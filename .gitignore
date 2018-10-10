@@ -1,3 +1,6 @@
+# Generated headers
+include/aws/jni
+
 # IDE Artifacts
 .metadata
 .build

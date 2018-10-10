@@ -3,8 +3,11 @@ project(aws-crt-java)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
 
+# Generate the java interface classes and headers first so they can be added to any generated projects 
+add_subdirectory("java/com/amazon/aws")
+
 file(GLOB AWS_CRT_JAVA_HEADERS
-        "include/aws/java/*.h"
+        "include/aws/jni/*.h"
         )
 
 file(GLOB AWS_CRT_JAVA_SRC
@@ -12,15 +15,12 @@ file(GLOB AWS_CRT_JAVA_SRC
         )
 
 if (WIN32)
-    file(GLOB AWS_CRT_JAVA_OS_HEADERS
-            )
-
     file(GLOB AWS_CRT_JAVA_OS_SRC
             "source/windows/*.c"
             )
 
     if (MSVC)
-        source_group("Header Files\\aws\\java" FILES ${AWS_CRT_JAVA_HEADERS})
+        source_group("Header Files\\aws\\jni" FILES ${AWS_CRT_JAVA_HEADERS})
         source_group("Source Files" FILES ${AWS_CRT_JAVA_SRC})
         source_group("Source Files\\windows" FILES ${AWS_CRT_JAVA_OS_SRC})
     endif ()
@@ -31,19 +31,12 @@ if (WIN32)
     set(TLS_STACK_DETERMINED ON)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    file(GLOB AWS_CRT_JAVA_OS_HEADERS
-            )
-
     file(GLOB AWS_CRT_JAVA_OS_SRC
             "source/linux/*.c"
             "source/posix/*.c"
             )
     set(PLATFORM_LIBS "")
 elseif (APPLE)
-
-    file(GLOB AWS_CRT_JAVA_OS_HEADERS
-            )
-
     file(GLOB AWS_CRT_JAVA_OS_SRC
             "source/bsd/*.c"
             "source/posix/*.c"
@@ -60,9 +53,6 @@ elseif (APPLE)
         set(TLS_STACK_DETERMINED ON)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-    file(GLOB AWS_CRT_JAVA_OS_HEADERS
-            )
-
     file(GLOB AWS_CRT_JAVA_OS_SRC
             "source/bsd/*.c"
             "source/posix/*.c"
@@ -87,7 +77,6 @@ endif ()
 
 file(GLOB CRT_JAVA_HEADERS
         ${AWS_CRT_JAVA_HEADERS}
-        ${AWS_CRT_JAVA_OS_HEADERS}
         )
 
 file(GLOB CRT_JAVA_SRC
@@ -108,13 +97,10 @@ else ()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
-if (BUILD_JNI_BINDINGS)
-    set(BUILD_RELOCATABLE_BINARIES ON)
-    find_package(JNI)
-    include_directories(${JNI_INCLUDE_DIRS})
-    set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DBUILD_JNI_BINDINGS")
-endif ()
+set(BUILD_RELOCATABLE_BINARIES ON)
+find_package(JNI)
+include_directories(${JNI_INCLUDE_DIRS})
+#set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
@@ -127,7 +113,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 find_package(aws-c-common REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} aws-c-common ${PLATFORM_LIBS})
 
-install(FILES ${AWS_CRT_JAVA_HEADERS} DESTINATION "include/aws/java")
+install(FILES ${AWS_CRT_JAVA_HEADERS} DESTINATION "include/aws/jni")
 install(FILES ${AWS_CRT_JAVA_TESTING_HEADERS} DESTINATION "include/aws/testing")
 
 install(

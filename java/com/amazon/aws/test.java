@@ -16,8 +16,8 @@ package com.amazon.aws;
 
 import java.util.StringTokenizer;
 
-class Test implements AutoCloseable {
-    public Test()
+class BasicResource implements AutoCloseable {
+    public BasicResource()
     {
         String libraryName = "aws-crt-java-test";
         String cwd = System.getProperty("user.dir");
@@ -41,12 +41,5 @@ class Test implements AutoCloseable {
         System.out.println("CLOSED");
     }
 
-    public static native void doIt();
-
-    public static void main(String[] args) {
-        System.out.println("I LIVE");
-        try (Test test = new Test()) {
-            doIt();
-        }
-    }
+    public native void doIt();
 };

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(aws-crt-java)
+project(aws-crt-java LANGUAGES C)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
 

@@ -11,7 +11,7 @@ This library is licensed under the Apache 2.0 License.
 aws-crt-java uses CMake for setting up build environments. This library depends on:
 * aws-c-common
 * aws-c-io
-* s2n
+* s2n (on POSIX platforms)
 * aws-c-mqtt
 * aws-c-http
 

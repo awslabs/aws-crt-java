@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-## AWS Crt Java
-
-Java bindings for the AWS Common Runtime
-
-## License
-
-This library is licensed under the Apache 2.0 License. 
-=======
 ## AWS CRT Java
 
 Java Bindings for the AWS Common Runtime
@@ -52,4 +43,3 @@ Or on windows,
 * -DENABLE_SANITIZERS=ON - Enables gcc/clang sanitizers, by default this adds -fsanitizer=address,undefined to the compile flags for projects that call aws_add_sanitizers.
 * -DCMAKE_INSTALL_PREFIX=/path/to/install - Standard way of installing to a user defined path. If specified when configuring aws-c-common, ensure the same prefix is specified when configuring other aws-c-* SDKs.
 
->>>>>>> Imported and edited README.md

@@ -1,12 +1,11 @@
 
-set(JAVAC "$ENV{JAVA_HOME}/bin/javac")
-set(JAVAH "$ENV{JAVA_HOME}/bin/javah")
+find_package(Java 1.7 REQUIRED)
 
 file(GLOB AWS_CRT_JAVA_FILES "*.java")
 
 message(STATUS "Compiling Java interfaces...")
 execute_process(
-    COMMAND "${JAVAC}" "-d" "${CMAKE_BINARY_DIR}/java" ${AWS_CRT_JAVA_FILES}
+    COMMAND "${Java_JAVAC_EXECUTABLE}" "-d" "${CMAKE_BINARY_DIR}/java" ${AWS_CRT_JAVA_FILES}
     )
 message(STATUS "Done.")
 
@@ -21,6 +20,6 @@ endforeach()
 
 message(STATUS "Generating JNI headers...")
 execute_process(
-    COMMAND "${JAVAH}" "-classpath" "${CMAKE_BINARY_DIR}/java" "-d" "${PROJECT_SOURCE_DIR}/include/aws/jni" ${AWS_CRT_JAVA_CLASSES}
+    COMMAND "${Java_JAVAH_EXECUTABLE}" "-classpath" "${CMAKE_BINARY_DIR}/java" "-d" "${PROJECT_SOURCE_DIR}/include/aws/jni" ${AWS_CRT_JAVA_CLASSES}
     )
 message(STATUS "Done.")

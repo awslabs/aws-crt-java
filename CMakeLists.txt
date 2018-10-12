@@ -113,16 +113,16 @@ target_link_libraries(${CMAKE_PROJECT_NAME} aws-c-common ${PLATFORM_LIBS})
 
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
 
-set(AWS_CRT_JAVA_LIB_PATH "${CMAKE_SHARED_LIBRARY_PREFIX}${CMAKE_PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-
+# create a jar to aggregate the JNI interfaces
 add_jar(${CMAKE_PROJECT_NAME}-jar
     SOURCES ${AWS_CRT_JAVA_SRC}
     OUTPUT_NAME ${CMAKE_PROJECT_NAME})
-add_dependencies("${CMAKE_PROJECT_NAME}-jar" ${CMAKE_PROJECT_NAME})
+
+# add the shared lib to the JNI jar after it's compiled (this creates an implicit dependency)
 add_custom_command(
     TARGET ${CMAKE_PROJECT_NAME}-jar
     POST_BUILD
-    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.jar" "${AWS_CRT_JAVA_LIB_PATH}"
+    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.jar" "$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
 )
 
 install(

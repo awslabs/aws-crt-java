@@ -91,9 +91,13 @@ public class CRT {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
             return "x86_32";
-        } else if (arch.matches("^(arm|arm32)$")) {
-            return "arm_32";
-        } 
+        } else if (arch.startsWith("armeabi")) {
+            if (arch.contains("v7")) {
+                return "armv7";
+            } else {
+                return "armv6";
+            }
+        }
         
         throw new UnknownPlatformException("AWS CRT: architecture not supported");
     }

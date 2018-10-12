@@ -8,8 +8,6 @@
 #        error ARCH armv7
 #    elif defined(__ARM_ARCH_6__) || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM - 0 >= 6)
 #        error ARCH armv6
-#    elif defined(__ARM_ARCH_5TEJ__) || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM - 0 >= 5)
-#        error ARCH armv5
 #    endif
 #endif
 #error ARCH unknown

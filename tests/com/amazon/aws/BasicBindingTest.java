@@ -16,15 +16,22 @@
 package com.amazon.aws;
 
 import org.junit.Test;
+import org.junit.Before;
 import static org.junit.Assert.*;
-import com.amazon.aws.BasicResource;
+import com.amazon.aws.CrtResource;
 
 public class BasicBindingTest {
     public BasicBindingTest() {}
     
+    @Before
+    public void InitCRT()
+    {
+        CRT crt = new CRT();
+    }
+
     @Test
     public void testDoIt() {
-        try (BasicResource test = new BasicResource()) {
+        try (CrtResource test = new CrtResource()) {
             test.doIt();
         }
         assertTrue("Resource created and destroyed", true);

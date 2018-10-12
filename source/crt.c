@@ -12,10 +12,11 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include "aws/jni/com_amazon_aws_Test.h"
+#include "aws/jni/com_amazon_aws_CRT.h"
+#include "aws/jni/com_amazon_aws_CrtResource.h"
 
 #include <stdio.h>
 
-void JNICALL Java_com_amazon_aws_Test_doIt(JNIEnv *env, jclass cls) {
+void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv *env, jobject obj) {
     printf("I DID THE THING\n");
 }

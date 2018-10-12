@@ -1,6 +1,6 @@
 /* Use # error to output the arch, and then parse from cmake */
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
-#   error ARCH i386
+#   error ARCH x86_32
 #elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
 #   error ARCH x86_64
 #elif defined(__arm__) || defined(__TARGET_ARCH_ARM)

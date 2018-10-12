@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.stream.*;
 
+
 public class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
 
@@ -31,6 +32,12 @@ public class CRT {
         } catch (UnsatisfiedLinkError e) {
             // otherwise, load from the jar this class is in
             loadLibraryFromJar();
+        }
+    }
+
+    public static class UnknownPlatformException extends Exception {
+        UnknownPlatformException(String message) {
+            super(message);
         }
     }
 
@@ -51,26 +58,71 @@ public class CRT {
         }
     }
 
-    private static void loadLibraryFromJar() {
-        // Prefix the lib
-        String prefix = "AWSCRT_" + new Date().getTime();
-        String platformName = System.mapLibraryName(CRT_LIB_NAME);
-        String extension = platformName.substring(platformName.lastIndexOf('.'));
-        String libraryName = CRT_LIB_NAME + extension;
-        Path libTempPath = Paths.get(System.getProperty("java.io.tmpdir"), prefix + libraryName);
+    private static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+    }
+
+    private static String getOSIdentifier() throws UnknownPlatformException {
+        String name = normalize(System.getProperty("os.name"));
+
+        if (name.contains("windows")) {
+            return "windows";
+        } else if (name.contains("linux")) {
+            return "linux";
+        } else if (name.contains("freebsd")) {
+            return "freebsd";
+        } else if (name.contains("mac os")) {
+            return "osx";
+        } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
+            return "solaris";
+        } else if (name.contains("android")) {
+            return "android";
+        }
+            
+        throw new UnknownPlatformException("AWS CRT: OS not supported");
+    }
+
+    private static String getArchIdentifier() throws UnknownPlatformException {
+        String arch = normalize(System.getProperty("os.arch"));
+        if (arch.matches("^(x8664|amd64|ia32e|em64t|x64)$")) {
+            return "x86_64";
+        } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
+            return "x86_32";
+        } else if (arch.matches("^(arm|arm32)$")) {
+            return "arm_32";
+        } 
         
-        // open a stream to read the shared lib contents from this JAR
-        InputStream in = CRT.class.getResourceAsStream("/" + libraryName);
-        // Copy from jar stream to file stream
+        throw new UnknownPlatformException("AWS CRT: architecture not supported");
+    }
+
+    private static void loadLibraryFromJar() {
         try {
+            // Prefix the lib
+            String prefix = "AWSCRT_" + new Date().getTime();
+            String platformName = System.mapLibraryName(CRT_LIB_NAME);
+            String extension = platformName.substring(platformName.lastIndexOf('.'));
+            String libraryName = CRT_LIB_NAME + extension;
+            String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier();
+            Path libTempPath = Paths.get(System.getProperty("java.io.tmpdir"), prefix + libraryName);
+
+            // open a stream to read the shared lib contents from this JAR
+            InputStream in = CRT.class.getResourceAsStream(libraryPath);
+            // Copy from jar stream to file stream
             Files.copy(in, libTempPath);
+            // load the shared lib from the temp path
+            System.load(libTempPath.toString());
+        }
+        catch (UnknownPlatformException upe) {
+            System.err.println("Unable to determine platform for AWS CRT: " + upe.toString());
+            upe.printStackTrace();
         }
         catch (Exception ex) {
             System.err.println("Unable to unpack AWS CRT lib: " + ex.toString());
             ex.printStackTrace();
         }
-
-        System.load(libTempPath.toString());
     }
 };
 

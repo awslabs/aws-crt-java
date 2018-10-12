@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.1)
 project(aws-crt-jni LANGUAGES C Java)
 
-include(UseJava)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+include(UseJava)
+include(AwsPlatformDetect)
 
 # Generate the java interface classes and headers first so they can be added to any generated projects 
 add_subdirectory("java/com/amazon/aws")
@@ -41,21 +42,20 @@ elseif (APPLE)
             "source/darwin/*.c"
             )
 
-        find_library(SECURITY_LIB Security)
-        if (NOT SECURITY_LIB)
-            message(FATAL_ERROR "Security framework not found")
-        endif ()
+    find_library(SECURITY_LIB Security)
+    if (NOT SECURITY_LIB)
+        message(FATAL_ERROR "Security framework not found")
+    endif ()
 
-        #No choice on TLS for apple, darwinssl will always be used.
-        set(PLATFORM_LIBS ${SECURITY_LIB})
-        set(TLS_STACK_DETERMINED ON)
+    #No choice on TLS for apple, darwinssl will always be used.
+    set(PLATFORM_LIBS ${SECURITY_LIB})
+    set(TLS_STACK_DETERMINED ON)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
     file(GLOB AWS_CRT_JAVA_OS_SRC
             "source/bsd/*.c"
             "source/posix/*.c"
             )
-
 endif()
 
 if (NOT CUSTOM_TLS)
@@ -82,8 +82,14 @@ file(GLOB CRT_JAVA_SRC
         ${AWS_CRT_JAVA_OS_SRC}
         )
 
+# figure out the target platform info and output the lib there
+aws_detect_target_platform(TARGET_OS TARGET_ARCH)
+set(TARGET_LIB_DIR "${TARGET_OS}/${TARGET_ARCH}")
+
+# shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${CMAKE_PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
 
 set(CMAKE_C_FLAGS_DEBUGOPT "")
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
@@ -123,7 +129,7 @@ add_jar(
 add_custom_command(
     TARGET aws-crt-java
     POST_BUILD
-    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
+    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "${TARGET_LIB_DIR}/$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
 )
 
 install(

@@ -47,7 +47,7 @@ list(APPEND CMAKE_JAVA_INCLUDE_PATH ${JUnit_JAR})
 add_jar(aws-crt-java-test 
     SOURCES ${AWS_JAVA_TEST_SRC}
     OUTPUT_NAME aws-crt-java-test
-    INCLUDE_JARS aws-crt-java-jar
+    INCLUDE_JARS aws-crt-java
     )
 
 add_junit_test(BasicBindingTest TESTS com.amazon.aws.BasicBindingTest.testDoIt)

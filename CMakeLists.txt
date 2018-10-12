@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(aws-crt-java LANGUAGES C Java)
+project(aws-crt-jni LANGUAGES C Java)
 
 include(UseJava)
 
@@ -114,15 +114,16 @@ target_link_libraries(${CMAKE_PROJECT_NAME} aws-c-common ${PLATFORM_LIBS})
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
 
 # create a jar to aggregate the JNI interfaces
-add_jar(${CMAKE_PROJECT_NAME}-jar
+add_jar(
+    aws-crt-java
     SOURCES ${AWS_CRT_JAVA_SRC}
-    OUTPUT_NAME ${CMAKE_PROJECT_NAME})
+)
 
 # add the shared lib to the JNI jar after it's compiled (this creates an implicit dependency)
 add_custom_command(
-    TARGET ${CMAKE_PROJECT_NAME}-jar
+    TARGET aws-crt-java
     POST_BUILD
-    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.jar" "$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
+    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
 )
 
 install(

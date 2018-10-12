@@ -22,17 +22,19 @@ import java.util.jar.*;
 import java.util.stream.*;
 
 public class CRT {
-    private static final String CRT_LIB_NAME = "aws-crt-java";
+    private static final String CRT_LIB_NAME = "aws-crt-jni";
 
     static {
         try {
             // If the lib is already present/loaded or is in java.library.path, just use it
             System.loadLibrary(CRT_LIB_NAME);
         } catch (UnsatisfiedLinkError e) {
+            // otherwise, load from the jar this class is in
             loadLibraryFromJar();
         }
     }
 
+    // Utility for dumping the contents of jars, debugging only
     private static void enumerateResources() throws URISyntaxException, IOException {
         Enumeration<URL> en = CRT.class.getClassLoader().getResources("META-INF");
         while (en.hasMoreElements()) {
@@ -58,15 +60,9 @@ public class CRT {
         Path libTempPath = Paths.get(System.getProperty("java.io.tmpdir"), prefix + libraryName);
         
         // open a stream to read the shared lib contents from this JAR
-        System.err.println("READING FROM " + libraryName);
         InputStream in = CRT.class.getResourceAsStream("/" + libraryName);
-        if (in == null) {
-            System.err.println("Couldn't read from " + libraryName);
-        }
         // Copy from jar stream to file stream
         try {
-            enumerateResources();
-            System.err.println("ATTEMPTING TO WRITE TO " + libTempPath);
             Files.copy(in, libTempPath);
         }
         catch (Exception ex) {

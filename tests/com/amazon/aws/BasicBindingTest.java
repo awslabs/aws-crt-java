@@ -12,10 +12,28 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include "aws/jni/com_amazon_aws_Test.h"
 
-#include <stdio.h>
+package com.amazon.aws;
 
-void JNICALL Java_com_amazon_aws_Test_doIt(JNIEnv *env, jclass cls) {
-    printf("I DID THE THING\n");
-}
+import org.junit.Test;
+import org.junit.Before;
+import static org.junit.Assert.*;
+import com.amazon.aws.CrtResource;
+
+public class BasicBindingTest {
+    public BasicBindingTest() {}
+    
+    @Before
+    public void InitCRT()
+    {
+        CRT crt = new CRT();
+    }
+
+    @Test
+    public void testDoIt() {
+        try (CrtResource test = new CrtResource()) {
+            test.doIt();
+        }
+        assertTrue("Resource created and destroyed", true);
+    }
+};

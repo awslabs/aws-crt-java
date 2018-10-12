@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
-project(aws-crt-java LANGUAGES C)
+project(aws-crt-jni LANGUAGES C Java)
+
+include(UseJava)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Generate the java interface classes and headers first so they can be added to any generated projects 
 add_subdirectory("java/com/amazon/aws")
@@ -108,8 +111,20 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 find_package(aws-c-common REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} aws-c-common ${PLATFORM_LIBS})
 
-install(FILES ${AWS_CRT_JAVA_HEADERS} DESTINATION "include/aws/jni")
-install(FILES ${AWS_CRT_JAVA_TESTING_HEADERS} DESTINATION "include/aws/testing")
+file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
+
+# create a jar to aggregate the JNI interfaces
+add_jar(
+    aws-crt-java
+    SOURCES ${AWS_CRT_JAVA_SRC}
+)
+
+# add the shared lib to the JNI jar after it's compiled (this creates an implicit dependency)
+add_custom_command(
+    TARGET aws-crt-java
+    POST_BUILD
+    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
+)
 
 install(
         TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
@@ -121,5 +136,11 @@ install(
 export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
 install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
 
-#include(CTest)
-#add_subdirectory(tests)
+find_package(JUnit)
+if (NOT JUnit_FOUND)
+    message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Tests will be disabled.")
+    return()
+endif()
+
+enable_testing()
+add_subdirectory(tests)

@@ -1,21 +1,53 @@
-cmake_minimum_required(VERSION 3.1)
-project(aws-crt-java-test)
 
-file(GLOB TEST_SRC "*.c")
-file(GLOB TEST_HDR "*.h")
+find_package(java 1.7 REQUIRED)
+find_package(JUnit)
 
-set(TEST_BINARY_NAME ${CMAKE_PROJECT_NAME})
+include(UseJava)
 
-find_package(aws-c-common REQUIRED)
+if (NOT JUnit_FOUND)
+    message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Tests will be disabled.")
+    return()
+endif()
 
-find_package(JNI)
-include_directories(${JNI_INCLUDE_DIRS})
-set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})
+file(GLOB_RECURSE AWS_JAVA_TEST_SRC "com/amazon/aws/*.java")
 
-add_library(${TEST_BINARY_NAME} SHARED ${TEST_SRC})
-#aws_set_common_properties(${TEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
-#aws_add_sanitizers(${TEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
-target_link_libraries(${TEST_BINARY_NAME} aws-c-common)
-target_compile_definitions(${TEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
-target_include_directories(${TEST_BINARY_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
+set(AWS_JAVA_CLASSPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
+function(add_junit_test TARGET_NAME)
+    if (WIN32 AND NOT CYGWIN)
+        set(SEPARATOR ";")
+    else (WIN32 AND NOT CYGWIN)
+        set(SEPARATOR ":")
+    endif(WIN32 AND NOT CYGWIN)
+
+    # Add JUnit, CRT Java libs, test JAR to the CLASSPATH
+    set(CLASSPATH ${JUnit_JAR}${SEPARATOR}${AWS_JAVA_CLASSPATH}${SEPARATOR}${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+    
+
+    foreach (ARG ${ARGN})
+        if (ARG MATCHES "CLASSPATH" OR ARG MATCHES "TESTS" OR ARG MATCHES "JVMARGS")
+            set(TYPE ${ARG})
+        else ()
+            if (TYPE MATCHES "CLASSPATH")
+                set(CLASSPATH "${CLASSPATH}${SEPARATOR}${ARG}")
+            elseif (TYPE MATCHES "TESTS")
+                set(TESTS ${TESTS} ${ARG})
+            elseif (TYPE MATCHES "JVMARGS")
+                set(JVMARGS ${JVMARGS} ${ARG})
+            endif()
+        endif()
+    endforeach(ARG)
+
+    add_test(NAME ${TARGET_NAME} COMMAND ${Java_JAVA_EXECUTABLE} ${JVMARGS} -classpath ${CLASSPATH} org.junit.runner.JUnitCore ${TESTS})
+endfunction(add_junit_test)
+
+# add JUnit to CLASSPATH for jar compilation
+list(APPEND CMAKE_JAVA_INCLUDE_PATH ${JUnit_JAR})
+
+add_jar(aws-crt-java-test 
+    SOURCES ${AWS_JAVA_TEST_SRC}
+    OUTPUT_NAME aws-crt-java-test
+    INCLUDE_JARS aws-crt-java
+    )
+
+add_junit_test(BasicBindingTest TESTS com.amazon.aws.BasicBindingTest.testDoIt)

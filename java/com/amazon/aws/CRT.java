@@ -74,7 +74,7 @@ public class CRT {
             return "linux";
         } else if (name.contains("freebsd")) {
             return "freebsd";
-        } else if (name.contains("mac os")) {
+        } else if (name.contains("macosx")) {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
@@ -82,7 +82,7 @@ public class CRT {
             return "android";
         }
             
-        throw new UnknownPlatformException("AWS CRT: OS not supported");
+        throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
     private static String getArchIdentifier() throws UnknownPlatformException {
@@ -103,21 +103,22 @@ public class CRT {
             }
         }
         
-        throw new UnknownPlatformException("AWS CRT: architecture not supported");
+        throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
     private static void loadLibraryFromJar() {
         try {
             // Prefix the lib
             String prefix = "AWSCRT_" + new Date().getTime();
-            String platformName = System.mapLibraryName(CRT_LIB_NAME);
-            String extension = platformName.substring(platformName.lastIndexOf('.'));
-            String libraryName = CRT_LIB_NAME + extension;
-            String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier();
+            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+            String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
             Path libTempPath = Paths.get(System.getProperty("java.io.tmpdir"), prefix + libraryName);
 
             // open a stream to read the shared lib contents from this JAR
             InputStream in = CRT.class.getResourceAsStream(libraryPath);
+            if (in == null) {
+                throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
+            }
             // Copy from jar stream to file stream
             Files.copy(in, libTempPath);
             // load the shared lib from the temp path

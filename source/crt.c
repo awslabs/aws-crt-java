@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include "aws/jni/com_amazon_aws_CRT.h"
-#include "aws/jni/com_amazon_aws_CrtResource.h"
+#include <aws/jni/com_amazon_aws_CRT.h>
+#include <aws/jni/com_amazon_aws_CrtResource.h>
 
 #include <stdio.h>
 

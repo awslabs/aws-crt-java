@@ -9,7 +9,7 @@ This library is licensed under the Apache 2.0 License.
 ## Usage
 ### Building
 aws-crt-java uses CMake for setting up build environments. This library depends on:
-* aws-c-common
+* aws-c-common (requires ENABLE_SANITIZERS=OFF, ASan cannot be loaded by JNI currently)
 * aws-c-io
 * s2n (on POSIX platforms)
 * aws-c-mqtt
@@ -40,6 +40,5 @@ Or on windows,
 
 ### CMake Options
 * -DCMAKE_CLANG_TIDY=/path/to/clang-tidy (or just clang-tidy or clang-tidy-7.0 if it is in your PATH) - Runs clang-tidy as part of your build.
-* -DENABLE_SANITIZERS=ON - Enables gcc/clang sanitizers, by default this adds -fsanitizer=address,undefined to the compile flags for projects that call aws_add_sanitizers.
 * -DCMAKE_INSTALL_PREFIX=/path/to/install - Standard way of installing to a user defined path. If specified when configuring aws-c-common, ensure the same prefix is specified when configuring other aws-c-* SDKs.
 

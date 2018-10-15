@@ -15,9 +15,9 @@ find_package_handle_standard_args(JUnit DEFAULT_MSG JUnit_JAR)
 function(add_junit_test TARGET_NAME)
     if (WIN32 AND NOT CYGWIN)
         set(SEPARATOR ";")
-    else (WIN32 AND NOT CYGWIN)
+    else ()
         set(SEPARATOR ":")
-    endif(WIN32 AND NOT CYGWIN)
+    endif()
 
     # Add JUnit, CRT Java libs, test JAR to the CLASSPATH
     set(CLASSPATH ${JUnit_JAR}${SEPARATOR}${CMAKE_JAVA_TARGET_OUTPUT_DIR})
@@ -34,9 +34,9 @@ function(add_junit_test TARGET_NAME)
                 set(JVMARGS ${JVMARGS} ${ARG})
             endif()
         endif()
-    endforeach(ARG)
+    endforeach()
 
     add_test(
         NAME ${TARGET_NAME} 
         COMMAND ${Java_JAVA_EXECUTABLE} ${JVMARGS} -classpath "${CLASSPATH}" org.junit.runner.JUnitCore ${TESTS})
-endfunction(add_junit_test)
+endfunction()

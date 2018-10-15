@@ -89,7 +89,12 @@ set(TARGET_LIB_DIR "${TARGET_OS}/${TARGET_ARCH}")
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${CMAKE_PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+# for non-msvc, library output will control the shared lib output
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
+# for msvc, runtime controls where dlls are output
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TARGET_LIB_DIR})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TARGET_LIB_DIR})
 
 set(CMAKE_C_FLAGS_DEBUGOPT "")
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
@@ -115,7 +120,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 find_package(aws-c-common REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} aws-c-common ${PLATFORM_LIBS})
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common ${PLATFORM_LIBS})
 
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
 

@@ -12,11 +12,13 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <aws/jni/com_amazon_aws_CRT.h>
-#include <aws/jni/com_amazon_aws_CrtResource.h>
+
+#include "aws/jni/com_amazon_aws_CrtResource.h"
 
 #include <stdio.h>
 
-void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv *env, jobject obj) {
+void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv* env, jobject obj) {
+    (void)env;
+    (void)obj;
     printf("I DID THE THING\n");
 }

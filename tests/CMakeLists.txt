@@ -29,3 +29,4 @@ add_jar(aws-crt-java-test
     )
 
 aws_add_junit_test(BasicBindingTest TESTS com.amazon.aws.BasicBindingTest)
+aws_add_junit_test(EventLoopGroupTest TESTS com.amazon.aws.EventLoopGroupTest)

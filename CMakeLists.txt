@@ -108,7 +108,7 @@ endif ()
 
 set(BUILD_RELOCATABLE_BINARIES ON)
 find_package(JNI)
-include_directories(${JNI_INCLUDE_DIRS})
+include_directories(${JNI_INCLUDE_DIRS} source)
 #set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)

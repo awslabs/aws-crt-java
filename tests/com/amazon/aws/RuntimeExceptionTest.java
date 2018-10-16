@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -14,8 +15,27 @@
  */
 package com.amazon.aws;
 
-public class RuntimeException extends Exception {
-    RuntimeException(String msg) {
-        super(msg);
+import org.junit.Test;
+import org.junit.Before;
+import static org.junit.Assert.*;
+import com.amazon.aws.CrtTest;
+import com.amazon.aws.CRT;
+
+public class RuntimeExceptionTest {
+    public RuntimeExceptionTest() {
+        new CRT();
     }
-};
+
+    @Test
+    public void ensureRuntimeExceptionsCanBeThrownFromNative() {
+        boolean exceptionCaught = false;
+        try (CrtTest test = new CrtTest()) {
+            test.throwRuntimeException();
+        }
+        catch (com.amazon.aws.RuntimeException ex) {
+            exceptionCaught = true;
+        }
+
+        assertTrue(exceptionCaught);
+    }
+}

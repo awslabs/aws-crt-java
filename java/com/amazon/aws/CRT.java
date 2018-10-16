@@ -135,8 +135,8 @@ public class CRT {
     }
 };
 
-class CrtResource implements AutoCloseable {
-    public CrtResource()
+class CrtTest implements AutoCloseable {
+    public CrtTest()
     {
     }
 
@@ -146,4 +146,5 @@ class CrtResource implements AutoCloseable {
     }
 
     public native void doIt();
+    public native void throwRuntimeException() throws RuntimeException;
 };

@@ -18,7 +18,7 @@ package com.amazon.aws;
 import org.junit.Test;
 import org.junit.Before;
 import static org.junit.Assert.*;
-import com.amazon.aws.CrtResource;
+import com.amazon.aws.CrtTest;
 
 public class BasicBindingTest {
     public BasicBindingTest() {}
@@ -31,7 +31,7 @@ public class BasicBindingTest {
 
     @Test
     public void testDoIt() {
-        try (CrtResource test = new CrtResource()) {
+        try (CrtTest test = new CrtTest()) {
             test.doIt();
         }
         assertTrue("Resource created and destroyed", true);

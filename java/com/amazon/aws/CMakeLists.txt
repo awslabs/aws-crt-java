@@ -4,6 +4,10 @@ find_package(Java 1.7 REQUIRED)
 set(AWS_JNI_HEADER_DIR "${PROJECT_SOURCE_DIR}/include/aws/jni")
 file(GLOB AWS_CRT_JAVA_SRC "*.java")
 
+# clean up previous java compiled classes
+file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/java")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/java")
+
 # as of JDK 10, javah was moved to javac -h
 # if the javah tool exists, then use it (two pass), otherwise attempt java -h (single pass)
 if (Java_JAVAH_EXECUTABLE)

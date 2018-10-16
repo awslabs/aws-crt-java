@@ -33,13 +33,6 @@ void JNICALL Java_com_amazon_aws_EventLoopGroup_init(JNIEnv *env, jobject jni_el
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
-    /* clamp num_threads between (1, n CPUs) */
-    if (num_threads > aws_system_info_processor_count()) {
-        num_threads = aws_system_info_processor_count();
-    }
-    if (num_threads < 1) {
-        num_threads = 1;
-    }
     aws_event_loop_group_default_init(elg, allocator, num_threads);
 
     /* push the elg back into the EventLoopGroup as _elg */

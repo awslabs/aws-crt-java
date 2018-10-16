@@ -15,8 +15,7 @@
 
 #include "aws/jni/com_amazon_aws_CrtResource.h"
 #include <aws/common/common.h>
-#include <aws/common/mutex.h>
-#include <aws/common/atomics.h>
+
 #include <stdio.h>
 
 void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv* env, jobject obj) {
@@ -25,49 +24,6 @@ void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv* env, jobject obj) {
     printf("I DID THE THING\n");
 }
 
-struct jni_allocator {
-    struct aws_atomic_var allocated;
-};
-
-struct jni_memory_header {
-    size_t size;
-};
-
-static void *s_mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
-    struct jni_allocator *jnialloc = (struct jni_allocator *)allocator->impl;
-
-    struct jni_memory_header *memory =
-        (struct jni_memory_header *)malloc(size + sizeof(struct jni_memory_header));
-
-    if (!memory) {
-        return NULL;
-    }
-
-    aws_atomic_fetch_add(&jnialloc->allocated, size);
-    memory->size = size;
-    return (uint8_t *)memory + sizeof(struct jni_memory_header);
-}
-
-static void s_mem_release_free(struct aws_allocator *allocator, void *ptr) {
-    struct jni_allocator *jnialloc = (struct jni_allocator *)allocator->impl;
-    struct jni_memory_header *memory =
-        (struct jni_memory_header *)((uint8_t *)ptr - sizeof(struct jni_memory_header));
-    
-    aws_atomic_fetch_sub(&jnialloc->allocated, memory->size);
-    free(memory);
-}
-
 struct aws_allocator *aws_jni_get_allocator() {
-    static struct jni_allocator jnialloc = {
-        .allocated = 0,
-    };
-
-    static struct aws_allocator aws_jni_alloc = {
-        .mem_acquire = &s_mem_acquire_malloc,
-        .mem_release = &s_mem_release_free,
-        .mem_realloc = NULL,
-        .impl = &jnialloc,
-    };
-
-    return &aws_jni_alloc;
+    return aws_default_allocator();
 }

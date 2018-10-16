@@ -146,5 +146,8 @@ class CrtTest implements AutoCloseable {
     }
 
     public native void doIt();
-    public native void throwRuntimeException() throws RuntimeException;
+
+    public native void throwRuntimeExceptionNew() throws RuntimeException;
+
+    public native void throwRuntimeExceptionAPI() throws RuntimeException;
 };

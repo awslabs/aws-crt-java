@@ -16,19 +16,14 @@
 package com.amazon.aws;
 
 import org.junit.Test;
-import org.junit.Before;
 import static org.junit.Assert.*;
 import com.amazon.aws.CRT;
 
 public class EventLoopGroupTest {
-    public EventLoopGroupTest() {}
-    
-    @Before
-    public void InitCRT()
-    {
-        CRT crt = new CRT();
+    public EventLoopGroupTest() {
+        new CRT();
     }
-
+    
     @Test
     public void testCreateDestroy() {
         try (EventLoopGroup elg = new EventLoopGroup(1)) {

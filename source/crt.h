@@ -16,8 +16,10 @@
 #ifndef AWS_JNI_CRT_H
 #define AWS_JNI_CRT_H
 
+#include <jni.h>
 #include <aws/common/common.h>
 
 struct aws_allocator *aws_jni_get_allocator();
+void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
 
 #endif /* AWS_JNI_CRT_H */

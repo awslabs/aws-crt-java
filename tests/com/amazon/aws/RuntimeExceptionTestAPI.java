@@ -16,26 +16,24 @@
 package com.amazon.aws;
 
 import org.junit.Test;
-import org.junit.Before;
 import static org.junit.Assert.*;
 import com.amazon.aws.CrtTest;
 import com.amazon.aws.CRT;
 
-public class RuntimeExceptionTest {
-    public RuntimeExceptionTest() {
+public class RuntimeExceptionTestAPI {
+    public RuntimeExceptionTestAPI() {
         new CRT();
     }
 
     @Test
-    public void ensureRuntimeExceptionsCanBeThrownFromNative() {
+    public void ensureRuntimeExceptionsCanBeThrownFromNativeViaAPI() {
         boolean exceptionCaught = false;
         try (CrtTest test = new CrtTest()) {
-            test.throwRuntimeException();
-        }
-        catch (com.amazon.aws.RuntimeException ex) {
+            test.throwRuntimeExceptionAPI();
+        } catch (com.amazon.aws.RuntimeException ex) {
             exceptionCaught = true;
         }
-
         assertTrue(exceptionCaught);
     }
-}
+};
+

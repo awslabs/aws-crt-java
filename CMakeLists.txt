@@ -120,7 +120,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 find_package(aws-c-common REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common ${PLATFORM_LIBS})
+find_package(aws-c-io REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common aws-c-io ${PLATFORM_LIBS})
 
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
 

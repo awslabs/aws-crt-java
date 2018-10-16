@@ -33,7 +33,14 @@ void JNICALL Java_com_amazon_aws_EventLoopGroup_init(JNIEnv *env, jobject jni_el
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
-    aws_event_loop_group_default_init(elg, allocator, num_threads);
+    int result = aws_event_loop_group_default_init(elg, allocator, num_threads);
+    if (result != AWS_OP_SUCCESS) {
+        jclass runtime_exception = (*env)->FindClass(env, "com/amazon/aws/RuntimeException");
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "aws_event_loop_group_default_init failed: %s", aws_error_str(aws_last_error()));
+        (*env)->ThrowNew(env, runtime_exception, buf);
+        return;
+    }
 
     /* push the elg back into the EventLoopGroup as _elg */
     elg_value = (jlong)elg;

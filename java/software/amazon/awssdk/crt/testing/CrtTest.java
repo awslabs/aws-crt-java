@@ -12,17 +12,26 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package software.amazon.awssdk.crt.testing;
 
-#ifndef AWS_JNI_CRT_H
-#define AWS_JNI_CRT_H
+import software.amazon.awssdk.crt.*;
 
-#include <jni.h>
-#include <aws/common/common.h>
-#include <aws/common/byte_buf.h>
+public class CrtTest implements AutoCloseable {
+    static {
+        new CRT();
+    }
 
-struct aws_allocator *aws_jni_get_allocator();
-void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
+    public CrtTest() {
+    }
 
-struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
+    @Override
+    public void close() {
+        System.out.println("CrtResource CLOSED");
+    }
 
-#endif /* AWS_JNI_CRT_H */
+    public native void doIt();
+
+    public native void throwRuntimeExceptionNew() throws CrtRuntimeException;
+
+    public native void throwRuntimeExceptionAPI() throws CrtRuntimeException;
+};

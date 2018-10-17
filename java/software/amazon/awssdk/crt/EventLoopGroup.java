@@ -12,10 +12,27 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
-public class RuntimeException extends Exception {
-    RuntimeException(String msg) {
-        super(msg);
+import software.amazon.awssdk.crt.CRT;
+
+public class EventLoopGroup implements AutoCloseable {
+    private long _elg;
+
+    static {
+        new CRT();
     }
+
+    public EventLoopGroup(int numThreads) {
+        _elg = 0;
+        init(numThreads);
+    }
+
+    @Override
+    public void close() {
+        clean_up();
+    }
+
+    private native void init(int numThreads);
+    private native void clean_up();
 };

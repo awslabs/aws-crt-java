@@ -12,7 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
 import java.io.*;
 import java.nio.file.*;
@@ -133,21 +133,4 @@ public class CRT {
             ex.printStackTrace();
         }
     }
-};
-
-class CrtTest implements AutoCloseable {
-    public CrtTest()
-    {
-    }
-
-    @Override
-    public void close() {
-        System.out.println("CrtResource CLOSED");
-    }
-
-    public native void doIt();
-
-    public native void throwRuntimeExceptionNew() throws RuntimeException;
-
-    public native void throwRuntimeExceptionAPI() throws RuntimeException;
 };

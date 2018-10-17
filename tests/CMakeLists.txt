@@ -9,7 +9,7 @@ if (NOT JUnit_FOUND)
     return()
 endif()
 
-file(GLOB_RECURSE AWS_JAVA_TEST_SRC "com/amazon/aws/*.java")
+file(GLOB_RECURSE AWS_JAVA_TEST_SRC "*.java")
 
 function (aws_add_junit_test NAME)
     add_junit_test(
@@ -28,7 +28,7 @@ add_jar(aws-crt-java-test
     INCLUDE_JARS aws-crt-java
     )
 
-aws_add_junit_test(BasicBindingTest TESTS com.amazon.aws.BasicBindingTest)
-aws_add_junit_test(RuntimeExceptionTestNew TESTS com.amazon.aws.RuntimeExceptionTestNew)
-aws_add_junit_test(RuntimeExceptionTestAPI TESTS com.amazon.aws.RuntimeExceptionTestAPI)
-aws_add_junit_test(EventLoopGroupTest TESTS com.amazon.aws.EventLoopGroupTest)
+aws_add_junit_test(BasicBindingTest TESTS crt.test.BasicBindingTest)
+aws_add_junit_test(RuntimeExceptionTestNew TESTS crt.test.RuntimeExceptionTestNew)
+aws_add_junit_test(RuntimeExceptionTestAPI TESTS crt.test.RuntimeExceptionTestAPI)
+aws_add_junit_test(EventLoopGroupTest TESTS crt.test.EventLoopGroupTest)

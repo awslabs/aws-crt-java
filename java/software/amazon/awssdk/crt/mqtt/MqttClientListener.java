@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,17 +13,16 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package software.amazon.awssdk.crt.mqtt;
 
-#ifndef AWS_JNI_CRT_H
-#define AWS_JNI_CRT_H
+import software.amazon.awssdk.crt.mqtt.MqttDeliveryToken;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
-#include <jni.h>
-#include <aws/common/common.h>
-#include <aws/common/byte_buf.h>
+public interface MqttClientListener {
+    public void connectionAccepted();
 
-struct aws_allocator *aws_jni_get_allocator();
-void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
+    public void connectionLost();
 
-struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
-
-#endif /* AWS_JNI_CRT_H */
+    public void messageArrived(MqttMessage message);
+    public void messageDelivered(MqttDeliveryToken token);
+}

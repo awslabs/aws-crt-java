@@ -12,23 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package software.amazon.awssdk.crt.mqtt;
 
-package com.amazon.aws;
+import software.amazon.awssdk.crt.mqtt.MqttToken;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
-
-public class BasicBindingTest {
-    public BasicBindingTest() {
-        new CRT();
-    }
+public class MqttDeliveryToken extends MqttToken {
     
-    @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
-        }
-        assertTrue("Resource created and destroyed", true);
-    }
-};
+}

@@ -12,22 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package software.amazon.awssdk.crt.mqtt;
 
-package com.amazon.aws;
-
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CRT;
-
-public class EventLoopGroupTest {
-    public EventLoopGroupTest() {
-        new CRT();
-    }
+public class MqttMessage {
     
-    @Test
-    public void testCreateDestroy() {
-        try (EventLoopGroup elg = new EventLoopGroup(1)) {
-            assertNotNull(elg);
-        }
-    }
-};
+}

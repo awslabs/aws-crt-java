@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,24 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import com.amazon.aws.CRT;
+package software.amazon.awssdk.crt.mqtt;
 
-public final class AWSIoTMQTTClient implements AutoCloseable {
-    private CRT _crt;
-
-    AWSIoTMQTTClient() {
-        // This will cause the JNI lib to be loaded the first time a CRT is created
-        _crt = new CRT();
-        assert (_crt != null);
-
-    }
+public class MqttToken {
     
-    @Override
-    public void close() {
-        _crt = null;
-    }
-
-    void connect() {
-
-    }
-};
+}

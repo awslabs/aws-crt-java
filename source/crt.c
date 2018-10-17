@@ -47,3 +47,7 @@ void aws_jni_throw_runtime_exception(JNIEnv * env, const char *msg) {
     snprintf(buf, sizeof(buf), "%s: %s", msg, aws_error_str(aws_last_error()));
     (*env)->ThrowNew(env, runtime_exception, buf);
 }
+
+struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
+    return aws_byte_cursor_from_array((*env)->GetStringUTFChars(env, str, NULL), (*env)->GetStringUTFLength(env, str));
+}

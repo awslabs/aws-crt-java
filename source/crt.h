@@ -18,8 +18,11 @@
 
 #include <jni.h>
 #include <aws/common/common.h>
+#include <aws/common/byte_buf.h>
 
 struct aws_allocator *aws_jni_get_allocator();
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
+
+struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
 
 #endif /* AWS_JNI_CRT_H */

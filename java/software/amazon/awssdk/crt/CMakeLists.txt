@@ -13,7 +13,7 @@ file(MAKE_DIRECTORY "${AWS_JNI_BINARY_DIR}")
 file(REMOVE_RECURSE "${AWS_JNI_HEADER_DIR}")
 file(MAKE_DIRECTORY "${AWS_JNI_HEADER_DIR}")
 
-if (JUnit_JAR) # testing will be possible
+if (JUnit_FOUND) # testing will be possible
     list(APPEND AWS_CRT_JAVA_ALL_SRC ${AWS_CRT_JAVA_SRC} ${AWS_CRT_JAVA_TEST_SRC})
 else()
     set(AWS_CRT_JAVA_ALL_SRC ${AWS_CRT_JAVA_SRC})

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,27 +13,16 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
-import com.amazon.aws.CRT;
+import software.amazon.awssdk.crt.MqttDeliveryToken;
+import software.amazon.awssdk.crt.MqttMessage;
 
-public class EventLoopGroup implements AutoCloseable {
-    private long _elg;
+public interface MqttClientListener {
+    public void connectionAccepted();
 
-    static {
-        new CRT();
-    }
+    public void connectionLost();
 
-    public EventLoopGroup(int numThreads) {
-        _elg = 0;
-        init(numThreads);
-    }
-
-    @Override
-    public void close() {
-        clean_up();
-    }
-
-    private native void init(int numThreads);
-    private native void clean_up();
-};
+    public void messageArrived(MqttMessage message);
+    public void messageDelivered(MqttDeliveryToken token);
+}

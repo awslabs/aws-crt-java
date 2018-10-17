@@ -12,8 +12,21 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
 
-public class MqttMessage {
+package crt.test;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+import software.amazon.awssdk.crt.testing.*;
+
+public class BasicBindingTest {
+    public BasicBindingTest() {}
     
-}
+    @Test
+    public void testDoIt() {
+        try (CrtTest test = new CrtTest()) {
+            test.doIt();
+        }
+        assertTrue("Resource created and destroyed", true);
+    }
+};

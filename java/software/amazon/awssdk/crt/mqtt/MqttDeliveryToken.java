@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,16 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
-import com.amazon.aws.MqttDeliveryToken;
-import com.amazon.aws.MqttMessage;
+import software.amazon.awssdk.crt.MqttToken;
 
-public interface MqttClientListener {
-    public void connectionAccepted();
-
-    public void connectionLost();
-
-    public void messageArrived(MqttMessage message);
-    public void messageDelivered(MqttDeliveryToken token);
+public class MqttDeliveryToken extends MqttToken {
+    
 }

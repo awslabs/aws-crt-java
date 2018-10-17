@@ -13,24 +13,22 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
-import com.amazon.aws.CRT;
+import software.amazon.awssdk.crt.testing.CrtTest;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
-public class RuntimeExceptionTestNew {
-    public RuntimeExceptionTestNew() {
-        new CRT();
-    }
+public class RuntimeExceptionTestAPI {
+    public RuntimeExceptionTestAPI() { }
 
     @Test
-    public void ensureRuntimeExceptionsCanBeThrownFromNativeViaNew() {
+    public void ensureRuntimeExceptionsCanBeThrownFromNativeViaAPI() {
         boolean exceptionCaught = false;
         try (CrtTest test = new CrtTest()) {
-            test.throwRuntimeExceptionNew();
-        } catch (com.amazon.aws.RuntimeException ex) {
+            test.throwRuntimeExceptionAPI();
+        } catch (CrtRuntimeException ex) {
             exceptionCaught = true;
         }
         assertTrue(exceptionCaught);

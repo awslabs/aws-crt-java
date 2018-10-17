@@ -13,11 +13,11 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
-import com.amazon.aws.CRT;
-import com.amazon.aws.EventLoopGroup;
-import com.amazon.aws.RuntimeException;
+import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.EventLoopGroup;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public final class MqttConnection implements AutoCloseable {
     private EventLoopGroup elg;
@@ -78,13 +78,13 @@ public final class MqttConnection implements AutoCloseable {
 
     }
 
-    private native void mqtt_connect(EventLoopGroup elg, String hostName, short port, ConnectOptions params) throws RuntimeException;
+    private native void mqtt_connect(EventLoopGroup elg, String hostName, short port, ConnectOptions params) throws CrtRuntimeException;
 
     private native void mqtt_disconnect();
 
-    private native void mqtt_subscribe() throws RuntimeException;
+    private native void mqtt_subscribe() throws CrtRuntimeException;
 
     private native void mqtt_unsubscribe();
 
-    private native void mqtt_publish() throws RuntimeException;
+    private native void mqtt_publish() throws CrtRuntimeException;
 };

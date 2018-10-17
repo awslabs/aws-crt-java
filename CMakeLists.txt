@@ -8,7 +8,7 @@ include(UseJava)
 include(AwsPlatformDetect)
 
 # Generate the java interface classes and headers first so they can be added to any generated projects 
-add_subdirectory("java/com/amazon/aws")
+add_subdirectory("java/software/amazon/awssdk/crt")
 
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"
@@ -124,7 +124,7 @@ find_package(aws-c-io REQUIRED)
 find_package(aws-c-mqtt REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common aws-c-io aws-c-mqtt ${PLATFORM_LIBS})
 
-file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/com/amazon/aws/*.java")
+file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/software/amazon/awssdk/crt/*.java")
 
 # create a jar to aggregate the JNI interfaces
 add_jar(

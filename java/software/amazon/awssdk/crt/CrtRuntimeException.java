@@ -12,10 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package com.amazon.aws;
+package software.amazon.awssdk.crt;
 
-public class RuntimeException extends Exception {
-    RuntimeException(String msg) {
+public class CrtRuntimeException extends Exception {
+    CrtRuntimeException(String msg) {
         super(msg);
     }
 };

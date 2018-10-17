@@ -22,7 +22,7 @@
 static jfieldID s_elg_field = 0;
 
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_EventLoopGroup_init(JNIEnv *env, jobject jni_elg, jint num_threads) {
+void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_init(JNIEnv *env, jobject jni_elg, jint num_threads) {
     if (!s_elg_field) {
         jclass elg_class = (*env)->GetObjectClass(env, jni_elg);
         s_elg_field = (*env)->GetFieldID(env, elg_class, "_elg", "J");
@@ -45,7 +45,7 @@ void JNICALL Java_com_amazon_aws_EventLoopGroup_init(JNIEnv *env, jobject jni_el
 }
 
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_EventLoopGroup_clean_1up(JNIEnv *env, jobject jni_elg) {
+void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_clean_1up(JNIEnv *env, jobject jni_elg) {
     assert(s_elg_field && "EventLoopGroup.clean_up was called without corresponding init");
 
     jlong elg_value = (*env)->GetLongField(env, jni_elg, s_elg_field);

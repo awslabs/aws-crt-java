@@ -1,9 +1,11 @@
 
 find_package(Java 1.7 REQUIRED)
+find_package(JUnit)
 
 set(AWS_JNI_HEADER_DIR "${PROJECT_SOURCE_DIR}/include/aws/jni")
 set(AWS_JNI_BINARY_DIR "${CMAKE_BINARY_DIR}/java")
 file(GLOB AWS_CRT_JAVA_SRC "*.java")
+file(GLOB AWS_CRT_JAVA_TEST_SRC "testing/*.java")
 
 # clean up previous java compiled classes
 file(REMOVE_RECURSE "${AWS_JNI_BINARY_DIR}")
@@ -11,12 +13,18 @@ file(MAKE_DIRECTORY "${AWS_JNI_BINARY_DIR}")
 file(REMOVE_RECURSE "${AWS_JNI_HEADER_DIR}")
 file(MAKE_DIRECTORY "${AWS_JNI_HEADER_DIR}")
 
+if (JUnit_JAR) # testing will be possible
+    list(APPEND AWS_CRT_JAVA_ALL_SRC ${AWS_CRT_JAVA_SRC} ${AWS_CRT_JAVA_TEST_SRC})
+else()
+    set(AWS_CRT_JAVA_ALL_SRC ${AWS_CRT_JAVA_SRC})
+endif()
+
 # as of JDK 10, javah was moved to javac -h
 # if the javah tool exists, then use it (two pass), otherwise attempt java -h (single pass)
 if (Java_JAVAH_EXECUTABLE)
     message(STATUS "Compiling Java interfaces...")
     execute_process(
-        COMMAND "${Java_JAVAC_EXECUTABLE}" "-d" "${AWS_JNI_BINARY_DIR}" ${AWS_CRT_JAVA_SRC}
+        COMMAND "${Java_JAVAC_EXECUTABLE}" "-d" "${AWS_JNI_BINARY_DIR}" ${AWS_CRT_JAVA_ALL_SRC}
     )
 
     # convert file paths to .class files into class names (inputs to javah)
@@ -35,7 +43,7 @@ if (Java_JAVAH_EXECUTABLE)
 else() # just use javac
     message(STATUS "Compiling Java interfaces and generating headers...")
     execute_process(
-        COMMAND "${Java_JAVAC_EXECUTABLE}" "-d" "${AWS_JNI_BINARY_DIR}" "-h" "${AWS_JNI_HEADER_DIR}" ${AWS_CRT_JAVA_SRC}
+        COMMAND "${Java_JAVAC_EXECUTABLE}" "-d" "${AWS_JNI_BINARY_DIR}" "-h" "${AWS_JNI_HEADER_DIR}" ${AWS_CRT_JAVA_ALL_SRC}
     )
 endif()
 message(STATUS "Done.")

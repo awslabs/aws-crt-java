@@ -12,22 +12,26 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package software.amazon.awssdk.crt.testing;
 
-package com.amazon.aws;
+import software.amazon.awssdk.crt.*;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CRT;
-
-public class EventLoopGroupTest {
-    public EventLoopGroupTest() {
+public class CrtTest implements AutoCloseable {
+    static {
         new CRT();
     }
-    
-    @Test
-    public void testCreateDestroy() {
-        try (EventLoopGroup elg = new EventLoopGroup(1)) {
-            assertNotNull(elg);
-        }
+
+    public CrtTest() {
     }
+
+    @Override
+    public void close() {
+        System.out.println("CrtResource CLOSED");
+    }
+
+    public native void doIt();
+
+    public native void throwRuntimeExceptionNew() throws CrtRuntimeException;
+
+    public native void throwRuntimeExceptionAPI() throws CrtRuntimeException;
 };

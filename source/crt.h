@@ -13,22 +13,13 @@
  * permissions and limitations under the License.
  */
 
-package com.amazon.aws;
+#ifndef AWS_JNI_CRT_H
+#define AWS_JNI_CRT_H
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
+#include <jni.h>
+#include <aws/common/common.h>
 
-public class BasicBindingTest {
-    public BasicBindingTest() {
-        new CRT();
-    }
-    
-    @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
-        }
-        assertTrue("Resource created and destroyed", true);
-    }
-};
+struct aws_allocator *aws_jni_get_allocator();
+void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
+
+#endif /* AWS_JNI_CRT_H */

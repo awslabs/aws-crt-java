@@ -12,23 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 package com.amazon.aws;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
-
-public class BasicBindingTest {
-    public BasicBindingTest() {
-        new CRT();
-    }
-    
-    @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
-        }
-        assertTrue("Resource created and destroyed", true);
+public class RuntimeException extends Exception {
+    RuntimeException(String msg) {
+        super(msg);
     }
 };

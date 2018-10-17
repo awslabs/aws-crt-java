@@ -13,12 +13,37 @@
  * permissions and limitations under the License.
  */
 
-#include "aws/jni/com_amazon_aws_CrtResource.h"
+#include <aws/jni/com_amazon_aws_CrtTest.h>
+#include <aws/common/common.h>
+#include <crt.h>
 
 #include <stdio.h>
 
-void JNICALL Java_com_amazon_aws_CrtResource_doIt(JNIEnv* env, jobject obj) {
+JNIEXPORT
+void JNICALL Java_com_amazon_aws_CrtTest_doIt(JNIEnv *env, jobject obj) {
     (void)env;
     (void)obj;
     printf("I DID THE THING\n");
+}
+
+JNIEXPORT void JNICALL Java_com_amazon_aws_CrtTest_throwRuntimeExceptionNew(JNIEnv *env, jobject obj) {
+    (void)obj;
+    jclass runtime_exception = (*env)->FindClass(env, "com/amazon/aws/RuntimeException");
+    (*env)->ThrowNew(env, runtime_exception, "Test RuntimeException via new");
+}
+
+JNIEXPORT void JNICALL Java_com_amazon_aws_CrtTest_throwRuntimeExceptionAPI(JNIEnv *env, jobject obj) {
+    (void)obj;
+    aws_jni_throw_runtime_exception(env, "Test RuntimeException via API");
+}
+
+struct aws_allocator *aws_jni_get_allocator() {
+    return aws_default_allocator();
+}
+
+void aws_jni_throw_runtime_exception(JNIEnv * env, const char *msg) {
+    char buf[1024];
+    jclass runtime_exception = (*env)->FindClass(env, "com/amazon/aws/RuntimeException");
+    snprintf(buf, sizeof(buf), "%s: %s", msg, aws_error_str(aws_last_error()));
+    (*env)->ThrowNew(env, runtime_exception, buf);
 }

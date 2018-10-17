@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,23 +13,24 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+import com.amazon.aws.CRT;
 
-package com.amazon.aws;
+public final class AWSIoTMQTTClient implements AutoCloseable {
+    private CRT _crt;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
+    AWSIoTMQTTClient() {
+        // This will cause the JNI lib to be loaded the first time a CRT is created
+        _crt = new CRT();
+        assert (_crt != null);
 
-public class BasicBindingTest {
-    public BasicBindingTest() {
-        new CRT();
     }
     
-    @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
-        }
-        assertTrue("Resource created and destroyed", true);
+    @Override
+    public void close() {
+        _crt = null;
+    }
+
+    void connect() {
+
     }
 };

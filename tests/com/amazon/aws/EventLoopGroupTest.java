@@ -17,18 +17,17 @@ package com.amazon.aws;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
+import com.amazon.aws.CRT;
 
-public class BasicBindingTest {
-    public BasicBindingTest() {
+public class EventLoopGroupTest {
+    public EventLoopGroupTest() {
         new CRT();
     }
     
     @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
+    public void testCreateDestroy() {
+        try (EventLoopGroup elg = new EventLoopGroup(1)) {
+            assertNotNull(elg);
         }
-        assertTrue("Resource created and destroyed", true);
     }
 };

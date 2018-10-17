@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,23 +13,27 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 package com.amazon.aws;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.amazon.aws.CrtTest;
+import com.amazon.aws.CRT;
 
-public class BasicBindingTest {
-    public BasicBindingTest() {
+public class RuntimeExceptionTestAPI {
+    public RuntimeExceptionTestAPI() {
         new CRT();
     }
-    
+
     @Test
-    public void testDoIt() {
+    public void ensureRuntimeExceptionsCanBeThrownFromNativeViaAPI() {
+        boolean exceptionCaught = false;
         try (CrtTest test = new CrtTest()) {
-            test.doIt();
+            test.throwRuntimeExceptionAPI();
+        } catch (com.amazon.aws.RuntimeException ex) {
+            exceptionCaught = true;
         }
-        assertTrue("Resource created and destroyed", true);
+        assertTrue(exceptionCaught);
     }
 };
+

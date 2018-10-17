@@ -12,23 +12,21 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 package com.amazon.aws;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import com.amazon.aws.CrtTest;
+public class EventLoopGroup implements AutoCloseable {
+    private long _elg;
 
-public class BasicBindingTest {
-    public BasicBindingTest() {
-        new CRT();
+    public EventLoopGroup(int numThreads) {
+        _elg = 0;
+        init(numThreads);
     }
-    
-    @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
-        }
-        assertTrue("Resource created and destroyed", true);
+
+    @Override
+    public void close() {
+        clean_up();
     }
+
+    private native void init(int numThreads);
+    private native void clean_up();
 };

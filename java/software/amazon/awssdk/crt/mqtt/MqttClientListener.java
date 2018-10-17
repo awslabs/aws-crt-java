@@ -13,10 +13,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.MqttDeliveryToken;
-import software.amazon.awssdk.crt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.MqttDeliveryToken;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
 public interface MqttClientListener {
     public void connectionAccepted();

@@ -14,25 +14,6 @@
  */
 package com.amazon.aws;
 
-import com.amazon.aws.CRT;
-
-public class EventLoopGroup implements AutoCloseable {
-    private long _elg;
-
-    static {
-        new CRT();
-    }
-
-    public EventLoopGroup(int numThreads) {
-        _elg = 0;
-        init(numThreads);
-    }
-
-    @Override
-    public void close() {
-        clean_up();
-    }
-
-    private native void init(int numThreads);
-    private native void clean_up();
-};
+public class MqttMessage {
+    
+}

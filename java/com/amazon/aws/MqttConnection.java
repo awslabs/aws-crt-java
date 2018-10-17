@@ -19,39 +19,66 @@ import com.amazon.aws.CRT;
 import com.amazon.aws.EventLoopGroup;
 import com.amazon.aws.RuntimeException;
 
-public final class MQTTClient implements AutoCloseable {
+public final class MqttConnection implements AutoCloseable {
     private EventLoopGroup elg;
     private String clientId;
+    private ConnectOptions options;
 
-    public static class ConnectParams {
-        public String caPath = "";
-        public String keyPath = "";
-        public String certificatePath = "";
+    public static class ConnectOptions {
+        public String clientEndpoint = ""; // API endpoint host name
+        public String keyStorePath = "";
+        public String certificateFile = ""; // X.509 based certificate file
+        public String privateKeyFile = ""; // PKCS#1 or PKCS#8 PEM encoded private key file
         public boolean useWebSockets = false;
         public String alpn = "";
+        public String clientId = "";
         public boolean cleanSession = true;
         public boolean keepAlive = false;
+        public long timeout = 1000; 
 
-        public ConnectParams() {
+        public ConnectOptions() {
         }
     }
 
-    MQTTClient(EventLoopGroup _elg, String _clientId) {
+    static {
         // This will cause the JNI lib to be loaded the first time a CRT is created
         new CRT();
+    }
+
+    MqttConnection(EventLoopGroup _elg, ConnectOptions _options) {
         elg = _elg;
-        clientId = _clientId;
+        options = _options;
     }
 
     @Override
     public void close() {
     }
 
-    public void connect() {
-        
+    public void updateOptions(ConnectOptions _options) {
+        options = _options;
     }
 
-    private native void mqtt_connect(EventLoopGroup elg, String hostName, short port, ConnectParams params) throws RuntimeException;
+    public void connect() {
+
+    }
+
+    public void disconnect() {
+
+    }
+
+    public void subscribe() {
+
+    }
+
+    public void unsubscribe() {
+
+    }
+
+    public void publish() {
+
+    }
+
+    private native void mqtt_connect(EventLoopGroup elg, String hostName, short port, ConnectOptions params) throws RuntimeException;
 
     private native void mqtt_disconnect();
 

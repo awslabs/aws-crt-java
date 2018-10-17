@@ -15,24 +15,14 @@
  */
 package com.amazon.aws;
 
-import com.amazon.aws.CRT;
+import com.amazon.aws.MqttDeliveryToken;
+import com.amazon.aws.MqttMessage;
 
-public final class AWSIoTMQTTClient implements AutoCloseable {
-    private CRT _crt;
+public interface MqttClientListener {
+    public void connectionAccepted();
 
-    AWSIoTMQTTClient() {
-        // This will cause the JNI lib to be loaded the first time a CRT is created
-        _crt = new CRT();
-        assert (_crt != null);
+    public void connectionLost();
 
-    }
-    
-    @Override
-    public void close() {
-        _crt = null;
-    }
-
-    void connect() {
-
-    }
-};
+    public void messageArrived(MqttMessage message);
+    public void messageDelivered(MqttDeliveryToken token);
+}

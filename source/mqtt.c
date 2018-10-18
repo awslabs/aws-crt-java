@@ -232,14 +232,14 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     }
     
     if (!port) {
-        aws_jni_throw_runtime_exception(env, "Endpoint should be in the format hostname:port and port must be between 1 and 65535");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Endpoint should be in the format hostname:port and port must be between 1 and 65535");
         return (jlong)NULL;
     }
 
     /* any error after this point needs to jump to error_cleanup */
     struct mqtt_jni_connection *connection = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_connection));
     if (!connection) {
-        aws_jni_throw_runtime_exception(env, "Out of memory allocating JNI connection");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating JNI connection");
         goto error_cleanup;
     }
     AWS_ZERO_STRUCT(*connection);
@@ -266,13 +266,13 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
 
     int result = aws_mqtt_client_init(&connection->client, allocator, elg);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "aws_mqtt_client_init failed");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_init failed");
         goto error_cleanup;
     }
 
     connection->client_connection = aws_mqtt_client_connection_new(&connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
     if (!connection->client_connection) {
-        aws_jni_throw_runtime_exception(env, "Out of memory allocating client connection");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating client connection");
         goto error_cleanup;
     }
 
@@ -282,7 +282,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
 
     result = aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "aws_mqtt_client_connection_connect failed");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");
         goto error_cleanup;
     }
 
@@ -314,7 +314,7 @@ JNIEXPORT
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
-        aws_jni_throw_runtime_exception(env, "Invalid connection");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_disconnect: Invalid connection");
         return;
     }
 

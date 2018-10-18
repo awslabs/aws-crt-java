@@ -104,7 +104,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
             }
         };
         try {
-            native_ptr(mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback));
+            acquire(mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback));
             connectionState = ConnectionState.Connecting;
         }
         catch (CrtRuntimeException ex) {

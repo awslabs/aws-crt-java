@@ -26,7 +26,7 @@ import software.amazon.awssdk.crt.CrtResource;
 public final class EventLoopGroup extends CrtResource implements AutoCloseable {
 
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        native_ptr(event_loop_group_new(numThreads));
+        acquire(event_loop_group_new(numThreads));
     }
 
     @Override

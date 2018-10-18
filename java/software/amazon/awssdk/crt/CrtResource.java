@@ -29,12 +29,12 @@ public class CrtResource {
     public CrtResource() {
     }
 
-    protected void release() {
-        ptr = 0;
+    protected void acquire(long _ptr) {
+        ptr = _ptr;
     }
     
-    protected void native_ptr(long _ptr) {
-        ptr = _ptr;
+    protected void release() {
+        ptr = 0;
     }
 
     public long native_ptr() {

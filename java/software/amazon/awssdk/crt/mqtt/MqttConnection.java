@@ -67,6 +67,10 @@ public final class MqttConnection implements AutoCloseable {
         disconnect();
     }
 
+    public long native_ptr() {
+        return connection;
+    }
+
     public void updateOptions(ConnectOptions _options) {
         options = _options;
     }
@@ -95,7 +99,7 @@ public final class MqttConnection implements AutoCloseable {
             }
         };
         try {
-            connection = mqtt_connect(elg, options, clientCallbacks, connectCallback);
+            connection = mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback);
         }
         catch (CrtRuntimeException ex) {
             return false;
@@ -122,7 +126,7 @@ public final class MqttConnection implements AutoCloseable {
 
     }
 
-    private static native long mqtt_connect(EventLoopGroup elg, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
+    private static native long mqtt_connect(long elg, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
 
     private static native void mqtt_disconnect(long connection);
 

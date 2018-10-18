@@ -31,7 +31,6 @@
 #include <ctype.h>
 
 #include "crt.h"
-#include "io.h"
 
 /* fields of MqttConnection.ConnectOptions */
 static struct {
@@ -174,23 +173,18 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
 JNIEXPORT 
 jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     JNIEnv *env,
-    jclass jni_mqtt, jobject jni_elg, jobject jni_options, jobject jni_client_callbacks, jobject jni_connect_callback) 
+    jclass jni_mqtt, jlong elg_addr, jobject jni_options, jobject jni_client_callbacks, jobject jni_connect_callback) 
 {
     s_cache_jni_classes(env);
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (!jni_elg) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: EventLoopGroup cannot be null");
+    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
+    if (!elg) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: EventLoopGroup is invalid/null");
         return (jlong)NULL;
     }
     if (!jni_options) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: ConnectOptions cannot be null");
-        return (jlong)NULL;
-    }
-
-    struct aws_event_loop_group *elg = aws_jni_event_loop_group_unpack(env, jni_elg);
-    if (!elg) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: invalid EventLoopGroup");
         return (jlong)NULL;
     }
 

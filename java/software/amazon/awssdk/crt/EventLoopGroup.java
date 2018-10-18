@@ -15,24 +15,31 @@
 package software.amazon.awssdk.crt;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
-public class EventLoopGroup implements AutoCloseable {
-    private long _elg;
+public final class EventLoopGroup implements AutoCloseable {
+    private long elg = 0;
 
     static {
         new CRT();
     }
 
-    public EventLoopGroup(int numThreads) {
-        _elg = 0;
-        init(numThreads);
+    public EventLoopGroup(int numThreads) throws CrtRuntimeException {
+        elg = event_loop_group_new(numThreads);
     }
 
     @Override
     public void close() {
-        clean_up();
+        if (elg != 0) {
+            event_loop_group_clean_up(elg);
+            elg = 0;
+        }
     }
 
-    private native void init(int numThreads);
-    private native void clean_up();
+    public long native_ptr() { 
+        return elg;
+    }
+
+    private static native long event_loop_group_new(int numThreads) throws CrtRuntimeException;
+    private static native void event_loop_group_clean_up(long elg);
 };

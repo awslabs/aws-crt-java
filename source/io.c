@@ -20,50 +20,26 @@
 
 #include "crt.h"
 
-/* cached id for looking up EventLoopGroup._elg */
-static jfieldID s_elg_field = 0;
-
-/* push the elg into the EventLoopGroup as _elg */
-void aws_jni_event_loop_group_pack(JNIEnv *env, jobject jni_elg, struct aws_event_loop_group* elg) {
-    if (AWS_UNLIKELY(!s_elg_field)) {
-        jclass elg_class = (*env)->GetObjectClass(env, jni_elg);
-        s_elg_field = (*env)->GetFieldID(env, elg_class, "_elg", "J");
-    }
-
-    (*env)->SetLongField(env, jni_elg, s_elg_field, (jlong)elg);
-}
-
-/* pull _elg out of an EventLoopGroup */
-struct aws_event_loop_group *aws_jni_event_loop_group_unpack(JNIEnv *env, jobject jni_elg) {
-    if (AWS_UNLIKELY(!s_elg_field)) {
-        jclass elg_class = (*env)->GetObjectClass(env, jni_elg);
-        s_elg_field = (*env)->GetFieldID(env, elg_class, "_elg", "J");
-    }
-
-    jlong elg_value = (*env)->GetLongField(env, jni_elg, s_elg_field);
-    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_value;
-    return elg;
-}
-
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_init(JNIEnv *env, jobject jni_elg, jint num_threads) {
-    struct aws_event_loop_group *elg = aws_jni_event_loop_group_unpack(env, jni_elg);
-    assert(!elg && "EventLoopGroup._elg should be 0 initialized in the constructor");
-
+jlong JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1new(
+    JNIEnv *env,
+    jclass jni_elg,
+    jint num_threads) {
+    
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
+    struct aws_event_loop_group *elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
     int result = aws_event_loop_group_default_init(elg, allocator, num_threads);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "aws_event_loop_group_default_init failed");
-        return;
+        return (jlong)NULL;
     }
 
-    aws_jni_event_loop_group_pack(env, jni_elg, elg);
+    return (jlong)elg;
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_clean_1up(JNIEnv *env, jobject jni_elg) {
-    struct aws_event_loop_group *elg = aws_jni_event_loop_group_unpack(env, jni_elg);
+void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1clean_1up(JNIEnv *env, jclass jni_elg, jlong elg_addr) {
+    struct aws_event_loop_group *elg = (struct aws_event_loop_group*)elg_addr;
     if (!elg) {
         aws_jni_throw_runtime_exception(env, "EventLoopGroup._elg should be non-zero at clean_up time");
         return;
@@ -71,6 +47,4 @@ void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_clean_1up(JNIEnv *en
 
     aws_event_loop_group_clean_up(elg);
     aws_mem_release(elg->allocator, elg);
-
-    aws_jni_event_loop_group_pack(env, jni_elg, NULL);
 }

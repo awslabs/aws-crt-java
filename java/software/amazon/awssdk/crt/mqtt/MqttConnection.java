@@ -34,7 +34,7 @@ public final class MqttConnection implements AutoCloseable {
         public String clientId = "";
         public boolean cleanSession = true;
         public short keepAliveMs = 0;
-        public long timeout = 1000; 
+        public short timeout = 1000; 
 
         public ConnectOptions() {
         }

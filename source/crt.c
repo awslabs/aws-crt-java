@@ -14,9 +14,10 @@
  */
 
 #include <aws/common/common.h>
-#include <crt.h>
 
 #include <stdio.h>
+
+#include "crt.h"
 
 struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();

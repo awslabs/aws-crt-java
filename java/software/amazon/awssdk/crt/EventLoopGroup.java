@@ -16,6 +16,7 @@ package software.amazon.awssdk.crt;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * This class wraps the aws_event_loop_group from aws-c-io to provide

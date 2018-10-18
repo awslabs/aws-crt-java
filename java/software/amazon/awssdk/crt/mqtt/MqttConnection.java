@@ -18,6 +18,7 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
@@ -64,7 +65,6 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     MqttConnection(EventLoopGroup _elg, ConnectOptions _options) {
         elg = _elg;
         options = _options;
-        connection = 0;
     }
 
     @Override
@@ -116,7 +116,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     public void disconnect() {
         if (native_ptr() != 0) {
             connectionState = ConnectionState.Disconnecting;
-            mqtt_disconnect(connection);
+            mqtt_disconnect(native_ptr());
             release();
         }
     }

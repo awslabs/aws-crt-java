@@ -23,10 +23,15 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
  * functionalities via the AWS Common Runtime
  */
-public final class MqttConnection implements AutoCloseable {
+public final class MqttConnection extends CrtResource implements AutoCloseable {
     private EventLoopGroup elg;
     private ConnectOptions options;
-    private long connection;
+
+    public enum ConnectionState {
+        Disconnected, Connecting, Connected, Disconnecting,
+    };
+
+    ConnectionState connectionState = ConnectionState.Disconnected;
 
     public static class ConnectOptions {
         public String endpointUri = ""; // API endpoint host name
@@ -50,14 +55,10 @@ public final class MqttConnection implements AutoCloseable {
         public void onFailure(String reason);
     }
     
+    /* used to receive connection events */
     interface ClientCallbacks {
         public void onConnected();
         public void onDisconnected(String reason);
-    }
-
-    static {
-        // This will cause the JNI lib to be loaded the first time a CRT is created
-        new CRT();
     }
 
     MqttConnection(EventLoopGroup _elg, ConnectOptions _options) {
@@ -71,8 +72,8 @@ public final class MqttConnection implements AutoCloseable {
         disconnect();
     }
 
-    public long native_ptr() {
-        return connection;
+    ConnectionState getState() {
+        return connectionState;
     }
 
     public void updateOptions(ConnectOptions _options) {
@@ -84,11 +85,11 @@ public final class MqttConnection implements AutoCloseable {
         ClientCallbacks clientCallbacks = new ClientCallbacks() {
             @Override
             public void onConnected() {
-
+                connectionState = ConnectionState.Connected;
             }
             @Override
             public void onDisconnected(String reason) {
-
+                connectionState = ConnectionState.Disconnected;
             }
         };
         AsyncCallback connectCallback = new AsyncCallback() {
@@ -103,7 +104,8 @@ public final class MqttConnection implements AutoCloseable {
             }
         };
         try {
-            connection = mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback);
+            native_ptr(mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback));
+            connectionState = ConnectionState.Connecting;
         }
         catch (CrtRuntimeException ex) {
             return false;
@@ -112,9 +114,10 @@ public final class MqttConnection implements AutoCloseable {
     }
 
     public void disconnect() {
-        if (connection != 0) {
+        if (native_ptr() != 0) {
+            connectionState = ConnectionState.Disconnecting;
             mqtt_disconnect(connection);
-            connection = 0;
+            release();
         }
     }
 

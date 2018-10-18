@@ -22,29 +22,23 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * access to an event loop for the MQTT protocol stack in the AWS Common
  * Runtime.
  */
-public final class EventLoopGroup implements AutoCloseable {
-    private long elg = 0;
-
-    static {
-        new CRT();
-    }
+public final class EventLoopGroup extends CrtResource implements AutoCloseable {
 
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        elg = event_loop_group_new(numThreads);
+        native_ptr(event_loop_group_new(numThreads));
     }
 
     @Override
     public void close() {
-        if (elg != 0) {
-            event_loop_group_clean_up(elg);
-            elg = 0;
+        if (native_ptr() != 0) {
+            event_loop_group_clean_up(native_ptr());
+            release();
         }
     }
 
-    public long native_ptr() { 
-        return elg;
-    }
-
+    /*******************************************************************************
+     * native methods
+     ******************************************************************************/
     private static native long event_loop_group_new(int numThreads) throws CrtRuntimeException;
     private static native void event_loop_group_clean_up(long elg);
 };

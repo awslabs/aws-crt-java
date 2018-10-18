@@ -23,7 +23,7 @@ struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();
 }
 
-void aws_jni_throw_runtime_exception(JNIEnv * env, const char *msg) {
+void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg) {
     char buf[1024];
     jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
     snprintf(buf, sizeof(buf), "%s: %s", msg, aws_error_str(aws_last_error()));

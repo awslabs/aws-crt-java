@@ -27,8 +27,8 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "crt.h"
 
@@ -49,7 +49,7 @@ static struct {
     jfieldID timeout_ms;
 } s_connect_options = {0};
 
-static void s_cache_connect_options(JNIEnv* env) {
+static void s_cache_connect_options(JNIEnv *env) {
     if (AWS_LIKELY(s_connect_options.endpoint_uri)) {
         return;
     }
@@ -73,7 +73,7 @@ static struct {
     jmethodID on_failure;
 } s_async_callback = {0};
 
-static void s_cache_async_callback(JNIEnv* env) {
+static void s_cache_async_callback(JNIEnv *env) {
     if (AWS_LIKELY(s_async_callback.on_success)) {
         return;
     }
@@ -89,7 +89,7 @@ static struct {
     jmethodID on_disconnected;
 } s_client_callbacks;
 
-static void s_cache_client_callbacks(JNIEnv* env) {
+static void s_cache_client_callbacks(JNIEnv *env) {
     if (AWS_LIKELY(s_client_callbacks.on_connected)) {
         return;
     }
@@ -99,7 +99,7 @@ static void s_cache_client_callbacks(JNIEnv* env) {
     s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(Ljava/lang/String;)V");
 }
 
-static void s_cache_jni_classes(JNIEnv* env) {
+static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_connect_options(env);
     s_cache_async_callback(env);
     s_cache_client_callbacks(env);
@@ -184,11 +184,14 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
     aws_mem_release(allocator, connection);
 }
 
-JNIEXPORT 
+JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     JNIEnv *env,
-    jclass jni_mqtt, jlong elg_addr, jobject jni_options, jobject jni_client_callbacks, jobject jni_connect_callback) 
-{
+    jclass jni_mqtt,
+    jlong elg_addr,
+    jobject jni_options,
+    jobject jni_client_callbacks,
+    jobject jni_connect_callback) {
     s_cache_jni_classes(env);
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -202,12 +205,18 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         return (jlong)NULL;
     }
 
-    struct aws_byte_cursor endpoint_uri = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.endpoint_uri));
-    struct aws_byte_cursor key_store_path = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.key_store_path));
-    struct aws_byte_cursor cert_path = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.certificate_file));
-    struct aws_byte_cursor key_path = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.private_key_file));
-    struct aws_byte_cursor alpn = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.alpn));
-    struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.client_id));
+    struct aws_byte_cursor endpoint_uri =
+        aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.endpoint_uri));
+    struct aws_byte_cursor key_store_path = aws_jni_byte_cursor_from_jstring(
+        env, (*env)->GetObjectField(env, jni_options, s_connect_options.key_store_path));
+    struct aws_byte_cursor cert_path = aws_jni_byte_cursor_from_jstring(
+        env, (*env)->GetObjectField(env, jni_options, s_connect_options.certificate_file));
+    struct aws_byte_cursor key_path = aws_jni_byte_cursor_from_jstring(
+        env, (*env)->GetObjectField(env, jni_options, s_connect_options.private_key_file));
+    struct aws_byte_cursor alpn =
+        aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.alpn));
+    struct aws_byte_cursor client_id =
+        aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.client_id));
     uint16_t keep_alive_ms = (*env)->GetShortField(env, jni_options, s_connect_options.keep_alive_ms);
     uint16_t timeout_ms = (*env)->GetShortField(env, jni_options, s_connect_options.timeout_ms);
     bool clean_session = (*env)->GetBooleanField(env, jni_options, s_connect_options.clean_session);
@@ -216,10 +225,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     const char *port_str = strchr((char *)endpoint_uri.ptr, ':');
     if (port_str) {
         /* truncate down to just the hostname */
-        endpoint_uri.len = port_str - (char*)endpoint_uri.ptr;
+        endpoint_uri.len = port_str - (char *)endpoint_uri.ptr;
 
         const char *cur = port_str + 1; /* skip ':' */
-        while (*cur) { /* ensure the port is all digits */
+        while (*cur) {                  /* ensure the port is all digits */
             if (!isdigit(*cur++)) {
                 port_str = NULL;
                 break;
@@ -230,9 +239,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
             port = (uint16_t)atoi(port_str);
         }
     }
-    
+
     if (!port) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Endpoint should be in the format hostname:port and port must be between 1 and 65535");
+        aws_jni_throw_runtime_exception(
+            env,
+            "MqttConnection.mqtt_connect: Endpoint should be in the format hostname:port and port must be between 1 "
+            "and 65535");
         return (jlong)NULL;
     }
 
@@ -245,12 +257,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     AWS_ZERO_STRUCT(*connection);
 
     struct aws_tls_ctx_options tls_ctx_opt;
-    aws_tls_ctx_options_init_client_mtls(&tls_ctx_opt, (char*)cert_path.ptr, (char*)key_path.ptr);
+    aws_tls_ctx_options_init_client_mtls(&tls_ctx_opt, (char *)cert_path.ptr, (char *)key_path.ptr);
     if (key_store_path.len > 0) {
-        aws_tls_ctx_options_override_default_trust_store(&tls_ctx_opt, NULL, (char*)key_store_path.ptr);
+        aws_tls_ctx_options_override_default_trust_store(&tls_ctx_opt, NULL, (char *)key_store_path.ptr);
     }
     if (alpn.len > 0) {
-        aws_tls_ctx_options_set_alpn_list(&tls_ctx_opt, (char*)alpn.ptr);
+        aws_tls_ctx_options_set_alpn_list(&tls_ctx_opt, (char *)alpn.ptr);
     }
 
     connection->socket_options.connect_timeout_ms = (timeout_ms) ? timeout_ms : 3000;
@@ -270,7 +282,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         goto error_cleanup;
     }
 
-    connection->client_connection = aws_mqtt_client_connection_new(&connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
+    connection->client_connection = aws_mqtt_client_connection_new(
+        &connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating client connection");
         goto error_cleanup;
@@ -280,7 +293,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
     connection->connect_callback = (*env)->NewGlobalRef(env, jni_connect_callback);
 
-    result = aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
+    result =
+        aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");
         goto error_cleanup;
@@ -310,7 +324,7 @@ error_cleanup:
 /*******************************************************************************
  * disconnect
  ******************************************************************************/
-JNIEXPORT 
+JNIEXPORT
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -325,23 +339,17 @@ void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass
 /*******************************************************************************
  * subscribe
  ******************************************************************************/
-JNIEXPORT 
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
-
-}
+JNIEXPORT
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {}
 
 /*******************************************************************************
  * unsubscribe
  ******************************************************************************/
-JNIEXPORT 
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
-
-}
+JNIEXPORT
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {}
 
 /*******************************************************************************
  * publish
  ******************************************************************************/
-JNIEXPORT 
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
-
-}
+JNIEXPORT
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {}

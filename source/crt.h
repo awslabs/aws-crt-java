@@ -16,9 +16,9 @@
 #ifndef AWS_JNI_CRT_H
 #define AWS_JNI_CRT_H
 
-#include <jni.h>
-#include <aws/common/common.h>
 #include <aws/common/byte_buf.h>
+#include <aws/common/common.h>
+#include <jni.h>
 
 struct aws_allocator *aws_jni_get_allocator();
 

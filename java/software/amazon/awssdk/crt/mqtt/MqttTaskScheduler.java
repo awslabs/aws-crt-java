@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -15,13 +14,6 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.mqtt.MqttDeliveryToken;
-import software.amazon.awssdk.crt.mqtt.MqttMessage;
-
-interface MqttClientListener {
-    public void connectionAccepted();
-    public void connectionLost();
-
-    public void messageArrived(MqttMessage message);
-    public void messageDelivered(MqttDeliveryToken token);
+public interface MqttTaskScheduler {
+    public void scheduleTask(Runnable task);
 }

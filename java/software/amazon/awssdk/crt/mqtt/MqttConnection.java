@@ -25,7 +25,7 @@ public final class MqttConnection implements AutoCloseable {
     private ConnectOptions options;
 
     public static class ConnectOptions {
-        public String clientEndpoint = ""; // API endpoint host name
+        public String endpointUri = ""; // API endpoint host name
         public String keyStorePath = "";
         public String certificateFile = ""; // X.509 based certificate file
         public String privateKeyFile = ""; // PKCS#1 or PKCS#8 PEM encoded private key file
@@ -33,7 +33,7 @@ public final class MqttConnection implements AutoCloseable {
         public String alpn = "";
         public String clientId = "";
         public boolean cleanSession = true;
-        public boolean keepAlive = false;
+        public short keepAliveMs = 0;
         public long timeout = 1000; 
 
         public ConnectOptions() {
@@ -58,7 +58,7 @@ public final class MqttConnection implements AutoCloseable {
         options = _options;
     }
 
-    public void connect() {
+    public void connect(MqttConnectionListener _listener) {
 
     }
 
@@ -78,7 +78,7 @@ public final class MqttConnection implements AutoCloseable {
 
     }
 
-    private native void mqtt_connect(EventLoopGroup elg, String hostName, short port, ConnectOptions params) throws CrtRuntimeException;
+    private native void mqtt_connect(EventLoopGroup elg, ConnectOptions params, MqttConnectionListener callback) throws CrtRuntimeException;
 
     private native void mqtt_disconnect();
 

@@ -4,7 +4,7 @@ find_package(JUnit)
 
 set(AWS_JNI_HEADER_DIR "${PROJECT_SOURCE_DIR}/include/aws/jni")
 set(AWS_JNI_BINARY_DIR "${CMAKE_BINARY_DIR}/java")
-file(GLOB AWS_CRT_JAVA_SRC "*.java")
+file(GLOB AWS_CRT_JAVA_SRC "*.java" "mqtt/*.java")
 file(GLOB AWS_CRT_JAVA_TEST_SRC "testing/*.java")
 
 # clean up previous java compiled classes

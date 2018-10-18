@@ -14,6 +14,24 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
+import java.util.concurrent.atomic.*;
+
 public class MqttToken {
-    
+    static AtomicLong nonce = new AtomicLong(1);
+
+    private long tokenId;
+    private String clientId;
+
+    public MqttToken(String _clientId) {
+        tokenId = nonce.getAndAdd(1);
+        clientId = clientId;
+    }
+
+    public long getTokenId() {
+        return tokenId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
 }

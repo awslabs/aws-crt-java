@@ -17,5 +17,7 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.mqtt.MqttToken;
 
 public class MqttDeliveryToken extends MqttToken {
-    
+    public MqttDeliveryToken(String clientId) {
+        super(clientId);
+    }
 }

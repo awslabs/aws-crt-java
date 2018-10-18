@@ -71,8 +71,36 @@ public final class MqttConnection implements AutoCloseable {
         options = _options;
     }
 
-    public void connect(MqttConnectionListener _listener) {
+    public boolean connect(MqttConnectionListener _listener) {
+        MqttToken connectToken = new MqttToken(options.clientId);
+        ClientCallbacks clientCallbacks = new ClientCallbacks() {
+            @Override
+            public void onConnected() {
 
+            }
+            @Override
+            public void onDisconnected(String reason) {
+
+            }
+        };
+        AsyncCallback connectCallback = new AsyncCallback() {
+            @Override
+            public void onSuccess() {
+                _listener.onSuccess(connectToken);
+            }
+            @Override
+            public void onFailure(String reason) {
+                Throwable cause = new Exception(reason);
+                _listener.onFailure(connectToken, cause);
+            }
+        };
+        try {
+            connection = mqtt_connect(elg, options, clientCallbacks, connectCallback);
+        }
+        catch (CrtRuntimeException ex) {
+            return false;
+        }
+        return true;
     }
 
     public void disconnect() {

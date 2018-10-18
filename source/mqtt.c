@@ -48,7 +48,7 @@ static struct {
 } s_connect_options = {0};
 
 static void s_cache_connect_options(JNIEnv* env) {
-    if (AWS_LIKELY(s_connect_options.endpoint_uri != 0)) {
+    if (AWS_LIKELY(s_connect_options.endpoint_uri)) {
         return;
     }
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$ConnectOptions");
@@ -65,66 +65,133 @@ static void s_cache_connect_options(JNIEnv* env) {
     s_connect_options.timeout_ms = (*env)->GetFieldID(env, cls, "timeout", "S");
 }
 
+/* methods of MqttConnection.AsyncCallback */
+static struct {
+    jmethodID on_success;
+    jmethodID on_failure;
+} s_async_callback = {0};
+
+static void s_cache_async_callback(JNIEnv* env) {
+    if (AWS_LIKELY(s_async_callback.on_success)) {
+        return;
+    }
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$AsyncCallback");
+    assert(cls);
+    s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
+    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/String;)V");
+}
+
+/* methods of MqttConnection.ClientCallbacks */
+static struct {
+    jmethodID on_connected;
+    jmethodID on_disconnected;
+} s_client_callbacks;
+
+static void s_cache_client_callbacks(JNIEnv* env) {
+    if (AWS_LIKELY(s_client_callbacks.on_connected)) {
+        return;
+    }
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$ClientCallbacks");
+    assert(cls);
+    s_client_callbacks.on_connected = (*env)->GetMethodID(env, cls, "onConnected", "()V");
+    s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(Ljava/lang/String;)V");
+}
+
+static void s_cache_jni_classes(JNIEnv* env) {
+    s_cache_connect_options(env);
+    s_cache_async_callback(env);
+    s_cache_client_callbacks(env);
+}
+
 struct mqtt_jni_connection {
     struct aws_socket_options socket_options;
     struct aws_mqtt_client client;
     struct aws_mqtt_client_connection *client_connection;
 
-    void (*on_connect)(struct mqtt_jni_connection*);
-    void (*on_disconnect)(struct mqtt_jni_connection*);
+    JNIEnv *env;
+    jobject client_callbacks; /* MqttConnection.ClientCallbacks */
+    jobject connect_callback; /* MqttConnection.AsyncCallback */
 };
 
-static void s_on_connect_failed(struct aws_mqtt_client_connection *connection, int error_code, void *user_data) {
-    (void)connection;
-    (void)error_code;
+struct mqtt_jni_callback {
+    JNIEnv *env;
+    jobject async_callback;
+};
 
-    struct mqtt_jni_connection *jni_connection = user_data;
-    (void)jni_connection;
+static void s_on_connect_failed(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
+    (void)client_connection;
+
+    struct mqtt_jni_connection *connection = user_data;
+    JNIEnv *env = connection->env;
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Connection failed with code: %d", error_code);
+    jstring message = (*env)->NewStringUTF(env, buf);
+    if (connection->connect_callback) {
+        (*env)->CallVoidMethod(env, connection->connect_callback, s_async_callback.on_failure, message);
+        (*env)->DeleteGlobalRef(env, connection->connect_callback);
+        connection->connect_callback = NULL;
+    }
 }
 
 static void s_on_connect_success(
-    struct aws_mqtt_client_connection *connection,
+    struct aws_mqtt_client_connection *client_connection,
     enum aws_mqtt_connect_return_code return_code,
     bool session_present,
     void *user_data) {
 
-    (void)connection;
+    (void)client_connection;
     (void)return_code;
     (void)session_present;
 
-    struct mqtt_jni_connection *jni_connection = user_data;
-    (void)jni_connection;
+    struct mqtt_jni_connection *connection = user_data;
+    JNIEnv *env = connection->env;
+    if (connection->connect_callback) {
+        (*env)->CallVoidMethod(env, connection->connect_callback, s_async_callback.on_success);
+        (*env)->DeleteGlobalRef(env, connection->connect_callback);
+        connection->connect_callback = NULL;
+    }
+    (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_connected);
 }
 
-static void s_on_disconnect(struct aws_mqtt_client_connection *connection, int error_code, void *user_data) {
+static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
 
-    (void)connection;
+    (void)client_connection;
     (void)error_code;
 
-    struct mqtt_python_connection *jni_connection = user_data;
-    (void)jni_connection;
+    struct mqtt_jni_connection *connection = user_data;
+    JNIEnv *env = connection->env;
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Disconnected with code: %d", error_code);
+    jstring message = (*env)->NewStringUTF(env, buf);
+    (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, message);
+    (*env)->DeleteGlobalRef(env, connection->client_callbacks);
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, connection->client_connection);
+    aws_mem_release(allocator, connection);
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
+JNIEXPORT 
+jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     JNIEnv *env,
-    jobject jni_mqtt, jobject jni_elg, jobject jni_options, jobject jni_callback) 
+    jclass jni_mqtt, jobject jni_elg, jobject jni_options, jobject jni_client_callbacks, jobject jni_connect_callback) 
 {
-    s_cache_connect_options(env);
+    s_cache_jni_classes(env);
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     if (!jni_elg) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: EventLoopGroup cannot be null");
-        return;
+        return (jlong)NULL;
     }
     if (!jni_options) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: ConnectOptions cannot be null");
-        return;
+        return (jlong)NULL;
     }
 
     struct aws_event_loop_group *elg = aws_jni_event_loop_group_unpack(env, jni_elg);
     if (!elg) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: invalid EventLoopGroup");
-        return;
+        return (jlong)NULL;
     }
 
     struct aws_byte_cursor endpoint_uri = aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.endpoint_uri));
@@ -152,8 +219,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
     }
     
     if (!port_str) {
-        aws_jni_throw_runtime_exception(env, "Endpoint should be in the format hostname:port");
-        return;
+        aws_jni_throw_runtime_exception(env, "Endpoint should be in the format hostname:port and port must be between 1 and 65535");
+        return (jlong)NULL;
     }
 
     uint16_t port = (uint16_t)atoi(port_str);
@@ -186,7 +253,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
     callbacks.on_disconnect = s_on_disconnect;
     callbacks.user_data = connection;
 
-    aws_mqtt_client_init(&connection->client, allocator, elg);
+    int result = aws_mqtt_client_init(&connection->client, allocator, elg);
+    if (result != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "aws_mqtt_client_init failed");
+        goto error_cleanup;
+    }
 
     connection->client_connection = aws_mqtt_client_connection_new(&connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
     if (!connection->client_connection) {
@@ -194,31 +265,54 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
         goto error_cleanup;
     }
 
-    aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
+    /* notify the JVM and retain references to the callback structures */
+    connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
+    connection->connect_callback = (*env)->NewGlobalRef(env, jni_connect_callback);
+
+    result = aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
+    if (result != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "aws_mqtt_client_connection_connect failed");
+        goto error_cleanup;
+    }
 
     /* return connection to java */
+    return (jlong)connection;
 
 error_cleanup:
     if (connection) {
         if (connection->client_connection) {
+            aws_mqtt_client_connection_disconnect(connection->client_connection);
             aws_mem_release(allocator, connection->client_connection);
         }
         aws_mem_release(allocator, connection);
     }
+
+    return (jlong)NULL;
 }
 
-JNIEXPORT void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jobject jni_mqtt) {
+JNIEXPORT 
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "Invalid connection");
+        return;
+    }
+
+    /* all cleanup is done in the disconnect callback */
+    aws_mqtt_client_connection_disconnect(connection->client_connection);
+}
+
+JNIEXPORT 
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 
 }
 
-JNIEXPORT void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(JNIEnv *env, jobject jni_mqtt) {
+JNIEXPORT 
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 
 }
 
-JNIEXPORT void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(JNIEnv *env, jobject jni_mqtt) {
-
-}
-
-JNIEXPORT void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(JNIEnv *env, jobject jni_mqtt) {
+JNIEXPORT 
+void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 
 }

@@ -20,7 +20,7 @@ import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
 interface MqttClientListener {
     public void connectionAccepted();
-    public void connectionLost();
+    public void connectionLost(String reason);
 
     public void messageArrived(MqttMessage message);
     public void messageDelivered(MqttDeliveryToken token);

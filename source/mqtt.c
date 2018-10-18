@@ -204,7 +204,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     uint16_t timeout_ms = (*env)->GetShortField(env, jni_options, s_connect_options.timeout_ms);
     bool clean_session = (*env)->GetBooleanField(env, jni_options, s_connect_options.clean_session);
 
-    const char* port_str = strchr((char*)endpoint_uri.ptr, ':');
+    uint16_t port = 0;
+    const char *port_str = strchr((char *)endpoint_uri.ptr, ':');
     if (port_str) {
         /* truncate down to just the hostname */
         endpoint_uri.len = port_str - (char*)endpoint_uri.ptr;
@@ -216,14 +217,16 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
                 break;
             }
         }
+
+        if (port_str) {
+            port = (uint16_t)atoi(port_str);
+        }
     }
     
-    if (!port_str) {
+    if (!port) {
         aws_jni_throw_runtime_exception(env, "Endpoint should be in the format hostname:port and port must be between 1 and 65535");
         return (jlong)NULL;
     }
-
-    uint16_t port = (uint16_t)atoi(port_str);
 
     /* any error after this point needs to jump to error_cleanup */
     struct mqtt_jni_connection *connection = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_connection));

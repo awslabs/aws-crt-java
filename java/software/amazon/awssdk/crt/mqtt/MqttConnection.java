@@ -19,6 +19,10 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
+/**
+ * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
+ * functionalities via the AWS Common Runtime
+ */
 public final class MqttConnection implements AutoCloseable {
     private EventLoopGroup elg;
     private ConnectOptions options;
@@ -126,6 +130,9 @@ public final class MqttConnection implements AutoCloseable {
 
     }
 
+    /*******************************************************************************
+     * Native methods
+     ******************************************************************************/
     private static native long mqtt_connect(long elg, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
 
     private static native void mqtt_disconnect(long connection);

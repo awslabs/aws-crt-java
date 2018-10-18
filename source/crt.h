@@ -21,8 +21,19 @@
 #include <aws/common/byte_buf.h>
 
 struct aws_allocator *aws_jni_get_allocator();
+
+/*******************************************************************************
+ * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the
+ * supplied message. Control WILL return from this function, so after calling
+ * it, make sure to clean up any native resources before exiting the calling
+ * JNIEXPORT function.
+ ******************************************************************************/
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
 
+/*******************************************************************************
+ * aws_jni_byte_cursor_from_jstring - Creates an aws_byte_cursor from the UTF-8
+ * characters extracted from the supplied jstring. The string value is null-terminated.
+ ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
 
 #endif /* AWS_JNI_CRT_H */

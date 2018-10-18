@@ -21,8 +21,12 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.stream.*;
 
-
-public class CRT {
+/**
+ * This class is responsible for loading the aws-crt-jni shared lib for the current
+ * platform out of aws-crt-java.jar. One instance of this class has to be created
+ * somewhere to invoke the static initialization block which will load the shared lib
+ */
+public final class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
 
     static {

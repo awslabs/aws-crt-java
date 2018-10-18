@@ -17,6 +17,11 @@ package software.amazon.awssdk.crt;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
+/**
+ * This class wraps the aws_event_loop_group from aws-c-io to provide
+ * access to an event loop for the MQTT protocol stack in the AWS Common
+ * Runtime.
+ */
 public final class EventLoopGroup implements AutoCloseable {
     private long elg = 0;
 

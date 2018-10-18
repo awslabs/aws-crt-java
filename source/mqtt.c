@@ -32,6 +32,9 @@
 
 #include "crt.h"
 
+/*******************************************************************************
+ * JNI class field/method maps
+ ******************************************************************************/
 /* fields of MqttConnection.ConnectOptions */
 static struct {
     jfieldID endpoint_uri;
@@ -102,6 +105,9 @@ static void s_cache_jni_classes(JNIEnv* env) {
     s_cache_client_callbacks(env);
 }
 
+/*******************************************************************************
+ * mqtt_jni_connection - represents an aws_mqtt_client_connection to Java
+ ******************************************************************************/
 struct mqtt_jni_connection {
     struct aws_socket_options socket_options;
     struct aws_mqtt_client client;
@@ -112,11 +118,18 @@ struct mqtt_jni_connection {
     jobject connect_callback; /* MqttConnection.AsyncCallback */
 };
 
+/*******************************************************************************
+ * mqtt_jni_callback - carries an AsyncCallback around as user data to mqtt
+ * async ops, and is used to deliver callbacks
+ ******************************************************************************/
 struct mqtt_jni_callback {
     JNIEnv *env;
     jobject async_callback;
 };
 
+/*******************************************************************************
+ * connect
+ ******************************************************************************/
 static void s_on_connect_failed(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
     (void)client_connection;
 
@@ -164,6 +177,7 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
     jstring message = (*env)->NewStringUTF(env, buf);
     (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, message);
     (*env)->DeleteGlobalRef(env, connection->client_callbacks);
+    connection->client_callbacks = NULL;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection->client_connection);
@@ -277,6 +291,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
 
 error_cleanup:
     if (connection) {
+        if (connection->client_callbacks) {
+            (*env)->DeleteGlobalRef(env, connection->client_callbacks);
+        }
+        if (connection->connect_callback) {
+            (*env)->DeleteGlobalRef(env, connection->connect_callback);
+        }
         if (connection->client_connection) {
             aws_mqtt_client_connection_disconnect(connection->client_connection);
             aws_mem_release(allocator, connection->client_connection);
@@ -287,6 +307,9 @@ error_cleanup:
     return (jlong)NULL;
 }
 
+/*******************************************************************************
+ * disconnect
+ ******************************************************************************/
 JNIEXPORT 
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
@@ -299,16 +322,25 @@ void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(JNIEnv *env, jclass
     aws_mqtt_client_connection_disconnect(connection->client_connection);
 }
 
+/*******************************************************************************
+ * subscribe
+ ******************************************************************************/
 JNIEXPORT 
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 
 }
 
+/*******************************************************************************
+ * unsubscribe
+ ******************************************************************************/
 JNIEXPORT 
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 
 }
 
+/*******************************************************************************
+ * publish
+ ******************************************************************************/
 JNIEXPORT 
 void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(JNIEnv *env, jclass jni_mqtt, jlong jni_connection) {
 

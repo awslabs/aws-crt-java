@@ -222,13 +222,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     bool clean_session = (*env)->GetBooleanField(env, jni_options, s_connect_options.clean_session);
 
     uint16_t port = 0;
-    const char *port_str = strchr((char *)endpoint_uri.ptr, ':');
+    char *port_str = strchr((char *)endpoint_uri.ptr, ':');
     if (port_str) {
         /* truncate down to just the hostname */
         endpoint_uri.len = port_str - (char *)endpoint_uri.ptr;
+        *port_str = '\0';
+        ++port_str;
 
-        const char *cur = port_str + 1; /* skip ':' */
-        while (*cur) {                  /* ensure the port is all digits */
+        const char *cur = port_str;
+        while (*cur) {              /* ensure the port is all digits */
             if (!isdigit(*cur++)) {
                 port_str = NULL;
                 break;

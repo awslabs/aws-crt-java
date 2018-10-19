@@ -31,7 +31,7 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg) {
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
-    return aws_byte_cursor_from_array((*env)->GetStringUTFChars(env, str, NULL), (*env)->GetStringUTFLength(env, str));
+    return aws_byte_cursor_from_array((*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
 }
 
 #if defined(ENABLE_JNI_TESTS)

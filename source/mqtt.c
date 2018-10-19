@@ -217,8 +217,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.alpn));
     struct aws_byte_cursor client_id =
         aws_jni_byte_cursor_from_jstring(env, (*env)->GetObjectField(env, jni_options, s_connect_options.client_id));
-    uint16_t keep_alive_ms = (*env)->GetShortField(env, jni_options, s_connect_options.keep_alive_ms);
-    uint16_t timeout_ms = (*env)->GetShortField(env, jni_options, s_connect_options.timeout_ms);
+    uint16_t keep_alive_ms = (uint16_t)(*env)->GetShortField(env, jni_options, s_connect_options.keep_alive_ms);
+    uint16_t timeout_ms = (uint16_t)(*env)->GetShortField(env, jni_options, s_connect_options.timeout_ms);
     bool clean_session = (*env)->GetBooleanField(env, jni_options, s_connect_options.clean_session);
 
     uint16_t port = 0;
@@ -236,7 +236,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         }
 
         if (port_str) {
-            port = (uint16_t)atoi(port_str);
+            port = (uint16_t)strtol(port_str, NULL, 10);
         }
     }
 

@@ -3,7 +3,7 @@
 # usage:
 # ./build-deps.sh
 #   -c, --clean - remove any cached CMake config before building
-#   -i, --install - sets the CMAKE_INSTALL_PREFIX, the root where the deps will be install
+#   -i, --install <path> - sets the CMAKE_INSTALL_PREFIX, the root where the deps will be install
 #   <all other args> - will be passed to cmake as-is
 
 # assumes that the dependency git repos are cloned in the parent

@@ -110,7 +110,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
  ******************************************************************************/
 struct mqtt_jni_connection {
     struct aws_socket_options socket_options;
-    struct aws_mqtt_client client;
+    struct aws_mqtt_client *client; /* Provided to mqtt_connect */
     struct aws_mqtt_client_connection *client_connection;
 
     JNIEnv *env;
@@ -188,15 +188,19 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     JNIEnv *env,
     jclass jni_mqtt,
-    jlong elg_addr,
+    jlong client_addr,
     jobject jni_options,
     jobject jni_client_callbacks,
     jobject jni_connect_callback) {
     s_cache_jni_classes(env);
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
-    if (!elg) {
+    struct aws_mqtt_client *client = (struct aws_mqtt_client *)client_addr;
+    if (!client) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Client is invalid/null");
+        return (jlong)NULL;
+    }
+    if (!client->event_loop_group) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: EventLoopGroup is invalid/null");
         return (jlong)NULL;
     }
@@ -230,7 +234,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         ++port_str;
 
         const char *cur = port_str;
-        while (*cur) {              /* ensure the port is all digits */
+        while (*cur) { /* ensure the port is all digits */
             if (!isdigit(*cur++)) {
                 port_str = NULL;
                 break;
@@ -267,9 +271,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
         aws_tls_ctx_options_set_alpn_list(&tls_ctx_opt, (char *)alpn.ptr);
     }
 
+    connection->client = client;
     connection->socket_options.connect_timeout_ms = (timeout_ms) ? timeout_ms : 3000;
     connection->socket_options.type = AWS_SOCKET_STREAM;
-    connection->socket_options.domain = AWS_SOCKET_IPV4;
 
     struct aws_mqtt_client_connection_callbacks callbacks;
     AWS_ZERO_STRUCT(callbacks);
@@ -278,14 +282,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     callbacks.on_disconnect = s_on_disconnect;
     callbacks.user_data = connection;
 
-    int result = aws_mqtt_client_init(&connection->client, allocator, elg);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_init failed");
-        goto error_cleanup;
-    }
-
     connection->client_connection = aws_mqtt_client_connection_new(
-        &connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
+        connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating client connection");
         goto error_cleanup;
@@ -295,7 +293,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
     connection->connect_callback = (*env)->NewGlobalRef(env, jni_connect_callback);
 
-    result =
+    int result =
         aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");

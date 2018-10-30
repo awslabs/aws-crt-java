@@ -23,9 +23,12 @@ import software.amazon.awssdk.crt.CrtResource;
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
  * functionalities via the AWS Common Runtime
+ * 
+ * MqttConnection represents a single connection from one MqttClient to an MQTT
+ * service endpoint
  */
 public final class MqttConnection extends CrtResource implements AutoCloseable {
-    private EventLoopGroup elg;
+    private MqttClient client;
     private ConnectOptions options;
 
     public enum ConnectionState {
@@ -62,8 +65,8 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         public void onDisconnected(String reason);
     }
 
-    MqttConnection(EventLoopGroup _elg, ConnectOptions _options) {
-        elg = _elg;
+    public MqttConnection(MqttClient _client, ConnectOptions _options) {
+        client = _client;
         options = _options;
     }
 
@@ -72,7 +75,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         disconnect();
     }
 
-    ConnectionState getState() {
+    public ConnectionState getState() {
         return connectionState;
     }
 
@@ -104,7 +107,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
             }
         };
         try {
-            acquire(mqtt_connect(elg.native_ptr(), options, clientCallbacks, connectCallback));
+            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectCallback));
             connectionState = ConnectionState.Connecting;
         }
         catch (CrtRuntimeException ex) {
@@ -136,7 +139,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqtt_connect(long elg, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
+    private static native long mqtt_connect(long client, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
 
     private static native void mqtt_disconnect(long connection);
 

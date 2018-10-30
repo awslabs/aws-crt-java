@@ -45,7 +45,7 @@ public final class CRT {
         }
     }
 
-    // Utility for dumping the contents of jars, debugging only
+    /* Utility for dumping the contents of jars, debugging only */
     private static void enumerateResources() throws URISyntaxException, IOException {
         Enumeration<URL> en = CRT.class.getClassLoader().getResources("META-INF");
         while (en.hasMoreElements()) {

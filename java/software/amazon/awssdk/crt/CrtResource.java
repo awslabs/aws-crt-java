@@ -22,7 +22,7 @@ public class CrtResource {
     private long ptr;
 
     static {
-        // This will cause the JNI lib to be loaded the first time a CRT is created
+        /* This will cause the JNI lib to be loaded the first time a CRT is created */
         new CRT();
     }
 

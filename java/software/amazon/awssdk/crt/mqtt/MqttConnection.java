@@ -35,10 +35,10 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     ConnectionState connectionState = ConnectionState.Disconnected;
 
     public static class ConnectOptions {
-        public String endpointUri = ""; // API endpoint host name
+        public String endpointUri = ""; /* API endpoint host name */
         public String keyStorePath = "";
-        public String certificateFile = ""; // X.509 based certificate file
-        public String privateKeyFile = ""; // PKCS#1 or PKCS#8 PEM encoded private key file
+        public String certificateFile = ""; /* X.509 based certificate file */
+        public String privateKeyFile = ""; /* PKCS#1 or PKCS#8 PEM encoded private key file */
         public boolean useWebSockets = false;
         public String alpn = "";
         public String clientId = "";

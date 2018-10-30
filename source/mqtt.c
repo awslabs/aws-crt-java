@@ -49,22 +49,29 @@ static struct {
     jfieldID timeout_ms;
 } s_connect_options = {0};
 
-static void s_cache_connect_options(JNIEnv *env) {
-    if (AWS_LIKELY(s_connect_options.endpoint_uri)) {
-        return;
-    }
+void s_cache_connect_options(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$ConnectOptions");
     assert(cls);
     s_connect_options.endpoint_uri = (*env)->GetFieldID(env, cls, "endpointUri", "Ljava/lang/String;");
+    assert(s_connect_options.endpoint_uri);
     s_connect_options.key_store_path = (*env)->GetFieldID(env, cls, "keyStorePath", "Ljava/lang/String;");
+    assert(s_connect_options.key_store_path);
     s_connect_options.certificate_file = (*env)->GetFieldID(env, cls, "certificateFile", "Ljava/lang/String;");
+    assert(s_connect_options.certificate_file);
     s_connect_options.private_key_file = (*env)->GetFieldID(env, cls, "privateKeyFile", "Ljava/lang/String;");
+    assert(s_connect_options.private_key_file);
     s_connect_options.use_websockets = (*env)->GetFieldID(env, cls, "useWebSockets", "Z");
+    assert(s_connect_options.use_websockets);
     s_connect_options.alpn = (*env)->GetFieldID(env, cls, "alpn", "Ljava/lang/String;");
+    assert(s_connect_options.alpn);
     s_connect_options.client_id = (*env)->GetFieldID(env, cls, "clientId", "Ljava/lang/String;");
+    assert(s_connect_options.client_id);
     s_connect_options.clean_session = (*env)->GetFieldID(env, cls, "cleanSession", "Z");
+    assert(s_connect_options.clean_session);
     s_connect_options.keep_alive_ms = (*env)->GetFieldID(env, cls, "keepAliveMs", "S");
+    assert(s_connect_options.keep_alive_ms);
     s_connect_options.timeout_ms = (*env)->GetFieldID(env, cls, "timeout", "S");
+    assert(s_connect_options.timeout_ms);
 }
 
 /* methods of MqttConnection.AsyncCallback */
@@ -73,14 +80,13 @@ static struct {
     jmethodID on_failure;
 } s_async_callback = {0};
 
-static void s_cache_async_callback(JNIEnv *env) {
-    if (AWS_LIKELY(s_async_callback.on_success)) {
-        return;
-    }
+void s_cache_async_callback(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$AsyncCallback");
     assert(cls);
     s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
+    assert(s_async_callback.on_success);
     s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/String;)V");
+    assert(s_async_callback.on_failure);
 }
 
 /* methods of MqttConnection.ClientCallbacks */
@@ -89,20 +95,13 @@ static struct {
     jmethodID on_disconnected;
 } s_client_callbacks;
 
-static void s_cache_client_callbacks(JNIEnv *env) {
-    if (AWS_LIKELY(s_client_callbacks.on_connected)) {
-        return;
-    }
+void s_cache_client_callbacks(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$ClientCallbacks");
     assert(cls);
     s_client_callbacks.on_connected = (*env)->GetMethodID(env, cls, "onConnected", "()V");
+    assert(s_client_callbacks.on_connected);
     s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(Ljava/lang/String;)V");
-}
-
-static void s_cache_jni_classes(JNIEnv *env) {
-    s_cache_connect_options(env);
-    s_cache_async_callback(env);
-    s_cache_client_callbacks(env);
+    assert(s_client_callbacks.on_disconnected);
 }
 
 /*******************************************************************************
@@ -192,7 +191,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     jobject jni_options,
     jobject jni_client_callbacks,
     jobject jni_connect_callback) {
-    s_cache_jni_classes(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)client_addr;

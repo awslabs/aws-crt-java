@@ -33,15 +33,27 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg) {
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
-    return aws_byte_cursor_from_array((*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+    return aws_byte_cursor_from_array(
+        (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+}
+
+static void s_cache_jni_classes(JNIEnv *env) {
+    extern void s_cache_connect_options(JNIEnv *);
+    extern void s_cache_async_callback(JNIEnv *);
+    extern void s_cache_client_callbacks(JNIEnv *);
+    s_cache_connect_options(env);
+    s_cache_async_callback(env);
+    s_cache_client_callbacks(env);
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
-JNIEXPORT 
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jclass jni_crt_class) {
     aws_load_error_strings();
     aws_io_load_error_strings();
     aws_mqtt_load_error_strings();
+
+    s_cache_jni_classes(env);
 }
 
 #if defined(ENABLE_JNI_TESTS)

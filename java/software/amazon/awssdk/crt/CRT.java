@@ -127,6 +127,12 @@ public final class CRT {
             Files.copy(in, libTempPath);
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
+
+            aws_crt_init();
+        }
+        catch (CrtRuntimeException crtex) {
+            System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
+            crtex.printStackTrace();
         }
         catch (UnknownPlatformException upe) {
             System.err.println("Unable to determine platform for AWS CRT: " + upe.toString());
@@ -137,4 +143,6 @@ public final class CRT {
             ex.printStackTrace();
         }
     }
+
+    private static native void aws_crt_init() throws CrtRuntimeException;
 };

@@ -14,6 +14,8 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/io/io.h>
+#include <aws/mqtt/mqtt.h>
 
 #include <stdio.h>
 
@@ -32,6 +34,14 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg) {
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
     return aws_byte_cursor_from_array((*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+}
+
+/* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jclass jni_crt_class) {
+    aws_load_error_strings();
+    aws_io_load_error_strings();
+    aws_mqtt_load_error_strings();
 }
 
 #if defined(ENABLE_JNI_TESTS)

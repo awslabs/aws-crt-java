@@ -46,6 +46,10 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_client_callbacks(env);
 }
 
+static void s_jni_atexit() {
+    /* aws_tls_clean_up_static_state(); */
+}
+
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jclass jni_crt_class) {
@@ -53,7 +57,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jcl
     aws_io_load_error_strings();
     aws_mqtt_load_error_strings();
 
+    /* struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_tls_init_static_state(allocator); */
+
     s_cache_jni_classes(env);
+
+    atexit(s_jni_atexit);
 }
 
 #if defined(ENABLE_JNI_TESTS)

@@ -14,7 +14,7 @@
  */
 #include <jni.h>
 
-#include <aws/mqtt/mqtt.h>
+#include <aws/mqtt/client.h>
 
 #include <crt.h>
 
@@ -37,7 +37,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1cl
             env, "MqttClient.mqtt_client_init: aws_mem_acquire failed, unable to allocate new aws_mqtt_client");
         return (jlong)NULL;
     }
-    
+
     AWS_ZERO_STRUCT(*client);
     client->event_loop_group = elg;
 

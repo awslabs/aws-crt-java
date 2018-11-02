@@ -25,7 +25,7 @@
 #include <aws/io/socket.h>
 #include <aws/io/socket_channel_handler.h>
 #include <aws/io/tls_channel_handler.h>
-#include <aws/mqtt/mqtt.h>
+#include <aws/mqtt/client.h>
 
 #include <ctype.h>
 #include <string.h>

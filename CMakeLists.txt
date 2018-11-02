@@ -70,6 +70,7 @@ if (NOT CUSTOM_TLS)
 
     if (USE_S2N)
         set(PLATFORM_LIBS ${PlATFORM_LIBS} s2n)
+	find_package(s2n REQUIRED)
     endif ()
 endif ()
 

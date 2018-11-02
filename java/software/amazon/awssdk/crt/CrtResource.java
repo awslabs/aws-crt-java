@@ -33,8 +33,10 @@ public class CrtResource {
         ptr = _ptr;
     }
     
-    protected void release() {
+    protected long release() {
+        long addr = ptr;
         ptr = 0;
+        return addr;
     }
 
     public long native_ptr() {

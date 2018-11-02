@@ -32,8 +32,7 @@ public final class EventLoopGroup extends CrtResource implements AutoCloseable {
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            event_loop_group_clean_up(native_ptr());
-            release();
+            event_loop_group_clean_up(release());
         }
     }
 

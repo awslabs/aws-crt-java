@@ -39,8 +39,7 @@ public class MqttClient extends CrtResource implements AutoCloseable {
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            mqtt_client_clean_up(native_ptr());
-            release();
+            mqtt_client_clean_up(release());
         }
     }
 

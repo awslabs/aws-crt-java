@@ -32,8 +32,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1cl
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt_client *client =
         (struct aws_mqtt_client *)aws_mem_acquire(allocator, sizeof(struct aws_mqtt_client));
+    if (!client) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClient.mqtt_client_init: aws_mem_acquire failed, unable to allocate new aws_mqtt_client");
+        return (jlong)NULL;
+    }
+    
     AWS_ZERO_STRUCT(*client);
-
     client->event_loop_group = elg;
 
     int result = aws_mqtt_client_init(client, allocator, client->event_loop_group);

@@ -310,7 +310,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     connection->client_connection = aws_mqtt_client_connection_new(
         connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
     if (!connection->client_connection) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating client connection");
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");
         goto error_cleanup;
     }
 

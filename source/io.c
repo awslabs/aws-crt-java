@@ -28,8 +28,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
+    if (!elg) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: aws_mem_acquire failed, unable to allocate new aws_event_loop_group");
+        return (jlong)NULL;
+    }
     int result = aws_event_loop_group_default_init(elg, allocator, (uint16_t)num_threads);
     if (result != AWS_OP_SUCCESS) {
+        aws_event_loop_group_clean_up(elg);
+        aws_mem_release(allocator, elg);
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_default_init failed");
         return (jlong)NULL;

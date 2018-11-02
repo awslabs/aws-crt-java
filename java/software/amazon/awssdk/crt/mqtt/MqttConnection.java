@@ -15,10 +15,12 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.mqtt.MqttException;
+
+import java.util.function.Consumer;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
@@ -30,12 +32,40 @@ import software.amazon.awssdk.crt.CrtResource;
 public final class MqttConnection extends CrtResource implements AutoCloseable {
     private MqttClient client;
     private ConnectOptions options;
+    private ConnectionState connectionState = ConnectionState.Disconnected;
 
     public enum ConnectionState {
         Disconnected, Connecting, Connected, Disconnecting,
     };
 
-    ConnectionState connectionState = ConnectionState.Disconnected;
+    public enum QOS {
+        AT_MOST_ONCE(0), AT_LEAST_ONCE(1), EXACTLY_ONCE(2);
+        /* reserved = 3 */
+
+        private int qos;
+
+        QOS(int value) {
+            qos = value;
+        }
+
+        public int getValue() {
+            return qos;
+        }
+    }
+    
+    class MessageHandler {
+        String topic;
+        Consumer<MqttMessage> callback;
+
+        public MessageHandler(String _topic, Consumer<MqttMessage> _callback) {
+            callback = _callback;
+            topic = _topic;
+        }
+
+        void deliver(String payload) {
+            callback.accept(new MqttMessage(topic, payload));
+        }
+    }
 
     public static class ConnectOptions {
         public String endpointUri = ""; /* API endpoint host name */
@@ -83,31 +113,42 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         options = _options;
     }
 
-    public boolean connect(MqttConnectionListener _listener) {
-        MqttToken connectToken = new MqttToken(options.clientId);
+    private AsyncCallback wrapAck(MqttActionListener ack) {
+        AsyncCallback callback = (ack != null) ? new AsyncCallback() {
+            @Override
+            public void onSuccess() {
+                ack.onSuccess();
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                Throwable cause = new MqttException(reason);
+                ack.onFailure(cause);
+            }
+        } : null;
+        return callback;
+    }
+
+    public boolean connect() {
+        return connect(null);
+    }
+
+    public boolean connect(MqttActionListener ack) {
         ClientCallbacks clientCallbacks = new ClientCallbacks() {
             @Override
             public void onConnected() {
                 connectionState = ConnectionState.Connected;
+                onOnline();
             }
             @Override
             public void onDisconnected(String reason) {
                 connectionState = ConnectionState.Disconnected;
+                onOffline();
             }
         };
-        AsyncCallback connectCallback = new AsyncCallback() {
-            @Override
-            public void onSuccess() {
-                _listener.onSuccess(connectToken);
-            }
-            @Override
-            public void onFailure(String reason) {
-                Throwable cause = new Exception(reason);
-                _listener.onFailure(connectToken, cause);
-            }
-        };
+        AsyncCallback connectAck = wrapAck(ack);
         try {
-            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectCallback));
+            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectAck));
             connectionState = ConnectionState.Connecting;
         }
         catch (CrtRuntimeException ex) {
@@ -117,35 +158,77 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     }
 
     public void disconnect() {
+        disconnect(null);
+    }
+
+    public void disconnect(MqttActionListener ack) {
         if (native_ptr() != 0) {
+            AsyncCallback disconnectAck = wrapAck(ack);
             connectionState = ConnectionState.Disconnecting;
-            mqtt_disconnect(native_ptr());
+            mqtt_disconnect(native_ptr(), disconnectAck);
             release();
         }
     }
 
-    public void subscribe() {
-
+    public void subscribe(String topic, QOS qos, Consumer<MqttMessage> handler) throws MqttException {
+        subscribe(topic, qos, handler, null);
     }
 
-    public void unsubscribe() {
-
+    public void subscribe(String topic, QOS qos, Consumer<MqttMessage> handler, MqttActionListener ack) throws MqttException {
+        if (native_ptr() != 0) {
+            AsyncCallback subAck = wrapAck(ack);
+            try {
+                mqtt_subscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+            }
+            catch (CrtRuntimeException ex) {
+                throw new MqttException("AWS CRT exception: " + ex.toString());
+            }
+        }
     }
 
-    public void publish() {
-
+    public void unsubscribe(String topic) {
+        unsubscribe(topic, null);
     }
+
+    public void unsubscribe(String topic, MqttActionListener ack) {
+        if (native_ptr() != 0) {
+            AsyncCallback unsubAck = wrapAck(ack);
+            mqtt_unsubscribe(native_ptr(), topic, unsubAck);
+        }
+    }
+
+    public void publish(MqttMessage message, QOS qos) throws MqttException {
+        publish(message, qos, null);
+    }
+
+    public void publish(MqttMessage message, QOS qos, MqttActionListener ack) throws MqttException {
+        if (native_ptr() != 0) {
+            AsyncCallback pubAck = wrapAck(ack);
+            try {
+                mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), message.getPayload(), pubAck);
+            }
+            catch (CrtRuntimeException ex) {
+                throw new MqttException("AWS CRT exception: " + ex.toString());
+            }
+        }
+    }
+
+    /*******************************************************************************
+     * Overrideable callbacks
+     ******************************************************************************/
+    public void onOnline() {}
+    public void onOffline() {}
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqtt_connect(long client, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback connectCallback) throws CrtRuntimeException;
+    private static native long mqtt_connect(long client, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native void mqtt_disconnect(long connection);
+    private static native void mqtt_disconnect(long connection, AsyncCallback ack);
 
-    private static native void mqtt_subscribe(long connection) throws CrtRuntimeException;
+    private static native void mqtt_subscribe(long connection, String topic, int qos, MessageHandler handler, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native void mqtt_unsubscribe(long connection);
+    private static native void mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native void mqtt_publish(long connection) throws CrtRuntimeException;
+    private static native void mqtt_publish(long connection, String topic, int qos, String payload, AsyncCallback ack) throws CrtRuntimeException;
 };

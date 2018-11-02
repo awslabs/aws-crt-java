@@ -14,24 +14,12 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import java.util.concurrent.atomic.*;
-
-public class MqttToken {
-    static AtomicLong nonce = new AtomicLong(1);
-
-    private long tokenId;
-    private String clientId;
-
-    public MqttToken(String _clientId) {
-        tokenId = nonce.getAndAdd(1);
-        clientId = clientId;
+/**
+ * This exception will be thrown by any exceptional cases encountered within the
+ * JNI bindings to the AWS Common Runtime
+ */
+public class MqttException extends Exception {
+    public MqttException(String msg) {
+        super(msg);
     }
-
-    public long getTokenId() {
-        return tokenId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-}
+};

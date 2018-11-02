@@ -1,5 +1,5 @@
 
-find_package(java 1.8 REQUIRED)
+find_package(Java 1.8 REQUIRED)
 find_package(JUnit)
 
 include(UseJava)

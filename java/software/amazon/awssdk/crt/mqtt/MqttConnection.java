@@ -113,7 +113,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         options = _options;
     }
 
-    private AsyncCallback wrapAck(MqttActionListener ack) {
+    private static AsyncCallback wrapAck(MqttActionListener ack) {
         AsyncCallback callback = (ack != null) ? new AsyncCallback() {
             @Override
             public void onSuccess() {
@@ -165,8 +165,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         if (native_ptr() != 0) {
             AsyncCallback disconnectAck = wrapAck(ack);
             connectionState = ConnectionState.Disconnecting;
-            mqtt_disconnect(native_ptr(), disconnectAck);
-            release();
+            mqtt_disconnect(release(), disconnectAck);
         }
     }
 

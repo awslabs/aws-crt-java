@@ -107,7 +107,6 @@ else ()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
-set(BUILD_RELOCATABLE_BINARIES ON)
 find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS} source)
 #set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})

@@ -37,13 +37,22 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str
         (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
 }
 
+JNIEnv* aws_jni_get_thread_env(JavaVM* jvm) {
+    JNIEnv *env = NULL;
+    jint result = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
+    assert(result == JNI_OK);
+    return env;
+}
+
 static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_connect_options(JNIEnv *);
     extern void s_cache_async_callback(JNIEnv *);
     extern void s_cache_client_callbacks(JNIEnv *);
+    extern void s_cache_message_handler(JNIEnv *);
     s_cache_connect_options(env);
     s_cache_async_callback(env);
     s_cache_client_callbacks(env);
+    s_cache_message_handler(env);
 }
 
 static void s_jni_atexit() {

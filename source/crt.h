@@ -36,4 +36,10 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg);
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
 
+/*******************************************************************************
+ * aws_jni_get_thread_env - Gets the JNIEnv for the current thread from the VM,
+ * attaching the env if necessary
+ ******************************************************************************/
+JNIEnv *aws_jni_get_thread_env(JavaVM *jvm);
+
 #endif /* AWS_JNI_CRT_H */

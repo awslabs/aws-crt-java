@@ -26,7 +26,7 @@ public class CrtTest implements AutoCloseable {
 
     @Override
     public void close() {
-        System.out.println("CrtResource CLOSED");
+        
     }
 
     public native void doIt();

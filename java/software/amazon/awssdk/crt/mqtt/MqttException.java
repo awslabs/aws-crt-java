@@ -14,6 +14,12 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-public class MqttToken {
-    
-}
+/**
+ * This exception will be thrown by any exceptional cases encountered within the
+ * JNI bindings to the AWS Common Runtime
+ */
+public class MqttException extends Exception {
+    public MqttException(String msg) {
+        super(msg);
+    }
+};

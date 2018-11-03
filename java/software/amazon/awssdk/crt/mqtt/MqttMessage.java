@@ -15,5 +15,19 @@
 package software.amazon.awssdk.crt.mqtt;
 
 public class MqttMessage {
-    
+    private String topic;
+    private String payload;
+
+    public MqttMessage(String _topic, String _payload) {
+        topic = _topic;
+        payload = _payload;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
 }

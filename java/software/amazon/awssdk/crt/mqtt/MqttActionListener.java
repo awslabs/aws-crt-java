@@ -14,8 +14,8 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.mqtt.MqttToken;
+interface MqttActionListener {
+    public void onSuccess();
 
-public class MqttDeliveryToken extends MqttToken {
-    
+    public void onFailure(Throwable cause);
 }

@@ -21,8 +21,12 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.stream.*;
 
-
-public class CRT {
+/**
+ * This class is responsible for loading the aws-crt-jni shared lib for the current
+ * platform out of aws-crt-java.jar. One instance of this class has to be created
+ * somewhere to invoke the static initialization block which will load the shared lib
+ */
+public final class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
 
     static {
@@ -41,7 +45,7 @@ public class CRT {
         }
     }
 
-    // Utility for dumping the contents of jars, debugging only
+    /* Utility for dumping the contents of jars, debugging only */
     private static void enumerateResources() throws URISyntaxException, IOException {
         Enumeration<URL> en = CRT.class.getClassLoader().getResources("META-INF");
         while (en.hasMoreElements()) {
@@ -123,6 +127,12 @@ public class CRT {
             Files.copy(in, libTempPath);
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
+
+            aws_crt_init();
+        }
+        catch (CrtRuntimeException crtex) {
+            System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
+            crtex.printStackTrace();
         }
         catch (UnknownPlatformException upe) {
             System.err.println("Unable to determine platform for AWS CRT: " + upe.toString());
@@ -133,4 +143,6 @@ public class CRT {
             ex.printStackTrace();
         }
     }
+
+    private static native void aws_crt_init() throws CrtRuntimeException;
 };

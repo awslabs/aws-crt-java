@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 #include <aws/io/io.h>
+#include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
 
 #include <stdio.h>
@@ -56,7 +57,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
 }
 
 static void s_jni_atexit() {
-    /* aws_tls_clean_up_static_state(); */
+    aws_tls_clean_up_static_state();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -66,8 +67,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jcl
     aws_io_load_error_strings();
     aws_mqtt_load_error_strings();
 
-    /* struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_tls_init_static_state(allocator); */
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_tls_init_static_state(allocator);
 
     s_cache_jni_classes(env);
 

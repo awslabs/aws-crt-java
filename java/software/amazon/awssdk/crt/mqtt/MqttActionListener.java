@@ -14,7 +14,7 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-interface MqttActionListener {
+public interface MqttActionListener {
     public void onSuccess();
 
     public void onFailure(Throwable cause);

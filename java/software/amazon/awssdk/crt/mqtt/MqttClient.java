@@ -43,7 +43,7 @@ public class MqttClient extends CrtResource implements AutoCloseable {
         }
     }
 
-    MqttConnection createConnection(ConnectOptions options) {
+    public MqttConnection createConnection(ConnectOptions options) {
         return new MqttConnection(this, options);
     }
     

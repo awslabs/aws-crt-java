@@ -203,7 +203,8 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, connection->client_connection);
+    /* client_connection will be cleaned up by channel shutdown */
+    connection->client_connection = NULL;
     aws_mem_release(allocator, connection);
 }
 
@@ -286,12 +287,16 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     AWS_ZERO_STRUCT(*connection);
 
     struct aws_tls_ctx_options tls_ctx_opt;
-    aws_tls_ctx_options_init_client_mtls(&tls_ctx_opt, (char *)cert_path.ptr, (char *)key_path.ptr);
-    if (key_store_path.len > 0) {
-        aws_tls_ctx_options_override_default_trust_store(&tls_ctx_opt, NULL, (char *)key_store_path.ptr);
-    }
-    if (alpn.len > 0) {
-        aws_tls_ctx_options_set_alpn_list(&tls_ctx_opt, (char *)alpn.ptr);
+    struct aws_tls_ctx_options *tls = NULL;
+    if (cert_path.len > 0 || key_path.len > 0) {
+        aws_tls_ctx_options_init_client_mtls(&tls_ctx_opt, (char *)cert_path.ptr, (char *)key_path.ptr);
+        if (key_store_path.len > 0) {
+            aws_tls_ctx_options_override_default_trust_store(&tls_ctx_opt, NULL, (char *)key_store_path.ptr);
+        }
+        if (alpn.len > 0) {
+            aws_tls_ctx_options_set_alpn_list(&tls_ctx_opt, (char *)alpn.ptr);
+        }
+        tls = &tls_ctx_opt;
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
@@ -308,7 +313,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     callbacks.user_data = connection;
 
     connection->client_connection = aws_mqtt_client_connection_new(
-        connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, &tls_ctx_opt);
+        connection->client, callbacks, &endpoint_uri, port, &connection->socket_options, tls);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");
         goto error_cleanup;
@@ -350,7 +355,7 @@ error_cleanup:
  * disconnect
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1disconnect(
     JNIEnv *env,
     jclass jni_mqtt,
     jlong jni_connection,
@@ -373,7 +378,7 @@ void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1disconnect(
  * subscribe
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscribe(
     JNIEnv *env,
     jclass jni_mqtt,
     jlong jni_connection,
@@ -386,7 +391,7 @@ void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1subscribe(
  * unsubscribe
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubscribe(
     JNIEnv *env,
     jclass jni_mqtt,
     jlong jni_connection,
@@ -397,7 +402,7 @@ void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1unsubscribe(
  * publish
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_com_amazon_aws_MQTTClient_mqtt_1publish(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish(
     JNIEnv *env,
     jclass jni_mqtt,
     jlong jni_connection,

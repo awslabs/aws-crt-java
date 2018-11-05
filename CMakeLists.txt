@@ -139,11 +139,15 @@ add_jar(
     SOURCES ${AWS_CRT_JAVA_SRC}
 )
 
-# add the shared lib to the JNI jar after it's compiled (this creates an implicit dependency)
+add_dependencies(aws-crt-java ${CMAKE_PROJECT_NAME})
+
+# add the shared lib to the JNI jar after it's compiled (this will always run, because it is not
+# currently possible to estabilish a proper build dependency against a JAR target added with add_jar()
+add_custom_target(aws-crt-java-shared-lib-package ALL DEPENDS aws-crt-java ${CMAKE_PROJECT_NAME} ${CMAKE_BINARY_DIR}/always_rebuild)
 add_custom_command(
-    TARGET aws-crt-java
-    POST_BUILD
+    OUTPUT ${CMAKE_BINARY_DIR}/always_rebuild "${CMAKE_BINARY_DIR}/aws-crt-java.jar"
     COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "${TARGET_LIB_DIR}/$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
+    COMMENT "Adding shared libs to aws-crt-java.jar..."
 )
 
 install(

@@ -148,7 +148,7 @@ add_dependencies(aws-crt-java-shared-lib-package aws-crt-java)
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/always_rebuild "${CMAKE_BINARY_DIR}/aws-crt-java.jar"
     COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "${TARGET_LIB_DIR}/$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
-    COMMENT "Adding shared libs to aws-crt-java.jar..."
+    COMMENT "Adding shared libs to aws-crt-java.jar"
 )
 
 install(

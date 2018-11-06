@@ -162,11 +162,12 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     }
 
     public void disconnect(MqttActionListener ack) {
-        if (native_ptr() != 0) {
-            AsyncCallback disconnectAck = wrapAck(ack);
-            connectionState = ConnectionState.Disconnecting;
-            mqtt_disconnect(release(), disconnectAck);
+        if (native_ptr() == 0) {
+            return;
         }
+        AsyncCallback disconnectAck = wrapAck(ack);
+        connectionState = ConnectionState.Disconnecting;
+        mqtt_disconnect(release(), disconnectAck);
     }
 
     public short subscribe(String topic, QOS qos, Consumer<MqttMessage> handler) throws MqttException {
@@ -174,28 +175,30 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     }
 
     public short subscribe(String topic, QOS qos, Consumer<MqttMessage> handler, MqttActionListener ack) throws MqttException {
-        if (native_ptr() != 0) {
-            AsyncCallback subAck = wrapAck(ack);
-            try {
-                return mqtt_subscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
-            }
-            catch (CrtRuntimeException ex) {
-                throw new MqttException("AWS CRT exception: " + ex.toString());
-            }
+        if (native_ptr() == 0) {
+            throw new MqttException("Invalid connection during subscribe");
         }
-        return 0;
+
+        AsyncCallback subAck = wrapAck(ack);
+        try {
+            return mqtt_subscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+        }
+        catch (CrtRuntimeException ex) {
+            throw new MqttException("AWS CRT exception: " + ex.toString());
+        }
     }
 
-    public short unsubscribe(String topic) {
+    public short unsubscribe(String topic) throws MqttException {
         return unsubscribe(topic, null);
     }
 
-    public short unsubscribe(String topic, MqttActionListener ack) {
+    public short unsubscribe(String topic, MqttActionListener ack) throws MqttException {
         if (native_ptr() != 0) {
-            AsyncCallback unsubAck = wrapAck(ack);
-            return mqtt_unsubscribe(native_ptr(), topic, unsubAck);
+            throw new MqttException("Invalid connection during unsubscribe");
         }
-        return 0;
+
+        AsyncCallback unsubAck = wrapAck(ack);
+        return mqtt_unsubscribe(native_ptr(), topic, unsubAck);
     }
 
     public short publish(MqttMessage message, QOS qos) throws MqttException {
@@ -204,15 +207,16 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
 
     public short publish(MqttMessage message, QOS qos, MqttActionListener ack) throws MqttException {
         if (native_ptr() != 0) {
-            AsyncCallback pubAck = wrapAck(ack);
-            try {
-                return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), message.getPayload(), pubAck);
-            }
-            catch (CrtRuntimeException ex) {
-                throw new MqttException("AWS CRT exception: " + ex.toString());
-            }
+            throw new MqttException("Invalid connection during publish");
         }
-        return 0;
+        
+        AsyncCallback pubAck = wrapAck(ack);
+        try {
+            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), message.getPayload(), pubAck);
+        }
+        catch (CrtRuntimeException ex) {
+            throw new MqttException("AWS CRT exception: " + ex.toString());
+        }
     }
 
     /*******************************************************************************

@@ -21,6 +21,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttException;
 
 import java.util.function.Consumer;
+import java.nio.ByteBuffer;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
@@ -63,7 +64,7 @@ public class MqttConnection extends CrtResource implements AutoCloseable {
         }
 
         void deliver(byte[] payload) {
-            callback.accept(new MqttMessage(topic, payload));
+            callback.accept(new MqttMessage(topic, ByteBuffer.wrap(payload)));
         }
     }
 
@@ -201,18 +202,25 @@ public class MqttConnection extends CrtResource implements AutoCloseable {
         return mqtt_unsubscribe(native_ptr(), topic, unsubAck);
     }
 
-    public short publish(MqttMessage message, QOS qos) throws MqttException {
-        return publish(message, qos, null);
+    public short publish(MqttMessage message, QOS qos, boolean retain) throws MqttException {
+        return publish(message, qos, retain, null);
     }
 
-    public short publish(MqttMessage message, QOS qos, MqttActionListener ack) throws MqttException {
+    public short publish(MqttMessage message, QOS qos, boolean retain, MqttActionListener ack) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during publish");
         }
         
         AsyncCallback pubAck = wrapAck(ack);
         try {
-            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), message.getPayload(), pubAck);
+            ByteBuffer payload = message.getPayload();
+            /* If the buffer is already direct, we can avoid an additional copy */
+            if (!payload.isDirect()) {
+                ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
+                payloadDirect.put(payload);
+                payload = payloadDirect;
+            }
+            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, payload, pubAck);
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -236,5 +244,5 @@ public class MqttConnection extends CrtResource implements AutoCloseable {
 
     private static native short mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native short mqtt_publish(long connection, String topic, int qos, byte[] payload, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqtt_publish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
 };

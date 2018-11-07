@@ -31,8 +31,20 @@ import software.amazon.awssdk.crt.mqtt.MqttConnection.ConnectOptions;
 public class MqttClient extends CrtResource implements AutoCloseable {
     private EventLoopGroup elg;
 
+    public MqttClient() throws CrtRuntimeException {
+        init(new EventLoopGroup(1));
+    }
+
     public MqttClient(int numThreads) throws CrtRuntimeException {
-        elg = new EventLoopGroup(numThreads);
+        init(new EventLoopGroup(numThreads));
+    }
+
+    public MqttClient(EventLoopGroup _elg) throws CrtRuntimeException {
+        init(_elg);
+    }
+    
+    private void init(EventLoopGroup _elg) throws CrtRuntimeException {
+        elg = _elg;
         acquire(mqtt_client_init(elg.native_ptr()));
     }
 

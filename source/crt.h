@@ -24,7 +24,7 @@ struct aws_allocator *aws_jni_get_allocator();
 
 /*******************************************************************************
  * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the
- * supplied message, sprintf formatted. Control WILL return from this function, 
+ * supplied message, sprintf formatted. Control WILL return from this function,
  * so after calling it, make sure to clean up any native resources before exiting
  * the calling JNIEXPORT function.
  ******************************************************************************/

@@ -388,7 +388,7 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     if (!callback->async_callback) {
         return;
     }
-    
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
     (*env)->DeleteGlobalRef(env, callback->async_callback);
@@ -599,7 +599,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     /* copy the payload from JNI into a buffer, which will be cleaned up in the ack callback */
-    /* TODO: consider pinning the buffer and creating a byte cursor directly from it, 
+    /* TODO: consider pinning the buffer and creating a byte cursor directly from it,
      * then releasing the buffer in the callback */
     jlong payload_size = (*env)->GetDirectBufferCapacity(env, jni_payload);
     if (payload_size == -1) {

@@ -44,9 +44,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str
         (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
 }
 
-JNIEnv* aws_jni_get_thread_env(JavaVM* jvm) {
+JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
-    jint result = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
+    jint result = (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
     assert(result == JNI_OK);
     return env;
 }

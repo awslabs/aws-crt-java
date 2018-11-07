@@ -54,10 +54,6 @@ public class MqttClient extends CrtResource implements AutoCloseable {
             mqtt_client_clean_up(release());
         }
     }
-
-    public MqttConnection createConnection(ConnectOptions options) {
-        return new MqttConnection(this, options);
-    }
     
     /*******************************************************************************
      * native methods

@@ -42,7 +42,7 @@ public class ConnectionTest {
             MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
             options.clientId = "ConnectionTest";
             options.endpointUri = TEST_ENDPOINT;
-            MqttConnection connection = client.createConnection(options);
+            MqttConnection connection = new MqttConnection(client, options);
             MqttActionListener connectAck = new MqttActionListener() {
                 @Override
                 public void onSuccess() {

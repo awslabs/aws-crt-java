@@ -385,6 +385,10 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     assert(callback);
     assert(callback->connection);
 
+    if (!callback->async_callback) {
+        return;
+    }
+    
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
     (*env)->DeleteGlobalRef(env, callback->async_callback);

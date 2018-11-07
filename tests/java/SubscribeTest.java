@@ -19,19 +19,22 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
-import java.util.Date;
+import java.util.function.*;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.*;
 
-public class ConnectionTest {
-    public ConnectionTest() {
+public class SubscribeTest {
+    public SubscribeTest() {
     }
 
     static final String TEST_ENDPOINT = "localhost:1883";
     static final int TEST_TIMEOUT = 3000; /* ms */
+    static final String TEST_TOPIC = "suback/me/senpai";
+
+    int subsAcked = 0;
+    boolean disconnecting = false;
 
     @Test
-    public void testConnectDisconnect() throws CrtRuntimeException, InterruptedException {
+    public void testConnectDisconnect() {
         try {
             MqttClient client = new MqttClient(1);
             assertNotNull(client);
@@ -40,46 +43,81 @@ public class ConnectionTest {
             final Semaphore done = new Semaphore(0);
 
             MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
-            options.clientId = "ConnectionTest";
+            options.clientId = "SubscribeTest";
             options.endpointUri = TEST_ENDPOINT;
-            MqttConnection connection = new MqttConnection(client, options);
-            MqttActionListener connectAck = new MqttActionListener() {
+            MqttConnection connection = new MqttConnection(client, options) {
                 @Override
-                public void onSuccess() {
-                    System.out.println("onSuccess");
+                public void onOnline() {
                     done.release();
                 }
 
                 @Override
-                public void onFailure(Throwable cause) {
-                    fail("Connection failed: " + cause.toString());
+                public void onOffline() {
+                    if (!disconnecting) {
+                        fail("Disconnected, server probably hung up");
+                    }
                     done.release();
                 }
             };
-            connection.connect(connectAck);
+
+            connection.connect();
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
 
-            MqttActionListener disconnectAck = new MqttActionListener() {
+            Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
+                @Override
+                public void accept(MqttMessage message) {
+
+                }
+            };
+
+            MqttActionListener subAck = new MqttActionListener() {
                 @Override
                 public void onSuccess() {
+                    subsAcked++;
                     done.release();
                 }
 
                 @Override
                 public void onFailure(Throwable cause) {
-                    fail("Disconnect failed: " + cause.toString());
+                    fail("Subscription failed: " + cause.getMessage());
                     done.release();
                 }
             };
 
-            connection.disconnect(disconnectAck);
+            connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
+            done.acquire();
+
+            assertEquals("Single subscription", 1, subsAcked);
+
+            MqttActionListener unsubAck = new MqttActionListener() {
+                @Override
+                public void onSuccess() {
+                    subsAcked--;
+                    done.release();
+                }
+
+                @Override
+                public void onFailure(Throwable cause) {
+                    fail("Unsubscription failed: " + cause.getMessage());
+                    done.release();
+                }
+            };
+            connection.unsubscribe(TEST_TOPIC, unsubAck);
+            done.acquire();
+
+            assertEquals("No Subscriptions", 0, subsAcked);
+
+            disconnecting = true;
+            connection.disconnect();
             done.acquire();
             assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
-        } catch (InterruptedException interrupted) { 
+        } catch (InterruptedException interrupted) { /* wait() can be interrupted */
             fail(interrupted.getMessage());
-        } 
+        } catch (MqttException mqttEx) {
+            fail(mqttEx.getMessage());
+        }
     }
 };

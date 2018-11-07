@@ -86,6 +86,8 @@ public class PublishTest {
             connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false, pubAck);
             done.acquire();
 
+            assertEquals("Published", 1, pubsAcked);
+
             disconnecting = true;
             connection.disconnect();
             done.acquire();

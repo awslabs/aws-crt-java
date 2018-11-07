@@ -26,11 +26,17 @@ struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();
 }
 
-void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg) {
+void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
     char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+
+    char exception[1280];
+    snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(aws_last_error()));
     jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
-    snprintf(buf, sizeof(buf), "%s: %s", msg, aws_error_str(aws_last_error()));
-    (*env)->ThrowNew(env, runtime_exception, buf);
+    (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {

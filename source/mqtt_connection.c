@@ -110,7 +110,7 @@ static struct { jmethodID deliver; } s_message_handler;
 void s_cache_message_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$MessageHandler");
     assert(cls);
-    s_message_handler.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;)V");
+    s_message_handler.deliver = (*env)->GetMethodID(env, cls, "deliver", "([B)V");
     assert(s_message_handler.deliver);
 }
 
@@ -153,6 +153,7 @@ static void s_on_connect_failed(struct aws_mqtt_client_connection *client_connec
         (*env)->DeleteGlobalRef(env, connection->connect_ack);
         connection->connect_ack = NULL;
     }
+    (*env)->DeleteLocalRef(env, message);
 }
 
 static void s_on_connect_success(
@@ -189,6 +190,7 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
         (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, message);
         (*env)->DeleteGlobalRef(env, connection->client_callbacks);
         connection->client_callbacks = NULL;
+        (*env)->DeleteLocalRef(env, message);
     }
 
     if (connection->connect_ack) {
@@ -402,8 +404,10 @@ static void s_on_subscription_delivered(struct aws_mqtt_client_connection* conne
 
     struct mqtt_jni_async_callback *callback = user_data;
     JNIEnv* env = aws_jni_get_thread_env(callback->connection->jvm);
-    jstring jni_payload = (*env)->NewStringUTF(env, (const char*)payload->ptr);
+    jbyteArray jni_payload = (*env)->NewByteArray(env, payload->len);
+    (*env)->SetByteArrayRegion(env, jni_payload, 0, payload->len, (const signed char*)payload->ptr);
     (*env)->CallVoidMethod(env, callback->async_callback, s_message_handler.deliver, jni_payload);
+    (*env)->DeleteLocalRef(env, jni_payload);
 }
 
 JNIEXPORT
@@ -531,7 +535,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     jlong jni_connection,
     jstring jni_topic,
     jint jni_qos,
-    jstring jni_payload,
+    jbyteArray jni_payload,
     jobject jni_ack) {
     return 0;
 }

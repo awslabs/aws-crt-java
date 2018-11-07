@@ -20,21 +20,23 @@ import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 import java.util.function.*;
+import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 
-public class SubscribeTest {
-    public SubscribeTest() {
+public class PublishTest {
+    public PublishTest() {
     }
 
     static final String TEST_ENDPOINT = "localhost:1883";
     static final int TEST_TIMEOUT = 3000; /* ms */
-    static final String TEST_TOPIC = "suback/me/senpai";
+    static final String TEST_TOPIC = "publish/me/senpai";
+    static final String TEST_PAYLOAD = "PUBLISH ME! SHINY AND CHROME!";
 
-    int subsAcked = 0;
+    int pubsAcked = 0;
     boolean disconnecting = false;
 
     @Test
-    public void testSubscribeUnsubscribe() {
+    public void testPublish() {
         try {
             MqttClient client = new MqttClient(1);
             assertNotNull(client);
@@ -43,7 +45,7 @@ public class SubscribeTest {
             final Semaphore done = new Semaphore(0);
 
             MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
-            options.clientId = "SubscribeTest";
+            options.clientId = "PublishTest";
             options.endpointUri = TEST_ENDPOINT;
             MqttConnection connection = new MqttConnection(client, options) {
                 @Override
@@ -64,49 +66,25 @@ public class SubscribeTest {
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
 
-            Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
-                @Override
-                public void accept(MqttMessage message) {
-
-                }
-            };
-
-            MqttActionListener subAck = new MqttActionListener() {
+            MqttActionListener pubAck = new MqttActionListener() {
                 @Override
                 public void onSuccess() {
-                    subsAcked++;
+                    pubsAcked++;
                     done.release();
                 }
 
                 @Override
                 public void onFailure(Throwable cause) {
-                    fail("Subscription failed: " + cause.getMessage());
+                    fail("Publish failed: " + cause.getMessage());
                     done.release();
                 }
             };
 
-            connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
+            ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
+            payload.put(TEST_PAYLOAD.getBytes());
+            MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
+            connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false, pubAck);
             done.acquire();
-
-            assertEquals("Single subscription", 1, subsAcked);
-
-            MqttActionListener unsubAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    subsAcked--;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Unsubscription failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
-            connection.unsubscribe(TEST_TOPIC, unsubAck);
-            done.acquire();
-
-            assertEquals("No Subscriptions", 0, subsAcked);
 
             disconnecting = true;
             connection.disconnect();

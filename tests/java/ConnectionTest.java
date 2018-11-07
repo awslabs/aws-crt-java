@@ -19,6 +19,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
+import java.util.Date;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.*;
 
 public class ConnectionTest {
     public ConnectionTest() {
@@ -28,53 +31,55 @@ public class ConnectionTest {
     static final int TEST_TIMEOUT = 3000; /* ms */
 
     @Test
-    public void testConnectDisconnect() {
-        try (MqttClient client = new MqttClient(1)) {
+    public void testConnectDisconnect() throws CrtRuntimeException, InterruptedException {
+        try {
+            MqttClient client = new MqttClient(1);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
+
+            final Semaphore done = new Semaphore(0);
 
             MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
             options.clientId = "ConnectionTest";
             options.endpointUri = TEST_ENDPOINT;
             MqttConnection connection = client.createConnection(options);
-            synchronized (connection) {
-                MqttActionListener connectAck = new MqttActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connection.notify();
-                    }
+            MqttActionListener connectAck = new MqttActionListener() {
+                @Override
+                public void onSuccess() {
+                    System.out.println("onSuccess");
+                    done.release();
+                }
 
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Connection failed: " + cause.toString());
-                        connection.notify();
-                    }
-                };
-                connection.connect(connectAck);
-                connection.wait(TEST_TIMEOUT);
-                assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
+                @Override
+                public void onFailure(Throwable cause) {
+                    fail("Connection failed: " + cause.toString());
+                    done.release();
+                }
+            };
+            connection.connect(connectAck);
+            done.acquire();
+            assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
 
-                MqttActionListener disconnectAck = new MqttActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connection.notify();
-                    }
+            MqttActionListener disconnectAck = new MqttActionListener() {
+                @Override
+                public void onSuccess() {
+                    done.release();
+                }
 
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Disconnect failed: " + cause.toString());
-                        connection.notify();
-                    }
-                };
-                connection.disconnect();
-                connection.wait(TEST_TIMEOUT);
-                assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
-            }
+                @Override
+                public void onFailure(Throwable cause) {
+                    fail("Disconnect failed: " + cause.toString());
+                    done.release();
+                }
+            };
 
+            connection.disconnect(disconnectAck);
+            done.acquire();
+            assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
-        } catch (InterruptedException interrupted) { /* wait() can be interrupted */
+        } catch (InterruptedException interrupted) { 
             fail(interrupted.getMessage());
-        }
+        } 
     }
 };

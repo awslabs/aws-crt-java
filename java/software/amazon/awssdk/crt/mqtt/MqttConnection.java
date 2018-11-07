@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  * MqttConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
  */
-public final class MqttConnection extends CrtResource implements AutoCloseable {
+public class MqttConnection extends CrtResource implements AutoCloseable {
     private MqttClient client;
     private ConnectOptions options;
     private ConnectionState connectionState = ConnectionState.Disconnected;
@@ -148,8 +148,8 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
         };
         AsyncCallback connectAck = wrapAck(ack);
         try {
-            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectAck));
             connectionState = ConnectionState.Connecting;
+            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectAck));
         }
         catch (CrtRuntimeException ex) {
             return false;
@@ -193,7 +193,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     }
 
     public short unsubscribe(String topic, MqttActionListener ack) throws MqttException {
-        if (native_ptr() != 0) {
+        if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during unsubscribe");
         }
 
@@ -206,7 +206,7 @@ public final class MqttConnection extends CrtResource implements AutoCloseable {
     }
 
     public short publish(MqttMessage message, QOS qos, MqttActionListener ack) throws MqttException {
-        if (native_ptr() != 0) {
+        if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during publish");
         }
         

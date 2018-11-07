@@ -167,12 +167,12 @@ static void s_on_connect_success(
 
     struct mqtt_jni_connection *connection = user_data;
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+    (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_connected);
     if (connection->connect_ack) {
         (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_success);
         (*env)->DeleteGlobalRef(env, connection->connect_ack);
         connection->connect_ack = NULL;
     }
-    (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_connected);
 }
 
 static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {

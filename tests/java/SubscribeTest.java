@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 import java.util.function.*;
+import java.util.concurrent.Semaphore;
 
 public class SubscribeTest {
     public SubscribeTest() {
@@ -27,98 +28,90 @@ public class SubscribeTest {
 
     static final String TEST_ENDPOINT = "localhost:1883";
     static final int TEST_TIMEOUT = 3000; /* ms */
-    static final String TEST_TOPIC = "test";
+    static final String TEST_TOPIC = "suback/me/senpai";
 
     int subsAcked = 0;
+    boolean disconnecting = false;
 
     @Test
     public void testConnectDisconnect() {
-        try (MqttClient client = new MqttClient(1)) {
+        try {
+            MqttClient client = new MqttClient(1);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
+
+            final Semaphore done = new Semaphore(0);
 
             MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
             options.clientId = "SubscribeTest";
             options.endpointUri = TEST_ENDPOINT;
-            MqttConnection connection = client.createConnection(options);
-            synchronized (connection) {
-                MqttActionListener connectAck = new MqttActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connection.notify();
+            MqttConnection connection = new MqttConnection(client, options) {
+                @Override
+                public void onOnline() {
+                    done.release();
+                }
+
+                @Override
+                public void onOffline() {
+                    if (!disconnecting) {
+                        fail("Disconnected, server probably hung up");
                     }
+                    done.release();
+                }
+            };
 
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Connection failed: " + cause.toString());
-                        connection.notify();
-                    }
-                };
-                connection.connect(connectAck);
-                connection.wait(TEST_TIMEOUT);
-                assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
+            connection.connect();
+            done.acquire();
+            assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
 
-                Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
-                    @Override
-                    public void accept(MqttMessage message) {
-                        
-                    }
-                };
+            Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
+                @Override
+                public void accept(MqttMessage message) {
 
-                MqttActionListener subAck = new MqttActionListener(){
-                    @Override
-                    public void onSuccess() {
-                        subsAcked++;
-                        connection.notify();
-                    }
-                
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Subscription failed: " + cause.getMessage());
-                        connection.notify();
-                    }
-                };
+                }
+            };
 
-                connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
-                connection.wait(TEST_TIMEOUT);
+            MqttActionListener subAck = new MqttActionListener() {
+                @Override
+                public void onSuccess() {
+                    subsAcked++;
+                    done.release();
+                }
 
-                assertEquals("Single subscription", 1, subsAcked);
+                @Override
+                public void onFailure(Throwable cause) {
+                    fail("Subscription failed: " + cause.getMessage());
+                    done.release();
+                }
+            };
 
-                MqttActionListener unsubAck = new MqttActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        subsAcked--;
-                        connection.notify();
-                    }
+            connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
+            done.acquire();
 
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Subscription failed: " + cause.getMessage());
-                        connection.notify();
-                    }
-                };
-                connection.unsubscribe(TEST_TOPIC, unsubAck);
-                connection.wait(TEST_TIMEOUT);
+            assertEquals("Single subscription", 1, subsAcked);
 
-                assertEquals("No Subscriptions", 0, subsAcked);
+            MqttActionListener unsubAck = new MqttActionListener() {
+                @Override
+                public void onSuccess() {
+                    subsAcked--;
+                    done.release();
+                }
 
-                MqttActionListener disconnectAck = new MqttActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connection.notify();
-                    }
+                @Override
+                public void onFailure(Throwable cause) {
+                    fail("Unsubscription failed: " + cause.getMessage());
+                    done.release();
+                }
+            };
+            connection.unsubscribe(TEST_TOPIC, unsubAck);
+            done.acquire();
 
-                    @Override
-                    public void onFailure(Throwable cause) {
-                        fail("Disconnect failed: " + cause.toString());
-                        connection.notify();
-                    }
-                };
-                connection.disconnect();
-                connection.wait(TEST_TIMEOUT);
-                assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
-            }
+            assertEquals("No Subscriptions", 0, subsAcked);
 
+            disconnecting = true;
+            connection.disconnect();
+            done.acquire();
+            assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         } catch (InterruptedException interrupted) { /* wait() can be interrupted */

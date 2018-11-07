@@ -62,7 +62,7 @@ public class MqttConnection extends CrtResource implements AutoCloseable {
             topic = _topic;
         }
 
-        void deliver(String payload) {
+        void deliver(byte[] payload) {
             callback.accept(new MqttMessage(topic, payload));
         }
     }
@@ -236,5 +236,5 @@ public class MqttConnection extends CrtResource implements AutoCloseable {
 
     private static native short mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native short mqtt_publish(long connection, String topic, int qos, String payload, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqtt_publish(long connection, String topic, int qos, byte[] payload, AsyncCallback ack) throws CrtRuntimeException;
 };

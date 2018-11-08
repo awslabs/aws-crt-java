@@ -13,12 +13,13 @@
  * permissions and limitations under the License.
  */
 package software.amazon.awssdk.crt.mqtt;
+import java.nio.ByteBuffer;
 
 public class MqttMessage {
     private String topic;
-    private String payload;
+    private final ByteBuffer payload;
 
-    public MqttMessage(String _topic, String _payload) {
+    public MqttMessage(String _topic, ByteBuffer _payload) {
         topic = _topic;
         payload = _payload;
     }
@@ -27,7 +28,7 @@ public class MqttMessage {
         return topic;
     }
 
-    public String getPayload() {
+    public ByteBuffer getPayload() {
         return payload;
     }
 }

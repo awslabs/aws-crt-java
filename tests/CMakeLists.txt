@@ -34,3 +34,4 @@ aws_add_junit_test(RuntimeExceptionTestAPI TESTS crt.test.RuntimeExceptionTestAP
 aws_add_junit_test(EventLoopGroupTest TESTS crt.test.EventLoopGroupTest)
 aws_add_junit_test(ConnectionTest TESTS crt.test.ConnectionTest)
 aws_add_junit_test(SubscribeTest TESTS crt.test.SubscribeTest)
+aws_add_junit_test(PublishTest TESTS crt.test.PublishTest)

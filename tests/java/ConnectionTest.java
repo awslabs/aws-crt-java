@@ -27,7 +27,7 @@ class MqttConnectionFixture {
     MqttClient client = null;
     MqttConnection connection = null;
     final Semaphore done = new Semaphore(0);
-    boolean disconnecting = false;
+    private boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = "localhost:1883";
     static final int TEST_TIMEOUT = 3000; /* ms */
@@ -36,10 +36,6 @@ class MqttConnectionFixture {
 
     }
 
-    protected Semaphore semaphore() {
-        return done;
-    }
-    
     boolean connect() {
         MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
         options.clientId = "ConnectionTest";

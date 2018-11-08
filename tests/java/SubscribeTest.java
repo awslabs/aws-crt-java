@@ -36,7 +36,6 @@ public class SubscribeTest extends MqttConnectionFixture {
     public void testSubscribeUnsubscribe() {
         connect();
 
-        Semaphore done = semaphore();
         Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
             @Override
             public void accept(MqttMessage message) {

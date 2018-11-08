@@ -23,30 +23,53 @@ import java.util.Date;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.*;
 
-public class ConnectionTest {
-    public ConnectionTest() {
-    }
+class MqttConnectionFixture {
+    MqttClient client = null;
+    MqttConnection connection = null;
+    final Semaphore done = new Semaphore(0);
+    boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = "localhost:1883";
     static final int TEST_TIMEOUT = 3000; /* ms */
 
-    @Test
-    public void testConnectDisconnect() throws CrtRuntimeException, InterruptedException {
+    public MqttConnectionFixture() {
+
+    }
+
+    protected Semaphore semaphore() {
+        return done;
+    }
+    
+    boolean connect() {
+        MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
+        options.clientId = "ConnectionTest";
+        options.endpointUri = TEST_ENDPOINT;
+
+        return connect(options);
+    }
+
+    boolean connect(MqttConnection.ConnectOptions options) {
         try {
-            MqttClient client = new MqttClient(1);
+            client = new MqttClient(1);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
-            final Semaphore done = new Semaphore(0);
+            connection = new MqttConnection(client, options) {
+                @Override
+                public void onOnline() {
 
-            MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
-            options.clientId = "ConnectionTest";
-            options.endpointUri = TEST_ENDPOINT;
-            MqttConnection connection = new MqttConnection(client, options);
+                }
+
+                @Override
+                public void onOffline() {
+                    if (!disconnecting) {
+                        fail("Lost connection to server");
+                    }
+                }
+            };
             MqttActionListener connectAck = new MqttActionListener() {
                 @Override
                 public void onSuccess() {
-                    System.out.println("onSuccess");
                     done.release();
                 }
 
@@ -59,27 +82,47 @@ public class ConnectionTest {
             connection.connect(connectAck);
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
+            return true;
+        }
+        catch (Exception ex) {
+            fail("Exception during connect: " + ex.getMessage());
+        }
+        return false;
+    }
 
-            MqttActionListener disconnectAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    done.release();
-                }
+    void disconnect() {
+        MqttActionListener disconnectAck = new MqttActionListener() {
+            @Override
+            public void onSuccess() {
+                done.release();
+            }
 
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Disconnect failed: " + cause.toString());
-                    done.release();
-                }
-            };
+            @Override
+            public void onFailure(Throwable cause) {
+                fail("Disconnect failed: " + cause.toString());
+                done.release();
+            }
+        };
 
+        disconnecting = true;
+        try {
             connection.disconnect(disconnectAck);
             done.acquire();
-            assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
-        } catch (CrtRuntimeException ex) {
-            fail(ex.getMessage());
-        } catch (InterruptedException interrupted) { 
-            fail(interrupted.getMessage());
-        } 
+        }
+        catch (Exception ex) {
+            fail("Exception during disconnect: " + ex.getMessage());
+        }
+        
+        assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
+    }
+}
+public class ConnectionTest extends MqttConnectionFixture {
+    public ConnectionTest() {
+    }
+
+    @Test
+    public void testConnectDisconnect() {
+        connect();
+        disconnect(); 
     }
 };

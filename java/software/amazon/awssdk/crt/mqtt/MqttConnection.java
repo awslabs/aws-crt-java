@@ -22,6 +22,7 @@ import software.amazon.awssdk.crt.mqtt.MqttException;
 
 import java.util.function.Consumer;
 import java.nio.ByteBuffer;
+import java.io.Closeable;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
@@ -30,7 +31,7 @@ import java.nio.ByteBuffer;
  * MqttConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
  */
-public class MqttConnection extends CrtResource implements AutoCloseable {
+public class MqttConnection extends CrtResource implements Closeable {
     private MqttClient client;
     private ConnectOptions options;
     private ConnectionState connectionState = ConnectionState.Disconnected;

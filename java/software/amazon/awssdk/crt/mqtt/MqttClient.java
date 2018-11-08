@@ -21,6 +21,8 @@ import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.mqtt.MqttConnection;
 import software.amazon.awssdk.crt.mqtt.MqttConnection.ConnectOptions;
 
+import java.io.Closeable;
+
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionalities
  * via the AWS Common Runtime
@@ -28,7 +30,7 @@ import software.amazon.awssdk.crt.mqtt.MqttConnection.ConnectOptions;
  * One MqttClient class is needed per application. It can create any number of connections to
  * any number of MQTT endpoints
  */
-public class MqttClient extends CrtResource implements AutoCloseable {
+public class MqttClient extends CrtResource implements Closeable {
     private EventLoopGroup elg;
 
     public MqttClient() throws CrtRuntimeException {

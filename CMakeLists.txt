@@ -152,14 +152,10 @@ add_custom_command(
 )
 
 install(
-        TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        FILES ${CMAKE_BINARY_DIR}/aws-crt-java.jar
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         COMPONENT library
 )
-
-export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
-install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
 
 if (NOT JUnit_FOUND)
     message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Tests will be disabled.")

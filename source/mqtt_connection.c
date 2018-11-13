@@ -598,22 +598,11 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
+    struct aws_byte_cursor buffer_payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
     /* copy the payload from JNI into a buffer, which will be cleaned up in the ack callback */
     /* TODO: consider pinning the buffer and creating a byte cursor directly from it,
      * then releasing the buffer in the callback */
-    jlong payload_size = (*env)->GetDirectBufferCapacity(env, jni_payload);
-    if (payload_size == -1) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
-        goto error_cleanup;
-    }
-    jbyte *payload_data = (*env)->GetDirectBufferAddress(env, jni_payload);
-    if (!payload_data) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
-        goto error_cleanup;
-    }
-    pub_data->payload = aws_byte_buf_from_array((const uint8_t *)payload_data, (size_t)payload_size);
+    pub_data->payload = aws_byte_buf_from_array(buffer_payload.ptr, buffer_payload.len);
     struct aws_byte_cursor payload = aws_byte_cursor_from_buf(&pub_data->payload);
 
     enum aws_mqtt_qos qos = jni_qos;
@@ -654,20 +643,12 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_m
     }
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
+    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
 
-    jlong payload_size = (*env)->GetDirectBufferCapacity(env, jni_payload);
-    if (payload_size == -1) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_set_will: Unable to get capacity of payload ByteBuffer");
+    /* exception will already have been thrown, so just return failure */
+    if (!payload.ptr) {
         return false;
     }
-    jbyte *payload_data = (*env)->GetDirectBufferAddress(env, jni_payload);
-    if (!payload_data) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_set_will: Unable to get buffer from payload ByteBuffer");
-        return false;
-    }
-    struct aws_byte_cursor payload = aws_byte_cursor_from_array((const uint8_t *)payload_data, (size_t)payload_size);
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;

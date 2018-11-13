@@ -214,14 +214,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         
         AsyncCallback pubAck = wrapAck(ack);
         try {
-            ByteBuffer payload = message.getPayload();
-            /* If the buffer is already direct, we can avoid an additional copy */
-            if (!payload.isDirect()) {
-                ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
-                payloadDirect.put(payload);
-                payload = payloadDirect;
-            }
-            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, payload, pubAck);
+            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -234,13 +227,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
 
         try {
-            ByteBuffer payload = message.getPayload();
-            if (!payload.isDirect()) {
-                ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
-                payloadDirect.put(payload);
-                payload = payloadDirect;
-            }
-            return mqtt_set_will(native_ptr(), message.getTopic(), qos.getValue(), retain, payload);
+            return mqtt_set_will(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());

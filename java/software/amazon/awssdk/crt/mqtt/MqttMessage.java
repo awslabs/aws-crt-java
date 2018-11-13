@@ -31,4 +31,15 @@ public class MqttMessage {
     public ByteBuffer getPayload() {
         return payload;
     }
+
+    public ByteBuffer getPayloadDirect() {
+        /* If the buffer is already direct, we can avoid an additional copy */
+        if (payload.isDirect()) {
+            return payload;
+        }
+
+        ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
+        payloadDirect.put(payload);
+        return payloadDirect;
+    }
 }

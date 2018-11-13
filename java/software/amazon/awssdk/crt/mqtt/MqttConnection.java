@@ -228,6 +228,25 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    public boolean setWill(MqttMessage message, QOS qos, boolean retain) throws MqttException {
+        if (native_ptr() == 0) {
+            throw new MqttException("Invalid connection during setWill");
+        }
+
+        try {
+            ByteBuffer payload = message.getPayload();
+            if (!payload.isDirect()) {
+                ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
+                payloadDirect.put(payload);
+                payload = payloadDirect;
+            }
+            return mqtt_set_will(native_ptr(), message.getTopic(), qos.getValue(), retain, payload);
+        }
+        catch (CrtRuntimeException ex) {
+            throw new MqttException("AWS CRT exception: " + ex.toString());
+        }
+    }
+
     /*******************************************************************************
      * Overrideable callbacks
      ******************************************************************************/
@@ -246,4 +265,6 @@ public class MqttConnection extends CrtResource implements Closeable {
     private static native short mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
 
     private static native short mqtt_publish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
+
+    private static native boolean mqtt_set_will(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
 };

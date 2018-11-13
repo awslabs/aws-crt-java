@@ -638,3 +638,40 @@ error_cleanup:
 
     return 0;
 }
+
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1will(
+    JNIEnv *env,
+    jclass jni_mqtt,
+    jlong jni_connection,
+    jstring jni_topic,
+    jint jni_qos,
+    jboolean jni_retain,
+    jobject jni_payload) {
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_set_will: Invalid connection");
+        return 0;
+    }
+
+    struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
+
+    jlong payload_size = (*env)->GetDirectBufferCapacity(env, jni_payload);
+    if (payload_size == -1) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttConnection.mqtt_set_will: Unable to get capacity of payload ByteBuffer");
+        return false;
+    }
+    jbyte *payload_data = (*env)->GetDirectBufferAddress(env, jni_payload);
+    if (!payload_data) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttConnection.mqtt_set_will: Unable to get buffer from payload ByteBuffer");
+        return false;
+    }
+    struct aws_byte_cursor payload = aws_byte_cursor_from_array((const uint8_t *)payload_data, (size_t)payload_size);
+
+    enum aws_mqtt_qos qos = jni_qos;
+    bool retain = jni_retain != 0;
+
+    int result = aws_mqtt_client_connection_set_will(connection->client_connection, &topic, qos, retain, &payload);
+    return (result == AWS_OP_SUCCESS);
+}

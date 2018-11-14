@@ -130,12 +130,55 @@ struct mqtt_jni_connection {
 
 /*******************************************************************************
  * mqtt_jni_async_callback - carries an AsyncCallback around as user data to mqtt
- * async ops, and is used to deliver callbacks
+ * async ops, and is used to deliver callbacks. Also hangs on to JNI references
+ * to buffers and strings that need to outlive the request
  ******************************************************************************/
 struct mqtt_jni_async_callback {
     struct mqtt_jni_connection *connection;
     jobject async_callback;
+    jobject jni_object_storage[2];
+    struct aws_array_list jni_objects; /* store pinned objects here, they will be un-pinned in clean_up */
 };
+
+static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(struct mqtt_jni_connection *connection,
+                                                                   jobject async_callback) {
+    struct aws_allocator* allocator = aws_jni_get_allocator();
+    struct mqtt_jni_async_callback *callback = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_async_callback));
+    if (!callback) {
+        /* caller will throw when they get a null */
+        return NULL;
+    }
+
+    JNIEnv* env = aws_jni_get_thread_env(connection->jvm);
+
+    callback->connection = connection;
+    callback->async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
+
+    aws_array_list_init_static(&callback->jni_objects, &callback->jni_object_storage, AWS_ARRAY_SIZE(callback->jni_object_storage), sizeof(jobject));
+    return callback;
+}
+
+static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *callback) {
+    assert(callback && callback->connection);
+    JNIEnv* env = aws_jni_get_thread_env(callback->connection->jvm);
+    if (callback->async_callback) {
+        (*env)->DeleteGlobalRef(env, callback->async_callback);
+    }
+
+    const size_t num_objects = aws_array_list_length(&callback->jni_objects);
+    for (size_t idx = 0; idx < num_objects; ++idx) {
+        jobject obj = NULL;
+        aws_array_list_get_at(&callback->jni_objects, &obj, idx);
+        if (obj) {
+            (*env)->DeleteGlobalRef(env, obj);
+        }
+    }
+
+    aws_array_list_clean_up(&callback->jni_objects);
+
+    struct aws_allocator* allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, callback);
+}
 
 /*******************************************************************************
  * connect
@@ -385,13 +428,10 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     assert(callback);
     assert(callback->connection);
 
-    if (!callback->async_callback) {
-        return;
+    if (callback->async_callback) {
+        JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
     }
-
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
-    (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
-    (*env)->DeleteGlobalRef(env, callback->async_callback);
 }
 
 static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
@@ -405,8 +445,7 @@ static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t pac
 
     s_deliver_ack_success(callback);
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, callback);
+    mqtt_jni_async_callback_clean_up(callback);
 }
 
 static void s_on_subscription_delivered(
@@ -447,9 +486,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscri
         return 0;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    struct mqtt_jni_async_callback *handler = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_async_callback));
+    struct mqtt_jni_async_callback* handler = mqtt_jni_async_callback_new(connection, jni_handler);
     if (!handler) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_subscribe: Unable to allocate handler");
         return 0;
@@ -461,14 +498,16 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscri
 
     struct mqtt_jni_async_callback *sub_ack = NULL;
     if (jni_ack) {
-        sub_ack = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_async_callback));
+        sub_ack = mqtt_jni_async_callback_new(connection, jni_ack);
         if (!sub_ack) {
             aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_subscribe: Unable to allocate sub ack");
             goto error_cleanup;
         }
-        sub_ack->connection = connection;
-        sub_ack->async_callback = (*env)->NewGlobalRef(env, jni_ack);
     }
+
+    /* pin the topic so it lives as long as the handler */
+    jni_topic = (*env)->NewGlobalRef(env, jni_topic);
+    aws_array_list_push_back(&handler->jni_objects, jni_topic);
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
     enum aws_mqtt_qos qos = jni_qos;
@@ -485,13 +524,11 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscri
 
 error_cleanup:
     if (handler) {
-        (*env)->DeleteGlobalRef(env, handler->async_callback);
-        aws_mem_release(allocator, handler);
+        mqtt_jni_async_callback_clean_up(handler);
     }
 
     if (sub_ack) {
-        (*env)->DeleteGlobalRef(env, sub_ack->async_callback);
-        aws_mem_release(allocator, sub_ack);
+        mqtt_jni_async_callback_clean_up(sub_ack);
     }
 
     return 0;
@@ -513,19 +550,15 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubsc
         return 0;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    struct mqtt_jni_async_callback *unsub_ack = NULL;
-    if (jni_ack) {
-        unsub_ack = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_async_callback));
-        if (!unsub_ack) {
-            aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_unsubscribe: Unable to allocate unsub ack");
-            goto error_cleanup;
-        }
-        unsub_ack->connection = connection;
-        unsub_ack->async_callback = (*env)->NewGlobalRef(env, jni_ack);
+    struct mqtt_jni_async_callback *unsub_ack = mqtt_jni_async_callback_new(connection, jni_ack);
+    if (!unsub_ack) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_unsubscribe: Unable to allocate unsub ack");
+        goto error_cleanup;
     }
 
+    /* pin the topic so it lives as long as the unsub request */
+    jni_topic = (*env)->NewGlobalRef(env, jni_topic);
+    aws_array_list_push_back(&unsub_ack->jni_objects, jni_topic);
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     uint16_t msg_id =
@@ -540,10 +573,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubsc
 
 error_cleanup:
     if (unsub_ack) {
-        if (unsub_ack->async_callback) {
-            (*env)->DeleteGlobalRef(env, unsub_ack->async_callback);
-        }
-        aws_mem_release(allocator, unsub_ack);
+        mqtt_jni_async_callback_clean_up(unsub_ack);
     }
     return 0;
 }
@@ -551,24 +581,13 @@ error_cleanup:
 /*******************************************************************************
  * publish
  ******************************************************************************/
-struct mqtt_publish_data {
-    struct mqtt_jni_async_callback callback;
-    jobject jni_payload; /* ByteBuffer global ref */
-    jstring jni_topic; /* global ref */
-};
-
 static void s_on_pub_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
     assert(connection);
-    struct mqtt_publish_data *pub_data = (struct mqtt_publish_data *)user_data;
+    struct mqtt_jni_async_callback *callback = (struct mqtt_jni_async_callback *)user_data;
 
-    s_deliver_ack_success(&pub_data->callback);
+    s_deliver_ack_success(callback);
 
-    JNIEnv* env = aws_jni_get_thread_env(pub_data->callback.connection->jvm);
-    (*env)->DeleteGlobalRef(env, pub_data->jni_topic);
-    (*env)->DeleteGlobalRef(env, pub_data->jni_payload);
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, pub_data);
+    mqtt_jni_async_callback_clean_up(callback);
 }
 
 JNIEXPORT
@@ -587,30 +606,27 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
         return 0;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct mqtt_publish_data *pub_data = aws_mem_acquire(allocator, sizeof(struct mqtt_publish_data));
-    if (!pub_data) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: Unable to allocate publish data");
+    struct mqtt_jni_async_callback *pub_ack = mqtt_jni_async_callback_new(connection, jni_ack);
+    if (!pub_ack) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: Unable to allocate pub ack");
         goto error_cleanup;
     }
 
-    pub_data->callback.connection = connection;
-    if (jni_ack) {
-        pub_data->callback.async_callback = (*env)->NewGlobalRef(env, jni_ack);
-    }
-
+    /* pin topic to pub_ack's lifetime */
+    jni_topic = (*env)->NewGlobalRef(env, jni_topic);
+    aws_array_list_push_back(&pub_ack->jni_objects, jni_topic);
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
-    pub_data->jni_topic = (*env)->NewGlobalRef(env, jni_topic);
 
     /* pin the buffer, to be released in pub ack, avoids a copy */
-    pub_data->jni_payload = (*env)->NewGlobalRef(env, jni_payload);
+    jni_payload = (*env)->NewGlobalRef(env, jni_payload);
+    aws_array_list_push_back(&pub_ack->jni_objects, jni_payload);
     struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
     uint16_t msg_id = aws_mqtt_client_connection_publish(
-        connection->client_connection, &topic, qos, retain, &payload, s_on_pub_ack, pub_data);
+        connection->client_connection, &topic, qos, retain, &payload, s_on_pub_ack, pub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: aws_mqtt_client_connection_publish failed");
         goto error_cleanup;
@@ -619,11 +635,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     return msg_id;
 
 error_cleanup:
-    if (pub_data) {
-        if (pub_data->callback.async_callback) {
-            (*env)->DeleteGlobalRef(env, pub_data->callback.async_callback);
-        }
-        aws_mem_release(allocator, pub_data);
+    if (pub_ack) {
+        mqtt_jni_async_callback_clean_up(pub_ack);
     }
 
     return 0;

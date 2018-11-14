@@ -214,14 +214,20 @@ public class MqttConnection extends CrtResource implements Closeable {
         
         AsyncCallback pubAck = wrapAck(ack);
         try {
-            ByteBuffer payload = message.getPayload();
-            /* If the buffer is already direct, we can avoid an additional copy */
-            if (!payload.isDirect()) {
-                ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
-                payloadDirect.put(payload);
-                payload = payloadDirect;
-            }
-            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, payload, pubAck);
+            return mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+        }
+        catch (CrtRuntimeException ex) {
+            throw new MqttException("AWS CRT exception: " + ex.toString());
+        }
+    }
+
+    public boolean setWill(MqttMessage message, QOS qos, boolean retain) throws MqttException {
+        if (native_ptr() == 0) {
+            throw new MqttException("Invalid connection during setWill");
+        }
+
+        try {
+            return mqtt_set_will(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -246,4 +252,6 @@ public class MqttConnection extends CrtResource implements Closeable {
     private static native short mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
 
     private static native short mqtt_publish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
+
+    private static native boolean mqtt_set_will(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
 };

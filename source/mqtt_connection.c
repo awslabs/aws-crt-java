@@ -553,7 +553,8 @@ error_cleanup:
  ******************************************************************************/
 struct mqtt_publish_data {
     struct mqtt_jni_async_callback callback;
-    struct aws_byte_buf payload;
+    jobject jni_payload; /* ByteBuffer global ref */
+    jstring jni_topic; /* global ref */
 };
 
 static void s_on_pub_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
@@ -562,7 +563,9 @@ static void s_on_pub_ack(struct aws_mqtt_client_connection *connection, uint16_t
 
     s_deliver_ack_success(&pub_data->callback);
 
-    aws_byte_buf_clean_up(&pub_data->payload);
+    JNIEnv* env = aws_jni_get_thread_env(pub_data->callback.connection->jvm);
+    (*env)->DeleteGlobalRef(env, pub_data->jni_topic);
+    (*env)->DeleteGlobalRef(env, pub_data->jni_payload);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, pub_data);
@@ -597,24 +600,11 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     }
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
+    pub_data->jni_topic = (*env)->NewGlobalRef(env, jni_topic);
 
-    /* copy the payload from JNI into a buffer, which will be cleaned up in the ack callback */
-    /* TODO: consider pinning the buffer and creating a byte cursor directly from it,
-     * then releasing the buffer in the callback */
-    jlong payload_size = (*env)->GetDirectBufferCapacity(env, jni_payload);
-    if (payload_size == -1) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
-        goto error_cleanup;
-    }
-    jbyte *payload_data = (*env)->GetDirectBufferAddress(env, jni_payload);
-    if (!payload_data) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
-        goto error_cleanup;
-    }
-    pub_data->payload = aws_byte_buf_from_array((const uint8_t *)payload_data, (size_t)payload_size);
-    struct aws_byte_cursor payload = aws_byte_cursor_from_buf(&pub_data->payload);
+    /* pin the buffer, to be released in pub ack, avoids a copy */
+    pub_data->jni_payload = (*env)->NewGlobalRef(env, jni_payload);
+    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
@@ -637,4 +627,33 @@ error_cleanup:
     }
 
     return 0;
+}
+
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1will(
+    JNIEnv *env,
+    jclass jni_mqtt,
+    jlong jni_connection,
+    jstring jni_topic,
+    jint jni_qos,
+    jboolean jni_retain,
+    jobject jni_payload) {
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_set_will: Invalid connection");
+        return 0;
+    }
+
+    struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
+    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
+
+    /* exception will already have been thrown, so just return failure */
+    if (!payload.ptr) {
+        return false;
+    }
+
+    enum aws_mqtt_qos qos = jni_qos;
+    bool retain = jni_retain != 0;
+
+    int result = aws_mqtt_client_connection_set_will(connection->client_connection, &topic, qos, retain, &payload);
+    return (result == AWS_OP_SUCCESS);
 }

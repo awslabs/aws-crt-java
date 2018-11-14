@@ -37,6 +37,13 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
+ * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the
+ * direct byte buffer. Note that the buffer is not reference pinned, so the cursor
+ * is only valid for the current JNI call
+ ******************************************************************************/
+struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer);
+
+/*******************************************************************************
  * aws_jni_get_thread_env - Gets the JNIEnv for the current thread from the VM,
  * attaching the env if necessary
  ******************************************************************************/

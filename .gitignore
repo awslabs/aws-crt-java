@@ -67,3 +67,5 @@ cmake-build*
 *.out
 *.app
 
+*.ipr
+*.iws

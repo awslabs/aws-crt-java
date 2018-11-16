@@ -15,7 +15,7 @@
 
 #include <jni.h>
 
-#include <aws/common/array_list.h>
+#include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/io/event_loop.h>
 #include <aws/io/tls_channel_handler.h>
@@ -73,8 +73,14 @@ void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1
  *****************************************************************************/
 struct jni_tls_ctx_options {
     struct aws_tls_ctx_options options;
-    jstring jni_strings_storage[8];
-    struct aws_array_list jni_strings;
+    /* these strings get copied from java, so we don't have to pin and track references */
+    struct aws_string *ca_file;
+    struct aws_string *ca_path;
+    struct aws_string *alpn_list;
+    struct aws_string *certificate_path;
+    struct aws_string *private_key_path;
+    struct aws_string *pkcs12_path;
+    struct aws_string *pkcs12_password;
 };
 
 JNIEXPORT
@@ -88,9 +94,8 @@ jlong JNICALL
             env, "TLSCtxOptions.tls_ctx_options_new: Unable to allocate new jni_tls_ctx_options");
         return (jlong)NULL;
     }
-    aws_array_list_init_static(
-        &tls->jni_strings, tls->jni_strings_storage, AWS_ARRAY_SIZE(tls->jni_strings_storage), sizeof(jstring));
-    AWS_ZERO_STRUCT(tls->options);
+
+    AWS_ZERO_STRUCT(*tls);
     return (jlong)tls;
 }
 
@@ -104,11 +109,26 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1cl
         return;
     }
 
-    size_t num_strings = aws_array_list_length(&tls->jni_strings);
-    for (size_t idx = 0; idx < num_strings; ++idx) {
-        jstring jni_str;
-        aws_array_list_get_at(&tls->jni_strings, &jni_str, idx);
-        (*env)->DeleteGlobalRef(env, jni_str);
+    if (tls->ca_file) {
+        aws_string_destroy(tls->ca_file);
+    }
+    if (tls->ca_path) {
+        aws_string_destroy(tls->ca_path);
+    }
+    if (tls->alpn_list) {
+        aws_string_destroy(tls->alpn_list);
+    }
+    if (tls->certificate_path) {
+        aws_string_destroy(tls->certificate_path);
+    }
+    if (tls->private_key_path) {
+        aws_string_destroy(tls->private_key_path);
+    }
+    if (tls->pkcs12_path) {
+        aws_string_destroy(tls->pkcs12_path);
+    }
+    if (tls->pkcs12_password) {
+        aws_string_destroy_secure(tls->pkcs12_password);
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -140,9 +160,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_ca_file = (*env)->NewGlobalRef(env, jni_ca_file);
-    aws_array_list_push_back(&tls->jni_strings, jni_ca_file);
-    tls->options.ca_file = (*env)->GetStringUTFChars(env, jni_ca_file, NULL);
+    tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_file);
+    tls->options.ca_file = (const char*)aws_string_bytes(tls->ca_file);
 }
 
 JNIEXPORT
@@ -156,9 +175,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_ca_path = (*env)->NewGlobalRef(env, jni_ca_path);
-    aws_array_list_push_back(&tls->jni_strings, jni_ca_path);
-    tls->options.ca_path = (*env)->GetStringUTFChars(env, jni_ca_path, NULL);
+    tls->ca_path = aws_jni_new_string_from_jstring(env, jni_ca_path);
+    tls->options.ca_path = (const char*)aws_string_bytes(tls->ca_path);
 }
 
 JNIEXPORT
@@ -172,9 +190,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_alpn = (*env)->NewGlobalRef(env, jni_alpn);
-    aws_array_list_push_back(&tls->jni_strings, jni_alpn);
-    tls->options.alpn_list = (*env)->GetStringUTFChars(env, jni_alpn, NULL);
+    tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
+    tls->options.alpn_list = (const char*)aws_string_bytes(tls->alpn_list);
 }
 
 JNIEXPORT
@@ -188,9 +205,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_certificate_path = (*env)->NewGlobalRef(env, jni_certificate_path);
-    aws_array_list_push_back(&tls->jni_strings, jni_certificate_path);
-    tls->options.certificate_path = (*env)->GetStringUTFChars(env, jni_certificate_path, NULL);
+    tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_certificate_path);
+    tls->options.certificate_path = (const char*)aws_string_bytes(tls->certificate_path);
 }
 
 JNIEXPORT
@@ -204,9 +220,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_key_path = (*env)->NewGlobalRef(env, jni_key_path);
-    aws_array_list_push_back(&tls->jni_strings, jni_key_path);
-    tls->options.private_key_path = (*env)->GetStringUTFChars(env, jni_key_path, NULL);
+    tls->private_key_path = aws_jni_new_string_from_jstring(env, jni_key_path);
+    tls->options.private_key_path = (const char*)aws_string_bytes(tls->private_key_path);
 }
 
 JNIEXPORT
@@ -220,9 +235,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_pkcs12_path = (*env)->NewGlobalRef(env, jni_pkcs12_path);
-    aws_array_list_push_back(&tls->jni_strings, jni_pkcs12_path);
-    tls->options.pkcs12_path = (*env)->GetStringUTFChars(env, jni_pkcs12_path, NULL);
+    tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
+    tls->options.pkcs12_path = (const char*)aws_string_bytes(tls->pkcs12_path);
 }
 
 JNIEXPORT
@@ -236,9 +250,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
         return;
     }
 
-    jni_pkcs12_password = (*env)->NewGlobalRef(env, jni_pkcs12_password);
-    aws_array_list_push_back(&tls->jni_strings, jni_pkcs12_password);
-    tls->options.pkcs12_password = (*env)->GetStringUTFChars(env, jni_pkcs12_password, NULL);
+    tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
+    tls->options.pkcs12_password = (const char*)aws_string_bytes(tls->pkcs12_password);
 }
 
 JNIEXPORT

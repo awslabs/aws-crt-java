@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/string.h>
 #include <aws/io/io.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
@@ -58,6 +59,11 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
         return aws_byte_cursor_from_array(NULL, 0);
     }
     return aws_byte_cursor_from_array((const uint8_t*)payload_data, (size_t)payload_size);
+}
+
+struct aws_string* aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
+    struct aws_allocator* allocator = aws_jni_get_allocator();
+    return aws_string_new_from_c_str(allocator, (*env)->GetStringUTFChars(env, str, NULL));
 }
 
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {

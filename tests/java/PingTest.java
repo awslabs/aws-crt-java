@@ -28,10 +28,6 @@ public class PingTest extends MqttConnectionFixture {
     public PingTest() {
     }
 
-    static final String TEST_TOPIC = "suback/me/senpai";
-
-    int subsAcked = 0;
-
     @Test
     public void testPing() {
         connect();

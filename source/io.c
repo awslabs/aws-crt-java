@@ -94,8 +94,8 @@ jlong JNICALL
             env, "TLSCtxOptions.tls_ctx_options_new: Unable to allocate new jni_tls_ctx_options");
         return (jlong)NULL;
     }
-
     AWS_ZERO_STRUCT(*tls);
+    aws_tls_ctx_options_init_default_client(&tls->options);
     return (jlong)tls;
 }
 
@@ -266,6 +266,11 @@ void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1se
     }
 
     tls->options.verify_peer = jni_verify != 0;
+}
+
+JNIEXPORT 
+jboolean JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1is_1alpn_1available(JNIEnv *env, jclass jni_class) {
+    return aws_tls_is_alpn_available();
 }
 
 /******************************************************************************

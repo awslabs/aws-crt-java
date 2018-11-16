@@ -64,7 +64,7 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
         tls_ctx_options_set_ca_path(native_ptr(), caPath);
     }
 
-    void setAlpn(String alpn) {
+    void setAlpnList(String alpn) {
         tls_ctx_options_set_alpn(native_ptr(), alpn);
     }
 
@@ -82,6 +82,33 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
 
     void setPkcs12Password(String pkcs12Password) {
         tls_ctx_options_set_pkcs12_password(native_ptr(), pkcs12Password);
+    }
+
+    void setVerifyPeer(boolean verify) {
+        tls_ctx_options_set_verify_peer(native_ptr(), verify);
+    }
+
+    boolean isAlpnSupported() {
+        return tls_ctx_options_is_alpn_available();
+    }
+
+    void overrideDefaultTrustStore(String caPath, String caFile) {
+        setCaPath(caPath);
+        setCaFile(caFile);
+    }
+
+    static TLSCtxOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+        TLSCtxOptions options = new TLSCtxOptions();
+        options.setCertificatePath(certificatePath);
+        options.setPrivateKeyPath(privateKeyPath);
+        return options;
+    }
+
+    static TLSCtxOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
+        TLSCtxOptions options = new TLSCtxOptions();
+        options.setPkcs12Path(pkcs12Path);
+        options.setPkcs12Password(pkcs12Password);
+        return options;
     }
 
     /*******************************************************************************
@@ -108,4 +135,6 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
     private static native void tls_ctx_options_set_pkcs12_password(long tls, String pkcs12_password);
 
     private static native void tls_ctx_options_set_verify_peer(long tls, boolean verify);
+
+    private static native boolean tls_ctx_options_is_alpn_available();
 };

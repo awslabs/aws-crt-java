@@ -97,7 +97,7 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
         setCaFile(caFile);
     }
 
-    static TLSCtxOptions createDefaultClient() {
+    static TLSCtxOptions createDefaultClient() throws CrtRuntimeException {
         return new TLSCtxOptions();
     }
 

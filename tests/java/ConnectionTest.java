@@ -29,28 +29,26 @@ class MqttConnectionFixture {
     final Semaphore done = new Semaphore(0);
     private boolean disconnecting = false;
 
-    static final String TEST_ENDPOINT = "localhost:1883";
+    static final String TEST_ENDPOINT = "localhost";
+    static final short TEST_PORT = 1883;
     static final int TEST_TIMEOUT = 3000; /* ms */
+    static final String TEST_CLIENTID = "AwsCrtJavaMqttTest";
 
-    public MqttConnectionFixture() {
+    MqttConnectionFixture() {
 
     }
 
     boolean connect() {
-        MqttConnection.ConnectOptions options = new MqttConnection.ConnectOptions();
-        options.clientId = "ConnectionTest";
-        options.endpointUri = TEST_ENDPOINT;
-
-        return connect(options);
+        return connect(false, (short)0);
     }
 
-    boolean connect(MqttConnection.ConnectOptions options) {
+    boolean connect(boolean cleanSession, short keepAliveMs) {
         try {
             client = new MqttClient(1);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
-            connection = new MqttConnection(client, options) {
+            connection = new MqttConnection(client, TEST_ENDPOINT, TEST_PORT) {
                 @Override
                 public void onOnline() {
 
@@ -75,7 +73,7 @@ class MqttConnectionFixture {
                     done.release();
                 }
             };
-            connection.connect(connectAck);
+            connection.connect(TEST_CLIENTID, connectAck);
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
             return true;

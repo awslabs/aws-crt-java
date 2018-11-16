@@ -16,9 +16,12 @@
 package software.amazon.awssdk.crt.mqtt;
 
 import software.amazon.awssdk.crt.EventLoopGroup;
+import software.amazon.awssdk.crt.TLSCtxOptions;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttException;
+import software.amazon.awssdk.crt.SocketOptions;
+import software.amazon.awssdk.crt.TLSCtxOptions;
 
 import java.util.function.Consumer;
 import java.nio.ByteBuffer;
@@ -33,7 +36,6 @@ import java.io.Closeable;
  */
 public class MqttConnection extends CrtResource implements Closeable {
     private MqttClient client;
-    private ConnectOptions options;
     private ConnectionState connectionState = ConnectionState.Disconnected;
 
     public enum ConnectionState {
@@ -69,22 +71,6 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
-    public static class ConnectOptions {
-        public String endpointUri = ""; /* API endpoint host name */
-        public String keyStorePath = "";
-        public String certificateFile = ""; /* X.509 based certificate file */
-        public String privateKeyFile = ""; /* PKCS#1 or PKCS#8 PEM encoded private key file */
-        public boolean useWebSockets = false;
-        public String alpn = "";
-        public String clientId = "";
-        public boolean cleanSession = true;
-        public short keepAliveMs = 0;
-        public short timeout = 1000;
-
-        public ConnectOptions() {
-        }
-    }
-
     /* used to receive the result of an async operation from CRT mqtt */
     interface AsyncCallback {
         public void onSuccess();
@@ -94,25 +80,61 @@ public class MqttConnection extends CrtResource implements Closeable {
     /* used to receive connection events */
     interface ClientCallbacks {
         public void onConnected();
+
         public void onDisconnected(String reason);
     }
 
-    public MqttConnection(MqttClient _client, ConnectOptions _options) {
+    public MqttConnection(MqttClient _client, String endpoint, short port) throws MqttException {
+        init(_client, endpoint, port, null, null);
+    }
+
+    public MqttConnection(MqttClient _client, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
+        init(_client, endpoint, port, socketOptions, null);
+    }
+
+    public MqttConnection(MqttClient _client, String endpoint, short port, SocketOptions socketOptions, TLSCtxOptions tlsOptions)
+            throws MqttException {
+        init(_client, endpoint, port, socketOptions, tlsOptions);
+    }
+    
+    private void init(MqttClient _client, String endpoint, short port, SocketOptions socketOptions, TLSCtxOptions tlsOptions) throws MqttException {
         client = _client;
-        options = _options;
+        try {
+            ClientCallbacks clientCallbacks = new ClientCallbacks() {
+                @Override
+                public void onConnected() {
+                    connectionState = ConnectionState.Connected;
+                    onOnline();
+                }
+
+                @Override
+                public void onDisconnected(String reason) {
+                    connectionState = ConnectionState.Disconnected;
+                    onOffline();
+                }
+            };
+            acquire(mqtt_new(client.native_ptr(), endpoint, port, clientCallbacks, socketOptions, tlsOptions));
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Exception during mqtt_new: " + ex.getMessage());
+        }
     }
 
     @Override
     public void close() {
         disconnect();
+        mqtt_clean_up(release());
     }
 
     public ConnectionState getState() {
         return connectionState;
     }
 
-    public void updateOptions(ConnectOptions _options) {
-        options = _options;
+    public void setLogin(String user, String pass) throws MqttException {
+        try {
+            mqtt_set_login(native_ptr(), user, pass);
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Failed to set login: " + ex.getMessage());
+        }        
     }
 
     private static AsyncCallback wrapAck(MqttActionListener ack) {
@@ -131,29 +153,32 @@ public class MqttConnection extends CrtResource implements Closeable {
         return callback;
     }
 
-    public boolean connect() {
-        return connect(null);
+    public boolean connect(String clientId) {
+        return connect(clientId, true, (short)0, null);
     }
 
-    public boolean connect(MqttActionListener ack) {
-        ClientCallbacks clientCallbacks = new ClientCallbacks() {
-            @Override
-            public void onConnected() {
-                connectionState = ConnectionState.Connected;
-                onOnline();
-            }
-            @Override
-            public void onDisconnected(String reason) {
-                connectionState = ConnectionState.Disconnected;
-                onOffline();
-            }
-        };
+    public boolean connect(String clientId, MqttActionListener ack) {
+        return connect(clientId, true, (short)0, ack);
+    }
+
+    public boolean connect(String clientId, boolean cleanSession) {
+        return connect(clientId, cleanSession, (short)0, null);
+    }
+
+    public boolean connect(String clientId, boolean cleanSession, MqttActionListener ack) {
+        return connect(clientId, cleanSession, (short)0, ack);
+    }
+
+    public boolean connect(String clientId, boolean cleanSession, short keepAliveMs) {
+        return connect(clientId, cleanSession, keepAliveMs, null);
+    }
+
+    public boolean connect(String clientId, boolean cleanSession, short keepAliveMs, MqttActionListener ack) {
         AsyncCallback connectAck = wrapAck(ack);
         try {
             connectionState = ConnectionState.Connecting;
-            acquire(mqtt_connect(client.native_ptr(), options, clientCallbacks, connectAck));
-        }
-        catch (CrtRuntimeException ex) {
+            mqtt_connect(native_ptr(), clientId, cleanSession, keepAliveMs, connectAck);
+        } catch (CrtRuntimeException ex) {
             return false;
         }
         return true;
@@ -169,7 +194,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
         AsyncCallback disconnectAck = wrapAck(ack);
         connectionState = ConnectionState.Disconnecting;
-        mqtt_disconnect(release(), disconnectAck);
+        mqtt_disconnect(native_ptr(), disconnectAck);
     }
 
     public short subscribe(String topic, QOS qos, Consumer<MqttMessage> handler) throws MqttException {
@@ -243,7 +268,11 @@ public class MqttConnection extends CrtResource implements Closeable {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqtt_connect(long client, ConnectOptions options, ClientCallbacks clientCallbacks, AsyncCallback ack) throws CrtRuntimeException;
+    private static native long mqtt_new(long client, String endpoint, short port, ClientCallbacks clientCallbacks, SocketOptions socketOptions, TLSCtxOptions tlsOptions) throws CrtRuntimeException;
+
+    private static native void mqtt_clean_up(long connection);
+
+    private static native void mqtt_connect(long connection, String clientId, boolean cleanSession, short keepAliveMs, AsyncCallback ack) throws CrtRuntimeException;
 
     private static native void mqtt_disconnect(long connection, AsyncCallback ack);
 
@@ -254,4 +283,6 @@ public class MqttConnection extends CrtResource implements Closeable {
     private static native short mqtt_publish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
 
     private static native boolean mqtt_set_will(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
+    
+    private static native void mqtt_set_login(long connection, String username, String password) throws CrtRuntimeException;
 };

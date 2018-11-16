@@ -68,11 +68,9 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 static void s_cache_jni_classes(JNIEnv *env) {
-    extern void s_cache_connect_options(JNIEnv *);
     extern void s_cache_async_callback(JNIEnv *);
     extern void s_cache_client_callbacks(JNIEnv *);
     extern void s_cache_message_handler(JNIEnv *);
-    s_cache_connect_options(env);
     s_cache_async_callback(env);
     s_cache_client_callbacks(env);
     s_cache_message_handler(env);

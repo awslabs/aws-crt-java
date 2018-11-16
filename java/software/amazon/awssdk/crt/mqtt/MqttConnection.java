@@ -259,6 +259,17 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    public void ping() throws MqttException {
+        if (native_ptr() == 0) {
+            throw new MqttException("Invalid connection during ping");
+        }
+        try {
+            mqtt_ping(native_ptr());
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Failed to send ping: " + ex.getMessage());
+        }
+    }
+
     /*******************************************************************************
      * Overrideable callbacks
      ******************************************************************************/
@@ -285,4 +296,6 @@ public class MqttConnection extends CrtResource implements Closeable {
     private static native boolean mqtt_set_will(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
     
     private static native void mqtt_set_login(long connection, String username, String password) throws CrtRuntimeException;
+
+    private static native void mqtt_ping(long connection) throws CrtRuntimeException;
 };

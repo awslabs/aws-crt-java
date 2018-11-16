@@ -15,11 +15,17 @@
 
 #include <jni.h>
 
+#include <aws/common/array_list.h>
 #include <aws/common/system_info.h>
 #include <aws/io/event_loop.h>
+#include <aws/io/tls_channel_handler.h>
+#include <aws/io/socket.h>
 
 #include "crt.h"
 
+/******************************************************************************
+ * EventLoopGroup
+ *****************************************************************************/
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1new(
     JNIEnv *env,
@@ -60,4 +66,287 @@ void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1
 
     aws_event_loop_group_clean_up(elg);
     aws_mem_release(elg->allocator, elg);
+}
+
+/******************************************************************************
+ * TLSCtxOptions
+ *****************************************************************************/
+struct jni_tls_ctx_options {
+    struct aws_tls_ctx_options options;
+    jstring jni_strings_storage[8];
+    struct aws_array_list jni_strings;
+};
+
+JNIEXPORT
+jlong JNICALL
+    Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1new(JNIEnv *env, jclass jni_tls_ctx_options) {
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct jni_tls_ctx_options *tls =
+        (struct jni_tls_ctx_options *)aws_mem_acquire(allocator, sizeof(struct jni_tls_ctx_options));
+    if (!tls) {
+        aws_jni_throw_runtime_exception(
+            env, "TLSCtxOptions.tls_ctx_options_new: Unable to allocate new jni_tls_ctx_options");
+        return (jlong)NULL;
+    }
+    aws_array_list_init_static(
+        &tls->jni_strings, tls->jni_strings_storage, AWS_ARRAY_SIZE(tls->jni_strings_storage), sizeof(jstring));
+    AWS_ZERO_STRUCT(tls->options);
+    return (jlong)tls;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1clean_1up(
+    JNIEnv *env,
+    jclass jni_tls_ctx_options,
+    jlong jni_tls) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    size_t num_strings = aws_array_list_length(&tls->jni_strings);
+    for (size_t idx = 0; idx < num_strings; ++idx) {
+        jstring jni_str;
+        aws_array_list_get_at(&tls->jni_strings, &jni_str, idx);
+        (*env)->DeleteGlobalRef(env, jni_str);
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, tls);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1minimum_1tls_1version(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jint jni_version) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    tls->options.minimum_tls_version = (enum aws_tls_versions)jni_version;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1ca_1file(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_ca_file) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_ca_file = (*env)->NewGlobalRef(env, jni_ca_file);
+    aws_array_list_push_back(&tls->jni_strings, jni_ca_file);
+    tls->options.ca_file = (*env)->GetStringUTFChars(env, jni_ca_file, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1ca_1path(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_ca_path) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_ca_path = (*env)->NewGlobalRef(env, jni_ca_path);
+    aws_array_list_push_back(&tls->jni_strings, jni_ca_path);
+    tls->options.ca_path = (*env)->GetStringUTFChars(env, jni_ca_path, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1alpn(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_alpn) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_alpn = (*env)->NewGlobalRef(env, jni_alpn);
+    aws_array_list_push_back(&tls->jni_strings, jni_alpn);
+    tls->options.alpn_list = (*env)->GetStringUTFChars(env, jni_alpn, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1certificate_1path(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_certificate_path) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_certificate_path = (*env)->NewGlobalRef(env, jni_certificate_path);
+    aws_array_list_push_back(&tls->jni_strings, jni_certificate_path);
+    tls->options.certificate_path = (*env)->GetStringUTFChars(env, jni_certificate_path, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1private_1key_1path(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_key_path) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_key_path = (*env)->NewGlobalRef(env, jni_key_path);
+    aws_array_list_push_back(&tls->jni_strings, jni_key_path);
+    tls->options.private_key_path = (*env)->GetStringUTFChars(env, jni_key_path, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1pkcs12_1path(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_pkcs12_path) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_pkcs12_path = (*env)->NewGlobalRef(env, jni_pkcs12_path);
+    aws_array_list_push_back(&tls->jni_strings, jni_pkcs12_path);
+    tls->options.pkcs12_path = (*env)->GetStringUTFChars(env, jni_pkcs12_path, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1pkcs12_1password(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_pkcs12_password) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    jni_pkcs12_password = (*env)->NewGlobalRef(env, jni_pkcs12_password);
+    aws_array_list_push_back(&tls->jni_strings, jni_pkcs12_password);
+    tls->options.pkcs12_password = (*env)->GetStringUTFChars(env, jni_pkcs12_password, NULL);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_TLSCtxOptions_tls_1ctx_1options_1set_1verify_1peer(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jboolean jni_verify) {
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    tls->options.verify_peer = jni_verify != 0;
+}
+
+/******************************************************************************
+ * SocketOptions
+ *****************************************************************************/
+JNIEXPORT 
+jlong JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1new(JNIEnv *env, jclass jni_class) {
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_socket_options *options =
+        (struct aws_socket_options *)aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
+    if (!options) {
+        aws_jni_throw_runtime_exception(
+            env, "SocketOptions.socket_options_new: Unable to allocate new aws_socket_options");
+        return (jlong)NULL;
+    }
+    AWS_ZERO_STRUCT(*options);
+    options->connect_timeout_ms = 3000;
+    options->domain = AWS_SOCKET_IPV4;
+    options->type = AWS_SOCKET_STREAM;
+    return (jlong)options;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1clean_1up(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_options) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, options);
+}
+
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1domain(JNIEnv *env, jclass jni_class, jlong jni_options, jint jni_domain) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    options->domain = (enum aws_socket_domain)jni_domain;
+}
+
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1type(JNIEnv *env, jclass jni_class, jlong jni_options, jint jni_type) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    options->type = (enum aws_socket_type)jni_type;
+}
+
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1connect_1timeout_1ms(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_options,
+    jint jni_timeout) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    options->connect_timeout_ms = jni_timeout;
+}
+
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1keep_1alive_1interval_1sec(
+    JNIEnv * env,
+    jclass jni_class,
+    jlong jni_options,
+    jshort jni_interval) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    options->keep_alive_interval_sec = jni_interval;
+}
+
+JNIEXPORT 
+void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1keep_1alive_1timeout_1sec(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_options,
+    jshort jni_timeout) {
+    struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
+    if (!options) {
+        return;
+    }
+
+    options->keep_alive_timeout_sec = jni_timeout;
 }

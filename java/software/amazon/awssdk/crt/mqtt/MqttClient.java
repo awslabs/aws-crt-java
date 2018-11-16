@@ -19,7 +19,6 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.mqtt.MqttConnection;
-import software.amazon.awssdk.crt.mqtt.MqttConnection.ConnectOptions;
 
 import java.io.Closeable;
 

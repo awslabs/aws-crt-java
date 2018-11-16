@@ -44,6 +44,13 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer);
 
 /*******************************************************************************
+ * aws_jni_new_string_from_jstring - Creates a new aws_string from the UTF-8
+ * characters extracted from the supplied jstring. The string must be destroyed
+ * via aws_string_destroy or aws_string_destroy_secure
+ ******************************************************************************/
+struct aws_string* aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
+
+/*******************************************************************************
  * aws_jni_get_thread_env - Gets the JNIEnv for the current thread from the VM,
  * attaching the env if necessary
  ******************************************************************************/

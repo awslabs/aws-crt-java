@@ -31,7 +31,8 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
         TLSv1(1),
         TLSv1_1(2),
         TLSv1_2(3),
-        TLSv1_3(4);
+        TLSv1_3(4),
+        TLS_VER_SYS_DEFAULTS(128);
 
         private int version;
         TlsVersions(int val) {

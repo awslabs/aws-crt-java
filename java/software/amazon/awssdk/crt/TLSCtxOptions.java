@@ -97,6 +97,10 @@ public final class TLSCtxOptions extends CrtResource implements Closeable {
         setCaFile(caFile);
     }
 
+    static TLSCtxOptions createDefaultClient() {
+        return new TLSCtxOptions();
+    }
+
     static TLSCtxOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TLSCtxOptions options = new TLSCtxOptions();
         options.setCertificatePath(certificatePath);

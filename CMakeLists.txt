@@ -113,7 +113,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 find_package(aws-c-common REQUIRED)
 find_package(aws-c-io REQUIRED)
 find_package(aws-c-mqtt REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common AWS::aws-c-io AWS::aws-c-mqtt)
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
 
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/software/amazon/awssdk/crt/*.java")
 

@@ -58,22 +58,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetB
             )
 endif()
 
-if (NOT CUSTOM_TLS)
-    if (USE_S2N)
-        set(TLS_STACK_DETERMINED ON)
-    endif ()
-    if (NOT TLS_STACK_DETERMINED)
-        if (NOT WIN32 AND NOT APPLE)
-            set(USE_S2N ON)
-        endif ()
-    endif ()
-
-    if (USE_S2N)
-        set(PLATFORM_LIBS ${PlATFORM_LIBS} s2n)
-	find_package(s2n REQUIRED)
-    endif ()
-endif ()
-
 file(GLOB CRT_JAVA_HEADERS
         ${AWS_CRT_JAVA_HEADERS}
         )
@@ -129,7 +113,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 find_package(aws-c-common REQUIRED)
 find_package(aws-c-io REQUIRED)
 find_package(aws-c-mqtt REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common aws-c-io aws-c-mqtt ${PLATFORM_LIBS})
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-common AWS::aws-c-io AWS::aws-c-mqtt)
 
 file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/software/amazon/awssdk/crt/*.java")
 

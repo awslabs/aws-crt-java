@@ -225,7 +225,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     jshort jni_port,
     jobject jni_client_callbacks,
     jlong jni_socket_options,
-    jlong jni_tls_options) {
+    jlong jni_tls_ctx) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_client;
@@ -254,11 +254,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
         socket_options = (struct aws_socket_options *)jni_socket_options;
     }
 
-    struct aws_tls_connection_options *tls = NULL;
-    if (jni_tls_options) {
-        tls = (struct aws_tls_connection_options *)jni_tls_options;
-    }
-
     /* any error after this point needs to jump to error_cleanup */
     struct mqtt_jni_connection *connection = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_connection));
     if (!connection) {
@@ -271,8 +266,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     assert(jvmresult == 0);
     memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
-    if (tls) {
-        memcpy(&connection->tls_options, tls, sizeof(struct aws_tls_connection_options));
+
+    /* if a tls_ctx was provided, initialize tls options */
+    struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_tls_connection_options *tls_options = NULL;
+    if (tls_ctx) {
+        aws_tls_connection_options_init_from_ctx(&connection->tls_options, tls_ctx);
+        tls_options = &connection->tls_options;
     }
 
     struct aws_mqtt_client_connection_callbacks callbacks;
@@ -283,7 +283,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     callbacks.user_data = connection;
 
     connection->client_connection =
-        aws_mqtt_client_connection_new(connection->client, callbacks, &endpoint, port, &connection->socket_options, tls);
+        aws_mqtt_client_connection_new(connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_options);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");

@@ -19,6 +19,7 @@ import software.amazon.awssdk.crt.ClientBootstrap;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.EventLoopGroup;
+import software.amazon.awssdk.crt.TlsContext;
 import software.amazon.awssdk.crt.mqtt.MqttConnection;
 
 import java.io.Closeable;
@@ -32,25 +33,23 @@ import java.io.Closeable;
  */
 public class MqttClient extends CrtResource implements Closeable {
     private ClientBootstrap bootstrap;
+    private TlsContext tlsContext;
 
     public MqttClient() throws CrtRuntimeException {
-        init(new ClientBootstrap(new EventLoopGroup(1)));
-    }
-
-    public MqttClient(int numThreads) throws CrtRuntimeException {
-        init(new ClientBootstrap(new EventLoopGroup(numThreads)));
-    }
-
-    public MqttClient(EventLoopGroup elg) throws CrtRuntimeException {
-        init(new ClientBootstrap(elg));
+        init(new ClientBootstrap(new EventLoopGroup(1)), null);
     }
 
     public MqttClient(ClientBootstrap cbs) throws CrtRuntimeException {
-        init(cbs);
+        init(cbs, null);
+    }
+
+    public MqttClient(ClientBootstrap cbs, TlsContext ctx) throws CrtRuntimeException {
+        init(cbs, ctx);
     }
     
-    private void init(ClientBootstrap cbs) throws CrtRuntimeException {
+    private void init(ClientBootstrap cbs, TlsContext ctx) throws CrtRuntimeException {
         bootstrap = cbs;
+        tlsContext = ctx;
         acquire(mqtt_client_init(bootstrap.native_ptr()));
     }
 
@@ -59,6 +58,10 @@ public class MqttClient extends CrtResource implements Closeable {
         if (native_ptr() != 0) {
             mqtt_client_clean_up(release());
         }
+    }
+
+    public TlsContext getTlsContext() {
+        return tlsContext;
     }
     
     /*******************************************************************************

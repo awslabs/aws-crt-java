@@ -22,6 +22,7 @@
 
 /* Have to wrap the native struct so we can manage string lifetime */
 struct jni_tls_ctx_options {
+    /* Must be first thing in the structure so casts to aws_tls_ctx_options work */
     struct aws_tls_ctx_options options;
     /* these strings get copied from java, so we don't have to pin and track references */
     struct aws_string *ca_file;

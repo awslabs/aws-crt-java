@@ -16,7 +16,7 @@
 package software.amazon.awssdk.crt.mqtt;
 
 import software.amazon.awssdk.crt.EventLoopGroup;
-import software.amazon.awssdk.crt.TlsContextOptions;
+import software.amazon.awssdk.crt.TlsContext;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttException;
@@ -84,21 +84,17 @@ public class MqttConnection extends CrtResource implements Closeable {
     }
 
     public MqttConnection(MqttClient _client, String endpoint, short port) throws MqttException {
-        init(_client, endpoint, port, null, null);
+        init(_client, endpoint, port, null);
     }
 
     public MqttConnection(MqttClient _client, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
-        init(_client, endpoint, port, socketOptions, null);
-    }
-
-    public MqttConnection(MqttClient _client, String endpoint, short port, SocketOptions socketOptions, TlsContextOptions tlsOptions)
-            throws MqttException {
-        init(_client, endpoint, port, socketOptions, tlsOptions);
+        init(_client, endpoint, port, socketOptions);
     }
     
-    private void init(MqttClient _client, String endpoint, short port, SocketOptions socketOptions, TlsContextOptions tlsOptions) throws MqttException {
+    private void init(MqttClient _client, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
         client = _client;
         try {
+            TlsContext tls = client.getTlsContext();
             ClientCallbacks clientCallbacks = new ClientCallbacks() {
                 @Override
                 public void onConnected() {
@@ -114,7 +110,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             };
             acquire(mqtt_new(client.native_ptr(), endpoint, port, clientCallbacks,
                     socketOptions != null ? socketOptions.native_ptr() : 0,
-                    tlsOptions != null ? tlsOptions.native_ptr() : 0)
+                    tls != null ? tls.native_ptr() : 0)
             );
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqtt_new: " + ex.getMessage());
@@ -281,7 +277,7 @@ public class MqttConnection extends CrtResource implements Closeable {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqtt_new(long client, String endpoint, short port, ClientCallbacks clientCallbacks, long socketOptions, long tlsOptions) throws CrtRuntimeException;
+    private static native long mqtt_new(long client, String endpoint, short port, ClientCallbacks clientCallbacks, long socketOptions, long tlsCtx) throws CrtRuntimeException;
 
     private static native void mqtt_clean_up(long connection);
 

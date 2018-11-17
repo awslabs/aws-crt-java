@@ -271,8 +271,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
     struct aws_tls_connection_options *tls_options = NULL;
     if (tls_ctx) {
-        aws_tls_connection_options_init_from_ctx(&connection->tls_options, tls_ctx);
         tls_options = &connection->tls_options;
+        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
+        aws_tls_connection_options_set_server_name(tls_options, (const char*)endpoint.ptr);
     }
 
     struct aws_mqtt_client_connection_callbacks callbacks;

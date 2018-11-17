@@ -15,6 +15,7 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
+import software.amazon.awssdk.crt.ClientBootstrap;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.EventLoopGroup;
@@ -30,23 +31,27 @@ import java.io.Closeable;
  * any number of MQTT endpoints
  */
 public class MqttClient extends CrtResource implements Closeable {
-    private EventLoopGroup elg;
+    private ClientBootstrap bootstrap;
 
     public MqttClient() throws CrtRuntimeException {
-        init(new EventLoopGroup(1));
+        init(new ClientBootstrap(new EventLoopGroup(1)));
     }
 
     public MqttClient(int numThreads) throws CrtRuntimeException {
-        init(new EventLoopGroup(numThreads));
+        init(new ClientBootstrap(new EventLoopGroup(numThreads)));
     }
 
-    public MqttClient(EventLoopGroup _elg) throws CrtRuntimeException {
-        init(_elg);
+    public MqttClient(EventLoopGroup elg) throws CrtRuntimeException {
+        init(new ClientBootstrap(elg));
+    }
+
+    public MqttClient(ClientBootstrap cbs) throws CrtRuntimeException {
+        init(cbs);
     }
     
-    private void init(EventLoopGroup _elg) throws CrtRuntimeException {
-        elg = _elg;
-        acquire(mqtt_client_init(elg.native_ptr()));
+    private void init(ClientBootstrap cbs) throws CrtRuntimeException {
+        bootstrap = cbs;
+        acquire(mqtt_client_init(bootstrap.native_ptr()));
     }
 
     @Override
@@ -59,7 +64,7 @@ public class MqttClient extends CrtResource implements Closeable {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long mqtt_client_init(long elg) throws CrtRuntimeException;
+    private static native long mqtt_client_init(long bootstrap) throws CrtRuntimeException;
 
     private static native void mqtt_client_clean_up(long client);
 }

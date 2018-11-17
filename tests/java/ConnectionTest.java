@@ -19,11 +19,12 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
-import java.util.Date;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.*;
+
 
 class MqttConnectionFixture {
+    EventLoopGroup elg = null;
+    ClientBootstrap bootstrap = null;
     MqttClient client = null;
     MqttConnection connection = null;
     final Semaphore done = new Semaphore(0);
@@ -44,7 +45,13 @@ class MqttConnectionFixture {
 
     boolean connect(boolean cleanSession, short keepAliveMs) {
         try {
-            client = new MqttClient(1);
+            elg = new EventLoopGroup(1);
+            bootstrap = new ClientBootstrap(elg);
+        } catch (CrtRuntimeException ex) {
+            fail("Exception during bootstrapping: " + ex.toString());
+        }
+        try {
+            client = new MqttClient(bootstrap);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
@@ -61,6 +68,7 @@ class MqttConnectionFixture {
                     }
                 }
             };
+            assertNotNull(connection);
             MqttActionListener connectAck = new MqttActionListener() {
                 @Override
                 public void onSuccess() {
@@ -79,7 +87,7 @@ class MqttConnectionFixture {
             return true;
         }
         catch (Exception ex) {
-            fail("Exception during connect: " + ex.getMessage());
+            fail("Exception during connect: " + ex.toString());
         }
         return false;
     }

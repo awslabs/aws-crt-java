@@ -31,7 +31,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1new
     }
     AWS_ZERO_STRUCT(*options);
     options->connect_timeout_ms = 3000;
-    options->domain = AWS_SOCKET_IPV4;
     options->type = AWS_SOCKET_STREAM;
     return (jlong)options;
 }

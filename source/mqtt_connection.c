@@ -246,7 +246,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
 
     struct aws_socket_options default_socket_options;
     AWS_ZERO_STRUCT(default_socket_options);
-    default_socket_options.domain = AWS_SOCKET_IPV4;
     default_socket_options.type = AWS_SOCKET_STREAM;
     default_socket_options.connect_timeout_ms = 3000;
     struct aws_socket_options *socket_options = &default_socket_options;

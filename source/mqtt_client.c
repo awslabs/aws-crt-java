@@ -20,12 +20,12 @@
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1client_1init(
     JNIEnv *env,
-    jclass jni_mqtt_client_cls,
-    jlong jni_elg) {
+    jclass jni_class,
+    jlong jni_bootstrap) {
 
-    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
-    if (!elg) {
-        aws_jni_throw_runtime_exception(env, "Invalid EventLoopGroup");
+    struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
+    if (!bootstrap) {
+        aws_jni_throw_runtime_exception(env, "Invalid ClientBootstrap");
         return (jlong)NULL;
     }
 
@@ -39,9 +39,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1cl
     }
 
     AWS_ZERO_STRUCT(*client);
-    client->event_loop_group = elg;
 
-    int result = aws_mqtt_client_init(client, allocator, client->event_loop_group);
+    int result = aws_mqtt_client_init(client, allocator, bootstrap);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "MqttClient.mqtt_client_init: aws_mqtt_client_init failed");
         goto error_cleanup;
@@ -60,7 +59,7 @@ error_cleanup:
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1client_1clean_1up(
     JNIEnv *env,
-    jclass jni_mqtt_client_cls,
+    jclass jni_class,
     jlong jni_mqtt_client) {
 
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_mqtt_client;

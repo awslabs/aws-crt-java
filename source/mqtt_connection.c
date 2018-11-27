@@ -82,7 +82,7 @@ struct mqtt_jni_connection {
     struct aws_mqtt_client *client; /* Provided to mqtt_connect */
     struct aws_mqtt_client_connection *client_connection;
     struct aws_socket_options socket_options;
-    struct aws_tls_ctx_options tls_options;
+    struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
     jobject client_callbacks; /* MqttConnection.ClientCallbacks */
@@ -224,17 +224,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     jstring jni_endpoint,
     jshort jni_port,
     jobject jni_client_callbacks,
-    jobject jni_socket_options,
-    jobject jni_tls_options) {
+    jlong jni_socket_options,
+    jlong jni_tls_ctx) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_client;
     if (!client) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_new: Client is invalid/null");
-        return (jlong)NULL;
-    }
-    if (!client->event_loop_group) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_new: EventLoopGroup is invalid/null");
         return (jlong)NULL;
     }
 
@@ -250,17 +246,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
 
     struct aws_socket_options default_socket_options;
     AWS_ZERO_STRUCT(default_socket_options);
-    default_socket_options.domain = AWS_SOCKET_IPV4;
     default_socket_options.type = AWS_SOCKET_STREAM;
     default_socket_options.connect_timeout_ms = 3000;
     struct aws_socket_options *socket_options = &default_socket_options;
     if (jni_socket_options) {
-        socket_options = (struct aws_socket_options *) jni_socket_options;
-    }
-
-    struct aws_tls_ctx_options *tls_ctx_opt = NULL;
-    if (jni_tls_options) {
-        tls_ctx_opt = (struct aws_tls_ctx_options *)jni_tls_options;
+        socket_options = (struct aws_socket_options *)jni_socket_options;
     }
 
     /* any error after this point needs to jump to error_cleanup */
@@ -275,8 +265,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     assert(jvmresult == 0);
     memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
-    if (tls_ctx_opt) {
-        memcpy(&connection->tls_options, tls_ctx_opt, sizeof(struct aws_tls_ctx_options));
+
+    /* if a tls_ctx was provided, initialize tls options */
+    struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_tls_connection_options *tls_options = NULL;
+    if (tls_ctx) {
+        tls_options = &connection->tls_options;
+        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
+        aws_tls_connection_options_set_server_name(tls_options, (const char*)endpoint.ptr);
     }
 
     struct aws_mqtt_client_connection_callbacks callbacks;
@@ -287,7 +283,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     callbacks.user_data = connection;
 
     connection->client_connection =
-        aws_mqtt_client_connection_new(connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_ctx_opt);
+        aws_mqtt_client_connection_new(connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_options);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");

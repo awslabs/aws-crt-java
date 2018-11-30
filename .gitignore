@@ -69,3 +69,7 @@ cmake-build*
 
 *.ipr
 *.iws
+
+# Maven
+mvn-build/
+targets/

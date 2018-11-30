@@ -44,6 +44,10 @@ class MqttConnectionFixture {
     }
 
     boolean connect(boolean cleanSession, short keepAliveMs) {
+        return connect(cleanSession, keepAliveMs, null);
+    }
+    
+    boolean connect(boolean cleanSession, short keepAliveMs, TlsContext tls) {
         try {
             elg = new EventLoopGroup(1);
             bootstrap = new ClientBootstrap(elg);
@@ -51,15 +55,13 @@ class MqttConnectionFixture {
             fail("Exception during bootstrapping: " + ex.toString());
         }
         try {
-            client = new MqttClient(bootstrap);
+            client = new MqttClient(bootstrap, tls);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
             connection = new MqttConnection(client, TEST_ENDPOINT, TEST_PORT) {
                 @Override
-                public void onOnline() {
-
-                }
+                public void onOnline() { }
 
                 @Override
                 public void onOffline() {
@@ -85,8 +87,7 @@ class MqttConnectionFixture {
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
             return true;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
         }
         return false;

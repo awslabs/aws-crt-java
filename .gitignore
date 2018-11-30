@@ -73,3 +73,8 @@ cmake-build*
 # Maven
 mvn-build/
 target/
+
+# Tests
+src/test/resources/*.key
+src/test/resources/*.pem
+

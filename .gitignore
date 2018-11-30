@@ -72,4 +72,4 @@ cmake-build*
 
 # Maven
 mvn-build/
-targets/
+target/

@@ -20,6 +20,11 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <directory>mvn-build/lib</directory>
+            </resource>
+        </resources>
         <plugins>
             <!-- make build dir for cmake -->
             <plugin>

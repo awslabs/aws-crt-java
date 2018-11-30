@@ -8,19 +8,19 @@ include(UseJava)
 include(AwsPlatformDetect)
 
 # Generate the java interface classes and headers first so they can be added to any generated projects 
-add_subdirectory("java/software/amazon/awssdk/crt")
+add_subdirectory("src/main/java/software/amazon/awssdk/crt")
 
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"
         )
 
 file(GLOB AWS_CRT_JAVA_SRC
-        "source/*.c"
+        "src/native/*.c"
         )
 
 if (WIN32)
     file(GLOB AWS_CRT_JAVA_OS_SRC
-            "source/windows/*.c"
+            "src/native/windows/*.c"
             )
 
     if (MSVC)
@@ -31,30 +31,20 @@ if (WIN32)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     file(GLOB AWS_CRT_JAVA_OS_SRC
-            "source/linux/*.c"
-            "source/posix/*.c"
+            "src/native/linux/*.c"
+            "src/native/posix/*.c"
             )
-    set(PLATFORM_LIBS "")
 elseif (APPLE)
     file(GLOB AWS_CRT_JAVA_OS_SRC
-            "source/bsd/*.c"
-            "source/posix/*.c"
-            "source/darwin/*.c"
+            "src/native/bsd/*.c"
+            "src/native/posix/*.c"
+            "src/native/darwin/*.c"
             )
-
-    find_library(SECURITY_LIB Security)
-    if (NOT SECURITY_LIB)
-        message(FATAL_ERROR "Security framework not found")
-    endif ()
-
-    #No choice on TLS for apple, darwinssl will always be used.
-    set(PLATFORM_LIBS ${SECURITY_LIB})
-    set(TLS_STACK_DETERMINED ON)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
     file(GLOB AWS_CRT_JAVA_OS_SRC
-            "source/bsd/*.c"
-            "source/posix/*.c"
+            "src/native/bsd/*.c"
+            "src/native/posix/*.c"
             )
 endif()
 
@@ -69,7 +59,7 @@ file(GLOB CRT_JAVA_SRC
 
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
-set(TARGET_LIB_DIR "${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${CMAKE_PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
@@ -91,15 +81,16 @@ else ()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
+# find JNI and add the include path
 find_package(JNI REQUIRED)
-include_directories(${JNI_INCLUDE_DIRS} source)
-#set(PLATFORM_LIBS ${PLATFORM_LIBS} ${JNI_LIBRARIES})
-
-find_package(JUnit)
+include_directories(${JNI_INCLUDE_DIRS} "src/native")
 
 # if we can test, include the test code
+find_package(JUnit)
 if (JUnit_FOUND)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DENABLE_JNI_TESTS")
+else()
+    message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Test code will be disabled.")
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
@@ -112,37 +103,3 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 
 find_package(aws-c-mqtt REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
-
-file(GLOB_RECURSE AWS_CRT_JAVA_SRC "java/software/amazon/awssdk/crt/*.java")
-
-# create a jar to aggregate the JNI interfaces
-add_jar(
-    aws-crt-java
-    SOURCES ${AWS_CRT_JAVA_SRC}
-)
-
-add_dependencies(aws-crt-java ${CMAKE_PROJECT_NAME})
-
-# add the shared lib to the JNI jar after it's compiled (this will always run, because it is not
-# currently possible to estabilish a proper build dependency against a JAR target added with add_jar()
-add_custom_target(aws-crt-java-shared-lib-package ALL DEPENDS aws-crt-java ${CMAKE_PROJECT_NAME} ${CMAKE_BINARY_DIR}/always_rebuild)
-add_dependencies(aws-crt-java-shared-lib-package aws-crt-java)
-add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/always_rebuild
-    COMMAND "${Java_JAR_EXECUTABLE}" "uf" "${CMAKE_BINARY_DIR}/aws-crt-java.jar" "${TARGET_LIB_DIR}/$<TARGET_FILE_NAME:${CMAKE_PROJECT_NAME}>"
-    COMMENT "Adding shared libs to aws-crt-java.jar"
-)
-
-install(
-        FILES ${CMAKE_BINARY_DIR}/aws-crt-java.jar
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        COMPONENT library
-)
-
-if (NOT JUnit_FOUND)
-    message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Tests will be disabled.")
-    return()
-endif()
-
-enable_testing()
-add_subdirectory(tests)

@@ -286,7 +286,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     if (tls_ctx) {
         tls_options = &connection->tls_options;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, (const char*)endpoint.ptr);
+        aws_tls_connection_options_set_server_name(tls_options, (const char *)endpoint.ptr);
     }
 
     struct aws_mqtt_client_connection_callbacks callbacks;
@@ -296,8 +296,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     callbacks.on_disconnect = s_on_disconnect;
     callbacks.user_data = connection;
 
-    connection->client_connection =
-        aws_mqtt_client_connection_new(connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_options);
+    connection->client_connection = aws_mqtt_client_connection_new(
+        connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_options);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");
@@ -483,7 +483,14 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscri
     enum aws_mqtt_qos qos = jni_qos;
 
     uint16_t msg_id = aws_mqtt_client_connection_subscribe(
-        connection->client_connection, &topic, qos, s_on_subscription_delivered, handler, s_cleanup_handler, s_on_ack, sub_ack);
+        connection->client_connection,
+        &topic,
+        qos,
+        s_on_subscription_delivered,
+        handler,
+        s_cleanup_handler,
+        s_on_ack,
+        sub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_subscribe: aws_mqtt_client_connection_subscribe failed");
@@ -662,7 +669,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(JNIEnv *env, jclass jni_class, jlong jni_connection) {
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Invalid connection");

@@ -49,20 +49,20 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
     jlong payload_size = (*env)->GetDirectBufferCapacity(env, byte_buffer);
     if (payload_size == -1) {
         aws_jni_throw_runtime_exception(
-                env, "MqttConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
+            env, "MqttConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
         return aws_byte_cursor_from_array(NULL, 0);
     }
     jbyte *payload_data = (*env)->GetDirectBufferAddress(env, byte_buffer);
     if (!payload_data) {
         aws_jni_throw_runtime_exception(
-                env, "MqttConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
+            env, "MqttConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
         return aws_byte_cursor_from_array(NULL, 0);
     }
-    return aws_byte_cursor_from_array((const uint8_t*)payload_data, (size_t)payload_size);
+    return aws_byte_cursor_from_array((const uint8_t *)payload_data, (size_t)payload_size);
 }
 
-struct aws_string* aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
-    struct aws_allocator* allocator = aws_jni_get_allocator();
+struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
+    struct aws_allocator *allocator = aws_jni_get_allocator();
     return aws_string_new_from_c_str(allocator, (*env)->GetStringUTFChars(env, str, NULL));
 }
 

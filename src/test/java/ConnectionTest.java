@@ -32,7 +32,6 @@ class MqttConnectionFixture {
 
     static final String TEST_ENDPOINT = "localhost";
     static final short TEST_PORT = 1883;
-    static final int TEST_TIMEOUT = 3000; /* ms */
     static final String TEST_CLIENTID = "AwsCrtJavaMqttTest";
 
     MqttConnectionFixture() {
@@ -48,6 +47,10 @@ class MqttConnectionFixture {
     }
     
     boolean connect(boolean cleanSession, short keepAliveMs, TlsContext tls) {
+        return connect(TEST_ENDPOINT, TEST_PORT, TEST_CLIENTID, cleanSession, keepAliveMs, tls);
+    }
+
+    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, short keepAliveMs, TlsContext tls) {
         try {
             elg = new EventLoopGroup(1);
             bootstrap = new ClientBootstrap(elg);
@@ -59,7 +62,7 @@ class MqttConnectionFixture {
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
-            connection = new MqttConnection(client, TEST_ENDPOINT, TEST_PORT) {
+            connection = new MqttConnection(client, endpoint, port) {
                 @Override
                 public void onOnline() { }
 
@@ -83,7 +86,7 @@ class MqttConnectionFixture {
                     done.release();
                 }
             };
-            connection.connect(TEST_CLIENTID, connectAck);
+            connection.connect(clientId, cleanSession, keepAliveMs, connectAck);
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
             return true;

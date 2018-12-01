@@ -75,6 +75,7 @@ mvn-build/
 target/
 
 # Tests
+*.log
 src/test/resources/*.key
 src/test/resources/*.pem
 

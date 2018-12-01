@@ -88,6 +88,8 @@ struct mqtt_jni_connection {
     jobject client_callbacks; /* MqttConnection.ClientCallbacks */
     jobject connect_ack;      /* MqttConnection.AsyncCallback */
     jobject disconnect_ack;   /* MqttConnection.AsyncCallback */
+
+    bool disconnect_requested;
 };
 
 /*******************************************************************************
@@ -186,7 +188,7 @@ static void s_on_connect_success(
     }
 }
 
-static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
+static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
     (void)client_connection;
     (void)error_code;
 
@@ -197,9 +199,18 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
         snprintf(buf, sizeof(buf), "Disconnected with code: %d", error_code);
         jstring message = (*env)->NewStringUTF(env, buf);
         (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, message);
+        (*env)->DeleteLocalRef(env, message);
+    }
+
+    /* this was not a requested disconnect, request a reconnect */
+    if (!connection->disconnect_requested) {
+        return true;
+    }
+
+    /* this is an intentional disconnect, so clean up everything */
+    if (connection->client_callbacks) {
         (*env)->DeleteGlobalRef(env, connection->client_callbacks);
         connection->client_callbacks = NULL;
-        (*env)->DeleteLocalRef(env, message);
     }
 
     if (connection->connect_ack) {
@@ -215,6 +226,8 @@ static void s_on_disconnect(struct aws_mqtt_client_connection *client_connection
 
     /* client_connection will be cleaned up by channel shutdown */
     connection->client_connection = NULL;
+
+    return false;
 }
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1new(
@@ -262,6 +275,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     AWS_ZERO_STRUCT(*connection);
     connection->client = client;
     connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
+    connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     assert(jvmresult == 0);
     memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
@@ -362,6 +376,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1disconnec
         return;
     }
 
+    connection->disconnect_requested = true;
     if (jni_ack) {
         connection->disconnect_ack = (*env)->NewGlobalRef(env, jni_ack);
     }
@@ -396,6 +411,11 @@ static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t pac
     s_deliver_ack_success(callback);
 
     mqtt_jni_async_callback_clean_up(callback);
+}
+
+static void s_cleanup_handler(void *user_data) {
+    struct mqtt_jni_async_callback *handler = user_data;
+    mqtt_jni_async_callback_clean_up(handler);
 }
 
 static void s_on_subscription_delivered(
@@ -463,7 +483,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscri
     enum aws_mqtt_qos qos = jni_qos;
 
     uint16_t msg_id = aws_mqtt_client_connection_subscribe(
-        connection->client_connection, &topic, qos, s_on_subscription_delivered, handler, s_on_ack, sub_ack);
+        connection->client_connection, &topic, qos, s_on_subscription_delivered, handler, s_cleanup_handler, s_on_ack, sub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_subscribe: aws_mqtt_client_connection_subscribe failed");
@@ -641,7 +661,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
     }
 }
 
-JNIEXPORT 
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(JNIEnv *env, jclass jni_class, jlong jni_connection) {
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {

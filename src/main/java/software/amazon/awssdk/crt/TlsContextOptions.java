@@ -53,63 +53,63 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
         }
     }
 
-    void setMinimumTlsVersion(TlsVersions version) {
+    public void setMinimumTlsVersion(TlsVersions version) {
         tls_options_set_minimum_tls_version(native_ptr(), version.getValue());
     }
 
-    void setCaFile(String caFile) {
+    public void setCaFile(String caFile) {
         tls_options_set_ca_file(native_ptr(), caFile);
     }
 
-    void setCaPath(String caPath) {
+    public void setCaPath(String caPath) {
         tls_options_set_ca_path(native_ptr(), caPath);
     }
 
-    void setAlpnList(String alpn) {
+    public void setAlpnList(String alpn) {
         tls_options_set_alpn(native_ptr(), alpn);
     }
 
-    void setCertificatePath(String certificatePath) {
+    public void setCertificatePath(String certificatePath) {
         tls_options_set_certificate_path(native_ptr(), certificatePath);
     }
 
-    void setPrivateKeyPath(String privateKeyPath) {
+    public void setPrivateKeyPath(String privateKeyPath) {
         tls_options_set_private_key_path(native_ptr(), privateKeyPath);
     }
 
-    void setPkcs12Path(String pkcs12Path) {
+    public void setPkcs12Path(String pkcs12Path) {
         tls_options_set_pkcs12_path(native_ptr(), pkcs12Path);
     }
 
-    void setPkcs12Password(String pkcs12Password) {
+    public void setPkcs12Password(String pkcs12Password) {
         tls_options_set_pkcs12_password(native_ptr(), pkcs12Password);
     }
 
-    void setVerifyPeer(boolean verify) {
+    public void setVerifyPeer(boolean verify) {
         tls_options_set_verify_peer(native_ptr(), verify);
     }
 
-    boolean isAlpnSupported() {
+    public boolean isAlpnSupported() {
         return tls_options_is_alpn_available();
     }
 
-    void overrideDefaultTrustStore(String caPath, String caFile) {
+    public void overrideDefaultTrustStore(String caPath, String caFile) {
         setCaPath(caPath);
         setCaFile(caFile);
     }
 
-    static TlsContextOptions createDefaultClient() throws CrtRuntimeException {
+    public static TlsContextOptions createDefaultClient() throws CrtRuntimeException {
         return new TlsContextOptions();
     }
 
-    static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.setCertificatePath(certificatePath);
         options.setPrivateKeyPath(privateKeyPath);
         return options;
     }
 
-    static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.setPkcs12Path(pkcs12Path);
         options.setPkcs12Password(pkcs12Password);

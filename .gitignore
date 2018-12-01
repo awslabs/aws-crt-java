@@ -69,3 +69,12 @@ cmake-build*
 
 *.ipr
 *.iws
+
+# Maven
+mvn-build/
+target/
+
+# Tests
+src/test/resources/*.key
+src/test/resources/*.pem
+

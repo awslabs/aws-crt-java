@@ -31,7 +31,7 @@ do
         shift
         ;;
         *)    # everything else
-        cmake_args+=("$1") # unknown args are passed to cmake
+        cmake_args="$cmake_args $arg" # unknown args are passed to cmake
         shift
         ;;
     esac

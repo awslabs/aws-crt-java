@@ -78,9 +78,10 @@ public class MqttConnection extends CrtResource implements Closeable {
     
     /* used to receive connection events */
     interface ClientCallbacks {
-        public void onConnected();
+        void onConnected();
 
-        public void onDisconnected(String reason);
+        /* return true to attempt reconnect if connection is in a recoverable state */
+        boolean onDisconnected(boolean recoverable, String reason);
     }
 
     public MqttConnection(MqttClient _client, String endpoint, short port) throws MqttException {
@@ -103,9 +104,9 @@ public class MqttConnection extends CrtResource implements Closeable {
                 }
 
                 @Override
-                public void onDisconnected(String reason) {
+                public boolean onDisconnected(boolean recoverable, String reason) {
                     connectionState = ConnectionState.Disconnected;
-                    onOffline();
+                    return onOffline(recoverable, reason);
                 }
             };
             acquire(mqtt_new(client.native_ptr(), endpoint, port, clientCallbacks,
@@ -272,7 +273,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * Overrideable callbacks
      ******************************************************************************/
     public void onOnline() {}
-    public void onOffline() {}
+    public boolean onOffline(boolean recoverable, String reason) { return false; }
 
     /*******************************************************************************
      * Native methods

@@ -61,7 +61,7 @@ void s_cache_client_callbacks(JNIEnv *env) {
     assert(cls);
     s_client_callbacks.on_connected = (*env)->GetMethodID(env, cls, "onConnected", "()V");
     assert(s_client_callbacks.on_connected);
-    s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(Ljava/lang/String;)V");
+    s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(ZLjava/lang/String;)Z");
     assert(s_client_callbacks.on_disconnected);
 }
 
@@ -158,7 +158,7 @@ static void s_on_connect_failed(struct aws_mqtt_client_connection *client_connec
     struct mqtt_jni_connection *connection = user_data;
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
     char buf[1024];
-    snprintf(buf, sizeof(buf), "Connection failed with code: %d", error_code);
+    snprintf(buf, sizeof(buf), "Connection failed with code: %d: %s", error_code, aws_error_str(error_code));
     jstring message = (*env)->NewStringUTF(env, buf);
     if (connection->connect_ack) {
         (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_failure, message);
@@ -193,28 +193,56 @@ static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection
     (void)error_code;
 
     struct mqtt_jni_connection *connection = user_data;
+
+    bool recoverable = true;
+    switch (error_code) {
+        case AWS_IO_SOCKET_CLOSED:
+        case AWS_IO_SOCKET_INVALID_ADDRESS:
+        case AWS_IO_SOCKET_ADDRESS_IN_USE:
+        case AWS_IO_SOCKET_UNSUPPORTED_ADDRESS_FAMILY:
+        case AWS_IO_SOCKET_CONNECTION_REFUSED:
+        case AWS_IO_SOCKET_INVALID_OPTIONS:
+        case AWS_IO_SOCKET_INVALID_OPERATION_FOR_TYPE:
+            recoverable = false;
+            break;
+        default:
+            break;
+    }
+
+    /* this was not a requested disconnect, request a reconnect unless user code says otherwise */
+    bool recover = recoverable && !connection->disconnect_requested;
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
     if (connection->client_callbacks) {
         char buf[1024];
-        snprintf(buf, sizeof(buf), "Disconnected with code: %d", error_code);
+        if (error_code) {
+            snprintf(buf, sizeof(buf), "Disconnected with code: %d: %s", error_code, aws_error_str(error_code));
+        }
+        else {
+            strncpy(buf, "Disconnected successfully", sizeof(buf));
+        }
         jstring message = (*env)->NewStringUTF(env, buf);
-        (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, message);
+        recover = (*env)->CallBooleanMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
         (*env)->DeleteLocalRef(env, message);
     }
 
-    /* this was not a requested disconnect, request a reconnect */
-    if (!connection->disconnect_requested) {
+    /* if the user wants recovery, and it's possible, tell mqtt to try to reconnect */
+    if (recoverable && recover) {
         return true;
     }
 
-    /* this is an intentional disconnect, so clean up everything */
+    /* this is an intentional or unrecoverable disconnect, so clean up everything */
     if (connection->client_callbacks) {
         (*env)->DeleteGlobalRef(env, connection->client_callbacks);
         connection->client_callbacks = NULL;
     }
 
     if (connection->connect_ack) {
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "Connection failed with code: %d: %s", error_code, aws_error_str(error_code));
+        jstring message = (*env)->NewStringUTF(env, buf);
+        (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_failure, message);
         (*env)->DeleteGlobalRef(env, connection->connect_ack);
+        (*env)->DeleteLocalRef(env, message);
         connection->connect_ack = NULL;
     }
 

@@ -48,6 +48,7 @@ public class IotServiceTest extends MqttConnectionFixture {
 
     Path pathToCert = null;
     Path pathToKey = null;
+    Path pathToCa = null;
 
     private boolean extractCredentials() {
         try {
@@ -60,8 +61,10 @@ public class IotServiceTest extends MqttConnectionFixture {
                     pathToCert = Paths.get(entry);
                 } else if (entry.endsWith("private.pem.key")) {
                     pathToKey = Paths.get(entry);
+                } else if (entry.endsWith("AmazonRootCA1.pem")) {
+                    pathToCa = Paths.get(entry);
                 }
-                if (pathToCert != null && pathToKey != null) {
+                if (pathToCert != null && pathToKey != null && pathToCa != null) {
                     return true;
                 }
             }
@@ -81,6 +84,7 @@ public class IotServiceTest extends MqttConnectionFixture {
 
         short port = TEST_PORT;
         TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
+        tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
         if (tlsOptions.isAlpnSupported()) {
             tlsOptions.setAlpnList("x-amzn-mqtt-ca");
             port = TEST_PORT_ALPN;

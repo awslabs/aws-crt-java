@@ -10,7 +10,7 @@ if NOT type $CLANG_FORMAT 2> /dev/null ; then
 fi
 
 FAIL=0
-SOURCE_FILES=`find source include tests -type f \( -name '*.h' -o -name '*.c' \) -not -path "include/aws/jni/*"`
+SOURCE_FILES=`find src/native -type f \( -name '*.h' -o -name '*.c' \)`
 for i in $SOURCE_FILES
 do
     $CLANG_FORMAT -output-replacements-xml $i | grep -c "<replacement " > /dev/null

@@ -19,8 +19,11 @@
 
 #include "crt.h"
 
-JNIEXPORT 
-jlong JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1new(JNIEnv *env, jclass jni_class, jlong jni_elg) {
+JNIEXPORT
+jlong JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1new(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_elg) {
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
     if (!elg) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
@@ -51,8 +54,11 @@ error_cleanup:
     return (jlong)NULL;
 }
 
-JNIEXPORT 
-void JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1clean_1up(JNIEnv *env, jclass jni_class, jlong jni_bootstrap) {
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1clean_1up(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_bootstrap) {
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
         return;

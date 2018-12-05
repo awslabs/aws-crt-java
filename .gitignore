@@ -74,8 +74,8 @@ cmake-build*
 mvn-build/
 target/
 
-# Tests
+# Test resources/certs/logs
 *.log
-src/test/resources/*.key
-src/test/resources/*.pem
-
+*.pem
+*.key
+*.crt

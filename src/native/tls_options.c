@@ -111,6 +111,10 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
         return;
     }
 
+    if (!jni_ca_file) {
+        return;
+    }
+
     tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_file);
     tls->options.ca_file = (const char *)aws_string_bytes(tls->ca_file);
 }
@@ -123,6 +127,10 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jstring jni_ca_path) {
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
+        return;
+    }
+
+    if (!jni_ca_path) {
         return;
     }
 
@@ -220,8 +228,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-jboolean JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1is_1alpn_1available(
-    JNIEnv *env,
-    jclass jni_class) {
+jboolean JNICALL
+    Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1is_1alpn_1available(JNIEnv *env, jclass jni_class) {
     return aws_tls_is_alpn_available();
 }

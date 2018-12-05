@@ -87,6 +87,7 @@ class MqttConnectionFixture {
                     done.release();
                 }
             };
+            cleanSession = true; // only true is supported right now
             connection.connect(clientId, cleanSession, keepAliveMs, connectAck);
             done.acquire();
             assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());

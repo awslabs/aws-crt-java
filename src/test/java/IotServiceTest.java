@@ -91,7 +91,7 @@ public class IotServiceTest extends MqttConnectionFixture {
         }
         TlsContext tls = new TlsContext(tlsOptions);
         
-        connect(TEST_ENDPOINT, port, TEST_CLIENTID, false, (short)0, tls);
+        connect(TEST_ENDPOINT, port, TEST_CLIENTID, true, (short)0, tls);
 
         Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
             @Override

@@ -10,7 +10,7 @@ set AWS_C_INSTALL=%cd%\\install
 
 CALL :install_library aws-c-common
 CALL :install_library aws-c-io
-CALL :install_library aws-c-mqtt
+CALL :install_library aws-c-mqtt transactional-tree
 
 cd aws-crt-java
 mvn test || goto error

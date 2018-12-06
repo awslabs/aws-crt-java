@@ -5,7 +5,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install gcc-6 cmake3 cppcheck maven -y
+      - sudo apt-get install gcc-6 cmake3 cppcheck openjdk-8-jdk-headless maven -y
   pre_build:
     commands:
       - export CC=gcc-6

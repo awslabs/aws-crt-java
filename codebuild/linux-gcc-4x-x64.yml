@@ -4,7 +4,7 @@ phases:
   install:
     commands:
       - sudo apt-get update -y
-      - sudo apt-get install gcc cmake3 cppcheck maven -y
+      - sudo apt-get install gcc cmake3 cppcheck openjdk-8-jdk-headless maven -y
   pre_build:
     commands:
       - export CC=gcc

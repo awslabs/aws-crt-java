@@ -13,7 +13,10 @@ deps=(aws-c-common aws-c-io aws-c-mqtt)
 # everything is relative to the directory this script is in
 home_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-install_prefix=$home_dir/../install
+# where to have cmake put its binaries
+deps_dir=$home_dir/build/deps
+
+install_prefix=$deps_dir/install
 
 cmake_args=()
 while [[ $# -gt 0 ]]
@@ -37,9 +40,6 @@ do
     esac
 done
 
-# where to have cmake put its binaries
-deps_dir=build/deps
-
 if [ $clean ]; then
     rm -r $deps_dir
 fi
@@ -52,6 +52,7 @@ for dep in ${deps[@]}; do
     mkdir -p $dep_dir
     pushd $dep_dir
 
+    echo "cmake -GNinja $cmake_args -DCMAKE_INSTALL_PREFIX=$install_prefix $src_dir"
     cmake -GNinja $cmake_args -DCMAKE_INSTALL_PREFIX=$install_prefix $src_dir
     cmake --build . --target all
     cmake --build . --target install

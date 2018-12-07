@@ -305,6 +305,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
     connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
+    (void)jvmresult;
     assert(jvmresult == 0);
     memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
 

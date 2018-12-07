@@ -3,6 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get update
       - sudo apt-get install clang-3.9 cmake3 cppcheck clang-tidy-3.9 openjdk-8-jdk-headless maven -y

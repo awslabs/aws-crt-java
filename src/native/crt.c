@@ -69,6 +69,7 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
     jint result = (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
+    (void)result;
     assert(result == JNI_OK);
     return env;
 }

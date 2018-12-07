@@ -1,6 +1,5 @@
 
 find_package(Java 1.8 REQUIRED)
-find_package(JUnit)
 
 set(AWS_JNI_HEADER_DIR "${PROJECT_SOURCE_DIR}/include/aws/jni")
 set(AWS_JNI_BINARY_DIR "${CMAKE_BINARY_DIR}/java")

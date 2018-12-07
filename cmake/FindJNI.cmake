@@ -351,23 +351,20 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(JNI  DEFAULT_MSG  JAVA_JVM_LIBRARY
-                                                    JAVA_INCLUDE_PATH)
+                                                    JAVA_INCLUDE_PATH
+                                                    JAVA_INCLUDE_PATH2)
 
 mark_as_advanced(
-  JAVA_AWT_LIBRARY
   JAVA_JVM_LIBRARY
-  JAVA_AWT_INCLUDE_PATH
   JAVA_INCLUDE_PATH
   JAVA_INCLUDE_PATH2
 )
 
 set(JNI_LIBRARIES
-  ${JAVA_AWT_LIBRARY}
   ${JAVA_JVM_LIBRARY}
 )
 
 set(JNI_INCLUDE_DIRS
   ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH2}
-  ${JAVA_AWT_INCLUDE_PATH}
 )

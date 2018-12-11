@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

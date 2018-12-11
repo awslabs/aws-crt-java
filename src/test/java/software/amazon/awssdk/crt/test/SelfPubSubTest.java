@@ -13,18 +13,16 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 import java.util.function.*;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Semaphore;
 
-import crt.test.MqttConnectionFixture;
+import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 
 public class SelfPubSubTest extends MqttConnectionFixture {
     public SelfPubSubTest() {

@@ -79,3 +79,6 @@ target/
 *.pem
 *.key
 *.crt
+
+# dependencies from build-deps.sh
+deps/

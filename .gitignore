@@ -82,3 +82,8 @@ target/
 
 # dependencies from build-deps.sh
 deps/
+
+# idea stuff
+.classpath
+.project
+.settings/

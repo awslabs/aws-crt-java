@@ -78,7 +78,7 @@
                             <workingDirectory>mvn-build</workingDirectory>
                             <arguments>
                                 <argument>-GUnix Makefiles</argument>
-                                <argument>-DCMAKE_INSTALL_PREFIX=${env.AWS_C_INSTALL}</argument>
+                                <argument>-DCMAKE_INSTALL_PREFIX=${project.basedir}/build/deps/install</argument>
                                 <argument>-DCMAKE_BUILD_TYPE=Release</argument>
                                 <argument>..</argument>
                             </arguments>

@@ -36,4 +36,4 @@ fi
 ./build-deps.sh
 
 # build java package
-mvn compile
+mvn -X compile

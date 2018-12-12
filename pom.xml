@@ -14,6 +14,9 @@
                     <family>windows</family>
                 </os>
             </activation>
+            <properties>
+                <cmake.target>ALL_BUILD</cmake.target>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -65,6 +68,7 @@
             </activation>
             <properties>
                 <cmake.generator>Unix Makefiles</cmake.generator>
+                <cmake.target>all</cmake.target>
             </properties>
         </profile>
         <profile>
@@ -76,6 +80,7 @@
             </activation>
             <properties>
                 <cmake.generator>Unix Makefiles</cmake.generator>
+                <cmake.target>all</cmake.target>
             </properties>
         </profile>
     </profiles>
@@ -171,7 +176,7 @@
                                 <argument>--build</argument>
                                 <argument>.</argument>
                                 <argument>--target</argument>
-                                <argument>all</argument>
+                                <argument>${cmake.target}</argument>
                             </arguments>
                         </configuration>
                     </execution>

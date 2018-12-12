@@ -7,7 +7,7 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
-call ..\build_deps.bat %CMAKE_ARGS%
+call build_deps.bat %CMAKE_ARGS%
 
 mvn test || goto error
 

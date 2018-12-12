@@ -5,9 +5,6 @@ set CMAKE_ARGS=%*
 REM this will also install jdk8
 choco install maven -y
 call RefreshEnv.cmd
-where javac > c:\tmp\javacpath.txt
-set /P JAVA_HOME= <c:\tmp\javacpath.txt
-set JAVA_HOME=%JAVA_HOME%\..
 echo JAVA_HOME=%JAVA_HOME%
 
 mkdir build\deps\install

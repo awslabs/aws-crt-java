@@ -6,7 +6,7 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install gcc-6 cmake3 cppcheck ninja-build openjdk-8-jdk-headless maven -y
+      - sudo apt-get install gcc-6 cmake3 cppcheck ninja-build libssl1.0.0 openjdk-8-jdk-headless maven -y
   pre_build:
     commands:
       - export CC=gcc-6

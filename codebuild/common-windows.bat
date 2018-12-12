@@ -9,9 +9,7 @@ REM set PATH=%JAVA_HOME%\bin;%PATH%
 REM this will also install jdk8
 choco install maven -y
 refreshenv
-where java > c:\tmp\javapath.txt
-SET /p JAVA_HOME= <c:\tmp\javapath.txt
-set JAVA_HOME=%JAVA_HOME%\..
+SET JAVA_HOME=%~$PATH:javac
 echo JAVA_HOME=%JAVA_HOME%
 
 mkdir build\deps\install

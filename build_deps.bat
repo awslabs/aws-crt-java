@@ -33,7 +33,7 @@ if not exist %DEPS_DIR% (
 
 :: See if a generator was provided
 echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
-    echo Using cmake generator from command line
+    echo Using supplied generator from command line: %CMAKE_ARGS%
 ) || (
     echo Getting cmake generator from cmake
     call find_vs_cmake_generator.bat

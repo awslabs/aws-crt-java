@@ -6,7 +6,7 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install gcc-7 cmake3 cppcheck openjdk-8-jdk-headless maven -y
+      - sudo apt-get install gcc-7 cmake3 cppcheck ninja-build openjdk-8-jdk-headless maven -y
   pre_build:
     commands:
       - export CC=gcc-7
@@ -14,6 +14,7 @@ phases:
     commands:
       - echo Build started on `date`
       - ./codebuild/common-posix.sh
+      - ./format-check.sh
   post_build:
     commands:
       - echo Build completed on `date`

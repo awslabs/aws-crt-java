@@ -101,6 +101,9 @@
         <resources>
             <resource>
                 <directory>mvn-build/lib</directory>
+                <excludes>
+                    <exclude>**/*.ilk</exclude>
+                </excludes>
             </resource>
         </resources>
         <testResources>

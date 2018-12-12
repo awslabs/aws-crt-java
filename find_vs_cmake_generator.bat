@@ -16,3 +16,4 @@ for /F "tokens=1 delims==" %%A in ("%GENERATOR%") do (
 :: Trim leading whitespace
 for /F "tokens=*" %%A in ("%GENERATOR_NAME%") do set TRIMMED=%%A
 set CMAKE_VS_GENERATOR=%TRIMMED:[arch]=Win64%
+echo cmake.generator=%CMAKE_VS_GENERATOR% > mvn-build\cmake.properties

@@ -20,7 +20,7 @@ echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL || (
 
 call build_deps.bat %CMAKE_ARGS%
 
-mvn test || goto error
+mvn compile -X || goto error
 
 goto :EOF
 

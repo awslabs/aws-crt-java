@@ -1,7 +1,11 @@
 
 set CMAKE_ARGS=%*
 
-@"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command (New-Object System.Net.WebClient).DownloadFile('https://d3pxv6yz143wms.cloudfront.net/Amazon-Corretto-preview-8u192.msi','C:\tmp\Amazon-Corretto.msi')
+msiexec /i /quiet /Log C:\tmp\Amazon-Corretto.msi
+set JAVA_HOME="C:\Program Files\Amazon Corretto"
+set PATH=%JAVA_HOME%\bin;%PATH%
 REM this will also install jdk8
 choco install maven -y
 

@@ -23,10 +23,10 @@
 #if UINTPTR_MAX == 0xffffffff
 #    ifdef __clang__
 #        pragma clang diagnostic push
-#        pragma clang diagnostic ignored "-Werror=pointer-to-int-cast"
+#        pragma clang diagnostic ignored "-Wpointer-to-int-cast"
 #    else
 #        pragma GCC diagnostic push
-#        pragma GCC diagnostic ignored "-Werror=pointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
 #    endif
 #endif
 

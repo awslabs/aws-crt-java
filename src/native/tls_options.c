@@ -34,6 +34,16 @@ struct jni_tls_ctx_options {
     struct aws_string *pkcs12_password;
 };
 
+#if UINTPTR_MAX == 0xffffffff
+#   ifdef __clang__
+#       pragma clang diagnostic push
+#       pragma clang diagnostic ignored "-Werror=pointer-to-int-cast"
+#   else
+#       pragma GCC diagnostic push
+#       pragma GCC diagnostic ignored "-Werror=pointer-to-int-cast"
+#   endif
+#endif
+
 JNIEXPORT
 jlong JNICALL
     Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_tls_ctx_options) {
@@ -232,3 +242,11 @@ jboolean JNICALL
     Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1is_1alpn_1available(JNIEnv *env, jclass jni_class) {
     return aws_tls_is_alpn_available();
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic pop
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

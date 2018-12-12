@@ -6,7 +6,7 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get update
-      - sudo apt-get install clang-3.9 cmake3 cppcheck clang-tidy-3.9 libssl1.0.0 ninja-build openjdk-8-jdk-headless maven -y
+      - sudo apt-get install clang-3.9 cmake3 cppcheck clang-tidy-3.9 libssl-dev ninja-build openjdk-8-jdk-headless maven -y
   pre_build:
     commands:
       - export CC=clang-3.9

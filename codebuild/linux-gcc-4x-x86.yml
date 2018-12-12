@@ -28,6 +28,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
+      - export CFLAGS=-m32
       - ./codebuild/common-posix.sh -DCMAKE_C_FLAGS="-m32" -DCMAKE_LIBRARY_ARCHITECTURE=i386-linux-gnu
   post_build:
     commands:

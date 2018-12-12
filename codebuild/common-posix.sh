@@ -17,7 +17,7 @@ function install_library {
     mkdir build
     cd build
 
-    cmake -DCMAKE_INSTALL_PREFIX=$AWS_C_INSTALL -DENABLE_SANITIZERS=ON $CMAKE_ARGS ../
+    cmake -DCMAKE_INSTALL_PREFIX=$AWS_C_INSTALL $CMAKE_ARGS ../
     make install
 
     popd

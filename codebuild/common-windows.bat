@@ -11,6 +11,7 @@ choco install maven -y
 refreshenv
 where java > c:\tmp\javapath.txt
 SET /p JAVA_HOME= <c:\tmp\javapath.txt
+set JAVA_HOME=%JAVA_HOME%\..
 echo JAVA_HOME=%JAVA_HOME%
 
 mkdir build\deps\install

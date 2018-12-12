@@ -428,7 +428,19 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     }
 }
 
-static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
+static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, const char* reason) {
+    assert(callback);
+    assert(callback->connection);
+
+    if (callback->async_callback) {
+        JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+        jstring jni_reason = (*env)->NewStringUTF(env, reason);
+        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_failure, jni_reason);
+        (*env)->DeleteLocalRef(env, jni_reason);
+    }
+}
+
+static void s_on_op_complete(struct aws_mqtt_client_connection* connection, uint16_t packet_id, int error_code, void *user_data) {
     assert(connection);
     (void)packet_id;
 
@@ -437,9 +449,22 @@ static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t pac
         return;
     }
 
-    s_deliver_ack_success(callback);
+    if (error_code) {
+        char reason[1024];
+        snprintf(reason, sizeof(reason), "Failed with code: %d: %s", error_code, aws_error_str(error_code));
+        s_deliver_ack_failure(callback, reason);
+    } else {
+        s_deliver_ack_success(callback);
+    }
 
     mqtt_jni_async_callback_clean_up(callback);
+}
+
+static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, const struct aws_byte_cursor *topic, 
+    enum aws_mqtt_qos qos, int error_code, void *user_data) {
+    (void)topic;
+    (void)qos;
+    s_on_op_complete(connection, packet_id, error_code, user_data);
 }
 
 static void s_cleanup_handler(void *user_data) {
@@ -568,7 +593,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubsc
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     uint16_t msg_id =
-        aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_ack, unsub_ack);
+        aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_op_complete, unsub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_unsubscribe: aws_mqtt_client_connection_unsubscribe failed");
@@ -587,15 +612,6 @@ error_cleanup:
 /*******************************************************************************
  * publish
  ******************************************************************************/
-static void s_on_pub_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
-    assert(connection);
-    struct mqtt_jni_async_callback *callback = (struct mqtt_jni_async_callback *)user_data;
-
-    s_deliver_ack_success(callback);
-
-    mqtt_jni_async_callback_clean_up(callback);
-}
-
 JNIEXPORT
 jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish(
     JNIEnv *env,
@@ -632,7 +648,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     bool retain = jni_retain != 0;
 
     uint16_t msg_id = aws_mqtt_client_connection_publish(
-        connection->client_connection, &topic, qos, retain, &payload, s_on_pub_ack, pub_ack);
+        connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: aws_mqtt_client_connection_publish failed");
         goto error_cleanup;

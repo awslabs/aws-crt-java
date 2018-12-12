@@ -151,13 +151,9 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
-#    ifdef __clang__
-#        pragma clang diagnostic push
-#        pragma clang diagnostic ignored "-Wpointer-to-int-cast"
-#    else
-#        pragma GCC diagnostic push
-#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
-#    endif
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#    pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #endif
 
 /*******************************************************************************
@@ -741,9 +737,5 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
 }
 
 #if UINTPTR_MAX == 0xffffffff
-#    ifdef __clang__
-#        pragma clang diagnostic pop
-#    else
-#        pragma GCC diagnostic pop
-#    endif
+#    pragma GCC diagnostic pop
 #endif

@@ -7,8 +7,7 @@ REM msiexec /i /quiet /Log C:\tmp\Amazon-Corretto.msi
 REM set JAVA_HOME="C:\Program Files\Amazon Corretto"
 REM set PATH=%JAVA_HOME%\bin;%PATH%
 REM this will also install jdk8
-choco install maven -y
-refreshenv
+choco install maven -y && refreshenv
 SET JAVA_HOME=%~$PATH:javac
 echo JAVA_HOME=%JAVA_HOME%
 

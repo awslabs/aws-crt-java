@@ -21,7 +21,7 @@ goto :EOF
 
 :install_library
 git clone https://github.com/awslabs/%~1.git
-cd %~1
+pushd %~1
 
 if [%~2] == [] GOTO do_build
 git checkout %~2
@@ -30,6 +30,7 @@ git checkout %~2
 cmake %CMAKE_ARGS% -DCMAKE_INSTALL_PREFIX=%AWS_C_INSTALL%
 cmake --build . --target ALL_BUILD
 cmake --build . --target INSTALL
+popd
 exit /b %errorlevel%
 
 :error

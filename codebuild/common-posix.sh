@@ -28,7 +28,6 @@ export AWS_C_INSTALL=`pwd`/build/deps/install
 
 # Non-OSX unix needs s2n
 if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-    sudo apt-get install libssl-dev -y
     install_library s2n 7c9069618e68214802ac7fbf45705d5f8b53135f
 fi
 

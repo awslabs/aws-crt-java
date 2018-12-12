@@ -33,7 +33,7 @@ if [ "$TRAVIS_OS_NAME" != "osx" ]; then
 fi
 
 # build aws-c-* dependencies
-./build-deps.sh
+./build-deps.sh $CMAKE_ARGS
 
 # build java package
 mvn -X compile

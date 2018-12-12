@@ -7,6 +7,15 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
+:: See if a generator was provided
+echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
+    echo "Using cmake generator from command line"
+) || (
+    echo "Getting cmake generator from cmake"
+    call ..\find_vs_cmake_generator.bat
+    CMAKE_ARGS=%CMAKE_ARGS% -G"%CMAKE_VS_GENERATOR%
+)
+
 mkdir build\deps\install
 set AWS_C_INSTALL=%cd%\build\deps\install
 
@@ -14,7 +23,6 @@ CALL :install_library aws-c-common
 CALL :install_library aws-c-io
 CALL :install_library aws-c-mqtt
 
-cd aws-crt-java
 mvn test || goto error
 
 goto :EOF

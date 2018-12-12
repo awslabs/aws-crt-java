@@ -76,7 +76,7 @@ set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
 
 #set warnings
 if (MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX -D_CRT_SECURE_NO_WARNINGS)
 else ()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()

@@ -43,7 +43,8 @@ struct jni_tls_ctx_options {
 
 JNIEXPORT
 jlong JNICALL
-    Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_tls_ctx_options) {
+    Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_class) {
+    (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls =
         (struct jni_tls_ctx_options *)aws_mem_acquire(allocator, sizeof(struct jni_tls_ctx_options));
@@ -60,8 +61,10 @@ jlong JNICALL
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1clean_1up(
     JNIEnv *env,
-    jclass jni_tls_ctx_options,
+    jclass jni_class,
     jlong jni_tls) {
+    (void)env;
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -99,6 +102,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jint jni_version) {
+    (void)env;
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -113,6 +118,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_ca_file) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -132,6 +138,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_ca_path) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -151,6 +158,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_alpn) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -166,6 +174,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_certificate_path) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -181,6 +190,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_key_path) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -196,6 +206,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_pkcs12_path) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -211,6 +222,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jstring jni_pkcs12_password) {
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -226,6 +238,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
     jclass jni_class,
     jlong jni_tls,
     jboolean jni_verify) {
+    (void)env;
+    (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {
         return;
@@ -237,6 +251,8 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 JNIEXPORT
 jboolean JNICALL
     Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1is_1alpn_1available(JNIEnv *env, jclass jni_class) {
+    (void)env;
+    (void)jni_class;
     return aws_tls_is_alpn_available();
 }
 

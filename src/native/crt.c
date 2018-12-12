@@ -74,6 +74,10 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
+#if defined(_MSC_VER)
+#   pragma warning(push)
+#   pragma warning(disable: 4210) /* non-standard extension used: function given file scope */
+#endif
 static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_async_callback(JNIEnv *);
     extern void s_cache_client_callbacks(JNIEnv *);
@@ -82,14 +86,18 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_client_callbacks(env);
     s_cache_message_handler(env);
 }
+#if defined(_MSC_VER)
+#   pragma warning(pop)
+#endif
 
-static void s_jni_atexit() {
+static void s_jni_atexit(void) {
     aws_tls_clean_up_static_state();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jclass jni_crt_class) {
+    (void)jni_crt_class;
     aws_load_error_strings();
     aws_io_load_error_strings();
     aws_mqtt_load_error_strings();

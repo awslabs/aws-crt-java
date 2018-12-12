@@ -18,6 +18,16 @@
 
 #include <crt.h>
 
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic push
+#        pragma clang diagnostic ignored "-Werror=pointer-to-int-cast"
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Werror=pointer-to-int-cast"
+#    endif
+#endif
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1client_1init(
     JNIEnv *env,
     jclass jni_class,
@@ -72,3 +82,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1cli
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, client);
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic pop
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

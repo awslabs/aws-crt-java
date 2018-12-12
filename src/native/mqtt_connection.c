@@ -149,6 +149,16 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
     aws_mem_release(allocator, callback);
 }
 
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic push
+#        pragma clang diagnostic ignored "-Werror=pointer-to-int-cast"
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Werror=pointer-to-int-cast"
+#    endif
+#endif
+
 /*******************************************************************************
  * new
  ******************************************************************************/
@@ -728,3 +738,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Failed to send ping");
     }
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic pop
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

@@ -34,6 +34,7 @@ struct jni_tls_ctx_options {
     struct aws_string *pkcs12_password;
 };
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #   ifdef __clang__
 #       pragma clang diagnostic push

@@ -19,6 +19,17 @@
 
 #include "crt.h"
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic push
+#        pragma clang diagnostic ignored "-Werror=pointer-to-int-cast"
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Werror=pointer-to-int-cast"
+#    endif
+#endif
+
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1new(
     JNIEnv *env,
@@ -68,3 +79,11 @@ void JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, bootstrap);
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    ifdef __clang__
+#        pragma clang diagnostic pop
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

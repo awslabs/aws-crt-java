@@ -90,7 +90,7 @@ class MqttConnectionFixture {
             cleanSession = true; // only true is supported right now
             connection.connect(clientId, cleanSession, keepAliveMs, connectAck);
             done.acquire();
-            assertEquals("Connected", MqttConnection.ConnectionState.Connected, connection.getState());
+            assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
@@ -121,7 +121,7 @@ class MqttConnectionFixture {
             fail("Exception during disconnect: " + ex.getMessage());
         }
         
-        assertEquals("Disconnected", MqttConnection.ConnectionState.Disconnected, connection.getState());
+        assertEquals("DISCONNECTED", MqttConnection.ConnectionState.DISCONNECTED, connection.getState());
     }
 }
 public class ConnectionTest extends MqttConnectionFixture {

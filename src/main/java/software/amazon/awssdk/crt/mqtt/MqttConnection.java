@@ -15,11 +15,9 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.EventLoopGroup;
 import software.amazon.awssdk.crt.TlsContext;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.mqtt.MqttException;
 import software.amazon.awssdk.crt.SocketOptions;
 
 import java.util.function.Consumer;
@@ -35,10 +33,10 @@ import java.io.Closeable;
  */
 public class MqttConnection extends CrtResource implements Closeable {
     private final MqttClient client;
-    private volatile ConnectionState connectionState = ConnectionState.Disconnected;
+    private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
 
     public enum ConnectionState {
-        Disconnected, Connecting, Connected, Disconnecting,
+        DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
     };
 
     public enum QOS {
@@ -98,13 +96,13 @@ public class MqttConnection extends CrtResource implements Closeable {
             ClientCallbacks clientCallbacks = new ClientCallbacks() {
                 @Override
                 public void onConnected() {
-                    connectionState = ConnectionState.Connected;
+                    connectionState = ConnectionState.CONNECTED;
                     onOnline();
                 }
 
                 @Override
                 public boolean onDisconnected(boolean recoverable, String reason) {
-                    connectionState = ConnectionState.Disconnected;
+                    connectionState = ConnectionState.DISCONNECTED;
                     return onOffline(recoverable, reason);
                 }
             };
@@ -176,7 +174,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         short keepAlive = (short)Math.max(0, Math.min(keepAliveMs, Short.MAX_VALUE));
         AsyncCallback connectAck = wrapAck(ack);
         try {
-            connectionState = ConnectionState.Connecting;
+            connectionState = ConnectionState.CONNECTING;
             mqtt_connect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
         } catch (CrtRuntimeException ex) {
             return false;
@@ -193,7 +191,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             return;
         }
         AsyncCallback disconnectAck = wrapAck(ack);
-        connectionState = ConnectionState.Disconnecting;
+        connectionState = ConnectionState.DISCONNECTING;
         mqtt_disconnect(native_ptr(), disconnectAck);
     }
 

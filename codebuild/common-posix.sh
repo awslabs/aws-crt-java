@@ -28,7 +28,7 @@ export AWS_C_INSTALL=`pwd`/build/deps/install
 
 # Non-OSX unix needs s2n
 if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-    install_library justinboswell/s2n
+    install_library awslabs/s2n
 fi
 
 # build aws-c-* dependencies

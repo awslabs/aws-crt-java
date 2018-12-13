@@ -34,7 +34,7 @@ import java.io.Closeable;
  * service endpoint
  */
 public class MqttConnection extends CrtResource implements Closeable {
-    private MqttClient client;
+    private final MqttClient client;
     private ConnectionState connectionState = ConnectionState.Disconnected;
 
     public enum ConnectionState {
@@ -56,11 +56,11 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
     
-    class MessageHandler {
+    private class MessageHandler {
         String topic;
         Consumer<MqttMessage> callback;
 
-        public MessageHandler(String _topic, Consumer<MqttMessage> _callback) {
+        private MessageHandler(String _topic, Consumer<MqttMessage> _callback) {
             callback = _callback;
             topic = _topic;
         }
@@ -84,18 +84,14 @@ public class MqttConnection extends CrtResource implements Closeable {
         boolean onDisconnected(boolean recoverable, String reason);
     }
 
-    public MqttConnection(MqttClient _client, String endpoint, short port) throws MqttException {
-        init(_client, endpoint, port, null);
+    public MqttConnection(MqttClient mqttClient, String endpoint, short port) throws MqttException {
+        this(mqttClient, endpoint, port, null);
     }
 
-    public MqttConnection(MqttClient _client, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
-        init(_client, endpoint, port, socketOptions);
-    }
-    
-    private void init(MqttClient _client, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
-        client = _client;
+    public MqttConnection(MqttClient mqttClient, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
+        client = mqttClient;
         try {
-            TlsContext tls = client.getTlsContext();
+            TlsContext tls = client.tlsContext();
             ClientCallbacks clientCallbacks = new ClientCallbacks() {
                 @Override
                 public void onConnected() {

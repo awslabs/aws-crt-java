@@ -15,7 +15,7 @@ function install_from_brew {
     pushd ./packages
     # usually the existing package is too old for one of the others, so uninstall
     # and reinstall from the cache
-    brew uninstall --ignore-dependencies $1
+    brew uninstall --ignore-dependencies $1 || true
     if [ ! -e $1*bottle*.tar.gz ]; then
         brew install --build-bottle $1
         brew bottle --json $1

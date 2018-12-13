@@ -12,10 +12,12 @@ compiler: clang
 addons:
   homebrew:
     update: true
+    taps: AdoptOpenJDK/openjdk
     packages:
       - ninja
       - maven
       - cmake
+      - adpotopenjdk-openjdk8
 
 script:
   - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

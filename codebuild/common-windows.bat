@@ -14,9 +14,10 @@ echo JAVA_HOME=%JAVA_HOME%
 
 :: See if a generator was provided
 echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
+    :: strip everything before -G
     set GENERATOR_ET_AL=%CMAKE_ARGS:*-G=%
+    :: strip leading whitepace that was between -G and the generator in quotes
     set GENERATOR_ET_AL=!GENERATOR_ET_AL: ^"=!
-    echo GENERATOR_ET_AL=!GENERATOR_ET_AL!
     for /F delims^=^"^ tokens^=1 %%A in ("!GENERATOR_ET_AL!") do @(
         set CMAKE_VS_GENERATOR=%%A
         goto :found_generator

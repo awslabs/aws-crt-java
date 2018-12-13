@@ -32,24 +32,20 @@ import java.io.Closeable;
  * any number of MQTT endpoints
  */
 public class MqttClient extends CrtResource implements Closeable {
-    private ClientBootstrap bootstrap;
-    private TlsContext tlsContext;
+    private final ClientBootstrap bootstrap;
+    private final TlsContext tlsContext;
 
     public MqttClient() throws CrtRuntimeException {
-        init(new ClientBootstrap(new EventLoopGroup(1)), null);
+        this(new ClientBootstrap(new EventLoopGroup(1)), null);
     }
 
-    public MqttClient(ClientBootstrap cbs) throws CrtRuntimeException {
-        init(cbs, null);
+    public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
+        this(clientBootstrap, null);
     }
 
-    public MqttClient(ClientBootstrap cbs, TlsContext ctx) throws CrtRuntimeException {
-        init(cbs, ctx);
-    }
-    
-    private void init(ClientBootstrap cbs, TlsContext ctx) throws CrtRuntimeException {
-        bootstrap = cbs;
-        tlsContext = ctx;
+    public MqttClient(ClientBootstrap clientBootstrap, TlsContext tlsContext) throws CrtRuntimeException {
+        this.bootstrap = clientBootstrap;
+        this.tlsContext = tlsContext;
         acquire(mqtt_client_init(bootstrap.native_ptr()));
     }
 
@@ -60,8 +56,8 @@ public class MqttClient extends CrtResource implements Closeable {
         }
     }
 
-    public TlsContext getTlsContext() {
-        return tlsContext;
+    public TlsContext tlsContext() {
+        return this.tlsContext;
     }
     
     /*******************************************************************************

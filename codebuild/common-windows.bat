@@ -5,7 +5,6 @@
 set CMAKE_ARGS=%*
 
 pushd %~dp0\..\
-cd
 
 "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 :: this will also install jdk8
@@ -16,6 +15,8 @@ echo JAVA_HOME=%JAVA_HOME%
 :: See if a generator was provided
 echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
     set GENERATOR_ET_AL=%CMAKE_ARGS:*-G=%
+    set GENERATOR_ET_AL=!GENERATOR_ET_AL: ^"=!
+    echo GENERATOR_ET_AL=!GENERATOR_ET_AL!
     for /F delims^=^"^ tokens^=1 %%A in ("!GENERATOR_ET_AL!") do @(
         set CMAKE_VS_GENERATOR=%%A
         goto :found_generator

@@ -7,16 +7,15 @@ set CMAKE_ARGS=%*
 pushd %~dp0\..\
 cd
 
-::"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 :: this will also install jdk8
-::choco install maven vswhere -y
-::call RefreshEnv.cmd
-::echo JAVA_HOME=%JAVA_HOME%
+choco install maven vswhere -y
+call RefreshEnv.cmd
+echo JAVA_HOME=%JAVA_HOME%
 
 :: See if a generator was provided
 echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
     set GENERATOR_ET_AL=%CMAKE_ARGS:*-G=%
-    echo GENERATOR_ET_AL=!GENERATOR_ET_AL!
     for /F delims^=^"^ tokens^=1 %%A in ("!GENERATOR_ET_AL!") do @(
         set CMAKE_VS_GENERATOR=%%A
         goto :found_generator
@@ -41,9 +40,6 @@ echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
 )
 
 :build_deps
-echo CMAKE_ARGS=!CMAKE_ARGS!
-exit /b %errorlevel%
-
 call build_deps.bat !CMAKE_ARGS!
 
 mvn compile -X || goto error

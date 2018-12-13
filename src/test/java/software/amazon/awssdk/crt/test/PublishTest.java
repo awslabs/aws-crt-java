@@ -19,6 +19,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
@@ -39,31 +41,16 @@ public class PublishTest extends MqttConnectionFixture {
         connect();
         
         try {
-            MqttActionListener pubAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    pubsAcked++;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Publish failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
-
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
-            connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false, pubAck);
-            done.acquire();
+            CompletableFuture<Integer> published = connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            published.thenApply(packetId -> pubsAcked++);
+            published.get();
 
             assertEquals("Published", 1, pubsAcked);
-        } catch (InterruptedException interrupted) { /* wait() can be interrupted */
-            fail(interrupted.getMessage());
-        } catch (MqttException mqttEx) {
-            fail(mqttEx.getMessage());
+        } catch (Exception ex) {
+            fail(ex.getMessage());
         }
 
         disconnect();

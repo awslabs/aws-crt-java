@@ -15,9 +15,13 @@
 
 package software.amazon.awssdk.crt.test;
 
+import com.sun.xml.internal.ws.util.CompletedFuture;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.mqtt.*;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.*;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -54,68 +58,28 @@ public class SelfPubSubTest extends MqttConnectionFixture {
                 }
             };
 
-            MqttActionListener subAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    subsAcked++;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Subscription failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
-
-            connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
-            done.acquire();
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler);
+            subscribed.thenApply(packetId -> subsAcked++);
+            subscribed.get();
 
             assertEquals("Single subscription", 1, subsAcked);
-
-            MqttActionListener pubAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    pubsAcked++;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Publish failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
 
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
-            connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false, pubAck);
-            done.acquire();
+            CompletableFuture<Integer> published = connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            published.thenApply(packetId -> pubsAcked++);
+            published.get();
 
             assertEquals("Published", 1, pubsAcked);
 
-            MqttActionListener unsubAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    subsAcked--;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Unsubscription failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
-            connection.unsubscribe(TEST_TOPIC, unsubAck);
-            done.acquire();
+            CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
+            unsubscribed.thenApply(packetId -> subsAcked--);
+            unsubscribed.get();
 
             assertEquals("No Subscriptions", 0, subsAcked);
-        } catch (InterruptedException interrupted) { /* wait() can be interrupted */
-            fail(interrupted.getMessage());
-        } catch (MqttException mqttEx) {
-            fail(mqttEx.getMessage());
+        } catch (Exception ex) {
+            fail(ex.getMessage());
         }
 
         disconnect();

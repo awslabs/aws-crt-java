@@ -19,6 +19,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
 
@@ -27,7 +30,6 @@ class MqttConnectionFixture {
     ClientBootstrap bootstrap = null;
     MqttClient client = null;
     MqttConnection connection = null;
-    final Semaphore done = new Semaphore(0);
     private boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = "localhost";
@@ -75,21 +77,9 @@ class MqttConnectionFixture {
                 }
             };
             assertNotNull(connection);
-            MqttActionListener connectAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    System.out.println("Connect failed: " + cause.toString());
-                    done.release();
-                }
-            };
             cleanSession = true; // only true is supported right now
-            connection.connect(clientId, cleanSession, keepAliveMs, connectAck);
-            done.acquire();
+            CompletableFuture<Void> connected = connection.connect(clientId, cleanSession, keepAliveMs);
+            connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;
         } catch (Exception ex) {
@@ -99,23 +89,10 @@ class MqttConnectionFixture {
     }
 
     void disconnect() {
-        MqttActionListener disconnectAck = new MqttActionListener() {
-            @Override
-            public void onSuccess() {
-                done.release();
-            }
-
-            @Override
-            public void onFailure(Throwable cause) {
-                fail("Disconnect failed: " + cause.toString());
-                done.release();
-            }
-        };
-
         disconnecting = true;
         try {
-            connection.disconnect(disconnectAck);
-            done.acquire();
+            CompletableFuture<Void> disconnected = connection.disconnect();
+            disconnected.get();
         }
         catch (Exception ex) {
             fail("Exception during disconnect: " + ex.getMessage());

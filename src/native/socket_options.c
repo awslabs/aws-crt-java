@@ -20,7 +20,7 @@
 #include "crt.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
-#if UINTPTR_MAX == 0xffffffff
+#if !defined(_MSC_VER) && UINTPTR_MAX == 0xffffffff
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
 #    pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
@@ -139,6 +139,6 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     options->keep_alive_timeout_sec = jni_timeout;
 }
 
-#if UINTPTR_MAX == 0xffffffff
+#if !defined(_MSC_VER) && UINTPTR_MAX == 0xffffffff
 #    pragma GCC diagnostic pop
 #endif

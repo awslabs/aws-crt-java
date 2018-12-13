@@ -20,7 +20,7 @@
 #include "crt.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
-#if UINTPTR_MAX == 0xffffffff
+#if !defined(_MSC_VER) && UINTPTR_MAX == 0xffffffff
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
 #    pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
@@ -79,6 +79,6 @@ void JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1
     aws_mem_release(allocator, bootstrap);
 }
 
-#if UINTPTR_MAX == 0xffffffff
+#if !defined(_MSC_VER) && UINTPTR_MAX == 0xffffffff
 #    pragma GCC diagnostic pop
 #endif

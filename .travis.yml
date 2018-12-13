@@ -16,7 +16,7 @@ addons:
     packages:
       - ninja
       - maven
-      - adpotopenjdk8
+      - adoptopenjdk8
 
 cache:
   directories:

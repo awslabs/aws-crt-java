@@ -32,16 +32,16 @@ if not exist %DEPS_DIR% (
 )
 
 :: See if a generator was provided
-echo.%CMAKE_ARGS% | findstr /C:"-G" >NUL && (
-    echo Using supplied generator from command line: %CMAKE_ARGS%
+echo.!CMAKE_ARGS! | findstr /C:"-G" >NUL && (
+    echo Using supplied generator from command line: !CMAKE_ARGS!
 ) || (
     echo Getting cmake generator from cmake
     call find_vs_cmake_generator.bat
     for /F "tokens=2 delims==" %%A in (mvn-build\cmake.properties) do (
         set CMAKE_VS_GENERATOR=%%A
     )
-    echo Using generator "%CMAKE_VS_GENERATOR%"
-    set CMAKE_ARGS=-G"%CMAKE_VS_GENERATOR%" %CMAKE_ARGS%
+    echo Using generator "!CMAKE_VS_GENERATOR!"
+    set CMAKE_ARGS=-G"!CMAKE_VS_GENERATOR!" !CMAKE_ARGS!
 )
 
 call :install_dep aws-c-common

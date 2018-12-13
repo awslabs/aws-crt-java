@@ -16,8 +16,11 @@ addons:
     packages:
       - ninja
       - maven
-      - cmake
       - adpotopenjdk-openjdk8
 
+cache:
+  directories:
+    - ./packages
+
 script:
-  - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  - ./codebuild/common-macos.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

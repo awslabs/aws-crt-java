@@ -7,7 +7,7 @@ CMAKE_ARGS="$@"
 
 function install_library {
     pushd build/deps/
-    git clone https://github.com/$1.git
+    git clone https://github.com/$1.git $1
     cd $1
 
     if [ -n "$2" ]; then

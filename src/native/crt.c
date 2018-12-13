@@ -75,8 +75,8 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 #if defined(_MSC_VER)
-#   pragma warning(push)
-#   pragma warning(disable: 4210) /* non-standard extension used: function given file scope */
+#    pragma warning(push)
+#    pragma warning(disable : 4210) /* non-standard extension used: function given file scope */
 #endif
 static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_async_callback(JNIEnv *);
@@ -87,7 +87,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_message_handler(env);
 }
 #if defined(_MSC_VER)
-#   pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
 static void s_jni_atexit(void) {

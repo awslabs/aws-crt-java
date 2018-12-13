@@ -36,19 +36,18 @@ struct jni_tls_ctx_options {
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
-#   if defined(_MSC_VER)
-#       pragma warning(push)
-#       pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
-#   else
-#       pragma GCC diagnostic push
-#       pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
-#       pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
-#   endif
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
 #endif
 
 JNIEXPORT
-jlong JNICALL
-    Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_class) {
+jlong JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_class) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls =
@@ -262,9 +261,9 @@ jboolean JNICALL
 }
 
 #if UINTPTR_MAX == 0xffffffff
-#   if defined(_MSC_VER)
-#       pragma warning(pop)
-#   else
-#       pragma GCC diagnostic pop
-#   endif
+#    if defined(_MSC_VER)
+#        pragma warning(pop)
+#    else
+#        pragma GCC diagnostic pop
+#    endif
 #endif

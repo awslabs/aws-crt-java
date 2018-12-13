@@ -228,12 +228,12 @@ static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection
         char buf[1024];
         if (error_code) {
             snprintf(buf, sizeof(buf), "Disconnected with code: %d: %s", error_code, aws_error_str(error_code));
-        }
-        else {
+        } else {
             strncpy(buf, "Disconnected successfully", sizeof(buf));
         }
         jstring message = (*env)->NewStringUTF(env, buf);
-        recover = (*env)->CallBooleanMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
+        recover = (*env)->CallBooleanMethod(
+            env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
         (*env)->DeleteLocalRef(env, message);
     }
 
@@ -445,7 +445,7 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     }
 }
 
-static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, const char* reason) {
+static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, const char *reason) {
     assert(callback);
     assert(callback->connection);
 
@@ -457,7 +457,11 @@ static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, cons
     }
 }
 
-static void s_on_op_complete(struct aws_mqtt_client_connection* connection, uint16_t packet_id, int error_code, void *user_data) {
+static void s_on_op_complete(
+    struct aws_mqtt_client_connection *connection,
+    uint16_t packet_id,
+    int error_code,
+    void *user_data) {
     assert(connection);
     (void)packet_id;
 
@@ -477,8 +481,13 @@ static void s_on_op_complete(struct aws_mqtt_client_connection* connection, uint
     mqtt_jni_async_callback_clean_up(callback);
 }
 
-static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, const struct aws_byte_cursor *topic, 
-    enum aws_mqtt_qos qos, int error_code, void *user_data) {
+static void s_on_ack(
+    struct aws_mqtt_client_connection *connection,
+    uint16_t packet_id,
+    const struct aws_byte_cursor *topic,
+    enum aws_mqtt_qos qos,
+    int error_code,
+    void *user_data) {
     (void)topic;
     (void)qos;
     s_on_op_complete(connection, packet_id, error_code, user_data);

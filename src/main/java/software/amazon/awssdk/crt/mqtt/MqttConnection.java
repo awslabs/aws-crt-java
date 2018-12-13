@@ -37,7 +37,7 @@ public class MqttConnection extends CrtResource implements Closeable {
 
     public enum ConnectionState {
         DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
-    };
+    }
 
     public enum QOS {
         AT_MOST_ONCE(0), AT_LEAST_ONCE(1), EXACTLY_ONCE(2);

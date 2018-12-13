@@ -76,7 +76,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         public void onFailure(String reason);
     }
     
-    /* used to receive connection events */
+    /* used to receive connection events from the CRT */
     interface ClientCallbacks {
         void onConnected();
 
@@ -167,15 +167,17 @@ public class MqttConnection extends CrtResource implements Closeable {
         return connect(clientId, cleanSession, (short)0, ack);
     }
 
-    public boolean connect(String clientId, boolean cleanSession, short keepAliveMs) {
+    public boolean connect(String clientId, boolean cleanSession, int keepAliveMs) {
         return connect(clientId, cleanSession, keepAliveMs, null);
     }
 
-    public boolean connect(String clientId, boolean cleanSession, short keepAliveMs, MqttActionListener ack) {
+    public boolean connect(String clientId, boolean cleanSession, int keepAliveMs, MqttActionListener ack) {
+        // Just clamp the keepAlive, no point in throwing
+        short keepAlive = (short)Math.max(0, Math.min(keepAliveMs, Short.MAX_VALUE));
         AsyncCallback connectAck = wrapAck(ack);
         try {
             connectionState = ConnectionState.Connecting;
-            mqtt_connect(native_ptr(), clientId, cleanSession, keepAliveMs, connectAck);
+            mqtt_connect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
         } catch (CrtRuntimeException ex) {
             return false;
         }

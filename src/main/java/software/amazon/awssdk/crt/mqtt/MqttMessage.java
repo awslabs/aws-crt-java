@@ -15,13 +15,13 @@
 package software.amazon.awssdk.crt.mqtt;
 import java.nio.ByteBuffer;
 
-public class MqttMessage {
+public final class MqttMessage {
     private String topic;
     private final ByteBuffer payload;
 
-    public MqttMessage(String _topic, ByteBuffer _payload) {
-        topic = _topic;
-        payload = _payload;
+    public MqttMessage(String topic, ByteBuffer payload) {
+        this.topic = topic;
+        this.payload = payload;
     }
 
     public String getTopic() {

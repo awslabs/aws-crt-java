@@ -17,6 +17,9 @@ package software.amazon.awssdk.crt;
 import java.io.*;
 import java.nio.file.*;
 import java.net.*;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.jar.*;
 import java.util.stream.*;
@@ -116,15 +119,23 @@ public final class CRT {
             String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
-            Path libTempPath = Paths.get(System.getProperty("java.io.tmpdir"), prefix + libraryName);
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
+            FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(permissions);
+            Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName, attrs);
 
             // open a stream to read the shared lib contents from this JAR
             InputStream in = CRT.class.getResourceAsStream(libraryPath);
             if (in == null) {
                 throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
             }
-            // Copy from jar stream to file stream
+            // Copy from jar stream to temp file
+            Files.deleteIfExists(libTempPath);
             Files.copy(in, libTempPath);
+            in.close();
+
+            // Ensure that the shared lib will be destroyed when java exits
+            libTempPath.toFile().deleteOnExit();
+
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
 

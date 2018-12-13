@@ -84,12 +84,15 @@ public class MqttConnection extends CrtResource implements Closeable {
         boolean onDisconnected(boolean recoverable, String reason);
     }
 
-    public MqttConnection(MqttClient mqttClient, String endpoint, short port) throws MqttException {
+    public MqttConnection(MqttClient mqttClient, String endpoint, int port) throws MqttException {
         this(mqttClient, endpoint, port, null);
     }
 
-    public MqttConnection(MqttClient mqttClient, String endpoint, short port, SocketOptions socketOptions) throws MqttException {
+    public MqttConnection(MqttClient mqttClient, String endpoint, int port, SocketOptions socketOptions) throws MqttException {
         client = mqttClient;
+        if (port > Short.MAX_VALUE || port <= 0) {
+            throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
+        }
         try {
             TlsContext tls = client.tlsContext();
             ClientCallbacks clientCallbacks = new ClientCallbacks() {
@@ -105,7 +108,7 @@ public class MqttConnection extends CrtResource implements Closeable {
                     return onOffline(recoverable, reason);
                 }
             };
-            acquire(mqtt_new(client.native_ptr(), endpoint, port, clientCallbacks,
+            acquire(mqtt_new(client.native_ptr(), endpoint, (short)port, clientCallbacks,
                     socketOptions != null ? socketOptions.native_ptr() : 0,
                     tls != null ? tls.native_ptr() : 0)
             );

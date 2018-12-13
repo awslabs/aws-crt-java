@@ -8,6 +8,10 @@
     <url>http://maven.apache.org</url>
     <profiles>
         <profile>
+            <!-- Windows profile: find cmake generators and use ALL_BUILD target 
+                NOTE: CMake generator will be cached to mvn-build/cmake.properties, delete or edit this
+                file to change VS version
+                -->
             <id>windows-vs</id>
             <activation>
                 <os>
@@ -59,6 +63,7 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
         <profile>
             <id>unix-make</id>
             <activation>
@@ -102,7 +107,7 @@
             <resource>
                 <directory>mvn-build/lib</directory>
                 <excludes>
-                    <exclude>**/*.ilk</exclude>
+                    <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
                 </excludes>
             </resource>
         </resources>

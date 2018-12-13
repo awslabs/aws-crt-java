@@ -35,7 +35,7 @@ import java.io.Closeable;
  */
 public class MqttConnection extends CrtResource implements Closeable {
     private final MqttClient client;
-    private ConnectionState connectionState = ConnectionState.Disconnected;
+    private volatile ConnectionState connectionState = ConnectionState.Disconnected;
 
     public enum ConnectionState {
         Disconnected, Connecting, Connected, Disconnecting,
@@ -60,9 +60,9 @@ public class MqttConnection extends CrtResource implements Closeable {
         String topic;
         Consumer<MqttMessage> callback;
 
-        private MessageHandler(String _topic, Consumer<MqttMessage> _callback) {
-            callback = _callback;
-            topic = _topic;
+        private MessageHandler(String topic, Consumer<MqttMessage> callback) {
+            this.callback = callback;
+            this.topic = topic;
         }
 
         void deliver(byte[] payload) {

@@ -13,7 +13,7 @@ phases:
       - curl -LO https://www.openssl.org/source/openssl-1.1.0j.tar.gz
       - tar -xzf openssl-1.1.0j.tar.gz
       - cd openssl-1.1.0j
-      - setarch i386 ./config -fPIC no-shared     \
+      - setarch i386 ./config -fPIC  \
         -m32 no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib     \
         no-hw no-mdc2 no-seed no-idea no-camellia\
         no-bf no-ripemd no-dsa no-ssl2 no-ssl3 no-capieng     \

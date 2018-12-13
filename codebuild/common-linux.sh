@@ -35,4 +35,4 @@ fi
 ./build-deps.sh $CMAKE_ARGS
 
 # build java package
-mvn -X compile
+mvn compile

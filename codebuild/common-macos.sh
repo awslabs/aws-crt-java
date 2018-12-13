@@ -31,4 +31,4 @@ install_from_brew cmake
 # build dependencies
 ./build-deps.sh $CMAKE_ARGS
 
-mvn -X compile
+mvn compile

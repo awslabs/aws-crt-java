@@ -13,16 +13,13 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.mqtt.*;
-import java.util.function.*;
-import java.util.concurrent.Semaphore;
+import software.amazon.awssdk.crt.mqtt.MqttException;
 
-import crt.test.MqttConnectionFixture;
+import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 
 public class PingTest extends MqttConnectionFixture {
     public PingTest() {

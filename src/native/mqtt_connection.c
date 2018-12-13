@@ -149,6 +149,18 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
     aws_mem_release(allocator, callback);
 }
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
+#endif
+
 /*******************************************************************************
  * new
  ******************************************************************************/
@@ -216,12 +228,12 @@ static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection
         char buf[1024];
         if (error_code) {
             snprintf(buf, sizeof(buf), "Disconnected with code: %d: %s", error_code, aws_error_str(error_code));
-        }
-        else {
+        } else {
             strncpy(buf, "Disconnected successfully", sizeof(buf));
         }
         jstring message = (*env)->NewStringUTF(env, buf);
-        recover = (*env)->CallBooleanMethod(env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
+        recover = (*env)->CallBooleanMethod(
+            env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
         (*env)->DeleteLocalRef(env, message);
     }
 
@@ -267,6 +279,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     jobject jni_client_callbacks,
     jlong jni_socket_options,
     jlong jni_tls_ctx) {
+    (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_client;
@@ -305,6 +318,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
     connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
+    (void)jvmresult;
     assert(jvmresult == 0);
     memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
 
@@ -347,8 +361,10 @@ error_cleanup:
  ******************************************************************************/
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1clean_1up(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection) {
+    (void)env;
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         return;
@@ -369,6 +385,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
     jboolean jni_clean_session,
     jshort keep_alive_ms,
     jobject jni_ack) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Connection is invalid/null");
@@ -395,9 +412,10 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1disconnect(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jobject jni_ack) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_disconnect: Invalid connection");
@@ -427,7 +445,23 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     }
 }
 
-static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
+static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, const char *reason) {
+    assert(callback);
+    assert(callback->connection);
+
+    if (callback->async_callback) {
+        JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+        jstring jni_reason = (*env)->NewStringUTF(env, reason);
+        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_failure, jni_reason);
+        (*env)->DeleteLocalRef(env, jni_reason);
+    }
+}
+
+static void s_on_op_complete(
+    struct aws_mqtt_client_connection *connection,
+    uint16_t packet_id,
+    int error_code,
+    void *user_data) {
     assert(connection);
     (void)packet_id;
 
@@ -436,9 +470,27 @@ static void s_on_ack(struct aws_mqtt_client_connection *connection, uint16_t pac
         return;
     }
 
-    s_deliver_ack_success(callback);
+    if (error_code) {
+        char reason[1024];
+        snprintf(reason, sizeof(reason), "Failed with code: %d: %s", error_code, aws_error_str(error_code));
+        s_deliver_ack_failure(callback, reason);
+    } else {
+        s_deliver_ack_success(callback);
+    }
 
     mqtt_jni_async_callback_clean_up(callback);
+}
+
+static void s_on_ack(
+    struct aws_mqtt_client_connection *connection,
+    uint16_t packet_id,
+    const struct aws_byte_cursor *topic,
+    enum aws_mqtt_qos qos,
+    int error_code,
+    void *user_data) {
+    (void)topic;
+    (void)qos;
+    s_on_op_complete(connection, packet_id, error_code, user_data);
 }
 
 static void s_cleanup_handler(void *user_data) {
@@ -458,8 +510,8 @@ static void s_on_subscription_delivered(
 
     struct mqtt_jni_async_callback *callback = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
-    jbyteArray jni_payload = (*env)->NewByteArray(env, payload->len);
-    (*env)->SetByteArrayRegion(env, jni_payload, 0, payload->len, (const signed char *)payload->ptr);
+    jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);
+    (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)payload->len, (const signed char *)payload->ptr);
     (*env)->CallVoidMethod(env, callback->async_callback, s_message_handler.deliver, jni_payload);
     (*env)->DeleteLocalRef(env, jni_payload);
 }
@@ -467,12 +519,13 @@ static void s_on_subscription_delivered(
 JNIEXPORT
 jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscribe(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jstring jni_topic,
     jint jni_qos,
     jobject jni_handler,
     jobject jni_ack) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_subscribe: Invalid connection");
@@ -545,10 +598,11 @@ error_cleanup:
 JNIEXPORT
 jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubscribe(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jstring jni_topic,
     jobject jni_ack) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_unsubscribe: Invalid connection");
@@ -567,7 +621,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubsc
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     uint16_t msg_id =
-        aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_ack, unsub_ack);
+        aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_op_complete, unsub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_unsubscribe: aws_mqtt_client_connection_unsubscribe failed");
@@ -586,25 +640,17 @@ error_cleanup:
 /*******************************************************************************
  * publish
  ******************************************************************************/
-static void s_on_pub_ack(struct aws_mqtt_client_connection *connection, uint16_t packet_id, void *user_data) {
-    assert(connection);
-    struct mqtt_jni_async_callback *callback = (struct mqtt_jni_async_callback *)user_data;
-
-    s_deliver_ack_success(callback);
-
-    mqtt_jni_async_callback_clean_up(callback);
-}
-
 JNIEXPORT
 jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jstring jni_topic,
     jint jni_qos,
     jboolean jni_retain,
     jobject jni_payload,
     jobject jni_ack) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: Invalid connection");
@@ -631,7 +677,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish
     bool retain = jni_retain != 0;
 
     uint16_t msg_id = aws_mqtt_client_connection_publish(
-        connection->client_connection, &topic, qos, retain, &payload, s_on_pub_ack, pub_ack);
+        connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_publish: aws_mqtt_client_connection_publish failed");
         goto error_cleanup;
@@ -649,12 +695,13 @@ error_cleanup:
 
 JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1will(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jstring jni_topic,
     jint jni_qos,
     jboolean jni_retain,
     jobject jni_payload) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_set_will: Invalid connection");
@@ -678,10 +725,11 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_m
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1login(
     JNIEnv *env,
-    jclass jni_mqtt,
+    jclass jni_class,
     jlong jni_connection,
     jstring jni_user,
     jstring jni_pass) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_set_login: Invalid connection");
@@ -701,6 +749,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
+    (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Invalid connection");
@@ -711,3 +760,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Failed to send ping");
     }
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(pop)
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -21,18 +21,11 @@ import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.io.File;
-import java.io.InputStream;
-import java.net.JarURLConnection;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.function.*;
-import java.net.URL;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
-import crt.test.MqttConnectionFixture;
+import software.amazon.awssdk.crt.test.MqttConnectionFixture;;
 
 public class IotServiceTest extends MqttConnectionFixture {
     public IotServiceTest() {

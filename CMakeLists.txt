@@ -76,7 +76,7 @@ set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
 
 #set warnings
 if (MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX -D_CRT_SECURE_NO_WARNINGS)
 else ()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
@@ -85,13 +85,8 @@ endif ()
 find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS} "src/native")
 
-# if we can test, include the test code
-find_package(JUnit)
-if (JUnit_FOUND)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DENABLE_JNI_TESTS")
-else()
-    message(STATUS "JUnit could not be found, please ensure that JUNIT_HOME is defined in your environment. Test code will be disabled.")
-endif()
+# Maven will manage making sure junit is available, so always enable tests
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DENABLE_JNI_TESTS")
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")

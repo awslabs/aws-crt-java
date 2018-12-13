@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,22 +14,25 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.testing.CrtTest;
+import software.amazon.awssdk.crt.CrtRuntimeException;;
 
-public class EventLoopGroupTest {
-    public EventLoopGroupTest() {}
-    
+public class RuntimeExceptionTestNew {
+    public RuntimeExceptionTestNew() { }
+
     @Test
-    public void testCreateDestroy() {
-        try (EventLoopGroup elg = new EventLoopGroup(1)) {
-            assertNotNull(elg);
-            assertTrue(elg.native_ptr() != 0);
+    public void ensureRuntimeExceptionsCanBeThrownFromNativeViaNew() {
+        boolean exceptionCaught = false;
+        try (CrtTest test = new CrtTest()) {
+            test.throwRuntimeExceptionNew();
         } catch (CrtRuntimeException ex) {
-            fail(ex.getMessage());
+            exceptionCaught = true;
         }
+        assertTrue(exceptionCaught);
     }
 };
+

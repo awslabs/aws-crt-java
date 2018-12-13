@@ -13,14 +13,13 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 
-import crt.test.MqttConnectionFixture;
+import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 
 import java.nio.ByteBuffer;
 

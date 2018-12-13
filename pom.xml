@@ -6,6 +6,89 @@
     <packaging>jar</packaging>
     <version>1.0</version>
     <url>http://maven.apache.org</url>
+    <profiles>
+        <profile>
+            <!-- Windows profile: find cmake generators and use ALL_BUILD target 
+                NOTE: CMake generator will be cached to mvn-build/cmake.properties, delete or edit this
+                file to change VS version
+                -->
+            <id>windows-vs</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <cmake.target>ALL_BUILD</cmake.target>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.3.2</version>
+                        <executions>
+                            <execution>
+                                <id>find-cmake-vs-generator</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>find_vs_cmake_generator.bat</executable>
+                                    <workingDirectory>.</workingDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <version>1.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>read-cmake-vs-generator</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.basedir}/mvn-build/cmake.properties</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
+        <profile>
+            <id>unix-make</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <cmake.target>all</cmake.target>
+            </properties>
+        </profile>
+        <profile>
+            <id>mac-make</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <cmake.target>all</cmake.target>
+            </properties>
+        </profile>
+    </profiles>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -23,6 +106,9 @@
         <resources>
             <resource>
                 <directory>mvn-build/lib</directory>
+                <excludes>
+                    <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
+                </excludes>
             </resource>
         </resources>
         <testResources>
@@ -77,9 +163,9 @@
                             <executable>cmake</executable>
                             <workingDirectory>mvn-build</workingDirectory>
                             <arguments>
-                                <argument>-GUnix Makefiles</argument>
-                                <argument>-DCMAKE_INSTALL_PREFIX=~/dev/install</argument>
-                                <argument>-DCMAKE_BUILD_TYPE=Debug</argument>
+                                <argument>-G${cmake.generator}</argument>
+                                <argument>-DCMAKE_INSTALL_PREFIX=${project.basedir}/build/deps/install</argument>
+                                <argument>-DCMAKE_BUILD_TYPE=Release</argument>
                                 <argument>..</argument>
                             </arguments>
                         </configuration>
@@ -92,8 +178,14 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>make</executable>
+                            <executable>cmake</executable>
                             <workingDirectory>mvn-build</workingDirectory>
+                            <arguments>
+                                <argument>--build</argument>
+                                <argument>.</argument>
+                                <argument>--target</argument>
+                                <argument>${cmake.target}</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

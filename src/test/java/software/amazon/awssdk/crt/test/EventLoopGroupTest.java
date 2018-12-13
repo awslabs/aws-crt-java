@@ -13,20 +13,22 @@
  * permissions and limitations under the License.
  */
 
-package crt.test;
+package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.testing.*;
+import software.amazon.awssdk.crt.*;
 
-public class BasicBindingTest {
-    public BasicBindingTest() {}
+public class EventLoopGroupTest {
+    public EventLoopGroupTest() {}
     
     @Test
-    public void testDoIt() {
-        try (CrtTest test = new CrtTest()) {
-            test.doIt();
+    public void testCreateDestroy() {
+        try (EventLoopGroup elg = new EventLoopGroup(1)) {
+            assertNotNull(elg);
+            assertTrue(elg.native_ptr() != 0);
+        } catch (CrtRuntimeException ex) {
+            fail(ex.getMessage());
         }
-        assertTrue("Resource created and destroyed", true);
     }
 };

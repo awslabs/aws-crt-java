@@ -19,8 +19,21 @@
 
 #include "crt.h"
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
+#endif
+
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1new(JNIEnv *env, jclass jni_class) {
+    (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =
         (struct aws_socket_options *)aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
@@ -40,6 +53,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1clea
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -55,6 +70,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     jclass jni_class,
     jlong jni_options,
     jint jni_domain) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -69,6 +86,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     jclass jni_class,
     jlong jni_options,
     jint jni_type) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -83,6 +102,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     jclass jni_class,
     jlong jni_options,
     jint jni_timeout) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -97,6 +118,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     jclass jni_class,
     jlong jni_options,
     jshort jni_interval) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -111,6 +134,8 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
     jclass jni_class,
     jlong jni_options,
     jshort jni_timeout) {
+    (void)env;
+    (void)jni_class;
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;
@@ -118,3 +143,11 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
 
     options->keep_alive_timeout_sec = jni_timeout;
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(pop)
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

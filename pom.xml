@@ -166,6 +166,7 @@
                                 <argument>-G${cmake.generator}</argument>
                                 <argument>-DCMAKE_INSTALL_PREFIX=${project.basedir}/build/deps/install</argument>
                                 <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                <argument>-DBUILD_SHARED_LIBS=ON</argument>
                                 <argument>..</argument>
                             </arguments>
                         </configuration>

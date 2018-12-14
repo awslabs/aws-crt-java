@@ -39,7 +39,7 @@ public class SubscribeTest extends MqttConnectionFixture {
         Consumer<MqttMessage> messageHandler = (message) -> { };
 
         try {
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
             subscribed.thenAccept(packetId -> subsAcked++);
             subscribed.get();
 

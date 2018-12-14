@@ -90,7 +90,7 @@ public class IotServiceTest extends MqttConnectionFixture {
         Consumer<MqttMessage> messageHandler = (message) -> {};
 
         try {
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
             subscribed.thenApply(packetId -> subsAcked++);
             subscribed.get();
 

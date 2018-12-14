@@ -38,7 +38,7 @@ public class WillTest extends MqttConnectionFixture {
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_WILL.length());
             payload.put(TEST_WILL.getBytes());
             MqttMessage will = new MqttMessage(TEST_TOPIC, payload);
-            connection.setWill(will, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            connection.setWill(will, QoS.AT_LEAST_ONCE, false);
         } catch (MqttException ex) {
             fail("Exception while setting will: " + ex.toString());
         }

@@ -41,7 +41,7 @@ public class PublishTest extends MqttConnectionFixture {
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
-            CompletableFuture<Integer> published = connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            CompletableFuture<Integer> published = connection.publish(message, QoS.AT_LEAST_ONCE, false);
             published.thenApply(packetId -> pubsAcked++);
             published.get();
 

@@ -53,7 +53,7 @@ public class SelfPubSubTest extends MqttConnectionFixture {
                 }
             };
 
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
             subscribed.thenApply(packetId -> subsAcked++);
             subscribed.get();
 
@@ -62,7 +62,7 @@ public class SelfPubSubTest extends MqttConnectionFixture {
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
-            CompletableFuture<Integer> published = connection.publish(message, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            CompletableFuture<Integer> published = connection.publish(message, QoS.AT_LEAST_ONCE, false);
             published.thenApply(packetId -> pubsAcked++);
             published.get();
 

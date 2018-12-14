@@ -41,20 +41,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
     }
 
-    public enum QOS {
-        AT_MOST_ONCE(0), AT_LEAST_ONCE(1), EXACTLY_ONCE(2);
-        /* reserved = 3 */
 
-        private int qos;
-
-        QOS(int value) {
-            qos = value;
-        }
-
-        public int getValue() {
-            return qos;
-        }
-    }
     
     private class MessageHandler {
         String topic;
@@ -199,7 +186,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future;
     }
 
-    public CompletableFuture<Integer> subscribe(String topic, QOS qos, Consumer<MqttMessage> handler) throws MqttException {
+    public CompletableFuture<Integer> subscribe(String topic, QoS qos, Consumer<MqttMessage> handler) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during subscribe");
         }
@@ -228,7 +215,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future.thenApply(unused -> packetId);
     }
 
-    public CompletableFuture<Integer> publish(MqttMessage message, QOS qos, boolean retain) throws MqttException {
+    public CompletableFuture<Integer> publish(MqttMessage message, QoS qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during publish");
         }
@@ -244,7 +231,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
-    public boolean setWill(MqttMessage message, QOS qos, boolean retain) throws MqttException {
+    public boolean setWill(MqttMessage message, QoS qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during setWill");
         }

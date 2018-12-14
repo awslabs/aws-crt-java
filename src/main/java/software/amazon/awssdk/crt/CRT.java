@@ -16,13 +16,10 @@ package software.amazon.awssdk.crt;
 
 import java.io.*;
 import java.nio.file.*;
-import java.net.*;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
-import java.util.jar.*;
-import java.util.stream.*;
 
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
@@ -45,23 +42,6 @@ public final class CRT {
     public static class UnknownPlatformException extends Exception {
         UnknownPlatformException(String message) {
             super(message);
-        }
-    }
-
-    /* Utility for dumping the contents of jars, debugging only */
-    private static void enumerateResources() throws URISyntaxException, IOException {
-        Enumeration<URL> en = CRT.class.getClassLoader().getResources("META-INF");
-        while (en.hasMoreElements()) {
-            URL url = en.nextElement();
-            System.out.println(url.toString());
-            JarURLConnection urlcon = (JarURLConnection) (url.openConnection());
-            try (JarFile jar = urlcon.getJarFile();) {
-                Enumeration<JarEntry> entries = jar.entries();
-                while (entries.hasMoreElements()) {
-                    String entry = entries.nextElement().getName();
-                    System.out.println("  " + entry);
-                }
-            }
         }
     }
 

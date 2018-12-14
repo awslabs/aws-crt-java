@@ -253,8 +253,9 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
 }
 
 JNIEXPORT
-jboolean JNICALL
-    Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsIsAlpnAvailable(JNIEnv *env, jclass jni_class) {
+jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsIsAlpnAvailable(
+    JNIEnv *env,
+    jclass jni_class) {
     (void)env;
     (void)jni_class;
     return aws_tls_is_alpn_available();

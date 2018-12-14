@@ -35,7 +35,6 @@ public class SelfPubSubTest extends MqttConnectionFixture {
 
     int pubsAcked = 0;
     int subsAcked = 0;
-    boolean disconnecting = false;
 
     @Test
     public void testPubSub() {
@@ -54,24 +53,27 @@ public class SelfPubSubTest extends MqttConnectionFixture {
             };
 
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
-            subscribed.thenApply(packetId -> subsAcked++);
-            subscribed.get();
+            subscribed.thenApply(unused -> subsAcked++);
+            int packetId = subscribed.get();
 
+            assertNotSame(0, packetId);
             assertEquals("Single subscription", 1, subsAcked);
 
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
             CompletableFuture<Integer> published = connection.publish(message, QoS.AT_LEAST_ONCE, false);
-            published.thenApply(packetId -> pubsAcked++);
-            published.get();
+            published.thenApply(unused -> pubsAcked++);
+            packetId = published.get();
 
+            assertNotSame(0, packetId);
             assertEquals("Published", 1, pubsAcked);
 
             CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-            unsubscribed.thenApply(packetId -> subsAcked--);
-            unsubscribed.get();
+            unsubscribed.thenApply(unused -> subsAcked--);
+            packetId = unsubscribed.get();
 
+            assertNotSame(0, packetId);
             assertEquals("No Subscriptions", 0, subsAcked);
         } catch (Exception ex) {
             fail(ex.getMessage());

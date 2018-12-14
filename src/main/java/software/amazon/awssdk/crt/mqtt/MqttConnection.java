@@ -195,12 +195,12 @@ public class MqttConnection extends CrtResource implements Closeable {
         AsyncCallback subAck = wrapPacketFuture(future);
         try {
             int packetId = mqtt_subscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
-            future.obtrudeValue(packetId);
+            // When the future completes, complete the returned future with the packetId
+            return future.thenApply(unused -> packetId);
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
         }
-        return future;
     }
 
     public CompletableFuture<Integer> unsubscribe(String topic) throws MqttException {
@@ -224,6 +224,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         AsyncCallback pubAck = wrapPacketFuture(future);
         try {
             int packetId = mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+            // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
         catch (CrtRuntimeException ex) {

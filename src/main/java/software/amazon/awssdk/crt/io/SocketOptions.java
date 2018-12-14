@@ -12,9 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 
@@ -55,50 +54,50 @@ public final class SocketOptions extends CrtResource implements Closeable {
     }
 
     public SocketOptions() throws CrtRuntimeException {
-        acquire(socket_options_new());
+        acquire(socketOptionsNew());
     }
 
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            socket_options_clean_up(release());
+            socketOptionsDestroy(release());
         }
     }
 
     void setDomain(SocketDomain domain) {
-        socket_options_set_domain(native_ptr(), domain.getValue());
+        socketOptionsSetDomain(native_ptr(), domain.getValue());
     }
 
     void setType(SocketType type) {
-        socket_options_set_type(native_ptr(), type.getValue());
+        socketOptionsSetType(native_ptr(), type.getValue());
     }
 
     void setConnectTimeoutMs(int timeoutMs) {
-        socket_options_set_connect_timeout_ms(native_ptr(), timeoutMs);
+        socketOptionsSetConnectTimeoutMs(native_ptr(), timeoutMs);
     }
 
     void setKeepAliveIntervalSeconds(short intervalSeconds) {
-        socket_options_set_keep_alive_interval_sec(native_ptr(), intervalSeconds);
+        socketOptionsSetKeepAliveIntervalSec(native_ptr(), intervalSeconds);
     }
 
     void setKeepAliveTimeoutSeconds(short timeoutSeconds) {
-        socket_options_set_keep_alive_timeout_sec(native_ptr(), timeoutSeconds);
+        socketOptionsSetKeepAliveTimeoutSec(native_ptr(), timeoutSeconds);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long socket_options_new() throws CrtRuntimeException;
+    private static native long socketOptionsNew() throws CrtRuntimeException;
 
-    private static native void socket_options_clean_up(long elg);
+    private static native void socketOptionsDestroy(long elg);
     
-    private static native void socket_options_set_domain(long tls, int domain);
+    private static native void socketOptionsSetDomain(long tls, int domain);
 
-    private static native void socket_options_set_type(long tls, int type);
+    private static native void socketOptionsSetType(long tls, int type);
 
-    private static native void socket_options_set_connect_timeout_ms(long tls, int connect_timeout_ms);
+    private static native void socketOptionsSetConnectTimeoutMs(long tls, int connect_timeout_ms);
 
-    private static native void socket_options_set_keep_alive_interval_sec(long tls, short keep_alive_interval);
+    private static native void socketOptionsSetKeepAliveIntervalSec(long tls, short keep_alive_interval);
 
-    private static native void socket_options_set_keep_alive_timeout_sec(long tls, short keep_alive_timeout);
+    private static native void socketOptionsSetKeepAliveTimeoutSec(long tls, short keep_alive_timeout);
 };

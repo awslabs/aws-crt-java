@@ -34,7 +34,7 @@
 
 JNIEXPORT
 jlong JNICALL
-    Java_software_amazon_awssdk_crt_TlsContext_tls_1ctx_1new(JNIEnv *env, jclass jni_class, jlong jni_options) {
+    Java_software_amazon_awssdk_crt_io_TlsContext_tlsContextNew(JNIEnv *env, jclass jni_class, jlong jni_options) {
     (void)jni_class;
     struct aws_tls_ctx_options *options = (struct aws_tls_ctx_options *)jni_options;
     if (!options) {
@@ -53,7 +53,7 @@ jlong JNICALL
 
 JNIEXPORT
 void JNICALL
-    Java_software_amazon_awssdk_crt_TlsContext_tls_1ctx_1clean_1up(JNIEnv *env, jclass jni_class, jlong jni_ctx) {
+    Java_software_amazon_awssdk_crt_io_TlsContext_tlsContextDestroy(JNIEnv *env, jclass jni_class, jlong jni_ctx) {
     (void)env;
     (void)jni_class;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_ctx;

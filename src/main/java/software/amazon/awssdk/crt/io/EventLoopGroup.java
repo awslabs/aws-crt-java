@@ -12,9 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 
@@ -28,19 +27,19 @@ import java.io.Closeable;
 public final class EventLoopGroup extends CrtResource implements Closeable {
 
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        acquire(event_loop_group_new(numThreads));
+        acquire(eventLoopGroupNew(numThreads));
     }
 
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            event_loop_group_clean_up(release());
+            eventLoopGroupDestroy(release());
         }
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long event_loop_group_new(int numThreads) throws CrtRuntimeException;
-    private static native void event_loop_group_clean_up(long elg);
+    private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
+    private static native void eventLoopGroupDestroy(long elg);
 };

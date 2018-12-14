@@ -16,10 +16,12 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.mqtt.*;
+import software.amazon.awssdk.crt.mqtt.MqttException;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
-import software.amazon.awssdk.crt.test.MqttConnectionFixture;
+import static org.junit.Assert.fail;
+
 
 import java.nio.ByteBuffer;
 
@@ -38,7 +40,7 @@ public class WillTest extends MqttConnectionFixture {
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_WILL.length());
             payload.put(TEST_WILL.getBytes());
             MqttMessage will = new MqttMessage(TEST_TOPIC, payload);
-            connection.setWill(will, MqttConnection.QOS.AT_LEAST_ONCE, false);
+            connection.setWill(will, QualityOfService.AT_LEAST_ONCE, false);
         } catch (MqttException ex) {
             fail("Exception while setting will: " + ex.toString());
         }

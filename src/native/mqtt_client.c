@@ -30,10 +30,8 @@
 #    endif
 #endif
 
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1client_1init(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_bootstrap) {
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqttClientNew(JNIEnv *env, jclass jni_class, jlong jni_bootstrap) {
     (void)jni_class;
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
@@ -69,7 +67,7 @@ error_cleanup:
     return (jlong)NULL;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqtt_1client_1clean_1up(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqttClientDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_mqtt_client) {

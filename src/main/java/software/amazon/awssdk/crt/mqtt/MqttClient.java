@@ -15,12 +15,11 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.ClientBootstrap;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.EventLoopGroup;
-import software.amazon.awssdk.crt.TlsContext;
-import software.amazon.awssdk.crt.mqtt.MqttConnection;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.io.Closeable;
 
@@ -46,13 +45,13 @@ public class MqttClient extends CrtResource implements Closeable {
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext tlsContext) throws CrtRuntimeException {
         this.bootstrap = clientBootstrap;
         this.tlsContext = tlsContext;
-        acquire(mqtt_client_init(bootstrap.native_ptr()));
+        acquire(mqttClientNew(bootstrap.native_ptr()));
     }
 
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            mqtt_client_clean_up(release());
+            mqttClientDestroy(release());
         }
     }
 
@@ -63,7 +62,7 @@ public class MqttClient extends CrtResource implements Closeable {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long mqtt_client_init(long bootstrap) throws CrtRuntimeException;
+    private static native long mqttClientNew(long bootstrap) throws CrtRuntimeException;
 
-    private static native void mqtt_client_clean_up(long client);
+    private static native void mqttClientDestroy(long client);
 }

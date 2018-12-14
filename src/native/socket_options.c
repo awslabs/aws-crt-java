@@ -32,7 +32,7 @@
 #endif
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1new(JNIEnv *env, jclass jni_class) {
+jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(JNIEnv *env, jclass jni_class) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =
@@ -49,7 +49,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1new
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1clean_1up(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options) {
@@ -65,7 +65,7 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1clea
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1domain(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsSetDomain(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,
@@ -81,7 +81,7 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1type(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsSetType(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,
@@ -97,7 +97,7 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1connect_1timeout_1ms(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsSetConnectTimeoutMs(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,
@@ -113,7 +113,7 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1keep_1alive_1interval_1sec(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsSetKeepAliveIntervalSec(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,
@@ -129,7 +129,7 @@ void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_SocketOptions_socket_1options_1set_1keep_1alive_1timeout_1sec(
+void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsSetKeepAliveTimeoutSec(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,

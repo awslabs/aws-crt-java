@@ -47,7 +47,7 @@ struct jni_tls_ctx_options {
 #endif
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1new(JNIEnv *env, jclass jni_class) {
+jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsNew(JNIEnv *env, jclass jni_class) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls =
@@ -63,7 +63,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1ne
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1clean_1up(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls) {
@@ -101,7 +101,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1cle
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1minimum_1tls_1version(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetMinimumTlsVersion(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -117,7 +117,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1ca_1file(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetCaFile(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -137,7 +137,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1ca_1path(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetCaPath(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -157,7 +157,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1alpn(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetAlpn(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -173,7 +173,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1certificate_1path(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetCertificatePath(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -189,7 +189,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1private_1key_1path(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetPrivateKeyPath(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -205,7 +205,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1pkcs12_1path(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetPkcs12Path(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -221,7 +221,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1pkcs12_1password(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetPkcs12Password(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -237,7 +237,7 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set_1verify_1peer(
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetVerifyPeer(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
@@ -253,8 +253,9 @@ void JNICALL Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1set
 }
 
 JNIEXPORT
-jboolean JNICALL
-    Java_software_amazon_awssdk_crt_TlsContextOptions_tls_1options_1is_1alpn_1available(JNIEnv *env, jclass jni_class) {
+jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsIsAlpnAvailable(
+    JNIEnv *env,
+    jclass jni_class) {
     (void)env;
     (void)jni_class;
     return aws_tls_is_alpn_available();

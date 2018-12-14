@@ -18,8 +18,12 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.*;
-import java.util.concurrent.Semaphore;
+
+import java.util.concurrent.CompletableFuture;
 
 
 class MqttConnectionFixture {
@@ -27,7 +31,6 @@ class MqttConnectionFixture {
     ClientBootstrap bootstrap = null;
     MqttClient client = null;
     MqttConnection connection = null;
-    final Semaphore done = new Semaphore(0);
     private boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = "localhost";
@@ -39,18 +42,18 @@ class MqttConnectionFixture {
     }
 
     boolean connect() {
-        return connect(false, (short)0);
+        return connect(false, 0);
     }
 
-    boolean connect(boolean cleanSession, short keepAliveMs) {
+    boolean connect(boolean cleanSession, int keepAliveMs) {
         return connect(cleanSession, keepAliveMs, null);
     }
     
-    boolean connect(boolean cleanSession, short keepAliveMs, TlsContext tls) {
+    boolean connect(boolean cleanSession, int keepAliveMs, TlsContext tls) {
         return connect(TEST_ENDPOINT, TEST_PORT, TEST_CLIENTID, cleanSession, keepAliveMs, tls);
     }
 
-    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, short keepAliveMs, TlsContext tls) {
+    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, int keepAliveMs, TlsContext tls) {
         try {
             elg = new EventLoopGroup(1);
             bootstrap = new ClientBootstrap(elg);
@@ -75,21 +78,9 @@ class MqttConnectionFixture {
                 }
             };
             assertNotNull(connection);
-            MqttActionListener connectAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    System.out.println("Connect failed: " + cause.toString());
-                    done.release();
-                }
-            };
             cleanSession = true; // only true is supported right now
-            connection.connect(clientId, cleanSession, keepAliveMs, connectAck);
-            done.acquire();
+            CompletableFuture<Void> connected = connection.connect(clientId, cleanSession, keepAliveMs);
+            connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;
         } catch (Exception ex) {
@@ -99,23 +90,10 @@ class MqttConnectionFixture {
     }
 
     void disconnect() {
-        MqttActionListener disconnectAck = new MqttActionListener() {
-            @Override
-            public void onSuccess() {
-                done.release();
-            }
-
-            @Override
-            public void onFailure(Throwable cause) {
-                fail("Disconnect failed: " + cause.toString());
-                done.release();
-            }
-        };
-
         disconnecting = true;
         try {
-            connection.disconnect(disconnectAck);
-            done.acquire();
+            CompletableFuture<Void> disconnected = connection.disconnect();
+            disconnected.get();
         }
         catch (Exception ex) {
             fail("Exception during disconnect: " + ex.getMessage());

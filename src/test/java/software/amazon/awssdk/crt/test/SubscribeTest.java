@@ -16,11 +16,14 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.mqtt.*;
-import java.util.function.*;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
-import software.amazon.awssdk.crt.test.MqttConnectionFixture;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class SubscribeTest extends MqttConnectionFixture {
     public SubscribeTest() {
@@ -34,54 +37,22 @@ public class SubscribeTest extends MqttConnectionFixture {
     public void testSubscribeUnsubscribe() {
         connect();
 
-        Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
-            @Override
-            public void accept(MqttMessage message) {
-
-            }
-        };
-
-        MqttActionListener subAck = new MqttActionListener() {
-            @Override
-            public void onSuccess() {
-                subsAcked++;
-                done.release();
-            }
-
-            @Override
-            public void onFailure(Throwable cause) {
-                fail("Subscription failed: " + cause.getMessage());
-                done.release();
-            }
-        };
+        Consumer<MqttMessage> messageHandler = (message) -> { };
 
         try {
-            connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler, subAck);
-            done.acquire();
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
+            subscribed.thenAccept(packetId -> subsAcked++);
+            subscribed.get();
 
             assertEquals("Single subscription", 1, subsAcked);
 
-            MqttActionListener unsubAck = new MqttActionListener() {
-                @Override
-                public void onSuccess() {
-                    subsAcked--;
-                    done.release();
-                }
-
-                @Override
-                public void onFailure(Throwable cause) {
-                    fail("Unsubscription failed: " + cause.getMessage());
-                    done.release();
-                }
-            };
-            connection.unsubscribe(TEST_TOPIC, unsubAck);
-            done.acquire();
+            CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
+            unsubscribed.thenAccept(packetId -> subsAcked--);
+            unsubscribed.get();
 
             assertEquals("No Subscriptions", 0, subsAcked);
-        } catch (InterruptedException interrupted) { /* wait() can be interrupted */
-            fail(interrupted.getMessage());
-        } catch (MqttException mqttEx) {
-            fail(mqttEx.getMessage());
+        } catch (Exception ex) {
+            fail(ex.getMessage());
         }
         
         disconnect();       

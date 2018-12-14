@@ -167,10 +167,11 @@ public class MqttConnection extends CrtResource implements Closeable {
         try {
             connectionState = ConnectionState.CONNECTING;
             mqttConnectionConnect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
-            return future;
+
         } catch (CrtRuntimeException ex) {
-            throw new MqttException(ex.getMessage());
+            future.completeExceptionally(ex);
         }
+        return future;
     }
 
     public CompletableFuture<Void> disconnect() {
@@ -185,12 +186,13 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future;
     }
 
-    public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) throws MqttException {
+    public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
-            throw new MqttException("Invalid connection during subscribe");
+            future.completeExceptionally(new MqttException("Invalid connection during subscribe"));
+            return future;
         }
 
-        CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback subAck = wrapPacketFuture(future);
         try {
             int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
@@ -198,16 +200,18 @@ public class MqttConnection extends CrtResource implements Closeable {
             return future.thenApply(unused -> packetId);
         }
         catch (CrtRuntimeException ex) {
-            throw new MqttException("AWS CRT exception: " + ex.toString());
+            future.completeExceptionally(ex);
+            return future;
         }
     }
 
     public CompletableFuture<Integer> unsubscribe(String topic) throws MqttException {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
-            throw new MqttException("Invalid connection during unsubscribe");
+            future.completeExceptionally(new MqttException("Invalid connection during unsubscribe"));
+            return future;
         }
 
-        CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback unsubAck = wrapPacketFuture(future);
         int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
@@ -215,11 +219,11 @@ public class MqttConnection extends CrtResource implements Closeable {
     }
 
     public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
-            throw new MqttException("Invalid connection during publish");
+            future.completeExceptionally(new MqttException("Invalid connection during publish"));
         }
 
-        CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback pubAck = wrapPacketFuture(future);
         try {
             int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
@@ -227,7 +231,8 @@ public class MqttConnection extends CrtResource implements Closeable {
             return future.thenApply(unused -> packetId);
         }
         catch (CrtRuntimeException ex) {
-            throw new MqttException("AWS CRT exception: " + ex.toString());
+            future.completeExceptionally(ex);
+            return future;
         }
     }
 

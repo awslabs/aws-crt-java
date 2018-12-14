@@ -96,7 +96,7 @@ static void s_jni_atexit(void) {
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_AwsCrtInit(JNIEnv *env, jclass jni_crt_class) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class) {
     (void)jni_crt_class;
     aws_load_error_strings();
     aws_io_load_error_strings();

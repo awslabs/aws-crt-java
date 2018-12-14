@@ -167,10 +167,10 @@ public class MqttConnection extends CrtResource implements Closeable {
         try {
             connectionState = ConnectionState.CONNECTING;
             mqttConnectionConnect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
+            return future;
         } catch (CrtRuntimeException ex) {
-            future.completeExceptionally(ex);
+            throw new MqttException(ex.getMessage());
         }
-        return future;
     }
 
     public CompletableFuture<Void> disconnect() {
@@ -185,7 +185,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future;
     }
 
-    public CompletableFuture<Integer> subscribe(String topic, QoS qos, Consumer<MqttMessage> handler) throws MqttException {
+    public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during subscribe");
         }
@@ -214,7 +214,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future.thenApply(unused -> packetId);
     }
 
-    public CompletableFuture<Integer> publish(MqttMessage message, QoS qos, boolean retain) throws MqttException {
+    public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during publish");
         }
@@ -231,13 +231,13 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
-    public boolean setWill(MqttMessage message, QoS qos, boolean retain) throws MqttException {
+    public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during setWill");
         }
 
         try {
-            return mqttConnectionSetWill(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
+            mqttConnectionSetWill(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());

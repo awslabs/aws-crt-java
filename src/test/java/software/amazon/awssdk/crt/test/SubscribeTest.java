@@ -16,13 +16,14 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.mqtt.*;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.*;
-
-import software.amazon.awssdk.crt.test.MqttConnectionFixture;
+import java.util.function.Consumer;
 
 public class SubscribeTest extends MqttConnectionFixture {
     public SubscribeTest() {
@@ -39,7 +40,7 @@ public class SubscribeTest extends MqttConnectionFixture {
         Consumer<MqttMessage> messageHandler = (message) -> { };
 
         try {
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
             subscribed.thenAccept(packetId -> subsAcked++);
             subscribed.get();
 

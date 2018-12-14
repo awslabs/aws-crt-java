@@ -16,15 +16,18 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.mqtt.*;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-
-import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 
 public class SelfPubSubTest extends MqttConnectionFixture {
     public SelfPubSubTest() {
@@ -52,7 +55,7 @@ public class SelfPubSubTest extends MqttConnectionFixture {
                 }
             };
 
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QoS.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
             subscribed.thenApply(unused -> subsAcked++);
             int packetId = subscribed.get();
 
@@ -62,7 +65,7 @@ public class SelfPubSubTest extends MqttConnectionFixture {
             ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
             payload.put(TEST_PAYLOAD.getBytes());
             MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
-            CompletableFuture<Integer> published = connection.publish(message, QoS.AT_LEAST_ONCE, false);
+            CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();
 

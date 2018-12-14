@@ -16,7 +16,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.mqtt.MqttException;
 
 import software.amazon.awssdk.crt.test.MqttConnectionFixture;

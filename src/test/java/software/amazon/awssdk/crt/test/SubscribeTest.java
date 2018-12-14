@@ -15,7 +15,6 @@
 
 package software.amazon.awssdk.crt.test;
 
-import com.sun.xml.internal.ws.util.CompletedFuture;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.mqtt.*;
@@ -37,12 +36,7 @@ public class SubscribeTest extends MqttConnectionFixture {
     public void testSubscribeUnsubscribe() {
         connect();
 
-        Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
-            @Override
-            public void accept(MqttMessage message) {
-
-            }
-        };
+        Consumer<MqttMessage> messageHandler = (message) -> { };
 
         try {
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, MqttConnection.QOS.AT_LEAST_ONCE, messageHandler);

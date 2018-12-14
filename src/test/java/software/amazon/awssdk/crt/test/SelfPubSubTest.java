@@ -15,13 +15,11 @@
 
 package software.amazon.awssdk.crt.test;
 
-import com.sun.xml.internal.ws.util.CompletedFuture;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.function.*;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -44,17 +42,14 @@ public class SelfPubSubTest extends MqttConnectionFixture {
         connect();
 
         try {
-            Consumer<MqttMessage> messageHandler = new Consumer<MqttMessage>() {
-                @Override
-                public void accept(MqttMessage message) {
-                    ByteBuffer payload = message.getPayload();
-                    assertTrue("Payload buffer is array of bytes", payload.hasArray());
-                    try {
-                        String contents = new String(payload.array(), "UTF-8");
-                        assertEquals("Message is intact", TEST_PAYLOAD, contents);
-                    } catch (UnsupportedEncodingException ex) {
-                        fail("Unable to decode payload: " + ex.getMessage());
-                    }
+            Consumer<MqttMessage> messageHandler = (message) -> {
+                ByteBuffer payload = message.getPayload();
+                assertTrue("Payload buffer is array of bytes", payload.hasArray());
+                try {
+                    String contents = new String(payload.array(), "UTF-8");
+                    assertEquals("Message is intact", TEST_PAYLOAD, contents);
+                } catch (UnsupportedEncodingException ex) {
+                    fail("Unable to decode payload: " + ex.getMessage());
                 }
             };
 

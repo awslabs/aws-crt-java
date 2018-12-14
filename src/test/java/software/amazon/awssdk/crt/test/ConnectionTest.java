@@ -21,8 +21,6 @@ import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 
 
 class MqttConnectionFixture {
@@ -41,18 +39,18 @@ class MqttConnectionFixture {
     }
 
     boolean connect() {
-        return connect(false, (short)0);
+        return connect(false, 0);
     }
 
-    boolean connect(boolean cleanSession, short keepAliveMs) {
+    boolean connect(boolean cleanSession, int keepAliveMs) {
         return connect(cleanSession, keepAliveMs, null);
     }
     
-    boolean connect(boolean cleanSession, short keepAliveMs, TlsContext tls) {
+    boolean connect(boolean cleanSession, int keepAliveMs, TlsContext tls) {
         return connect(TEST_ENDPOINT, TEST_PORT, TEST_CLIENTID, cleanSession, keepAliveMs, tls);
     }
 
-    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, short keepAliveMs, TlsContext tls) {
+    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, int keepAliveMs, TlsContext tls) {
         try {
             elg = new EventLoopGroup(1);
             bootstrap = new ClientBootstrap(elg);

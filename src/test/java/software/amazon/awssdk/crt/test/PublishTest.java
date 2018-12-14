@@ -17,13 +17,10 @@ package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.*;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Semaphore;
 
 import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 

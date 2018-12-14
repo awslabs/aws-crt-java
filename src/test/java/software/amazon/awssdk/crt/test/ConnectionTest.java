@@ -18,6 +18,9 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;

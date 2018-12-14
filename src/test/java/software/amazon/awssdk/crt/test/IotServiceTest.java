@@ -18,6 +18,8 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.io.File;
@@ -26,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
-import software.amazon.awssdk.crt.test.MqttConnectionFixture;;
+;
 
 public class IotServiceTest extends MqttConnectionFixture {
     public IotServiceTest() {

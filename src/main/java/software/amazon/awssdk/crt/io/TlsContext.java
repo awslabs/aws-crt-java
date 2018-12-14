@@ -12,37 +12,34 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.EventLoopGroup;
 
 import java.io.Closeable;
 
 /**
- * This class wraps the aws_client_bootstrap from aws-c-io to provide
- * a client context for all protocol stacks in the AWS Common Runtime.
+ * This class wraps the aws_tls_connection_options from aws-c-io to provide
+ * access to TLS configuration contexts in the AWS Common Runtime.
  */
-public final class ClientBootstrap extends CrtResource implements Closeable {
-    private EventLoopGroup elg;
+public final class TlsContext extends CrtResource implements Closeable {
 
-    public ClientBootstrap(EventLoopGroup _elg) throws CrtRuntimeException {
-        elg = _elg;
-        acquire(client_bootstrap_new(elg.native_ptr()));
+    public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
+        acquire(tlsContextNew(options.native_ptr()));
     }
 
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            client_bootstrap_clean_up(release());
+            tlsContextDestroy(release());
         }
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long client_bootstrap_new(long elg) throws CrtRuntimeException;
-    private static native void client_bootstrap_clean_up(long bootstrap);
+    private static native long tlsContextNew(long options) throws CrtRuntimeException;
+
+    private static native void tlsContextDestroy(long elg);
 };

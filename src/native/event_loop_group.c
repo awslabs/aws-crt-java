@@ -32,7 +32,7 @@
 #endif
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1new(
+jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(
     JNIEnv *env,
     jclass jni_elg,
     jint num_threads) {
@@ -58,7 +58,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_EventLoopGroup_event_1loop_1group_1clean_1up(
+void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDestroy(
     JNIEnv *env,
     jclass jni_elg,
     jlong elg_addr) {

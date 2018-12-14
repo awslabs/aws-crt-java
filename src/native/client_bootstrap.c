@@ -32,7 +32,7 @@
 #endif
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1new(
+jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_elg) {
@@ -68,7 +68,7 @@ error_cleanup:
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_ClientBootstrap_client_1bootstrap_1clean_1up(
+void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_bootstrap) {

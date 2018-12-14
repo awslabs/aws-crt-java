@@ -96,7 +96,7 @@ static void s_jni_atexit(void) {
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jclass jni_crt_class) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_AwsCrtInit(JNIEnv *env, jclass jni_crt_class) {
     (void)jni_crt_class;
     aws_load_error_strings();
     aws_io_load_error_strings();
@@ -109,25 +109,3 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_aws_1crt_1init(JNIEnv *env, jcl
 
     atexit(s_jni_atexit);
 }
-
-#if defined(ENABLE_JNI_TESTS)
-JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_testing_CrtTest_doIt(JNIEnv *env, jobject obj) {
-    (void)env;
-    (void)obj;
-    printf("I DID THE THING\n");
-}
-
-JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_testing_CrtTest_throwRuntimeExceptionNew(JNIEnv *env, jobject obj) {
-    (void)obj;
-    jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
-    (*env)->ThrowNew(env, runtime_exception, "Test RuntimeException via new");
-}
-
-JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_testing_CrtTest_throwRuntimeExceptionAPI(JNIEnv *env, jobject obj) {
-    (void)obj;
-    aws_jni_throw_runtime_exception(env, "Test RuntimeException via API");
-}
-#endif /* ENABLE_JNI_TESTS */

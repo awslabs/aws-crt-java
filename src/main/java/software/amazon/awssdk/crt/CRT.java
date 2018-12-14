@@ -139,7 +139,7 @@ public final class CRT {
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
 
-            aws_crt_init();
+            AwsCrtInit();
         }
         catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
@@ -155,5 +155,5 @@ public final class CRT {
         }
     }
 
-    private static native void aws_crt_init() throws CrtRuntimeException;
+    private static native void AwsCrtInit() throws CrtRuntimeException;
 };

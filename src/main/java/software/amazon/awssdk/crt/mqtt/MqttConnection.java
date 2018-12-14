@@ -15,13 +15,12 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.SocketOptions;
+import software.amazon.awssdk.crt.io.SocketOptions;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.nio.ByteBuffer;
 import java.io.Closeable;
@@ -95,19 +94,19 @@ public class MqttConnection extends CrtResource implements Closeable {
                     return onOffline(recoverable, reason);
                 }
             };
-            acquire(mqtt_new(client.native_ptr(), endpoint, (short)port, clientCallbacks,
+            acquire(mqttConnectionNew(client.native_ptr(), endpoint, (short)port, clientCallbacks,
                     socketOptions != null ? socketOptions.native_ptr() : 0,
                     tls != null ? tls.native_ptr() : 0)
             );
         } catch (CrtRuntimeException ex) {
-            throw new MqttException("Exception during mqtt_new: " + ex.getMessage());
+            throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
         }
     }
 
     @Override
     public void close() {
         disconnect();
-        mqtt_clean_up(release());
+        mqttConnectionDestroy(release());
     }
 
     public ConnectionState getState() {
@@ -116,7 +115,7 @@ public class MqttConnection extends CrtResource implements Closeable {
 
     public void setLogin(String user, String pass) throws MqttException {
         try {
-            mqtt_set_login(native_ptr(), user, pass);
+            mqttConnectionSetLogin(native_ptr(), user, pass);
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }        
@@ -167,7 +166,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         AsyncCallback connectAck = wrapVoidFuture(future);
         try {
             connectionState = ConnectionState.CONNECTING;
-            mqtt_connect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
+            mqttConnectionConnect(native_ptr(), clientId, cleanSession, keepAlive, connectAck);
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
         }
@@ -182,7 +181,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
         AsyncCallback disconnectAck = wrapVoidFuture(future);
         connectionState = ConnectionState.DISCONNECTING;
-        mqtt_disconnect(native_ptr(), disconnectAck);
+        mqttConnectionDisconnect(native_ptr(), disconnectAck);
         return future;
     }
 
@@ -194,7 +193,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback subAck = wrapPacketFuture(future);
         try {
-            int packetId = mqtt_subscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+            int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -210,7 +209,7 @@ public class MqttConnection extends CrtResource implements Closeable {
 
         CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback unsubAck = wrapPacketFuture(future);
-        int packetId = mqtt_unsubscribe(native_ptr(), topic, unsubAck);
+        int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
         return future.thenApply(unused -> packetId);
     }
@@ -223,7 +222,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         AsyncCallback pubAck = wrapPacketFuture(future);
         try {
-            int packetId = mqtt_publish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+            int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -238,7 +237,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
 
         try {
-            return mqtt_set_will(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
+            return mqttConnectionSetWill(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -250,7 +249,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             throw new MqttException("Invalid connection during ping");
         }
         try {
-            mqtt_ping(native_ptr());
+            mqttConnectionPing(native_ptr());
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Failed to send ping: " + ex.getMessage());
         }
@@ -265,23 +264,23 @@ public class MqttConnection extends CrtResource implements Closeable {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqtt_new(long client, String endpoint, short port, ClientCallbacks clientCallbacks, long socketOptions, long tlsCtx) throws CrtRuntimeException;
+    private static native long mqttConnectionNew(long client, String endpoint, short port, ClientCallbacks clientCallbacks, long socketOptions, long tlsCtx) throws CrtRuntimeException;
 
-    private static native void mqtt_clean_up(long connection);
+    private static native void mqttConnectionDestroy(long connection);
 
-    private static native void mqtt_connect(long connection, String clientId, boolean cleanSession, short keepAliveMs, AsyncCallback ack) throws CrtRuntimeException;
+    private static native void mqttConnectionConnect(long connection, String clientId, boolean cleanSession, short keepAliveMs, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native void mqtt_disconnect(long connection, AsyncCallback ack);
+    private static native void mqttConnectionDisconnect(long connection, AsyncCallback ack);
 
-    private static native short mqtt_subscribe(long connection, String topic, int qos, MessageHandler handler, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqttConnectionSubscribe(long connection, String topic, int qos, MessageHandler handler, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native short mqtt_unsubscribe(long connection, String topic, AsyncCallback ack);
+    private static native short mqttConnectionUnsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native short mqtt_publish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqttConnectionPublish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native boolean mqtt_set_will(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
+    private static native boolean mqttConnectionSetWill(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
     
-    private static native void mqtt_set_login(long connection, String username, String password) throws CrtRuntimeException;
+    private static native void mqttConnectionSetLogin(long connection, String username, String password) throws CrtRuntimeException;
 
-    private static native void mqtt_ping(long connection) throws CrtRuntimeException;
+    private static native void mqttConnectionPing(long connection) throws CrtRuntimeException;
 };

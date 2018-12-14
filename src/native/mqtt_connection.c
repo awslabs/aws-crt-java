@@ -270,7 +270,7 @@ static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection
     return false;
 }
 
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1new(
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionNew(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_client,
@@ -359,7 +359,7 @@ error_cleanup:
 /*******************************************************************************
  * clean_up
  ******************************************************************************/
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1clean_1up(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
@@ -377,7 +377,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
  * connect
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionConnect(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -410,7 +410,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1connect(
  * disconnect
  ******************************************************************************/
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1disconnect(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionDisconnect(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -517,7 +517,7 @@ static void s_on_subscription_delivered(
 }
 
 JNIEXPORT
-jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1subscribe(
+jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionSubscribe(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -596,7 +596,7 @@ error_cleanup:
  * unsubscribe
  ******************************************************************************/
 JNIEXPORT
-jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1unsubscribe(
+jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionUnsubscribe(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -641,7 +641,7 @@ error_cleanup:
  * publish
  ******************************************************************************/
 JNIEXPORT
-jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1publish(
+jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionPublish(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -693,7 +693,7 @@ error_cleanup:
     return 0;
 }
 
-JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1will(
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionSetWill(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -723,7 +723,7 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_m
     return (result == AWS_OP_SUCCESS);
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1set_1login(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionSetLogin(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -745,7 +745,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt_1ping(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionPing(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {

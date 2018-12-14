@@ -12,9 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 
@@ -43,54 +42,54 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     }
 
     public TlsContextOptions() throws CrtRuntimeException {
-        acquire(tls_options_new());
+        acquire(tlsContextOptionsNew());
     }
 
     @Override
     public void close() {
         if (native_ptr() != 0) {
-            tls_options_clean_up(release());
+            tlsContextOptionsDestroy(release());
         }
     }
 
     public void setMinimumTlsVersion(TlsVersions version) {
-        tls_options_set_minimum_tls_version(native_ptr(), version.getValue());
+        tlsContextOptionsSetMinimumTlsVersion(native_ptr(), version.getValue());
     }
 
     public void setCaFile(String caFile) {
-        tls_options_set_ca_file(native_ptr(), caFile);
+        tlsContextOptionsSetCaFile(native_ptr(), caFile);
     }
 
     public void setCaPath(String caPath) {
-        tls_options_set_ca_path(native_ptr(), caPath);
+        tlsContextOptionsSetCaPath(native_ptr(), caPath);
     }
 
     public void setAlpnList(String alpn) {
-        tls_options_set_alpn(native_ptr(), alpn);
+        tlsContextOptionsSetAlpn(native_ptr(), alpn);
     }
 
     public void setCertificatePath(String certificatePath) {
-        tls_options_set_certificate_path(native_ptr(), certificatePath);
+        tlsContextOptionsSetCertificatePath(native_ptr(), certificatePath);
     }
 
     public void setPrivateKeyPath(String privateKeyPath) {
-        tls_options_set_private_key_path(native_ptr(), privateKeyPath);
+        tlsContextOptionsSetPrivateKeyPath(native_ptr(), privateKeyPath);
     }
 
     public void setPkcs12Path(String pkcs12Path) {
-        tls_options_set_pkcs12_path(native_ptr(), pkcs12Path);
+        tlsContextOptionsSetPkcs12Path(native_ptr(), pkcs12Path);
     }
 
     public void setPkcs12Password(String pkcs12Password) {
-        tls_options_set_pkcs12_password(native_ptr(), pkcs12Password);
+        tlsContextOptionsSetPkcs12Password(native_ptr(), pkcs12Password);
     }
 
     public void setVerifyPeer(boolean verify) {
-        tls_options_set_verify_peer(native_ptr(), verify);
+        tlsContextOptionsSetVerifyPeer(native_ptr(), verify);
     }
 
     public boolean isAlpnSupported() {
-        return tls_options_is_alpn_available();
+        return tlsContextOptionsIsAlpnAvailable();
     }
 
     public void overrideDefaultTrustStore(String caPath, String caFile) {
@@ -119,27 +118,27 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long tls_options_new() throws CrtRuntimeException;
+    private static native long tlsContextOptionsNew() throws CrtRuntimeException;
 
-    private static native void tls_options_clean_up(long elg);
+    private static native void tlsContextOptionsDestroy(long elg);
     
-    private static native void tls_options_set_minimum_tls_version(long tls, int version);
+    private static native void tlsContextOptionsSetMinimumTlsVersion(long tls, int version);
 
-    private static native void tls_options_set_ca_file(long tls, String ca_file);
+    private static native void tlsContextOptionsSetCaFile(long tls, String ca_file);
 
-    private static native void tls_options_set_ca_path(long tls, String ca_path);
+    private static native void tlsContextOptionsSetCaPath(long tls, String ca_path);
 
-    private static native void tls_options_set_alpn(long tls, String alpn);
+    private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
-    private static native void tls_options_set_certificate_path(long tls, String cert_path);
+    private static native void tlsContextOptionsSetCertificatePath(long tls, String cert_path);
 
-    private static native void tls_options_set_private_key_path(long tls, String key_path);
+    private static native void tlsContextOptionsSetPrivateKeyPath(long tls, String key_path);
 
-    private static native void tls_options_set_pkcs12_path(long tls, String pkcs12_path);
+    private static native void tlsContextOptionsSetPkcs12Path(long tls, String pkcs12_path);
 
-    private static native void tls_options_set_pkcs12_password(long tls, String pkcs12_password);
+    private static native void tlsContextOptionsSetPkcs12Password(long tls, String pkcs12_password);
 
-    private static native void tls_options_set_verify_peer(long tls, boolean verify);
+    private static native void tlsContextOptionsSetVerifyPeer(long tls, boolean verify);
 
-    private static native boolean tls_options_is_alpn_available();
+    private static native boolean tlsContextOptionsIsAlpnAvailable();
 };

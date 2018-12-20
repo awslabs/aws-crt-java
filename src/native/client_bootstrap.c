@@ -44,27 +44,14 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_client_bootstrap *bootstrap =
-        (struct aws_client_bootstrap *)aws_mem_acquire(allocator, sizeof(struct aws_client_bootstrap));
+    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, NULL, NULL);
     if (!bootstrap) {
         aws_jni_throw_runtime_exception(
             env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
         return (jlong)NULL;
     }
 
-    if (aws_client_bootstrap_init(bootstrap, allocator, elg, NULL, NULL)) {
-        aws_jni_throw_runtime_exception(
-            env, "ClientBootstrap.client_bootstrap_new: Unable to initalize new aws_client_boostrap");
-        goto error_cleanup;
-    }
-
     return (jlong)bootstrap;
-
-error_cleanup:
-    if (bootstrap) {
-        aws_mem_release(allocator, bootstrap);
-    }
-    return (jlong)NULL;
 }
 
 JNIEXPORT
@@ -79,9 +66,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
         return;
     }
 
-    aws_client_bootstrap_clean_up(bootstrap);
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, bootstrap);
+    aws_client_bootstrap_destroy(bootstrap);
 }
 
 #if UINTPTR_MAX == 0xffffffff

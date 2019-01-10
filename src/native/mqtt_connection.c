@@ -50,7 +50,7 @@ void s_cache_async_callback(JNIEnv *env) {
     assert(s_async_callback.on_failure);
 }
 
-/* methods of MqttConnection.ConnectionEvents */
+/* methods of MqttCConnectionEvents */
 static struct {
     jmethodID on_connection_complete;
     jmethodID on_connection_interrupted;

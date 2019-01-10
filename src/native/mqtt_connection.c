@@ -190,6 +190,7 @@ static void s_on_connection_complete(
     bool session_present,
     void *user_data) {
     (void)client_connection;
+    (void)return_code;
 
     struct mqtt_jni_connection *connection = user_data;
     if (connection->connection_events) {
@@ -224,6 +225,7 @@ static void s_on_connection_resumed(
     bool session_present,
     void *user_data) {
     (void)client_connection;
+    (void)return_code;
 
     struct mqtt_jni_connection *connection = user_data;
     if (connection->connection_events) {

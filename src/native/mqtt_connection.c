@@ -46,23 +46,26 @@ void s_cache_async_callback(JNIEnv *env) {
     assert(cls);
     s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
     assert(s_async_callback.on_success);
-    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/String;)V");
+    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/Throwable;)V");
     assert(s_async_callback.on_failure);
 }
 
-/* methods of MqttConnection.ClientCallbacks */
+/* methods of MqttConnection.ConnectionEvents */
 static struct {
-    jmethodID on_connected;
-    jmethodID on_disconnected;
-} s_client_callbacks;
+    jmethodID on_connection_complete;
+    jmethodID on_connection_interrupted;
+    jmethodID on_connection_resumed;
+} s_connection_events;
 
-void s_cache_client_callbacks(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$ClientCallbacks");
+void s_cache_connection_events(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnectionEvents");
     assert(cls);
-    s_client_callbacks.on_connected = (*env)->GetMethodID(env, cls, "onConnected", "()V");
-    assert(s_client_callbacks.on_connected);
-    s_client_callbacks.on_disconnected = (*env)->GetMethodID(env, cls, "onDisconnected", "(ZLjava/lang/String;)Z");
-    assert(s_client_callbacks.on_disconnected);
+    s_connection_events.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(IZ)V");
+    assert(s_connection_events.on_connection_complete);
+    s_connection_events.on_connection_interrupted = (*env)->GetMethodID(env, cls, "onConnectionInterrupted", "(I)V");
+    assert(s_connection_events.on_connection_interrupted);
+    s_connection_events.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
+    assert(s_connection_events.on_connection_resumed);
 }
 
 /* MqttConnection.MessageHandler */
@@ -75,6 +78,18 @@ void s_cache_message_handler(JNIEnv *env) {
     assert(s_message_handler.deliver);
 }
 
+static struct {
+    jclass jni_mqtt_exception;
+    jmethodID jni_constructor;
+} s_mqtt_exception;
+
+void s_cache_mqtt_exception(JNIEnv *env) {
+    s_mqtt_exception.jni_mqtt_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttException");
+    assert(s_mqtt_exception.jni_mqtt_exception);
+    s_mqtt_exception.jni_constructor = (*env)->GetMethodID(env, s_mqtt_exception.jni_mqtt_exception, "<init>", "(I)V");
+    assert(s_mqtt_exception.jni_mqtt_exception);
+}
+
 /*******************************************************************************
  * mqtt_jni_connection - represents an aws_mqtt_client_connection to Java
  ******************************************************************************/
@@ -85,9 +100,7 @@ struct mqtt_jni_connection {
     struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
-    jobject client_callbacks; /* MqttConnection.ClientCallbacks */
-    jobject connect_ack;      /* MqttConnection.AsyncCallback */
-    jobject disconnect_ack;   /* MqttConnection.AsyncCallback */
+    jobject connection_events; /* MqttConnection.ConnectionEvents */
 
     bool disconnect_requested;
 };
@@ -149,6 +162,12 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
     aws_mem_release(allocator, callback);
 }
 
+static jobject s_new_mqtt_exception(JNIEnv *env, int error_code) {
+    jobject exception =
+        (*env)->NewObject(env, s_mqtt_exception.jni_mqtt_exception, s_mqtt_exception.jni_constructor, error_code);
+    return exception;
+}
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -164,121 +183,65 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
 /*******************************************************************************
  * new
  ******************************************************************************/
-static void s_on_connect_failed(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
+static void s_on_connection_complete(
+    struct aws_mqtt_client_connection *client_connection,
+    int error_code,
+    enum aws_mqtt_connect_return_code return_code,
+    bool session_present,
+    void *user_data) {
     (void)client_connection;
 
     struct mqtt_jni_connection *connection = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
-    char buf[1024];
-    snprintf(buf, sizeof(buf), "Connection failed with code: %d: %s", error_code, aws_error_str(error_code));
-    jstring message = (*env)->NewStringUTF(env, buf);
-    if (connection->connect_ack) {
-        (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_failure, message);
-        (*env)->DeleteGlobalRef(env, connection->connect_ack);
-        connection->connect_ack = NULL;
+    if (connection->connection_events) {
+        JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+        (*env)->CallVoidMethod(
+            env,
+            connection->connection_events,
+            s_connection_events.on_connection_complete,
+            error_code,
+            session_present);
     }
-    (*env)->DeleteLocalRef(env, message);
 }
 
-static void s_on_connect_success(
+static void s_on_connection_interrupted(
+    struct aws_mqtt_client_connection *client_connection,
+    int error_code,
+    void *user_data) {
+    (void)client_connection;
+
+    struct mqtt_jni_connection *connection = user_data;
+
+    if (connection->connection_events) {
+        JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+        (*env)->CallVoidMethod(
+            env, connection->connection_events, s_connection_events.on_connection_interrupted, error_code);
+    }
+}
+
+static void s_on_connection_resumed(
     struct aws_mqtt_client_connection *client_connection,
     enum aws_mqtt_connect_return_code return_code,
     bool session_present,
     void *user_data) {
-
     (void)client_connection;
-    (void)return_code;
-    (void)session_present;
 
     struct mqtt_jni_connection *connection = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
-    (*env)->CallVoidMethod(env, connection->client_callbacks, s_client_callbacks.on_connected);
-    if (connection->connect_ack) {
-        (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_success);
-        (*env)->DeleteGlobalRef(env, connection->connect_ack);
-        connection->connect_ack = NULL;
+    if (connection->connection_events) {
+        JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+        (*env)->CallVoidMethod(
+            env, connection->connection_events, s_connection_events.on_connection_resumed, session_present);
     }
 }
 
-static bool s_on_disconnect(struct aws_mqtt_client_connection *client_connection, int error_code, void *user_data) {
-    (void)client_connection;
-    (void)error_code;
-
-    struct mqtt_jni_connection *connection = user_data;
-
-    bool recoverable = true;
-    switch (error_code) {
-        case AWS_IO_SOCKET_CLOSED:
-        case AWS_IO_SOCKET_INVALID_ADDRESS:
-        case AWS_IO_SOCKET_ADDRESS_IN_USE:
-        case AWS_IO_SOCKET_UNSUPPORTED_ADDRESS_FAMILY:
-        case AWS_IO_SOCKET_CONNECTION_REFUSED:
-        case AWS_IO_SOCKET_INVALID_OPTIONS:
-        case AWS_IO_SOCKET_INVALID_OPERATION_FOR_TYPE:
-            recoverable = false;
-            break;
-        default:
-            break;
-    }
-
-    /* this was not a requested disconnect, request a reconnect unless user code says otherwise */
-    bool recover = recoverable && !connection->disconnect_requested;
-    JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
-    if (connection->client_callbacks) {
-        char buf[1024];
-        if (error_code) {
-            snprintf(buf, sizeof(buf), "Disconnected with code: %d: %s", error_code, aws_error_str(error_code));
-        } else {
-            strncpy(buf, "Disconnected successfully", sizeof(buf));
-        }
-        jstring message = (*env)->NewStringUTF(env, buf);
-        recover = (*env)->CallBooleanMethod(
-            env, connection->client_callbacks, s_client_callbacks.on_disconnected, (jboolean)recover, message);
-        (*env)->DeleteLocalRef(env, message);
-    }
-
-    /* if the user wants recovery, and it's possible, tell mqtt to try to reconnect */
-    if (recoverable && recover) {
-        return true;
-    }
-
-    /* this is an intentional or unrecoverable disconnect, so clean up everything */
-    if (connection->client_callbacks) {
-        (*env)->DeleteGlobalRef(env, connection->client_callbacks);
-        connection->client_callbacks = NULL;
-    }
-
-    if (connection->connect_ack) {
-        char buf[1024];
-        snprintf(buf, sizeof(buf), "Connection failed with code: %d: %s", error_code, aws_error_str(error_code));
-        jstring message = (*env)->NewStringUTF(env, buf);
-        (*env)->CallVoidMethod(env, connection->connect_ack, s_async_callback.on_failure, message);
-        (*env)->DeleteGlobalRef(env, connection->connect_ack);
-        (*env)->DeleteLocalRef(env, message);
-        connection->connect_ack = NULL;
-    }
-
-    if (connection->disconnect_ack) {
-        (*env)->CallVoidMethod(env, connection->disconnect_ack, s_async_callback.on_success);
-        (*env)->DeleteGlobalRef(env, connection->disconnect_ack);
-        connection->disconnect_ack = NULL;
-    }
-
-    /* client_connection will be cleaned up by channel shutdown */
-    connection->client_connection = NULL;
-
-    return false;
+static void s_on_connection_disconnected(struct aws_mqtt_client_connection *client_connection, void *user_data) {
+    s_on_connection_interrupted(client_connection, 0, user_data);
 }
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionNew(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_client,
-    jstring jni_endpoint,
-    jshort jni_port,
-    jobject jni_client_callbacks,
-    jlong jni_socket_options,
-    jlong jni_tls_ctx) {
+    jobject jni_connection_events) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -286,25 +249,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     if (!client) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_new: Client is invalid/null");
         return (jlong)NULL;
-    }
-
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring(env, jni_endpoint);
-    uint16_t port = jni_port;
-    if (!port) {
-        aws_jni_throw_runtime_exception(
-            env,
-            "MqttConnection.mqtt_new: Endpoint should be in the format hostname:port and port must be between 1 "
-            "and 65535");
-        return (jlong)NULL;
-    }
-
-    struct aws_socket_options default_socket_options;
-    AWS_ZERO_STRUCT(default_socket_options);
-    default_socket_options.type = AWS_SOCKET_STREAM;
-    default_socket_options.connect_timeout_ms = 3000;
-    struct aws_socket_options *socket_options = &default_socket_options;
-    if (jni_socket_options) {
-        socket_options = (struct aws_socket_options *)jni_socket_options;
     }
 
     /* any error after this point needs to jump to error_cleanup */
@@ -315,36 +259,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     }
     AWS_ZERO_STRUCT(*connection);
     connection->client = client;
-    connection->client_callbacks = (*env)->NewGlobalRef(env, jni_client_callbacks);
+    connection->connection_events = (*env)->NewGlobalRef(env, jni_connection_events);
     connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     (void)jvmresult;
     assert(jvmresult == 0);
-    memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
 
-    /* if a tls_ctx was provided, initialize tls options */
-    struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
-    struct aws_tls_connection_options *tls_options = NULL;
-    if (tls_ctx) {
-        tls_options = &connection->tls_options;
-        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, (const char *)endpoint.ptr);
-    }
-
-    struct aws_mqtt_client_connection_callbacks callbacks;
-    AWS_ZERO_STRUCT(callbacks);
-    callbacks.on_connection_failed = s_on_connect_failed;
-    callbacks.on_connack = s_on_connect_success;
-    callbacks.on_disconnect = s_on_disconnect;
-    callbacks.user_data = connection;
-
-    connection->client_connection = aws_mqtt_client_connection_new(
-        connection->client, callbacks, &endpoint, port, &connection->socket_options, tls_options);
+    connection->client_connection = aws_mqtt_client_connection_new(connection->client);
     if (!connection->client_connection) {
         aws_jni_throw_runtime_exception(
             env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new connection");
         goto error_cleanup;
     }
+    aws_mqtt_client_connection_set_connection_interruption_handlers(
+        connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
 
     return (jlong)connection;
 
@@ -369,6 +297,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttC
     if (!connection) {
         return;
     }
+    if (connection->connection_events) {
+        (*env)->DeleteGlobalRef(env, connection->connection_events);
+    }
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection);
 }
@@ -381,10 +312,13 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
+    jstring jni_endpoint,
+    jshort jni_port,
+    jlong jni_socket_options,
+    jlong jni_tls_ctx,
     jstring jni_client_id,
     jboolean jni_clean_session,
-    jshort keep_alive_ms,
-    jobject jni_ack) {
+    jshort keep_alive_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -392,17 +326,51 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
         return;
     }
 
+    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring(env, jni_endpoint);
+    uint16_t port = jni_port;
+    if (!port) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "MqttConnection.mqtt_new: Endpoint should be in the format hostname:port and port must be between 1 "
+            "and 65535");
+        return;
+    }
+
+    struct aws_socket_options default_socket_options;
+    AWS_ZERO_STRUCT(default_socket_options);
+    default_socket_options.type = AWS_SOCKET_STREAM;
+    default_socket_options.connect_timeout_ms = 3000;
+    struct aws_socket_options *socket_options = &default_socket_options;
+    if (jni_socket_options) {
+        socket_options = (struct aws_socket_options *)jni_socket_options;
+    }
+    memcpy(&connection->socket_options, socket_options, sizeof(struct aws_socket_options));
+
+    /* if a tls_ctx was provided, initialize tls options */
+    struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_tls_connection_options *tls_options = NULL;
+    if (tls_ctx) {
+        tls_options = &connection->tls_options;
+        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
+        aws_tls_connection_options_set_server_name(tls_options, (const char *)endpoint.ptr);
+    }
+
     struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring(env, jni_client_id);
     bool clean_session = jni_clean_session != 0;
-    connection->connect_ack = jni_ack ? (*env)->NewGlobalRef(env, jni_ack) : NULL;
 
-    int result =
-        aws_mqtt_client_connection_connect(connection->client_connection, &client_id, clean_session, keep_alive_ms);
+    int result = aws_mqtt_client_connection_connect(
+        connection->client_connection,
+        &endpoint,
+        port,
+        &connection->socket_options,
+        tls_options,
+        &client_id,
+        clean_session,
+        keep_alive_ms,
+        s_on_connection_complete,
+        connection);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");
-        if (connection->connect_ack) {
-            (*env)->DeleteGlobalRef(env, connection->connect_ack);
-        }
     }
 }
 
@@ -413,8 +381,7 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionDisconnect(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_connection,
-    jobject jni_ack) {
+    jlong jni_connection) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -423,12 +390,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionD
     }
 
     connection->disconnect_requested = true;
-    if (jni_ack) {
-        connection->disconnect_ack = (*env)->NewGlobalRef(env, jni_ack);
-    }
 
-    /* all cleanup is done in the disconnect callback */
-    aws_mqtt_client_connection_disconnect(connection->client_connection);
+    aws_mqtt_client_connection_disconnect(connection->client_connection, s_on_connection_disconnected, connection);
 }
 
 /*******************************************************************************
@@ -445,13 +408,13 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     }
 }
 
-static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, const char *reason) {
+static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int error_code) {
     assert(callback);
     assert(callback->connection);
 
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
-        jstring jni_reason = (*env)->NewStringUTF(env, reason);
+        jobject jni_reason = s_new_mqtt_exception(env, error_code);
         (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_failure, jni_reason);
         (*env)->DeleteLocalRef(env, jni_reason);
     }
@@ -471,9 +434,7 @@ static void s_on_op_complete(
     }
 
     if (error_code) {
-        char reason[1024];
-        snprintf(reason, sizeof(reason), "Failed with code: %d: %s", error_code, aws_error_str(error_code));
-        s_deliver_ack_failure(callback, reason);
+        s_deliver_ack_failure(callback, error_code);
     } else {
         s_deliver_ack_success(callback);
     }

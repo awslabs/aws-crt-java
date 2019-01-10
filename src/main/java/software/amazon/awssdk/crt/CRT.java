@@ -136,4 +136,6 @@ public final class CRT {
     }
 
     private static native void awsCrtInit() throws CrtRuntimeException;
+
+    public static native String awsErrorString(int errorCode);
 };

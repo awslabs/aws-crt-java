@@ -14,12 +14,26 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
+import software.amazon.awssdk.crt.CRT;
+
 /**
  * This exception will be thrown by any exceptional cases encountered within the
  * JNI bindings to the AWS Common Runtime
  */
-public class MqttException extends RuntimeException  {
+public class MqttException extends RuntimeException {
+    private int errorCode;
+
     public MqttException(String msg) {
         super(msg);
+        this.errorCode = -1;
+    }
+
+    public MqttException(int errorCode) {
+        super(CRT.awsErrorString(errorCode));
+        this.errorCode = errorCode;
+    }
+
+    int getErrorCode() {
+        return errorCode;
     }
 };

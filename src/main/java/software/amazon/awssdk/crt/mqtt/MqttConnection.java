@@ -61,6 +61,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
     /* used to receive the result of an async operation from CRT mqtt */
     interface AsyncCallback {
         public void onSuccess();
+        public void onSuccess(Object value);
         public void onFailure(Throwable reason);
     }
 
@@ -97,25 +98,17 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
         }        
     }
 
-    private static AsyncCallback wrapVoidFuture(CompletableFuture<Void> future) {
+    private static <T> AsyncCallback wrapFuture(CompletableFuture<T> future, T value) {
         return new AsyncCallback() {
             @Override
             public void onSuccess() {
-                future.complete(null);
+                future.complete(value);
             }
 
             @Override
-            public void onFailure(Throwable reason) {
-                future.completeExceptionally(reason);
-            }
-        };
-    }
-
-    private static AsyncCallback wrapPacketFuture(CompletableFuture<Integer> future) {
-        return new AsyncCallback() {
-            @Override
-            public void onSuccess() {
-                future.complete(0);
+            @SuppressWarnings("unchecked")
+            public void onSuccess(Object val) {
+                future.complete((T)(val));
             }
 
             @Override
@@ -169,12 +162,19 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
         }
     }
 
-    public CompletableFuture<Void> connect(String clientId, String endpointUri, int port) {
-        return connect(clientId, endpointUri, port);
+    /**
+     * Connect to the service endpoint and start a session
+     * @param clientId
+     * @param endpointUri
+     * @param port
+     * @return CompletableFuture<Boolean>, future result is true if resuming a session, false if clean session
+     */
+    public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
+        return connect(clientId, endpoint, port);
     }
 
-    public CompletableFuture<Void> connect(
-        String clientId, String endpointUri, int port, 
+    public CompletableFuture<Boolean> connect(
+        String clientId, String endpoint, int port, 
         SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs) 
         throws MqttException {
         // Just clamp the keepAlive, no point in throwing
@@ -182,12 +182,12 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
         if (port > Short.MAX_VALUE || port <= 0) {
             throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
         }
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        connectAck = wrapVoidFuture(future);
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        connectAck = wrapFuture(future, null);
         try {
             connectionState = ConnectionState.CONNECTING;
             mqttConnectionConnect(
-                native_ptr(), endpointUri, (short) port, 
+                native_ptr(), endpoint, (short) port, 
                 socketOptions != null ? socketOptions.native_ptr() : 0,
                 tls != null ? tls.native_ptr() : 0, 
                 clientId, cleanSession, keepAlive);
@@ -204,7 +204,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
             future.complete(null);
             return future;
         }
-        disconnectAck = wrapVoidFuture(future);
+        disconnectAck = wrapFuture(future, null);
         connectionState = ConnectionState.DISCONNECTING;
         mqttConnectionDisconnect(native_ptr());
         return future;
@@ -217,7 +217,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
             return future;
         }
 
-        AsyncCallback subAck = wrapPacketFuture(future);
+        AsyncCallback subAck = wrapFuture(future, 0);
         try {
             int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
             // When the future completes, complete the returned future with the packetId
@@ -236,7 +236,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
             return future;
         }
 
-        AsyncCallback unsubAck = wrapPacketFuture(future);
+        AsyncCallback unsubAck = wrapFuture(future, 0);
         int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
         return future.thenApply(unused -> packetId);
@@ -248,7 +248,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
         }
 
-        AsyncCallback pubAck = wrapPacketFuture(future);
+        AsyncCallback pubAck = wrapFuture(future, 0);
         try {
             int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
             // When the future completes, complete the returned future with the packetId

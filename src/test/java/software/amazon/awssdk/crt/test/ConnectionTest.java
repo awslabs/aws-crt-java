@@ -77,16 +77,6 @@ class MqttConnectionFixture {
                         System.out.println("Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
                     }
                 }
-            
-                @Override
-                public void onConnectionComplete(int errorCode, boolean sessionPresent) {
-                    if (errorCode == 0) {
-                        System.out.println("Connected");
-                    }
-                    else {
-                        System.out.println("Connection failed: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
-                    }
-                }
             };
 
             connection = new MqttConnection(client, events);

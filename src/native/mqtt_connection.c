@@ -196,11 +196,7 @@ static void s_on_connection_complete(
     if (connection->mqtt_connection) {
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
-            env,
-            connection->mqtt_connection,
-            s_mqtt_connection.on_connection_complete,
-            error_code,
-            session_present);
+            env, connection->mqtt_connection, s_mqtt_connection.on_connection_complete, error_code, session_present);
     }
 }
 

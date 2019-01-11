@@ -57,7 +57,7 @@ static struct {
     jmethodID on_connection_resumed;
 } s_mqtt_connection;
 
-void s_cache_connection_events(JNIEnv *env) {
+void s_cache_mqtt_connection(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection");
     assert(cls);
     s_mqtt_connection.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(IZ)V");

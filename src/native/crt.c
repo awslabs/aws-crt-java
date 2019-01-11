@@ -79,12 +79,12 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 #    pragma warning(disable : 4210) /* non-standard extension used: function given file scope */
 #endif
 static void s_cache_jni_classes(JNIEnv *env) {
+    extern void s_cache_mqtt_connection(JNIEnv *);
     extern void s_cache_async_callback(JNIEnv *);
-    extern void s_cache_connection_events(JNIEnv *);
     extern void s_cache_message_handler(JNIEnv *);
     extern void s_cache_mqtt_exception(JNIEnv *);
+    s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
-    s_cache_connection_events(env);
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
 }

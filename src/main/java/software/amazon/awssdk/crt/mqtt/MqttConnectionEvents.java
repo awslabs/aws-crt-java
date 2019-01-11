@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -14,26 +15,18 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.CRT;
-
-/**
- * This exception will be thrown by any exceptional cases encountered within the
- * JNI bindings to the AWS Common Runtime
+/** 
+ * Interface used to receive connection events from the CRT 
  */
-public class MqttException extends RuntimeException {
-    private int errorCode;
+public interface MqttConnectionEvents {
+    /**
+     * connection was lost (or disconnected), reconnect will be attempted automatically until
+     * disconnect() is called
+     */
+    void onConnectionInterrupted(int errorCode);
 
-    public MqttException(String msg) {
-        super(msg);
-        this.errorCode = -1;
-    }
-
-    public MqttException(int errorCode) {
-        super(CRT.awsErrorString(errorCode));
-        this.errorCode = errorCode;
-    }
-
-    int getErrorCode() {
-        return errorCode;
-    }
-};
+    /**
+     *  called on first successful connect, and whenever a reconnect succeeds 
+     */
+    void onConnectionResumed(boolean sessionPresent);
+}

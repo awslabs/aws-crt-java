@@ -79,12 +79,14 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 #    pragma warning(disable : 4210) /* non-standard extension used: function given file scope */
 #endif
 static void s_cache_jni_classes(JNIEnv *env) {
+    extern void s_cache_mqtt_connection(JNIEnv *);
     extern void s_cache_async_callback(JNIEnv *);
-    extern void s_cache_client_callbacks(JNIEnv *);
     extern void s_cache_message_handler(JNIEnv *);
+    extern void s_cache_mqtt_exception(JNIEnv *);
+    s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
-    s_cache_client_callbacks(env);
     s_cache_message_handler(env);
+    s_cache_mqtt_exception(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
@@ -108,4 +110,11 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     s_cache_jni_classes(env);
 
     atexit(s_jni_atexit);
+}
+
+JNIEXPORT
+jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorString(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    (void)jni_crt_class;
+    const char *error_msg = aws_error_str(error_code);
+    return (*env)->NewStringUTF(env, error_msg);
 }

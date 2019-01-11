@@ -65,21 +65,24 @@ class MqttConnectionFixture {
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
 
-            connection = new MqttConnection(client, endpoint, port) {
+            MqttConnectionEvents events = new MqttConnectionEvents(){
                 @Override
-                public void onOnline() { }
-
+                public void onConnectionResumed(boolean sessionPresent) {
+                    System.out.println("Connection resumed");
+                }
+            
                 @Override
-                public boolean onOffline(boolean recoverable, String reason) {
-                    if (!disconnecting && !recoverable) {
-                        System.out.println("Lost connection to server: " + reason);
+                public void onConnectionInterrupted(int errorCode) {
+                    if (!disconnecting) {
+                        System.out.println("Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
                     }
-                    return recoverable;
                 }
             };
+
+            connection = new MqttConnection(client, events);
             assertNotNull(connection);
             cleanSession = true; // only true is supported right now
-            CompletableFuture<Void> connected = connection.connect(clientId, cleanSession, keepAliveMs);
+            CompletableFuture<Boolean> connected = connection.connect(clientId, endpoint, port, null, tls, cleanSession, keepAliveMs);
             connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;

@@ -32,7 +32,7 @@ import java.io.Closeable;
  * MqttConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
  */
-public class MqttConnection extends CrtResource implements Closeable, MqttConnectionEvents {
+public class MqttConnection extends CrtResource implements Closeable {
     private final MqttClient client;
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
     private MqttConnectionEvents userConnectionCallbacks;
@@ -118,12 +118,11 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
         };
     }
 
-    @Override
-    public void onConnectionComplete(int errorCode, boolean sessionPresent) {
+    private void onConnectionComplete(int errorCode, boolean sessionPresent) {
         if (errorCode == 0) {
             connectionState = ConnectionState.CONNECTED;
             if (connectAck != null) {
-                connectAck.onSuccess();
+                connectAck.onSuccess(sessionPresent);
                 connectAck = null;
             }
         } else {
@@ -133,13 +132,9 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
                 connectAck = null;
             }
         }
-        if (userConnectionCallbacks != null) {
-            userConnectionCallbacks.onConnectionComplete(errorCode, sessionPresent);
-        }
     }
 
-    @Override
-    public void onConnectionInterrupted(int errorCode) {
+    private void onConnectionInterrupted(int errorCode) {
         connectionState = ConnectionState.DISCONNECTED;
         if (disconnectAck != null) {
             if (errorCode == 0) {
@@ -154,8 +149,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
         }
     }
 
-    @Override
-    public void onConnectionResumed(boolean sessionPresent) {
+    private void onConnectionResumed(boolean sessionPresent) {
         connectionState = ConnectionState.CONNECTED;
         if (userConnectionCallbacks != null) {
             userConnectionCallbacks.onConnectionResumed(sessionPresent);
@@ -287,7 +281,7 @@ public class MqttConnection extends CrtResource implements Closeable, MqttConnec
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttConnectionNew(long client, MqttConnectionEvents clientCallbacks) throws CrtRuntimeException;
+    private static native long mqttConnectionNew(long client, MqttConnection thisObj) throws CrtRuntimeException;
 
     private static native void mqttConnectionDestroy(long connection);
 

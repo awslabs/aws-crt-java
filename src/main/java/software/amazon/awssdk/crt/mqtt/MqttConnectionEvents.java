@@ -20,13 +20,7 @@ package software.amazon.awssdk.crt.mqtt;
  */
 public interface MqttConnectionEvents {
     /**
-     * called when a connection is resolved, one way or the other. Non-zero error
-     * code indicates connection never completed or was disconnected
-     */
-    void onConnectionComplete(int errorCode, boolean sessionPresent);
-
-    /**
-     * connection was lost, reconnect will be attempted automatically until
+     * connection was lost (or disconnected), reconnect will be attempted automatically until
      * disconnect() is called
      */
     void onConnectionInterrupted(int errorCode);

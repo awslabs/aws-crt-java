@@ -50,22 +50,22 @@ void s_cache_async_callback(JNIEnv *env) {
     assert(s_async_callback.on_failure);
 }
 
-/* methods of MqttConnectionEvents */
+/* methods of MqttConnection */
 static struct {
     jmethodID on_connection_complete;
     jmethodID on_connection_interrupted;
     jmethodID on_connection_resumed;
-} s_connection_events;
+} s_mqtt_connection;
 
 void s_cache_connection_events(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnectionEvents");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection");
     assert(cls);
-    s_connection_events.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(IZ)V");
-    assert(s_connection_events.on_connection_complete);
-    s_connection_events.on_connection_interrupted = (*env)->GetMethodID(env, cls, "onConnectionInterrupted", "(I)V");
-    assert(s_connection_events.on_connection_interrupted);
-    s_connection_events.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
-    assert(s_connection_events.on_connection_resumed);
+    s_mqtt_connection.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(IZ)V");
+    assert(s_mqtt_connection.on_connection_complete);
+    s_mqtt_connection.on_connection_interrupted = (*env)->GetMethodID(env, cls, "onConnectionInterrupted", "(I)V");
+    assert(s_mqtt_connection.on_connection_interrupted);
+    s_mqtt_connection.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
+    assert(s_mqtt_connection.on_connection_resumed);
 }
 
 /* MqttConnection.MessageHandler */
@@ -100,7 +100,7 @@ struct mqtt_jni_connection {
     struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
-    jobject connection_events; /* MqttConnection.ConnectionEvents */
+    jobject mqtt_connection; /* MqttConnection instance */
 
     bool disconnect_requested;
 };
@@ -193,12 +193,12 @@ static void s_on_connection_complete(
     (void)return_code;
 
     struct mqtt_jni_connection *connection = user_data;
-    if (connection->connection_events) {
+    if (connection->mqtt_connection) {
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
             env,
-            connection->connection_events,
-            s_connection_events.on_connection_complete,
+            connection->mqtt_connection,
+            s_mqtt_connection.on_connection_complete,
             error_code,
             session_present);
     }
@@ -212,10 +212,10 @@ static void s_on_connection_interrupted(
 
     struct mqtt_jni_connection *connection = user_data;
 
-    if (connection->connection_events) {
+    if (connection->mqtt_connection) {
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
-            env, connection->connection_events, s_connection_events.on_connection_interrupted, error_code);
+            env, connection->mqtt_connection, s_mqtt_connection.on_connection_interrupted, error_code);
     }
 }
 
@@ -228,10 +228,10 @@ static void s_on_connection_resumed(
     (void)return_code;
 
     struct mqtt_jni_connection *connection = user_data;
-    if (connection->connection_events) {
+    if (connection->mqtt_connection) {
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
-            env, connection->connection_events, s_connection_events.on_connection_resumed, session_present);
+            env, connection->mqtt_connection, s_mqtt_connection.on_connection_resumed, session_present);
     }
 }
 
@@ -243,7 +243,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     JNIEnv *env,
     jclass jni_class,
     jlong jni_client,
-    jobject jni_connection_events) {
+    jobject jni_mqtt_connection) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -261,7 +261,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     }
     AWS_ZERO_STRUCT(*connection);
     connection->client = client;
-    connection->connection_events = (*env)->NewGlobalRef(env, jni_connection_events);
+    connection->mqtt_connection = (*env)->NewGlobalRef(env, jni_mqtt_connection);
     connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     (void)jvmresult;
@@ -299,8 +299,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttC
     if (!connection) {
         return;
     }
-    if (connection->connection_events) {
-        (*env)->DeleteGlobalRef(env, connection->connection_events);
+    if (connection->mqtt_connection) {
+        (*env)->DeleteGlobalRef(env, connection->mqtt_connection);
     }
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection);

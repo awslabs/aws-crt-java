@@ -48,6 +48,10 @@ Requirements:
 4) build_deps.bat
 5) mvn compile
 
+## Installing
+From the aws-crt-java directory:
+```mvn install:install-file -Dfile=target/aws-crt-java-1.0.jar -DpomFile=pom.xml```
+
 ## Testing
 Once you've set up an IoT Thing [here](https://console.aws.amazon.com/iot), put the certificates into the 
 src/test/resources/credentials directory. You should have:

@@ -30,7 +30,7 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure JAVA_HOME is set
 * Maven
-1) brew install maven cmake3 ninja
+1) brew install maven cmake3 ninja (if you have homebrew installed, otherwise install these manually)
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
 4) ./build-deps.sh (insert any CMake flags here, such as -DCMAKE_BUILD_TYPE=Debug)

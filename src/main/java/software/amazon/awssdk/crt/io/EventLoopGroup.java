@@ -26,10 +26,19 @@ import java.io.Closeable;
  */
 public final class EventLoopGroup extends CrtResource implements Closeable {
 
+    /**
+     * Creates a new event loop group for the I/O subsystem to use to run blocking I/O requests
+     * @param numThreads The number of threads that the event loop group may run tasks across. Usually 1.
+     * @throws CrtRuntimeException
+     */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
         acquire(eventLoopGroupNew(numThreads));
     }
 
+    /**
+     * Stops the event loop group's tasks and frees all resources associated with the the group. This should be called
+     * after all other clients/connections and other resources are cleaned up, or else they will not clean up completely.
+     */
     @Override
     public void close() {
         if (native_ptr() != 0) {

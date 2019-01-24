@@ -21,12 +21,26 @@ import java.io.Closeable;
 
 /**
  * This class wraps the aws_socket_options from aws-c-io to provide
- * access to socket configuration in the AWS Common Runtime.
+ * access to TCP/UDP socket configuration in the AWS Common Runtime.
  */
 public final class SocketOptions extends CrtResource implements Closeable {
 
+    /**
+     * Socket communications domain
+     */
     public enum SocketDomain {
-        IPV4(0), IPv6(1), LOCAL(2);
+        /**
+         * Corresponds to PF_INET in Berkeley sockets
+         */
+        IPv4(0),
+        /**
+         * Corresponds to PF_INET6 in Berkeley sockets
+         */
+        IPv6(1),
+        /**
+         * Corresponds to PF_LOCAL in Berkeley sockets, usually UNIX domain sockets or named pipes
+         */
+        LOCAL(2);
 
         private int domain;
 
@@ -39,8 +53,18 @@ public final class SocketOptions extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Socket type
+     */
     public enum SocketType {
-        STREAM(0), DGRAM(1);
+        /**
+         * Corresponds to SOCK_STREAM in Berkeley sockets (TCP)
+         */
+        STREAM(0),
+        /**
+         * Corresponds to SOCK_DGRAM in Berkeley sockets (UDP)
+         */
+        DGRAM(1);
 
         private int type;
 
@@ -53,10 +77,17 @@ public final class SocketOptions extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Creates a new set of socket options
+     * @throws CrtRuntimeException
+     */
     public SocketOptions() throws CrtRuntimeException {
         acquire(socketOptionsNew());
     }
 
+    /**
+     * Frees the native resources for this set of socket options
+     */
     @Override
     public void close() {
         if (native_ptr() != 0) {
@@ -64,22 +95,43 @@ public final class SocketOptions extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Sets the socket domain
+     * @param domain
+     */
     void setDomain(SocketDomain domain) {
         socketOptionsSetDomain(native_ptr(), domain.getValue());
     }
 
+    /**
+     * Sets the socket type
+     * @param type
+     */
     void setType(SocketType type) {
         socketOptionsSetType(native_ptr(), type.getValue());
     }
 
+    /**
+     * Sets the number of milliseconds before a connection will be considered timed out
+     * @param timeoutMs The amount of time, in milliseconds, to wait for a connection to complete
+     */
     void setConnectTimeoutMs(int timeoutMs) {
         socketOptionsSetConnectTimeoutMs(native_ptr(), timeoutMs);
     }
 
+    /**
+     * Sets the number of seconds between TCP keepalive packets being sent to the peer
+     * @param intervalSeconds The amount of time, in seconds, between keepalive packet sends
+     */
     void setKeepAliveIntervalSeconds(short intervalSeconds) {
         socketOptionsSetKeepAliveIntervalSec(native_ptr(), intervalSeconds);
     }
 
+    /**
+     * Sets the number of seconds to wait for a keepalive response before considering the connection timed out
+     * @param timeoutSeconds The amount of time, in seconds, to wait for a keepalive to be acknowledged by the peer
+     *                       before timing out the socket connection
+     */
     void setKeepAliveTimeoutSeconds(short timeoutSeconds) {
         socketOptionsSetKeepAliveTimeoutSec(native_ptr(), timeoutSeconds);
     }

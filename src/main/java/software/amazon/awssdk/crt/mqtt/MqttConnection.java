@@ -27,7 +27,7 @@ import java.io.Closeable;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
- * functionalities via the AWS Common Runtime
+ * functionality via the AWS Common Runtime
  * 
  * MqttConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
@@ -42,7 +42,11 @@ public class MqttConnection extends CrtResource implements Closeable {
     public enum ConnectionState {
         DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
     }
-    
+
+    /**
+     * Wraps the handler provided by the user so that an MqttMessage can be constructed from the published
+     * buffer and topic
+     */
     private class MessageHandler {
         String topic;
         Consumer<MqttMessage> callback;
@@ -58,18 +62,35 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
-    /* used to receive the result of an async operation from CRT mqtt */
+    /**
+     * Interface used to receive the result of an async operation from CRT mqtt
+     */
     interface AsyncCallback {
         public void onSuccess();
         public void onSuccess(Object value);
         public void onFailure(Throwable reason);
     }
 
+    /**
+     * Constructs a new MqttConnection. Connections are reusable after being disconnected.
+     * @param mqttClient Must be non-null
+     * @throws MqttException
+     */
     public MqttConnection(MqttClient mqttClient) throws MqttException {
         this(mqttClient, null);
     }
 
+    /**
+     * Constructs a new MqttConnection. Connections are reusable after being disconnected.
+     * @param mqttClient Must be non-null
+     * @param callbacks Optional handler for connection interruptions/resumptions
+     * @throws MqttException
+     */
     public MqttConnection(MqttClient mqttClient, MqttConnectionEvents callbacks) throws MqttException {
+        if (mqttClient == null) {
+            throw new MqttException("MqttClient must not be null");
+        }
+
         client = mqttClient;
         userConnectionCallbacks = callbacks;
         
@@ -80,16 +101,30 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Disconnects if necessary, and frees native resources associated with this connection
+     */
     @Override
     public void close() {
         disconnect();
         mqttConnectionDestroy(release());
     }
 
+    /**
+     * Returns the current connection state. This function should not be used often, it is much better to respond
+     * to events delivered via the MqttConnectionEvents interface provided at construction.
+     * @return The current connection state
+     */
     public ConnectionState getState() {
         return connectionState;
     }
 
+    /**
+     * Sets the login credentials for the connection. Only valid before connect() has been called.
+     * @param user Login username
+     * @param pass Login password
+     * @throws MqttException
+     */
     public void setLogin(String user, String pass) throws MqttException {
         try {
             mqttConnectionSetLogin(native_ptr(), user, pass);
@@ -98,6 +133,8 @@ public class MqttConnection extends CrtResource implements Closeable {
         }        
     }
 
+    // Internal wrapper, builds an AsyncCallback that can be passed to the native implementation that will
+    // deliver operation success/failure to the future associated with the operation
     private static <T> AsyncCallback wrapFuture(CompletableFuture<T> future, T value) {
         return new AsyncCallback() {
             @Override
@@ -118,6 +155,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         };
     }
 
+    // Called from native when the connection is established the first time
     private void onConnectionComplete(int errorCode, boolean sessionPresent) {
         if (errorCode == 0) {
             connectionState = ConnectionState.CONNECTED;
@@ -134,6 +172,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    // Called when the connection drops or is disconnected. If errorCode == 0, the disconnect was intentional.
     private void onConnectionInterrupted(int errorCode) {
         connectionState = ConnectionState.DISCONNECTED;
         if (disconnectAck != null) {
@@ -149,6 +188,7 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    // Called when a reconnect succeeds, and also on initial connection success.
     private void onConnectionResumed(boolean sessionPresent) {
         connectionState = ConnectionState.CONNECTED;
         if (userConnectionCallbacks != null) {
@@ -157,16 +197,29 @@ public class MqttConnection extends CrtResource implements Closeable {
     }
 
     /**
-     * Connect to the service endpoint and start a session
-     * @param clientId
-     * @param endpointUri
-     * @param port
+     * Connect to the service endpoint and start a session without TLS.
+     * @param clientId The clientId provided to the service. Must be unique across all connected Things on the endpoint.
+     * @param endpoint The hostname of the service endpoint
+     * @param port The port to connect to on the service endpoint host
      * @return CompletableFuture<Boolean>, future result is true if resuming a session, false if clean session
      */
     public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
-        return connect(clientId, endpoint, port);
+        return connect(clientId, endpoint, port, null, null, true, 0);
     }
 
+    /**
+     * Connect to the service endpoint and start a session
+     * @param clientId The clientId provided to the service. Must be unique across all connected Things on the endpoint.
+     * @param endpoint The hostname of the service endpoint
+     * @param port     The port to connect to on the service endpoint host
+     * @param socketOptions Optional SocketOptions instance with options for this connection
+     * @param tls Optional TLS context. If this is null, a TLS connection will not be attempted.
+     * @param cleanSession Whether or not to completely restart the session. If false, topics that were already
+     *                     subscribed by this clientId will be resumed
+     * @param keepAliveMs 0 = no keepalive, non-zero = ms between keepalive packets
+     * @return CompletableFuture<Boolean>, future result is true if resuming a session, false if clean session
+     * @throws MqttException
+     */
     public CompletableFuture<Boolean> connect(
         String clientId, String endpoint, int port, 
         SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs) 
@@ -192,6 +245,10 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future;
     }
 
+    /**
+     * Disconnects the current session
+     * @return CompletableFuture<Void> When this future completes, the disconnection is complete
+     */
     public CompletableFuture<Void> disconnect() {
         CompletableFuture<Void> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
@@ -204,6 +261,13 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future;
     }
 
+    /**
+     * Subscribes to a topic
+     * @param topic The topic to subscribe to
+     * @param qos {@link QualityOfService} for this subscription
+     * @param handler A handler which can recieve an MqttMessage when a message is published to the topic
+     * @return CompletableFuture<Integer> future result is the packet/message id associated with the subscribe operation
+     */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
@@ -223,6 +287,12 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Unsubscribes from a topic
+     * @param topic The topic to unsubscribe from
+     * @return CompletableFuture<Integer> future result is the packet/message id associated with the unsubscribe operation
+     * @throws MqttException
+     */
     public CompletableFuture<Integer> unsubscribe(String topic) throws MqttException {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
@@ -236,6 +306,14 @@ public class MqttConnection extends CrtResource implements Closeable {
         return future.thenApply(unused -> packetId);
     }
 
+    /**
+     * Publishes a message to a topic
+     * @param message The message to publish. The message contains the topic to publish to.
+     * @param qos The {@link QualityOfService} to use for the publish operation
+     * @param retain Whether or not the message should be retained by the broker to be delivered to future subscribers
+     * @return CompletableFuture<Integer> future value is the packet/message id associated with the publish operation
+     * @throws MqttException
+     */
     public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
@@ -254,6 +332,14 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Sets the last will and testament message to be delivered to a topic when this client disconnects
+     * @param message The message to publish as the will. The message contains the topic that the message will be
+     *                published to on disconnect.
+     * @param qos The {@link QualityOfService} of the will message
+     * @param retain Whether or not the message should be retained by the broker to be delivered to future subscribers
+     * @throws MqttException
+     */
     public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during setWill");
@@ -267,6 +353,10 @@ public class MqttConnection extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Sends a MQTT ping to the endpoint.
+     * @throws MqttException
+     */
     public void ping() throws MqttException {
         if (native_ptr() == 0) {
             throw new MqttException("Invalid connection during ping");

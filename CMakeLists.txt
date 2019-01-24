@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 
+if (UNIX AND NOT APPLE)
+    include(GNUInstallDirs)
+elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+    set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
+if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
+    set(FIND_LIBRARY_USE_LIB64_PATHS true)
+endif()
+
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 
 if (BUILD_DEPS)

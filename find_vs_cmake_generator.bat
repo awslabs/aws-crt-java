@@ -8,6 +8,7 @@ if exist mvn-build\cmake.properties (
 )
 
 :: Get the latest version of Visual Studio
+vswhere -legacy -latest -property installationVersion
 for /F "delims=" %%A in ('vswhere -legacy -latest -property installationVersion') do @(
     set VS_VERSION=%%A
 )

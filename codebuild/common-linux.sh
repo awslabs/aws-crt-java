@@ -4,4 +4,4 @@ set -e
 set -x
 
 # build java package
-mvn compile
+mvn -B compile

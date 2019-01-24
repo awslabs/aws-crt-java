@@ -15,24 +15,42 @@
 package software.amazon.awssdk.crt.mqtt;
 import java.nio.ByteBuffer;
 
+/**
+ * Represents a single message to be published or that was published to a connection
+ */
 public final class MqttMessage {
     private String topic;
     private final ByteBuffer payload;
 
+    /**
+     * Constructs a new payload
+     * @param topic The topic this message is to be published on or was published to
+     * @param payload The message payload. Note that for minimal copies/maximum efficiency, this should be a direct
+     *                buffer allocated via {@link ByteBuffer.allocateDirect}
+     */
     public MqttMessage(String topic, ByteBuffer payload) {
         this.topic = topic;
         this.payload = payload;
     }
 
+    /**
+     * Gets the topic associated with this message
+     * @return The topic
+     */
     public String getTopic() {
         return topic;
     }
 
+    /**
+     * Gets the message payload
+     * @return Message payload
+     */
     public ByteBuffer getPayload() {
         return payload;
     }
 
-    public ByteBuffer getPayloadDirect() {
+    // Used mostly internally to retrieve the payload in order to pass it to native code
+    ByteBuffer getPayloadDirect() {
         /* If the buffer is already direct, we can avoid an additional copy */
         if (payload.isDirect()) {
             return payload;

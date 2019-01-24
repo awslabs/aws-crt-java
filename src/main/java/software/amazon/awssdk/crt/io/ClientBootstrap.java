@@ -26,6 +26,11 @@ import java.io.Closeable;
 public final class ClientBootstrap extends CrtResource implements Closeable {
     private EventLoopGroup elg;
 
+    /**
+     * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
+     * @param _elg
+     * @throws CrtRuntimeException
+     */
     public ClientBootstrap(EventLoopGroup _elg) throws CrtRuntimeException {
         elg = _elg;
         acquire(clientBootstrapNew(elg.native_ptr()));

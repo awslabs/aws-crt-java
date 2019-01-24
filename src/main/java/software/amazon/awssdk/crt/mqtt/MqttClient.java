@@ -34,20 +34,38 @@ public class MqttClient extends CrtResource implements Closeable {
     private final ClientBootstrap bootstrap;
     private final TlsContext tlsContext;
 
+    /**
+     * Creates a default MqttClient with no TLS and a {@link ClientBootstrap} constructed with default settings
+     * @throws CrtRuntimeException
+     */
     public MqttClient() throws CrtRuntimeException {
         this(new ClientBootstrap(new EventLoopGroup(1)), null);
     }
 
+    /**
+     * Creates an MqttClient from the provided {@link ClientBootstrap} with no TLS
+     * @param clientBootstrap The ClientBootstrap to use
+     * @throws CrtRuntimeException
+     */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
         this(clientBootstrap, null);
     }
 
+    /**
+     * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
+     * @param clientBootstrap
+     * @param tlsContext
+     * @throws CrtRuntimeException
+     */
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext tlsContext) throws CrtRuntimeException {
         this.bootstrap = clientBootstrap;
         this.tlsContext = tlsContext;
         acquire(mqttClientNew(bootstrap.native_ptr()));
     }
 
+    /**
+     * Cleans up the native resources associated with this client. The client is unusable after this call
+     */
     @Override
     public void close() {
         if (native_ptr() != 0) {
@@ -55,6 +73,10 @@ public class MqttClient extends CrtResource implements Closeable {
         }
     }
 
+    /**
+     * Get the {@link TlsContext} associated with this client
+     * @return the TlsContext provided to this client at construction. May be null.
+     */
     public TlsContext tlsContext() {
         return this.tlsContext;
     }

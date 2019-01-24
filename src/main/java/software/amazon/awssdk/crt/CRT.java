@@ -135,7 +135,13 @@ public final class CRT {
         }
     }
 
+    // Called internally when bootstrapping the CRT, allows native code to do any static initialization it needs
     private static native void awsCrtInit() throws CrtRuntimeException;
 
+    /**
+     * Given an integer error code from an internal operation
+     * @param errorCode An error code returned from an exception or other native function call
+     * @return A user-friendly description of the error
+     */
     public static native String awsErrorString(int errorCode);
 };

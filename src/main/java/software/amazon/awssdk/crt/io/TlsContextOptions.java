@@ -140,14 +140,10 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     }
 
     /**
-<<<<<<< HEAD
      * Set whether or not the peer should be verified. Default is true for clients, and false for servers.
      * If you are in a development or debugging environment, you can disable this to avoid or diagnose trust
      * store issues. This should always be true on clients in the wild.
      * If you set this to true on a server, it will validate every client connection.
-=======
-     * Set whether or not the peer should be verified.
->>>>>>> Added javadocs to java classes, README for credentials
      * @param verify
      */
     public void setVerifyPeer(boolean verify) {

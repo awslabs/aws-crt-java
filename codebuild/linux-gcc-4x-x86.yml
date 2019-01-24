@@ -29,6 +29,7 @@ phases:
     commands:
       - echo Build started on `date`
       - export CFLAGS=-m32
+      - setarch i386 mvn -X help:active-profiles
       - setarch i386 ./codebuild/common-linux.sh
   post_build:
     commands:

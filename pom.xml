@@ -20,6 +20,8 @@
             </activation>
             <properties>
                 <cmake.target>ALL_BUILD</cmake.target>
+                <cmake.cflags/>
+                <cmake.linkflags/>
             </properties>
             <build>
                 <plugins>
@@ -86,6 +88,20 @@
             <properties>
                 <cmake.generator>Unix Makefiles</cmake.generator>
                 <cmake.target>all</cmake.target>
+                <cmake.cflags/>
+                <cmake.linkflags/>
+            </properties>
+        </profile>
+        <profile>
+            <id>unix-x86</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <arch>x86</arch>
+                </os>
+            </activation>
+            <properties>
+                <cmake.cflags>-m32</cmake.cflags>
             </properties>
         </profile>
     </profiles>
@@ -168,6 +184,7 @@
                                 <argument>-DBUILD_SHARED_LIBS=ON</argument>
                                 <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                 <argument>-DBUILD_DEPS=ON</argument>
+                                <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                 <argument>..</argument>
                             </arguments>
                         </configuration>

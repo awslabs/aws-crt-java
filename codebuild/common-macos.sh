@@ -5,8 +5,6 @@
 set -e
 set -x
 
-CMAKE_ARGS="$@"
-
 # ensure each required package is installed, if not, make a bottle for brew in ./packages
 # so it will be cached for future runs. If the cache is ever blown away, this will update
 # the packages as well
@@ -28,7 +26,4 @@ function install_from_brew {
 install_from_brew sphinx-doc
 install_from_brew cmake
 
-# build dependencies
-./build-deps.sh $CMAKE_ARGS
-
-mvn compile
+mvn -B compile

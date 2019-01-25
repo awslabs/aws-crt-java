@@ -21,8 +21,7 @@ Building:
 1) apt-get install cmake3 libssl-dev ninja-build maven openjdk-8-jdk-headless -y
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) ./build-deps.sh (insert any CMake flags here, such as -DCMAKE_BUILD_TYPE=Debug)
-5) mvn compile
+4) mvn compile
 
 ### OSX
 Requirements:
@@ -33,8 +32,7 @@ Requirements:
 1) brew install maven cmake3 ninja (if you have homebrew installed, otherwise install these manually)
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) ./build-deps.sh (insert any CMake flags here, such as -DCMAKE_BUILD_TYPE=Debug)
-5) mvn compile
+4) mvn compile
 
 ### Windows
 Requirements:
@@ -45,8 +43,7 @@ Requirements:
 1) choco install maven (if you have chocolatey installed), otherwise install maven manually
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) build_deps.bat
-5) mvn compile
+4) mvn compile
 
 ## Installing
 From the aws-crt-java directory:

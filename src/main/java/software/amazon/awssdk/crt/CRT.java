@@ -99,9 +99,7 @@ public final class CRT {
             String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
-            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
-            FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(permissions);
-            Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName, attrs);
+            Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName);
 
             // open a stream to read the shared lib contents from this JAR
             InputStream in = CRT.class.getResourceAsStream(libraryPath);
@@ -113,8 +111,19 @@ public final class CRT {
             Files.copy(in, libTempPath);
             in.close();
 
+            File tempSharedLib = libTempPath.toFile();
+            if (!tempSharedLib.setExecutable(true)) {
+                throw new CrtRuntimeException("Unable to make shared library executable");
+            }
+            if (!tempSharedLib.setWritable(false)) {
+                throw new CrtRuntimeException("Unable to make shared library read-only");
+            }
+            if (!tempSharedLib.setReadable(true)) {
+                throw new CrtRuntimeException("Unable to make shared library readable");
+            }
+
             // Ensure that the shared lib will be destroyed when java exits
-            libTempPath.toFile().deleteOnExit();
+            tempSharedLib.deleteOnExit();
 
             // load the shared lib from the temp path
             System.load(libTempPath.toString());

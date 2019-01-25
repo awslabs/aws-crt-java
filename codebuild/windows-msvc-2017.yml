@@ -1,7 +1,11 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_CMAKE_GENERATOR: Visual Studio 15 2017 Win64
+
 phases:
   build:
     commands:
-      - .\codebuild\common-windows.bat -G "Visual Studio 15 2017 Win64"
+      - .\codebuild\common-windows.bat
 

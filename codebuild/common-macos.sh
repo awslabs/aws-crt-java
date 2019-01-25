@@ -26,4 +26,4 @@ function install_from_brew {
 install_from_brew sphinx-doc
 install_from_brew cmake
 
-mvn compile
+mvn -B compile

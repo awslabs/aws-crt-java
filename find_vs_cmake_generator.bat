@@ -7,17 +7,27 @@ if exist mvn-build\cmake.properties (
     goto :EOF
 )
 
+if not [%AWS_CMAKE_GENERATOR%] == [] (
+    echo Using AWS_CMAKE_GENERATOR from environment
+    set GENERATOR=%AWS_CMAKE_GENERATOR%
+    goto :generator_found
+)
+
 :: Get the latest version of Visual Studio
 if exist "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" (
     set VS_VERSION=14
-) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
+) 
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
     set VS_VERSION=15
-) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat" (
+) 
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat" (
     set VS_VERSION=15
-) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" (
+) 
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" (
     set VS_VERSION=15
 )
 
+:vs_found
 echo VS_VERSION=!VS_VERSION!
 
 :: Get a list of Visual Studio generators from cmake, match against the version installed

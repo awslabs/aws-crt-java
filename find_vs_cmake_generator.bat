@@ -7,7 +7,7 @@ if exist mvn-build\cmake.properties (
     goto :EOF
 )
 
-if not [%AWS_CMAKE_GENERATOR%] == [] (
+if not ["%AWS_CMAKE_GENERATOR%"] == [""] (
     echo Using AWS_CMAKE_GENERATOR from environment
     set GENERATOR=%AWS_CMAKE_GENERATOR%
     goto :generator_found

@@ -8,20 +8,20 @@ if exist mvn-build\cmake.properties (
 )
 
 :: Get the latest version of Visual Studio
-vswhere -legacy -latest -property installationVersion
-for /F "delims=" %%A in ('vswhere -legacy -latest -property installationVersion') do @(
-    set VS_VERSION=%%A
-)
-
-:: strip minor version info
-for /F "tokens=1 delims=." %%A in ("!VS_VERSION!") do @(
-    set VS_VERSION=%%A
+if exist "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" (
+    set VS_VERSION=14
+) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
+    set VS_VERSION=15
+) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat" (
+    set VS_VERSION=15
+) else if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" (
+    set VS_VERSION=15
 )
 
 echo VS_VERSION=!VS_VERSION!
 
 :: Get a list of Visual Studio generators from cmake, match against the version installed
-for /F "delims=" %%A in ('cmake --help ^| findstr /C:"Visual Studio !VS_VERSION!"') do @(
+for /F "delims=" %%A in ('cmake --help ^| findstr /C:"Visual Studio !VS_VERSION!"') do (
     set GENERATOR=%%A
     goto :generator_found
 )

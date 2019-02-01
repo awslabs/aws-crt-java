@@ -5,7 +5,7 @@
     <artifactId>aws-crt</artifactId>
     <packaging>jar</packaging>
     <version>0.2.0</version>
-    <name>aws-crt</name>
+    <name>${project.groupId}:${project.artifactId}</name>
     <description>Java bindings for the AWS SDK Common Runtime</description>
     <url>https://github.com/awslabs/aws-crt-java</url>
 

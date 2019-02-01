@@ -2,10 +2,35 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.amazon.awssdk.crt</groupId>
-    <artifactId>aws-crt-java</artifactId>
+    <artifactId>aws-crt</artifactId>
     <packaging>jar</packaging>
-    <version>1.0</version>
-    <url>http://maven.apache.org</url>
+    <version>0.2.0</version>
+    <name>aws-crt</name>
+    <description>Java bindings for the AWS SDK Common Runtime</description>
+    <url>https://github.com/awslabs/aws-crt-java</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>AWS SDK Common Runtime Team</name>
+            <email>aws-sdk-common-runtime@amazon.com</email>
+            <organization>Amazon Web Services</organization>
+            <organizationUrl>http://aws.amazon.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/awslabs/aws-crt-java.git</connection>
+        <developerConnection>scm:git:ssh://github.com:awslabs/aws-crt-java.git</developerConnection>
+        <url>http://github.com/awslabs/aws-crt-java/tree/master</url>
+    </scm>
+
     <profiles>
         <profile>
             <!-- Windows profile: find cmake generators and use ALL_BUILD target 

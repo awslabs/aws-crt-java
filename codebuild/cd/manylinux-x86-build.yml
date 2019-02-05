@@ -1,0 +1,24 @@
+version: 0.2
+#this build spec assumes the manylinux CentOS5 custom image
+#additional packages we installed: cmake 3.5, libcrypto 1.1.0j, gcc 4.8.4, openjdk8, maven 3.6.0, gnupg 2.0.10
+phases:
+  install:
+    commands:
+  pre_build:
+    commands:
+      - export CC=gcc
+  build:
+    commands:
+      - echo Build started on `date`
+      - cd aws-crt-java
+      # take out the test skipping when we can pull secrets and run the tests from codebuild
+      - mvn package -Punix-x86 -Dmaven.test.skip=true
+      # get the shared libs from the native build
+      - cp -r mvn-build/lib ../dist
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+artifacts:
+  files:
+    - 'dist/*' 

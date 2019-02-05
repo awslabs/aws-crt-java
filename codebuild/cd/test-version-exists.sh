@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 #force a failure if there's no tag
 git describe --abbrev=0
 #now get the tag

@@ -11,7 +11,7 @@ phases:
     commands:
       - echo Build started on `date`
       - cd aws-crt-java
-      - bash ./test-version-exists
+      - bash ./test-version-exists.sh
   post_build:
     commands:
       - echo Build completed on `date`

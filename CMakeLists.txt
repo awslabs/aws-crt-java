@@ -80,7 +80,7 @@ if (BUILD_DEPS)
     list(APPEND CMAKE_PREFIX_PATH "${AWS_DEPS_INSTALL_DIR}")
     message(STATUS "CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
     project(aws-crt-jni C Java)
-
+    message(STATUS "CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
 else()
     #the following two lines are done in this branch intentionally, don't move it. project() does some magic that
     #we want happening exactly right now.

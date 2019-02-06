@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.1)
 
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
+    message(STATUS "Using GNUInstallDirs")
 elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
     set(CMAKE_INSTALL_LIBDIR "lib")
+    message(STATUS "Using lib default")
 endif()
 
 message(STATUS "CMAKE_INSTALL_LIBDIR=" ${CMAKE_INSTALL_LIBDIR})

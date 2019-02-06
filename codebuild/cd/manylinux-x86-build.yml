@@ -23,3 +23,7 @@ phases:
 artifacts:
   files:
     - 'dist/**/*' 
+
+cache:
+  paths:
+    - '/root/.m2/**/*'

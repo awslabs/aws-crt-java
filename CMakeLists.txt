@@ -2,13 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
-    message(STATUS "Using GNUInstallDirs")
 elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
     set(CMAKE_INSTALL_LIBDIR "lib")
-    message(STATUS "Using lib default")
 endif()
-
-message(STATUS "CMAKE_INSTALL_LIBDIR=" ${CMAKE_INSTALL_LIBDIR})
 
 if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
     set(FIND_LIBRARY_USE_LIB64_PATHS true)
@@ -20,7 +16,8 @@ if (BUILD_DEPS)
     set(AWS_DEPS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps)
     set(AWS_DEPS_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps/install)
 
-    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/lib/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/lib64/cmake")
 
     if (NOT DEFINED CMAKE_PREFIX_PATH)
         set(CMAKE_PREFIX_PATH ${AWS_DEPS_INSTALL_DIR})
@@ -80,9 +77,7 @@ if (BUILD_DEPS)
     #the following two lines are done in this branch intentionally, don't move it. project() does some magic that
     #we don't want happening until we're done with the above code.
     list(APPEND CMAKE_PREFIX_PATH "${AWS_DEPS_INSTALL_DIR}")
-    message(STATUS "CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
     project(aws-crt-jni C Java)
-    message(STATUS "CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
 else()
     #the following two lines are done in this branch intentionally, don't move it. project() does some magic that
     #we want happening exactly right now.

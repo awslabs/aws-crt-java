@@ -14,7 +14,7 @@ phases:
       # take out the test skipping when we can pull secrets and run the tests from codebuild
       - JAVA_HOME=/opt/java-se-8u40-ri/ mvn package -Punix-x86 -Dmaven.test.skip=true
       # get the shared libs from the native build
-      - cp -r mvn-build/lib ../dist
+      - cp -rv mvn-build/lib ../dist
   post_build:
     commands:
       - echo Build completed on `date`

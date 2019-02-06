@@ -49,6 +49,7 @@
             </properties>
             <build>
                 <resources>
+                    <!-- shared libs built via cmake -->
                     <resource>
                         <directory>mvn-build/lib</directory>
                         <excludes>
@@ -124,6 +125,7 @@
                 <cmake.cflags/>
             </properties>
         </profile>
+        <!-- 32-bit Unix -->
         <profile>
             <id>unix-x86</id>
             <activation>
@@ -135,6 +137,66 @@
             <properties>
                 <cmake.cflags>-m32</cmake.cflags>
             </properties>
+        </profile>
+        <!-- native compilation -->
+        <profile>
+            <id>build-shared-lib</id>
+            <activation>
+                <property>
+                    <name>!shared-lib.skip</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- cmake configure and build -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.3.2</version>
+                        <executions>
+                            <!-- cmake configure -->
+                            <execution>
+                                <id>cmake-configure</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <workingDirectory>mvn-build</workingDirectory>
+                                    <arguments>
+                                        <argument>-G${cmake.generator}</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DBUILD_SHARED_LIBS=ON</argument>
+                                        <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
+                                        <argument>-DBUILD_DEPS=ON</argument>
+                                        <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>..</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <!-- cmake build -->
+                            <execution>
+                                <id>make</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <workingDirectory>mvn-build</workingDirectory>
+                                    <arguments>
+                                        <argument>--build</argument>
+                                        <argument>.</argument>
+                                        <argument>--target</argument>
+                                        <argument>${cmake.target}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
     <properties>
@@ -184,53 +246,6 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- cmake configure and build -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.3.2</version>
-                <executions>
-                    <!-- cmake configure -->
-                    <execution>
-                        <id>cmake-configure</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>cmake</executable>
-                            <workingDirectory>mvn-build</workingDirectory>
-                            <arguments>
-                                <argument>-G${cmake.generator}</argument>
-                                <argument>-DCMAKE_BUILD_TYPE=Release</argument>
-                                <argument>-DBUILD_SHARED_LIBS=ON</argument>
-                                <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
-                                <argument>-DBUILD_DEPS=ON</argument>
-                                <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                <argument>..</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <!-- cmake build -->
-                    <execution>
-                        <id>make</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>cmake</executable>
-                            <workingDirectory>mvn-build</workingDirectory>
-                            <arguments>
-                                <argument>--build</argument>
-                                <argument>.</argument>
-                                <argument>--target</argument>
-                                <argument>${cmake.target}</argument>
-                            </arguments>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

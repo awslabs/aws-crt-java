@@ -12,7 +12,7 @@ phases:
       - echo Build started on `date`
       - cd aws-crt-java
       # take out the test skipping when we can pull secrets and run the tests from codebuild
-      - mvn package -Punix-x86 -Dmaven.test.skip=true
+      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn package -Punix-x86 -Dmaven.test.skip=true
       # get the shared libs from the native build
       - cp -r mvn-build/lib ../dist
   post_build:

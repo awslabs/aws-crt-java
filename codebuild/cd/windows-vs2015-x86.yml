@@ -7,6 +7,7 @@ env:
 phases:
   build:
     commands:
+      - cd aws-crt-java
       - .\codebuild\common-windows.bat
       - mkdir ..\dist
       - xcopy /S /F .\mvn-build\lib ..\dist\
@@ -14,4 +15,3 @@ phases:
 artifacts:
   files:
     - 'dist/**/*' 
-    

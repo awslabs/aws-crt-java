@@ -22,7 +22,7 @@ include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
     set(S2N_URL "https://github.com/awslabs/s2n.git")
-    set(s2N_SHA "383586162b3ee60bbd75105fcfe583b14bf60d46")
+    set(s2N_SHA "e23fb83e80f567c225279cdeb6c9e271b2ff459c")
     include(BuildS2N)
 endif()
 

@@ -14,4 +14,4 @@ phases:
 
 artifacts:
   files:
-    - 'dist/**/*' 
+    - 'dist/**/*.dll' 

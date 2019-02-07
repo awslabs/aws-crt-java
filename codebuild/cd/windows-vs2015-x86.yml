@@ -10,7 +10,7 @@ phases:
       - .\aws-crt-java\codebuild\cd\windows-vs2015-setup.bat
   build:
     commands:
-      - cmake --version
+      - set JAVA_HOME="C:\jdk8"
       - cd aws-crt-java
       - .\codebuild\cd\windows-vs2015-any.bat
       - mkdir ..\dist

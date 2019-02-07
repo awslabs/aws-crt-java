@@ -10,7 +10,7 @@ phases:
       - .\aws-crt-java\codebuild\cd\windows-vs2015-setup.bat
   build:
     commands:
-      - RefreshEnv
+      - set JAVA_HOME="C:\jdk8"
       - echo JAVA_HOME="%JAVA_HOME%"
       - cd aws-crt-java
       - mvn -B compile

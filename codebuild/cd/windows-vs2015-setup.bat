@@ -8,6 +8,5 @@ choco install jdk8 -y -params "installdir=c:\\jdk8"
 choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
-setx JAVA_HOME "%JAVA_HOME%"
 
 @endlocal

@@ -15,9 +15,8 @@ set(AWS_DEPS_LIB_DIR "${AWS_DEPS_INSTALL_DIR}/lib" CACHE PATH "Dependencies libr
 set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies build directory.")
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
-message("install dir ${AWS_DEPS_INSTALL_DIR}")
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
-set(AWS_C_COMMON_SHA "v0.3.1")
+set(AWS_C_COMMON_SHA "tags/v0.3.1")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)

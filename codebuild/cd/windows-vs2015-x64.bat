@@ -10,8 +10,6 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
-cmake --version
-
 mvn -B compile || goto error
 
 popd

@@ -7,8 +7,9 @@ env:
 phases:
   build:
     commands:
+      - cmake --version
       - cd aws-crt-java
-      - .\codebuild\common-windows.bat
+      - .\codebuild\cd\windows-vs2015-x64.bat
       - mkdir ..\dist
       - xcopy /S /F .\mvn-build\lib ..\dist\lib\
 

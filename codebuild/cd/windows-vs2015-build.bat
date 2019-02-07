@@ -9,4 +9,12 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
+mvn -B compile || goto error
+
 @endlocal
+goto :EOF
+
+:error
+@endlocal
+echo Failed with error #%errorlevel%.
+exit /b %errorlevel%

@@ -5,14 +5,10 @@ env:
     AWS_CMAKE_GENERATOR: Visual Studio 14 2015 Win64
 
 phases:
-  install:
-    commands:
-      - call .\aws-crt-java\codebuild\cd\windows-vs2015-setup.bat
   build:
     commands:
-      - echo JAVA_HOME=%JAVA_HOME%
       - cd aws-crt-java
-      - mvn -B compile
+      - .\codebuild\cd\windows-vs2015-build.bat
       - mkdir ..\dist
       - xcopy /S /F .\mvn-build\lib ..\dist\lib\
 

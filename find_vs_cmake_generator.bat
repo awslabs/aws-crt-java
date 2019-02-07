@@ -50,5 +50,6 @@ if not exist mvn-build (
     mkdir mvn-build
 )
 echo cmake.generator=!CMAKE_VS_GENERATOR!>mvn-build\cmake.properties
+type mvn-build\cmake.properties
 
 @endlocal

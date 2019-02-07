@@ -16,3 +16,6 @@ artifacts:
   files:
     - 'dist/**/*.dll'
   
+cache:
+  paths:
+    - C:\Users\ContainerAdministrator\.m2\**\*

@@ -9,7 +9,7 @@ phases:
     commands:
       - cmake --version
       - cd aws-crt-java
-      - .\codebuild\cd\windows-vs2015-x64.bat
+      - .\codebuild\cd\windows-vs2015-any.bat
       - mkdir ..\dist
       - xcopy /S /F .\mvn-build\lib ..\dist\lib\
 

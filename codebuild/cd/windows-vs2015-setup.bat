@@ -7,6 +7,6 @@
 choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
-setx JAVA_HOME %JAVA_HOME%
+setx JAVA_HOME "%JAVA_HOME%"
 
 @endlocal

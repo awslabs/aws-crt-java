@@ -164,8 +164,8 @@
                                 <configuration>
                                     <executable>cmake</executable>
                                     <workingDirectory>mvn-build</workingDirectory>
+                                    <commandlineArgs>-G${cmake.generator}</commandlineArgs>
                                     <arguments>
-                                        <argument>-G${cmake.generator}</argument>
                                         <argument>-DCMAKE_BUILD_TYPE=Release</argument>
                                         <argument>-DBUILD_SHARED_LIBS=ON</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>

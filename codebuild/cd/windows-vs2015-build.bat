@@ -6,7 +6,7 @@
 :: this will also install jdk8
 choco install jdk8 -y -params "installdir=c:\\jdk8"
 choco install maven -y
-choco upgrade cmake -y
+choco upgrade cmake -y --installargs 'ADD_CMAKE_TO_PATH=System'
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 

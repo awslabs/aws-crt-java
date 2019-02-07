@@ -11,8 +11,7 @@ phases:
     commands:
       - echo Build started on `date`
       - cd aws-crt-java
-      # take out the test skipping when we can pull secrets and run the tests from codebuild
-      - JAVA_HOME=/opt/jdk1.8.0_201/ mvn package -Punix-x86 -Dmaven.test.skip=true
+      - JAVA_HOME=/opt/jdk1.8.0_201/ mvn -B compile -Punix-x86
       # get the shared libs from the native build
       - mkdir -p ../dist
       - cp -rv mvn-build/lib ../dist/

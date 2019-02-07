@@ -10,7 +10,7 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
-mvn -B compile -Dmaven.test.skip=true || goto error
+mvn -B compile || goto error
 
 popd
 @endlocal

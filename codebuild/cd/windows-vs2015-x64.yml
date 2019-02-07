@@ -7,7 +7,7 @@ env:
 phases:
   install:
     commands:
-      - .\codebuild\cd\windows-vs2015-setup.bat
+      - .\aws-crt-java\codebuild\cd\windows-vs2015-setup.bat
   build:
     commands:
       - cmake --version

@@ -72,7 +72,7 @@
                         <version>1.3.2</version>
                         <executions>
                             <execution>
-                                <id>find-cmake-vs-generator</id>
+                                <id>configure-visual-studio</id>
                                 <phase>initialize</phase>
                                 <goals>
                                     <goal>exec</goal>

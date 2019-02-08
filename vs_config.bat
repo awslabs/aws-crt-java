@@ -105,6 +105,8 @@ echo cmake.generator="!CMAKE_VS_GENERATOR!">mvn-build\cmake.properties
 echo vs.version=!VS_VERSION!>>mvn-build\cmake.properties
 echo vs.vcvarsall=!VCVARSALL_PATH!>>mvn-build\cmake.properties
 
+type mvn-build\cmake.properties
+
 @endlocal
 goto :EOF
 

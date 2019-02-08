@@ -7,8 +7,9 @@ if not [%AWS_CMAKE_GENERATOR%] == [] (
     echo Using AWS_CMAKE_GENERATOR from environment
     set GENERATOR=%AWS_CMAKE_GENERATOR%
     :: skip "Visual Studio ", then get the next 2 chars
-    set VS_VERSION=%AWS_CMAKE_GENERATOR:Visual Studio =%
-    set VS_VERSION=%AWS_CMAKE_GENERATOR:~0,2%
+    set VS_VERSION=%AWS_CMAKE_GENERATOR:"=%
+    set VS_VERSION=!VS_VERSION:Visual Studio =!
+    set VS_VERSION=!VS_VERSION:~0,2!
     echo VS_VERSION=!VS_VERSION!
 )
 

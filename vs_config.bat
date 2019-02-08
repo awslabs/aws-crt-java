@@ -1,5 +1,5 @@
 
-@echo off
+@echo on
 @setlocal enableextensions enabledelayedexpansion
 
 :: if the generator is specified, then we can narrow the search

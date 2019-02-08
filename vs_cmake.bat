@@ -40,8 +40,7 @@ call !VCVARSALL! !ARCH!
 :cmake
 popd
 @echo on
-:: This is intentionally not %*, as if you use that the quotes get broken
-cmake %1 %2 %3 %4 %5 %6 %7 %8 %9
+cmake %*
 @echo off
 
 @endlocal

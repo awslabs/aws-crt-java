@@ -173,7 +173,7 @@
                                     <executable>${cmake.command}</executable>
                                     <workingDirectory>mvn-build</workingDirectory>
                                     <arguments>
-                                        <argument>-G${cmake.generator}</argument>
+                                        <argument>-G"${cmake.generator}"</argument>
                                         <argument>-D"CMAKE_BUILD_TYPE=Release"</argument>
                                         <argument>-D"BUILD_SHARED_LIBS=ON"</argument>
                                         <argument>-D"CMAKE_EXPORT_COMPILE_COMMANDS=ON"</argument>

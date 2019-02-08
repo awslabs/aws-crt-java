@@ -1,6 +1,7 @@
 
 @setlocal enableextensions enabledelayedexpansion
 
+echo PATH=%PATH%
 echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR="Visual Studio 14 2015 Win64"

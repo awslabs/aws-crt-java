@@ -78,7 +78,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>find_vs_cmake_generator.bat</executable>
+                                    <executable>"${project.basedir}/vs_config.bat"</executable>
                                     <workingDirectory>.</workingDirectory>
                                 </configuration>
                             </execution>

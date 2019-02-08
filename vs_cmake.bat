@@ -28,7 +28,8 @@ if not exist !VCVARSALL! (
 )
 
 :: If the generator ends with Win64, do a 64 bit build, else 32 bit
-set ISWIN64=!GENERATOR:~-5!
+set ISWIN64=!GENERATOR:"=!
+set ISWIN64=!ISWIN64:~-5!
 if [%ISWIN64%] == [Win64] (
     set ARCH=amd64
 ) else (

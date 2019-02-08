@@ -99,7 +99,7 @@ set CMAKE_VS_GENERATOR=%TRIMMED:[arch] =Win64%
 if not exist mvn-build (
     mkdir mvn-build
 )
-echo cmake.generator=!CMAKE_VS_GENERATOR!>mvn-build\cmake.properties
+echo cmake.generator="!CMAKE_VS_GENERATOR!">mvn-build\cmake.properties
 echo vs.version=!VS_VERSION!>>mvn-build\cmake.properties
 echo vs.vcvarsall=!VCVARSALL_PATH!>>mvn-build\cmake.properties
 

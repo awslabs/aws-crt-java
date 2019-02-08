@@ -51,7 +51,7 @@
                 </os>
             </activation>
             <properties>
-                <cmake.command>${project.basedir}/vs_cmake.bat</cmake.command>
+                <cmake.command>"${project.basedir}/vs_cmake.bat"</cmake.command>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.cflags/>
             </properties>

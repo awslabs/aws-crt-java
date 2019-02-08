@@ -164,15 +164,7 @@
                                 <configuration>
                                     <executable>cmake</executable>
                                     <workingDirectory>mvn-build</workingDirectory>
-                                    <commandlineArgs>-G${cmake.generator}</commandlineArgs>
-                                    <arguments>
-                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
-                                        <argument>-DBUILD_SHARED_LIBS=ON</argument>
-                                        <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
-                                        <argument>-DBUILD_DEPS=ON</argument>
-                                        <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>..</argument>
-                                    </arguments>
+                                    <commandlineArgs>-G${cmake.generator} -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_DEPS=ON -DCMAKE_C_FLAGS=${cmake.cflags} ..</commandlineArgs>
                                 </configuration>
                             </execution>
                             <!-- cmake build -->

@@ -1,7 +1,7 @@
 
 :: This script ensures that the correct vcvarsall.bat has been run before cmake runs
 :: otherwise it won't find the Visual Studio toolchain
-@echo off
+@echo on
 @setlocal enableextensions enabledelayedexpansion
 
 pushd %~dp0
@@ -30,7 +30,7 @@ if not exist !VCVARSALL! (
 :: If the generator ends with Win64, do a 64 bit build, else 32 bit
 set ISWIN64=!GENERATOR:"=!
 set ISWIN64=!ISWIN64:~-5!
-if [%ISWIN64%] == [Win64] (
+if [!ISWIN64!] == [Win64] (
     set ARCH=amd64
 ) else (
     set ARCH=x86

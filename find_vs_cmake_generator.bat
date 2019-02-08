@@ -1,4 +1,5 @@
 
+@echo off
 @setlocal enableextensions enabledelayedexpansion
 
 if exist mvn-build\cmake.properties (
@@ -6,7 +7,7 @@ if exist mvn-build\cmake.properties (
     goto :EOF
 )
 
-if not [%AWS_CMAKE_GENERATOR%] == [""] (
+if not [%AWS_CMAKE_GENERATOR%] == [] (
     echo Using AWS_CMAKE_GENERATOR from environment
     set GENERATOR=%AWS_CMAKE_GENERATOR%
     goto :generator_found
@@ -50,5 +51,6 @@ if not exist mvn-build (
     mkdir mvn-build
 )
 echo cmake.generator=!CMAKE_VS_GENERATOR!>mvn-build\cmake.properties
+echo vs.version=!VS_VERSION!>>mvn-build\cmake.properties
 
 @endlocal

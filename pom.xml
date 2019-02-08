@@ -31,6 +31,13 @@
         <url>http://github.com/awslabs/aws-crt-java/tree/master</url>
     </scm>
 
+    <properties>
+        <cmake.command>cmake</cmake.command>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <profiles>
         <profile>
             <!-- Windows profile: find cmake generators and use ALL_BUILD target 
@@ -44,6 +51,7 @@
                 </os>
             </activation>
             <properties>
+                <cmake.command>${project.basedir}/vs_cmake.bat</cmake.command>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.cflags/>
             </properties>
@@ -162,9 +170,17 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>cmake</executable>
+                                    <executable>${cmake.command}</executable>
                                     <workingDirectory>mvn-build</workingDirectory>
-                                    <commandlineArgs>-G${cmake.generator} -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_DEPS=ON -DCMAKE_C_FLAGS=${cmake.cflags} ..</commandlineArgs>
+                                    <arguments>
+                                        <argument>-G${cmake.generator}</argument>
+                                        <argument>-D"CMAKE_BUILD_TYPE=Release"</argument>
+                                        <argument>-D"BUILD_SHARED_LIBS=ON"</argument>
+                                        <argument>-D"CMAKE_EXPORT_COMPILE_COMMANDS=ON"</argument>
+                                        <argument>-D"BUILD_DEPS=ON"</argument>
+                                        <argument>-D"CMAKE_C_FLAGS=${cmake.cflags}"</argument>
+                                        <argument>..</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                             <!-- cmake build -->
@@ -175,7 +191,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>cmake</executable>
+                                    <executable>${cmake.command}</executable>
                                     <workingDirectory>mvn-build</workingDirectory>
                                     <arguments>
                                         <argument>--build</argument>
@@ -191,11 +207,7 @@
             </build>
         </profile>
     </profiles>
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>

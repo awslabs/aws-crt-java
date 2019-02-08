@@ -93,7 +93,7 @@ for /F "tokens=1 delims==" %%A in ("!GENERATOR!") do (
 )
 
 :: Trim leading whitespace
-for /F "tokens=*" %%A in ("%GENERATOR_NAME%") do set TRIMMED=%%A
+for /F "tokens=*" %%A in (%GENERATOR_NAME%) do set TRIMMED=%%A
 set CMAKE_VS_GENERATOR=%TRIMMED:[arch] =Win64%
 :: strip quotes in case they are there
 set CMAKE_VS_GENERATOR=!CMAKE_VS_GENERATOR:"=!

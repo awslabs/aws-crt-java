@@ -15,10 +15,10 @@ phases:
   pre_build:
     commands:
       - mkdir -p mvn-build
-      - cp -r $CODEBUILD_SRC_DIR_linux_x64/* mvn-build/
-      - cp -r $CODEBUILD_SRC_DIR_linux_x86/* mvn-build/
-      - cp -r $CODEBUILD_SRC_DIR_windows_x64/* mvn-build/
-      - cp -r $CODEBUILD_SRC_DIR_windows_x86/* mvn-build/
+      - ls -alR $CODEBUILD_SRC_DIR_linux_x64/* mvn-build/
+      - ls -alR $CODEBUILD_SRC_DIR_linux_x86/* mvn-build/
+      - ls -alR $CODEBUILD_SRC_DIR_windows_x64/* mvn-build/
+      - ls -alR $CODEBUILD_SRC_DIR_windows_x86/* mvn-build/
       - ls -alR mvn-build/lib
   build:
     commands:

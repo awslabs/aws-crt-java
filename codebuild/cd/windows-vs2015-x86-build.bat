@@ -6,7 +6,7 @@ echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR="Visual Studio 14 2015"
 
-mvn -B compile || goto error
+mvn -X compile || goto error
 
 mkdir ..\dist
 xcopy /S /F .\mvn-build\lib ..\dist\lib\

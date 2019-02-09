@@ -32,7 +32,7 @@ phases:
 artifacts:
   discard-paths: yes
   files:
-    - target/aws-crt-*.jar
+    - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
 
 cache:
   paths:

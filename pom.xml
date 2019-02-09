@@ -56,16 +56,6 @@
                 <cmake.cflags/>
             </properties>
             <build>
-                <resources>
-                    <!-- shared libs built via cmake -->
-                    <resource>
-                        <directory>mvn-build/lib</directory>
-                        <excludes>
-                            <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
-                            <exclude>**/*.pdb</exclude><!-- do not package pdbs, comment this out to debug C code -->
-                        </excludes>
-                    </resource>
-                </resources>
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
@@ -218,6 +208,16 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <!-- shared libs built via cmake -->
+            <resource>
+                <directory>mvn-build/lib</directory>
+                <excludes>
+                    <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
+                    <exclude>**/*.pdb</exclude><!-- do not package pdbs, comment this out to debug C code -->
+                </excludes>
+            </resource>
+        </resources>
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>

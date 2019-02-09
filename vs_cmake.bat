@@ -1,7 +1,7 @@
 
 :: This script ensures that the correct vcvarsall.bat has been run before cmake runs
 :: otherwise it won't find the Visual Studio toolchain
-@echo on
+@echo off
 @setlocal enableextensions enabledelayedexpansion
 
 pushd %~dp0
@@ -50,3 +50,4 @@ goto :EOF
 :error
 popd
 @endlocal
+exit /b 1

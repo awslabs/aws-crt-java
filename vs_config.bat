@@ -1,6 +1,8 @@
 
-@echo on
+@echo off
 @setlocal enableextensions enabledelayedexpansion
+
+pushd %~dp0
 
 :: if the generator is specified, then we can narrow the search
 if not [%AWS_CMAKE_GENERATOR%] == [] (
@@ -10,7 +12,6 @@ if not [%AWS_CMAKE_GENERATOR%] == [] (
     set VS_VERSION=%AWS_CMAKE_GENERATOR:"=%
     set VS_VERSION=!VS_VERSION:Visual Studio =!
     set VS_VERSION=!VS_VERSION:~0,2!
-    echo VS_VERSION=!VS_VERSION!
 )
 
 :: Augment the path to include the path where VS installs vswhere in 2017 and later
@@ -105,11 +106,11 @@ echo cmake.generator=!CMAKE_VS_GENERATOR!>mvn-build\cmake.properties
 echo vs.version=!VS_VERSION!>>mvn-build\cmake.properties
 echo vs.vcvarsall=!VCVARSALL_PATH!>>mvn-build\cmake.properties
 
-type mvn-build\cmake.properties
-
+popd
 @endlocal
 goto :EOF
 
 :error
+popd
 @endlocal
 exit /b 1

@@ -23,8 +23,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - cd $CODEBUILD_SRC_DIR
-      - ls -al
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - mvn -B package -Dshared-lib.skip=true -Dmaven.test.skip=true
   post_build:
     commands:

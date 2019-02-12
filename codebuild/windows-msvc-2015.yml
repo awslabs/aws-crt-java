@@ -7,5 +7,5 @@ env:
 phases:
   build:
     commands:
-      - .\codebuild\common-windows.bat
+      - %CODEBUILD_SRC_DIR%\codebuild\common-windows.bat
 

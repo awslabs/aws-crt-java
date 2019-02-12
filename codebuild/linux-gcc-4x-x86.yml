@@ -6,7 +6,7 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo dpkg --add-architecture i386
       - sudo apt-get update -y
-      - sudo apt-get install gcc gcc-multilib libssl-dev:i386 cmake3 cppcheck ninja-build openjdk-8-jdk-headless:i386 maven -y
+      - sudo apt-get install gcc gcc-multilib cmake3 ninja-build openjdk-8-jdk-headless:i386 maven -y
       # Build OpenSSL from source
       - mkdir /tmp/libcrypto-build
       - cd /tmp/libcrypto-build

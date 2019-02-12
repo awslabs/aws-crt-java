@@ -8,8 +8,8 @@ phases:
       - sudo apt-get update -y
       - sudo apt-get install gcc gcc-multilib libssl-dev:i386 cmake3 cppcheck ninja-build openjdk-8-jdk-headless:i386 maven -y
       # Build OpenSSL from source
-      - mkdir libcrypto-build
-      - cd libcrypto-build
+      - mkdir /tmp/libcrypto-build
+      - cd /tmp/libcrypto-build
       - curl -LO https://www.openssl.org/source/openssl-1.1.0j.tar.gz
       - tar -xzf openssl-1.1.0j.tar.gz
       - cd openssl-1.1.0j
@@ -21,7 +21,6 @@ phases:
         --prefix=`pwd`/../../build/deps/install/
       - make -j 12 
       - make install
-      - cd ../../
   pre_build:
     commands:
       - export CC=gcc
@@ -29,7 +28,7 @@ phases:
     commands:
       - echo Build started on `date`
       - export CFLAGS=-m32
-      - setarch i386 ./codebuild/common-linux.sh
+      - setarch i386 $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
   post_build:
     commands:
       - echo Build completed on `date`

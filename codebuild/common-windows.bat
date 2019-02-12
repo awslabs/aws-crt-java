@@ -12,6 +12,7 @@ choco install maven -y
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
+cd %CODEBUILD_SRC_DIR%
 mvn -B compile || goto error
 
 popd

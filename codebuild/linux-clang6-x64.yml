@@ -17,8 +17,8 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - ./codebuild/common-linux.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      - ./format-check.sh
+      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - $CODEBUILD_SRC_DIR/format-check.sh
   post_build:
     commands:
       - echo Build completed on `date`

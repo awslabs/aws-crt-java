@@ -26,4 +26,5 @@ function install_from_brew {
 install_from_brew sphinx-doc
 install_from_brew cmake
 
+cd $CODEBUILD_SRC_DIR
 mvn -B compile

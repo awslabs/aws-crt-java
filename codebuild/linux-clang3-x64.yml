@@ -13,7 +13,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - ./codebuild/common-linux.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
   post_build:
     commands:
       - echo Build completed on `date`

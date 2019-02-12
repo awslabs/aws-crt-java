@@ -1,0 +1,40 @@
+version: 0.2
+#this buildspec assumes the ubuntu 14.04 trusty image
+# This job is responsible for artifacting the JAR which will have all of the other shared libs stuffed
+# into it once all platforms are built and artifacted
+phases:
+  install:
+    commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
+      - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
+      - sudo apt-get update -y
+      - sudo apt-get install cmake3 libssl-dev ninja-build openjdk-8-jdk-headless maven -y -f
+
+  pre_build:
+    commands:
+      - mkdir -p mvn-build
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - cp -rv $CODEBUILD_SRC_DIR_windows_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - cp -rv $CODEBUILD_SRC_DIR_windows_x86/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
+  build:
+    commands:
+      - echo Build started on `date`
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      - mvn -B package -Dshared-lib.skip=true -Dmaven.test.skip=true
+      - jar -tf target/aws-crt-*.jar
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+artifacts:
+  discard-paths: yes
+  files:
+    - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
+
+cache:
+  paths:
+    - '/root/.m2/**/*'

@@ -16,7 +16,8 @@ if (BUILD_DEPS)
     set(AWS_DEPS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps)
     set(AWS_DEPS_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps/install)
 
-    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/lib/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${AWS_DEPS_INSTALL_DIR}/lib64/cmake")
 
     if (NOT DEFINED CMAKE_PREFIX_PATH)
         set(CMAKE_PREFIX_PATH ${AWS_DEPS_INSTALL_DIR})
@@ -75,7 +76,6 @@ if (BUILD_DEPS)
     #we don't want happening until we're done with the above code.
     list(APPEND CMAKE_PREFIX_PATH "${AWS_DEPS_INSTALL_DIR}")
     project(aws-crt-jni C Java)
-
 else()
     #the following two lines are done in this branch intentionally, don't move it. project() does some magic that
     #we want happening exactly right now.

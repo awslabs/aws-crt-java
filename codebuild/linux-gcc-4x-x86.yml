@@ -20,7 +20,7 @@ phases:
         -DSSL_FORBID_ENULL -DOPENSSL_NO_DTLS1 -DOPENSSL_NO_HEARTBEATS   \
         --prefix=$CODEBUILD_SRC_DIR/build/deps/install/
       - make -j 12 
-      - make install
+      - make install_sw
   pre_build:
     commands:
       - export CC=gcc

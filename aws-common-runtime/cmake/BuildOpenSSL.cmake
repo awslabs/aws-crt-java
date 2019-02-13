@@ -12,7 +12,6 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
         PREFIX ${AWS_DEPS_BUILD_DIR}
         URL ${OPENSSL_URL}
         BUILD_IN_SOURCE 1
-        UPDATE_DISCONNECTED 1
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
@@ -28,7 +27,6 @@ else()
         PREFIX ${AWS_DEPS_BUILD_DIR}
         URL ${OPENSSL_URL}
         BUILD_IN_SOURCE 1
-        UPDATE_DISCONNECTED 1
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 

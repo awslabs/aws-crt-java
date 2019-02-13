@@ -22,7 +22,7 @@ include(BuildAwsCCommon)
 if (UNIX AND NOT APPLE)
     set(OPENSSL_URL "https://www.openssl.org/source/openssl-1.1.0j.tar.gz")
     include(BuildOpenSSL)
-    
+
     set(S2N_URL "https://github.com/awslabs/s2n.git")
     set(s2N_SHA "e23fb83e80f567c225279cdeb6c9e271b2ff459c")
     include(BuildS2N)
@@ -39,7 +39,8 @@ include(BuildAwsCMqtt)
 add_dependencies(AwsCMqtt AwsCIO)
 
 if (UNIX AND NOT APPLE)
+    add_dependencies(S2N OpenSSL)
     add_dependencies(AwsCIO S2N AwsCCommon)
 else()
-    add_dependencies(AwsCIO AwsCCommon )
+    add_dependencies(AwsCIO AwsCCommon)
 endif()

@@ -20,7 +20,8 @@ set(AWS_C_COMMON_SHA "tags/v0.3.1")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
-    set(OPENSSL_URL "https://www.openssl.org/source/openssl-1.1.0j.tar.gz")
+    set(OPENSSL_URL "https://github.com/openssl/openssl.git")
+    set(OPENSSL_SHA "OpenSSL_1_1_0j")
     include(BuildOpenSSL)
 
     set(S2N_URL "https://github.com/awslabs/s2n.git")

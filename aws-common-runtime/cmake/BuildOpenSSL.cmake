@@ -10,7 +10,8 @@ endif()
 if("${TARGET_ARCH}" STREQUAL ANDROID)
     ExternalProject_Add(OpenSSL
         PREFIX ${AWS_DEPS_BUILD_DIR}
-        URL ${OPENSSL_URL}
+        GIT_REPOSITORY ${OPENSSL_URL}
+        GIT_TAG ${OPENSSL_SHA}
         BUILD_IN_SOURCE 1
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 
@@ -25,7 +26,8 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
 else()
     ExternalProject_Add(OpenSSL
         PREFIX ${AWS_DEPS_BUILD_DIR}
-        URL ${OPENSSL_URL}
+        GIT_REPOSITORY ${OPENSSL_URL}
+        GIT_TAG ${OPENSSL_SHA}
         BUILD_IN_SOURCE 1
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 

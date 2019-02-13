@@ -84,3 +84,6 @@ target/
 .classpath
 .project
 .settings/
+
+# configuration pulled from Secrets Manager
+settings.xml

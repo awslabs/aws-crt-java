@@ -170,6 +170,7 @@
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>--trace</argument>
                                         <argument>..</argument>
                                     </arguments>
                                 </configuration>

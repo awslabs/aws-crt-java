@@ -21,7 +21,7 @@
             <name>AWS SDK Common Runtime Team</name>
             <email>aws-sdk-common-runtime@amazon.com</email>
             <organization>Amazon Web Services</organization>
-            <organizationUrl>http://aws.amazon.com</organizationUrl>
+            <organizationUrl>https://aws.amazon.com</organizationUrl>
         </developer>
     </developers>
 
@@ -165,11 +165,11 @@
                                     <workingDirectory>mvn-build</workingDirectory>
                                     <arguments>
                                         <argument>-G${cmake.generator}</argument>
-                                        <argument>-D"CMAKE_BUILD_TYPE=Release"</argument>
-                                        <argument>-D"BUILD_SHARED_LIBS=ON"</argument>
-                                        <argument>-D"CMAKE_EXPORT_COMPILE_COMMANDS=ON"</argument>
-                                        <argument>-D"BUILD_DEPS=ON"</argument>
-                                        <argument>-D"CMAKE_C_FLAGS=${cmake.cflags}"</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DBUILD_SHARED_LIBS=ON</argument>
+                                        <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
+                                        <argument>-DBUILD_DEPS=ON</argument>
+                                        <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>..</argument>
                                     </arguments>
                                 </configuration>

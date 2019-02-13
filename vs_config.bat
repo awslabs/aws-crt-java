@@ -5,7 +5,7 @@
 pushd %~dp0
 
 :: if the generator is specified, then we can narrow the search
-if not [%AWS_CMAKE_GENERATOR%] == [] (
+if not ["%AWS_CMAKE_GENERATOR%"] == [] (
     echo Using AWS_CMAKE_GENERATOR from environment
     set GENERATOR=%AWS_CMAKE_GENERATOR%
     :: skip "Visual Studio ", then get the next 2 chars

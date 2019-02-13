@@ -13,6 +13,7 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
         URL ${OPENSSL_URL}
         BUILD_IN_SOURCE 1
         UPDATE_DISCONNECTED 1
+        UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
             no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng
@@ -28,6 +29,7 @@ else()
         URL ${OPENSSL_URL}
         BUILD_IN_SOURCE 1
         UPDATE_DISCONNECTED 1
+        UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${SETARCH_CMD} ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
             no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng 

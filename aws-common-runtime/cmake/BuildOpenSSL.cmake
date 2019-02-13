@@ -19,8 +19,8 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
             -DSSL_FORBID_ENULL -DOPENSSL_NO_DTLS1 -DOPENSSL_NO_HEARTBEATS
             --prefix=${AWS_DEPS_INSTALL_DIR}
             --openssldir=${AWS_DEPS_INSTALL_DIR}
-        BUILD_COMMAND "make -j 12"
-        INSTALL_COMMAND "make install_sw"
+        BUILD_COMMAND make -j 12
+        INSTALL_COMMAND make install_sw
         )
 else()
     ExternalProject_Add(OpenSSL

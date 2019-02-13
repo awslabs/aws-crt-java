@@ -24,6 +24,8 @@ if (BUILD_DEPS)
     endif()
 
     file(MAKE_DIRECTORY ${AWS_DEPS_BUILD_DIR})
+
+    # run another cmake to do the deps build
     if(TARGET_ARCH STREQUAL "ANDROID")
         execute_process(
                 COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR}

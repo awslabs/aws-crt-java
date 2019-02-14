@@ -28,6 +28,7 @@ else()
         GIT_TAG ${OPENSSL_SHA}
         BUILD_IN_SOURCE 1
         UPDATE_COMMAND ""
+        LOG_CONFIGURE 1
         CONFIGURE_COMMAND ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
             no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng 

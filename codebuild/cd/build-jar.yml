@@ -24,7 +24,7 @@ phases:
     commands:
       - echo Build started on `date`
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - mvn -B package -Dshared-lib.skip=true -Dmaven.test.skip=true
+      - mvn -B package -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
       - jar -tf target/aws-crt-*.jar
   post_build:
     commands:

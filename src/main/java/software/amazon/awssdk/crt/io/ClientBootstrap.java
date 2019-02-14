@@ -28,11 +28,12 @@ public final class ClientBootstrap extends CrtResource implements Closeable {
 
     /**
      * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
-     * @param _elg
-     * @throws CrtRuntimeException
+     * @param elg An EventLoopGroup instance, most applications only ever have one
+     * @throws CrtRuntimeException If the provided EventLoopGroup is null or invalid,
+     * or if the system is unable to allocate space for a native client bootstrap object
      */
-    public ClientBootstrap(EventLoopGroup _elg) throws CrtRuntimeException {
-        elg = _elg;
+    public ClientBootstrap(EventLoopGroup elg) throws CrtRuntimeException {
+        this.elg = elg;
         acquire(clientBootstrapNew(elg.native_ptr()));
     }
 

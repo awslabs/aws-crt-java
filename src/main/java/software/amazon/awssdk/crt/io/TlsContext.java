@@ -29,7 +29,8 @@ public final class TlsContext extends CrtResource implements Closeable {
      * Creates a new TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
      * @param options A set of options for this context
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException If the provided options are malformed or the system is unable
+     * to allocate space for a native tls context
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
         acquire(tlsContextNew(options.native_ptr()));

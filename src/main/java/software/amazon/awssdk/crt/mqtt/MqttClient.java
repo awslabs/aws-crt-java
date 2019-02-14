@@ -36,7 +36,7 @@ public class MqttClient extends CrtResource implements Closeable {
 
     /**
      * Creates a default MqttClient with no TLS and a {@link ClientBootstrap} constructed with default settings
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException @see software.amazon.awssdk.crt.io.ClientBootstrap#constructor(EventLoopGroup) @see software.amazon.awssdk.crt.io.EventLoopGroup#constructor(int)
      */
     public MqttClient() throws CrtRuntimeException {
         this(new ClientBootstrap(new EventLoopGroup(1)), null);
@@ -45,7 +45,7 @@ public class MqttClient extends CrtResource implements Closeable {
     /**
      * Creates an MqttClient from the provided {@link ClientBootstrap} with no TLS
      * @param clientBootstrap The ClientBootstrap to use
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
         this(clientBootstrap, null);
@@ -53,9 +53,9 @@ public class MqttClient extends CrtResource implements Closeable {
 
     /**
      * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
-     * @param clientBootstrap
-     * @param tlsContext
-     * @throws CrtRuntimeException
+     * @param clientBootstrap The ClientBootstrap to use
+     * @param tlsContext The TlsContext to use
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext tlsContext) throws CrtRuntimeException {
         this.bootstrap = clientBootstrap;

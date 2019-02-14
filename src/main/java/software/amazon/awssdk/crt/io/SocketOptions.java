@@ -79,7 +79,7 @@ public final class SocketOptions extends CrtResource implements Closeable {
 
     /**
      * Creates a new set of socket options
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native socket options instance
      */
     public SocketOptions() throws CrtRuntimeException {
         acquire(socketOptionsNew());

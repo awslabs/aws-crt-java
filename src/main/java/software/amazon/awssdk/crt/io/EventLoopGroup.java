@@ -29,7 +29,7 @@ public final class EventLoopGroup extends CrtResource implements Closeable {
     /**
      * Creates a new event loop group for the I/O subsystem to use to run blocking I/O requests
      * @param numThreads The number of threads that the event loop group may run tasks across. Usually 1.
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
         acquire(eventLoopGroupNew(numThreads));

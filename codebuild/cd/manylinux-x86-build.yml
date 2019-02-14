@@ -9,6 +9,8 @@ phases:
       - export CC=gcc
   build:
     commands:
+      - uname -a
+      - uname -m
       - echo Build started on `date`
       - cd aws-crt-java
       - JAVA_HOME=/opt/jdk1.8.0_201/ mvn -B compile -Punix-x86

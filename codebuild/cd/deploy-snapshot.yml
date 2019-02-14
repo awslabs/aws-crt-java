@@ -27,12 +27,6 @@ phases:
     commands:
       - echo Build completed on `date`
 
-artifacts:
-  discard-paths: yes
-  files:
-    - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
-    - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.asc
-
 cache:
   paths:
     - '/root/.m2/**/*'

@@ -26,7 +26,7 @@ public final class MqttMessage {
      * Constructs a new payload
      * @param topic The topic this message is to be published on or was published to
      * @param payload The message payload. Note that for minimal copies/maximum efficiency, this should be a direct
-     *                buffer allocated via {@link ByteBuffer.allocateDirect}
+     *                buffer allocated via {@link java.nio.ByteBuffer#allocateDirect(int)}
      */
     public MqttMessage(String topic, ByteBuffer payload) {
         this.topic = topic;

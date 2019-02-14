@@ -59,7 +59,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
     public TlsContextOptions() throws CrtRuntimeException {
         acquire(tlsContextOptionsNew());
@@ -77,7 +77,8 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Sets the minimum acceptable TLS version that the {@link TlsContext} will allow
-     * @param version
+     * @param version Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
+     * as this will update if the OS TLS is updated
      */
     public void setMinimumTlsVersion(TlsVersions version) {
         tlsContextOptionsSetMinimumTlsVersion(native_ptr(), version.getValue());
@@ -85,7 +86,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Sets the root certificate to validate certificates against.
-     * @param caFile Path to PEM format root certificate
+     * @param caFile Path to PEM format root certificate, or null
      */
     public void setCaFile(String caFile) {
         tlsContextOptionsSetCaFile(native_ptr(), caFile);
@@ -93,15 +94,16 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Sets the path to a local trust store to use for validation
-     * @param caPath
+     * @param caPath The path to a local trust store, or null
      */
     public void setCaPath(String caPath) {
         tlsContextOptionsSetCaPath(native_ptr(), caPath);
     }
 
     /**
-     * Sets the ALPN protocol list that will be provided when a TLS connection starts
-     * @param alpn
+     * Sets the ALPN protocol list that will be provided when a TLS connection
+     * starts
+     * @param alpn The ALPN protocol to use, e.g. "x-amzn-mqtt-ca"
      */
     public void setAlpnList(String alpn) {
         tlsContextOptionsSetAlpn(native_ptr(), alpn);
@@ -117,7 +119,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Sets the path to the private key for the certificate provided via {@link setCertificatePath}
-     * @param privateKeyPath
+     * @param privateKeyPath Path to private key
      */
     public void setPrivateKeyPath(String privateKeyPath) {
         tlsContextOptionsSetPrivateKeyPath(native_ptr(), privateKeyPath);
@@ -125,7 +127,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * OSX only - Sets the path to the PKCS12 file
-     * @param pkcs12Path
+     * @param pkcs12Path Path to PKCS12 file
      */
     public void setPkcs12Path(String pkcs12Path) {
         tlsContextOptionsSetPkcs12Path(native_ptr(), pkcs12Path);
@@ -133,7 +135,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * OSX only - Sets the password for PKCS12
-     * @param pkcs12Password
+     * @param pkcs12Password PKCS12 password
      */
     public void setPkcs12Password(String pkcs12Password) {
         tlsContextOptionsSetPkcs12Password(native_ptr(), pkcs12Password);
@@ -144,7 +146,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
      * If you are in a development or debugging environment, you can disable this to avoid or diagnose trust
      * store issues. This should always be true on clients in the wild.
      * If you set this to true on a server, it will validate every client connection.
-     * @param verify
+     * @param verify true to verify peers, false to skip verification
      */
     public void setVerifyPeer(boolean verify) {
         tlsContextOptionsSetVerifyPeer(native_ptr(), verify);
@@ -152,7 +154,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Returns whether or not ALPN is supported on the current platform
-     * @return
+     * @return true if ALPN is supported, false otherwise
      */
     public static boolean isAlpnSupported() {
         return tlsContextOptionsIsAlpnAvailable();
@@ -170,8 +172,8 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * Helper which creates a default set of TLS options for the current platform
-     * @return
-     * @throws CrtRuntimeException
+     * @return A default configured set of options for a TLS client connection
+     * @throws CrtRuntimeException @see TlsContextOptions.TlsContextOptions()
      */
     public static TlsContextOptions createDefaultClient() throws CrtRuntimeException {
         return new TlsContextOptions();
@@ -181,8 +183,8 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
      * Helper which creates TLS options using a certificate and private key
      * @param certificatePath Path to a PEM format certificate
      * @param privateKeyPath Path to a PEM format private key
-     * @return
-     * @throws CrtRuntimeException
+     * @return A set of options for setting up an MTLS connection
+     * @throws CrtRuntimeException @see #constructor()
      */
     public static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
@@ -193,10 +195,10 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
 
     /**
      * OSX only - Helper which creates TLS options using PKCS12
-     * @param pkcs12Path {@see setPkcs12Path}
-     * @param pkcs12Password {@see setPkcs12Password}
-     * @return
-     * @throws CrtRuntimeException
+     * @param pkcs12Path The path to a PKCS12 file @see #setPkcs12Path(String)
+     * @param pkcs12Password The PKCS12 password @see #setPkcs12Password(String)
+     * @return A set of options for creating a PKCS12 TLS connection
+     * @throws CrtRuntimeException @see #constructor()
      */
     public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();

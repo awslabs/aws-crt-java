@@ -74,7 +74,7 @@ public class MqttConnection extends CrtResource implements Closeable {
     /**
      * Constructs a new MqttConnection. Connections are reusable after being disconnected.
      * @param mqttClient Must be non-null
-     * @throws MqttException
+     * @throws MqttException If mqttClient is null
      */
     public MqttConnection(MqttClient mqttClient) throws MqttException {
         this(mqttClient, null);
@@ -84,7 +84,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * Constructs a new MqttConnection. Connections are reusable after being disconnected.
      * @param mqttClient Must be non-null
      * @param callbacks Optional handler for connection interruptions/resumptions
-     * @throws MqttException
+     * @throws MqttException If mqttClient is null
      */
     public MqttConnection(MqttClient mqttClient, MqttConnectionEvents callbacks) throws MqttException {
         if (mqttClient == null) {
@@ -123,7 +123,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * Sets the login credentials for the connection. Only valid before connect() has been called.
      * @param user Login username
      * @param pass Login password
-     * @throws MqttException
+     * @throws MqttException If the username or password are null
      */
     public void setLogin(String user, String pass) throws MqttException {
         try {
@@ -201,7 +201,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @param clientId The clientId provided to the service. Must be unique across all connected Things on the endpoint.
      * @param endpoint The hostname of the service endpoint
      * @param port The port to connect to on the service endpoint host
-     * @return CompletableFuture<Boolean>, future result is true if resuming a session, false if clean session
+     * @return Future result is true if resuming a session, false if clean session
      */
     public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
         return connect(clientId, endpoint, port, null, null, true, 0);
@@ -217,8 +217,8 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @param cleanSession Whether or not to completely restart the session. If false, topics that were already
      *                     subscribed by this clientId will be resumed
      * @param keepAliveMs 0 = no keepalive, non-zero = ms between keepalive packets
-     * @return CompletableFuture<Boolean>, future result is true if resuming a session, false if clean session
-     * @throws MqttException
+     * @return Future result is true if resuming a session, false if clean session
+     * @throws MqttException If the port is out of range
      */
     public CompletableFuture<Boolean> connect(
         String clientId, String endpoint, int port, 
@@ -247,7 +247,7 @@ public class MqttConnection extends CrtResource implements Closeable {
 
     /**
      * Disconnects the current session
-     * @return CompletableFuture<Void> When this future completes, the disconnection is complete
+     * @return When this future completes, the disconnection is complete
      */
     public CompletableFuture<Void> disconnect() {
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -266,7 +266,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @param topic The topic to subscribe to
      * @param qos {@link QualityOfService} for this subscription
      * @param handler A handler which can recieve an MqttMessage when a message is published to the topic
-     * @return CompletableFuture<Integer> future result is the packet/message id associated with the subscribe operation
+     * @return Future result is the packet/message id associated with the subscribe operation
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
@@ -290,10 +290,9 @@ public class MqttConnection extends CrtResource implements Closeable {
     /**
      * Unsubscribes from a topic
      * @param topic The topic to unsubscribe from
-     * @return CompletableFuture<Integer> future result is the packet/message id associated with the unsubscribe operation
-     * @throws MqttException
+     * @return Future result is the packet/message id associated with the unsubscribe operation
      */
-    public CompletableFuture<Integer> unsubscribe(String topic) throws MqttException {
+    public CompletableFuture<Integer> unsubscribe(String topic) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
             future.completeExceptionally(new MqttException("Invalid connection during unsubscribe"));
@@ -311,10 +310,9 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @param message The message to publish. The message contains the topic to publish to.
      * @param qos The {@link QualityOfService} to use for the publish operation
      * @param retain Whether or not the message should be retained by the broker to be delivered to future subscribers
-     * @return CompletableFuture<Integer> future value is the packet/message id associated with the publish operation
-     * @throws MqttException
+     * @return Future value is the packet/message id associated with the publish operation
      */
-    public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
+    public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (native_ptr() == 0) {
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
@@ -338,7 +336,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      *                published to on disconnect.
      * @param qos The {@link QualityOfService} of the will message
      * @param retain Whether or not the message should be retained by the broker to be delivered to future subscribers
-     * @throws MqttException
+     * @throws MqttException If the connection is already connected, or is otherwise unable to set the will
      */
     public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
         if (native_ptr() == 0) {
@@ -355,7 +353,7 @@ public class MqttConnection extends CrtResource implements Closeable {
 
     /**
      * Sends a MQTT ping to the endpoint.
-     * @throws MqttException
+     * @throws MqttException If the connection is not connected, or the ping operation is otherwise unable to be attempted
      */
     public void ping() throws MqttException {
         if (native_ptr() == 0) {

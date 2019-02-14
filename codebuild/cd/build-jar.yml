@@ -10,7 +10,7 @@ phases:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
       - sudo apt-get update -y
-      - sudo apt-get install cmake3 libssl-dev ninja-build openjdk-8-jdk-headless maven -y -f
+      - sudo apt-get install cmake3 ninja-build openjdk-8-jdk-headless maven -y -f
 
   pre_build:
     commands:

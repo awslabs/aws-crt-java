@@ -8,7 +8,9 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get install openjdk-8-jdk-headless maven gnupg2 -y -f
-      - sudo pip install 'requests[security]'
+      # Warnings will pop up around SNIMissingWarning or InsecurePlatformWarning, if they actually
+      # stop execution, we can install the python security wrappers
+      #- sudo pip install 'requests[security]'
 
   pre_build:
     commands:

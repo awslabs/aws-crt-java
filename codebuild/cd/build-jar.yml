@@ -7,7 +7,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-8-jdk-headless maven -y -f
+      - sudo apt-get install openjdk-8-jdk-headless maven gnupg2 -y -f
 
   pre_build:
     commands:
@@ -17,11 +17,20 @@ phases:
       - cp -rv $CODEBUILD_SRC_DIR_windows_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x86/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
+      # install settings.xml to ~/.m2/settings.xml
+      - mkdir -p $HOME/.m2
+      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
+      # import gpg key
+      - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
+      - gpg --import /tmp/aws-sdk-common-runtime.key.asc
+      - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d: | sed -e 's/[\\\"\}]//g')
   build:
     commands:
       - echo Build started on `date`
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - mvn -B package -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
+      # do a full build, but skip shared libs and tests, since the shared libs were artifacts above
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
+      # record the contents in the log for posterity/debugging
       - jar -tf target/aws-crt-*.jar
   post_build:
     commands:

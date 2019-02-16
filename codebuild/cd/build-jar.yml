@@ -27,10 +27,9 @@ phases:
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
-      - pushd $CODEBUILD_SRC_DIR
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --abbrev=0 | cut -f2 -dv)
       - echo PKG_VERSION=$PKG_VERSION
-      - popd
   build:
     commands:
       - echo Build started on `date`

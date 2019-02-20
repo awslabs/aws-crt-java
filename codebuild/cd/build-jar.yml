@@ -19,6 +19,7 @@ phases:
       - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x86/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - cp -rv $CODEBUILD_SRC_DIR_freebsd_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2

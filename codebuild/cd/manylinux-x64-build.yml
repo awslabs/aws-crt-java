@@ -7,21 +7,15 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
+      - export GIT_TAG=$(git describe --abbrev=0)
   build:
     commands:
-      - echo Build started on `date`
       - cd aws-crt-java
       - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B compile
-      # get the shared libs from the native build
-      - mkdir -p ../dist
-      - cp -rv mvn-build/lib ../dist/
   post_build:
     commands:
-      - echo Build completed on `date`
-
-artifacts:
-  files:
-    - 'dist/**/*' 
+      # get the shared libs from the native build into S3
+      - aws s3 cp --recursive mvn-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 
 cache:
   paths:

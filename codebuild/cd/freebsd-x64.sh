@@ -3,12 +3,10 @@
 set -e
 set -x
 
-echo Build started on `date`
 cd `dirname $0`/../..
 
 mvn -B compile
 
-mkdir -p ../dist
-cp -rv mvn-build/lib ../dist/
-
-echo Build completed on `date`
+# Upload the lib to S3
+GIT_TAG=$(git describe --abbrev=0)
+aws s3 cp --recursive mvn-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib

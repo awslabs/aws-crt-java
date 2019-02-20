@@ -14,12 +14,13 @@ phases:
 
   pre_build:
     commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      - export PKG_VERSION=$(git describe --abbrev=0 | cut -f2 -dv)
+      - echo PKG_VERSION=$PKG_VERSION
       - mkdir -p mvn-build
-      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
-      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
       - cp -rv $CODEBUILD_SRC_DIR_windows_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x86/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
-      - cp -rv $CODEBUILD_SRC_DIR_freebsd_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
@@ -28,9 +29,6 @@ phases:
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
-      - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - export PKG_VERSION=$(git describe --abbrev=0 | cut -f2 -dv)
-      - echo PKG_VERSION=$PKG_VERSION
   build:
     commands:
       - echo Build started on `date`

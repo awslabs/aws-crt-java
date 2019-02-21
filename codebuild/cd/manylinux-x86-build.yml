@@ -4,6 +4,7 @@ version: 0.2
 phases:
   install:
     commands:
+      - pip3 install awscli
   pre_build:
     commands:
       - export CC=gcc
@@ -14,8 +15,13 @@ phases:
       - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B compile -Punix-x86
   post_build:
     commands:
-      # get the shared libs from the native build into S3
-      - aws s3 cp --recursive mvn-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+      # get the shared libs from the native build
+      - mkdir -p ../dist
+      - cp -rv mvn-build/lib ../dist/
+
+artifacts:
+  files:
+    - 'dist/**/*' 
 
 cache:
   paths:

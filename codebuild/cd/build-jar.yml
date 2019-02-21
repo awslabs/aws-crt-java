@@ -7,7 +7,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-8-jdk-headless maven gnupg2 -y -f
+      - sudo apt-get install openjdk-8-jdk-headless maven gnupg2 awscli -y -f
       # Warnings will pop up around SNIMissingWarning or InsecurePlatformWarning, if they actually
       # stop execution, we can install the python security wrappers
       #- sudo pip install 'requests[security]'
@@ -19,6 +19,8 @@ phases:
       - echo PKG_VERSION=$PKG_VERSION
       - mkdir -p mvn-build
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - cp -rv $CODEBUILD_SRC_DIR_windows_x86/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib

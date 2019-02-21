@@ -34,13 +34,10 @@ phases:
       - echo Build started on `date`
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
-      # do a full build, but skip shared libs and tests, since the shared libs were artifacts above
+      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
-      # record the contents in the log for posterity/debugging
-      - jar -tf target/aws-crt-*.jar
   post_build:
     commands:
-      - echo Build completed on `date`
 
 artifacts:
   discard-paths: yes

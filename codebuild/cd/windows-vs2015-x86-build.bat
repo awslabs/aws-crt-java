@@ -8,8 +8,11 @@ set AWS_CMAKE_GENERATOR=Visual Studio 14 2015
 
 mvn -X compile || goto error
 
-mkdir ..\dist
-xcopy /S /F .\mvn-build\lib ..\dist\lib\
+for /f %%A in ('git describe --abbrev=0') do (
+    set GIT_TAG=%%A
+)
+
+aws s3 cp --recursive .\mvn-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
 
 @endlocal
 goto :EOF

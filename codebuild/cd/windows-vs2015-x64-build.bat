@@ -12,7 +12,7 @@ for /f %%A in ('git describe --abbrev^=0') do (
     set GIT_TAG=%%A
 )
 
-aws s3 cp --recursive .\mvn-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
+aws s3 cp --recursive --exclude "*" --include "*.dll" .\mvn-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
 
 @endlocal
 goto :EOF

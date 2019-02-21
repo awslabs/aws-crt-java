@@ -16,7 +16,6 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --abbrev=0 | cut -f2 -dv)
-      - echo PKG_VERSION=$PKG_VERSION
       - mkdir -p mvn-build
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
       - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
@@ -31,7 +30,6 @@ phases:
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
   build:
     commands:
-      - echo Build started on `date`
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # update the version to match the git tag, make a snapshot version we can test
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT

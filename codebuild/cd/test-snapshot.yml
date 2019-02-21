@@ -16,7 +16,6 @@ phases:
 
   build:
     commands:
-      - echo Build started on `date`
       # Verify that the package can be found in the snapshot repo
       # note that this uses an ancient version of maven and the maven dependency plugin because we're on trusty
       # http://maven.apache.org/plugins-archives/maven-dependency-plugin-2.1/get-mojo.html

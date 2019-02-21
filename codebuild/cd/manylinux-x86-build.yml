@@ -4,7 +4,6 @@ version: 0.2
 phases:
   install:
     commands:
-      - pip3 install awscli
   pre_build:
     commands:
       - export CC=gcc

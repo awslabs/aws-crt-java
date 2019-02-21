@@ -9,7 +9,7 @@ phases:
       - sudo apt-get update -y
       - sudo apt-get install openjdk-8-jdk-headless maven -y -f
 
-  pre-build:
+  pre_build:
     commands:
       - cd aws-crt-java
       - export CRT_VERSION=$(git describe --abbrev=0 | sed -e s/^v//)

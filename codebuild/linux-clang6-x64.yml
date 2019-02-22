@@ -1,14 +1,13 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
+#this buildspec assumes the ubuntu aws/codebuild/java:openjdk-8 image
 phases:
   install:
     commands:
-      - sudo add-apt-repository ppa:openjdk-r/ppa
       - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
       - sudo apt-get update -y
-      - sudo apt-get install clang-6.0 cmake3 cppcheck clang-format-6.0 ninja-build openjdk-8-jdk-headless maven -y -f
+      - sudo apt-get install clang-6.0 cmake3 cppcheck clang-format-6.0 ninja-build -y -f
 
   pre_build:
     commands:

@@ -28,7 +28,7 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # Trigger the release of the last staged package
-      - mvn -B nexus-staging:release
+      - mvn -B nexus-staging:release -Prelease
   post_build:
     commands:
 

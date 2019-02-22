@@ -37,7 +37,8 @@ phases:
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
       # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
+      - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
   post_build:
     commands:
 
@@ -46,6 +47,7 @@ artifacts:
   files:
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.asc
+    - /tmp/repositoryId.txt
 
 cache:
   paths:

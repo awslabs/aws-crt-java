@@ -24,11 +24,12 @@ phases:
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      - export REPOSITORY_ID=$(cat $CODEBUILD_SRC_DIR_aws_crt/repositoryId.txt)
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # Trigger the release of the last staged package
-      - mvn -B nexus-staging:release -Prelease
+      # Trigger the release of the last staged package in the staging repository
+      - mvn -B nexus-staging:release -Prelease -DstagingRepositoryId=$REPOSITORY_ID
   post_build:
     commands:
 

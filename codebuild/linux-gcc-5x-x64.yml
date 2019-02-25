@@ -1,12 +1,11 @@
 version: 0.2
-#this build spec assumes the ubuntu 14.04 trusty image
+#this build spec assumes the ubuntu aws/codebuild/java:openjdk-8 image
 phases:
   install:
     commands:
-      - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install gcc-5 cmake3 ninja-build openjdk-8-jdk-headless maven -y
+      - sudo apt-get install gcc-5 cmake3 ninja-build -y
   pre_build:
     commands:
       - export CC=gcc-5

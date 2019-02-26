@@ -13,4 +13,4 @@ cat /tmp/privatekey.pem
 
 # build java package
 cd $CODEBUILD_SRC_DIR
-mvn -B test -Dendpoint=$ENDPOINT -Dcertificate=/tmp/certificate.pem -Dprivatekey=/tmp/privatekey.pem -Drootca=/tmp/AmazonRootCA1.pem
+mvn -B --debug test -Dendpoint=$ENDPOINT -Dcertificate=/tmp/certificate.pem -Dprivatekey=/tmp/privatekey.pem -Drootca=/tmp/AmazonRootCA1.pem

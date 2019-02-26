@@ -37,59 +37,12 @@ public class IotServiceTest extends MqttConnectionFixture {
     }
 
     static final String TEST_TOPIC = "sdk/test/java";
-    static final String TEST_ENDPOINT = "ajndtdnbudvd1-ats.iot.us-east-2.amazonaws.com";
-    static final short TEST_PORT = 8883;
-    static final short TEST_PORT_ALPN = 443;
-    static final String TEST_CLIENTID = "sdk-java";
 
     int subsAcked = 0;
 
-    Path pathToCert = null;
-    Path pathToKey = null;
-    Path pathToCa = null;
-
-    private boolean extractCredentials() {
-        try {
-            String workingDir = Paths.get("").toAbsolutePath().toString();
-            File credentialsDir = new File(Paths.get(workingDir, "src/test/resources/credentials").toString());
-            File[] files = credentialsDir.listFiles();
-            for (File file: files) {
-                String entry = file.getAbsolutePath();
-                if (entry.endsWith(".pem.crt")) {
-                    pathToCert = Paths.get(entry);
-                } else if (entry.endsWith("private.pem.key")) {
-                    pathToKey = Paths.get(entry);
-                } else if (entry.endsWith("AmazonRootCA1.pem")) {
-                    pathToCa = Paths.get(entry);
-                }
-                if (pathToCert != null && pathToKey != null && pathToCa != null) {
-                    return true;
-                }
-            }
-        } catch (Exception ex) {
-            System.out.println("Exception thrown during credential resolve: " + ex);
-            return false;
-        }
-        return false;
-    }
-
     @Test
     public void testIotService() throws CrtRuntimeException {
-        if (!extractCredentials()) {
-            System.out.println("No credentials present, skipping test");
-            return;
-        }
-
-        short port = TEST_PORT;
-        TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
-        tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
-        if (tlsOptions.isAlpnSupported()) {
-            tlsOptions.setAlpnList("x-amzn-mqtt-ca");
-            port = TEST_PORT_ALPN;
-        }
-        TlsContext tls = new TlsContext(tlsOptions);
-        
-        connect(TEST_ENDPOINT, port, TEST_CLIENTID, true, (short)0, tls);
+        connect( true, (short)0);
 
         Consumer<MqttMessage> messageHandler = (message) -> {};
 

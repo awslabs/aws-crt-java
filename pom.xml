@@ -325,6 +325,20 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- unit test configuration -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <configuration>
+                <systemPropertyVariables>
+                    <certificate>${crt.test.certificate}</certificate>
+                    <privatekey>${crt.test.privatekey}</privatekey>
+                    <endpoint>${crt.test.endpoint}</endpoint>
+                    <rootca>${crt.test.rootca}</rootca>
+                </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

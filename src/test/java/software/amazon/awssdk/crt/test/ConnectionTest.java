@@ -21,8 +21,12 @@ import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -33,9 +37,32 @@ class MqttConnectionFixture {
     MqttConnection connection = null;
     private boolean disconnecting = false;
 
-    static final String TEST_ENDPOINT = "localhost";
-    static final short TEST_PORT = 1883;
-    static final String TEST_CLIENTID = "AwsCrtJavaMqttTest";
+    static final String TEST_ENDPOINT = System.getProperty("endpoint");
+    static final String TEST_CERTIFICATE = System.getProperty("certificate");
+    static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
+    static final String TEST_ROOTCA = System.getProperty("rootca");
+    static final short TEST_PORT = 8883;
+    static final short TEST_PORT_ALPN = 443;
+    static final String TEST_CLIENTID = "sdk-java-v2-" + UUID.randomUUID();
+
+    Path pathToCert = null;
+    Path pathToKey = null;
+    Path pathToCa = null;
+
+    private boolean findCredentials() {
+        try {
+            pathToCert = Paths.get(TEST_CERTIFICATE);
+            pathToKey = Paths.get(TEST_PRIVATEKEY);
+            pathToCa = Paths.get(TEST_ROOTCA);
+            if (pathToCert != null && pathToKey != null && pathToCa != null) {
+                return true;
+            }
+        } catch (Exception ex) {
+            System.out.println("Exception thrown during credential resolve: " + ex);
+            return false;
+        }
+        return false;
+    }
 
     MqttConnectionFixture() {
 
@@ -46,14 +73,11 @@ class MqttConnectionFixture {
     }
 
     boolean connect(boolean cleanSession, int keepAliveMs) {
-        return connect(cleanSession, keepAliveMs, null);
-    }
-    
-    boolean connect(boolean cleanSession, int keepAliveMs, TlsContext tls) {
-        return connect(TEST_ENDPOINT, TEST_PORT, TEST_CLIENTID, cleanSession, keepAliveMs, tls);
-    }
+        if (!findCredentials()) {
+            System.out.println("No credentials present, skipping test");
+            return false;
+        }
 
-    boolean connect(String endpoint, short port, String clientId, boolean cleanSession, int keepAliveMs, TlsContext tls) {
         try {
             elg = new EventLoopGroup(1);
             bootstrap = new ClientBootstrap(elg);
@@ -61,6 +85,14 @@ class MqttConnectionFixture {
             fail("Exception during bootstrapping: " + ex.toString());
         }
         try {
+            int port = TEST_PORT;
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
+            tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
+            if (TlsContextOptions.isAlpnSupported()) {
+                tlsOptions.setAlpnList("x-amzn-mqtt-ca");
+                port = TEST_PORT_ALPN;
+            }
+            TlsContext tls = new TlsContext(tlsOptions);
             client = new MqttClient(bootstrap, tls);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
@@ -82,7 +114,7 @@ class MqttConnectionFixture {
             connection = new MqttConnection(client, events);
             assertNotNull(connection);
             cleanSession = true; // only true is supported right now
-            CompletableFuture<Boolean> connected = connection.connect(clientId, endpoint, port, null, tls, cleanSession, keepAliveMs);
+            CompletableFuture<Boolean> connected = connection.connect(TEST_CLIENTID, TEST_ENDPOINT, port, null, tls, cleanSession, keepAliveMs);
             connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;

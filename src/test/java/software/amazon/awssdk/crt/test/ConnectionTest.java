@@ -63,13 +63,13 @@ class MqttConnectionFixture {
             pathToCert = Paths.get(TEST_CERTIFICATE);
             pathToKey = Paths.get(TEST_PRIVATEKEY);
             pathToCa = Paths.get(TEST_ROOTCA);
-            if (pathToCert == null) {
+            if (pathToCert == null || pathToCert.toString().equals("")) {
                 throw new MissingCredentialsException("Certificate not provided");
             }
             if (!pathToCert.toFile().exists()) {
                 throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
             }
-            if (pathToKey == null) {
+            if (pathToKey == null || pathToKey.toString().equals("")) {
                 throw new MissingCredentialsException("Private key not provided");
             }
             if (!pathToKey.toFile().exists()) {
@@ -78,7 +78,6 @@ class MqttConnectionFixture {
             if (pathToCa != null && !pathToCa.toFile().exists()) {
                 throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
             }
-
         } catch (InvalidPathException ex) {
             throw new MissingCredentialsException("Exception thrown during credential resolve: " + ex);
         }
@@ -103,7 +102,9 @@ class MqttConnectionFixture {
         try {
             int port = TEST_PORT;
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
-            tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
+            if (!pathToCa.toString().equals("")) {
+                tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
+            }
             if (TlsContextOptions.isAlpnSupported()) {
                 tlsOptions.setAlpnList("x-amzn-mqtt-ca");
                 port = TEST_PORT_ALPN;

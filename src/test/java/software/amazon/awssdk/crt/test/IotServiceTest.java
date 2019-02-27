@@ -19,18 +19,11 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
-
-;
 
 public class IotServiceTest extends MqttConnectionFixture {
     public IotServiceTest() {
@@ -41,7 +34,7 @@ public class IotServiceTest extends MqttConnectionFixture {
     int subsAcked = 0;
 
     @Test
-    public void testIotService() throws CrtRuntimeException {
+    public void testIotService() {
         connect( true, (short)0);
 
         Consumer<MqttMessage> messageHandler = (message) -> {};

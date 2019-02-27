@@ -15,8 +15,11 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.*;
+
+import org.junit.rules.ExpectedException;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -24,11 +27,17 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+class MissingCredentialsException extends RuntimeException {
+    MissingCredentialsException(String message) {
+        super(message);
+    }
+}
 
 class MqttConnectionFixture {
     EventLoopGroup elg = null;
@@ -49,23 +58,33 @@ class MqttConnectionFixture {
     Path pathToKey = null;
     Path pathToCa = null;
 
-    private boolean findCredentials() {
+    private void findCredentials() {
         try {
             pathToCert = Paths.get(TEST_CERTIFICATE);
             pathToKey = Paths.get(TEST_PRIVATEKEY);
             pathToCa = Paths.get(TEST_ROOTCA);
-            if (pathToCert != null && pathToKey != null && pathToCa != null) {
-                return true;
+            if (pathToCert == null) {
+                throw new MissingCredentialsException("Certificate not provided");
             }
-        } catch (Exception ex) {
-            System.out.println("Exception thrown during credential resolve: " + ex);
-            return false;
+            if (!pathToCert.toFile().exists()) {
+                throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
+            }
+            if (pathToKey == null) {
+                throw new MissingCredentialsException("Private key not provided");
+            }
+            if (!pathToKey.toFile().exists()) {
+                throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
+            }
+            if (pathToCa != null && !pathToCa.toFile().exists()) {
+                throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
+            }
+
+        } catch (InvalidPathException ex) {
+            throw new MissingCredentialsException("Exception thrown during credential resolve: " + ex);
         }
-        return false;
     }
 
     MqttConnectionFixture() {
-
     }
 
     boolean connect() {
@@ -73,10 +92,7 @@ class MqttConnectionFixture {
     }
 
     boolean connect(boolean cleanSession, int keepAliveMs) {
-        if (!findCredentials()) {
-            System.out.println("No credentials present, skipping test");
-            return false;
-        }
+        findCredentials();
 
         try {
             elg = new EventLoopGroup(1);

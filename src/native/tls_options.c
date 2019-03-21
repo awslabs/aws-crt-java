@@ -133,13 +133,13 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     const char *ca_path = NULL;
     if (jni_ca_file) {
         tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_file);
-        ca_file = (const char*)aws_string_bytes(tls->ca_file);
+        ca_file = (const char *)aws_string_bytes(tls->ca_file);
     }
     if (jni_ca_path) {
         tls->ca_path = aws_jni_new_string_from_jstring(env, jni_ca_path);
-        ca_path = (const char*)aws_string_bytes(tls->ca_path);
+        ca_path = (const char *)aws_string_bytes(tls->ca_path);
     }
-    
+
     aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file);
 }
 
@@ -173,13 +173,19 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     }
 
     if (!jni_certificate_path || !jni_key_path) {
-        aws_jni_throw_runtime_exception(env, "TlsContextOptions.tlsContextOptionsInitMTLSFromPath: certificatePath and privateKeyPath must be non-null");
+        aws_jni_throw_runtime_exception(
+            env,
+            "TlsContextOptions.tlsContextOptionsInitMTLSFromPath: certificatePath and privateKeyPath must be non-null");
         return;
     }
 
     tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_certificate_path);
     tls->private_key_path = aws_jni_new_string_from_jstring(env, jni_key_path);
-    aws_tls_ctx_options_init_client_mtls_from_path(&tls->options, aws_jni_get_allocator(), (const char*)aws_string_bytes(tls->certificate_path), (const char*)aws_string_bytes(tls->private_key_path));
+    aws_tls_ctx_options_init_client_mtls_from_path(
+        &tls->options,
+        aws_jni_get_allocator(),
+        (const char *)aws_string_bytes(tls->certificate_path),
+        (const char *)aws_string_bytes(tls->private_key_path));
 }
 
 #if defined(__APPLE__)
@@ -198,14 +204,18 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     }
 
     if (!jni_pkcs12_path || !jni_pkcs12_password) {
-        aws_jni_throw_runtime_exception(env, "TlsContextOptions.tlsContextOptionsInitMTLSPkcs12FromPath: pkcs12Path and pkcs12Password must be non-null");
+        aws_jni_throw_runtime_exception(
+            env,
+            "TlsContextOptions.tlsContextOptionsInitMTLSPkcs12FromPath: pkcs12Path and pkcs12Password must be "
+            "non-null");
         return;
     }
 
     tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
     tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
     struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
-    aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(&tls->options, aws_jni_get_allocator(), (const char*)aws_string_bytes(tls->pkcs12_path), &password);
+    aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
+        &tls->options, aws_jni_get_allocator(), (const char *)aws_string_bytes(tls->pkcs12_path), &password);
 }
 
 #endif /* __APPLE__ */

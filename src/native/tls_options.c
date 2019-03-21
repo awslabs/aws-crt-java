@@ -182,6 +182,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     aws_tls_ctx_options_init_client_mtls_from_path(&tls->options, aws_jni_get_allocator(), (const char*)aws_string_bytes(tls->certificate_path), (const char*)aws_string_bytes(tls->private_key_path));
 }
 
+#if defined(__APPLE__)
+
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsInitMTLSPkcs12FromPath(
     JNIEnv *env,
@@ -205,6 +207,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
     aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(&tls->options, aws_jni_get_allocator(), (const char*)aws_string_bytes(tls->pkcs12_path), &password);
 }
+
+#endif /* __APPLE__ */
 
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetVerifyPeer(

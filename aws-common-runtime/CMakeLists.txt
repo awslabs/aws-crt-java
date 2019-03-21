@@ -16,7 +16,7 @@ set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies buil
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
-set(AWS_C_COMMON_SHA "v0.3.3")
+set(AWS_C_COMMON_SHA "v0.3.4")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
@@ -30,11 +30,11 @@ if (UNIX AND NOT APPLE)
 endif()
 
 set(AWS_C_IO_URL "https://github.com/awslabs/aws-c-io.git")
-set(AWS_C_IO_SHA "v0.2.1")
+set(AWS_C_IO_SHA "0.2.4")
 include(BuildAwsCIO)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "v0.2.0")
+set(AWS_C_MQTT_SHA "v0.3.0")
 include(BuildAwsCMqtt)
 
 add_dependencies(AwsCMqtt AwsCIO)

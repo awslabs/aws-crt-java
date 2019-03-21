@@ -96,6 +96,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     /**
      * Sets the path to the certificate that identifies this TLS host. Must be in PEM format.
      * @param certificatePath Path to PEM format certificate
+     * @param privateKeyPath Path to PEM format private key
      */
     public void initMTLSFromPath(String certificatePath, String privateKeyPath) {
         tlsContextOptionsInitMTLSFromPath(native_ptr(), certificatePath, privateKeyPath);

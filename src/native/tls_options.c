@@ -173,7 +173,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     }
 
     if (!jni_certificate_path || !jni_key_path) {
-        aws_jni_throw_runtime_exception(env, "TlsContextOptions.tlsContextOptionsInitMTLSFromPath: certificatePath and privateKeyPath may not be null");
+        aws_jni_throw_runtime_exception(env, "TlsContextOptions.tlsContextOptionsInitMTLSFromPath: certificatePath and privateKeyPath must be non-null");
         return;
     }
 

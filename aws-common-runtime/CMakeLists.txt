@@ -34,7 +34,7 @@ set(AWS_C_IO_SHA "0.2.4")
 include(BuildAwsCIO)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "v0.3.0")
+set(AWS_C_MQTT_SHA "v0.3.1")
 include(BuildAwsCMqtt)
 
 add_dependencies(AwsCMqtt AwsCIO)

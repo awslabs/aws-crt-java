@@ -18,6 +18,8 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
@@ -25,6 +27,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
 public class IotServiceTest extends MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
+
     public IotServiceTest() {
     }
 

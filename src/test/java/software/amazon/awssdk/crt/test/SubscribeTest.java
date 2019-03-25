@@ -16,16 +16,21 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import software.amazon.awssdk.crt.mqtt.MqttMessage;
-import software.amazon.awssdk.crt.mqtt.QualityOfService;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
+
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class SubscribeTest extends MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
+
     public SubscribeTest() {
     }
 

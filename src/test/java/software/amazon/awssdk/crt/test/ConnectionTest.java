@@ -40,9 +40,6 @@ class MissingCredentialsException extends RuntimeException {
 }
 
 class MqttConnectionFixture {
-    @Rule
-    public Timeout testTimeout = Timeout.millis(15 * 1000);
-
     EventLoopGroup elg = null;
     ClientBootstrap bootstrap = null;
     MqttClient client = null;

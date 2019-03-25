@@ -17,4 +17,5 @@ phases:
       - echo Build completed on `date`
 
 artifacts:
-  files: target/surefire-reports/**
+  files: 
+    - 'target/surefire-reports/**'

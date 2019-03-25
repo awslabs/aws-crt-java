@@ -316,7 +316,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     jlong jni_tls_ctx,
     jstring jni_client_id,
     jboolean jni_clean_session,
-    jshort keep_alive_ms) {
+    jint keep_alive_ms,
+    jshort ping_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -350,23 +351,26 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     if (tls_ctx) {
         tls_options = &connection->tls_options;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, (const char *)endpoint.ptr);
+        aws_tls_connection_options_set_server_name(tls_options, aws_jni_get_allocator(), &endpoint);
     }
 
     struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring(env, jni_client_id);
     bool clean_session = jni_clean_session != 0;
 
-    int result = aws_mqtt_client_connection_connect(
-        connection->client_connection,
-        &endpoint,
-        port,
-        &connection->socket_options,
-        tls_options,
-        &client_id,
-        clean_session,
-        keep_alive_ms,
-        s_on_connection_complete,
-        connection);
+    struct aws_mqtt_connection_options connect_options = {
+        .host_name = endpoint,
+        .port = port,
+        .socket_options = &connection->socket_options,
+        .tls_options = tls_options,
+        .client_id = client_id,
+        .keep_alive_time_secs = keep_alive_ms / 1000,
+        .ping_timeout_ms = ping_timeout_ms,
+        .clean_session = clean_session,
+        .on_connection_complete = s_on_connection_complete,
+        .user_data = connection,
+    };
+
+    int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");
     }

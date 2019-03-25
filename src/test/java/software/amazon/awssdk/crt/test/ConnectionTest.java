@@ -82,7 +82,7 @@ class MqttConnectionFixture {
             connection = new MqttConnection(client, events);
             assertNotNull(connection);
             cleanSession = true; // only true is supported right now
-            CompletableFuture<Boolean> connected = connection.connect(clientId, endpoint, port, null, tls, cleanSession, keepAliveMs);
+            CompletableFuture<Boolean> connected = connection.connect(clientId, endpoint, port, null, tls, cleanSession, keepAliveMs, 0);
             connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;

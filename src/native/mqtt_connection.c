@@ -316,7 +316,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     jlong jni_tls_ctx,
     jstring jni_client_id,
     jboolean jni_clean_session,
-    jshort keep_alive_ms,
+    jint keep_alive_ms,
     jshort ping_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;

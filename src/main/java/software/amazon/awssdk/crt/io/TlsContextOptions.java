@@ -85,22 +85,6 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     }
 
     /**
-     * Sets the root certificate to validate certificates against.
-     * @param caFile Path to PEM format root certificate, or null
-     */
-    public void setCaFile(String caFile) {
-        tlsContextOptionsSetCaFile(native_ptr(), caFile);
-    }
-
-    /**
-     * Sets the path to a local trust store to use for validation
-     * @param caPath The path to a local trust store, or null
-     */
-    public void setCaPath(String caPath) {
-        tlsContextOptionsSetCaPath(native_ptr(), caPath);
-    }
-
-    /**
      * Sets the ALPN protocol list that will be provided when a TLS connection
      * starts
      * @param alpn The ALPN protocol to use, e.g. "x-amzn-mqtt-ca"
@@ -112,33 +96,19 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     /**
      * Sets the path to the certificate that identifies this TLS host. Must be in PEM format.
      * @param certificatePath Path to PEM format certificate
+     * @param privateKeyPath Path to PEM format private key
      */
-    public void setCertificatePath(String certificatePath) {
-        tlsContextOptionsSetCertificatePath(native_ptr(), certificatePath);
+    public void initMTLSFromPath(String certificatePath, String privateKeyPath) {
+        tlsContextOptionsInitMTLSFromPath(native_ptr(), certificatePath, privateKeyPath);
     }
 
     /**
-     * Sets the path to the private key for the certificate provided via {@link setCertificatePath}
-     * @param privateKeyPath Path to private key
-     */
-    public void setPrivateKeyPath(String privateKeyPath) {
-        tlsContextOptionsSetPrivateKeyPath(native_ptr(), privateKeyPath);
-    }
-
-    /**
-     * OSX only - Sets the path to the PKCS12 file
+     * OSX only - Initializes MTLS with PKCS12 file and password
      * @param pkcs12Path Path to PKCS12 file
-     */
-    public void setPkcs12Path(String pkcs12Path) {
-        tlsContextOptionsSetPkcs12Path(native_ptr(), pkcs12Path);
-    }
-
-    /**
-     * OSX only - Sets the password for PKCS12
      * @param pkcs12Password PKCS12 password
      */
-    public void setPkcs12Password(String pkcs12Password) {
-        tlsContextOptionsSetPkcs12Password(native_ptr(), pkcs12Password);
+    public void initMTLSPkcs12(String pkcs12Path, String pkcs12Password) {
+        tlsContextOptionsInitMTLSPkcs12FromPath(native_ptr(), pkcs12Path, pkcs12Password);
     }
 
     /**
@@ -166,8 +136,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
      * @param caFile Path to the root certificate. Must be in PEM format.
      */
     public void overrideDefaultTrustStore(String caPath, String caFile) {
-        setCaPath(caPath);
-        setCaFile(caFile);
+        tlsContextOptionsOverrideDefaultTrustStoreFromPath(native_ptr(), caFile, caPath);
     }
 
     /**
@@ -188,8 +157,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
      */
     public static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
-        options.setCertificatePath(certificatePath);
-        options.setPrivateKeyPath(privateKeyPath);
+        options.initMTLSFromPath(certificatePath, privateKeyPath);
         return options;
     }
 
@@ -202,8 +170,7 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
      */
     public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
-        options.setPkcs12Path(pkcs12Path);
-        options.setPkcs12Password(pkcs12Password);
+        options.initMTLSPkcs12(pkcs12Path, pkcs12Password);
         return options;
     }
 
@@ -216,19 +183,13 @@ public final class TlsContextOptions extends CrtResource implements Closeable {
     
     private static native void tlsContextOptionsSetMinimumTlsVersion(long tls, int version);
 
-    private static native void tlsContextOptionsSetCaFile(long tls, String ca_file);
-
-    private static native void tlsContextOptionsSetCaPath(long tls, String ca_path);
+    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file, String ca_path);
 
     private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
-    private static native void tlsContextOptionsSetCertificatePath(long tls, String cert_path);
-
-    private static native void tlsContextOptionsSetPrivateKeyPath(long tls, String key_path);
-
-    private static native void tlsContextOptionsSetPkcs12Path(long tls, String pkcs12_path);
-
-    private static native void tlsContextOptionsSetPkcs12Password(long tls, String pkcs12_password);
+    private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
+    
+    private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
 
     private static native void tlsContextOptionsSetVerifyPeer(long tls, boolean verify);
 

@@ -204,7 +204,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @return Future result is true if resuming a session, false if clean session
      */
     public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
-        return connect(clientId, endpoint, port, null, null, true, 0);
+        return connect(clientId, endpoint, port, null, null, true, 0, 0);
     }
 
     /**
@@ -222,10 +222,11 @@ public class MqttConnection extends CrtResource implements Closeable {
      */
     public CompletableFuture<Boolean> connect(
         String clientId, String endpoint, int port, 
-        SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs) 
-        throws MqttException {
-        // Just clamp the keepAlive, no point in throwing
-        short keepAlive = (short) Math.max(0, Math.min(keepAliveMs, Short.MAX_VALUE));
+        SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs, int pingTimeoutMs) 
+            throws MqttException {
+            
+        // Just clamp the pingTimeout, no point in throwing
+        short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));
         if (port > Short.MAX_VALUE || port <= 0) {
             throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
         }
@@ -237,7 +238,7 @@ public class MqttConnection extends CrtResource implements Closeable {
                 native_ptr(), endpoint, (short) port, 
                 socketOptions != null ? socketOptions.native_ptr() : 0,
                 tls != null ? tls.native_ptr() : 0, 
-                clientId, cleanSession, keepAlive);
+                clientId, cleanSession, keepAliveMs, pingTimeout);
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
@@ -376,7 +377,7 @@ public class MqttConnection extends CrtResource implements Closeable {
     private static native void mqttConnectionConnect(
         long connection, String endpoint, short port, 
         long socketOptions, long tlsContext, String clientId, 
-        boolean cleanSession, short keepAliveMs) throws CrtRuntimeException;
+        boolean cleanSession, int keepAliveMs, short pingTimeoutMs) throws CrtRuntimeException;
 
     private static native void mqttConnectionDisconnect(long connection);
 

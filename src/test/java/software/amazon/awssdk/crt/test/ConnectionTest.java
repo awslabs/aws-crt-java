@@ -18,8 +18,8 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.rules.Timeout;
 
-import org.junit.rules.ExpectedException;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -40,6 +40,9 @@ class MissingCredentialsException extends RuntimeException {
 }
 
 class MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.millis(15 * 1000);
+
     EventLoopGroup elg = null;
     ClientBootstrap bootstrap = null;
     MqttClient client = null;

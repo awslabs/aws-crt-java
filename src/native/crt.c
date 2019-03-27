@@ -93,10 +93,10 @@ static void s_cache_jni_classes(JNIEnv *env) {
 #    pragma warning(pop)
 #endif
 
-static struct aws_logger s_logger;
+//static struct aws_logger s_logger;
 
 static void s_jni_atexit(void) {
-    aws_logger_clean_up(&s_logger);
+    // aws_logger_clean_up(&s_logger);
     aws_tls_clean_up_static_state();
 }
 
@@ -111,13 +111,13 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_tls_init_static_state(allocator);
 
-    struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
-    if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
-        aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-        return;
-    }
+    // struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
+    // if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
+    //     aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
+    //     return;
+    // }
 
-    aws_logger_set(&s_logger);
+    // aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);
 

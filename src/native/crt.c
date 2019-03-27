@@ -93,7 +93,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
 #    pragma warning(pop)
 #endif
 
-//static struct aws_logger s_logger;
+// static struct aws_logger s_logger;
 
 static void s_jni_atexit(void) {
     // aws_logger_clean_up(&s_logger);

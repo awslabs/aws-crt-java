@@ -15,10 +15,8 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.rules.Timeout;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -30,6 +28,7 @@ import software.amazon.awssdk.crt.mqtt.*;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -131,7 +130,8 @@ class MqttConnectionFixture {
             connection = new MqttConnection(client, events);
             assertNotNull(connection);
             cleanSession = true; // only true is supported right now
-            CompletableFuture<Boolean> connected = connection.connect(TEST_CLIENTID, TEST_ENDPOINT, port, null, tls, cleanSession, keepAliveMs, 0);
+            String clientId = TEST_CLIENTID + (new Date()).toString();
+            CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, tls, cleanSession, keepAliveMs, 0);
             connected.get();
             assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
             return true;

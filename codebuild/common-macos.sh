@@ -27,9 +27,11 @@ install_from_brew sphinx-doc
 install_from_brew cmake
 
 # install awscli from bundle
-curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o /tmp/awscli-bundle.zip
-unzip /tmp/awscli-bundle.zip
-sudo /tmp/awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+pushd /tmp
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o awscli-bundle.zip
+unzip awscli-bundle.zip
+sudo awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+popd
 
 curl https://www.amazontrust.com/repository/AmazonRootCA1.pem --output /tmp/AmazonRootCA1.pem
 cert=$(aws secretsmanager get-secret-value --secret-id "unit-test/certificate" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && printf "$cert" > /tmp/certificate.pem

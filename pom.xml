@@ -33,6 +33,7 @@
 
     <properties>
         <cmake.command>cmake</cmake.command>
+        <cmake.buildtype>Release</cmake.buildtype>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -137,6 +138,17 @@
                 <cmake.cflags>-m32</cmake.cflags>
             </properties>
         </profile>
+        <profile>
+            <id>debug-native</id>
+            <activation>
+                <property>
+                    <name>debug.native</name>
+                </property>
+            </activation>
+            <properties>
+                <cmake.buildtype>Debug</cmake.buildtype>
+            </properties>
+        </profile>
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>
@@ -165,7 +177,7 @@
                                     <workingDirectory>mvn-build</workingDirectory>
                                     <arguments>
                                         <argument>-G${cmake.generator}</argument>
-                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DBUILD_SHARED_LIBS=ON</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
@@ -324,6 +336,20 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- unit test configuration -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.21.0</version>
+                <configuration>
+                <systemPropertyVariables>
+                    <certificate>${crt.test.certificate}</certificate>
+                    <privatekey>${crt.test.privatekey}</privatekey>
+                    <endpoint>${crt.test.endpoint}</endpoint>
+                    <rootca>${crt.test.rootca}</rootca>
+                </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>

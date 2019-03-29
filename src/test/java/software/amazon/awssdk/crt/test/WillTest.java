@@ -16,6 +16,8 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.mqtt.MqttException;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
@@ -26,6 +28,9 @@ import static org.junit.Assert.fail;
 import java.nio.ByteBuffer;
 
 public class WillTest extends MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
+    
     public WillTest() {
     }
 

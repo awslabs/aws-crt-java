@@ -113,8 +113,7 @@ struct mqtt_jni_connection {
 struct mqtt_jni_async_callback {
     struct mqtt_jni_connection *connection;
     jobject async_callback;
-    jobject jni_object_storage[2];
-    struct aws_array_list jni_objects; /* store pinned objects here, they will be un-pinned in clean_up */
+    jobject jni_objects[2]; /* store pinned objects here, they will be un-pinned in clean_up */
 };
 
 static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
@@ -132,11 +131,8 @@ static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
     callback->connection = connection;
     callback->async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
 
-    aws_array_list_init_static(
-        &callback->jni_objects,
-        &callback->jni_object_storage,
-        AWS_ARRAY_SIZE(callback->jni_object_storage),
-        sizeof(jobject));
+    AWS_ZERO_ARRAY(callback->jni_objects);
+
     return callback;
 }
 
@@ -147,16 +143,12 @@ static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *cal
         (*env)->DeleteGlobalRef(env, callback->async_callback);
     }
 
-    const size_t num_objects = aws_array_list_length(&callback->jni_objects);
-    for (size_t idx = 0; idx < num_objects; ++idx) {
-        jobject obj = NULL;
-        aws_array_list_get_at(&callback->jni_objects, &obj, idx);
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(callback->jni_objects); ++idx) {
+        jobject obj = callback->jni_objects[idx];
         if (obj) {
             (*env)->DeleteGlobalRef(env, obj);
         }
     }
-
-    aws_array_list_clean_up(&callback->jni_objects);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, callback);
@@ -507,9 +499,6 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectio
     }
 
     /* from here, any failure requires error_cleanup */
-    handler->connection = connection;
-    handler->async_callback = (*env)->NewGlobalRef(env, jni_handler);
-
     struct mqtt_jni_async_callback *sub_ack = NULL;
     if (jni_ack) {
         sub_ack = mqtt_jni_async_callback_new(connection, jni_ack);
@@ -521,7 +510,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectio
 
     /* pin the topic so it lives as long as the handler */
     jni_topic = (*env)->NewGlobalRef(env, jni_topic);
-    aws_array_list_push_back(&handler->jni_objects, jni_topic);
+    handler->jni_objects[0] = jni_topic;
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
     enum aws_mqtt_qos qos = jni_qos;
@@ -580,7 +569,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectio
 
     /* pin the topic so it lives as long as the unsub request */
     jni_topic = (*env)->NewGlobalRef(env, jni_topic);
-    aws_array_list_push_back(&unsub_ack->jni_objects, jni_topic);
+    unsub_ack->jni_objects[0] = jni_topic;
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     uint16_t msg_id =
@@ -628,12 +617,12 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectio
 
     /* pin topic to pub_ack's lifetime */
     jni_topic = (*env)->NewGlobalRef(env, jni_topic);
-    aws_array_list_push_back(&pub_ack->jni_objects, jni_topic);
+    pub_ack->jni_objects[0] = jni_topic;
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring(env, jni_topic);
 
     /* pin the buffer, to be released in pub ack, avoids a copy */
     jni_payload = (*env)->NewGlobalRef(env, jni_payload);
-    aws_array_list_push_back(&pub_ack->jni_objects, jni_payload);
+    pub_ack->jni_objects[1] = jni_payload;
     struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;

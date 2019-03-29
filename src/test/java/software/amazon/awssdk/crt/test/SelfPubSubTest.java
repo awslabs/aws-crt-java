@@ -20,6 +20,8 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
@@ -30,6 +32,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class SelfPubSubTest extends MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
+    
     public SelfPubSubTest() {
     }
 

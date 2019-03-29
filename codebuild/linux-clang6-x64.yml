@@ -22,3 +22,8 @@ phases:
     commands:
       - echo Build completed on `date`
 
+artifacts:
+  discard-paths: yes
+  files: 
+    - 'target/surefire-reports/**'
+    - 'hs_err_pid*'

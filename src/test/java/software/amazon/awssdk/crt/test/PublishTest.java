@@ -18,12 +18,17 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.nio.ByteBuffer;
 
 public class PublishTest extends MqttConnectionFixture {
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
+
     public PublishTest() {
     }
 

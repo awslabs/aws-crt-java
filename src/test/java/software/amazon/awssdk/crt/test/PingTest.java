@@ -25,7 +25,7 @@ import software.amazon.awssdk.crt.test.MqttConnectionFixture;
 
 public class PingTest extends MqttConnectionFixture {
     @Rule
-    public Timeout testTimeout = Timeout.seconds(15);
+    public Timeout testTimeout = new Timeout(15 * 1000);
     
     public PingTest() {
     }

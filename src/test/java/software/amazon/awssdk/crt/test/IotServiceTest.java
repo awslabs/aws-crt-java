@@ -28,7 +28,7 @@ import java.util.function.*;
 
 public class IotServiceTest extends MqttConnectionFixture {
     @Rule
-    public Timeout testTimeout = Timeout.seconds(15);
+    public Timeout testTimeout = new Timeout(15 * 1000);
 
     public IotServiceTest() {
     }

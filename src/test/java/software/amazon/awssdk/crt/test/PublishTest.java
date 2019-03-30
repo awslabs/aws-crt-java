@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 
 public class PublishTest extends MqttConnectionFixture {
     @Rule
-    public Timeout testTimeout = Timeout.seconds(15);
+    public Timeout testTimeout = new Timeout(15 * 1000);
 
     public PublishTest() {
     }

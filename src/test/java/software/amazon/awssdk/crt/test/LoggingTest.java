@@ -36,15 +36,11 @@ public class LoggingTest {
     public void testLogging() {
         try {
             File tempFile = File.createTempFile("AWSCRT-LoggingTest", ".log");
-           //tempFile.deleteOnExit();
+            tempFile.deleteOnExit();
             Logger.configure(tempFile, Logger.Level.TRACE);
-            //FileOutputStream logStream = new FileOutputStream(tempFile);
-            //Logger.configure(logStream.getFD(), Logger.Level.TRACE);
             EventLoopGroup elg = new EventLoopGroup(1);
             elg.close();
 
-            //logStream.flush();
-            //logStream.close();
             Logger.flush();
 
             String fileContents = new String(Files.readAllBytes(tempFile.toPath()));

@@ -23,8 +23,11 @@
 static struct aws_logger s_logger;
 
 JNIEXPORT
-void JNICALL
-Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFd(JNIEnv *env, jclass jni_logger, jobject jni_fd, jint jni_level) {
+void JNICALL Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFd(
+    JNIEnv *env,
+    jclass jni_logger,
+    jobject jni_fd,
+    jint jni_level) {
     if (jni_fd == NULL) {
         aws_jni_throw_runtime_exception(env, "FileDescriptor must not be null");
         return;
@@ -48,7 +51,7 @@ Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFd(JNIEnv *env, jcl
     }
 
     int fd = (*env)->GetIntField(env, jni_fd, descriptor_field);
-    FILE* fp = fdopen(fd, "w");
+    FILE *fp = fdopen(fd, "w");
     if (!fp) {
         aws_jni_throw_runtime_exception(env, "Unable to open fd %d for writing", fd);
         return;
@@ -64,8 +67,11 @@ Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFd(JNIEnv *env, jcl
 }
 
 JNIEXPORT
-void JNICALL
-Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFilename(JNIEnv *env, jclass jni_logger, jstring jni_filename, jint jni_level) {
+void JNICALL Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFilename(
+    JNIEnv *env,
+    jclass jni_logger,
+    jstring jni_filename,
+    jint jni_level) {
     if (jni_filename == NULL) {
         aws_jni_throw_runtime_exception(env, "filename must not be null");
         return;
@@ -77,8 +83,8 @@ Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFilename(JNIEnv *en
     }
 
     enum aws_log_level level = jni_level;
-    const char* filename = (*env)->GetStringUTFChars(env, jni_filename, NULL);
-    struct aws_logger_standard_options log_options = {.level = level, .filename = filename };
+    const char *filename = (*env)->GetStringUTFChars(env, jni_filename, NULL);
+    struct aws_logger_standard_options log_options = {.level = level, .filename = filename};
     if (aws_logger_init_standard(&s_logger, aws_jni_get_allocator(), &log_options)) {
         aws_jni_throw_runtime_exception(env, "Failed to initialize aws_logger");
         return;
@@ -88,14 +94,12 @@ Java_software_amazon_awssdk_crt_io_Logger_configureLoggerWithFilename(JNIEnv *en
 }
 
 JNIEXPORT
-void JNICALL
-Java_software_amazon_awssdk_crt_io_Logger_flushLogger(JNIEnv *env, jclass jni_logger) {
+void JNICALL Java_software_amazon_awssdk_crt_io_Logger_flushLogger(JNIEnv *env, jclass jni_logger) {
     if (aws_logger_get() == &s_logger) {
         /* until we have aws_logger_flush, we flush all writable streams */
         fflush(NULL);
     }
 }
-
 
 /* called at exit of the java process by the CRT atexit callback */
 void s_logger_cleanup() {

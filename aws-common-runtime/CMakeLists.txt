@@ -25,7 +25,7 @@ if (UNIX AND NOT APPLE)
     include(BuildOpenSSL)
 
     set(S2N_URL "https://github.com/awslabs/s2n.git")
-    set(s2N_SHA "e23fb83e80f567c225279cdeb6c9e271b2ff459c")
+    set(S2N_SHA "e23fb83e80f567c225279cdeb6c9e271b2ff459c")
     include(BuildS2N)
 endif()
 

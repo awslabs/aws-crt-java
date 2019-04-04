@@ -24,7 +24,7 @@ if (UNIX AND NOT APPLE)
     set(OPENSSL_SHA "OpenSSL_1_1_1-stable")
     include(BuildOpenSSL)
 
-    set(S2N_URL "https://github.com/awslabs/s2n.git")
+    set(S2N_URL "https://github.com/justinboswell/s2n.git")
     set(S2N_SHA "")
     include(BuildS2N)
 endif()

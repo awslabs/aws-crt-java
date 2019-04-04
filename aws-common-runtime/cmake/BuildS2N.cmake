@@ -19,6 +19,7 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
             -DANDROID_STL=${ANDROID_STL}
             -DENABLE_HW_OPTIMIZATION=OFF
             -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+            -DUSE_S2N_PQ_CRYPTO=OFF
             )
 else()
     ExternalProject_Add(S2N
@@ -34,5 +35,6 @@ else()
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
             -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+            -DUSE_S2N_PQ_CRYPTO=OFF
             )
 endif()

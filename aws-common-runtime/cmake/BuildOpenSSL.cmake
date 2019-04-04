@@ -12,7 +12,7 @@ if("${TARGET_ARCH}" STREQUAL ANDROID)
         GIT_TAG ${OPENSSL_SHA}
         BUILD_IN_SOURCE 1
         UPDATE_COMMAND ""
-        CONFIGURE_COMMAND unset CXX; ./config -fPIC ${OPENSSL_C_FLAGS} 
+        CONFIGURE_COMMAND ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
             no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng 
             no-unit-test no-tests
@@ -29,7 +29,7 @@ else()
         GIT_TAG ${OPENSSL_SHA}
         BUILD_IN_SOURCE 1
         UPDATE_COMMAND ""
-        CONFIGURE_COMMAND unset CXX; ./config -fPIC ${OPENSSL_C_FLAGS} 
+        CONFIGURE_COMMAND ./config -fPIC ${OPENSSL_C_FLAGS} 
             no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 
             no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng 
             no-unit-test no-tests

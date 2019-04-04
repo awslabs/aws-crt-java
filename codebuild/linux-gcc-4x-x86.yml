@@ -10,6 +10,7 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
+      - unset CXX
   build:
     commands:
       - echo Build started on `date`

@@ -24,13 +24,13 @@ if (UNIX AND NOT APPLE)
     set(OPENSSL_SHA "OpenSSL_1_1_1-stable")
     include(BuildOpenSSL)
 
-    set(S2N_URL "https://github.com/justinboswell/s2n.git")
-    set(S2N_SHA "")
+    set(S2N_URL "https://github.com/awslabs/s2n.git")
+    set(S2N_SHA "db4fe111c6e64a206662524da31a5aba6b0932a8")
     include(BuildS2N)
 endif()
 
 set(AWS_C_IO_URL "https://github.com/awslabs/aws-c-io.git")
-set(AWS_C_IO_SHA "v0.2.4")
+set(AWS_C_IO_SHA "v0.2.7")
 include(BuildAwsCIO)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")

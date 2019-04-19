@@ -84,10 +84,11 @@ static struct {
 } s_mqtt_exception;
 
 void s_cache_mqtt_exception(JNIEnv *env) {
-    s_mqtt_exception.jni_mqtt_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttException");
+    s_mqtt_exception.jni_mqtt_exception =
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttException"));
     assert(s_mqtt_exception.jni_mqtt_exception);
     s_mqtt_exception.jni_constructor = (*env)->GetMethodID(env, s_mqtt_exception.jni_mqtt_exception, "<init>", "(I)V");
-    assert(s_mqtt_exception.jni_mqtt_exception);
+    assert(s_mqtt_exception.jni_constructor);
 }
 
 /*******************************************************************************

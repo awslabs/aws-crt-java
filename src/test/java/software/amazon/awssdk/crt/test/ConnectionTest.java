@@ -25,6 +25,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
+import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,6 +46,7 @@ class MqttConnectionFixture {
     MqttConnection connection = null;
     private boolean disconnecting = false;
 
+    static final String CREDENTIALS_DIR = "./src/test/resources/credentials/";
     static final String TEST_ENDPOINT = System.getProperty("endpoint");
     static final String TEST_CERTIFICATE = System.getProperty("certificate");
     static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
@@ -57,11 +59,26 @@ class MqttConnectionFixture {
     Path pathToKey = null;
     Path pathToCa = null;
 
+    private Path findCredentialsFile(String sysPropertyOverride, String directory, String extension){
+        File overrideFile = new File(sysPropertyOverride);
+        if (overrideFile.exists() && overrideFile.isFile()) {
+            return Paths.get(sysPropertyOverride);
+        }
+
+        for(File f: new File(directory).listFiles()) {
+            if(f.getName().endsWith(extension)) {
+                return Paths.get(f.getAbsolutePath());
+            }
+        }
+
+        return null;
+    }
+
     private void findCredentials() {
         try {
-            pathToCert = Paths.get(TEST_CERTIFICATE);
-            pathToKey = Paths.get(TEST_PRIVATEKEY);
-            pathToCa = Paths.get(TEST_ROOTCA);
+            pathToCert = findCredentialsFile(TEST_CERTIFICATE, CREDENTIALS_DIR, ".crt");
+            pathToKey = findCredentialsFile(TEST_PRIVATEKEY, CREDENTIALS_DIR, ".key");
+            pathToCa = findCredentialsFile(TEST_ROOTCA, CREDENTIALS_DIR, ".pem");
             if (pathToCert == null || pathToCert.toString().equals("")) {
                 throw new MissingCredentialsException("Certificate not provided");
             }
@@ -80,6 +97,9 @@ class MqttConnectionFixture {
         } catch (InvalidPathException ex) {
             throw new MissingCredentialsException("Exception thrown during credential resolve: " + ex);
         }
+        System.out.println("IoT Cert Found: " + pathToCert.toAbsolutePath().toString());
+        System.out.println("IoT Key Found:  " + pathToKey.toAbsolutePath().toString());
+        System.out.println("IoT Root Found: " + pathToCa.toAbsolutePath().toString());
     }
 
     MqttConnectionFixture() {

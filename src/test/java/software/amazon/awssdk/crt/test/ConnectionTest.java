@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
@@ -40,6 +41,7 @@ class MissingCredentialsException extends RuntimeException {
 
 class MqttConnectionFixture {
     EventLoopGroup elg = null;
+    HostResolver hr = null;
     ClientBootstrap bootstrap = null;
     MqttClient client = null;
     MqttConnection connection = null;
@@ -94,7 +96,8 @@ class MqttConnectionFixture {
 
         try {
             elg = new EventLoopGroup(1);
-            bootstrap = new ClientBootstrap(elg);
+            hr = new HostResolver(elg);
+            bootstrap = new ClientBootstrap(elg, hr);
         } catch (CrtRuntimeException ex) {
             fail("Exception during bootstrapping: " + ex.toString());
         }

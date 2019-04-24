@@ -18,7 +18,6 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.io.Closeable;
@@ -39,7 +38,7 @@ public class MqttClient extends CrtResource implements Closeable {
      * @throws CrtRuntimeException @see software.amazon.awssdk.crt.io.ClientBootstrap#constructor(EventLoopGroup) @see software.amazon.awssdk.crt.io.EventLoopGroup#constructor(int)
      */
     public MqttClient() throws CrtRuntimeException {
-        this(new ClientBootstrap(new EventLoopGroup(1)), null);
+        this(new ClientBootstrap(1), null);
     }
 
     /**

@@ -35,16 +35,24 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_elg) {
+    jlong jni_elg,
+    jlong jni_hr) {
     (void)jni_class;
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
+    struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_hr;
+
     if (!elg) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
         return (jlong)NULL;
     }
 
+    if (!resolver) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid HostResolver");
+        return (jlong)NULL;
+    }
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, NULL, NULL);
+    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, resolver, NULL);
     if (!bootstrap) {
         aws_jni_throw_runtime_exception(
             env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
@@ -66,7 +74,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
         return;
     }
 
-    aws_client_bootstrap_destroy(bootstrap);
+    aws_client_bootstrap_release(bootstrap);
 }
 
 #if UINTPTR_MAX == 0xffffffff

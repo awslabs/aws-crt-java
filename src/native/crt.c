@@ -15,6 +15,8 @@
 
 #include <aws/common/common.h>
 #include <aws/common/string.h>
+#include <aws/http/connection.h>
+#include <aws/http/http.h>
 #include <aws/io/io.h>
 #include <aws/io/logging.h>
 #include <aws/io/tls_channel_handler.h>
@@ -98,6 +100,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
 static void s_jni_atexit(void) {
     // aws_logger_clean_up(&s_logger);
     aws_tls_clean_up_static_state();
+    aws_http_library_clean_up();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -110,6 +113,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_tls_init_static_state(allocator);
+    aws_http_library_init(allocator);
 
     // struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
     // if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {

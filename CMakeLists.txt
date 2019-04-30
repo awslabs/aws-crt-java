@@ -180,3 +180,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 
 find_package(aws-c-mqtt REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
+
+find_package(aws-c-http REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)

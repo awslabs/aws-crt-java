@@ -14,11 +14,16 @@
  */
 package software.amazon.awssdk.crt;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * This wraps a native pointer to an AWS Common Runtime resource. It also ensures
  * that the first time a resource is referenced, the CRT will be loaded and bound.
  */
 public class CrtResource {
+    private static final ConcurrentHashMap<Long, String> NATIVE_RESOURCES = new ConcurrentHashMap<>();
     private long ptr;
 
     static {
@@ -26,14 +31,24 @@ public class CrtResource {
         new CRT();
     }
 
+    public static int getAllocatedNativeResourceCount() {
+        return NATIVE_RESOURCES.size();
+    }
+
+    public static Collection<String> getAllocatedNativeResources() {
+        return Collections.unmodifiableCollection(NATIVE_RESOURCES.values());
+    }
+
     public CrtResource() {
     }
 
     protected void acquire(long _ptr) {
+        NATIVE_RESOURCES.put(_ptr, this.getClass().getCanonicalName());
         ptr = _ptr;
     }
     
     protected long release() {
+        NATIVE_RESOURCES.remove(ptr);
         long addr = ptr;
         ptr = 0;
         return addr;

@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -43,6 +44,8 @@ class MqttConnectionFixture {
     EventLoopGroup elg = null;
     HostResolver hr = null;
     ClientBootstrap bootstrap = null;
+    TlsContextOptions tlsOptions = null;
+    TlsContext tls = null;
     MqttClient client = null;
     MqttConnection connection = null;
     private boolean disconnecting = false;
@@ -103,7 +106,7 @@ class MqttConnectionFixture {
         }
         try {
             int port = TEST_PORT;
-            TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
+            tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
             if (!pathToCa.toString().equals("")) {
                 tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
             }
@@ -111,7 +114,7 @@ class MqttConnectionFixture {
                 tlsOptions.setAlpnList("x-amzn-mqtt-ca");
                 port = TEST_PORT_ALPN;
             }
-            TlsContext tls = new TlsContext(tlsOptions);
+            tls = new TlsContext(tlsOptions);
             client = new MqttClient(bootstrap, tls);
             assertNotNull(client);
             assertTrue(client.native_ptr() != 0);
@@ -156,14 +159,26 @@ class MqttConnectionFixture {
         
         assertEquals("DISCONNECTED", MqttConnection.ConnectionState.DISCONNECTED, connection.getState());
     }
+
+    void close() {
+        connection.close();
+        client.close();
+        tlsOptions.close();
+        tls.close();
+        bootstrap.close();
+        hr.close();
+        elg.close();
+    }
 }
-public class ConnectionTest extends MqttConnectionFixture {
-    public ConnectionTest() {
+public class MqttConnectionTest extends MqttConnectionFixture {
+    public MqttConnectionTest() {
     }
 
     @Test
     public void testConnectDisconnect() {
         connect();
-        disconnect(); 
+        disconnect();
+        close();
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 };

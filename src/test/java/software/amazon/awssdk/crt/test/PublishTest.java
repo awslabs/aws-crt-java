@@ -15,11 +15,13 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
@@ -55,5 +57,7 @@ public class PublishTest extends MqttConnectionFixture {
         }
 
         disconnect();
+        close();
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 };

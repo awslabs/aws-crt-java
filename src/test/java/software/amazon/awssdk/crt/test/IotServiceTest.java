@@ -15,11 +15,13 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
@@ -59,6 +61,8 @@ public class IotServiceTest extends MqttConnectionFixture {
             fail(ex.getMessage());
         }
         
-        disconnect();       
+        disconnect();
+        close();
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 };

@@ -68,6 +68,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostResol
         return;
     }
 
+    aws_host_resolver_clean_up(resolver);
     aws_mem_release(allocator, resolver);
 
     return;

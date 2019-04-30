@@ -15,9 +15,11 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttException;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
@@ -51,5 +53,7 @@ public class WillTest extends MqttConnectionFixture {
         }
 
         disconnect();
+        close();
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 };

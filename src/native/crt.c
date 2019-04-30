@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include "async_callback.h"
 #include "crt.h"
 
 struct aws_allocator *aws_jni_get_allocator() {
@@ -83,7 +84,6 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 #endif
 static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_mqtt_connection(JNIEnv *);
-    extern void s_cache_async_callback(JNIEnv *);
     extern void s_cache_message_handler(JNIEnv *);
     extern void s_cache_mqtt_exception(JNIEnv *);
     s_cache_mqtt_connection(env);

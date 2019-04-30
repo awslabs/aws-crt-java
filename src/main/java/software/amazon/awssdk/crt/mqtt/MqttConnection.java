@@ -15,6 +15,7 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
+import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -60,15 +61,6 @@ public class MqttConnection extends CrtResource implements Closeable {
         void deliver(byte[] payload) {
             callback.accept(new MqttMessage(topic, ByteBuffer.wrap(payload)));
         }
-    }
-
-    /**
-     * Interface used to receive the result of an async operation from CRT mqtt
-     */
-    interface AsyncCallback {
-        public void onSuccess();
-        public void onSuccess(Object value);
-        public void onFailure(Throwable reason);
     }
 
     /**
@@ -131,28 +123,6 @@ public class MqttConnection extends CrtResource implements Closeable {
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }        
-    }
-
-    // Internal wrapper, builds an AsyncCallback that can be passed to the native implementation that will
-    // deliver operation success/failure to the future associated with the operation
-    private static <T> AsyncCallback wrapFuture(CompletableFuture<T> future, T value) {
-        return new AsyncCallback() {
-            @Override
-            public void onSuccess() {
-                future.complete(value);
-            }
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public void onSuccess(Object val) {
-                future.complete((T)(val));
-            }
-
-            @Override
-            public void onFailure(Throwable reason) {
-                future.completeExceptionally(reason);
-            }
-        };
     }
 
     // Called from native when the connection is established the first time
@@ -231,7 +201,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
         }
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        connectAck = wrapFuture(future, null);
+        connectAck = AsyncCallback.wrapFuture(future, null);
         try {
             connectionState = ConnectionState.CONNECTING;
             mqttConnectionConnect(
@@ -256,7 +226,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             future.complete(null);
             return future;
         }
-        disconnectAck = wrapFuture(future, null);
+        disconnectAck = AsyncCallback.wrapFuture(future, null);
         connectionState = ConnectionState.DISCONNECTING;
         mqttConnectionDisconnect(native_ptr());
         return future;
@@ -276,7 +246,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             return future;
         }
 
-        AsyncCallback subAck = wrapFuture(future, 0);
+        AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
         try {
             int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
             // When the future completes, complete the returned future with the packetId
@@ -300,7 +270,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             return future;
         }
 
-        AsyncCallback unsubAck = wrapFuture(future, 0);
+        AsyncCallback unsubAck = AsyncCallback.wrapFuture(future, 0);
         int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
         return future.thenApply(unused -> packetId);
@@ -319,7 +289,7 @@ public class MqttConnection extends CrtResource implements Closeable {
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
         }
 
-        AsyncCallback pubAck = wrapFuture(future, 0);
+        AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
         try {
             int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
             // When the future completes, complete the returned future with the packetId

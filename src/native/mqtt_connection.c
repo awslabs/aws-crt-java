@@ -30,25 +30,14 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "async_callback.h"
 #include "crt.h"
 
 /*******************************************************************************
  * JNI class field/method maps
  ******************************************************************************/
-/* methods of MqttConnection.AsyncCallback */
-static struct {
-    jmethodID on_success;
-    jmethodID on_failure;
-} s_async_callback = {0};
 
-void s_cache_async_callback(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$AsyncCallback");
-    assert(cls);
-    s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
-    assert(s_async_callback.on_success);
-    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/Throwable;)V");
-    assert(s_async_callback.on_failure);
-}
+struct crt_async_callback g_async_callback;
 
 /* methods of MqttConnection */
 static struct {
@@ -399,7 +388,7 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
 
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
-        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
+        (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_success);
     }
 }
 
@@ -410,7 +399,7 @@ static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int 
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
         jobject jni_reason = s_new_mqtt_exception(env, error_code);
-        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_failure, jni_reason);
+        (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_failure, jni_reason);
         (*env)->DeleteLocalRef(env, jni_reason);
     }
 }

@@ -14,17 +14,15 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-
-import java.io.Closeable;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * This class wraps the aws_event_loop_group from aws-c-io to provide
  * access to an event loop for the MQTT protocol stack in the AWS Common
  * Runtime.
  */
-public final class EventLoopGroup extends CrtResource implements Closeable {
+public final class EventLoopGroup extends CrtResource {
 
     /**
      * Creates a new event loop group for the I/O subsystem to use to run blocking I/O requests
@@ -41,9 +39,10 @@ public final class EventLoopGroup extends CrtResource implements Closeable {
      */
     @Override
     public void close() {
-        if (native_ptr() != 0) {
+        if (!isNull()) {
             eventLoopGroupDestroy(release());
         }
+        super.close();
     }
 
     /*******************************************************************************

@@ -15,12 +15,10 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
-
-import java.io.Closeable;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionalities
@@ -29,7 +27,7 @@ import java.io.Closeable;
  * One MqttClient class is needed per application. It can create any number of connections to
  * any number of MQTT endpoints
  */
-public class MqttClient extends CrtResource implements Closeable {
+public class MqttClient extends CrtResource {
     private final ClientBootstrap bootstrap;
     private final TlsContext tlsContext;
 
@@ -67,9 +65,10 @@ public class MqttClient extends CrtResource implements Closeable {
      */
     @Override
     public void close() {
-        if (native_ptr() != 0) {
+        if (!isNull()) {
             mqttClientDestroy(release());
         }
+        super.close();
     }
 
     /**

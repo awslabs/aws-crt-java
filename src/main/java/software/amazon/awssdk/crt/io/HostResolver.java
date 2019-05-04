@@ -1,11 +1,23 @@
+/*
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
-import java.io.Closeable;
-
-public class HostResolver extends CrtResource implements Closeable {
+public class HostResolver extends CrtResource {
     private final static int DEFAULT_MAX_ENTRIES = 8;
     private final EventLoopGroup elg;
     private final int maxEntries;
@@ -22,9 +34,10 @@ public class HostResolver extends CrtResource implements Closeable {
 
     @Override
     public void close() {
-        if (native_ptr() != 0) {
+        if (!isNull()) {
             hostResolverRelease(release());
         }
+        super.close();
     }
 
     /*******************************************************************************

@@ -30,7 +30,7 @@ public class EventLoopGroupTest {
     public void testCreateDestroy() {
         try (EventLoopGroup elg = new EventLoopGroup(1)) {
             assertNotNull(elg);
-            assertTrue(elg.native_ptr() != 0);
+            assertTrue(!elg.isNull());
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }

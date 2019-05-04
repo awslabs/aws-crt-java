@@ -14,16 +14,14 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-
-import java.io.Closeable;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * This class wraps the aws_socket_options from aws-c-io to provide
  * access to TCP/UDP socket configuration in the AWS Common Runtime.
  */
-public final class SocketOptions extends CrtResource implements Closeable {
+public final class SocketOptions extends CrtResource {
 
     /**
      * Socket communications domain
@@ -90,9 +88,10 @@ public final class SocketOptions extends CrtResource implements Closeable {
      */
     @Override
     public void close() {
-        if (native_ptr() != 0) {
+        if (!isNull()) {
             socketOptionsDestroy(release());
         }
+        super.close();
     }
 
     /**

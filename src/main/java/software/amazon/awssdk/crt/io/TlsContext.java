@@ -24,7 +24,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 public final class TlsContext extends CrtResource {
 
     /**
-     * Creates a new TlsContext. There are significant native resources consumed to create a TlsContext, so most
+     * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
      * @param options A set of options for this context
      * @throws CrtRuntimeException If the provided options are malformed or the system is unable
@@ -32,6 +32,14 @@ public final class TlsContext extends CrtResource {
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
         acquire(tlsContextNew(options.native_ptr()));
+    }
+
+    /**
+     * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
+     * applications will only need to create one and re-use it for all connections.
+     */
+    public TlsContext() throws CrtRuntimeException  {
+        acquire(tlsContextNew(own(new TlsContextOptions()).native_ptr()));
     }
 
     /**

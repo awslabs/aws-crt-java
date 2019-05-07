@@ -86,10 +86,12 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_mqtt_connection(JNIEnv *);
     extern void s_cache_message_handler(JNIEnv *);
     extern void s_cache_mqtt_exception(JNIEnv *);
+    extern void s_cache_http_connection(JNIEnv *);
     s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
+    s_cache_http_connection(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)

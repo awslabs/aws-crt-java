@@ -117,7 +117,7 @@ class MqttConnectionFixture {
             tls = new TlsContext(tlsOptions);
             client = new MqttClient(bootstrap, tls);
             assertNotNull(client);
-            assertTrue(client.native_ptr() != 0);
+            assertTrue(!client.isNull());
 
             MqttConnectionEvents events = new MqttConnectionEvents(){
                 @Override

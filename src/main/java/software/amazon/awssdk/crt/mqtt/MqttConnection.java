@@ -16,15 +16,14 @@
 package software.amazon.awssdk.crt.mqtt;
 
 import software.amazon.awssdk.crt.AsyncCallback;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.nio.ByteBuffer;
-import java.io.Closeable;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
@@ -33,7 +32,7 @@ import java.io.Closeable;
  * MqttConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
  */
-public class MqttConnection extends CrtResource implements Closeable {
+public class MqttConnection extends CrtResource {
     private final MqttClient client;
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
     private MqttConnectionEvents userConnectionCallbacks;
@@ -100,6 +99,7 @@ public class MqttConnection extends CrtResource implements Closeable {
     public void close() {
         disconnect();
         mqttConnectionDestroy(release());
+        super.close();
     }
 
     /**
@@ -222,7 +222,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      */
     public CompletableFuture<Void> disconnect() {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        if (native_ptr() == 0) {
+        if (isNull()) {
             future.complete(null);
             return future;
         }
@@ -241,7 +241,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (native_ptr() == 0) {
+        if (isNull()) {
             future.completeExceptionally(new MqttException("Invalid connection during subscribe"));
             return future;
         }
@@ -265,7 +265,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      */
     public CompletableFuture<Integer> unsubscribe(String topic) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (native_ptr() == 0) {
+        if (isNull()) {
             future.completeExceptionally(new MqttException("Invalid connection during unsubscribe"));
             return future;
         }
@@ -285,7 +285,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      */
     public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (native_ptr() == 0) {
+        if (isNull()) {
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
         }
 
@@ -310,7 +310,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @throws MqttException If the connection is already connected, or is otherwise unable to set the will
      */
     public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
-        if (native_ptr() == 0) {
+        if (isNull()) {
             throw new MqttException("Invalid connection during setWill");
         }
 
@@ -327,7 +327,7 @@ public class MqttConnection extends CrtResource implements Closeable {
      * @throws MqttException If the connection is not connected, or the ping operation is otherwise unable to be attempted
      */
     public void ping() throws MqttException {
-        if (native_ptr() == 0) {
+        if (isNull()) {
             throw new MqttException("Invalid connection during ping");
         }
         try {

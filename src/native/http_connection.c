@@ -35,24 +35,11 @@
 #include <aws/http/http.h>
 #include <aws/http/request_response.h>
 
+#include "http_connection.h"
+
 /*******************************************************************************
  * JNI class field/method maps
  ******************************************************************************/
-
-/* methods of HttpConnection.AsyncCallback */
-static struct {
-    jmethodID on_success;
-    jmethodID on_failure;
-} s_async_callback = {0};
-
-void s_cache_http_async_callback(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/AsyncCallback");
-    assert(cls);
-    s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
-    assert(s_async_callback.on_success);
-    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/Throwable;)V");
-    assert(s_async_callback.on_failure);
-}
 
 /* methods of HttpConnection */
 static struct {
@@ -69,18 +56,6 @@ void s_cache_http_connection(JNIEnv *env) {
     s_http_connection.on_connection_shutdown = (*env)->GetMethodID(env, cls, "onConnectionShutdown", "(I)V");
     assert(s_http_connection.on_connection_shutdown);
 }
-
-/*******************************************************************************
- * http_jni_connection - represents an aws_http_connection to Java
- ******************************************************************************/
-struct http_jni_connection {
-    struct aws_http_connection *native_http_conn;
-    struct aws_socket_options *socket_options;
-    struct aws_tls_connection_options *tls_options;
-
-    JavaVM *jvm;
-    jobject java_http_conn; /* The Java HttpConnection instance */
-};
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -132,6 +107,7 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
+    jint jni_window_size,
     jstring jni_endpoint,
     jint jni_port) {
 
@@ -154,6 +130,11 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
 
     if (jni_port <= 0 || 65535 < jni_port) {
         aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
+        return (jlong)NULL;
+    }
+
+    if (jni_window_size <= 0) {
+        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
         return (jlong)NULL;
     }
 
@@ -191,6 +172,7 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     http_options.port = port;
     http_options.socket_options = socket_options;
     http_options.tls_options = NULL;
+    http_options.initial_window_size = (size_t)jni_window_size;
     http_options.user_data = http_jni_conn;
     http_options.on_setup = s_on_http_conn_setup;
     http_options.on_shutdown = s_on_http_conn_shutdown;

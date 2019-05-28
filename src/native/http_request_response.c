@@ -283,10 +283,6 @@ static void s_on_incoming_body_fn(
         callback->java_http_stream,
         jByteBuffer);
 
-    // Verify Window Increment is within bounds
-    assert(0 <= window_increment);
-    assert(window_increment <= *out_window_update_size);
-
     if (window_increment < 0 || *out_window_update_size < window_increment) {
         aws_jni_throw_runtime_exception(env, "WindowUpdate is OutOfBounds.");
         return;

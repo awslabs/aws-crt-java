@@ -339,6 +339,8 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     jbyteArray jByteArray = aws_java_byte_array_new(env, out_remaining);
     jobject jByteBuffer = aws_java_byte_array_to_java_byte_buffer(env, jByteArray);
 
+    jByteBuffer = (*env)->NewGlobalRef(env, jByteBuffer);
+
     jboolean isDone = (*env)->CallBooleanMethod(
         env,
         callback->java_crt_http_callback_handler,
@@ -348,6 +350,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
 
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
+        (*env)->DeleteGlobalRef(env, jByteBuffer);
         aws_http_connection_close(aws_http_stream_get_connection(stream));
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
@@ -357,6 +360,8 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
 
     aws_copy_java_byte_array_to_native_array(env, jByteArray, out, amt_written);
     dst->len += amt_written;
+
+    (*env)->DeleteGlobalRef(env, jByteBuffer);
 
     if (isDone) {
         return AWS_HTTP_OUTGOING_BODY_DONE;

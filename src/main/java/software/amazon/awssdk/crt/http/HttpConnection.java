@@ -200,6 +200,17 @@ public class HttpConnection extends CrtResource {
         }
 
         if (!isNull()) {
+            try {
+                /**
+                 * FIXME: Artificial sleep to avoid Race Condition with EventLoop when shutting down the Tls Connection
+                 * Tracking Issue: https://github.com/awslabs/aws-c-http/issues/66
+                 * TraceLog: https://gist.github.com/alexw91/e6205fd38ecc530a55b956c98ca189dc
+                 */
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             httpConnectionRelease(release());
         }
 

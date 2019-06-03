@@ -156,6 +156,7 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
         goto error_cleanup;
     }
 
+    AWS_ZERO_STRUCT(*http_jni_conn);
     // Create a new reference to the HttpConnection Object.
     http_jni_conn->java_http_conn = (*env)->NewGlobalRef(env, http_conn_jobject);
 

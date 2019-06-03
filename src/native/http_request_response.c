@@ -17,6 +17,7 @@
 #include <jni.h>
 #include <unistd.h>
 
+#include <aws/common/mutex.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/http/request_response.h>
@@ -109,6 +110,7 @@ static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStre
  * callbacks.
  ******************************************************************************/
 struct http_stream_callback_data {
+    struct aws_mutex lock;
     struct http_jni_connection *connection;
     jobject java_crt_http_callback_handler;
     jobject java_http_stream;
@@ -120,6 +122,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_stream_callback_data *callback = aws_mem_acquire(allocator, sizeof(struct http_stream_callback_data));
+    AWS_ZERO_STRUCT(*callback);
 
     if (!callback) {
         /* caller will throw when they get a null */
@@ -219,6 +222,9 @@ static void s_on_incoming_headers_fn(
     void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_lock(&callback->lock);
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     jobjectArray jHeaders = s_java_headers_array_from_native(user_data, header_array, num_headers);
 
@@ -227,6 +233,7 @@ static void s_on_incoming_headers_fn(
 
     if (err_code != AWS_OP_SUCCESS) {
         // Close the connection if we can't get the response status
+        aws_mutex_unlock(&callback->lock);
         aws_http_connection_close(aws_http_stream_get_connection(stream));
         return;
     }
@@ -239,6 +246,9 @@ static void s_on_incoming_headers_fn(
         resp_status,
         jHeaders);
 
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_unlock(&callback->lock);
+
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
         aws_http_connection_close(aws_http_stream_get_connection(stream));
@@ -248,6 +258,10 @@ static void s_on_incoming_headers_fn(
 
 static void s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bool has_body, void *user_data) {
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_lock(&callback->lock);
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
     jboolean jHasBody = has_body;
@@ -257,6 +271,9 @@ static void s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, b
         s_crt_http_stream_handler.onResponseHeadersDone,
         callback->java_http_stream,
         jHasBody);
+
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_unlock(&callback->lock);
 
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
@@ -273,6 +290,10 @@ static void s_on_incoming_body_fn(
     void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_lock(&callback->lock);
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
     jobject jByteBuffer = aws_jni_byte_buffer_copy_from_cursor(env, data);
@@ -282,6 +303,8 @@ static void s_on_incoming_body_fn(
         s_crt_http_stream_handler.onResponseBody,
         callback->java_http_stream,
         jByteBuffer);
+
+    aws_mutex_unlock(&callback->lock);
 
     if (window_increment < 0 || *out_window_update_size < window_increment) {
         aws_jni_throw_runtime_exception(env, "WindowUpdate is OutOfBounds.");
@@ -306,6 +329,10 @@ static void s_on_incoming_body_fn(
 static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_lock(&callback->lock);
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
     jint jErrorCode = error_code;
@@ -315,6 +342,8 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         s_crt_http_stream_handler.onResponseComplete,
         callback->java_http_stream,
         jErrorCode);
+
+    aws_mutex_unlock(&callback->lock);
 
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
@@ -331,6 +360,10 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+
+    // Other threads might edit the callback struct, so ensure that we gain a lock on it
+    aws_mutex_lock(&callback->lock);
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
     uint8_t *out = &(dst->buffer[dst->len]);
@@ -351,6 +384,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
         (*env)->DeleteGlobalRef(env, jByteBuffer);
+        aws_mutex_unlock(&callback->lock);
         aws_http_connection_close(aws_http_stream_get_connection(stream));
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
@@ -362,6 +396,8 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     dst->len += amt_written;
 
     (*env)->DeleteGlobalRef(env, jByteBuffer);
+
+    aws_mutex_unlock(&callback->lock);
 
     if (isDone) {
         return AWS_HTTP_OUTGOING_BODY_DONE;
@@ -400,6 +436,12 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
         return (jobject)NULL;
     }
 
+    // There's a Data Race between this thread writing to callback_data->java_http_stream and the EventLoop thread
+    // reading callback_data->java_http_stream when calling the callbacks, add a lock so that both threads see a
+    // consistent state.
+    aws_mutex_init(&callback_data->lock);
+    aws_mutex_lock(&callback_data->lock);
+
     struct aws_byte_cursor method = aws_jni_byte_cursor_from_jstring(env, jni_method);
     struct aws_byte_cursor uri = aws_jni_byte_cursor_from_jstring(env, jni_uri);
     jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
@@ -434,6 +476,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     request_options.on_complete = s_on_stream_complete_fn;
     request_options.user_data = callback_data;
 
+    // This call schedules tasks on the Native Event loop thread to begin sending HttpRequest and receive the response.
     struct aws_http_stream *req = aws_http_stream_new_client_request(&request_options);
 
     if (req == NULL) {
@@ -447,6 +490,9 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     jHttpStream = (*env)->NewGlobalRef(env, jHttpStream);
 
     callback_data->java_http_stream = jHttpStream;
+
+    // Now that callback_data->java_http_stream has been written, the EventLoop thread may begin using this callback.
+    aws_mutex_unlock(&callback_data->lock);
 
     return jHttpStream;
 }

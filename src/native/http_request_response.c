@@ -246,7 +246,6 @@ static void s_on_incoming_headers_fn(
         resp_status,
         jHeaders);
 
-    // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_unlock(&callback->lock);
 
     if ((*env)->ExceptionCheck(env)) {
@@ -272,7 +271,6 @@ static void s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, b
         callback->java_http_stream,
         jHasBody);
 
-    // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_unlock(&callback->lock);
 
     if ((*env)->ExceptionCheck(env)) {

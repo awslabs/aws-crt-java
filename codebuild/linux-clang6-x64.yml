@@ -27,3 +27,4 @@ artifacts:
   files: 
     - 'target/surefire-reports/**'
     - 'hs_err_pid*'
+    - 'core*'

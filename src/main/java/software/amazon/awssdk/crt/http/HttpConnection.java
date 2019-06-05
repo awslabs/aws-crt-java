@@ -15,7 +15,6 @@
 
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -24,6 +23,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static software.amazon.awssdk.crt.CRT.AWS_CRT_SUCCESS;
 
@@ -40,10 +40,12 @@ public class HttpConnection extends CrtResource {
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
+    private static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
 
     private final ClientBootstrap clientBootstrap;
     private final SocketOptions socketOptions;
     private final TlsContext tlsContext;
+    private final int windowSize;
     private final URI uri;
     private final int port;
     private final boolean useTls;
@@ -62,7 +64,25 @@ public class HttpConnection extends CrtResource {
      */
     public static CompletableFuture<HttpConnection> createConnection(URI uri, ClientBootstrap bootstrap,
                                                                      SocketOptions socketOptions, TlsContext tlsContext) throws CrtRuntimeException {
-        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext);
+        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, DEFAULT_MAX_WINDOW_SIZE);
+        return conn.connect();
+    }
+
+    /**
+     * Creates a new CompletableFuture for a new HttpConnection.
+     * @param uri Must be non-null and contain a hostname
+     * @param bootstrap The ClientBootstrap to use for the Connection
+     * @param socketOptions The SocketOptions to use for the Connection
+     * @param tlsContext The TlsContext to use for the Connection
+     * @param windowSize The Initial Window size for requests made on this connection
+     * @return CompletableFuture indicating when the connection has completed
+     * @throws CrtRuntimeException if Native threw a CrtRuntimeException
+     */
+    public static CompletableFuture<HttpConnection> createConnection(URI uri, ClientBootstrap bootstrap,
+                                                                     SocketOptions socketOptions,
+                                                                     TlsContext tlsContext,
+                                                                     int windowSize) throws CrtRuntimeException {
+        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, windowSize);
         return conn.connect();
     }
 
@@ -73,7 +93,7 @@ public class HttpConnection extends CrtResource {
      * @param socketOptions The SocketOptions to use for the Connection
      * @param tlsContext The TlsContext to use for the Connection
      */
-    private HttpConnection(URI uri, ClientBootstrap bootstrap, SocketOptions socketOptions, TlsContext tlsContext) {
+    private HttpConnection(URI uri, ClientBootstrap bootstrap, SocketOptions socketOptions, TlsContext tlsContext, int windowSize) {
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
         if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
@@ -81,6 +101,7 @@ public class HttpConnection extends CrtResource {
         if (bootstrap == null || bootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
         if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
         if (HTTPS.equals(uri.getScheme()) && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+        if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero.");}
 
         int port = uri.getPort();
 
@@ -100,6 +121,7 @@ public class HttpConnection extends CrtResource {
         this.clientBootstrap = bootstrap;
         this.socketOptions = socketOptions;
         this.tlsContext = tlsContext;
+        this.windowSize = windowSize;
         this.connectedFuture = new CompletableFuture<>();
         this.shutdownFuture = new CompletableFuture<>();
     }
@@ -117,6 +139,7 @@ public class HttpConnection extends CrtResource {
                 clientBootstrap.native_ptr(),
                 socketOptions.native_ptr(),
                 useTls ? tlsContext.native_ptr() : 0,
+                windowSize,
                 uri.getHost(),
                 port));
 
@@ -124,11 +147,73 @@ public class HttpConnection extends CrtResource {
     }
 
     /**
+     * Schedules an HttpRequest on the Native EventLoop for this HttpConnection.
+     *
+     * @param request The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native EventLoop
+     * @throws CrtRuntimeException
+     * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
+     *          request/response, but must be closed by the user thread making this request when it's done.
+     */
+    public HttpStream makeRequest(HttpRequest request, CrtHttpStreamHandler streamHandler) throws CrtRuntimeException {
+        if (isShutdownComplete() || isNull()) {
+            throw new IllegalStateException("HttpConnection has been shut down, can't make requests on it.");
+        }
+
+        HttpStream stream = httpConnectionMakeRequest(native_ptr(),
+                request.getMethod(),
+                request.getEncodedPath(),
+                request.getHeaders(),
+                streamHandler);
+
+        if (stream == null || stream.isNull()) {
+            throw new IllegalStateException("HttpStream is null");
+        }
+
+        return stream;
+    }
+
+    /**
      * Closes and frees this HttpConnection and any native sub-resources associated with this connection
      */
     @Override
     public void close() {
+        if (didConnectSuccessfully() && !isShutdownComplete()) {
+            /**
+             * We have to wait for the connection to finish shutting down to avoid race conditions between
+             * shutdown tasks and memory release tasks.
+             *
+             * The httpConnectionShutdown() call schedules shutdown tasks on the Native EventLoop that may send
+             * HTTP/TLS/TCP shutdown messages to peers if necessary and will eventually cause internal connection
+             * memory to stop being accessed.
+             *
+             * The httpConnectionRelease() call will begin releasing internal connection memory. If the shutdown isn't
+             * complete before httpConnectionRelease(), it can lead to the shutdown tasks accessing memory that's been
+             * released, resulting in Segfaults.
+             */
+            try {
+                // Give Shutdown 10 seconds to complete, otherwise throw a Timeout Exception
+                this.shutdown().get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         if (!isNull()) {
+            try {
+                /**
+                 * FIXME: The above shutdown().get() should be enough to avoid race conditions, but aws-c-http has a
+                 * bug in the way it orders it's shutdown callbacks. Add an artificial sleep here to avoid Race
+                 * Condition with the EventLoop when shutting down the TLS Connection.
+                 *
+                 * Tracking Issue: https://github.com/awslabs/aws-c-http/issues/66
+                 * TraceLog: https://gist.github.com/alexw91/e6205fd38ecc530a55b956c98ca189dc
+                 */
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             httpConnectionRelease(release());
         }
 
@@ -164,6 +249,15 @@ public class HttpConnection extends CrtResource {
         return shutdownFuture;
     }
 
+    private boolean didConnectSuccessfully() {
+        return connectedFuture.isDone() && !connectedFuture.isCompletedExceptionally();
+    }
+
+
+    private boolean isShutdownComplete() {
+        return shutdownFuture.isDone();
+    }
+
     /**
      * Schedules a task on the Native EventLoop to shut down the current connection
      * @return When this future completes, the shutdown is complete
@@ -188,10 +282,16 @@ public class HttpConnection extends CrtResource {
                                                  long client_bootstrap,
                                                  long socketOptions,
                                                  long tlsContext,
+                                                 int windowSize,
                                                  String endpoint,
                                                  int port) throws CrtRuntimeException;
 
     private static native void httpConnectionShutdown(long connection) throws CrtRuntimeException;
     private static native void httpConnectionRelease(long connection);
 
+    private static native HttpStream httpConnectionMakeRequest(long connection,
+                                                               String method,
+                                                               String uri,
+                                                               HttpHeader[] headers,
+                                                               CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
 }

@@ -9,4 +9,6 @@ ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" 
 
 # build java package
 cd $CODEBUILD_SRC_DIR
+
+ulimit -c unlimited
 mvn -B test -DredirectTestOutputToFile=true -DreuseForks=false -Dendpoint=$ENDPOINT -Dcertificate=/tmp/certificate.pem -Dprivatekey=/tmp/privatekey.pem -Drootca=/tmp/AmazonRootCA1.pem

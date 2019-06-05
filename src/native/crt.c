@@ -44,6 +44,120 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
+/* methods of Java's ByteBuffer Class */
+static struct {
+    jclass cls;
+    jmethodID get_capacity; /* The total number of bytes in the internal byte array. Stays constant. */
+    jmethodID get_limit;    /* The max allowed read/write position of the Buffer. limit must be <= capacity. */
+    jmethodID set_limit;
+    jmethodID get_position; /* The current read/write position of the Buffer. position must be <= limit */
+    jmethodID set_position;
+    jmethodID get_remaining; /* Remaining number of bytes before the limit is reached. Equal to (limit - position). */
+    jmethodID wrap;          /* Creates a new ByteBuffer Object from a Java byte[]. */
+} s_java_byte_buffer = {0};
+
+void s_cache_java_byte_buffer(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/nio/ByteBuffer");
+    assert(cls);
+
+    // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
+    // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
+    s_java_byte_buffer.cls = (*env)->NewGlobalRef(env, cls);
+
+    s_java_byte_buffer.get_capacity = (*env)->GetMethodID(env, cls, "capacity", "()I");
+    assert(s_java_byte_buffer.get_capacity);
+
+    s_java_byte_buffer.get_limit = (*env)->GetMethodID(env, cls, "limit", "()I");
+    assert(s_java_byte_buffer.get_limit);
+
+    s_java_byte_buffer.set_limit = (*env)->GetMethodID(env, cls, "limit", "(I)Ljava/nio/Buffer;");
+    assert(s_java_byte_buffer.set_limit);
+
+    s_java_byte_buffer.get_position = (*env)->GetMethodID(env, cls, "position", "()I");
+    assert(s_java_byte_buffer.get_position);
+
+    s_java_byte_buffer.set_position = (*env)->GetMethodID(env, cls, "position", "(I)Ljava/nio/Buffer;");
+    assert(s_java_byte_buffer.set_position);
+
+    s_java_byte_buffer.get_remaining = (*env)->GetMethodID(env, cls, "remaining", "()I");
+    assert(s_java_byte_buffer.get_remaining);
+
+    s_java_byte_buffer.wrap = (*env)->GetStaticMethodID(env, cls, "wrap", "([B)Ljava/nio/ByteBuffer;");
+    assert(s_java_byte_buffer.wrap);
+}
+
+jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
+    jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
+    return jArray;
+}
+
+void aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount) {
+    (*env)->GetByteArrayRegion(env, src, 0, amount, (jbyte *)dst);
+}
+
+void aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
+    (*env)->SetByteArrayRegion(env, dst, 0, amount, (jbyte *)src);
+}
+
+jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
+    jobject jByteBuffer = (*env)->CallStaticObjectMethod(env, s_java_byte_buffer.cls, s_java_byte_buffer.wrap, jArray);
+    return jByteBuffer;
+}
+
+/**
+ * Converts a Java byte[] to a Native aws_byte_cursor
+ */
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array) {
+
+    jboolean isCopy;
+    jbyte *data = (*env)->GetByteArrayElements(env, array, &isCopy);
+    jsize len = (*env)->GetArrayLength(env, array);
+    return aws_byte_cursor_from_array((const uint8_t *)data, (size_t)len);
+}
+
+/**
+ * Converts a Native aws_byte_cursor to a Java byte[]
+ */
+jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
+    jbyteArray jArray = aws_java_byte_array_new(env, native_data->len);
+    aws_copy_native_array_to_java_byte_array(env, jArray, native_data->ptr, native_data->len);
+    return jArray;
+}
+
+/**
+ * Converts a Native aws_byte_cursor to a Java ByteBuffer Object
+ */
+jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
+    assert(env);
+    jbyteArray jArray = aws_jni_byte_array_from_cursor(env, native_data);
+    jobject jByteBuffer = aws_java_byte_array_to_java_byte_buffer(env, jArray);
+
+    return jByteBuffer;
+}
+
+/**
+ * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
+ */
+jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
+    jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst->buffer, (jlong)dst->capacity);
+
+    // Set the Buffer Limit (the max allowed element to read/write)
+    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, (jint)dst->capacity);
+
+    // Set the Buffer Position (the next element to read/write)
+    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, (jint)dst->len);
+
+    return jByteBuf;
+}
+
+/**
+ * Returns the read/write position of a Java ByteBuffer
+ */
+int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
+    jint position = (*env)->CallIntMethod(env, java_byte_buffer, s_java_byte_buffer.get_position);
+    return (int)position;
+}
+
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
     return aws_byte_cursor_from_array(
         (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
@@ -87,11 +201,18 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_message_handler(JNIEnv *);
     extern void s_cache_mqtt_exception(JNIEnv *);
     extern void s_cache_http_connection(JNIEnv *);
+    extern void s_cache_crt_http_stream_handler(JNIEnv *);
+    extern void s_cache_http_header(JNIEnv *);
+    extern void s_cache_http_stream(JNIEnv *);
+    s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
     s_cache_http_connection(env);
+    s_cache_crt_http_stream_handler(env);
+    s_cache_http_header(env);
+    s_cache_http_stream(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
@@ -122,7 +243,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     //     aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
     //     return;
     // }
-
     // aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);

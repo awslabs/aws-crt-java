@@ -240,9 +240,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
 
     // struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
     // if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
-    //    aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-    //    return;
-    //}
+    //     aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
+    //     return;
+    // }
     // aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);

@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 public class HttpHeader {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private byte[] name;  /* Not final, Native will manually set name after calling empty Constructor. */
-    private byte[] value; /* Not final, Native will manually set name after calling empty Constructor. */
+    private byte[] value; /* Not final, Native will manually set value after calling empty Constructor. */
 
     /** Called by Native to create a new HttpHeader. This is so that Native doesn't have to worry about UTF8
      * encoding/decoding issues. The user thread will deal with them when they call getName() or getValue() **/

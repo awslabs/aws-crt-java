@@ -94,7 +94,7 @@ public class HttpRequestResponseTest {
     private String calculateBodyHash(ByteBuffer bodyBuffer) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(bodyBuffer);
-        return  byteArrayToHex(digest.digest());
+        return byteArrayToHex(digest.digest());
     }
 
     public TestHttpResponse getResponse(URI uri, HttpRequest request, String reqBody) throws Exception {

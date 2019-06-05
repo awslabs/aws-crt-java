@@ -379,10 +379,11 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
         callback->java_http_stream,
         jByteBuffer);
 
+    aws_mutex_unlock(&callback->lock);
+
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
         (*env)->DeleteGlobalRef(env, jByteBuffer);
-        aws_mutex_unlock(&callback->lock);
         aws_http_connection_close(aws_http_stream_get_connection(stream));
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
@@ -394,8 +395,6 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     dst->len += amt_written;
 
     (*env)->DeleteGlobalRef(env, jByteBuffer);
-
-    aws_mutex_unlock(&callback->lock);
 
     if (isDone) {
         return AWS_HTTP_OUTGOING_BODY_DONE;

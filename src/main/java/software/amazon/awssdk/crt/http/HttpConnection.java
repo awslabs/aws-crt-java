@@ -246,12 +246,12 @@ public class HttpConnection extends CrtResource {
         return shutdownFuture;
     }
 
-    public boolean didConnectSuccessfully() {
+    private boolean didConnectSuccessfully() {
         return connectedFuture.isDone() && !connectedFuture.isCompletedExceptionally();
     }
 
 
-    public boolean isShutdownComplete() {
+    private boolean isShutdownComplete() {
         return shutdownFuture.isDone();
     }
 

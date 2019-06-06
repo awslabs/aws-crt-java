@@ -7,7 +7,6 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
-      - export GIT_TAG=$(git describe --abbrev=0)
   build:
     commands:
       - cd aws-crt-java

@@ -9,7 +9,7 @@ phases:
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - export PKG_VERSION=$(git describe --abbrev=0 | cut -f2 -dv)
+      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - echo PKG_VERSION=$PKG_VERSION
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2

@@ -13,7 +13,6 @@ Requirements:
 * Clang 3.9+ or GCC 4.4+
 * libssl-dev (on POSIX platforms)
 * cmake 3.1+
-* ninja
 * Java: Any JDK8 or above, ensure JAVA_HOME is set
 * Maven
 

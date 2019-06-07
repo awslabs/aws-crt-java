@@ -34,7 +34,7 @@ set(AWS_C_IO_SHA "v0.3.9")
 include(BuildAwsCIO)
 
 set(AWS_C_COMPRESSION_URL "https://github.com/awslabs/aws-c-compression.git")
-set(AWS_C_COMPRESSION_SHA "v0.2.0")
+set(AWS_C_COMPRESSION_SHA "v0.2.1")
 include(BuildAwsCCompression)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
@@ -44,6 +44,8 @@ include(BuildAwsCMqtt)
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
 set(AWS_C_HTTP_SHA "v0.2.16")
 include(BuildAwsCHttp)
+
+add_dependencies(AwsCCompression AwsCCommon)
 
 # AwsCMqtt depends on AwsCIO
 add_dependencies(AwsCMqtt AwsCIO)

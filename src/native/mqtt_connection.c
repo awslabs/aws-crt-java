@@ -237,7 +237,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating JNI connection");
         goto error_cleanup;
     }
-    
+
     connection->client = client;
     connection->mqtt_connection = (*env)->NewGlobalRef(env, jni_mqtt_connection);
     connection->disconnect_requested = false;

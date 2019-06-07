@@ -40,11 +40,10 @@ JNIEXPORT jlong JNICALL
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_mqtt_client *client =
-        (struct aws_mqtt_client *)aws_mem_acquire(allocator, sizeof(struct aws_mqtt_client));
+    struct aws_mqtt_client *client = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_client));
     if (!client) {
         aws_jni_throw_runtime_exception(
-            env, "MqttClient.mqtt_client_init: aws_mem_acquire failed, unable to allocate new aws_mqtt_client");
+            env, "MqttClient.mqtt_client_init: aws_mem_calloc failed, unable to allocate new aws_mqtt_client");
         return (jlong)NULL;
     }
 

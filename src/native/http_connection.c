@@ -49,12 +49,12 @@ static struct {
 
 void s_cache_http_connection(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpConnection");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_http_connection.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(I)V");
-    assert(s_http_connection.on_connection_complete);
+    AWS_FATAL_ASSERT(s_http_connection.on_connection_complete);
 
     s_http_connection.on_connection_shutdown = (*env)->GetMethodID(env, cls, "onConnectionShutdown", "(I)V");
-    assert(s_http_connection.on_connection_shutdown);
+    AWS_FATAL_ASSERT(s_http_connection.on_connection_shutdown);
 }
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -71,13 +71,13 @@ void s_cache_http_connection(JNIEnv *env) {
 
 static void s_on_http_conn_setup(struct aws_http_connection *connection, int error_code, void *user_data) {
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)user_data;
-    assert(http_jni_conn);
+    AWS_FATAL_ASSERT(http_jni_conn);
 
     // Save the native pointer
     http_jni_conn->native_http_conn = connection;
 
-    assert(s_http_connection.on_connection_complete);
-    assert(http_jni_conn->java_http_conn);
+    AWS_FATAL_ASSERT(s_http_connection.on_connection_complete);
+    AWS_ASSERT(http_jni_conn->java_http_conn);
     // Call the Java Object's "onComplete" callback
     if (http_jni_conn->java_http_conn) {
         JNIEnv *env = aws_jni_get_thread_env(http_jni_conn->jvm);
@@ -150,20 +150,19 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     }
 
     /* any error after this point needs to jump to error_cleanup */
-    struct http_jni_connection *http_jni_conn = aws_mem_acquire(allocator, sizeof(struct http_jni_connection));
+    struct http_jni_connection *http_jni_conn = aws_mem_calloc(allocator, 1, sizeof(struct http_jni_connection));
     if (!http_jni_conn) {
         aws_jni_throw_runtime_exception(env, "Out of memory allocating JNI connection");
         goto error_cleanup;
     }
 
-    AWS_ZERO_STRUCT(*http_jni_conn);
     // Create a new reference to the HttpConnection Object.
     http_jni_conn->java_http_conn = (*env)->NewGlobalRef(env, http_conn_jobject);
 
     // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
     jint jvmresult = (*env)->GetJavaVM(env, &http_jni_conn->jvm);
     (void)jvmresult;
-    assert(jvmresult == 0);
+    AWS_FATAL_ASSERT(jvmresult == 0);
 
     struct aws_http_client_connection_options http_options = AWS_HTTP_CLIENT_CONNECTION_OPTIONS_INIT;
     http_options.self_size = sizeof(struct aws_http_client_connection_options);

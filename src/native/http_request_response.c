@@ -46,17 +46,17 @@ static struct {
 
 void s_cache_http_header(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_http_header.header_class = cls;
 
     s_http_header.constructor = (*env)->GetMethodID(env, cls, "<init>", "()V");
-    assert(s_http_header.constructor);
+    AWS_FATAL_ASSERT(s_http_header.constructor);
 
     s_http_header.name = (*env)->GetFieldID(env, cls, "name", "[B");
-    assert(s_http_header.name);
+    AWS_FATAL_ASSERT(s_http_header.name);
 
     s_http_header.value = (*env)->GetFieldID(env, cls, "value", "[B");
-    assert(s_http_header.value);
+    AWS_FATAL_ASSERT(s_http_header.value);
 
     // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
     // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
@@ -71,7 +71,7 @@ static struct {
 
 void s_cache_http_stream(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStream");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_http_stream_handler.stream_class = cls;
 
     // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
@@ -79,15 +79,15 @@ void s_cache_http_stream(JNIEnv *env) {
     s_http_stream_handler.stream_class = (*env)->NewGlobalRef(env, s_http_stream_handler.stream_class);
 
     s_http_stream_handler.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
-    assert(s_http_stream_handler.constructor);
+    AWS_FATAL_ASSERT(s_http_stream_handler.constructor);
 
     s_http_stream_handler.close = (*env)->GetMethodID(env, cls, "close", "()V");
-    assert(s_http_stream_handler.close);
+    AWS_FATAL_ASSERT(s_http_stream_handler.close);
 }
 
 static jobject s_java_http_stream_from_native_new(JNIEnv *env, struct aws_http_stream *stream) {
     jlong jni_native_ptr = (jlong)stream;
-    assert(jni_native_ptr);
+    AWS_FATAL_ASSERT(jni_native_ptr);
     jobject jHttpStream =
         (*env)->NewObject(env, s_http_stream_handler.stream_class, s_http_stream_handler.constructor, jni_native_ptr);
 
@@ -121,9 +121,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
     jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct http_stream_callback_data *callback = aws_mem_acquire(allocator, sizeof(struct http_stream_callback_data));
-    AWS_ZERO_STRUCT(*callback);
-
+    struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
     if (!callback) {
         /* caller will throw when they get a null */
         return NULL;
@@ -160,30 +158,30 @@ static struct {
 
 void s_cache_crt_http_stream_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/CrtHttpStreamHandler");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_crt_http_stream_handler.onResponseHeaders = (*env)->GetMethodID(
         env,
         cls,
         "onResponseHeaders",
         "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
 
-    assert(s_crt_http_stream_handler.onResponseHeaders);
+    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeaders);
 
     s_crt_http_stream_handler.onResponseHeadersDone =
         (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Z)V");
-    assert(s_crt_http_stream_handler.onResponseHeadersDone);
+    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeadersDone);
 
     s_crt_http_stream_handler.onResponseBody = (*env)->GetMethodID(
         env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
-    assert(s_crt_http_stream_handler.onResponseBody);
+    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseBody);
 
     s_crt_http_stream_handler.onResponseComplete =
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
-    assert(s_crt_http_stream_handler.onResponseComplete);
+    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseComplete);
 
     s_crt_http_stream_handler.sendOutgoingBody = (*env)->GetMethodID(
         env, cls, "sendRequestBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)Z");
-    assert(s_crt_http_stream_handler.sendOutgoingBody);
+    AWS_FATAL_ASSERT(s_crt_http_stream_handler.sendOutgoingBody);
 }
 
 static jobjectArray s_java_headers_array_from_native(
@@ -193,10 +191,10 @@ static jobjectArray s_java_headers_array_from_native(
 
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
-    assert(s_http_header.header_class);
-    assert(s_http_header.constructor);
-    assert(s_http_header.name);
-    assert(s_http_header.value);
+    AWS_FATAL_ASSERT(s_http_header.header_class);
+    AWS_FATAL_ASSERT(s_http_header.constructor);
+    AWS_FATAL_ASSERT(s_http_header.name);
+    AWS_FATAL_ASSERT(s_http_header.value);
 
     jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, s_http_header.header_class, NULL);
 
@@ -319,7 +317,7 @@ static void s_on_incoming_body_fn(
     // to be able to read.
     int amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     (void)amt_read;
-    assert(amt_read == data->len);
+    AWS_FATAL_ASSERT(amt_read == data->len);
 
     *out_window_update_size = (size_t)window_increment;
 }
@@ -389,7 +387,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     }
 
     int amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
-    assert(amt_written <= out_remaining);
+    AWS_FATAL_ASSERT(amt_written <= out_remaining);
 
     aws_copy_java_byte_array_to_native_array(env, jByteArray, out, amt_written);
     dst->len += amt_written;
@@ -446,8 +444,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct aws_http_header headers[num_headers];
     AWS_ZERO_ARRAY(headers);
 
-    assert(s_http_header.name);
-    assert(s_http_header.value);
+    AWS_FATAL_ASSERT(s_http_header.name);
+    AWS_FATAL_ASSERT(s_http_header.value);
 
     for (int i = 0; i < num_headers; i++) {
         jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);

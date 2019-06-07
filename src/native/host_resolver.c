@@ -49,7 +49,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
         return (jlong)NULL;
     }
 
-    struct aws_host_resolver *resolver = aws_mem_acquire(allocator, sizeof(struct aws_host_resolver));
+    struct aws_host_resolver *resolver = aws_mem_calloc(allocator, 1, sizeof(struct aws_host_resolver));
     aws_host_resolver_init_default(resolver, allocator, (size_t)max_entries, el_group);
 
     return (jlong)resolver;

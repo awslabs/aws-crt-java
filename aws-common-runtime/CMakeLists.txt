@@ -16,7 +16,7 @@ set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies buil
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
-set(AWS_C_COMMON_SHA "v0.3.6")
+set(AWS_C_COMMON_SHA "v0.3.11")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
@@ -30,22 +30,26 @@ if (UNIX AND NOT APPLE)
 endif()
 
 set(AWS_C_IO_URL "https://github.com/awslabs/aws-c-io.git")
-set(AWS_C_IO_SHA "v0.3.5")
+set(AWS_C_IO_SHA "v0.3.9")
 include(BuildAwsCIO)
 
+set(AWS_C_COMPRESSION_URL "https://github.com/awslabs/aws-c-compression.git")
+set(AWS_C_COMPRESSION_SHA "v0.2.0")
+include(BuildAwsCCompression)
+
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "v0.3.4")
+set(AWS_C_MQTT_SHA "v0.3.7")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "v0.2.3")
+set(AWS_C_HTTP_SHA "v0.2.16")
 include(BuildAwsCHttp)
 
 # AwsCMqtt depends on AwsCIO
 add_dependencies(AwsCMqtt AwsCIO)
 
 # AwsCHttp depends on AwsCIO
-add_dependencies(AwsCHttp AwsCIO)
+add_dependencies(AwsCHttp AwsCCompression AwsCIO)
 
 if (UNIX AND NOT APPLE)
     add_dependencies(S2N OpenSSL)

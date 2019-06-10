@@ -6,19 +6,21 @@
 
 pushd %~dp0
 
-if not exist mvn-build\cmake.properties (
-    echo "mvn-build\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"
+set CMAKE_BINARIES=target\cmake-build
+
+if not exist %CMAKE_BINARIES%\cmake.properties (
+    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"
     goto :error
 )
 
 :: Read generator and Visual Studio version from cmake.properties
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"cmake.generator"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"cmake.generator"') do (
     set GENERATOR=%%A
 )
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"vs.version"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"vs.version"') do (
     set VS_VERSION=%%A
 ) 
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"vs.vcvarsall"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"vs.vcvarsall"') do (
     set VCVARSALL=%%A
 )
 

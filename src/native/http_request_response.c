@@ -507,6 +507,29 @@ JNIEXPORT void JNICALL
     aws_http_stream_release(stream);
 }
 
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamGetResponseStatusCode(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_stream) {
+
+    struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
+
+    if (stream == NULL) {
+        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        return -1;
+    }
+
+    int status = -1;
+    int err_code = aws_http_stream_get_incoming_response_status(stream, &status);
+
+    if (err_code != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "Error Getting Response Status Code from HttpStream.");
+        return -1;
+    }
+
+    return (jint)status;
+}
+
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamIncrementWindow(
     JNIEnv *env,
     jclass jni_class,

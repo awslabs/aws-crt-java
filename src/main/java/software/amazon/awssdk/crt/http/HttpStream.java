@@ -51,6 +51,15 @@ public class HttpStream extends CrtResource {
         httpStreamIncrementWindow(native_ptr(), windowSize);
     }
 
+    /**
+     * Retrieves the Http Response Status Code
+     * @return The Http Response Status Code
+     */
+    public int getResponseStatusCode() {
+        return httpStreamGetResponseStatusCode(native_ptr());
+    }
+
     private static native void httpStreamRelease(long http_stream);
     private static native void httpStreamIncrementWindow(long http_stream, int window_size);
+    private static native int  httpStreamGetResponseStatusCode(long http_stream);
 }

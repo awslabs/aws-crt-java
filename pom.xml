@@ -344,12 +344,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
-                <systemPropertyVariables>
-                    <certificate>${crt.test.certificate}</certificate>
-                    <privatekey>${crt.test.privatekey}</privatekey>
-                    <endpoint>${crt.test.endpoint}</endpoint>
-                    <rootca>${crt.test.rootca}</rootca>
-                </systemPropertyVariables>
+                    <systemPropertyVariables>
+                        <certificate>${crt.test.certificate}</certificate>
+                        <privatekey>${crt.test.privatekey}</privatekey>
+                        <endpoint>${crt.test.endpoint}</endpoint>
+                        <rootca>${crt.test.rootca}</rootca>
+                    </systemPropertyVariables>
+                    <shutdown>kill</shutdown>
                 </configuration>
             </plugin>
         </plugins>

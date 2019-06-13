@@ -3,13 +3,11 @@ language: c
 
 os: osx
 osx_image:
-  - xcode8
-  - xcode9.2
   - xcode10.1
 compiler: clang
 language: java
 jdk:
-  - openjdk8
+  - openjdk11
 
 # use the addon to do the update of homebrew, or else ruby versions get confused
 addons:

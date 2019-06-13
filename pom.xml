@@ -34,6 +34,7 @@
     <properties>
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>Release</cmake.buildtype>
+        <cmake.binaries>target/cmake-build</cmake.binaries>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,7 +43,7 @@
     <profiles>
         <profile>
             <!-- Windows profile: find cmake generators and use ALL_BUILD target 
-                NOTE: CMake generator will be cached to mvn-build/cmake.properties, delete or edit this
+                NOTE: CMake generator will be cached to target/cmake-build/cmake.properties, delete or edit this
                 file to change VS version
                 -->
             <id>windows-vs</id>
@@ -89,7 +90,7 @@
                                 </goals>
                                 <configuration>
                                     <files>
-                                        <file>${project.basedir}/mvn-build/cmake.properties</file>
+                                        <file>${cmake.binaries}/cmake.properties</file>
                                     </files>
                                 </configuration>
                             </execution>
@@ -174,7 +175,7 @@
                                 </goals>
                                 <configuration>
                                     <executable>${cmake.command}</executable>
-                                    <workingDirectory>mvn-build</workingDirectory>
+                                    <workingDirectory>${cmake.binaries}</workingDirectory>
                                     <arguments>
                                         <argument>-G${cmake.generator}</argument>
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
@@ -182,7 +183,7 @@
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>..</argument>
+                                        <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -195,7 +196,7 @@
                                 </goals>
                                 <configuration>
                                     <executable>${cmake.command}</executable>
-                                    <workingDirectory>mvn-build</workingDirectory>
+                                    <workingDirectory>${cmake.binaries}</workingDirectory>
                                     <arguments>
                                         <argument>--build</argument>
                                         <argument>.</argument>
@@ -294,7 +295,7 @@
         <resources>
             <!-- shared libs built via cmake -->
             <resource>
-                <directory>mvn-build/lib</directory>
+                <directory>${cmake.binaries}/lib</directory>
                 <excludes>
                     <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude><!-- do not package pdbs, comment this out to debug C code -->
@@ -328,7 +329,7 @@
                         <phase>initialize</phase>
                         <configuration>
                             <tasks>
-                                <mkdir dir="mvn-build"/>
+                                <mkdir dir="${cmake.binaries}"/>
                             </tasks>
                         </configuration>
                         <goals>
@@ -343,12 +344,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
-                <systemPropertyVariables>
-                    <certificate>${crt.test.certificate}</certificate>
-                    <privatekey>${crt.test.privatekey}</privatekey>
-                    <endpoint>${crt.test.endpoint}</endpoint>
-                    <rootca>${crt.test.rootca}</rootca>
-                </systemPropertyVariables>
+                    <systemPropertyVariables>
+                        <certificate>${crt.test.certificate}</certificate>
+                        <privatekey>${crt.test.privatekey}</privatekey>
+                        <endpoint>${crt.test.endpoint}</endpoint>
+                        <rootca>${crt.test.rootca}</rootca>
+                    </systemPropertyVariables>
+                    <shutdown>kill</shutdown>
                 </configuration>
             </plugin>
         </plugins>

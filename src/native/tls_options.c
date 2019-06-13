@@ -50,14 +50,12 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsNew(JNIEnv *env, jclass jni_class) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct jni_tls_ctx_options *tls =
-        (struct jni_tls_ctx_options *)aws_mem_acquire(allocator, sizeof(struct jni_tls_ctx_options));
+    struct jni_tls_ctx_options *tls = aws_mem_calloc(allocator, 1, sizeof(struct jni_tls_ctx_options));
     if (!tls) {
         aws_jni_throw_runtime_exception(
             env, "TlsContextOptions.tls_ctx_options_new: Unable to allocate new jni_tls_ctx_options");
         return (jlong)NULL;
     }
-    AWS_ZERO_STRUCT(*tls);
     aws_tls_ctx_options_init_default_client(&tls->options, aws_jni_get_allocator());
     return (jlong)tls;
 }

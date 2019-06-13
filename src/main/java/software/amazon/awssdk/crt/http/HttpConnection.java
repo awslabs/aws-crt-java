@@ -200,20 +200,6 @@ public class HttpConnection extends CrtResource {
         }
 
         if (!isNull()) {
-            try {
-                /**
-                 * FIXME: The above shutdown().get() should be enough to avoid race conditions, but aws-c-http has a
-                 * bug in the way it orders it's shutdown callbacks. Add an artificial sleep here to avoid Race
-                 * Condition with the EventLoop when shutting down the TLS Connection.
-                 *
-                 * Tracking Issue: https://github.com/awslabs/aws-c-http/issues/66
-                 * TraceLog: https://gist.github.com/alexw91/e6205fd38ecc530a55b956c98ca189dc
-                 */
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
             httpConnectionRelease(release());
         }
 

@@ -10,11 +10,11 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
-      - mkdir -p mvn-build
-      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
-      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
-      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/
-      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/mvn-build/lib
+      - mkdir -p target/cmake-build/lib
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
       - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml

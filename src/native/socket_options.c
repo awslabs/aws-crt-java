@@ -36,7 +36,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =
-        (struct aws_socket_options *)aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
+        (struct aws_socket_options *)aws_mem_calloc(allocator, 1, sizeof(struct aws_socket_options));
     if (!options) {
         aws_jni_throw_runtime_exception(
             env, "SocketOptions.socket_options_new: Unable to allocate new aws_socket_options");

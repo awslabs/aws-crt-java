@@ -15,11 +15,11 @@ function install_from_brew {
     # and reinstall from the cache
     brew uninstall --ignore-dependencies $1 || true
     if [ ! -e $1*bottle*.tar.gz ]; then
-        brew install --build-bottle $1
-        brew bottle --json $1
+        brew install -v --build-bottle $1
+        brew bottle -v --json $1
         brew uninstall --ignore-dependencies $1
     fi
-    brew install $1*bottle*tar.gz
+    brew install -v $1*bottle*tar.gz
     popd
 }
 

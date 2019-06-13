@@ -8,6 +8,8 @@ osx_image:
   - xcode10.1
 compiler: clang
 language: java
+jdk:
+  - openjdk8
 
 # use the addon to do the update of homebrew, or else ruby versions get confused
 addons:
@@ -17,4 +19,4 @@ addons:
       - cmake
 
 script:
-  - CODEBUILD_SRC_DIR=`pwd` ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  - ./codebuild/common-macos.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

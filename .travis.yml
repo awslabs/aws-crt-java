@@ -3,24 +3,18 @@ language: c
 
 os: osx
 osx_image:
-  - xcode8
-  - xcode9.2
   - xcode10.1
 compiler: clang
+language: java
+jdk:
+  - openjdk11
 
 # use the addon to do the update of homebrew, or else ruby versions get confused
 addons:
   homebrew:
     update: true
-    taps: AdoptOpenJDK/openjdk
     packages:
-      - ninja
-      - maven
-      - adoptopenjdk8
-
-cache:
-  directories:
-    - ./packages
+      - cmake
 
 script:
   - ./codebuild/common-macos.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

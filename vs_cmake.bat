@@ -4,8 +4,6 @@
 @echo off
 @setlocal enableextensions enabledelayedexpansion
 
-pushd %~dp0
-
 set CMAKE_BINARIES=%CD%
 
 if not exist %CMAKE_BINARIES%\cmake.properties (
@@ -41,7 +39,6 @@ if [!ISWIN64!] == [Win64] (
 call !VCVARSALL! !ARCH!
 
 :cmake
-popd
 @echo on
 cmake %*
 @echo off
@@ -50,6 +47,5 @@ cmake %*
 goto :EOF
 
 :error
-popd
 @endlocal
 exit /b 1

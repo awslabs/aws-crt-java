@@ -40,7 +40,7 @@ call !VCVARSALL! !ARCH!
 
 :cmake
 @echo on
-cmake %*
+cmake %* || goto :error
 @echo off
 
 @endlocal

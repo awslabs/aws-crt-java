@@ -6,7 +6,7 @@
 
 pushd %~dp0
 
-set CMAKE_BINARIES=.
+set CMAKE_BINARIES=%CD%
 
 if not exist %CMAKE_BINARIES%\cmake.properties (
     echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"

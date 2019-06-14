@@ -6,7 +6,7 @@ echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR=Visual Studio 14 2015 Win64
 
-mvn -X compile || goto error
+mvn -X compile -Pwindows-jenkins || goto error
 
 for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A

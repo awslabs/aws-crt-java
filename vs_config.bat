@@ -4,7 +4,11 @@
 
 pushd %~dp0
 
-set CMAKE_BINARIES=target\cmake-build
+set CMAKE_BINARIES=%1
+if ["%CMAKE_BINARIES%"] == [] (
+    echo No CMake binaries directory specified
+    goto :error
+)
 
 :: if the generator is specified, then we can narrow the search
 if not ["%AWS_CMAKE_GENERATOR%"] == [] (

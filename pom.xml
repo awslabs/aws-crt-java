@@ -72,6 +72,9 @@
                                 </goals>
                                 <configuration>
                                     <executable>"${project.basedir}/vs_config.bat"</executable>
+                                    <arguments>
+                                        <argument>${cmake.binaries}</argument>
+                                    </arguments>
                                     <workingDirectory>.</workingDirectory>
                                 </configuration>
                             </execution>
@@ -148,6 +151,21 @@
             </activation>
             <properties>
                 <cmake.buildtype>Debug</cmake.buildtype>
+            </properties>
+        </profile>
+        <!-- Windows CI -->
+        <profile>
+            <id>windows-ci</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+                <property>
+                    <name>env.JENKINS_HOME</name>
+                </property>
+            </activation>
+            <properties>
+                <cmake.binaries>${env.TEMP}/${project.artifactId}-build</cmake.binaries>
             </properties>
         </profile>
         <!-- native compilation -->

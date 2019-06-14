@@ -153,19 +153,6 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
-        <!-- Windows CI -->
-        <profile>
-            <id>windows-jenkins</id>
-            <properties>
-                <cmake.binaries>${env.TEMP}/${project.artifactId}-build</cmake.binaries>
-            </properties>
-        </profile>
-        <profile>
-            <id>windows-codebuild</id>
-            <properties>
-                <cmake.binaries>${env.TEMP}/${project.artifactId}-build</cmake.binaries>
-            </properties>
-        </profile>
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>

@@ -118,6 +118,7 @@ public class HttpRequestResponseTest {
                 @Override
                 public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
                     response.statusCode = responseStatusCode;
+                    Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
                     response.headers.addAll(Arrays.asList(nextHeaders));
                 }
 

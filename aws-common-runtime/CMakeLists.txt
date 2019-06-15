@@ -34,7 +34,7 @@ set(AWS_C_IO_SHA "v0.3.13")
 include(BuildAwsCIO)
 
 set(AWS_C_COMPRESSION_URL "https://github.com/awslabs/aws-c-compression.git")
-set(AWS_C_COMPRESSION_SHA "v0.2.1")
+set(AWS_C_COMPRESSION_SHA "v0.2.2")
 include(BuildAwsCCompression)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")

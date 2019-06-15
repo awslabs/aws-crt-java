@@ -339,18 +339,18 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring(env, jni_client_id);
     bool clean_session = jni_clean_session != 0;
 
-    struct aws_mqtt_connection_options connect_options = {
-        .host_name = endpoint,
-        .port = port,
-        .socket_options = &connection->socket_options,
-        .tls_options = tls_options,
-        .client_id = client_id,
-        .keep_alive_time_secs = keep_alive_ms / 1000,
-        .ping_timeout_ms = ping_timeout_ms,
-        .clean_session = clean_session,
-        .on_connection_complete = s_on_connection_complete,
-        .user_data = connection,
-    };
+    struct aws_mqtt_connection_options connect_options;
+    AWS_ZERO_STRUCT(connect_options);
+    connect_options.host_name = endpoint;
+    connect_options.port = port;
+    connect_options.socket_options = &connection->socket_options;
+    connect_options.tls_options = tls_options;
+    connect_options.client_id = client_id;
+    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
+    connect_options.ping_timeout_ms = ping_timeout_ms;
+    connect_options.clean_session = clean_session;
+    connect_options.on_connection_complete = s_on_connection_complete;
+    connect_options.user_data = connection;
 
     int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
     if (result != AWS_OP_SUCCESS) {

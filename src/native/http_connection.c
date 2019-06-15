@@ -87,6 +87,7 @@ static void s_on_http_conn_setup(struct aws_http_connection *connection, int err
 }
 
 static void s_on_http_conn_shutdown(struct aws_http_connection *connection, int error_code, void *user_data) {
+    (void)connection;
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)user_data;
 
     // Call the Java Object's "onShutdown" callback
@@ -100,7 +101,7 @@ static void s_on_http_conn_shutdown(struct aws_http_connection *connection, int 
 /**
  * Create a new aws_http_request_options struct with default values
  */
-JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpConnectionNew(
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpConnectionNew(
     JNIEnv *env,
     jclass jni_class,
     jobject http_conn_jobject,
@@ -110,6 +111,8 @@ JNIEXPORT long JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     jint jni_window_size,
     jstring jni_endpoint,
     jint jni_port) {
+
+    (void)jni_class;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
@@ -205,6 +208,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
+    
+    (void)env;
+    (void)jni_class;
 
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
     aws_http_connection_close(http_jni_conn->native_http_conn);
@@ -214,6 +220,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
+    
+    (void)jni_class;
 
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
     if (http_jni_conn->java_http_conn) {

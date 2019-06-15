@@ -15,7 +15,6 @@
 
 #include <crt.h>
 #include <jni.h>
-#include <unistd.h>
 
 #include <aws/common/mutex.h>
 #include <aws/http/connection.h>
@@ -410,6 +409,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     jobjectArray jni_headers,
     jobject jni_crt_http_callback_handler) {
 
+    (void)jni_class;
+
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
 
     if (!http_jni_conn) {
@@ -441,7 +442,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct aws_byte_cursor uri = aws_jni_byte_cursor_from_jstring(env, jni_uri);
     jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
 
-    struct aws_http_header headers[num_headers];
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, headers, num_headers);
     AWS_ZERO_ARRAY(headers);
 
     AWS_FATAL_ASSERT(s_http_header.name);
@@ -494,6 +495,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
 
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamRelease(JNIEnv *env, jclass jni_class, jlong jni_stream) {
+    
+    (void)jni_class;
 
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
@@ -510,6 +513,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jclass jni_class,
     jlong jni_stream,
     jint window_update) {
+
+    (void)jni_class;
 
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 

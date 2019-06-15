@@ -35,6 +35,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     jclass jni_class,
     jlong jni_elg,
     jint max_entries) {
+    
+    (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *el_group = (struct aws_event_loop_group *)jni_elg;
@@ -59,6 +61,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostResol
     JNIEnv *env,
     jclass jni_class,
     jlong jni_host_resolver) {
+    
+    (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_host_resolver;

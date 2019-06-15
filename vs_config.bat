@@ -4,7 +4,7 @@
 
 :: Ensure all slashes in the path are windows style
 set ARG=%1
-set CMAKE_BINARIES=%ARG:\=/%
+set CMAKE_BINARIES=%ARG:/=\%
 if ["%CMAKE_BINARIES%"] == [] (
     echo No CMake binaries directory specified
     goto :error

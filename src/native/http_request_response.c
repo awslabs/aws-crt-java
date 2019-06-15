@@ -495,7 +495,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
 
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamRelease(JNIEnv *env, jclass jni_class, jlong jni_stream) {
-    
+
     (void)jni_class;
 
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;

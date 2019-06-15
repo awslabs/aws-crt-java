@@ -208,7 +208,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
-    
+
     (void)env;
     (void)jni_class;
 
@@ -220,7 +220,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpC
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
-    
+
     (void)jni_class;
 
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;

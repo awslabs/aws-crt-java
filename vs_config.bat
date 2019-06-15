@@ -111,6 +111,8 @@ if not exist %CMAKE_BINARIES% (
 echo cmake.generator=!CMAKE_VS_GENERATOR!>%CMAKE_BINARIES%\cmake.properties
 echo vs.version=!VS_VERSION!>>%CMAKE_BINARIES%\cmake.properties
 echo vs.vcvarsall=!VCVARSALL_PATH!>>%CMAKE_BINARIES%\cmake.properties
+echo CMAKE_BINARIES=%CMAKE_BINARIES%
+type %CMAKE_BINARIES%\cmake.properties
 
 popd
 @endlocal

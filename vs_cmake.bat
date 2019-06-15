@@ -7,7 +7,7 @@
 set CMAKE_BINARIES=%CD%
 
 if not exist %CMAKE_BINARIES%\cmake.properties (
-    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"
+    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure vs_config.bat has run"
     goto :error
 )
 

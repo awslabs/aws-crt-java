@@ -2,15 +2,13 @@
 @echo on
 @setlocal enableextensions enabledelayedexpansion
 
-if ["%1"] == [] (
+:: Ensure all slashes in the path are windows style
+set ARG=%1
+set CMAKE_BINARIES=%ARG:\=/%
+if ["%CMAKE_BINARIES%"] == [] (
     echo No CMake binaries directory specified
     goto :error
 )
-
-:: convert whatever path was passed in into an absolute path
-pushd %1
-set CMAKE_BINARIES=%CD%
-popd
 
 :: if the generator is specified, then we can narrow the search
 if not ["%AWS_CMAKE_GENERATOR%"] == [] (

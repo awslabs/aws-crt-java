@@ -4,7 +4,7 @@
 
 :: Ensure all slashes in the path are windows style
 set ARG=%1
-set CMAKE_BINARIES=%ARG:/=\%
+set CMAKE_BINARIES=%CD%\%ARG:/=\%
 if ["%CMAKE_BINARIES%"] == [] (
     echo No CMake binaries directory specified
     goto :error
@@ -111,7 +111,7 @@ if not exist %CMAKE_BINARIES% (
 echo cmake.generator=!CMAKE_VS_GENERATOR!>"%CMAKE_BINARIES%\cmake.properties"
 echo vs.version=!VS_VERSION!>>"%CMAKE_BINARIES%\cmake.properties"
 echo vs.vcvarsall=!VCVARSALL_PATH!>>"%CMAKE_BINARIES%\cmake.properties"
-echo CMAKE_BINARIES=%CD%\%CMAKE_BINARIES%
+echo CMAKE_BINARIES=%CMAKE_BINARIES%
 type "%CMAKE_BINARIES%\cmake.properties"
 
 @endlocal

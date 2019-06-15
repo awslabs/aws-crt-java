@@ -206,7 +206,7 @@ static jobjectArray s_java_headers_array_from_native(
         // Overwrite with actual values
         (*env)->SetObjectField(env, jHeader, s_http_header.name, actual_name);
         (*env)->SetObjectField(env, jHeader, s_http_header.value, actual_value);
-        (*env)->SetObjectArrayElement(env, jArray, i, jHeader);
+        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
     }
 
     return jArray;

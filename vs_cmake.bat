@@ -1,7 +1,7 @@
 
 :: This script ensures that the correct vcvarsall.bat has been run before cmake runs
 :: otherwise it won't find the Visual Studio toolchain
-@echo off
+@echo on
 @setlocal enableextensions enabledelayedexpansion
 
 set CMAKE_BINARIES=%CD%

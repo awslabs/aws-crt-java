@@ -197,7 +197,7 @@ static jobjectArray s_java_headers_array_from_native(
 
     jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, s_http_header.header_class, NULL);
 
-    for (int i = 0; i < num_headers; i++) {
+    for (size_t i = 0; i < num_headers; i++) {
         jobject jHeader = (*env)->NewObject(env, s_http_header.header_class, s_http_header.constructor);
 
         jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &(header_array[i].name));
@@ -301,7 +301,7 @@ static void s_on_incoming_body_fn(
 
     aws_mutex_unlock(&callback->lock);
 
-    if (window_increment < 0 || *out_window_update_size < window_increment) {
+    if (window_increment < 0 || *out_window_update_size < (size_t)window_increment) {
         aws_jni_throw_runtime_exception(env, "WindowUpdate is OutOfBounds.");
         return;
     }
@@ -314,7 +314,7 @@ static void s_on_incoming_body_fn(
 
     // We can check the ByteBuffer read position to verify that the userThread actually read all the data they claimed
     // to be able to read.
-    int amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
+    size_t amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     (void)amt_read;
     AWS_FATAL_ASSERT(amt_read == data->len);
 
@@ -385,7 +385,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
 
-    int amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
+    size_t amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     AWS_FATAL_ASSERT(amt_written <= out_remaining);
 
     aws_copy_java_byte_array_to_native_array(env, jByteArray, out, amt_written);

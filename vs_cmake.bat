@@ -1,15 +1,13 @@
 
 :: This script ensures that the correct vcvarsall.bat has been run before cmake runs
 :: otherwise it won't find the Visual Studio toolchain
-@echo off
+@echo on
 @setlocal enableextensions enabledelayedexpansion
 
-pushd %~dp0
-
-set CMAKE_BINARIES=target\cmake-build
+set CMAKE_BINARIES=.
 
 if not exist %CMAKE_BINARIES%\cmake.properties (
-    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"
+    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure vs_config.bat has run"
     goto :error
 )
 
@@ -41,15 +39,13 @@ if [!ISWIN64!] == [Win64] (
 call !VCVARSALL! !ARCH!
 
 :cmake
-popd
 @echo on
-cmake %*
+cmake %* || goto :error
 @echo off
 
 @endlocal
 goto :EOF
 
 :error
-popd
 @endlocal
 exit /b 1

@@ -72,6 +72,9 @@
                                 </goals>
                                 <configuration>
                                     <executable>"${project.basedir}/vs_config.bat"</executable>
+                                    <arguments>
+                                        <argument>${cmake.binaries}</argument>
+                                    </arguments>
                                     <workingDirectory>.</workingDirectory>
                                 </configuration>
                             </execution>

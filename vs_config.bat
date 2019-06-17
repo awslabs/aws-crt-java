@@ -2,9 +2,13 @@
 @echo on
 @setlocal enableextensions enabledelayedexpansion
 
-pushd %~dp0
-
-set CMAKE_BINARIES=target\cmake-build
+:: Ensure all slashes in the path are windows style
+set ARG=%1
+set CMAKE_BINARIES=%CD%\%ARG:/=\%
+if ["%CMAKE_BINARIES%"] == [] (
+    echo No CMake binaries directory specified
+    goto :error
+)
 
 :: if the generator is specified, then we can narrow the search
 if not ["%AWS_CMAKE_GENERATOR%"] == [] (
@@ -104,15 +108,15 @@ set CMAKE_VS_GENERATOR=!CMAKE_VS_GENERATOR:"=!
 if not exist %CMAKE_BINARIES% (
     mkdir %CMAKE_BINARIES%
 )
-echo cmake.generator=!CMAKE_VS_GENERATOR!>%CMAKE_BINARIES%\cmake.properties
-echo vs.version=!VS_VERSION!>>%CMAKE_BINARIES%\cmake.properties
-echo vs.vcvarsall=!VCVARSALL_PATH!>>%CMAKE_BINARIES%\cmake.properties
+echo cmake.generator=!CMAKE_VS_GENERATOR!>"%CMAKE_BINARIES%\cmake.properties"
+echo vs.version=!VS_VERSION!>>"%CMAKE_BINARIES%\cmake.properties"
+echo vs.vcvarsall=!VCVARSALL_PATH!>>"%CMAKE_BINARIES%\cmake.properties"
+echo CMAKE_BINARIES=%CMAKE_BINARIES%
+type "%CMAKE_BINARIES%\cmake.properties"
 
-popd
 @endlocal
 goto :EOF
 
 :error
-popd
 @endlocal
 exit /b 1

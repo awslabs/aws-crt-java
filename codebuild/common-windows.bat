@@ -13,7 +13,7 @@ call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
 cd %CODEBUILD_SRC_DIR%
-mvn -B compile || goto error
+mvn -B compile -Pwindows-codebuild || goto error
 
 popd
 @endlocal

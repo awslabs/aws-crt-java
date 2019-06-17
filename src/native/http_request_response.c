@@ -15,7 +15,6 @@
 
 #include <crt.h>
 #include <jni.h>
-#include <unistd.h>
 
 #include <aws/common/mutex.h>
 #include <aws/http/connection.h>
@@ -198,7 +197,7 @@ static jobjectArray s_java_headers_array_from_native(
 
     jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, s_http_header.header_class, NULL);
 
-    for (int i = 0; i < num_headers; i++) {
+    for (size_t i = 0; i < num_headers; i++) {
         jobject jHeader = (*env)->NewObject(env, s_http_header.header_class, s_http_header.constructor);
 
         jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &(header_array[i].name));
@@ -207,7 +206,7 @@ static jobjectArray s_java_headers_array_from_native(
         // Overwrite with actual values
         (*env)->SetObjectField(env, jHeader, s_http_header.name, actual_name);
         (*env)->SetObjectField(env, jHeader, s_http_header.value, actual_value);
-        (*env)->SetObjectArrayElement(env, jArray, i, jHeader);
+        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
     }
 
     return jArray;
@@ -302,7 +301,7 @@ static void s_on_incoming_body_fn(
 
     aws_mutex_unlock(&callback->lock);
 
-    if (window_increment < 0 || *out_window_update_size < window_increment) {
+    if (window_increment < 0 || *out_window_update_size < (size_t)window_increment) {
         aws_jni_throw_runtime_exception(env, "WindowUpdate is OutOfBounds.");
         return;
     }
@@ -315,7 +314,7 @@ static void s_on_incoming_body_fn(
 
     // We can check the ByteBuffer read position to verify that the userThread actually read all the data they claimed
     // to be able to read.
-    int amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
+    size_t amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     (void)amt_read;
     AWS_FATAL_ASSERT(amt_read == data->len);
 
@@ -386,7 +385,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
 
-    int amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
+    size_t amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     AWS_FATAL_ASSERT(amt_written <= out_remaining);
 
     aws_copy_java_byte_array_to_native_array(env, jByteArray, out, amt_written);
@@ -409,6 +408,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     jstring jni_uri,
     jobjectArray jni_headers,
     jobject jni_crt_http_callback_handler) {
+
+    (void)jni_class;
 
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
 
@@ -441,7 +442,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct aws_byte_cursor uri = aws_jni_byte_cursor_from_jstring(env, jni_uri);
     jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
 
-    struct aws_http_header headers[num_headers];
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, headers, num_headers);
     AWS_ZERO_ARRAY(headers);
 
     AWS_FATAL_ASSERT(s_http_header.name);
@@ -495,6 +496,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamRelease(JNIEnv *env, jclass jni_class, jlong jni_stream) {
 
+    (void)jni_class;
+
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
     if (stream == NULL) {
@@ -533,6 +536,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jclass jni_class,
     jlong jni_stream,
     jint window_update) {
+
+    (void)jni_class;
 
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 

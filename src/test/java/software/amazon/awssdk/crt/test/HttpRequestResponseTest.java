@@ -15,6 +15,8 @@
 
 package software.amazon.awssdk.crt.test;
 
+import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
+
 import org.junit.Assert;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
@@ -75,19 +77,11 @@ public class HttpRequestResponseTest {
         }
     }
 
-    private void transferData(ByteBuffer in, ByteBuffer out) {
-        int amtToTransfer = Math.min(in.remaining(), out.remaining());
-
-        if (amtToTransfer > 0) {
-            out.put(in.array(), in.arrayOffset() + in.position(), amtToTransfer);
-            in.position(in.position() + amtToTransfer);
-        }
-    }
-
     public static String byteArrayToHex(byte[] input) {
         StringBuilder output = new StringBuilder(input.length * 2);
-        for(byte b: input)
+        for (byte b: input) {
             output.append(String.format("%02X", b));
+        }
         return output.toString();
     }
 

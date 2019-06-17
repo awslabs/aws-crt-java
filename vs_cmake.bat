@@ -4,7 +4,7 @@
 @echo on
 @setlocal enableextensions enabledelayedexpansion
 
-set CMAKE_BINARIES=target\cmake-build
+set CMAKE_BINARIES=.
 
 if not exist %CMAKE_BINARIES%\cmake.properties (
     echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure vs_config.bat has run"

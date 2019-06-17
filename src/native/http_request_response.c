@@ -513,6 +513,8 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jclass jni_class,
     jlong jni_stream) {
 
+    (void)jni_class;
+
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
     if (stream == NULL) {

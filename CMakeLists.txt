@@ -195,5 +195,6 @@ if (UNIX AND NOT APPLE)
                 NAMES crypto
                 PATHS ${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
                 NO_DEFAULT_PATH)
+    message(STATUS "LIBCRYPTO_STATIC: ${LIBCRYPTO_STATIC}")
     target_link_libraries(${CMAKE_PROJECT_NAME} ${LIBCRYPTO_STATIC})
 endif()

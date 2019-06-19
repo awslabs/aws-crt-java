@@ -192,7 +192,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)
 
 if (UNIX AND NOT APPLE)
     find_library(LIBCRYPTO_STATIC 
-                NAMES crypto
+                NAMES libcrypto.a
                 PATHS ${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
                 NO_DEFAULT_PATH)
     message(STATUS "LIBCRYPTO_STATIC: ${LIBCRYPTO_STATIC}")

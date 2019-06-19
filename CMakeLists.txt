@@ -191,9 +191,9 @@ find_package(aws-c-http REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)
 
 if (UNIX AND NOT APPLE)
-    set(SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-    set(BUILD_SHARED_LIBS OFF)
-    find_package(LibCrypto)
-    set(BUILD_SHARED_LIBS ${SAVED_BUILD_SHARED_LIBS})
-    target_link_libraries(${CMAKE_PROJECT_NAME} LibCrypto::Crypto)
+    find_library(LIBCRYPTO_STATIC 
+                NAMES crypto
+                PATHS ${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
+                NO_DEFAULT_PATH)
+    target_link_libraries(${CMAKE_PROJECT_NAME} ${LIBCRYPTO_STATIC})
 endif()

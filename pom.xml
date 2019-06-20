@@ -186,7 +186,6 @@
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>-DCMAKE_VERBOSE_MAKEFILE=ON</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>

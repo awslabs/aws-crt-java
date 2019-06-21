@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -29,9 +30,10 @@ public class EventLoopGroupTest {
     public void testCreateDestroy() {
         try (EventLoopGroup elg = new EventLoopGroup(1)) {
             assertNotNull(elg);
-            assertTrue(elg.native_ptr() != 0);
+            assertTrue(!elg.isNull());
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 };

@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
+if (DEFINED CMAKE_PREFIX_PATH)
+    file(TO_CMAKE_PATH ${CMAKE_PREFIX_PATH} CMAKE_PREFIX_PATH)
+endif()
+
+if (DEFINED CMAKE_INSTALL_PREFIX)
+    file(TO_CMAKE_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX)
+endif()
+
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
 elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -37,7 +45,6 @@ if (BUILD_DEPS)
                 -DANDROID_STANDALONE_TOOLCHAIN=${ANDROID_STANDALONE_TOOLCHAIN}
                 -DANDROID_STL=${ANDROID_STL}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DCMAKE_PREFIX_PATH=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_INSTALL_PREFIX=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
                 -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
@@ -52,7 +59,6 @@ if (BUILD_DEPS)
                 -DTARGET_ARCH=${TARGET_ARCH}
                 -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DCMAKE_PREFIX_PATH=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_INSTALL_PREFIX=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
                 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/bin
@@ -180,3 +186,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 
 find_package(aws-c-mqtt REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
+
+find_package(aws-c-http REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)
+
+if (UNIX AND NOT APPLE)
+    find_library(LIBCRYPTO_STATIC 
+                NAMES libcrypto.a
+                PATHS ${AWS_DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
+                NO_DEFAULT_PATH)
+    message(STATUS "LIBCRYPTO_STATIC: ${LIBCRYPTO_STATIC}")
+    target_link_libraries(${CMAKE_PROJECT_NAME} ${LIBCRYPTO_STATIC})
+endif()

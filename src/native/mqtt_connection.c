@@ -30,25 +30,14 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "async_callback.h"
 #include "crt.h"
 
 /*******************************************************************************
  * JNI class field/method maps
  ******************************************************************************/
-/* methods of MqttConnection.AsyncCallback */
-static struct {
-    jmethodID on_success;
-    jmethodID on_failure;
-} s_async_callback = {0};
 
-void s_cache_async_callback(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$AsyncCallback");
-    assert(cls);
-    s_async_callback.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
-    assert(s_async_callback.on_success);
-    s_async_callback.on_failure = (*env)->GetMethodID(env, cls, "onFailure", "(Ljava/lang/Throwable;)V");
-    assert(s_async_callback.on_failure);
-}
+struct crt_async_callback g_async_callback;
 
 /* methods of MqttConnection */
 static struct {
@@ -59,13 +48,13 @@ static struct {
 
 void s_cache_mqtt_connection(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_mqtt_connection.on_connection_complete = (*env)->GetMethodID(env, cls, "onConnectionComplete", "(IZ)V");
-    assert(s_mqtt_connection.on_connection_complete);
+    AWS_FATAL_ASSERT(s_mqtt_connection.on_connection_complete);
     s_mqtt_connection.on_connection_interrupted = (*env)->GetMethodID(env, cls, "onConnectionInterrupted", "(I)V");
-    assert(s_mqtt_connection.on_connection_interrupted);
+    AWS_FATAL_ASSERT(s_mqtt_connection.on_connection_interrupted);
     s_mqtt_connection.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
-    assert(s_mqtt_connection.on_connection_resumed);
+    AWS_FATAL_ASSERT(s_mqtt_connection.on_connection_resumed);
 }
 
 /* MqttConnection.MessageHandler */
@@ -73,9 +62,9 @@ static struct { jmethodID deliver; } s_message_handler;
 
 void s_cache_message_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttConnection$MessageHandler");
-    assert(cls);
+    AWS_FATAL_ASSERT(cls);
     s_message_handler.deliver = (*env)->GetMethodID(env, cls, "deliver", "([B)V");
-    assert(s_message_handler.deliver);
+    AWS_FATAL_ASSERT(s_message_handler.deliver);
 }
 
 static struct {
@@ -84,10 +73,11 @@ static struct {
 } s_mqtt_exception;
 
 void s_cache_mqtt_exception(JNIEnv *env) {
-    s_mqtt_exception.jni_mqtt_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttException");
-    assert(s_mqtt_exception.jni_mqtt_exception);
+    s_mqtt_exception.jni_mqtt_exception =
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttException"));
+    AWS_FATAL_ASSERT(s_mqtt_exception.jni_mqtt_exception);
     s_mqtt_exception.jni_constructor = (*env)->GetMethodID(env, s_mqtt_exception.jni_mqtt_exception, "<init>", "(I)V");
-    assert(s_mqtt_exception.jni_mqtt_exception);
+    AWS_FATAL_ASSERT(s_mqtt_exception.jni_constructor);
 }
 
 /*******************************************************************************
@@ -120,7 +110,7 @@ static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
     struct mqtt_jni_connection *connection,
     jobject async_callback) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct mqtt_jni_async_callback *callback = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_async_callback));
+    struct mqtt_jni_async_callback *callback = aws_mem_calloc(allocator, 1, sizeof(struct mqtt_jni_async_callback));
     if (!callback) {
         /* caller will throw when they get a null */
         return NULL;
@@ -137,7 +127,7 @@ static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
 }
 
 static void mqtt_jni_async_callback_clean_up(struct mqtt_jni_async_callback *callback) {
-    assert(callback && callback->connection);
+    AWS_FATAL_ASSERT(callback && callback->connection);
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     if (callback->async_callback) {
         (*env)->DeleteGlobalRef(env, callback->async_callback);
@@ -242,18 +232,18 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqtt
     }
 
     /* any error after this point needs to jump to error_cleanup */
-    struct mqtt_jni_connection *connection = aws_mem_acquire(allocator, sizeof(struct mqtt_jni_connection));
+    struct mqtt_jni_connection *connection = aws_mem_calloc(allocator, 1, sizeof(struct mqtt_jni_connection));
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_connect: Out of memory allocating JNI connection");
         goto error_cleanup;
     }
-    AWS_ZERO_STRUCT(*connection);
+
     connection->client = client;
     connection->mqtt_connection = (*env)->NewGlobalRef(env, jni_mqtt_connection);
     connection->disconnect_requested = false;
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     (void)jvmresult;
-    assert(jvmresult == 0);
+    AWS_FATAL_ASSERT(jvmresult == 0);
 
     connection->client_connection = aws_mqtt_client_connection_new(connection->client);
     if (!connection->client_connection) {
@@ -349,18 +339,18 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionC
     struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring(env, jni_client_id);
     bool clean_session = jni_clean_session != 0;
 
-    struct aws_mqtt_connection_options connect_options = {
-        .host_name = endpoint,
-        .port = port,
-        .socket_options = &connection->socket_options,
-        .tls_options = tls_options,
-        .client_id = client_id,
-        .keep_alive_time_secs = keep_alive_ms / 1000,
-        .ping_timeout_ms = ping_timeout_ms,
-        .clean_session = clean_session,
-        .on_connection_complete = s_on_connection_complete,
-        .user_data = connection,
-    };
+    struct aws_mqtt_connection_options connect_options;
+    AWS_ZERO_STRUCT(connect_options);
+    connect_options.host_name = endpoint;
+    connect_options.port = port;
+    connect_options.socket_options = &connection->socket_options;
+    connect_options.tls_options = tls_options;
+    connect_options.client_id = client_id;
+    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
+    connect_options.ping_timeout_ms = ping_timeout_ms;
+    connect_options.clean_session = clean_session;
+    connect_options.on_connection_complete = s_on_connection_complete;
+    connect_options.user_data = connection;
 
     int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
     if (result != AWS_OP_SUCCESS) {
@@ -393,23 +383,23 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionD
  ******************************************************************************/
 /* called from any sub, unsub, or pub ack */
 static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
-    assert(callback);
-    assert(callback->connection);
+    AWS_FATAL_ASSERT(callback);
+    AWS_FATAL_ASSERT(callback->connection);
 
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
-        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_success);
+        (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_success);
     }
 }
 
 static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int error_code) {
-    assert(callback);
-    assert(callback->connection);
+    AWS_FATAL_ASSERT(callback);
+    AWS_FATAL_ASSERT(callback->connection);
 
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
         jobject jni_reason = s_new_mqtt_exception(env, error_code);
-        (*env)->CallVoidMethod(env, callback->async_callback, s_async_callback.on_failure, jni_reason);
+        (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_failure, jni_reason);
         (*env)->DeleteLocalRef(env, jni_reason);
     }
 }
@@ -419,7 +409,7 @@ static void s_on_op_complete(
     uint16_t packet_id,
     int error_code,
     void *user_data) {
-    assert(connection);
+    AWS_FATAL_ASSERT(connection);
     (void)packet_id;
 
     struct mqtt_jni_async_callback *callback = user_data;
@@ -458,10 +448,10 @@ static void s_on_subscription_delivered(
     const struct aws_byte_cursor *topic,
     const struct aws_byte_cursor *payload,
     void *user_data) {
-    assert(connection);
-    assert(topic);
-    assert(payload);
-    assert(user_data);
+    AWS_FATAL_ASSERT(connection);
+    AWS_FATAL_ASSERT(topic);
+    AWS_FATAL_ASSERT(payload);
+    AWS_FATAL_ASSERT(user_data);
 
     struct mqtt_jni_async_callback *callback = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);

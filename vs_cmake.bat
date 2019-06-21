@@ -1,24 +1,24 @@
 
 :: This script ensures that the correct vcvarsall.bat has been run before cmake runs
 :: otherwise it won't find the Visual Studio toolchain
-@echo off
+@echo on
 @setlocal enableextensions enabledelayedexpansion
 
-pushd %~dp0
+set CMAKE_BINARIES=.
 
-if not exist mvn-build\cmake.properties (
-    echo "mvn-build\cmake.properties does not exist, please make sure find_vs_cmake_generator has run"
+if not exist %CMAKE_BINARIES%\cmake.properties (
+    echo "%CMAKE_BINARIES%\cmake.properties does not exist, please make sure vs_config.bat has run"
     goto :error
 )
 
 :: Read generator and Visual Studio version from cmake.properties
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"cmake.generator"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"cmake.generator"') do (
     set GENERATOR=%%A
 )
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"vs.version"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"vs.version"') do (
     set VS_VERSION=%%A
 ) 
-for /f "tokens=2 delims==" %%A in ('type mvn-build\cmake.properties ^| findstr /C:"vs.vcvarsall"') do (
+for /f "tokens=2 delims==" %%A in ('type %CMAKE_BINARIES%\cmake.properties ^| findstr /C:"vs.vcvarsall"') do (
     set VCVARSALL=%%A
 )
 
@@ -39,15 +39,13 @@ if [!ISWIN64!] == [Win64] (
 call !VCVARSALL! !ARCH!
 
 :cmake
-popd
 @echo on
-cmake %*
+cmake %* || goto :error
 @echo off
 
 @endlocal
 goto :EOF
 
 :error
-popd
 @endlocal
 exit /b 1

@@ -71,7 +71,6 @@ cmake-build*
 *.iws
 
 # Maven
-mvn-build/
 target/
 
 # Test resources/certs/logs

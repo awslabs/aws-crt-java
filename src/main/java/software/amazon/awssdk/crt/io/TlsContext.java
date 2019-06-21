@@ -14,19 +14,17 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.CrtResource;
-
-import java.io.Closeable;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * This class wraps the aws_tls_context from aws-c-io to provide
  * access to TLS configuration contexts in the AWS Common Runtime.
  */
-public final class TlsContext extends CrtResource implements Closeable {
+public final class TlsContext extends CrtResource {
 
     /**
-     * Creates a new TlsContext. There are significant native resources consumed to create a TlsContext, so most
+     * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
      * @param options A set of options for this context
      * @throws CrtRuntimeException If the provided options are malformed or the system is unable
@@ -37,13 +35,22 @@ public final class TlsContext extends CrtResource implements Closeable {
     }
 
     /**
+     * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
+     * applications will only need to create one and re-use it for all connections.
+     */
+    public TlsContext() throws CrtRuntimeException  {
+        acquire(tlsContextNew(own(new TlsContextOptions()).native_ptr()));
+    }
+
+    /**
      * Frees all native resources associated with the context. This object is unusable after close is called.
      */
     @Override
     public void close() {
-        if (native_ptr() != 0) {
+        if (!isNull()) {
             tlsContextDestroy(release());
         }
+        super.close();
     }
 
     /*******************************************************************************

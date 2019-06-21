@@ -8,11 +8,11 @@ set AWS_CMAKE_GENERATOR=Visual Studio 14 2015
 
 mvn -X compile || goto error
 
-for /f %%A in ('git describe --abbrev^=0') do (
+for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
 
-aws s3 cp --recursive --exclude "*" --include "*.dll" .\mvn-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
+aws s3 cp --recursive --exclude "*" --include "*.dll" .\target\cmake-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
 
 @endlocal
 goto :EOF

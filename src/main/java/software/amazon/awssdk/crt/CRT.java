@@ -28,6 +28,7 @@ import java.util.*;
  */
 public final class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
+    public static final int AWS_CRT_SUCCESS = 0;
 
     static {
         try {

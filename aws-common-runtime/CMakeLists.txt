@@ -21,11 +21,11 @@ include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
     set(OPENSSL_URL "https://github.com/openssl/openssl.git")
-    set(OPENSSL_SHA "OpenSSL_1_1_0j")
+    set(OPENSSL_SHA "OpenSSL_1_1_1-stable")
     include(BuildOpenSSL)
 
     set(S2N_URL "https://github.com/awslabs/s2n.git")
-    set(S2N_SHA "e23fb83e80f567c225279cdeb6c9e271b2ff459c")
+    set(S2N_SHA "db4fe111c6e64a206662524da31a5aba6b0932a8")
     include(BuildS2N)
 endif()
 

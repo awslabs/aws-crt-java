@@ -234,9 +234,7 @@ static jobjectArray s_java_headers_array_from_native(
     return jArray;
 }
 
-static void aws_http_close_connection_with_reason(
-    struct aws_http_stream *stream,
-    char *reason) {
+static void aws_http_close_connection_with_reason(struct aws_http_stream *stream, char *reason) {
 
     struct aws_http_connection *conn = aws_http_stream_get_connection(stream);
 
@@ -343,7 +341,7 @@ static int aws_http_resp_body_publish_to_java(
     // Set read start position to zero
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     aws_jni_byte_buffer_set_position(env, callback->java_direct_resp_body_buf, 0);
-    aws_jni_byte_buffer_set_limit(env, callback->java_direct_resp_body_buf, callback->resp_body_out_buf.len);
+    aws_jni_byte_buffer_set_limit(env, callback->java_direct_resp_body_buf, (jint)callback->resp_body_out_buf.len);
 
     jint window_increment = (*env)->CallIntMethod(
         env,

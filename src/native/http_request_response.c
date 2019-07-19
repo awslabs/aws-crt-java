@@ -520,7 +520,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
         return (jobject)NULL;
     }
 
-    if (jni_resp_body_buf_size > http_jni_conn->window_size) {
+    if (((size_t)jni_resp_body_buf_size) > http_jni_conn->window_size) {
         aws_jni_throw_runtime_exception(
             env, "HttpConnection.MakeRequest: Response Body Buffer can't be > than Window Size");
         return (jobject)NULL;

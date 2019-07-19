@@ -76,6 +76,16 @@ jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_b
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer);
 
 /*******************************************************************************
+ * aws_jni_byte_buffer_set_position - Sets the Read/Write Position of a ByteBuffer
+ ******************************************************************************/
+void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position);
+
+/*******************************************************************************
+ * aws_jni_byte_buffer_set_limit - Sets the Read/Write Limit of a ByteBuffer
+ ******************************************************************************/
+void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit);
+
+/*******************************************************************************
  * aws_jni_byte_cursor_from_jstring - Creates an aws_byte_cursor from the UTF-8
  * characters extracted from the supplied jstring. The string value is null-terminated.
  ******************************************************************************/

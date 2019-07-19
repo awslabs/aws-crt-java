@@ -161,6 +161,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_http
 
     // Create a new reference to the HttpConnection Object.
     http_jni_conn->java_http_conn = (*env)->NewGlobalRef(env, http_conn_jobject);
+    http_jni_conn->window_size = (size_t)jni_window_size;
 
     // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
     jint jvmresult = (*env)->GetJavaVM(env, &http_jni_conn->jvm);

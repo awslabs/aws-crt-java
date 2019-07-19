@@ -29,4 +29,5 @@ struct http_jni_connection {
 
     JavaVM *jvm;
     jobject java_http_conn; /* The Java HttpConnection instance */
+    size_t window_size;
 };

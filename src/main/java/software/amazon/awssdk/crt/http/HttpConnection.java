@@ -36,16 +36,18 @@ import static software.amazon.awssdk.crt.CRT.AWS_CRT_SUCCESS;
  * This class is not thread safe and should not be called from different threads.
  */
 public class HttpConnection extends CrtResource {
+    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
+    public static final int DEFAULT_RESP_BODY_BUFFER_SIZE = 1024 * 1024; // 1 MB
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
-    private static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
 
     private final ClientBootstrap clientBootstrap;
     private final SocketOptions socketOptions;
     private final TlsContext tlsContext;
     private final int windowSize;
+    private final int respBodyBufSize;
     private final URI uri;
     private final int port;
     private final boolean useTls;
@@ -64,7 +66,7 @@ public class HttpConnection extends CrtResource {
      */
     public static CompletableFuture<HttpConnection> createConnection(URI uri, ClientBootstrap bootstrap,
                                                                      SocketOptions socketOptions, TlsContext tlsContext) throws CrtRuntimeException {
-        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, DEFAULT_MAX_WINDOW_SIZE);
+        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_RESP_BODY_BUFFER_SIZE);
         return conn.connect();
     }
 
@@ -75,14 +77,16 @@ public class HttpConnection extends CrtResource {
      * @param socketOptions The SocketOptions to use for the Connection
      * @param tlsContext The TlsContext to use for the Connection
      * @param windowSize The Initial Window size for requests made on this connection
+     * @param respBodyBufSize How much data Native should buffer before calling CrtHttpStreamHandler.onResponseBody() callbacks
      * @return CompletableFuture indicating when the connection has completed
      * @throws CrtRuntimeException if Native threw a CrtRuntimeException
      */
     public static CompletableFuture<HttpConnection> createConnection(URI uri, ClientBootstrap bootstrap,
                                                                      SocketOptions socketOptions,
                                                                      TlsContext tlsContext,
-                                                                     int windowSize) throws CrtRuntimeException {
-        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, windowSize);
+                                                                     int windowSize,
+                                                                     int respBodyBufSize) throws CrtRuntimeException {
+        HttpConnection conn = new HttpConnection(uri, bootstrap, socketOptions, tlsContext, windowSize, respBodyBufSize);
         return conn.connect();
     }
 
@@ -92,8 +96,10 @@ public class HttpConnection extends CrtResource {
      * @param bootstrap The ClientBootstrap to use for the Connection
      * @param socketOptions The SocketOptions to use for the Connection
      * @param tlsContext The TlsContext to use for the Connection
+     * @param windowSize The Initial Window size for requests made on this connection
+     * @param respBodyBufSize How much data Native should buffer before calling CrtHttpStreamHandler.onResponseBody() callbacks
      */
-    private HttpConnection(URI uri, ClientBootstrap bootstrap, SocketOptions socketOptions, TlsContext tlsContext, int windowSize) {
+    private HttpConnection(URI uri, ClientBootstrap bootstrap, SocketOptions socketOptions, TlsContext tlsContext, int windowSize, int respBodyBufSize) {
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
         if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
@@ -122,6 +128,7 @@ public class HttpConnection extends CrtResource {
         this.socketOptions = socketOptions;
         this.tlsContext = tlsContext;
         this.windowSize = windowSize;
+        this.respBodyBufSize = respBodyBufSize;
         this.connectedFuture = new CompletableFuture<>();
         this.shutdownFuture = new CompletableFuture<>();
     }
@@ -161,6 +168,7 @@ public class HttpConnection extends CrtResource {
         }
 
         HttpStream stream = httpConnectionMakeRequest(native_ptr(),
+                respBodyBufSize,
                 request.getMethod(),
                 request.getEncodedPath(),
                 request.getHeaders(),
@@ -276,6 +284,7 @@ public class HttpConnection extends CrtResource {
     private static native void httpConnectionRelease(long connection);
 
     private static native HttpStream httpConnectionMakeRequest(long connection,
+                                                               int respBodyBufSize,
                                                                String method,
                                                                String uri,
                                                                HttpHeader[] headers,

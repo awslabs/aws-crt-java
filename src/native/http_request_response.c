@@ -164,6 +164,7 @@ static void http_stream_callback_release(JNIEnv *env, struct http_stream_callbac
     (*env)->DeleteGlobalRef(env, callback->java_crt_http_callback_handler);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, callback->resp_body_out_buf.buffer);
     aws_mem_release(allocator, callback);
 }
 

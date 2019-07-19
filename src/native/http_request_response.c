@@ -236,7 +236,6 @@ static jobjectArray s_java_headers_array_from_native(
 
 static void aws_http_close_connection_with_reason(
     struct aws_http_stream *stream,
-    struct http_stream_callback_data *callback,
     char *reason) {
 
     struct aws_http_connection *conn = aws_http_stream_get_connection(stream);

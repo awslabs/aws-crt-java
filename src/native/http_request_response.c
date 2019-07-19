@@ -354,12 +354,12 @@ static int aws_http_resp_body_publish_to_java(
 
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
-        aws_http_close_connection_with_reason(stream, callback, "Received Exception from onResponseBody");
+        aws_http_close_connection_with_reason(stream, "Received Exception from onResponseBody");
         return AWS_OP_ERR;
     }
 
     if (window_increment < 0) {
-        aws_http_close_connection_with_reason(stream, callback, "Window Increment from onResponseBody < 0");
+        aws_http_close_connection_with_reason(stream, "Window Increment from onResponseBody < 0");
         return AWS_OP_ERR;
     }
 
@@ -367,7 +367,7 @@ static int aws_http_resp_body_publish_to_java(
     // they claimed to be able to read.
     size_t read_position = aws_jni_byte_buffer_get_position(env, callback->java_direct_resp_body_buf);
     if (read_position != callback->resp_body_out_buf.len) {
-        aws_http_close_connection_with_reason(stream, callback, "ByteBuffer.remaining() > 0 after onResponseBody");
+        aws_http_close_connection_with_reason(stream, "ByteBuffer.remaining() > 0 after onResponseBody");
         return AWS_OP_ERR;
     }
 
@@ -398,6 +398,7 @@ static void s_on_incoming_body_fn(
         bool is_buffer_full = ((callback->resp_body_out_buf.capacity - callback->resp_body_out_buf.len) == 0);
 
         if (!is_buffer_full) {
+            /* Http Body buffer isn't full, so don't publish to Java yet. */
             break;
         }
 

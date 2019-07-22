@@ -136,26 +136,37 @@ jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_
 }
 
 /**
+ * Get the Buffer Position (the next element to read/write)
+ */
+int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
+    jint position = (*env)->CallIntMethod(env, java_byte_buffer, s_java_byte_buffer.get_position);
+    return (int)position;
+}
+
+/**
+ * Set the Buffer Position (the next element to read/write)
+ */
+void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
+    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, position);
+}
+
+/**
+ * Set the Buffer Limit (the max allowed element to read/write)
+ */
+void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
+    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, limit);
+}
+
+/**
  * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
  */
 jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
     jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst->buffer, (jlong)dst->capacity);
 
-    // Set the Buffer Limit (the max allowed element to read/write)
-    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, (jint)dst->capacity);
-
-    // Set the Buffer Position (the next element to read/write)
-    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, (jint)dst->len);
+    aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)dst->len);
+    aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
 
     return jByteBuf;
-}
-
-/**
- * Returns the read/write position of a Java ByteBuffer
- */
-int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
-    jint position = (*env)->CallIntMethod(env, java_byte_buffer, s_java_byte_buffer.get_position);
-    return (int)position;
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {

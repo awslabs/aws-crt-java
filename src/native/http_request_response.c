@@ -111,12 +111,17 @@ static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStre
 struct http_stream_callback_data {
     struct aws_mutex lock;
     struct http_jni_connection *connection;
+    struct aws_byte_buf resp_body_out_buf;
     jobject java_crt_http_callback_handler;
     jobject java_http_stream;
+
+    /* Direct Byte Buffer that points to resp_body_buf struct above*/
+    jobject java_direct_resp_body_buf;
 };
 
 static struct http_stream_callback_data *http_stream_callback_alloc(
     struct http_jni_connection *connection,
+    jint resp_body_buf_size,
     jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -127,7 +132,21 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
     }
 
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+    aws_mutex_init(&callback->lock);
     callback->connection = connection;
+
+    /* Create a aws_byte_buf to buffer ResponseBody Bytes so that we don't create a Java byte[] per packet. Otherwise,
+     * we'll create garbage faster than Java's GC can clean up. */
+    callback->resp_body_out_buf.allocator = allocator;
+    callback->resp_body_out_buf.buffer = aws_mem_calloc(allocator, 1, resp_body_buf_size);
+    callback->resp_body_out_buf.capacity = (size_t)resp_body_buf_size;
+    callback->resp_body_out_buf.len = 0;
+
+    /* Create a Java DirectByteBuffer that points to the Native aws_byte_buf struct */
+    callback->java_direct_resp_body_buf = aws_jni_direct_byte_buffer_from_byte_buf(env, &callback->resp_body_out_buf);
+
+    /* Tell the JVM not to Garbage Collect this buffer */
+    callback->java_direct_resp_body_buf = (*env)->NewGlobalRef(env, callback->java_direct_resp_body_buf);
 
     // We need to call NewGlobalRef() on jobjects that we want to last after this native method returns to Java.
     // Otherwise Java's GC may free the jobject when Native still has a reference to it.
@@ -139,10 +158,13 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 static void http_stream_callback_release(JNIEnv *env, struct http_stream_callback_data *callback) {
 
     s_java_http_stream_from_native_delete(env, callback->java_http_stream);
-    // Delete our reference to the Java JniHttpCallbackHandler Object from the JVM.
+
+    // Mark our Callback Java Objects as eligible for Garbage Collection
+    (*env)->DeleteGlobalRef(env, callback->java_direct_resp_body_buf);
     (*env)->DeleteGlobalRef(env, callback->java_crt_http_callback_handler);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, callback->resp_body_out_buf.buffer);
     aws_mem_release(allocator, callback);
 }
 
@@ -212,6 +234,20 @@ static jobjectArray s_java_headers_array_from_native(
     return jArray;
 }
 
+static void aws_http_close_connection_with_reason(struct aws_http_stream *stream, char *reason) {
+
+    struct aws_http_connection *conn = aws_http_stream_get_connection(stream);
+
+    AWS_LOGF_ERROR(
+        AWS_LS_HTTP_CONNECTION,
+        "Aborting Http Connection. conn=%p, stream=%p, Reason: %s",
+        (void *)conn,
+        (void *)stream,
+        reason);
+
+    aws_http_connection_close(conn);
+}
+
 static void s_on_incoming_headers_fn(
     struct aws_http_stream *stream,
     const struct aws_http_header *header_array,
@@ -277,6 +313,68 @@ static void s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, b
     }
 }
 
+/**
+ * Copies src to dest. If dest is too small, src->ptr will be incremented to point to the next byte that wasn't copied,
+ * and src->len will be decremented to the number of bytes remaining.
+ */
+static void aws_byte_buf_transfer_best_effort(struct aws_byte_buf *dst, struct aws_byte_cursor *src) {
+    size_t dst_remaining = (dst->capacity - dst->len);
+    size_t amt_to_copy = (dst_remaining < src->len) ? dst_remaining : src->len;
+
+    memcpy(dst->buffer + dst->len, src->ptr, amt_to_copy);
+
+    dst->len += amt_to_copy;
+    src->ptr += amt_to_copy;
+    src->len -= amt_to_copy;
+}
+
+static int aws_http_resp_body_publish_to_java(
+    struct aws_http_stream *stream,
+    struct http_stream_callback_data *callback,
+    size_t *out_window_update_size) {
+
+    // Return early if there's nothing to publish
+    if (callback->resp_body_out_buf.len == 0) {
+        return AWS_OP_SUCCESS;
+    }
+
+    // Set read start position to zero
+    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    aws_jni_byte_buffer_set_position(env, callback->java_direct_resp_body_buf, 0);
+    aws_jni_byte_buffer_set_limit(env, callback->java_direct_resp_body_buf, (jint)callback->resp_body_out_buf.len);
+
+    jint window_increment = (*env)->CallIntMethod(
+        env,
+        callback->java_crt_http_callback_handler,
+        s_crt_http_stream_handler.onResponseBody,
+        callback->java_http_stream,
+        callback->java_direct_resp_body_buf);
+
+    if ((*env)->ExceptionCheck(env)) {
+        // Close the Connection if the Java Callback throws an Exception
+        aws_http_close_connection_with_reason(stream, "Received Exception from onResponseBody");
+        return AWS_OP_ERR;
+    }
+
+    if (window_increment < 0) {
+        aws_http_close_connection_with_reason(stream, "Window Increment from onResponseBody < 0");
+        return AWS_OP_ERR;
+    }
+
+    // We can check the ByteBuffer read position to verify that the user callback actually read all the data
+    // they claimed to be able to read.
+    size_t read_position = aws_jni_byte_buffer_get_position(env, callback->java_direct_resp_body_buf);
+    if (read_position != callback->resp_body_out_buf.len) {
+        aws_http_close_connection_with_reason(stream, "ByteBuffer.remaining() > 0 after onResponseBody");
+        return AWS_OP_ERR;
+    }
+
+    // Publish to Java succeeded, set resp body buffer position to zero
+    callback->resp_body_out_buf.len = 0;
+    *out_window_update_size = window_increment;
+    return AWS_OP_SUCCESS;
+}
+
 static void s_on_incoming_body_fn(
     struct aws_http_stream *stream,
     const struct aws_byte_cursor *data,
@@ -289,36 +387,28 @@ static void s_on_incoming_body_fn(
     // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_lock(&callback->lock);
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    struct aws_byte_cursor body_in_remaining = *data;
+    size_t total_window_increment = 0;
 
-    jobject jByteBuffer = aws_jni_byte_buffer_copy_from_cursor(env, data);
-    jint window_increment = (*env)->CallIntMethod(
-        env,
-        callback->java_crt_http_callback_handler,
-        s_crt_http_stream_handler.onResponseBody,
-        callback->java_http_stream,
-        jByteBuffer);
+    while (body_in_remaining.len > 0) {
+        size_t curr_window_increment = 0;
+        aws_byte_buf_transfer_best_effort(&callback->resp_body_out_buf, &body_in_remaining);
+        bool is_buffer_full = ((callback->resp_body_out_buf.capacity - callback->resp_body_out_buf.len) == 0);
+
+        if (!is_buffer_full) {
+            /* Http Body buffer isn't full, so don't publish to Java yet. */
+            break;
+        }
+
+        if (AWS_OP_SUCCESS != aws_http_resp_body_publish_to_java(stream, callback, &curr_window_increment)) {
+            return;
+        }
+
+        total_window_increment += curr_window_increment;
+    }
 
     aws_mutex_unlock(&callback->lock);
-
-    if (window_increment < 0 || *out_window_update_size < (size_t)window_increment) {
-        aws_jni_throw_runtime_exception(env, "WindowUpdate is OutOfBounds.");
-        return;
-    }
-
-    if ((*env)->ExceptionCheck(env)) {
-        // Close the Connection if the Java Callback throws an Exception
-        aws_http_connection_close(aws_http_stream_get_connection(stream));
-        return;
-    }
-
-    // We can check the ByteBuffer read position to verify that the userThread actually read all the data they claimed
-    // to be able to read.
-    size_t amt_read = aws_jni_byte_buffer_get_position(env, jByteBuffer);
-    (void)amt_read;
-    AWS_FATAL_ASSERT(amt_read == data->len);
-
-    *out_window_update_size = (size_t)window_increment;
+    *out_window_update_size = (size_t)total_window_increment;
 }
 
 static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
@@ -327,6 +417,12 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
 
     // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_lock(&callback->lock);
+
+    size_t curr_window_increment = 0;
+    int result = aws_http_resp_body_publish_to_java(stream, callback, &curr_window_increment);
+    if (result != AWS_OP_SUCCESS) {
+        return;
+    }
 
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
 
@@ -404,6 +500,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
+    jint jni_resp_body_buf_size,
     jstring jni_method,
     jstring jni_uri,
     jobjectArray jni_headers,
@@ -414,28 +511,33 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
 
     if (!http_jni_conn) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.ExecuteRequest: Invalid jni_connection");
+        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Invalid jni_connection");
         return (jobject)NULL;
     }
 
     if (!jni_crt_http_callback_handler) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.ExecuteRequest: Invalid jni_callback_handler");
+        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Invalid jni_callback_handler");
+        return (jobject)NULL;
+    }
+
+    if (((size_t)jni_resp_body_buf_size) > http_jni_conn->window_size) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpConnection.MakeRequest: Response Body Buffer can't be > than Window Size");
         return (jobject)NULL;
     }
 
     struct http_stream_callback_data *callback_data =
-        http_stream_callback_alloc(http_jni_conn, jni_crt_http_callback_handler);
+        http_stream_callback_alloc(http_jni_conn, jni_resp_body_buf_size, jni_crt_http_callback_handler);
 
     if (!callback_data) {
         aws_jni_throw_runtime_exception(
-            env, "HttpConnection.ExecuteRequest: Unable to allocate http_request_jni_async_callback");
+            env, "HttpConnection.MakeRequest: Unable to allocate http_request_jni_async_callback");
         return (jobject)NULL;
     }
 
     // There's a Data Race between this thread writing to callback_data->java_http_stream and the EventLoop thread
     // reading callback_data->java_http_stream when calling the callbacks, add a lock so that both threads see a
     // consistent state.
-    aws_mutex_init(&callback_data->lock);
     aws_mutex_lock(&callback_data->lock);
 
     struct aws_byte_cursor method = aws_jni_byte_cursor_from_jstring(env, jni_method);
@@ -476,7 +578,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct aws_http_stream *req = aws_http_stream_new_client_request(&request_options);
 
     if (req == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.ExecuteRequest: Unable to Execute Request");
+        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Unable to Execute Request");
         return (jobject)NULL;
     }
 

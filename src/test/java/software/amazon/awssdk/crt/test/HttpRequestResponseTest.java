@@ -105,6 +105,7 @@ public class HttpRequestResponseTest {
 
         HttpConnection conn = null;
         HttpStream stream = null;
+        List<Integer> respBodyUpdateSizes = new ArrayList<>();
         try {
             conn = HttpConnection.createConnection(uri, bootstrap, sockOpts, tlsContext).get();
             actuallyConnected = true;
@@ -123,6 +124,7 @@ public class HttpRequestResponseTest {
 
                 @Override
                 public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+                    respBodyUpdateSizes.add(bodyBytesIn.remaining());
                     int start = bodyBytesIn.position();
                     response.bodyBuffer.put(bodyBytesIn);
                     int amountRead = bodyBytesIn.position() - start;
@@ -162,6 +164,11 @@ public class HttpRequestResponseTest {
             tlsContext.close();
             sockOpts.close();
             bootstrap.close();
+        }
+
+        // For every Response Body update (except the last update)
+        for (int i = 0; i < (respBodyUpdateSizes.size() - 1); i++) {
+            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSizes.get(i) == HttpConnection.DEFAULT_RESP_BODY_BUFFER_SIZE);
         }
 
         Assert.assertTrue(actuallyConnected);

@@ -55,6 +55,9 @@ public final class TlsContextOptions extends CrtResource {
         int getValue() { return version; }
     }
 
+    private TlsVersions tlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
+    private TlsCipherPreference tlsCipherPreference = TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT;
+
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
      * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
@@ -75,11 +78,18 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Sets the minimum acceptable TLS version that the {@link TlsContext} will allow
+     * Sets the minimum acceptable TLS version that the {@link TlsContext} will allow. Not compatible with
+     * setCipherPreference() API.
+     *
      * @param version Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
      * as this will update if the OS TLS is updated
      */
     public void setMinimumTlsVersion(TlsVersions version) {
+        if (this.tlsCipherPreference != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT && version != TlsVersions.TLS_VER_SYS_DEFAULTS) {
+            throw new IllegalArgumentException("Currently only setMinimumTlsVersion() or setCipherPreference() may be used, not both.");
+        }
+
+        this.tlsVersion = version;
         tlsContextOptionsSetMinimumTlsVersion(native_ptr(), version.getValue());
     }
 
@@ -90,6 +100,25 @@ public final class TlsContextOptions extends CrtResource {
      */
     public void setAlpnList(String alpn) {
         tlsContextOptionsSetAlpn(native_ptr(), alpn);
+    }
+
+    /**
+     * Sets the TLS Cipher Preferences that can be negotiated and used during the TLS Connection. Not compatible with
+     * setMinimumTlsVersion() API.
+     *
+     * @param cipherPref The Cipher Preference to use
+     */
+    public void setCipherPreference(TlsCipherPreference cipherPref) {
+        if(!isCipherPreferenceSupported(cipherPref)) {
+            throw new IllegalArgumentException("TlsCipherPreference is not supported on this platform: " + cipherPref.name());
+        }
+
+        if (this.tlsVersion != TlsVersions.TLS_VER_SYS_DEFAULTS && cipherPref != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT) {
+            throw new IllegalArgumentException("Currently only setMinimumTlsVersion() or setCipherPreference() may be used, not both.");
+        }
+
+        this.tlsCipherPreference = cipherPref;
+        tlsContextOptionsSetCipherPreference(native_ptr(), cipherPref.getValue());
     }
 
     /**
@@ -127,6 +156,15 @@ public final class TlsContextOptions extends CrtResource {
      */
     public static boolean isAlpnSupported() {
         return tlsContextOptionsIsAlpnAvailable();
+    }
+
+    /**
+     * Returns whether or not the current platform can be configured to a specific TlsCipherPreference.
+     * @param cipherPref The TlsCipherPreference to check
+     * @return True if the current platform does support this TlsCipherPreference, false otherwise
+     */
+    public static boolean isCipherPreferenceSupported(TlsCipherPreference cipherPref) {
+        return tlsContextOptionsIsCipherPreferenceSupported(cipherPref.getValue());
     }
 
     /**
@@ -174,6 +212,25 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /*******************************************************************************
+     * .with() methods
+     ******************************************************************************/
+
+    public TlsContextOptions withCipherPreference(TlsCipherPreference cipherPref) {
+        setCipherPreference(cipherPref);
+        return this;
+    }
+
+    public TlsContextOptions withMinimumTlsVersion(TlsVersions version) {
+        setMinimumTlsVersion(version);
+        return this;
+    }
+
+    public TlsContextOptions withAlpnList(String alpnList) {
+        setAlpnList(alpnList);
+        return this;
+    }
+
+    /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native long tlsContextOptionsNew() throws CrtRuntimeException;
@@ -186,6 +243,8 @@ public final class TlsContextOptions extends CrtResource {
 
     private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
+    private static native void tlsContextOptionsSetCipherPreference(long tls, int cipherPref);
+
     private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
     
     private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
@@ -193,4 +252,7 @@ public final class TlsContextOptions extends CrtResource {
     private static native void tlsContextOptionsSetVerifyPeer(long tls, boolean verify);
 
     private static native boolean tlsContextOptionsIsAlpnAvailable();
+
+    private static native boolean tlsContextOptionsIsCipherPreferenceSupported(int cipherPref);
+
 };

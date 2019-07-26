@@ -22,49 +22,79 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpConnection;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.net.URI;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 public class HttpConnectionTest {
 
-    protected void testConnection(URI uri, boolean expectConnected, String exceptionMsg) throws CrtRuntimeException {
+    private class HttpConnectionTestResponse {
         boolean actuallyConnected = false;
         boolean exceptionThrown = false;
+        Exception exception = null;
+    }
 
-        ClientBootstrap bootstrap = new ClientBootstrap(1);
-        SocketOptions sockOpts = new SocketOptions();
-        TlsContext tlsContext =  new TlsContext();
-
+    private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
+        HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
         try {
             HttpConnection conn = HttpConnection.createConnection(uri, bootstrap, sockOpts, tlsContext).get();
-            actuallyConnected = true;
+            resp.actuallyConnected = true;
             conn.shutdown().get();
             conn.close();
         } catch (Exception e) {
-            exceptionThrown = true;
-            Assert.assertTrue(e.getMessage(), e.getMessage().contains(exceptionMsg));
+            resp.exceptionThrown = true;
+            resp.exception = e;
+
         } finally {
             tlsContext.close();
             sockOpts.close();
             bootstrap.close();
         }
 
-        Assert.assertEquals("URI: " + uri.toString(), expectConnected, actuallyConnected);
-        Assert.assertEquals("URI: " + uri.toString(), expectConnected, !exceptionThrown);
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        return resp;
+    }
+
+    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws CrtRuntimeException {
+        for (TlsCipherPreference pref: TlsCipherPreference.values()) {
+            if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
+                continue;
+            }
+
+            TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
+            HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
+            tlsOpts.close();
+
+            Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
+            Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
+            if (resp.exception != null) {
+                Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
+            }
+
+            Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        }
     }
 
     @Test
     public void testHttpConnection() throws Exception {
-        testConnection(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnection(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnection(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
-        testConnection(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
-        testConnection(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
-        testConnection(new URI("https://rsa2048.badssl.com/"), true, null);
-        testConnection(new URI("http://http.badssl.com/"), true, null);
-        testConnection(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
-        testConnection(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
+        // S3
+        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
+        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+
+        // KMS
+        testConnectionWithAllCiphers(new URI("https://kms.us-east-1.amazonaws.com:443"), true, null);
+        testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
+        testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
+        testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
+
+        // BadSSL
+        testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
+        testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+        testConnectionWithAllCiphers(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
+        testConnectionWithAllCiphers(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
     }
 }

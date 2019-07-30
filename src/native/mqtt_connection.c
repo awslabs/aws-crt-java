@@ -686,23 +686,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttC
     }
 }
 
-JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionPing(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_connection) {
-    (void)jni_class;
-    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
-    if (!connection) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Invalid connection");
-        return;
-    }
-
-    if (aws_mqtt_client_connection_ping(connection->client_connection)) {
-        aws_jni_throw_runtime_exception(env, "MqttConnection.mqtt_ping: Failed to send ping");
-    }
-}
-
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

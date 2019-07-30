@@ -322,21 +322,6 @@ public class MqttConnection extends CrtResource {
         }
     }
 
-    /**
-     * Sends a MQTT ping to the endpoint.
-     * @throws MqttException If the connection is not connected, or the ping operation is otherwise unable to be attempted
-     */
-    public void ping() throws MqttException {
-        if (isNull()) {
-            throw new MqttException("Invalid connection during ping");
-        }
-        try {
-            mqttConnectionPing(native_ptr());
-        } catch (CrtRuntimeException ex) {
-            throw new MqttException("Failed to send ping: " + ex.getMessage());
-        }
-    }
-
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -360,6 +345,4 @@ public class MqttConnection extends CrtResource {
     private static native boolean mqttConnectionSetWill(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
     
     private static native void mqttConnectionSetLogin(long connection, String username, String password) throws CrtRuntimeException;
-
-    private static native void mqttConnectionPing(long connection) throws CrtRuntimeException;
 };

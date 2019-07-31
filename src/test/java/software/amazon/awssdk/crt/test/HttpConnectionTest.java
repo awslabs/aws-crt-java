@@ -15,11 +15,13 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpConnection;
+import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
@@ -39,14 +41,14 @@ public class HttpConnectionTest {
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
         try {
-            HttpConnection conn = HttpConnection.createConnection(uri, bootstrap, sockOpts, tlsContext).get();
+            HttpConnectionPoolManager connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+            HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
             resp.actuallyConnected = true;
-            conn.shutdown().get();
             conn.close();
+            connectionPool.close();
         } catch (Exception e) {
             resp.exceptionThrown = true;
             resp.exception = e;
-
         } finally {
             tlsContext.close();
             sockOpts.close();

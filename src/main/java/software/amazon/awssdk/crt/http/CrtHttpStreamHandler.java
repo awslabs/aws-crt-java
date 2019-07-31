@@ -46,8 +46,11 @@ public interface CrtHttpStreamHandler {
     }
 
     /**
-     * Called when new Body bytes have been received.
-     * Note that this function may be called multiple times as bodyBytes are received.
+     * Called when new Response Body bytes have been received. Note that this function may be called multiple times over
+     * the lifetime of an HttpConnection as bytes are received.
+     *
+     * Users must read all data from bodyBytesIn before returning. If "bodyBytesIn.remaining() > 0" after this method
+     * returns, then Native will assume there was a processing failure and abort the connection.
      *
      * Do NOT keep a reference to this ByteBuffer past the lifetime of this function call. The CommonRuntime reserves
      * the right to use DirectByteBuffers pointing to memory that only lives as long as the function call.
@@ -67,7 +70,12 @@ public interface CrtHttpStreamHandler {
      */
     default int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
         /* Optional Callback, ignore incoming response body by default unless user wants to capture it. */
-        return bodyBytesIn.remaining();
+        int amtRead = bodyBytesIn.remaining();
+
+        /* Set Read position to Read limit so Native knows we processed this data. */
+        bodyBytesIn.position(bodyBytesIn.limit());
+
+        return amtRead;
     }
 
     /**

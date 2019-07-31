@@ -22,8 +22,6 @@
 #include <aws/http/request_response.h>
 #include <aws/io/logging.h>
 
-#include "http_connection.h"
-
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -110,7 +108,7 @@ static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStre
  ******************************************************************************/
 struct http_stream_callback_data {
     struct aws_mutex lock;
-    struct http_jni_connection *connection;
+    JavaVM *jvm;
     struct aws_byte_buf resp_body_out_buf;
     jobject java_crt_http_callback_handler;
     jobject java_http_stream;
@@ -120,7 +118,7 @@ struct http_stream_callback_data {
 };
 
 static struct http_stream_callback_data *http_stream_callback_alloc(
-    struct http_jni_connection *connection,
+    JNIEnv *env,
     jint resp_body_buf_size,
     jobject java_callback_handler) {
 
@@ -131,9 +129,12 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
         return NULL;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+    // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
+    jint jvmresult = (*env)->GetJavaVM(env, &callback->jvm);
+    (void)jvmresult;
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
     aws_mutex_init(&callback->lock);
-    callback->connection = connection;
 
     /* Create a aws_byte_buf to buffer ResponseBody Bytes so that we don't create a Java byte[] per packet. Otherwise,
      * we'll create garbage faster than Java's GC can clean up. */
@@ -210,7 +211,7 @@ static jobjectArray s_java_headers_array_from_native(
     const struct aws_http_header *header_array,
     size_t num_headers) {
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_FATAL_ASSERT(s_http_header.header_class);
     AWS_FATAL_ASSERT(s_http_header.constructor);
@@ -258,7 +259,7 @@ static void s_on_incoming_headers_fn(
     // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_lock(&callback->lock);
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jobjectArray jHeaders = s_java_headers_array_from_native(user_data, header_array, num_headers);
 
     int resp_status = -1;
@@ -294,7 +295,7 @@ static void s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, b
     // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_lock(&callback->lock);
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     jboolean jHasBody = has_body;
     (*env)->CallVoidMethod(
@@ -339,7 +340,7 @@ static int aws_http_resp_body_publish_to_java(
     }
 
     // Set read start position to zero
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     aws_jni_byte_buffer_set_position(env, callback->java_direct_resp_body_buf, 0);
     aws_jni_byte_buffer_set_limit(env, callback->java_direct_resp_body_buf, (jint)callback->resp_body_out_buf.len);
 
@@ -424,7 +425,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         return;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     jint jErrorCode = error_code;
     (*env)->CallVoidMethod(
@@ -455,7 +456,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     // Other threads might edit the callback struct, so ensure that we gain a lock on it
     aws_mutex_lock(&callback->lock);
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     uint8_t *out = &(dst->buffer[dst->len]);
     size_t out_remaining = dst->capacity - dst->len;
@@ -508,9 +509,9 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
 
     (void)jni_class;
 
-    struct http_jni_connection *http_jni_conn = (struct http_jni_connection *)jni_connection;
+    struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
 
-    if (!http_jni_conn) {
+    if (!native_conn) {
         aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Invalid jni_connection");
         return (jobject)NULL;
     }
@@ -520,14 +521,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
         return (jobject)NULL;
     }
 
-    if (((size_t)jni_resp_body_buf_size) > http_jni_conn->window_size) {
-        aws_jni_throw_runtime_exception(
-            env, "HttpConnection.MakeRequest: Response Body Buffer can't be > than Window Size");
-        return (jobject)NULL;
-    }
-
     struct http_stream_callback_data *callback_data =
-        http_stream_callback_alloc(http_jni_conn, jni_resp_body_buf_size, jni_crt_http_callback_handler);
+        http_stream_callback_alloc(env, jni_resp_body_buf_size, jni_crt_http_callback_handler);
 
     if (!callback_data) {
         aws_jni_throw_runtime_exception(
@@ -560,7 +555,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     }
 
     struct aws_http_request_options request_options = AWS_HTTP_REQUEST_OPTIONS_INIT;
-    request_options.client_connection = http_jni_conn->native_http_conn;
+    request_options.client_connection = native_conn;
     request_options.method = method;
     request_options.uri = uri;
     request_options.header_array = headers;

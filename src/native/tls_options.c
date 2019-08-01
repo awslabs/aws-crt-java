@@ -158,6 +158,31 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
 }
 
 JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsSetCipherPreference(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jint jni_cipher_pref) {
+
+    (void)jni_class;
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+
+    if (!tls) {
+        return;
+    }
+
+    if (jni_cipher_pref < 0 || AWS_IO_TLS_CIPHER_PREF_END_RANGE <= jni_cipher_pref) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "TlsContextOptions.tlsContextOptionsSetCipherPreference: TlsCipherPreference is out of range: %d",
+            (int)jni_cipher_pref);
+        return;
+    }
+
+    tls->options.cipher_pref = (enum aws_tls_cipher_pref)jni_cipher_pref;
+}
+
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsInitMTLSFromPath(
     JNIEnv *env,
     jclass jni_class,
@@ -241,6 +266,26 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContext
     (void)env;
     (void)jni_class;
     return aws_tls_is_alpn_available();
+}
+
+JNIEXPORT
+jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsIsCipherPreferenceSupported(
+    JNIEnv *env,
+    jclass jni_class,
+    jint jni_cipher_pref) {
+
+    (void)env;
+    (void)jni_class;
+
+    if (jni_cipher_pref < 0 || AWS_IO_TLS_CIPHER_PREF_END_RANGE <= jni_cipher_pref) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "TlsContextOptions.tlsContextOptionsSetCipherPreference: TlsCipherPreference is out of range: %d",
+            (int)jni_cipher_pref);
+        return false;
+    }
+
+    return aws_tls_is_cipher_pref_supported((enum aws_tls_cipher_pref)jni_cipher_pref);
 }
 
 #if UINTPTR_MAX == 0xffffffff

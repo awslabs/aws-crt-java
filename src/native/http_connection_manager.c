@@ -141,6 +141,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolMa
     jclass jni_class,
     jlong jni_conn_manager) {
 
+    (void)jni_class;
+
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
@@ -182,6 +184,8 @@ JNIEXPORT void JNICALL
         jobject conn_manager_jobject,
         jlong jni_conn_manager) {
 
+    (void)jni_class;
+
     AWS_LOGF_INFO(AWS_LS_HTTP_CONNECTION, "Called httpConnectionManagerAcquireConnection()");
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
@@ -209,6 +213,8 @@ JNIEXPORT void JNICALL
         jclass jni_class,
         jlong jni_conn_manager,
         jlong jni_conn) {
+
+    (void)jni_class;
 
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
     struct aws_http_connection *conn = (struct aws_http_connection *)jni_conn;

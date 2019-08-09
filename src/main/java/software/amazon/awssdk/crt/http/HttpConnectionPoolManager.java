@@ -31,7 +31,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
  */
 public class HttpConnectionPoolManager extends CrtResource {
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
-    public static final int DEFAULT_MAX_CONNECTIONS = 10;
+    public static final int DEFAULT_MAX_CONNECTIONS = 2;
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;

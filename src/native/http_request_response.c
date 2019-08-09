@@ -458,7 +458,7 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     jobject jByteBuffer = callback->java_body_buf;
 
     aws_jni_byte_buffer_set_position(env, jByteBuffer, 0);
-    aws_jni_byte_buffer_set_limit(env, jByteBuffer, request_size);
+    aws_jni_byte_buffer_set_limit(env, jByteBuffer, (jint)request_size);
 
     jboolean isDone = (*env)->CallBooleanMethod(
         env,

@@ -109,17 +109,17 @@ static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStre
 struct http_stream_callback_data {
     struct aws_mutex lock;
     JavaVM *jvm;
-    struct aws_byte_buf resp_body_out_buf;
+    struct aws_byte_buf native_body_buf;
     jobject java_crt_http_callback_handler;
     jobject java_http_stream;
 
-    /* Direct Byte Buffer that points to resp_body_buf struct above*/
-    jobject java_direct_resp_body_buf;
+    /* Direct Byte Buffer that points to native_body_buf struct above*/
+    jobject java_body_buf;
 };
 
 static struct http_stream_callback_data *http_stream_callback_alloc(
     JNIEnv *env,
-    jint resp_body_buf_size,
+    jint body_buf_size,
     jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -136,21 +136,18 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     aws_mutex_init(&callback->lock);
 
-    /* Create a aws_byte_buf to buffer ResponseBody Bytes so that we don't create a Java byte[] per packet. Otherwise,
-     * we'll create garbage faster than Java's GC can clean up. */
-    callback->resp_body_out_buf.allocator = allocator;
-    callback->resp_body_out_buf.buffer = aws_mem_calloc(allocator, 1, resp_body_buf_size);
-    callback->resp_body_out_buf.capacity = (size_t)resp_body_buf_size;
-    callback->resp_body_out_buf.len = 0;
+    /* Pre-allocate a Native buffer and Java Direct ByteBuffer so that we don't create a new Java Object for each IO
+     * operation. Otherwise, we'll create garbage faster than Java's GC can clean up. */
+    callback->native_body_buf.allocator = allocator;
+    callback->native_body_buf.buffer = aws_mem_calloc(allocator, 1, body_buf_size);
+    callback->native_body_buf.capacity = (size_t)body_buf_size;
+    callback->native_body_buf.len = 0;
 
-    /* Create a Java DirectByteBuffer that points to the Native aws_byte_buf struct */
-    callback->java_direct_resp_body_buf = aws_jni_direct_byte_buffer_from_byte_buf(env, &callback->resp_body_out_buf);
+    /* Create a Java DirectByteBuffer that points to native_body_buf */
+    callback->java_body_buf = aws_jni_direct_byte_buffer_from_byte_buf(env, &callback->native_body_buf);
 
-    /* Tell the JVM not to Garbage Collect this buffer */
-    callback->java_direct_resp_body_buf = (*env)->NewGlobalRef(env, callback->java_direct_resp_body_buf);
-
-    // We need to call NewGlobalRef() on jobjects that we want to last after this native method returns to Java.
-    // Otherwise Java's GC may free the jobject when Native still has a reference to it.
+    /* Tell the JVM we have a reference to both the Java ByteBuffer and the callback handler (so they're not GC'd) */
+    callback->java_body_buf = (*env)->NewGlobalRef(env, callback->java_body_buf);
     callback->java_crt_http_callback_handler = (*env)->NewGlobalRef(env, java_callback_handler);
 
     return callback;
@@ -161,11 +158,11 @@ static void http_stream_callback_release(JNIEnv *env, struct http_stream_callbac
     s_java_http_stream_from_native_delete(env, callback->java_http_stream);
 
     // Mark our Callback Java Objects as eligible for Garbage Collection
-    (*env)->DeleteGlobalRef(env, callback->java_direct_resp_body_buf);
+    (*env)->DeleteGlobalRef(env, callback->java_body_buf);
     (*env)->DeleteGlobalRef(env, callback->java_crt_http_callback_handler);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, callback->resp_body_out_buf.buffer);
+    aws_mem_release(allocator, callback->native_body_buf.buffer);
     aws_mem_release(allocator, callback);
 }
 
@@ -335,21 +332,21 @@ static int aws_http_resp_body_publish_to_java(
     size_t *out_window_update_size) {
 
     // Return early if there's nothing to publish
-    if (callback->resp_body_out_buf.len == 0) {
+    if (callback->native_body_buf.len == 0) {
         return AWS_OP_SUCCESS;
     }
 
     // Set read start position to zero
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-    aws_jni_byte_buffer_set_position(env, callback->java_direct_resp_body_buf, 0);
-    aws_jni_byte_buffer_set_limit(env, callback->java_direct_resp_body_buf, (jint)callback->resp_body_out_buf.len);
+    aws_jni_byte_buffer_set_position(env, callback->java_body_buf, 0);
+    aws_jni_byte_buffer_set_limit(env, callback->java_body_buf, (jint)callback->native_body_buf.len);
 
     jint window_increment = (*env)->CallIntMethod(
         env,
         callback->java_crt_http_callback_handler,
         s_crt_http_stream_handler.onResponseBody,
         callback->java_http_stream,
-        callback->java_direct_resp_body_buf);
+        callback->java_body_buf);
 
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
@@ -364,14 +361,14 @@ static int aws_http_resp_body_publish_to_java(
 
     // We can check the ByteBuffer read position to verify that the user callback actually read all the data
     // they claimed to be able to read.
-    size_t read_position = aws_jni_byte_buffer_get_position(env, callback->java_direct_resp_body_buf);
-    if (read_position != callback->resp_body_out_buf.len) {
+    size_t read_position = aws_jni_byte_buffer_get_position(env, callback->java_body_buf);
+    if (read_position != callback->native_body_buf.len) {
         aws_http_close_connection_with_reason(stream, "ByteBuffer.remaining() > 0 after onResponseBody");
         return AWS_OP_ERR;
     }
 
     // Publish to Java succeeded, set resp body buffer position to zero
-    callback->resp_body_out_buf.len = 0;
+    callback->native_body_buf.len = 0;
     *out_window_update_size = window_increment;
     return AWS_OP_SUCCESS;
 }
@@ -393,13 +390,7 @@ static void s_on_incoming_body_fn(
 
     while (body_in_remaining.len > 0) {
         size_t curr_window_increment = 0;
-        aws_byte_buf_transfer_best_effort(&callback->resp_body_out_buf, &body_in_remaining);
-        bool is_buffer_full = ((callback->resp_body_out_buf.capacity - callback->resp_body_out_buf.len) == 0);
-
-        if (!is_buffer_full) {
-            /* Http Body buffer isn't full, so don't publish to Java yet. */
-            break;
-        }
+        aws_byte_buf_transfer_best_effort(&callback->native_body_buf, &body_in_remaining);
 
         if (AWS_OP_SUCCESS != aws_http_resp_body_publish_to_java(stream, callback, &curr_window_increment)) {
             return;
@@ -461,10 +452,13 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     uint8_t *out = &(dst->buffer[dst->len]);
     size_t out_remaining = dst->capacity - dst->len;
 
-    jbyteArray jByteArray = aws_java_byte_array_new(env, out_remaining);
-    jobject jByteBuffer = aws_java_byte_array_to_java_byte_buffer(env, jByteArray);
+    size_t buf_capacity = callback->native_body_buf.capacity;
+    size_t request_size = (buf_capacity > out_remaining) ? out_remaining : buf_capacity;
 
-    jByteBuffer = (*env)->NewGlobalRef(env, jByteBuffer);
+    jobject jByteBuffer = callback->java_body_buf;
+
+    aws_jni_byte_buffer_set_position(env, jByteBuffer, 0);
+    aws_jni_byte_buffer_set_limit(env, jByteBuffer, request_size);
 
     jboolean isDone = (*env)->CallBooleanMethod(
         env,
@@ -473,11 +467,9 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
         callback->java_http_stream,
         jByteBuffer);
 
-    aws_mutex_unlock(&callback->lock);
-
     if ((*env)->ExceptionCheck(env)) {
         // Close the Connection if the Java Callback throws an Exception
-        (*env)->DeleteGlobalRef(env, jByteBuffer);
+        aws_mutex_unlock(&callback->lock);
         aws_http_connection_close(aws_http_stream_get_connection(stream));
         return AWS_HTTP_OUTGOING_BODY_IN_PROGRESS;
     }
@@ -485,10 +477,10 @@ enum aws_http_outgoing_body_state s_stream_outgoing_body_fn(
     size_t amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
     AWS_FATAL_ASSERT(amt_written <= out_remaining);
 
-    aws_copy_java_byte_array_to_native_array(env, jByteArray, out, amt_written);
+    memcpy(out, callback->native_body_buf.buffer, amt_written);
     dst->len += amt_written;
 
-    (*env)->DeleteGlobalRef(env, jByteBuffer);
+    aws_mutex_unlock(&callback->lock);
 
     if (isDone) {
         return AWS_HTTP_OUTGOING_BODY_DONE;

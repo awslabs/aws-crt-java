@@ -109,6 +109,7 @@ public class HttpRequestResponseTest {
         HttpConnection conn = null;
         HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
+        List<Integer> reqBodyUpdateSizes = new ArrayList<>();
         try {
             connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
             conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
@@ -145,6 +146,7 @@ public class HttpRequestResponseTest {
 
                 @Override
                 public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+                    reqBodyUpdateSizes.add(bodyBytesOut.remaining());
                     transferData(bodyBytesIn, bodyBytesOut);
 
                     return bodyBytesIn.remaining() == 0;
@@ -175,10 +177,14 @@ public class HttpRequestResponseTest {
             bootstrap.close();
         }
 
-        // For every Response Body update (except the last update)
-        for (int i = 0; i < (respBodyUpdateSizes.size() - 1); i++) {
-            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSizes.get(i) == HttpRequestOptions.DEFAULT_RESP_BODY_BUFFER_SIZE);
+        for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
+            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
         }
+
+        for (Integer reqBodyUpdateSize: reqBodyUpdateSizes) {
+            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
+        }
+
 
         Assert.assertTrue(actuallyConnected);
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());

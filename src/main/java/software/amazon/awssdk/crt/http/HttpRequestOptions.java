@@ -18,9 +18,10 @@ package software.amazon.awssdk.crt.http;
  * This class provides access to Http Request handling options.
  */
 public class HttpRequestOptions {
-    public static final int DEFAULT_RESP_BODY_BUFFER_SIZE = 1024 * 1024; // 1 MB
+    /* The size of the Java Buffer to pre-allocate for the Request onResponseBody() and sendRequestBody() callbacks */
+    public static final int DEFAULT_BODY_BUFFER_SIZE = 128 * 1024; // 128 KB
 
-    private int bodyBufferSize = DEFAULT_RESP_BODY_BUFFER_SIZE;
+    private int bodyBufferSize = DEFAULT_BODY_BUFFER_SIZE;
 
     public HttpRequestOptions() {
     }

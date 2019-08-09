@@ -53,7 +53,7 @@ public class HttpConnectionManagerTest {
         addResource(tlsContext);
 
         HttpConnectionPoolManager connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpRequestOptions.DEFAULT_RESP_BODY_BUFFER_SIZE, numConnections);
+                HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
 
         return connPool;
     }

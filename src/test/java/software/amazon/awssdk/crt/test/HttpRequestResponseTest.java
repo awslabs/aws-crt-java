@@ -23,8 +23,10 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpConnection;
+import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestOptions;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -103,11 +105,14 @@ public class HttpRequestResponseTest {
 
         final TestHttpResponse response = new TestHttpResponse();
 
+        HttpConnectionPoolManager connPool = null;
         HttpConnection conn = null;
         HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
+        List<Integer> reqBodyUpdateSizes = new ArrayList<>();
         try {
-            conn = HttpConnection.createConnection(uri, bootstrap, sockOpts, tlsContext).get();
+            connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+            conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
             actuallyConnected = true;
             CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
                 @Override
@@ -141,13 +146,15 @@ public class HttpRequestResponseTest {
 
                 @Override
                 public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+                    reqBodyUpdateSizes.add(bodyBytesOut.remaining());
                     transferData(bodyBytesIn, bodyBytesOut);
 
                     return bodyBytesIn.remaining() == 0;
                 }
             };
 
-            stream = conn.makeRequest(request, streamHandler);
+            HttpRequestOptions reqOptions = new HttpRequestOptions();
+            stream = conn.makeRequest(request, reqOptions, streamHandler);
             Assert.assertNotNull(stream);
             // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
             reqCompleted.get(60, TimeUnit.SECONDS);
@@ -161,15 +168,23 @@ public class HttpRequestResponseTest {
                 conn.close();
             }
 
+            if (connPool != null) {
+                connPool.close();
+            }
+
             tlsContext.close();
             sockOpts.close();
             bootstrap.close();
         }
 
-        // For every Response Body update (except the last update)
-        for (int i = 0; i < (respBodyUpdateSizes.size() - 1); i++) {
-            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSizes.get(i) == HttpConnection.DEFAULT_RESP_BODY_BUFFER_SIZE);
+        for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
+            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
         }
+
+        for (Integer reqBodyUpdateSize: reqBodyUpdateSizes) {
+            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
+        }
+
 
         Assert.assertTrue(actuallyConnected);
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());

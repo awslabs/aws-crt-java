@@ -23,6 +23,10 @@
 #include <aws/io/logging.h>
 #include <aws/io/stream.h>
 
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -329,6 +333,8 @@ static int s_on_incoming_headers_fn(
 }
 
 static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bool has_body, void *user_data) {
+    (void)stream;
+
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
     if (!http_stream_callback_is_valid(callback)) {

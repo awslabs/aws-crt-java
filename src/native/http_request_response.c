@@ -374,7 +374,7 @@ static void aws_byte_buf_transfer_best_effort(struct aws_byte_buf *dst, struct a
 }
 
 // Returns AWS_OP_SUCCESS or AWS_OP_ERR
-static int aws_http_resp_body_publish_to_java(
+static int s_resp_body_publish_to_java(
     struct aws_http_stream *stream,
     struct http_stream_callback_data *callback,
     size_t *out_window_update_size) {
@@ -435,7 +435,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
         size_t curr_window_increment = 0;
         aws_byte_buf_transfer_best_effort(&callback->native_body_buf, &body_in_remaining);
 
-        int result = aws_http_resp_body_publish_to_java(stream, callback, &curr_window_increment);
+        int result = s_resp_body_publish_to_java(stream, callback, &curr_window_increment);
         if (result != AWS_OP_SUCCESS) {
             return AWS_OP_ERR;
         }

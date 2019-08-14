@@ -38,11 +38,11 @@ set(AWS_C_COMPRESSION_SHA "v0.2.2")
 include(BuildAwsCCompression)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "e90e0c36fa44f1aa8d620389de27da65d32549fd")
+set(AWS_C_MQTT_SHA "v0.4.2")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "1550f23214db8ce331a8ae7b88a4ed9955c2e323")
+set(AWS_C_HTTP_SHA "v0.4.0")
 include(BuildAwsCHttp)
 
 add_dependencies(AwsCCompression AwsCCommon)

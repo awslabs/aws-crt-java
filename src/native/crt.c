@@ -91,12 +91,14 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     return jArray;
 }
 
-void aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount) {
+bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount) {
     (*env)->GetByteArrayRegion(env, src, 0, (jsize)amount, (jbyte *)dst);
+    return (*env)->ExceptionCheck(env);
 }
 
-void aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
+bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
+    return (*env)->ExceptionCheck(env);
 }
 
 jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
@@ -120,8 +122,12 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArr
  */
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
     jbyteArray jArray = aws_java_byte_array_new(env, native_data->len);
-    aws_copy_native_array_to_java_byte_array(env, jArray, native_data->ptr, native_data->len);
-    return jArray;
+    if (jArray) {
+        if (aws_copy_native_array_to_java_byte_array(env, jArray, native_data->ptr, native_data->len)) {
+            return jArray;
+        }
+    }
+    return NULL;
 }
 
 /**
@@ -162,9 +168,10 @@ void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
  */
 jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
     jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst->buffer, (jlong)dst->capacity);
-
-    aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)dst->len);
-    aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
+    if (jByteBuf) {
+        aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)dst->len);
+        aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
+    }
 
     return jByteBuf;
 }

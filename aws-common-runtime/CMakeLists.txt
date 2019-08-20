@@ -16,7 +16,7 @@ set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies buil
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
-set(AWS_C_COMMON_SHA "v0.4.2")
+set(AWS_C_COMMON_SHA "v0.4.3")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
@@ -38,19 +38,15 @@ set(AWS_C_COMPRESSION_SHA "v0.2.2")
 include(BuildAwsCCompression)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "v0.4.1")
+set(AWS_C_MQTT_SHA "v0.4.2")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "v0.3.3")
+set(AWS_C_HTTP_SHA "v0.4.0")
 include(BuildAwsCHttp)
 
 add_dependencies(AwsCCompression AwsCCommon)
-
-# AwsCMqtt depends on AwsCIO
-add_dependencies(AwsCMqtt AwsCIO)
-
-# AwsCHttp depends on AwsCIO
+add_dependencies(AwsCMqtt AwsCHttp)
 add_dependencies(AwsCHttp AwsCCompression AwsCIO)
 
 if (UNIX AND NOT APPLE)

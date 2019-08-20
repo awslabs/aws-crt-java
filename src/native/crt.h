@@ -36,14 +36,16 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);
 
 /*******************************************************************************
- * aws_copy_java_byte_array_to_native_array - Copies from a Java byte[] to a Native byte array
+ * aws_copy_java_byte_array_to_native_array - Copies from a Java byte[] to a Native byte array.
+ * Returns false if ArrayIndexOutOfBoundsException occurred.
  ******************************************************************************/
-void aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount);
+bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount);
 
 /*******************************************************************************
  * aws_copy_java_byte_array_to_native_array - Copies from a Native byte array to a Java byte[]
+ * Returns false if ArrayIndexOutOfBoundsException occurred.
  ******************************************************************************/
-void aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount);
+bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount);
 
 /*******************************************************************************
  * aws_java_byte_array_to_java_byte_buffer - Creates a Java ByteBuffer Object from a Java byte[]

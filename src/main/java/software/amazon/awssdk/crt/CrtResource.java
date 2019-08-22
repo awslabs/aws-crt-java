@@ -64,11 +64,13 @@ public class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
 
+        String canonicalName = this.getClass().getCanonicalName();
+
         if (_ptr == NULL) {
-            throw new IllegalStateException("Can't acquire NULL Pointer");
+            throw new IllegalStateException("Can't acquire NULL Pointer: " + canonicalName);
         }
 
-        String lastValue = NATIVE_RESOURCES.put(_ptr, this.getClass().getCanonicalName());
+        String lastValue = NATIVE_RESOURCES.put(_ptr, canonicalName);
 
         if (lastValue != null) {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);

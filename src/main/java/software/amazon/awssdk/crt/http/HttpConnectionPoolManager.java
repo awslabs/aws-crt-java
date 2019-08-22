@@ -97,19 +97,18 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     /** Called from Native when a new connection is acquired **/
     private void onConnectionAcquired(long connection, int errorCode) {
-        if (errorCode != CRT.AWS_CRT_SUCCESS) {
-            closePendingAcquisitions(new HttpException(errorCode));
-            this.close();
-            return;
-        }
-
-        HttpConnection conn = new HttpConnection(this, connection);
         CompletableFuture<HttpConnection> connectionRequest = connectionAcquisitionRequests.poll();
 
         if (connectionRequest == null) {
             throw new IllegalStateException("No Future for Connection Acquisition");
         }
 
+        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+            connectionRequest.completeExceptionally(new HttpException(errorCode));
+            return;
+        }
+
+        HttpConnection conn = new HttpConnection(this, connection);
         connectionRequest.complete(conn);
     }
 
@@ -158,7 +157,7 @@ public class HttpConnectionPoolManager extends CrtResource {
      */
     public void close() {
         isClosed.set(true);
-        closePendingAcquisitions(new RuntimeException("Connection Manager Closed before Connection could be acquired."));
+        closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
         if (!isNull()) {
             httpConnectionManagerRelease(release());
         }

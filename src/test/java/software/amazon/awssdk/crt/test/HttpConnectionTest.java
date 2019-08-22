@@ -40,16 +40,20 @@ public class HttpConnectionTest {
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
+        HttpConnectionPoolManager connectionPool = null;
         try {
-            HttpConnectionPoolManager connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+            connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
             HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
             resp.actuallyConnected = true;
             conn.close();
-            connectionPool.close();
+
         } catch (Exception e) {
             resp.exceptionThrown = true;
             resp.exception = e;
         } finally {
+            if (connectionPool != null) {
+                connectionPool.close();
+            }
             tlsContext.close();
             sockOpts.close();
             bootstrap.close();

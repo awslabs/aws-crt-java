@@ -150,6 +150,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolMa
         return;
     }
 
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Releasing ConnManager: id: %p", (void *)jni_conn_manager);
     aws_http_connection_manager_release(conn_manager);
 }
 
@@ -163,11 +164,17 @@ static void s_on_http_conn_acquisition_callback(
     int error_code,
     void *user_data) {
 
-    AWS_LOGF_INFO(AWS_LS_HTTP_CONNECTION, "Called s_on_http_conn_acquisition_callback()");
     struct http_conn_acquire_callback_data *callback = (struct http_conn_acquire_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jlong jni_connection = (jlong)connection;
     jint jni_error_code = (jint)error_code;
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_HTTP_CONNECTION,
+        "ConnManager Acquired Conn: conn: %p, err_code: %d,  err_str: %s",
+        (void *)connection,
+        error_code,
+        aws_error_str(error_code));
 
     (*env)->CallVoidMethod(
         env,
@@ -186,13 +193,14 @@ JNIEXPORT void JNICALL
 
     (void)jni_class;
 
-    AWS_LOGF_INFO(AWS_LS_HTTP_CONNECTION, "Called httpConnectionManagerAcquireConnection()");
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
         aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
         return;
     }
+
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Requesting a new connection from conn_manager: %p", (void *)conn_manager);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_conn_acquire_callback_data *callback_data =
@@ -228,6 +236,12 @@ JNIEXPORT void JNICALL
         aws_jni_throw_runtime_exception(env, "Connection can't be null");
         return;
     }
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_HTTP_CONNECTION,
+        "ConnManager Releasing Conn: manager: %p, conn: %p",
+        (void *)conn_manager,
+        (void *)conn);
 
     aws_http_connection_manager_release_connection(conn_manager, conn);
 }

@@ -632,6 +632,12 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     // This call schedules tasks on the Native Event loop thread to begin sending HttpRequest and receive the response.
     native_stream = aws_http_connection_make_request(native_conn, &request_options);
     if (native_stream) {
+        AWS_LOGF_TRACE(
+            AWS_LS_HTTP_CONNECTION,
+            "Opened new Stream on Connection. conn: %p, stream: %p",
+            (void *)native_conn,
+            (void *)native_stream);
+
         jHttpStream = s_java_http_stream_from_native_new(env, native_stream);
         if (jHttpStream) {
             // Call NewGlobalRef() so that jHttpStream reference doesn't get Garbage collected can can be used from
@@ -646,6 +652,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     // Check for errors that might have occurred while holding the lock.
     if (!native_stream) {
         // Failed to create native aws_http_stream. Clean up callback_data.
+        AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
         aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Unable to Execute Request");
         http_stream_callback_release(env, callback_data);
         return NULL;
@@ -679,6 +686,7 @@ JNIEXPORT void JNICALL
         return;
     }
 
+    AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Releasing Stream. stream: %p", (void *)stream);
     aws_http_stream_release(stream);
 }
 
@@ -727,6 +735,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
         return;
     }
 
+    AWS_LOGF_TRACE(
+        AWS_LS_HTTP_STREAM, "Updating Stream Window. stream: %p, update: %d", (void *)stream, (int)window_update);
     aws_http_stream_update_window(stream, window_update);
 }
 

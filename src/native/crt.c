@@ -242,18 +242,14 @@ static void s_jni_atexit(void) {
     // aws_logger_clean_up(&s_logger);
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
-    aws_tls_clean_up_static_state();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class) {
     (void)jni_crt_class;
-    aws_load_error_strings();
-    aws_io_load_error_strings();
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_tls_init_static_state(allocator);
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
 

@@ -37,6 +37,7 @@ public class MqttClient extends CrtResource {
      */
     public MqttClient() throws CrtRuntimeException {
         this(new ClientBootstrap(1), null);
+        own(bootstrap);
     }
 
     /**

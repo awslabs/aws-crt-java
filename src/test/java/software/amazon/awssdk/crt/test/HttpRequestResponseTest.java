@@ -217,6 +217,14 @@ public class HttpRequestResponseTest {
             response = getResponse(uri, request, requestBody);
         } while (shouldRetry(response) && numAttempts < 3);
 
+        boolean hasContentLengthHeader = false;
+        for (HttpHeader h: response.headers) {
+            if (h.getName().equals("Content-Length")) {
+                hasContentLengthHeader = true;
+            }
+        }
+
+        Assert.assertTrue(hasContentLengthHeader);
         Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
 
         return response;

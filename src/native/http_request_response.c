@@ -308,6 +308,7 @@ static int s_on_incoming_headers_fn(
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jobjectArray jHeaders = s_java_headers_array_from_native(user_data, header_array, num_headers);
     if (!jHeaders) {
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 

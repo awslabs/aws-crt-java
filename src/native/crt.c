@@ -123,7 +123,7 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArr
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
     jbyteArray jArray = aws_java_byte_array_new(env, native_data->len);
     if (jArray) {
-        if (aws_copy_native_array_to_java_byte_array(env, jArray, native_data->ptr, native_data->len)) {
+        if (!aws_copy_native_array_to_java_byte_array(env, jArray, native_data->ptr, native_data->len)) {
             return jArray;
         }
     }

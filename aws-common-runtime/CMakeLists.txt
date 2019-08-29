@@ -45,9 +45,19 @@ set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
 set(AWS_C_HTTP_SHA "v0.4.2")
 include(BuildAwsCHttp)
 
+set(AWS_C_CAL_URL "https://github.com/awslabs/aws-c-cal.git")
+set(AWS_C_CAL_SHA "v0.1.5")
+include(BuildAwsCCal)
+
+set(AWS_C_AUTH_URL "https://github.com/awslabs/aws-c-auth.git")
+set(AWS_C_AUTH_SHA "v0.2.1")
+include(BuildAwsCAuth)
+
 add_dependencies(AwsCCompression AwsCCommon)
 add_dependencies(AwsCMqtt AwsCHttp)
 add_dependencies(AwsCHttp AwsCCompression AwsCIO)
+add_dependencies(AwsCCal AwsCCommon)
+add_dependencies(AwsCAuth AwsCHttp AwsCCal)
 
 if (UNIX AND NOT APPLE)
     add_dependencies(S2N OpenSSL)

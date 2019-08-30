@@ -14,22 +14,32 @@
  */
 package software.amazon.awssdk.crt.io;
 
+/**
+ * A TlsCipherPreference represents a hardcoded ordered list of TLS Ciphers to use when negotiating a TLS Connection.
+ *
+ * At present, the ability to configure arbitrary orderings of TLS Ciphers is not allowed, and only a curated list of
+ * vetted TlsCipherPreference's are exposed.
+ */
 public enum TlsCipherPreference {
     /**
      * Use whatever the System Default Preference is. This is usually the best option, as it will be automatically
-     * updated as the underlying OS or platform changes.
+     * updated as the underlying OS or platform changes, and will always be supported on all Platforms.
      */
     TLS_CIPHER_SYSTEM_DEFAULT(0),
 
     /**
-     * Contains Draft Hybrid TLS Ciphers: https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     * This TlsCipherPreference contains BIKE and SIKE Draft Hybrid TLS Ciphers at the top of the preference list.
+     *     - For more info see: https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
      *
-     * These ciphers perform two Key Exchanges (1 ECDHE + 1 Post-Quantum) during the TLS Handshake in order to
-     * combine the security of Classical ECDHE Key Exchange with the conjectured quantum-resistance of newly
+     * These Hybrid TLS ciphers perform two Key Exchanges (1 ECDHE + 1 Post-Quantum) during the TLS Handshake in order
+     * to combine the security of Classical ECDHE Key Exchange with the conjectured quantum-resistance of newly
      * proposed key exchanges.
      *
      * The algorithms these new Post-Quantum ciphers are based on have been submitted to NIST's Post-Quantum Crypto
      * Standardization Process, and are still under review.
+     *
+     * While these Post Quantum Hybrid TLS Ciphers are the most preferred ciphers in the preference list, classical
+     * ciphers are still present and can be negotiated if the TLS peer does not support these Hybrid TLS Ciphers.
      *
      * This Cipher Preference may stop being supported at any time.
      */
@@ -42,4 +52,13 @@ public enum TlsCipherPreference {
     }
 
     int getValue() { return val; }
+
+    /**
+     * Not all Cipher Preferences are supported on all Platforms due to differences in the underlying TLS Libraries.
+     *
+     * @return True if this TlsCipherPreference is currently supported on the current platform.
+     */
+    public boolean isSupported() {
+        return TlsContextOptions.isCipherPreferenceSupported(this);
+    }
 }

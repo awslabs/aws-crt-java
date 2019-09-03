@@ -18,6 +18,8 @@ import java.net.URI;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -46,6 +48,7 @@ public class HttpConnectionPoolManager extends CrtResource {
     private final boolean useTls;
     private final int maxConnections;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     /**
      * The queue of Connection Acquisition requests.
@@ -86,7 +89,8 @@ public class HttpConnectionPoolManager extends CrtResource {
         this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
 
-        acquire(httpConnectionManagerNew(clientBootstrap.native_ptr(),
+        acquire(httpConnectionManagerNew(this,
+                                            clientBootstrap.native_ptr(),
                                             socketOptions.native_ptr(),
                                             useTls ? tlsContext.native_ptr() : 0,
                                             windowSize,
@@ -153,13 +157,37 @@ public class HttpConnectionPoolManager extends CrtResource {
     }
 
     /**
+     * Called from Native when all Connections in this Connection Pool have finished shutting down and it is safe to
+     * begin releasing Native Resources that HttpConnectionPoolManager depends on.
+     */
+    private void onShutdownComplete() {
+        this.shutdownComplete.complete(null);
+    }
+
+    /**
      * Closes this Connection Pool and any pending Connection Acquisitions
      */
     public void close() {
         isClosed.set(true);
         closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
         if (!isNull()) {
+            /*
+             * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
+             * connection shutdown messages to peers for any open Connections.
+             */
             httpConnectionManagerRelease(release());
+        }
+
+        try {
+            /*
+             * Wait for those shutdown messages to finish being sent. We MUST wait for shutdown to complete since
+             * the shutdown tasks that were scheduled are still using Native Resources that will likely be closed when
+             * this method returns (TlsContext, EventLoop, etc), and if they're closed before the shutdown tasks
+             * complete, it will likely lead to use-after-free errors and cause a Segfault.
+             */
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -183,7 +211,8 @@ public class HttpConnectionPoolManager extends CrtResource {
      * Native methods
      ******************************************************************************/
 
-    private static native long httpConnectionManagerNew(long client_bootstrap,
+    private static native long httpConnectionManagerNew(HttpConnectionPoolManager thisObj,
+                                                        long client_bootstrap,
                                                         long socketOptions,
                                                         long tlsContext,
                                                         int windowSize,

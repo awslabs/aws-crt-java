@@ -53,10 +53,11 @@ set(AWS_C_AUTH_URL "https://github.com/awslabs/aws-c-auth.git")
 set(AWS_C_AUTH_SHA "v0.2.1")
 include(BuildAwsCAuth)
 
+add_dependencies(AwsCIO AwsCCommon)
 add_dependencies(AwsCCompression AwsCCommon)
 add_dependencies(AwsCMqtt AwsCHttp)
 add_dependencies(AwsCHttp AwsCCompression AwsCIO)
-add_dependencies(AwsCCal AwsCCommon)
+add_dependencies(AwsCCal OpenSSL AwsCCommon)
 add_dependencies(AwsCAuth AwsCHttp AwsCCal)
 
 if (UNIX AND NOT APPLE)

@@ -19,6 +19,9 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
+/**
+ * Contains all the configuration options for a HttpConnectionPoolManager instance
+ */
 public class HttpConnectionPoolManagerOptions {
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
@@ -35,32 +38,56 @@ public class HttpConnectionPoolManagerOptions {
     public HttpConnectionPoolManagerOptions() {
     }
 
+    /**
+     * Sets the client bootstrap instance to use to create the pool's connections
+     */
     public HttpConnectionPoolManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
         this.clientBootstrap = clientBootstrap;
         return this;
     }
 
+    /**
+     * Gets the client bootstrap instance to use to create the pool's connections
+     */
     public ClientBootstrap getClientBootstrap() { return clientBootstrap; }
 
+    /**
+     * Sets the socket options to use for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withSocketOptions(SocketOptions socketOptions) {
         this.socketOptions = socketOptions;
         return this;
     }
 
+    /**
+     * Gets the socket options to use for connections in the connection pool
+     */
     public SocketOptions getSocketOptions() { return socketOptions; }
 
+    /**
+     * Sets the tls context to use for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withTlsContext(TlsContext tlsContext) {
         this.tlsContext = tlsContext;
         return this;
     }
 
+    /**
+     * Gets the tls context to use for connections in the connection pool
+     */
     public TlsContext getTlsContext() { return tlsContext; }
 
+    /**
+     * Sets the IO channel window size to use for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withWindowSize(int windowSize) {
         this.windowSize = windowSize;
         return this;
     }
 
+    /**
+     * Gets the IO channel window size to use for connections in the connection pool
+     */
     public int getWindowSize() { return windowSize; }
 
     public HttpConnectionPoolManagerOptions withUri(URI uri) {

@@ -53,7 +53,7 @@ public final class TlsContext extends CrtResource {
         super.close();
     }
 
-    public TlsConnectionOptions createConnectionOptions() throw CrtRuntimeException {
+    public TlsConnectionOptions createConnectionOptions() throws CrtRuntimeException {
         return new TlsConnectionOptions(this);
     }
 

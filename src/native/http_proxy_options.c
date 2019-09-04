@@ -75,7 +75,7 @@ void JNICALL Java_software_amazon_awssdk_crt_http_HttpProxyOptions_httpProxyOpti
         return;
     }
 
-    options->auth_type = (enum aws_http_proxy_authorization_type)jni_authorization_type;
+    options->auth_type = (enum aws_http_proxy_authentication_type)jni_authorization_type;
 }
 
 JNIEXPORT
@@ -147,7 +147,7 @@ void JNICALL Java_software_amazon_awssdk_crt_http_HttpProxyOptions_httpProxyOpti
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options,
-    klong jni_tls_connection_options) {
+    jlong jni_tls_connection_options) {
     (void)env;
     (void)jni_class;
     struct aws_http_proxy_options *options = (struct aws_http_proxy_options *)jni_options;
@@ -155,7 +155,7 @@ void JNICALL Java_software_amazon_awssdk_crt_http_HttpProxyOptions_httpProxyOpti
         return;
     }
 
-    options->tls_connection_options = (struct aws_tls_connection_options *)jni_tls_connection_options;
+    options->tls_options = (struct aws_tls_connection_options *)jni_tls_connection_options;
 }
 
 #if UINTPTR_MAX == 0xffffffff

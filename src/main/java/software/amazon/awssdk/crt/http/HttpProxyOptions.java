@@ -16,11 +16,12 @@ package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 
 /**
  * This class provides access to Http Proxy configuration options
  */
-public class HttpProxyOptions {
+public class HttpProxyOptions extends CrtResource {
 
     private String host;
     private String authUsername;

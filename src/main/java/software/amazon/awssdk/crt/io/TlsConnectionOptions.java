@@ -23,6 +23,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  */
 public final class TlsConnectionOptions extends CrtResource {
 
+    private String serverName;
+    private String alpnList;
     private final TlsContext context;
 
     /**
@@ -31,7 +33,7 @@ public final class TlsConnectionOptions extends CrtResource {
      */
     public TlsConnectionOptions(TlsContext tlsContext) throws CrtRuntimeException {
         this.context = tlsContext;
-        acquire(tlsConnectionOptionsNew(tlsContext.native_ptr());
+        acquire(tlsConnectionOptionsNew(tlsContext.native_ptr()));
     }
 
     /**
@@ -40,7 +42,7 @@ public final class TlsConnectionOptions extends CrtResource {
     @Override
     public void close() {
         if (!isNull()) {
-            tlsConnnectionOptionsDestroy(release());
+            tlsConnectionOptionsDestroy(release());
         }
         super.close();
     }
@@ -71,7 +73,7 @@ public final class TlsConnectionOptions extends CrtResource {
 
     private static native void tlsConnectionOptionsDestroy(long elg);
 
-    private static native void tlsConnectionOptionsSetServerName(long native_options, jstring server_name) throws CrtRuntimeException;
+    private static native void tlsConnectionOptionsSetServerName(long native_options, String server_name) throws CrtRuntimeException;
 
-    private static native void tlsConnectionOptionsSetAlpnList(long native_options, jstring alpn_list) throws CrtRuntimeException;
+    private static native void tlsConnectionOptionsSetAlpnList(long native_options, String alpn_list) throws CrtRuntimeException;
 };

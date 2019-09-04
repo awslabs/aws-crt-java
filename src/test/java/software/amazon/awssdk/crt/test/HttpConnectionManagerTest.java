@@ -14,7 +14,9 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
+import software.amazon.awssdk.crt.http.HttpConnectionPoolManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestOptions;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -44,6 +46,10 @@ public class HttpConnectionManagerTest {
     }
 
     private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections) {
+        return createConnectionPool(uri, numThreads, numConnections, null, 0);
+    }
+
+    private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
         ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
         SocketOptions sockOpts = new SocketOptions();
         TlsContext tlsContext =  new TlsContext();
@@ -52,8 +58,25 @@ public class HttpConnectionManagerTest {
         addResource(sockOpts);
         addResource(tlsContext);
 
-        HttpConnectionPoolManager connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
+        HttpProxyOptions proxyOptions = null;
+        if (proxyHost != null) {
+            proxyOptions = new HttpProxyOptions();
+            proxyOptions.setHost(proxyHost);
+            proxyOptions.setPort(proxyPort);
+
+            addResource(proxyOptions);
+        }
+
+        HttpConnectionPoolManagerOptions options = new HttpConnectionPoolManagerOptions();
+        options.withClientBootstrap(bootstrap)
+            .withSocketOptions(sockOpts)
+            .withTlsContext(tlsContext)
+            .withUri(uri)
+            .withMaxConnections(numConnections)
+            .withWindowSize(HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE)
+            .withProxyOptions(proxyOptions);
+
+        HttpConnectionPoolManager connPool = HttpConnectionPoolManager.create(options);
 
         return connPool;
     }
@@ -147,4 +170,20 @@ public class HttpConnectionManagerTest {
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }
 
+    @Test
+    public void testParallelRequestsWithLocalProxy() throws Exception {
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+
+        URI uri = new URI(endpoint);
+
+        HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS, "127.0.0.1", 3128);
+        HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+
+        testParallelConnections(connectionPool, request, NUM_REQUESTS);
+
+        connectionPool.close();
+        cleanupResources();
+
+        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+    }
 }

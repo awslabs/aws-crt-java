@@ -24,6 +24,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpConnection;
 import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
+import software.amazon.awssdk.crt.http.HttpConnectionPoolManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestOptions;
@@ -111,7 +112,13 @@ public class HttpRequestResponseTest {
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
         try {
-            connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+            HttpConnectionPoolManagerOptions options = new HttpConnectionPoolManagerOptions();
+            options.withClientBootstrap(bootstrap)
+                .withSocketOptions(sockOpts)
+                .withTlsContext(tlsContext)
+                .withUri(uri);
+
+            connPool = HttpConnectionPoolManager.create(options);
             conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
             actuallyConnected = true;
             CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {

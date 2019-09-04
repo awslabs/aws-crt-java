@@ -30,8 +30,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Manages a Pool of Http Connections
  */
 public class HttpConnectionPoolManager extends CrtResource {
-    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
-    public static final int DEFAULT_MAX_CONNECTIONS = 2;
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
@@ -43,8 +41,8 @@ public class HttpConnectionPoolManager extends CrtResource {
     private final int windowSize;
     private final URI uri;
     private final int port;
-    private final boolean useTls;
     private final int maxConnections;
+    private final HttpProxyOptions proxyOptions;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     /**
@@ -52,25 +50,34 @@ public class HttpConnectionPoolManager extends CrtResource {
      */
     private final Queue<CompletableFuture<HttpConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
 
-    public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
-        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
+    public static HttpConnectionPoolManager create(HttpConnectionPoolManagerOptions options) {
+        return new HttpConnectionPoolManager(options);
     }
 
-    public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
-                                      URI uri, int windowSize, int maxConnections) {
+    private HttpConnectionPoolManager(HttpConnectionPoolManagerOptions options) {
 
+        URI uri = options.getUri();
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
         if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
         if (uri.getHost() == null) { throw new IllegalArgumentException("URI does not have a Host name"); }
+
+        ClientBootstrap clientBootstrap = options.getClientBootstrap();
         if (clientBootstrap == null || clientBootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
+
+        SocketOptions socketOptions = options.getSocketOptions();
         if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
-        if (HTTPS.equals(uri.getScheme()) && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+
+        boolean useTls = HTTPS.equals(uri.getScheme());
+        if (useTls && options.getTlsContext() == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+
+        int windowSize = options.getWindowSize();
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
+
+        int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
         int port = uri.getPort();
-
         /* Pick a default port based on the scheme if one wasn't set in the URI */
         if (port == -1) {
             if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
@@ -79,12 +86,12 @@ public class HttpConnectionPoolManager extends CrtResource {
 
         this.clientBootstrap = clientBootstrap;
         this.socketOptions = socketOptions;
-        this.tlsContext = tlsContext;
+        this.tlsContext = options.getTlsContext();
         this.windowSize = windowSize;
         this.uri = uri;
         this.port = port;
-        this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
+        this.proxyOptions = options.getProxyOptions();
 
         acquire(httpConnectionManagerNew(clientBootstrap.native_ptr(),
                                             socketOptions.native_ptr(),
@@ -92,7 +99,8 @@ public class HttpConnectionPoolManager extends CrtResource {
                                             windowSize,
                                             uri.getHost(),
                                             port,
-                                            maxConnections));
+                                            maxConnections,
+                                            proxyOptions != null ? proxyOptions.native_ptr() : 0));
     }
 
     /** Called from Native when a new connection is acquired **/
@@ -189,7 +197,8 @@ public class HttpConnectionPoolManager extends CrtResource {
                                                         int windowSize,
                                                         String endpoint,
                                                         int port,
-                                                        int maxConns) throws CrtRuntimeException;
+                                                        int maxConns,
+                                                        long proxyOptions) throws CrtRuntimeException;
 
     private static native void httpConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

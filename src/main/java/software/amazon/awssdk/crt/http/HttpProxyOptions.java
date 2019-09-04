@@ -76,7 +76,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the proxy host to connect through
      * @param host proxy to connect through
      */
-    void setHost(String host) {
+    public void setHost(String host) {
         this.host = host;
         httpProxyOptionsSetHost(native_ptr(), this.host);
     }
@@ -85,7 +85,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the proxy port to connect through
      * @param port proxy port to connect through
      */
-    void setPort(int port) {
+    public void setPort(int port) {
         httpProxyOptionsSetPort(native_ptr(), port);
     }
 
@@ -93,7 +93,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the proxy authorization type
      * @param authorizationType what kind of authentication, if any, to use
      */
-    void setAuthorizationType(HttpProxyAuthorizationType authorizationType) {
+    public void setAuthorizationType(HttpProxyAuthorizationType authorizationType) {
         httpProxyOptionsSetAuthorizationType(native_ptr(), authorizationType.getValue());
     }
 
@@ -101,7 +101,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the username to use for authorization; only applicable to basic authentication
      * @param host username to use with basic authentication
      */
-    void setAuthorizationUsername(String username) {
+    public void setAuthorizationUsername(String username) {
         this.authUsername = username;
         httpProxyOptionsSetAuthorizationUsername(native_ptr(), this.authUsername);
     }
@@ -110,7 +110,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the password to use for authorization; only applicable to basic authentication
      * @param host password to use with basic authentication
      */
-    void setAuthorizationPassword(String password) {
+    public void setAuthorizationPassword(String password) {
         this.authPassword = password;
         httpProxyOptionsSetAuthorizationPassword(native_ptr(), this.authPassword);
     }
@@ -119,7 +119,7 @@ public class HttpProxyOptions extends CrtResource {
      * Sets the tls connection options for the proxy connection
      * @param tlsConnectionOptions tls connection options for the proxy connection
      */
-    void setTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
+    public void setTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
         this.tlsConnectionOptions = tlsConnectionOptions;
         httpProxyOptionsSetTlsConnectionOptions(native_ptr(), this.tlsConnectionOptions.native_ptr());
     }

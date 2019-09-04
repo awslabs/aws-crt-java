@@ -67,13 +67,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     jint jni_window_size,
     jstring jni_endpoint,
     jint jni_port,
-    jint jni_max_conns) {
+    jint jni_max_conns,
+    long jni_proxy_options) {
 
     (void)jni_class;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_http_proxy_options *proxy_options = (struct aws_http_proxy_options *)jni_proxy_options;
 
     if (!client_bootstrap) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
@@ -122,6 +124,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     manager_options.host = endpoint;
     manager_options.port = port;
     manager_options.max_connections = (size_t)jni_max_conns;
+    manager_options.proxy_options = proxy_options;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;

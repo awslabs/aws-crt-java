@@ -23,8 +23,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  */
 public final class TlsConnectionOptions extends CrtResource {
 
-    private String serverName;
-    private String alpnList;
     private final TlsContext context;
 
     /**
@@ -52,8 +50,7 @@ public final class TlsConnectionOptions extends CrtResource {
      * @param serverName server name to use for TLS endpoint validation
      */
     void setServerName(String serverName) throws CrtRuntimeException {
-        this.serverName = serverName;
-        tlsConnectionOptionsSetServerName(native_ptr(), this.serverName);
+        tlsConnectionOptionsSetServerName(native_ptr(), serverName);
     }
 
     /**
@@ -61,8 +58,7 @@ public final class TlsConnectionOptions extends CrtResource {
      * @param host password to use with basic authentication
      */
     void setAlpnList(String alpnList) throws CrtRuntimeException {
-        this.alpnList = alpnList;
-        tlsConnectionOptionsSetAlpnList(native_ptr(), this.alpnList);
+        tlsConnectionOptionsSetAlpnList(native_ptr(), alpnList);
     }
 
 

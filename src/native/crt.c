@@ -177,8 +177,12 @@ jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_b
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
-    return aws_byte_cursor_from_array(
-        (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+    struct aws_byte_cursor cursor = {0};
+    if (str != NULL) {
+        cursor = aws_byte_cursor_from_array(
+            (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+    }
+    return cursor;
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {

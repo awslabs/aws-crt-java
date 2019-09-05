@@ -93,6 +93,22 @@ public class HttpConnectionPoolManager extends CrtResource {
         this.maxConnections = maxConnections;
         this.proxyOptions = options.getProxyOptions();
 
+        String proxyHost = null;
+        int proxyPort = 0;
+        TlsContext proxyTlsContext = null;
+        int proxyAuthorizationType = 0;
+        String proxyAuthorizationUsername = null;
+        String proxyAuthorizationPassword = null;
+
+        if (proxyOptions != null) {
+            proxyHost = proxyOptions.getHost();
+            proxyPort = proxyOptions.getPort();
+            proxyTlsContext = proxyOptions.getTlsContext();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
+            proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+        }
+
         acquire(httpConnectionManagerNew(clientBootstrap.native_ptr(),
                                             socketOptions.native_ptr(),
                                             useTls ? tlsContext.native_ptr() : 0,
@@ -100,7 +116,12 @@ public class HttpConnectionPoolManager extends CrtResource {
                                             uri.getHost(),
                                             port,
                                             maxConnections,
-                                            proxyOptions != null ? proxyOptions.native_ptr() : 0));
+                                            proxyHost,
+                                            proxyPort,
+                                            proxyTlsContext != null ? proxyTlsContext.native_ptr() : 0,
+                                            proxyAuthorizationType,
+                                            proxyAuthorizationUsername,
+                                            proxyAuthorizationPassword));
     }
 
     /** Called from Native when a new connection is acquired **/
@@ -198,7 +219,13 @@ public class HttpConnectionPoolManager extends CrtResource {
                                                         String endpoint,
                                                         int port,
                                                         int maxConns,
-                                                        long proxyOptions) throws CrtRuntimeException;
+                                                        String proxyHost,
+                                                        int proxyPort,
+                                                        long proxyTlsContext,
+                                                        int proxyAuthorizationType,
+                                                        String proxyAuthorizationUsername,
+                                                        String proxyAuthorizationPassword
+                                                        ) throws CrtRuntimeException;
 
     private static native void httpConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

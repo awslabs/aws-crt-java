@@ -68,14 +68,18 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     jstring jni_endpoint,
     jint jni_port,
     jint jni_max_conns,
-    long jni_proxy_options) {
+    jstring jni_proxy_host,
+    jint jni_proxy_port,
+    jlong jni_proxy_tls_context,
+    jint jni_proxy_authorization_type,
+    jstring jni_proxy_authorization_username,
+    jstring jni_proxy_authorization_password) {
 
     (void)jni_class;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
-    struct aws_http_proxy_options *proxy_options = (struct aws_http_proxy_options *)jni_proxy_options;
 
     if (!client_bootstrap) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
@@ -124,16 +128,36 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     manager_options.host = endpoint;
     manager_options.port = port;
     manager_options.max_connections = (size_t)jni_max_conns;
-    manager_options.proxy_options = proxy_options;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;
+    }
+
+    struct aws_http_proxy_options proxy_options = {0};
+    struct aws_tls_connection_options proxy_tls_conn_options = {0};
+    if (jni_proxy_host != NULL) {
+        proxy_options.host = aws_jni_byte_cursor_from_jstring(env, jni_proxy_host);
+        proxy_options.port = jni_proxy_port;
+        proxy_options.auth_type = jni_proxy_authorization_type;
+        proxy_options.auth_username = aws_jni_byte_cursor_from_jstring(env, jni_proxy_authorization_username);
+        proxy_options.auth_password = aws_jni_byte_cursor_from_jstring(env, jni_proxy_authorization_password);
+
+        if (jni_proxy_tls_context != 0) {
+            struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;
+            aws_tls_connection_options_init_from_ctx(&proxy_tls_conn_options, proxy_tls_ctx);
+            aws_tls_connection_options_set_server_name(&proxy_tls_conn_options, allocator, &proxy_options.host);
+            proxy_options.tls_options = &proxy_tls_conn_options;
+        }
     }
 
     struct aws_http_connection_manager *conn_manager = aws_http_connection_manager_new(allocator, &manager_options);
 
     if (use_tls) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
+    }
+
+    if (proxy_options.tls_options) {
+        aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
     }
 
     return (jlong)conn_manager;

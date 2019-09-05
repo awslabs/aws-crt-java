@@ -14,19 +14,19 @@
  */
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.TlsConnectionOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
- * This class provides access to Http Proxy configuration options
+ * This class provides access to Http proxy configuration options
  */
-public class HttpProxyOptions extends CrtResource {
+public class HttpProxyOptions {
 
     private String host;
+    private int port;
     private String authUsername;
     private String authPassword;
-    private TlsConnectionOptions tlsConnectionOptions;
+    private TlsContext tlsContext;
+    private HttpProxyAuthorizationType authorizationType;
 
     /**
      * what kind of authentication, if any, to use when connecting to a proxy server
@@ -57,19 +57,8 @@ public class HttpProxyOptions extends CrtResource {
      * Creates a new set of proxy options
      * @throws CrtRuntimeException If the system is unable to allocate space for a http proxy options instance
      */
-    public HttpProxyOptions() throws CrtRuntimeException {
-        acquire(httpProxyOptionsNew());
-    }
-
-    /**
-     * Frees the native resources for this set of proxy options
-     */
-    @Override
-    public void close() {
-        if (!isNull()) {
-            httpProxyOptionsDestroy(release());
-        }
-        super.close();
+    public HttpProxyOptions() {
+        this.authorizationType = HttpProxyAuthorizationType.None;
     }
 
     /**
@@ -78,24 +67,38 @@ public class HttpProxyOptions extends CrtResource {
      */
     public void setHost(String host) {
         this.host = host;
-        httpProxyOptionsSetHost(native_ptr(), this.host);
     }
+
+    /**
+     * Gets the proxy host to connect through
+     */
+    public String getHost() { return host; }
 
     /**
      * Sets the proxy port to connect through
      * @param port proxy port to connect through
      */
     public void setPort(int port) {
-        httpProxyOptionsSetPort(native_ptr(), port);
+        this.port = port;
     }
+
+    /**
+     * Gets the proxy port to connect through
+     */
+    public int getPort() { return port; }
 
     /**
      * Sets the proxy authorization type
      * @param authorizationType what kind of authentication, if any, to use
      */
     public void setAuthorizationType(HttpProxyAuthorizationType authorizationType) {
-        httpProxyOptionsSetAuthorizationType(native_ptr(), authorizationType.getValue());
+        this.authorizationType = authorizationType;
     }
+
+    /**
+     * Gets the proxy authorization type
+     */
+    public HttpProxyAuthorizationType getAuthorizationType() { return authorizationType; }
 
     /**
      * Sets the username to use for authorization; only applicable to basic authentication
@@ -103,8 +106,12 @@ public class HttpProxyOptions extends CrtResource {
      */
     public void setAuthorizationUsername(String username) {
         this.authUsername = username;
-        httpProxyOptionsSetAuthorizationUsername(native_ptr(), this.authUsername);
     }
+
+    /**
+     * Gets the username to use for authorization
+     */
+    public String getAuthorizationUsername() { return authUsername; }
 
     /**
      * Sets the password to use for authorization; only applicable to basic authentication
@@ -112,34 +119,24 @@ public class HttpProxyOptions extends CrtResource {
      */
     public void setAuthorizationPassword(String password) {
         this.authPassword = password;
-        httpProxyOptionsSetAuthorizationPassword(native_ptr(), this.authPassword);
     }
 
     /**
-     * Sets the tls connection options for the proxy connection
-     * @param tlsConnectionOptions tls connection options for the proxy connection
+     * Gets the password to use for authorization
      */
-    public void setTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
-        this.tlsConnectionOptions = tlsConnectionOptions;
-        httpProxyOptionsSetTlsConnectionOptions(native_ptr(), this.tlsConnectionOptions.native_ptr());
+    public String getAuthorizationPassword() { return authPassword; }
+
+    /**
+     * Sets the tls context for the proxy connection
+     * @param tlsContext tls context for the proxy connection
+     */
+    public void setTlsContext(TlsContext tlsContext) {
+        this.tlsContext = tlsContext;
     }
 
-    /*******************************************************************************
-     * native methods
-     ******************************************************************************/
-    private static native long httpProxyOptionsNew() throws CrtRuntimeException;
+    /**
+     * Gets the tls context for the proxy connection
+     */
+    public TlsContext getTlsContext() { return tlsContext; }
 
-    private static native void httpProxyOptionsDestroy(long native_proxy_options);
-
-    private static native void httpProxyOptionsSetAuthorizationType(long native_proxy_options, int authorization_type);
-
-    private static native void httpProxyOptionsSetHost(long native_proxy_options, String host);
-
-    private static native void httpProxyOptionsSetPort(long native_proxy_options, int port);
-
-    private static native void httpProxyOptionsSetAuthorizationUsername(long native_proxy_options, String username);
-
-    private static native void httpProxyOptionsSetAuthorizationPassword(long native_proxy_options, String password);
-
-    private static native void httpProxyOptionsSetTlsConnectionOptions(long native_proxy_options, long native_tls_options);
 }

@@ -33,6 +33,10 @@ public class HttpConnectionManagerTest {
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
+
+    static final String PROXY_HOST = System.getProperty("proxyhost");
+    static final String PROXY_PORT = System.getProperty("proxyport");
+
     List<CrtResource> crtResources = new ArrayList<>();
 
     private void addResource(CrtResource resource) {
@@ -63,8 +67,6 @@ public class HttpConnectionManagerTest {
             proxyOptions = new HttpProxyOptions();
             proxyOptions.setHost(proxyHost);
             proxyOptions.setPort(proxyPort);
-
-            addResource(proxyOptions);
         }
 
         HttpConnectionPoolManagerOptions options = new HttpConnectionPoolManagerOptions();
@@ -174,15 +176,24 @@ public class HttpConnectionManagerTest {
     public void testParallelRequestsWithLocalProxy() throws Exception {
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
 
-        URI uri = new URI(endpoint);
+        String proxyHost = PROXY_HOST;
+        int proxyPort = 0;
+        if (PROXY_PORT != null) {
+            proxyPort = Integer.parseInt(PROXY_PORT);
+        }
 
-        HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS, "127.0.0.1", 3128);
-        HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+        if (proxyHost != null && proxyHost.length() > 0 && proxyPort > 0) {
+            URI uri = new URI(endpoint);
 
-        testParallelConnections(connectionPool, request, NUM_REQUESTS);
+            HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS, proxyHost, proxyPort);
 
-        connectionPool.close();
-        cleanupResources();
+            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+
+            testParallelConnections(connectionPool, request, NUM_REQUESTS);
+
+            connectionPool.close();
+            cleanupResources();
+        }
 
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }

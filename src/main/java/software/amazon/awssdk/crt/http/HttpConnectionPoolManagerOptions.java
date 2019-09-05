@@ -90,32 +90,56 @@ public class HttpConnectionPoolManagerOptions {
      */
     public int getWindowSize() { return windowSize; }
 
+    /**
+     * Sets the URI to use for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withUri(URI uri) {
         this.uri = uri;
         return this;
     }
 
+    /**
+     * Gets the URI to use for connections in the connection pool
+     */
     public URI getUri() { return uri; }
 
+    /**
+     * Sets the port to connect to for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withPort(int port) {
         this.port = port;
         return this;
     }
 
+    /**
+     * Gets the port to connect to for connections in the connection pool
+     */
     public int getPort() { return port; }
 
+    /**
+     * Sets the maximum number of connections allowed in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
         return this;
     }
 
+    /**
+     * Gets the maximum number of connections allowed in the connection pool
+     */
     public int getMaxConnections() { return maxConnections; }
 
+    /**
+     * Sets the proxy options for connections in the connection pool
+     */
     public HttpConnectionPoolManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
         this.proxyOptions = proxyOptions;
         return this;
     }
 
+    /**
+     * Gets the proxy options for connections in the connection pool
+     */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
 }
 

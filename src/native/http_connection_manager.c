@@ -133,7 +133,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
         manager_options.tls_connection_options = &tls_conn_options;
     }
 
-    struct aws_http_proxy_options proxy_options = {0};
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
     struct aws_tls_connection_options proxy_tls_conn_options = {0};
     if (jni_proxy_host != NULL) {
         proxy_options.host = aws_jni_byte_cursor_from_jstring(env, jni_proxy_host);

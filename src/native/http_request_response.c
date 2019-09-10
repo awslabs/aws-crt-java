@@ -306,6 +306,21 @@ static int s_on_incoming_headers_fn(
     }
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+
+    /* All New Java Objects created through JNI have Thread-local references in the current Environment Frame, and
+     * won't be eligible for GC until either DeleteLocalRef or PopLocalFrame is called.
+     *
+     * Capacity is multiple of 4 since we will need at minimum 4 Java Objects for a single Header:
+     *   - byte[] name, byte[] val, HttpHeader, HttpHeader[]
+     */
+    jint frameCapacity = (jint)(num_headers * 4);
+    jint result = (*env)->PushLocalFrame(env, frameCapacity);
+
+    if (result != 0) {
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to PushLocalFrame. Possibly OutOfMemory.", (void *)stream);
+        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
+
     jobjectArray jHeaders = s_java_headers_array_from_native(user_data, header_array, num_headers);
     if (!jHeaders) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
@@ -325,6 +340,9 @@ static int s_on_incoming_headers_fn(
         callback->java_http_stream,
         resp_status,
         jHeaders);
+
+    /* Mark all the Java Objects created since the last call to PushLocalFrame() as eligible for GC */
+    (*env)->PopLocalFrame(env, NULL);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);

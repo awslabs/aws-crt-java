@@ -31,8 +31,8 @@ public class HttpConnection extends CrtResource {
     private final HttpConnectionPoolManager manager;
 
     protected HttpConnection(HttpConnectionPoolManager manager, long connection) {
-        this.manager = manager;
         acquire(connection);
+        this.manager = addReference(manager);
     }
 
     /**
@@ -68,14 +68,16 @@ public class HttpConnection extends CrtResource {
         return stream;
     }
 
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
     /**
      * Releases this HttpConnection back into the Connection Pool, and allows another Request to acquire this connection.
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()){
-            manager.releaseConnectionPointer(release());
-            super.close();
+            manager.releaseConnectionPointer(native_ptr());
         }
     }
 

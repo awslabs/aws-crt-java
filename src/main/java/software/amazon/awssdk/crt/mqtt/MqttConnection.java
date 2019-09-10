@@ -33,7 +33,6 @@ import java.util.function.Consumer;
  * service endpoint
  */
 public class MqttConnection extends CrtResource {
-    private final MqttClient client;
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
     private MqttConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
@@ -82,11 +81,11 @@ public class MqttConnection extends CrtResource {
             throw new MqttException("MqttClient must not be null");
         }
 
-        client = mqttClient;
+        addReference(mqttClient);
         userConnectionCallbacks = callbacks;
         
         try {
-            acquire(mqttConnectionNew(client.native_ptr(), this));
+            acquire(mqttConnectionNew(mqttClient.native_ptr(), this));
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
         }
@@ -96,11 +95,13 @@ public class MqttConnection extends CrtResource {
      * Disconnects if necessary, and frees native resources associated with this connection
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         disconnect();
-        mqttConnectionDestroy(release());
-        super.close();
+        mqttConnectionDestroy(native_ptr());
     }
+
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Returns the current connection state. This function should not be used often, it is much better to respond
@@ -194,7 +195,7 @@ public class MqttConnection extends CrtResource {
         String clientId, String endpoint, int port, 
         SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs, int pingTimeoutMs) 
             throws MqttException {
-            
+
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));
         if (port > Short.MAX_VALUE || port <= 0) {
@@ -210,6 +211,8 @@ public class MqttConnection extends CrtResource {
                 tls != null ? tls.native_ptr() : 0, 
                 clientId, cleanSession, keepAliveMs, pingTimeout);
 
+            addReference(tls);
+
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
         }
@@ -221,15 +224,16 @@ public class MqttConnection extends CrtResource {
      * @return When this future completes, the disconnection is complete
      */
     public CompletableFuture<Void> disconnect() {
-        CompletableFuture<Void> future = new CompletableFuture<>();
+        CompletableFuture<Void> emptyFuture = new CompletableFuture<Void>();
+        CompletableFuture<Void> releaseFuture = emptyFuture.whenComplete((result, ex) -> releaseReferences());
         if (isNull()) {
-            future.complete(null);
-            return future;
+            releaseFuture.complete(null);
+            return releaseFuture;
         }
-        disconnectAck = AsyncCallback.wrapFuture(future, null);
+        disconnectAck = AsyncCallback.wrapFuture(releaseFuture, null);
         connectionState = ConnectionState.DISCONNECTING;
         mqttConnectionDisconnect(native_ptr());
-        return future;
+        return releaseFuture;
     }
 
     /**

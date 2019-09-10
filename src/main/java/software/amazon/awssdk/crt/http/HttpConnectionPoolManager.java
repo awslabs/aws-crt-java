@@ -39,9 +39,6 @@ public class HttpConnectionPoolManager extends CrtResource {
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
 
-    private final ClientBootstrap clientBootstrap;
-    private final SocketOptions socketOptions;
-    private final TlsContext tlsContext;
     private final int windowSize;
     private final URI uri;
     private final int port;
@@ -80,9 +77,6 @@ public class HttpConnectionPoolManager extends CrtResource {
             if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
         }
 
-        this.clientBootstrap = clientBootstrap;
-        this.socketOptions = socketOptions;
-        this.tlsContext = tlsContext;
         this.windowSize = windowSize;
         this.uri = uri;
         this.port = port;
@@ -97,6 +91,11 @@ public class HttpConnectionPoolManager extends CrtResource {
                                             uri.getHost(),
                                             port,
                                             maxConnections));
+
+         addReference(clientBootstrap);
+         if (useTls) {
+             addReference(tlsContext);
+         }
     }
 
     /** Called from Native when a new connection is acquired **/
@@ -162,12 +161,18 @@ public class HttpConnectionPoolManager extends CrtResource {
      */
     private void onShutdownComplete() {
         this.shutdownComplete.complete(null);
+
+        releaseReferences();
     }
+
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Closes this Connection Pool and any pending Connection Acquisitions
      */
-    public void close() {
+    @Override
+    protected void releaseNativeHandle() {
         isClosed.set(true);
         closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
         if (!isNull()) {
@@ -175,19 +180,7 @@ public class HttpConnectionPoolManager extends CrtResource {
              * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
              * connection shutdown messages to peers for any open Connections.
              */
-            httpConnectionManagerRelease(release());
-        }
-
-        try {
-            /*
-             * Wait for those shutdown messages to finish being sent. We MUST wait for shutdown to complete since
-             * the shutdown tasks that were scheduled are still using Native Resources that will likely be closed when
-             * this method returns (TlsContext, EventLoop, etc), and if they're closed before the shutdown tasks
-             * complete, it will likely lead to use-after-free errors and cause a Segfault.
-             */
-            shutdownComplete.get(60, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            httpConnectionManagerRelease(native_ptr());
         }
     }
 

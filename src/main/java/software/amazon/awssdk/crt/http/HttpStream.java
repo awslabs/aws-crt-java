@@ -31,8 +31,11 @@ public class HttpStream extends CrtResource {
     }
 
     @Override
-    public void close() {
-        httpStreamRelease(release());
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    @Override
+    protected void releaseNativeHandle() {
+        httpStreamRelease(native_ptr());
     }
 
     /**

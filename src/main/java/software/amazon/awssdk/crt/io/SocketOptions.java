@@ -83,15 +83,17 @@ public final class SocketOptions extends CrtResource {
         acquire(socketOptionsNew());
     }
 
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
     /**
      * Frees the native resources for this set of socket options
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            socketOptionsDestroy(release());
+            socketOptionsDestroy(native_ptr());
         }
-        super.close();
     }
 
     /**

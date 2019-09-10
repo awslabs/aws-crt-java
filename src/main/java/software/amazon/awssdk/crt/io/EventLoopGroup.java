@@ -33,16 +33,18 @@ public final class EventLoopGroup extends CrtResource {
         acquire(eventLoopGroupNew(numThreads));
     }
 
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
     /**
      * Stops the event loop group's tasks and frees all resources associated with the the group. This should be called
      * after all other clients/connections and other resources are cleaned up, or else they will not clean up completely.
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            eventLoopGroupDestroy(release());
+            eventLoopGroupDestroy(native_ptr());
         }
-        super.close();
     }
 
     /*******************************************************************************

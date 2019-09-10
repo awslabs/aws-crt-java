@@ -66,15 +66,17 @@ public final class TlsContextOptions extends CrtResource {
         acquire(tlsContextOptionsNew());
     }
 
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
     /**
      * Frees the native resources associated with this instance
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            tlsContextOptionsDestroy(release());
+            tlsContextOptionsDestroy(native_ptr());
         }
-        super.close();
     }
 
     /**

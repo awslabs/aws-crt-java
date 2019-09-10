@@ -19,25 +19,24 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public class HostResolver extends CrtResource {
     private final static int DEFAULT_MAX_ENTRIES = 8;
-    private final EventLoopGroup elg;
-    private final int maxEntries;
 
     public HostResolver(EventLoopGroup elg) throws CrtRuntimeException {
         this(elg, DEFAULT_MAX_ENTRIES);
     }
 
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
-        this.elg = elg;
-        this.maxEntries = maxEntries;
         acquire(hostResolverNew(elg.native_ptr(), maxEntries));
+        addReference(elg);
     }
 
     @Override
-    public void close() {
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    @Override
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            hostResolverRelease(release());
+            hostResolverRelease(native_ptr());
         }
-        super.close();
     }
 
     /*******************************************************************************

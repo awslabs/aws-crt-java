@@ -22,18 +22,21 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * a client context for all protocol stacks in the AWS Common Runtime.
  */
 public final class ClientBootstrap extends CrtResource {
-    private final HostResolver hostResolver;
-    private final EventLoopGroup elg;
-
     /**
      * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
      * @param numThreads The number of Threads to use in the EventLoop
      * @throws CrtRuntimeException If the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(int numThreads) throws CrtRuntimeException {
-        this.elg = own(new EventLoopGroup(numThreads));
-        this.hostResolver = own(new HostResolver(elg));
-        acquire(clientBootstrapNew(elg.native_ptr(), hostResolver.native_ptr()));
+        try (EventLoopGroup elg = new EventLoopGroup(numThreads)) {
+            try (HostResolver hr = new HostResolver(elg)) {
+                acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+
+                // Order is likely important here
+                addReference(hr);
+                addReference(elg);
+            }
+        }
     }
 
     /**
@@ -44,17 +47,21 @@ public final class ClientBootstrap extends CrtResource {
      * or if the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(EventLoopGroup elg, HostResolver hr) throws CrtRuntimeException {
-        this.hostResolver = hr;
-        this.elg = elg;
-        acquire(clientBootstrapNew(elg.native_ptr(), hostResolver.native_ptr()));
+        acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+
+        // Order is likely important here
+        addReference(hr);
+        addReference(elg);
     }
 
     @Override
-    public void close() {
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    @Override
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            clientBootstrapDestroy(release());
+            clientBootstrapDestroy(native_ptr());
         }
-        super.close();
     }
 
     /*******************************************************************************

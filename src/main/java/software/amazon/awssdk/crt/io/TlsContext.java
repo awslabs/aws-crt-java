@@ -39,18 +39,22 @@ public final class TlsContext extends CrtResource {
      * applications will only need to create one and re-use it for all connections.
      */
     public TlsContext() throws CrtRuntimeException  {
-        acquire(tlsContextNew(own(new TlsContextOptions()).native_ptr()));
+        try (TlsContextOptions options = new TlsContextOptions()) {
+            acquire(tlsContextNew(options.native_ptr()));
+        }
     }
+
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Frees all native resources associated with the context. This object is unusable after close is called.
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            tlsContextDestroy(release());
+            tlsContextDestroy(native_ptr());
         }
-        super.close();
     }
 
     /*******************************************************************************

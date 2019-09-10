@@ -28,57 +28,40 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * any number of MQTT endpoints
  */
 public class MqttClient extends CrtResource {
-    private final ClientBootstrap bootstrap;
-    private final TlsContext tlsContext;
 
     /**
-     * Creates a default MqttClient with no TLS and a {@link ClientBootstrap} constructed with default settings
+     * Creates a default MqttClient with a {@link ClientBootstrap} constructed with default settings
      * @throws CrtRuntimeException @see software.amazon.awssdk.crt.io.ClientBootstrap#constructor(EventLoopGroup) @see software.amazon.awssdk.crt.io.EventLoopGroup#constructor(int)
      */
     public MqttClient() throws CrtRuntimeException {
-        this(new ClientBootstrap(1), null);
-        own(bootstrap);
+        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+            acquire(mqttClientNew(bootstrap.native_ptr()));
+            addReference(bootstrap);
+        }
     }
 
     /**
-     * Creates an MqttClient from the provided {@link ClientBootstrap} with no TLS
+     * Creates an MqttClient from the provided {@link ClientBootstrap}
      * @param clientBootstrap The ClientBootstrap to use
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
-        this(clientBootstrap, null);
-    }
-
-    /**
-     * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
-     * @param clientBootstrap The ClientBootstrap to use
-     * @param tlsContext The TlsContext to use
-     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
-     */
-    public MqttClient(ClientBootstrap clientBootstrap, TlsContext tlsContext) throws CrtRuntimeException {
-        this.bootstrap = clientBootstrap;
-        this.tlsContext = tlsContext;
-        acquire(mqttClientNew(bootstrap.native_ptr()));
+        acquire(mqttClientNew(clientBootstrap.native_ptr()));
+        addReference(clientBootstrap);
     }
 
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            mqttClientDestroy(release());
+            mqttClientDestroy(native_ptr());
         }
-        super.close();
     }
 
-    /**
-     * Get the {@link TlsContext} associated with this client
-     * @return the TlsContext provided to this client at construction. May be null.
-     */
-    public TlsContext tlsContext() {
-        return this.tlsContext;
-    }
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
     
     /*******************************************************************************
      * native methods

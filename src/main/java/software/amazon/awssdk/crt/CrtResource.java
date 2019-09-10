@@ -16,6 +16,7 @@ package software.amazon.awssdk.crt;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,11 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * This wraps a native pointer to an AWS Common Runtime resource. It also ensures
  * that the first time a resource is referenced, the CRT will be loaded and bound.
  */
-public class CrtResource implements AutoCloseable {
+public abstract class CrtResource implements AutoCloseable {
     private static final ConcurrentHashMap<Long, String> NATIVE_RESOURCES = new ConcurrentHashMap<>();
     private static final long NULL = 0;
-    private final LinkedList<CrtResource> ownedSubResources = new LinkedList<>();
+    private final LinkedList<CrtResource> referencedResources = new LinkedList<>();
     private long ptr;
+    private AtomicInteger refCount = new AtomicInteger(1);
 
     static {
         /* This will cause the JNI lib to be loaded the first time a CRT is created */
@@ -46,17 +48,15 @@ public class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Marks a SubResource as owned by this Resource. This will cause the SubResource to be closed after this Resource
-     * is closed.
-     * @param subresource The owned subresource
-     * @return The original subresource.
+     * Marks a resource as referenced by this resource.
+     * @param resource The referenced subresource
+     * @return The original resource.
      */
-    public <T extends CrtResource> T own(T subresource) {
-        if (!isNull()) {
-            throw new IllegalStateException("Parent Resource already created and acquired, can't add sub-resources after the fact.");
-        }
-        ownedSubResources.push(subresource);
-        return subresource;
+    public <T extends CrtResource> T addReference(T resource) {
+        CrtResource baseResource = resource;
+        baseResource.refCount.incrementAndGet();
+        referencedResources.push(resource);
+        return resource;
     }
 
     protected void acquire(long _ptr) {
@@ -78,15 +78,18 @@ public class CrtResource implements AutoCloseable {
 
         ptr = _ptr;
     }
-    
-    protected long release() {
+
+    protected abstract void releaseNativeHandle();
+
+    protected abstract boolean canReleaseReferencesImmediately();
+
+    private void release() {
         if (isNull()) {
             throw new IllegalStateException("Already Released Resource!");
         }
+        releaseNativeHandle();
         NATIVE_RESOURCES.remove(ptr);
-        long addr = ptr;
         ptr = 0;
-        return addr;
     }
 
     public long native_ptr() {
@@ -103,8 +106,21 @@ public class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Closing sub-resources before releasing parent Resource may cause use-after-free bugs!");
         }
 
-        while(ownedSubResources.size() > 0) {
-            CrtResource r = ownedSubResources.pop();
+        int remainingRefs = refCount.decrementAndGet();
+        if (remainingRefs > 0) {
+            return;
+        }
+
+        release();
+
+        if (canReleaseReferencesImmediately()) {
+            releaseReferences();
+        }
+    }
+
+    protected void releaseReferences() {
+        while(referencedResources.size() > 0) {
+            CrtResource r = referencedResources.pop();
             r.close();
         }
     }

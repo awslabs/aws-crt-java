@@ -81,7 +81,7 @@ public class MqttConnection extends CrtResource {
             throw new MqttException("MqttClient must not be null");
         }
 
-        addReference(mqttClient);
+        addReferenceTo(mqttClient);
         userConnectionCallbacks = callbacks;
         
         try {
@@ -211,7 +211,7 @@ public class MqttConnection extends CrtResource {
                 tls != null ? tls.native_ptr() : 0, 
                 clientId, cleanSession, keepAliveMs, pingTimeout);
 
-            addReference(tls);
+            addReferenceTo(tls);
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);

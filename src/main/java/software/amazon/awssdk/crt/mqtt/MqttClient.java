@@ -36,7 +36,7 @@ public class MqttClient extends CrtResource {
     public MqttClient() throws CrtRuntimeException {
         try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
             acquire(mqttClientNew(bootstrap.native_ptr()));
-            addReference(bootstrap);
+            addReferenceTo(bootstrap);
         }
     }
 
@@ -47,7 +47,7 @@ public class MqttClient extends CrtResource {
      */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
         acquire(mqttClientNew(clientBootstrap.native_ptr()));
-        addReference(clientBootstrap);
+        addReferenceTo(clientBootstrap);
     }
 
     /**

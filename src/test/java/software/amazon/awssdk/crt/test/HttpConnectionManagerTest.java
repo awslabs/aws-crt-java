@@ -31,31 +31,16 @@ public class HttpConnectionManagerTest {
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
-    List<CrtResource> crtResources = new ArrayList<>();
-
-    private void addResource(CrtResource resource) {
-        crtResources.add(resource);
-    }
-
-    private void cleanupResources() {
-        for (CrtResource r: crtResources) {
-            r.close();
-        }
-    }
 
     private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections) {
-        ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
-        SocketOptions sockOpts = new SocketOptions();
-        TlsContext tlsContext =  new TlsContext();
-
-        addResource(bootstrap);
-        addResource(sockOpts);
-        addResource(tlsContext);
-
-        HttpConnectionPoolManager connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
-
-        return connPool;
+        try (ClientBootstrap bootstrap = new ClientBootstrap(numThreads)) {
+            try (SocketOptions sockOpts = new SocketOptions()) {
+                try (TlsContext tlsContext =  new TlsContext()) {
+                    return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
+                            HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
+                }
+            }
+        }
     }
 
     private HttpRequest createHttpRequest(String method, String endpoint, String path, String requestBody) throws Exception{
@@ -136,13 +121,15 @@ public class HttpConnectionManagerTest {
 
         URI uri = new URI(endpoint);
 
-        HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS);
-        HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+        CompletableFuture<Void> shutdownComplete = null;
+        try (HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
+            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
 
-        testParallelConnections(connectionPool, request, NUM_REQUESTS);
+            testParallelConnections(connectionPool, request, NUM_REQUESTS);
+            shutdownComplete = connectionPool.getShutdownCompleteFuture();
+        }
 
-        connectionPool.close();
-        cleanupResources();
+        shutdownComplete.get();
 
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }

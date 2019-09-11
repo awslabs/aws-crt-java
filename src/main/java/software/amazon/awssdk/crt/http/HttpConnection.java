@@ -32,7 +32,7 @@ public class HttpConnection extends CrtResource {
 
     protected HttpConnection(HttpConnectionPoolManager manager, long connection) {
         acquire(connection);
-        this.manager = addReference(manager);
+        this.manager = addReferenceTo(manager);
     }
 
     /**

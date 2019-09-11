@@ -26,7 +26,7 @@ public class HostResolver extends CrtResource {
 
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
         acquire(hostResolverNew(elg.native_ptr(), maxEntries));
-        addReference(elg);
+        addReferenceTo(elg);
     }
 
     @Override

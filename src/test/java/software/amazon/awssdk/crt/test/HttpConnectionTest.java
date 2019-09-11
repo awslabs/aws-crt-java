@@ -36,27 +36,19 @@ public class HttpConnectionTest {
         boolean actuallyConnected = false;
         boolean exceptionThrown = false;
         Exception exception = null;
+        CompletableFuture<Void> shutdownComplete = null;
     }
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
-        HttpConnectionPoolManager connectionPool = null;
-        try {
-            connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
-            HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            resp.actuallyConnected = true;
-            conn.close();
-
+        try (HttpConnectionPoolManager connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri)) {
+            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
+            try (HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                resp.actuallyConnected = true;
+            }
         } catch (Exception e) {
             resp.exceptionThrown = true;
             resp.exception = e;
-        } finally {
-            if (connectionPool != null) {
-                connectionPool.close();
-            }
-            tlsContext.close();
-            sockOpts.close();
-            bootstrap.close();
         }
 
         return resp;
@@ -68,15 +60,24 @@ public class HttpConnectionTest {
                 continue;
             }
 
-            TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
-            HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
-            tlsOpts.close();
+            HttpConnectionTestResponse resp = null;
+            try (TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref)) {
+                try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+                    try (SocketOptions socketOptions = new SocketOptions()) {
+                        try (TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+                            resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
+                        }
+                    }
+                }
+            }
 
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
             if (resp.exception != null) {
                 Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
             }
+
+            resp.shutdownComplete.get();
 
             Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
         }

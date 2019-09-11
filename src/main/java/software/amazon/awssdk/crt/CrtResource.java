@@ -52,11 +52,15 @@ public abstract class CrtResource implements AutoCloseable {
      * @param resource The referenced subresource
      * @return The original resource.
      */
-    public <T extends CrtResource> T addReference(T resource) {
-        CrtResource baseResource = resource;
-        baseResource.refCount.incrementAndGet();
+    public <T extends CrtResource> T addReferenceTo(T resource) {
+        resource.addRef();
         referencedResources.push(resource);
+
         return resource;
+    }
+
+    public void addRef() {
+        refCount.incrementAndGet();
     }
 
     protected void acquire(long _ptr) {

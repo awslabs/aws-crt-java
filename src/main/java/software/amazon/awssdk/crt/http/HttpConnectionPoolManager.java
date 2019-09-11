@@ -92,9 +92,9 @@ public class HttpConnectionPoolManager extends CrtResource {
                                             port,
                                             maxConnections));
 
-         addReference(clientBootstrap);
+         addReferenceTo(clientBootstrap);
          if (useTls) {
-             addReference(tlsContext);
+             addReferenceTo(tlsContext);
          }
     }
 
@@ -183,6 +183,8 @@ public class HttpConnectionPoolManager extends CrtResource {
             httpConnectionManagerRelease(native_ptr());
         }
     }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************
      * Getter methods

@@ -33,8 +33,8 @@ public final class ClientBootstrap extends CrtResource {
                 acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
 
                 // Order is likely important here
-                addReference(hr);
-                addReference(elg);
+                addReferenceTo(hr);
+                addReferenceTo(elg);
             }
         }
     }
@@ -50,8 +50,8 @@ public final class ClientBootstrap extends CrtResource {
         acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
 
         // Order is likely important here
-        addReference(hr);
-        addReference(elg);
+        addReferenceTo(hr);
+        addReferenceTo(elg);
     }
 
     @Override

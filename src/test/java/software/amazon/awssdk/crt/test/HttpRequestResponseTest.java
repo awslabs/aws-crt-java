@@ -93,88 +93,80 @@ public class HttpRequestResponseTest {
         return byteArrayToHex(digest.digest());
     }
 
+    private HttpConnectionPoolManager createConnectionPoolManager(URI uri) {
+        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+            try (SocketOptions sockOpts = new SocketOptions()) {
+                try (TlsContext tlsContext =  new TlsContext()) {
+                    return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+                }
+            }
+        }
+    }
+
     public TestHttpResponse getResponse(URI uri, HttpRequest request, String reqBody) throws Exception {
         boolean actuallyConnected = false;
-
-        ClientBootstrap bootstrap = new ClientBootstrap(1);
-        SocketOptions sockOpts = new SocketOptions();
-        TlsContext tlsContext =  new TlsContext();
 
         final ByteBuffer bodyBytesIn = ByteBuffer.wrap(reqBody.getBytes(UTF8));
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
 
         final TestHttpResponse response = new TestHttpResponse();
 
-        HttpConnectionPoolManager connPool = null;
-        HttpConnection conn = null;
         HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
-        try {
-            connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
-            conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            actuallyConnected = true;
-            CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
-                    response.statusCode = responseStatusCode;
-                    Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
-                    response.headers.addAll(Arrays.asList(nextHeaders));
-                }
+        CompletableFuture<Void> shutdownComplete = null;
+        try (HttpConnectionPoolManager connPool = createConnectionPoolManager(uri)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS))) {
+                actuallyConnected = true;
+                CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
+                        response.statusCode = responseStatusCode;
+                        Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
+                        response.headers.addAll(Arrays.asList(nextHeaders));
+                    }
 
-                @Override
-                public void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
-                    response.hasBody = hasBody;
-                }
+                    @Override
+                    public void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
+                        response.hasBody = hasBody;
+                    }
 
-                @Override
-                public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
-                    respBodyUpdateSizes.add(bodyBytesIn.remaining());
-                    int start = bodyBytesIn.position();
-                    response.bodyBuffer.put(bodyBytesIn);
-                    int amountRead = bodyBytesIn.position() - start;
+                    @Override
+                    public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+                        respBodyUpdateSizes.add(bodyBytesIn.remaining());
+                        int start = bodyBytesIn.position();
+                        response.bodyBuffer.put(bodyBytesIn);
+                        int amountRead = bodyBytesIn.position() - start;
 
-                    // Slide the window open by the number of bytes just read
-                    return amountRead;
-                }
+                        // Slide the window open by the number of bytes just read
+                        return amountRead;
+                    }
 
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    response.onCompleteErrorCode = errorCode;
-                    reqCompleted.complete(null);
-                }
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        response.onCompleteErrorCode = errorCode;
+                        reqCompleted.complete(null);
+                    }
 
-                @Override
-                public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-                    reqBodyUpdateSizes.add(bodyBytesOut.remaining());
-                    transferData(bodyBytesIn, bodyBytesOut);
+                    @Override
+                    public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+                        reqBodyUpdateSizes.add(bodyBytesOut.remaining());
+                        transferData(bodyBytesIn, bodyBytesOut);
 
-                    return bodyBytesIn.remaining() == 0;
-                }
-            };
+                        return bodyBytesIn.remaining() == 0;
+                    }
+                };
 
-            HttpRequestOptions reqOptions = new HttpRequestOptions();
-            stream = conn.makeRequest(request, reqOptions, streamHandler);
-            Assert.assertNotNull(stream);
-            // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
-            reqCompleted.get(60, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (stream != null) {
+                HttpRequestOptions reqOptions = new HttpRequestOptions();
+                stream = conn.makeRequest(request, reqOptions, streamHandler);
+                Assert.assertNotNull(stream);
+                // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
+                reqCompleted.get(60, TimeUnit.SECONDS);
                 stream.close();
             }
-            if (conn != null) {
-                conn.close();
-            }
-
-            if (connPool != null) {
-                connPool.close();
-            }
-
-            tlsContext.close();
-            sockOpts.close();
-            bootstrap.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
@@ -185,8 +177,10 @@ public class HttpRequestResponseTest {
             Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
         }
 
-
         Assert.assertTrue(actuallyConnected);
+
+        shutdownComplete.get();
+
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
 
         return response;

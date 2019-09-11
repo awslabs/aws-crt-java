@@ -46,7 +46,7 @@ set(AWS_C_HTTP_SHA "v0.4.4")
 include(BuildAwsCHttp)
 
 set(AWS_C_CAL_URL "https://github.com/awslabs/aws-c-cal.git")
-set(AWS_C_CAL_SHA "v0.1.6")
+set(AWS_C_CAL_SHA "dea8b172aa2d156dcb91a4d7b036559cf6e41e17")
 include(BuildAwsCCal)
 
 set(AWS_C_AUTH_URL "https://github.com/awslabs/aws-c-auth.git")

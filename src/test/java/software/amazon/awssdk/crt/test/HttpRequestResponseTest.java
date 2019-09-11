@@ -94,12 +94,11 @@ public class HttpRequestResponseTest {
     }
 
     private HttpConnectionPoolManager createConnectionPoolManager(URI uri) {
-        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
-            try (SocketOptions sockOpts = new SocketOptions()) {
-                try (TlsContext tlsContext =  new TlsContext()) {
-                    return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
-                }
-            }
+        try(ClientBootstrap bootstrap = new ClientBootstrap(1);
+            SocketOptions sockOpts = new SocketOptions();
+            TlsContext tlsContext =  new TlsContext()) {
+
+            return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
         }
     }
 
@@ -117,7 +116,7 @@ public class HttpRequestResponseTest {
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpConnectionPoolManager connPool = createConnectionPoolManager(uri)) {
             shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (HttpConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS))) {
+            try (HttpConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
                 CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
                     @Override

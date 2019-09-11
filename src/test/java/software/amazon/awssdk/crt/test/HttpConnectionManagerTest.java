@@ -33,13 +33,12 @@ public class HttpConnectionManagerTest {
     private final String EMPTY_BODY = "";
 
     private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections) {
-        try (ClientBootstrap bootstrap = new ClientBootstrap(numThreads)) {
-            try (SocketOptions sockOpts = new SocketOptions()) {
-                try (TlsContext tlsContext =  new TlsContext()) {
-                    return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                            HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
-                }
-            }
+        try(ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
+            SocketOptions sockOpts = new SocketOptions();
+            TlsContext tlsContext =  new TlsContext()) {
+
+            return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
+                HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
         }
     }
 

@@ -28,14 +28,14 @@ public final class ClientBootstrap extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(int numThreads) throws CrtRuntimeException {
-        try (EventLoopGroup elg = new EventLoopGroup(numThreads)) {
-            try (HostResolver hr = new HostResolver(elg)) {
-                acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+        try(EventLoopGroup elg = new EventLoopGroup(numThreads);
+            HostResolver hr = new HostResolver(elg)) {
 
-                // Order is likely important here
-                addReferenceTo(hr);
-                addReferenceTo(elg);
-            }
+            acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+
+            // Order is likely important here
+            addReferenceTo(hr);
+            addReferenceTo(elg);
         }
     }
 

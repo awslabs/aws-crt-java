@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,21 +55,19 @@ public class HttpConnectionTest {
         return resp;
     }
 
-    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws CrtRuntimeException {
+    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws Exception {
         for (TlsCipherPreference pref: TlsCipherPreference.values()) {
             if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
                 continue;
             }
 
             HttpConnectionTestResponse resp = null;
-            try (TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref)) {
-                try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
-                    try (SocketOptions socketOptions = new SocketOptions()) {
-                        try (TlsContext tlsCtx = new TlsContext(tlsOpts)) {
-                            resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
-                        }
-                    }
-                }
+            try(TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
+                ClientBootstrap bootstrap = new ClientBootstrap(1);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+                resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
             }
 
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);

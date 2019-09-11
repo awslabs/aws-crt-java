@@ -216,7 +216,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
         AWS_FATAL_ASSERT(result == JNI_OK);
         /* This should only happen in event loop threads, the JVM main thread attachment is
          * managed by the JVM, so we only need to clean up event loop thread attachments */
-        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, jvm));
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void*)jvm));
     }
 
     return env;

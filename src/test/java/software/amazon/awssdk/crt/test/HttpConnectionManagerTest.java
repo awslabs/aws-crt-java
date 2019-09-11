@@ -21,12 +21,13 @@ import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 public class HttpConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
-    private final static int NUM_CONNECTIONS = 20;
-    private final static int NUM_REQUESTS = 100;
+    private final static int NUM_CONNECTIONS = 1;
+    private final static int NUM_REQUESTS = 2;
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
@@ -63,6 +64,9 @@ public class HttpConnectionManagerTest {
         List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
 
         for (int i = 0; i < numRequests; i++) {
+
+            Log.Log(Log.LogLevel.Trace, String.format("Starting request %d", i));
+
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
 
@@ -75,6 +79,7 @@ public class HttpConnectionManagerTest {
                         connPool.releaseConnection(conn);
                         requestCompleteFuture.completeExceptionally(throwable);
                     }
+                    Log.Log(Log.LogLevel.Trace, "Acquired Connection");
                     int requestId = numRequestsMade.incrementAndGet();
                     HttpRequestOptions reqOptions = new HttpRequestOptions();
                     conn.makeRequest(request, reqOptions,  new CrtHttpStreamHandler() {
@@ -85,6 +90,7 @@ public class HttpConnectionManagerTest {
 
                         @Override
                         public void onResponseComplete(HttpStream stream, int errorCode) {
+                            Log.Log(Log.LogLevel.Trace, "OnResponseComplete");
                             if (errorCode != CRT.AWS_CRT_SUCCESS) {
                                 numErrorCode.incrementAndGet();
                             }
@@ -98,10 +104,14 @@ public class HttpConnectionManagerTest {
 
         }
 
+        Log.Log(Log.LogLevel.Trace, "Waiting on requests");
+
         // Wait for all Requests to complete
         for (CompletableFuture f: requestCompleteFutures) {
             f.join();
         }
+
+        Log.Log(Log.LogLevel.Trace, "All requests done");
 
         // Verify we got some Http Status Code for each Request
         Assert.assertEquals(numRequests, reqIdToStatus.size());
@@ -118,6 +128,8 @@ public class HttpConnectionManagerTest {
     public void testParallelRequests() throws Exception {
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
 
+        Log.Log(Log.LogLevel.Trace, "BeginTest");
+
         URI uri = new URI(endpoint);
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -126,9 +138,18 @@ public class HttpConnectionManagerTest {
 
             testParallelConnections(connectionPool, request, NUM_REQUESTS);
             shutdownComplete = connectionPool.getShutdownCompleteFuture();
+
+            Log.Log(Log.LogLevel.Trace, "EndTest");
         }
 
+        Log.Log(Log.LogLevel.Trace, "ShutdownWait");
         shutdownComplete.get();
+        Log.Log(Log.LogLevel.Trace, "ShutdownComplete");
+
+        boolean done = false;
+        while (!done) {
+            ;
+        }
 
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }

@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import software.amazon.awssdk.crt.Log;
+
 /**
  * This wraps a native pointer to an AWS Common Runtime resource. It also ensures
  * that the first time a resource is referenced, the CRT will be loaded and bound.
@@ -53,6 +55,7 @@ public abstract class CrtResource implements AutoCloseable {
      * @return The original resource.
      */
     public <T extends CrtResource> T addReferenceTo(T resource) {
+        Log.Log(Log.LogLevel.Trace, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
         resource.addRef();
         referencedResources.push(resource);
 
@@ -88,11 +91,22 @@ public abstract class CrtResource implements AutoCloseable {
     protected abstract boolean canReleaseReferencesImmediately();
 
     private void release() {
+        Log.Log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
+
         if (isNull()) {
             throw new IllegalStateException("Already Released Resource!");
         }
-        releaseNativeHandle();
+
+        /*
+         * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
+         * By removing from the map first, we prevent a double-bind exception from getting thrown when the second Java object
+         * calls acquire on the native handle.
+         *
+         * "Totally reasonable approach" - Mike
+         */
         NATIVE_RESOURCES.remove(ptr);
+        releaseNativeHandle();
+
         ptr = 0;
     }
 
@@ -106,11 +120,8 @@ public abstract class CrtResource implements AutoCloseable {
 
     @Override
     public void close() {
-        if (!isNull()) {
-            throw new IllegalStateException("Closing sub-resources before releasing parent Resource may cause use-after-free bugs!");
-        }
-
         int remainingRefs = refCount.decrementAndGet();
+        Log.Log(Log.LogLevel.Trace, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
         if (remainingRefs > 0) {
             return;
         }
@@ -123,6 +134,7 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     protected void releaseReferences() {
+        Log.Log(Log.LogLevel.Trace, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
         while(referencedResources.size() > 0) {
             CrtResource r = referencedResources.pop();
             r.close();

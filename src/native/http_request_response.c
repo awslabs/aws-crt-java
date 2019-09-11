@@ -295,9 +295,14 @@ static jobjectArray s_java_headers_array_from_native(
 
 static int s_on_incoming_headers_fn(
     struct aws_http_stream *stream,
+    enum aws_http_header_block header_block,
     const struct aws_http_header *header_array,
     size_t num_headers,
     void *user_data) {
+
+    if (header_block != AWS_HTTP_HEADER_BLOCK_INFORMATIONAL) {
+        return AWS_OP_SUCCESS;
+    }
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
@@ -333,7 +338,7 @@ static int s_on_incoming_headers_fn(
     return AWS_OP_SUCCESS;
 }
 
-static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bool has_body, void *user_data) {
+static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, enum aws_http_header_block header_block, void *user_data) {
     (void)stream;
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
@@ -344,7 +349,7 @@ static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bo
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
-    jboolean jHasBody = has_body;
+    jboolean jHasBody = true; // !
     (*env)->CallVoidMethod(
         env,
         callback->java_crt_http_callback_handler,

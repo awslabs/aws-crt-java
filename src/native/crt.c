@@ -210,7 +210,7 @@ void s_detach_jvm_from_thread(void *user_data) {
 
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
-    if ((*jvm)->GetEnv(jvm, (void**)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
         (void)result;
         AWS_FATAL_ASSERT(result == JNI_OK);

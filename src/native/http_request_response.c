@@ -353,7 +353,10 @@ static int s_on_incoming_headers_fn(
     return AWS_OP_SUCCESS;
 }
 
-static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, enum aws_http_header_block block_type, void *user_data) {
+static int s_on_incoming_header_block_done_fn(
+    struct aws_http_stream *stream,
+    enum aws_http_header_block block_type,
+    void *user_data) {
     (void)stream;
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;

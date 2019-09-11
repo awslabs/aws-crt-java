@@ -41,7 +41,7 @@ public interface CrtHttpStreamHandler {
      * @param stream The HttpStream object
      * @param hasBody True if the HTTP Response had a Body, false otherwise.
      */
-    default void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
+    default void onResponseHeadersDone(HttpStream stream, int blockType) {
         /* Optional Callback, do nothing by default */
     }
 

@@ -208,19 +208,17 @@ void s_detach_jvm_from_thread(void *user_data) {
     (*jvm)->DetachCurrentThread(jvm);
 }
 
-void s_attach_jvm_cleanup_to_thread(void *user_data) {
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, user_data));
-}
-
-static aws_thread_once s_jvm_once = AWS_THREAD_ONCE_STATIC_INIT;
-
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
-    aws_thread_call_once(&s_jvm_once, s_attach_jvm_cleanup_to_thread, jvm);
-    
     JNIEnv *env = NULL;
-    jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
-    (void)result;
-    AWS_FATAL_ASSERT(result == JNI_OK);
+    if ((*jvm)->GetEnv(jvm, (void**)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+        (void)result;
+        AWS_FATAL_ASSERT(result == JNI_OK);
+        /* This should only happen in event loop threads, the JVM main thread attachment is
+         * managed by the JVM, so we only need to clean up event loop thread attachments */
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, jvm));
+    }
+
     return env;
 }
 

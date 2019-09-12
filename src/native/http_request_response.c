@@ -248,7 +248,7 @@ void s_cache_crt_http_stream_handler(JNIEnv *env) {
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeaders);
 
     s_crt_http_stream_handler.onResponseHeadersDone =
-        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Z)V");
+        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeadersDone);
 
     s_crt_http_stream_handler.onResponseBody = (*env)->GetMethodID(
@@ -295,10 +295,12 @@ static jobjectArray s_java_headers_array_from_native(
 
 static int s_on_incoming_headers_fn(
     struct aws_http_stream *stream,
+    enum aws_http_header_block block_type,
     const struct aws_http_header *header_array,
     size_t num_headers,
     void *user_data) {
 
+    (void)block_type;
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
     if (!http_stream_callback_is_valid(callback)) {
@@ -351,7 +353,10 @@ static int s_on_incoming_headers_fn(
     return AWS_OP_SUCCESS;
 }
 
-static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bool has_body, void *user_data) {
+static int s_on_incoming_header_block_done_fn(
+    struct aws_http_stream *stream,
+    enum aws_http_header_block block_type,
+    void *user_data) {
     (void)stream;
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
@@ -362,13 +367,13 @@ static int s_on_incoming_header_block_done_fn(struct aws_http_stream *stream, bo
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
-    jboolean jHasBody = has_body;
+    jint jni_block_type = block_type;
     (*env)->CallVoidMethod(
         env,
         callback->java_crt_http_callback_handler,
         s_crt_http_stream_handler.onResponseHeadersDone,
         callback->java_http_stream,
-        jHasBody);
+        jni_block_type);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);

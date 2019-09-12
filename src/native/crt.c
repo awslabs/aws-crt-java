@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 #include <aws/common/string.h>
+#include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/io/io.h>
@@ -202,11 +203,22 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     return aws_string_new_from_c_str(allocator, (*env)->GetStringUTFChars(env, str, NULL));
 }
 
+void s_detach_jvm_from_thread(void *user_data) {
+    JavaVM *jvm = user_data;
+    (*jvm)->DetachCurrentThread(jvm);
+}
+
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
-    jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
-    (void)result;
-    AWS_FATAL_ASSERT(result == JNI_OK);
+    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+        (void)result;
+        AWS_FATAL_ASSERT(result == JNI_OK);
+        /* This should only happen in event loop threads, the JVM main thread attachment is
+         * managed by the JVM, so we only need to clean up event loop thread attachments */
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+    }
+
     return env;
 }
 

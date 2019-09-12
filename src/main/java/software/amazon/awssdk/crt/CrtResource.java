@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import software.amazon.awssdk.crt.Log;
@@ -138,6 +139,13 @@ public abstract class CrtResource implements AutoCloseable {
         while(referencedResources.size() > 0) {
             CrtResource r = referencedResources.pop();
             r.close();
+        }
+    }
+
+    public static void logNativeResources() {
+        Log.Log(Log.LogLevel.Trace, "Dumping native object set:");
+        for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
+            Log.Log(Log.LogLevel.Trace, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
         }
     }
 }

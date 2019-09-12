@@ -300,7 +300,7 @@ static int s_on_incoming_headers_fn(
     size_t num_headers,
     void *user_data) {
 
-    if (header_block != AWS_HTTP_HEADER_BLOCK_INFORMATIONAL) {
+    if (header_block != AWS_HTTP_HEADER_BLOCK_MAIN) {
         return AWS_OP_SUCCESS;
     }
 

@@ -146,10 +146,7 @@ public class HttpConnectionManagerTest {
         shutdownComplete.get();
         Log.Log(Log.LogLevel.Trace, "ShutdownComplete");
 
-        boolean done = false;
-        while (!done) {
-            ;
-        }
+        CrtResource.logNativeResources();
 
         Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
     }

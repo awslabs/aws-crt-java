@@ -255,6 +255,11 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
 
+    bool done = false;
+    while (!done) {
+        ;
+    }
+
     s_log_file = fopen("/tmp/test.log", "w");
 
     struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = s_log_file};

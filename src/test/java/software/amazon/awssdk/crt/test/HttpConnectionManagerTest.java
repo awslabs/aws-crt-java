@@ -16,7 +16,6 @@ import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestOptions;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -53,7 +52,7 @@ public class HttpConnectionManagerTest {
         addResource(tlsContext);
 
         HttpConnectionPoolManager connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE, numConnections);
+                HttpConnectionPoolManager.DEFAULT_MAX_BUFFER_SIZE, HttpConnectionPoolManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
 
         return connPool;
     }
@@ -92,8 +91,7 @@ public class HttpConnectionManagerTest {
                         requestCompleteFuture.completeExceptionally(throwable);
                     }
                     int requestId = numRequestsMade.incrementAndGet();
-                    HttpRequestOptions reqOptions = new HttpRequestOptions();
-                    conn.makeRequest(request, reqOptions,  new CrtHttpStreamHandler() {
+                    conn.makeRequest(request, new CrtHttpStreamHandler() {
                         @Override
                         public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
                             reqIdToStatus.put(requestId, responseStatusCode);

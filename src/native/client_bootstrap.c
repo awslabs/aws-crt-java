@@ -15,8 +15,8 @@
 
 #include <jni.h>
 
-#include <aws/io/logging.h>
 #include <aws/io/channel_bootstrap.h>
+#include <aws/io/logging.h>
 
 #include "crt.h"
 

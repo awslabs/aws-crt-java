@@ -60,7 +60,6 @@ public final class ClientBootstrap extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            logNativeResources();
             clientBootstrapDestroy(native_ptr());
         }
     }

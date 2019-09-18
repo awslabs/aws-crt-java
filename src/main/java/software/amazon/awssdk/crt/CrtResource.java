@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import software.amazon.awssdk.crt.Log;
 
@@ -29,6 +32,9 @@ import software.amazon.awssdk.crt.Log;
  */
 public abstract class CrtResource implements AutoCloseable {
     private static final ConcurrentHashMap<Long, String> NATIVE_RESOURCES = new ConcurrentHashMap<>();
+    private static AtomicInteger resourceCount = new AtomicInteger(0);
+    private static final Lock lock = new ReentrantLock();
+    private static final Condition emptyResources  = lock.newCondition();
     private static final long NULL = 0;
     private final LinkedList<CrtResource> referencedResources = new LinkedList<>();
     private long ptr;
@@ -84,6 +90,7 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
         }
 
+        resourceCount.incrementAndGet();
         ptr = _ptr;
     }
 
@@ -107,6 +114,11 @@ public abstract class CrtResource implements AutoCloseable {
          */
         NATIVE_RESOURCES.remove(ptr);
         releaseNativeHandle();
+
+        int remainingResources = resourceCount.decrementAndGet();
+        if (remainingResources == 0) {
+            emptyResources.signal();
+        }
 
         ptr = 0;
     }
@@ -146,6 +158,17 @@ public abstract class CrtResource implements AutoCloseable {
         Log.Log(Log.LogLevel.Trace, "Dumping native object set:");
         for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
             Log.Log(Log.LogLevel.Trace, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
+        }
+    }
+
+    public static void waitForNoResources() {
+        lock.lock();
+        try {
+            emptyResources.await();
+        } catch (Exception e) {
+            ;
+        } finally {
+            lock.unlock();
         }
     }
 }

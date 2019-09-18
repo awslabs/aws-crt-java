@@ -27,6 +27,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
@@ -77,6 +78,9 @@ public class HttpConnectionTest {
             }
 
             resp.shutdownComplete.get();
+
+            Log.Log(Log.LogLevel.Trace, "TestShutdownComplete... what's left?");
+            CrtResource.logNativeResources();
 
             Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
         }

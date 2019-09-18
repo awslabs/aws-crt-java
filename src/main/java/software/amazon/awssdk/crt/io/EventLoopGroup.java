@@ -14,8 +14,10 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 
 /**
  * This class wraps the aws_event_loop_group from aws-c-io to provide
@@ -23,6 +25,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * Runtime.
  */
 public final class EventLoopGroup extends CrtResource {
+
+    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     /**
      * Creates a new event loop group for the I/O subsystem to use to run blocking I/O requests
@@ -34,7 +38,7 @@ public final class EventLoopGroup extends CrtResource {
     }
 
     @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Stops the event loop group's tasks and frees all resources associated with the the group. This should be called
@@ -43,13 +47,26 @@ public final class EventLoopGroup extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            eventLoopGroupDestroy(native_ptr());
+            eventLoopGroupDestroy(this, native_ptr());
         }
     }
+
+    /**
+     * Called from Native when the asynchronous cleanup process needed for event loop groups has completed.
+     */
+    private void onCleanupComplete() {
+        Log.Log(Log.LogLevel.Trace, "EventLoopGroup.onCleanupComplete");
+
+        releaseReferences();
+
+        this.shutdownComplete.complete(null);
+    }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
-    private static native void eventLoopGroupDestroy(long elg);
+    private static native void eventLoopGroupDestroy(EventLoopGroup thisObj, long elg);
 };

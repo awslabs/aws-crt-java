@@ -222,6 +222,8 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_crt_http_stream_handler(JNIEnv *);
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
+    extern void s_cache_event_loop_group(JNIEnv *);
+
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
@@ -231,6 +233,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_crt_http_stream_handler(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);
+    s_cache_event_loop_group(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
@@ -255,10 +258,11 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
 
+    /*
     bool done = false;
     while (!done) {
         ;
-    }
+    }*/
 
     s_log_file = fopen("/tmp/test.log", "w");
 

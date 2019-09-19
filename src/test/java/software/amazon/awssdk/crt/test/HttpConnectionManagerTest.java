@@ -65,7 +65,7 @@ public class HttpConnectionManagerTest {
 
         for (int i = 0; i < numRequests; i++) {
 
-            Log.Log(Log.LogLevel.Trace, String.format("Starting request %d", i));
+            Log.log(Log.LogLevel.Trace, String.format("Starting request %d", i));
 
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
@@ -79,7 +79,7 @@ public class HttpConnectionManagerTest {
                         connPool.releaseConnection(conn);
                         requestCompleteFuture.completeExceptionally(throwable);
                     }
-                    Log.Log(Log.LogLevel.Trace, "Acquired Connection");
+                    Log.log(Log.LogLevel.Trace, "Acquired Connection");
                     int requestId = numRequestsMade.incrementAndGet();
                     HttpRequestOptions reqOptions = new HttpRequestOptions();
                     conn.makeRequest(request, reqOptions,  new CrtHttpStreamHandler() {
@@ -90,7 +90,7 @@ public class HttpConnectionManagerTest {
 
                         @Override
                         public void onResponseComplete(HttpStream stream, int errorCode) {
-                            Log.Log(Log.LogLevel.Trace, "OnResponseComplete");
+                            Log.log(Log.LogLevel.Trace, "OnResponseComplete");
                             if (errorCode != CRT.AWS_CRT_SUCCESS) {
                                 numErrorCode.incrementAndGet();
                             }
@@ -104,14 +104,14 @@ public class HttpConnectionManagerTest {
 
         }
 
-        Log.Log(Log.LogLevel.Trace, "Waiting on requests");
+        Log.log(Log.LogLevel.Trace, "Waiting on requests");
 
         // Wait for all Requests to complete
         for (CompletableFuture f: requestCompleteFutures) {
             f.join();
         }
 
-        Log.Log(Log.LogLevel.Trace, "All requests done");
+        Log.log(Log.LogLevel.Trace, "All requests done");
 
         // Verify we got some Http Status Code for each Request
         Assert.assertEquals(numRequests, reqIdToStatus.size());
@@ -126,29 +126,18 @@ public class HttpConnectionManagerTest {
 
     @Test
     public void testParallelRequests() throws Exception {
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
 
-        Log.Log(Log.LogLevel.Trace, "BeginTest");
+        Log.log(Log.LogLevel.Trace, "BeginTest");
 
         URI uri = new URI(endpoint);
 
-        CompletableFuture<Void> shutdownComplete = null;
         try (HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
-
             testParallelConnections(connectionPool, request, NUM_REQUESTS);
-            shutdownComplete = connectionPool.getShutdownCompleteFuture();
-
-            Log.Log(Log.LogLevel.Trace, "EndTest");
         }
 
-        Log.Log(Log.LogLevel.Trace, "ShutdownWait");
-        shutdownComplete.get();
-        Log.Log(Log.LogLevel.Trace, "ShutdownComplete");
-
-        CrtResource.logNativeResources();
-
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 
 }

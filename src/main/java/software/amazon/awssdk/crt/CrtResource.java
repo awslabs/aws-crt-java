@@ -17,6 +17,7 @@ package software.amazon.awssdk.crt;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,11 +32,16 @@ import software.amazon.awssdk.crt.Log;
  * that the first time a resource is referenced, the CRT will be loaded and bound.
  */
 public abstract class CrtResource implements AutoCloseable {
+    private static final String NATIVE_DEBUG_PROPERTY_NAME = "aws.iot.sdk.debugnative";
+    private static final long NULL = 0;
+
     private static final ConcurrentHashMap<Long, String> NATIVE_RESOURCES = new ConcurrentHashMap<>();
-    private static AtomicInteger resourceCount = new AtomicInteger(0);
+
+    private static boolean debugNativeObjects = System.getProperty(NATIVE_DEBUG_PROPERTY_NAME) != null;
+    private static int resourceCount = 0;
     private static final Lock lock = new ReentrantLock();
     private static final Condition emptyResources  = lock.newCondition();
-    private static final long NULL = 0;
+
     private final LinkedList<CrtResource> referencedResources = new LinkedList<>();
     private long ptr;
     private AtomicInteger refCount = new AtomicInteger(1);
@@ -43,14 +49,6 @@ public abstract class CrtResource implements AutoCloseable {
     static {
         /* This will cause the JNI lib to be loaded the first time a CRT is created */
         new CRT();
-    }
-
-    public static int getAllocatedNativeResourceCount() {
-        return NATIVE_RESOURCES.size();
-    }
-
-    public static Collection<String> getAllocatedNativeResources() {
-        return Collections.unmodifiableCollection(NATIVE_RESOURCES.values());
     }
 
     public CrtResource() {
@@ -62,7 +60,9 @@ public abstract class CrtResource implements AutoCloseable {
      * @return The original resource.
      */
     public <T extends CrtResource> T addReferenceTo(T resource) {
-        Log.Log(Log.LogLevel.Trace, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+        if (debugNativeObjects) {
+            Log.log(Log.LogLevel.Trace, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+        }
         resource.addRef();
         referencedResources.push(resource);
 
@@ -90,8 +90,8 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
         }
 
-        resourceCount.incrementAndGet();
         ptr = _ptr;
+        incrementNativeObjectCount();
     }
 
     protected abstract void releaseNativeHandle();
@@ -99,7 +99,9 @@ public abstract class CrtResource implements AutoCloseable {
     protected abstract boolean canReleaseReferencesImmediately();
 
     private void release() {
-        Log.Log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
+        if (debugNativeObjects) {
+            Log.log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
+        }
 
         if (isNull()) {
             throw new IllegalStateException("Already Released Resource!");
@@ -115,10 +117,7 @@ public abstract class CrtResource implements AutoCloseable {
         NATIVE_RESOURCES.remove(ptr);
         releaseNativeHandle();
 
-        int remainingResources = resourceCount.decrementAndGet();
-        if (remainingResources == 0) {
-            emptyResources.signal();
-        }
+        decrementNativeObjectCount();
 
         ptr = 0;
     }
@@ -134,7 +133,11 @@ public abstract class CrtResource implements AutoCloseable {
     @Override
     public void close() {
         int remainingRefs = refCount.decrementAndGet();
-        Log.Log(Log.LogLevel.Trace, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
+
+        if (debugNativeObjects) {
+            Log.log(Log.LogLevel.Trace, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
+        }
+
         if (remainingRefs > 0) {
             return;
         }
@@ -147,7 +150,10 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     protected void releaseReferences() {
-        Log.Log(Log.LogLevel.Trace, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
+        if (debugNativeObjects) {
+            Log.log(Log.LogLevel.Trace, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
+        }
+
         while(referencedResources.size() > 0) {
             CrtResource r = referencedResources.pop();
             r.close();
@@ -155,18 +161,58 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     public static void logNativeResources() {
-        Log.Log(Log.LogLevel.Trace, "Dumping native object set:");
+        Log.log(Log.LogLevel.Trace, "Dumping native object set:");
         for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
-            Log.Log(Log.LogLevel.Trace, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
+            Log.log(Log.LogLevel.Trace, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
+        }
+    }
+
+    private static void incrementNativeObjectCount() {
+        if (!debugNativeObjects) {
+            return;
+        }
+
+        lock.lock();
+        try {
+            ++resourceCount;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private static void decrementNativeObjectCount() {
+        if (!debugNativeObjects) {
+            return;
+        }
+
+        lock.lock();
+        try {
+            --resourceCount;
+            if (resourceCount == 0) {
+                emptyResources.signal();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     public static void waitForNoResources() {
+        if (!debugNativeObjects) {
+            return;
+        }
+
         lock.lock();
         try {
-            emptyResources.await();
-        } catch (Exception e) {
-            ;
+            long timeout = System.currentTimeMillis() + 30*1000;
+            while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
+                emptyResources.await(1, TimeUnit.SECONDS);
+            }
+            if (resourceCount != 0) {
+                throw new InterruptedException();
+            }
+        } catch (InterruptedException e) {
+            /* Cause tests to fail without having to go add checked exceptions to every instance */
+            throw new RuntimeException("Timeout waiting for resource count to drop to zero");
         } finally {
             lock.unlock();
         }

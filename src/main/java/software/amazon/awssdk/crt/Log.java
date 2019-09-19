@@ -15,10 +15,20 @@
 package software.amazon.awssdk.crt;
 
 /**
- * This exception will be thrown by any exceptional cases encountered within
- * the JNI bindings to the AWS Common Runtime
+ * Static wrapper around native and crt logging.
  */
 public class Log {
+
+    private static final String LOG_DESTINATION_PROPERTY_NAME = "aws.iot.sdk.log.destination";
+    private static final String LOG_FILE_NAME_PROPERTY_NAME = "aws.iot.sdk.log.filename";
+    private static final String LOG_LEVEL_PROPERTY_NAME = "aws.iot.sdk.log.level";
+
+    private enum LogDestination {
+        None,
+        Stdout,
+        Stderr,
+        File
+    }
 
     public enum LogLevel {
         None(0),
@@ -40,12 +50,49 @@ public class Log {
         }
     };
 
-    public static void Log(LogLevel level, String logstring) {
+    public static void log(LogLevel level, String logstring) {
         log(level.getValue(), logstring);
+    }
+
+    public static void initLoggingFromSystemProperties() throws IllegalArgumentException {
+        String destinationString = System.getProperty(LOG_DESTINATION_PROPERTY_NAME);
+        String filenameString = System.getProperty(LOG_FILE_NAME_PROPERTY_NAME);
+        String levelString = System.getProperty(LOG_LEVEL_PROPERTY_NAME);
+        if (destinationString == null) {
+            return;
+        }
+
+        LogDestination destination = LogDestination.valueOf(destinationString);
+        LogLevel level = LogLevel.Warn;
+        if (levelString != null) {
+            level = LogLevel.valueOf(levelString);
+        }
+
+        switch(destination) {
+            case Stdout:
+                initLoggingToStdout(level.getValue());
+                break;
+
+            case Stderr:
+                initLoggingToStderr(level.getValue());
+                break;
+
+            case File:
+                if (filenameString == null) {
+                    return;
+                }
+
+                initLoggingToFile(level.getValue(), filenameString);
+                break;
+        }
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native void log(int level, String logstring);
+
+    private static native void initLoggingToStdout(int level);
+    private static native void initLoggingToStderr(int level);
+    private static native void initLoggingToFile(int level, String filename);
 };

@@ -180,7 +180,7 @@ public class HttpRequestResponseTest {
 
         shutdownComplete.get();
 
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
 
         return response;
     }

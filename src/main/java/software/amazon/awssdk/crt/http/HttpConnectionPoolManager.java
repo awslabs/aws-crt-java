@@ -27,7 +27,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.Log;
 
 /**
  * Manages a Pool of Http Connections
@@ -142,9 +141,7 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     protected void releaseConnectionPointer(long connection_ptr) {
         if (!isNull()) {
-            Log.Log(Log.LogLevel.Trace, "releaseConnectionPointer Begin");
             httpConnectionManagerReleaseConnection(this.native_ptr(), connection_ptr);
-            Log.Log(Log.LogLevel.Trace, "releaseConnectionPointer End");
         }
     }
 
@@ -163,8 +160,6 @@ public class HttpConnectionPoolManager extends CrtResource {
      * begin releasing Native Resources that HttpConnectionPoolManager depends on.
      */
     private void onShutdownComplete() {
-        Log.Log(Log.LogLevel.Trace, "OnShutdownComplete");
-
         releaseReferences();
 
         this.shutdownComplete.complete(null);
@@ -178,9 +173,6 @@ public class HttpConnectionPoolManager extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-
-        Log.Log(Log.LogLevel.Trace, "ConnectionPoolManager.releaseNativeHandle");
-
         isClosed.set(true);
         closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
         if (!isNull()) {

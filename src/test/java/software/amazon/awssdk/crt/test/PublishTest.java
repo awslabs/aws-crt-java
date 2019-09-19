@@ -58,6 +58,6 @@ public class PublishTest extends MqttConnectionFixture {
 
         disconnect();
         close();
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 };

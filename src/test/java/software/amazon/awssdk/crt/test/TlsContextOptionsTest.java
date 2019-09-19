@@ -12,7 +12,7 @@ public class TlsContextOptionsTest {
 
     @Test
     public void testTlsContextOptionsAPI() {
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = new TlsContextOptions()) {
             for (TlsVersions tlsVersion: TlsContextOptions.TlsVersions.values()) {
@@ -40,6 +40,6 @@ public class TlsContextOptionsTest {
             Assert.assertTrue(exceptionThrown);
         }
 
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 }

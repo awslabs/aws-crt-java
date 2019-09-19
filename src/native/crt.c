@@ -26,6 +26,7 @@
 
 #include "async_callback.h"
 #include "crt.h"
+#include "logging.h"
 
 struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();
@@ -239,14 +240,10 @@ static void s_cache_jni_classes(JNIEnv *env) {
 #    pragma warning(pop)
 #endif
 
-static struct aws_logger s_logger;
-static FILE *s_log_file = NULL;
-
 static void s_jni_atexit(void) {
-    aws_logger_clean_up(&s_logger);
-    fclose(s_log_file);
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
+    aws_cleanup_logging();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -257,21 +254,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
-
-    /*
-    bool done = false;
-    while (!done) {
-        ;
-    }*/
-
-    s_log_file = fopen("/tmp/test.log", "w");
-
-    struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = s_log_file};
-    if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
-        aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-        return;
-    }
-    aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);
 

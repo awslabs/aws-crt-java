@@ -16,6 +16,8 @@
 
 #include <aws/common/logging.h>
 
+#include "crt.h"
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -36,6 +38,62 @@ void JNICALL
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);
 
     AWS_LOGF(jni_level, AWS_LS_COMMON_GENERAL, raw_string);
+}
+
+static struct aws_logger s_logger;
+static bool s_initialized_logger = false;
+
+static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_options *options) {
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    if (aws_logger_init_standard(&s_logger, allocator, options)) {
+        aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
+        return;
+    }
+
+    aws_logger_set(&s_logger);
+    s_initialized_logger = true;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToStdout(JNIEnv *env, jclass jni_crt_class, jint level) {
+    (void)jni_crt_class;
+
+    struct aws_logger_standard_options log_options = {.level = level, .file = stdout};
+
+    s_aws_init_logging_internal(env, &log_options);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToStderr(JNIEnv *env, jclass jni_crt_class, jint level) {
+    (void)jni_crt_class;
+
+    struct aws_logger_standard_options log_options = {.level = level, .file = stderr};
+
+    s_aws_init_logging_internal(env, &log_options);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToFile(
+    JNIEnv *env,
+    jclass jni_crt_class,
+    jint level,
+    jstring filename) {
+    (void)jni_crt_class;
+
+    struct aws_logger_standard_options log_options = {.level = level,
+                                                      .filename = (*env)->GetStringUTFChars(env, filename, NULL)};
+
+    s_aws_init_logging_internal(env, &log_options);
+}
+
+void aws_cleanup_logging() {
+    if (aws_logger_get() == &s_logger) {
+        aws_logger_set(NULL);
+    }
+
+    if (s_initialized_logger) {
+        aws_logger_clean_up(&s_logger);
+    }
 }
 
 #if UINTPTR_MAX == 0xffffffff

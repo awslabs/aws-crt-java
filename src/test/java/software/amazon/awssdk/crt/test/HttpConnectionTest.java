@@ -68,7 +68,7 @@ public class HttpConnectionTest {
                 SocketOptions socketOptions = new SocketOptions();
                 TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
+                resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
             }
 
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
@@ -79,10 +79,7 @@ public class HttpConnectionTest {
 
             resp.shutdownComplete.get();
 
-            Log.Log(Log.LogLevel.Trace, "TestShutdownComplete... what's left?");
-            CrtResource.logNativeResources();
-
-            Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+            CrtResource.waitForNoResources();
         }
     }
 

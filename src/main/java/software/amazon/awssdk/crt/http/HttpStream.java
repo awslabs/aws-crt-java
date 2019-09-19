@@ -16,6 +16,7 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.io.CrtByteBuffer;
 
 /**
  * An HttpStream represents a single Http Request/Response pair within a HttpConnection, and wraps the native resources
@@ -24,9 +25,11 @@ import software.amazon.awssdk.crt.CrtResource;
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
  */
 public class HttpStream extends CrtResource {
+    private CrtByteBuffer streamBuffer;
 
-    /* Native code can call this constructor */
-    protected HttpStream(long ptr) {
+    /* Native code will call this constructor during HttpConnection.makeRequest() */
+    protected HttpStream(CrtByteBuffer streamBuffer, long ptr) {
+        this.streamBuffer = streamBuffer;
         acquire(ptr);
     }
 
@@ -35,7 +38,11 @@ public class HttpStream extends CrtResource {
 
     @Override
     protected void releaseNativeHandle() {
-        httpStreamRelease(native_ptr());
+        if (!isNull()) {
+            streamBuffer.releaseBackToPool();
+            streamBuffer = null;
+            httpStreamRelease(native_ptr());
+        }
     }
 
     /**
@@ -51,7 +58,9 @@ public class HttpStream extends CrtResource {
         if (windowSize < 0) {
             throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
         }
-        httpStreamIncrementWindow(native_ptr(), windowSize);
+        if (!isNull()) {
+            httpStreamIncrementWindow(native_ptr(), windowSize);
+        }
     }
 
     /**
@@ -59,7 +68,10 @@ public class HttpStream extends CrtResource {
      * @return The Http Response Status Code
      */
     public int getResponseStatusCode() {
-        return httpStreamGetResponseStatusCode(native_ptr());
+        if (!isNull()) {
+            return httpStreamGetResponseStatusCode(native_ptr());
+        }
+        throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
     private static native void httpStreamRelease(long http_stream);

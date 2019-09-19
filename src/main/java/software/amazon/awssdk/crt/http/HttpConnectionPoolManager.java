@@ -19,12 +19,13 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.CrtBufferPool;
+import software.amazon.awssdk.crt.io.CrtByteBuffer;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -32,6 +33,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Manages a Pool of Http Connections
  */
 public class HttpConnectionPoolManager extends CrtResource {
+    public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
     private static final String HTTP = "http";
@@ -46,6 +48,7 @@ public class HttpConnectionPoolManager extends CrtResource {
     private final int maxConnections;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private final CrtBufferPool bufferPool;
 
     /**
      * The queue of Connection Acquisition requests.
@@ -53,11 +56,11 @@ public class HttpConnectionPoolManager extends CrtResource {
     private final Queue<CompletableFuture<HttpConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
 
     public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
-        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
+        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
     }
 
     public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
-                                      URI uri, int windowSize, int maxConnections) {
+                                      URI uri, int bufferSize, int windowSize, int maxConnections) {
 
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
@@ -66,6 +69,7 @@ public class HttpConnectionPoolManager extends CrtResource {
         if (clientBootstrap == null || clientBootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
         if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
         if (HTTPS.equals(uri.getScheme()) && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+        if (bufferSize <= 0) { throw new  IllegalArgumentException("Buffer Size must be greater than zero."); }
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
@@ -82,6 +86,10 @@ public class HttpConnectionPoolManager extends CrtResource {
         this.port = port;
         this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
+        // TODO: We will need to create more buffers once we allow >1 HttpStream per HttpConnection (such as for Http/2)
+        try (CrtBufferPool bufferPool = new CrtBufferPool(maxConnections, bufferSize)) {
+            this.bufferPool = addReferenceTo(bufferPool);
+        }
 
         acquire(httpConnectionManagerNew(this,
                                             clientBootstrap.native_ptr(),
@@ -113,6 +121,10 @@ public class HttpConnectionPoolManager extends CrtResource {
 
         HttpConnection conn = new HttpConnection(this, connection);
         connectionRequest.complete(conn);
+    }
+
+    protected CompletableFuture<CrtByteBuffer> acquireBuffer() {
+        return this.bufferPool.acquireBuffer();
     }
 
     /**

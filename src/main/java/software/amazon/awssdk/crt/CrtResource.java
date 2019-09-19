@@ -78,6 +78,10 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
 
+        if (isAlwaysNullResource()) {
+            throw new IllegalStateException("Always-null resources cannot acquire a native pointer");
+        }
+
         String canonicalName = this.getClass().getCanonicalName();
 
         if (_ptr == NULL) {
@@ -103,23 +107,28 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
         }
 
-        if (isNull()) {
-            throw new IllegalStateException("Already Released Resource!");
+        if (!isAlwaysNullResource()) {
+            if (isNull()) {
+                throw new IllegalStateException("Already Released Resource!");
+            }
+
+            /*
+             * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
+             * By removing from the map first, we prevent a double-bind exception from getting thrown when the second Java object
+             * calls acquire on the native handle.
+             *
+             * "Totally reasonable approach" - Mike
+             */
+            NATIVE_RESOURCES.remove(ptr);
         }
 
-        /*
-         * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
-         * By removing from the map first, we prevent a double-bind exception from getting thrown when the second Java object
-         * calls acquire on the native handle.
-         *
-         * "Totally reasonable approach" - Mike
-         */
-        NATIVE_RESOURCES.remove(ptr);
         releaseNativeHandle();
 
-        decrementNativeObjectCount();
+        if (!isAlwaysNullResource()) {
+            decrementNativeObjectCount();
 
-        ptr = 0;
+            ptr = 0;
+        }
     }
 
     public long native_ptr() {
@@ -129,6 +138,8 @@ public abstract class CrtResource implements AutoCloseable {
     public boolean isNull() {
         return (ptr == NULL);
     }
+
+    protected boolean isAlwaysNullResource() { return false; }
 
     @Override
     public void close() {

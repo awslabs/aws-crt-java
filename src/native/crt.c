@@ -166,16 +166,30 @@ void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
 }
 
 /**
- * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
+ * Populates a aws_byte_buf struct from a Java DirectByteBuffer Object
  */
-jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
-    jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst->buffer, (jlong)dst->capacity);
+void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject directBuf, struct aws_byte_buf *dst) {
+    dst->buffer = (*env)->GetDirectBufferAddress(env, directBuf);
+    dst->capacity = (size_t)(*env)->GetDirectBufferCapacity(env, directBuf);
+    dst->len = aws_jni_byte_buffer_get_position(env, directBuf);
+}
+
+jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, size_t capacity) {
+
+    jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst, (jlong)capacity);
     if (jByteBuf) {
-        aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)dst->len);
+        aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)capacity);
         aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
     }
 
     return jByteBuf;
+}
+
+/**
+ * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
+ */
+jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
+    return aws_jni_direct_byte_buffer_from_raw_ptr(env, (void *)dst->buffer, (jlong)dst->capacity);
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
@@ -236,6 +250,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
     extern void s_cache_event_loop_group(JNIEnv *);
+    extern void s_cache_crt_byte_buffer(JNIEnv * env);
 
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
@@ -247,6 +262,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);
+    s_cache_crt_byte_buffer(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)

@@ -39,9 +39,9 @@ public interface CrtHttpStreamHandler {
      * response. Guaranteed to be called exactly once if there is at least 1 Header.
      *
      * @param stream The HttpStream object
-     * @param hasBody True if the HTTP Response had a Body, false otherwise.
+     * @param blockType The type of the header block, corresponds to {@link HttpHeaderBlock}
      */
-    default void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
+    default void onResponseHeadersDone(HttpStream stream, int blockType) {
         /* Optional Callback, do nothing by default */
     }
 

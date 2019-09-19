@@ -53,7 +53,7 @@ public class HttpRequestResponseTest {
 
     private class TestHttpResponse {
         int statusCode = -1;
-        boolean hasBody = false;
+        int blockType = -1;
         List<HttpHeader> headers = new ArrayList<>();
         ByteBuffer bodyBuffer = ByteBuffer.wrap(new byte[16*1024*1024]); // Allow up to 16 MB Responses
         int onCompleteErrorCode = -1;
@@ -113,6 +113,7 @@ public class HttpRequestResponseTest {
         HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
+
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpConnectionPoolManager connPool = createConnectionPoolManager(uri)) {
             shutdownComplete = connPool.getShutdownCompleteFuture();
@@ -127,8 +128,8 @@ public class HttpRequestResponseTest {
                     }
 
                     @Override
-                    public void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
-                        response.hasBody = hasBody;
+                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                        response.blockType = blockType;
                     }
 
                     @Override
@@ -209,6 +210,8 @@ public class HttpRequestResponseTest {
             numAttempts++;
             response = getResponse(uri, request, requestBody);
         } while (shouldRetry(response) && numAttempts < 3);
+
+        Assert.assertNotEquals(-1, response.blockType);
 
         boolean hasContentLengthHeader = false;
         for (HttpHeader h: response.headers) {

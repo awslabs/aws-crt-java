@@ -248,7 +248,7 @@ void s_cache_crt_http_stream_handler(JNIEnv *env) {
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeaders);
 
     s_crt_http_stream_handler.onResponseHeadersDone =
-        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Z)V");
+        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeadersDone);
 
     s_crt_http_stream_handler.onResponseBody = (*env)->GetMethodID(
@@ -295,12 +295,12 @@ static jobjectArray s_java_headers_array_from_native(
 
 static int s_on_incoming_headers_fn(
     struct aws_http_stream *stream,
-    enum aws_http_header_block header_block,
+    enum aws_http_header_block block_type,
     const struct aws_http_header *header_array,
     size_t num_headers,
     void *user_data) {
 
-    if (header_block != AWS_HTTP_HEADER_BLOCK_MAIN) {
+    if (block_type != AWS_HTTP_HEADER_BLOCK_MAIN) {
         return AWS_OP_SUCCESS;
     }
 
@@ -358,7 +358,7 @@ static int s_on_incoming_headers_fn(
 
 static int s_on_incoming_header_block_done_fn(
     struct aws_http_stream *stream,
-    enum aws_http_header_block header_block,
+    enum aws_http_header_block block_type,
     void *user_data) {
     (void)stream;
 
@@ -369,14 +369,13 @@ static int s_on_incoming_header_block_done_fn(
     }
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-
-    jboolean jHasBody = true; // !
+    jint jni_block_type = block_type;
     (*env)->CallVoidMethod(
         env,
         callback->java_crt_http_callback_handler,
         s_crt_http_stream_handler.onResponseHeadersDone,
         callback->java_http_stream,
-        jHasBody);
+        jni_block_type);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);

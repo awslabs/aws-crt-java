@@ -94,6 +94,10 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
         }
 
+        if (debugNativeObjects) {
+            Log.log(Log.LogLevel.Trace, String.format("acquire - %s with native pointer %d", canonicalName, _ptr));
+        }
+
         ptr = _ptr;
         incrementNativeObjectCount();
     }
@@ -186,6 +190,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             ++resourceCount;
+            Log.log(Log.LogLevel.Trace, String.format("incrementNativeObjectCount - count = %d", resourceCount));
         } finally {
             lock.unlock();
         }
@@ -199,6 +204,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             --resourceCount;
+            Log.log(Log.LogLevel.Trace, String.format("decrementNativeObjectCount - count = %d", resourceCount));
             if (resourceCount == 0) {
                 emptyResources.signal();
             }
@@ -213,10 +219,13 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         lock.lock();
+
         try {
             long timeout = System.currentTimeMillis() + 30*1000;
             while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
                 emptyResources.await(1, TimeUnit.SECONDS);
+                Log.log(Log.LogLevel.Trace, "waitForNoResources - postWait");
+                logNativeResources();
             }
             if (resourceCount != 0) {
                 throw new InterruptedException();

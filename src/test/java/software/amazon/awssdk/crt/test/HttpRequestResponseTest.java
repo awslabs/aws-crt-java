@@ -109,51 +109,8 @@ public class HttpRequestResponseTest {
 
         final TestHttpResponse response = new TestHttpResponse();
 
-        HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
-<<<<<<< HEAD
-=======
-        try {
-            connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
-            conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            actuallyConnected = true;
-            CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
-                    response.statusCode = responseStatusCode;
-                    Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
-                    response.headers.addAll(Arrays.asList(nextHeaders));
-                }
-
-                @Override
-                public void onResponseHeadersDone(HttpStream stream, int blockType) {
-                    response.blockType = blockType;
-                }
-
-                @Override
-                public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
-                    respBodyUpdateSizes.add(bodyBytesIn.remaining());
-                    int start = bodyBytesIn.position();
-                    response.bodyBuffer.put(bodyBytesIn);
-                    int amountRead = bodyBytesIn.position() - start;
-
-                    // Slide the window open by the number of bytes just read
-                    return amountRead;
-                }
-
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    response.onCompleteErrorCode = errorCode;
-                    reqCompleted.complete(null);
-                    stream.close();
-                }
-
-                @Override
-                public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-                    reqBodyUpdateSizes.add(bodyBytesOut.remaining());
-                    transferData(bodyBytesIn, bodyBytesOut);
->>>>>>> fde0b0f4ecf0997c063f7fe5a98d0fa848ab6d0c
 
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpConnectionPoolManager connPool = createConnectionPoolManager(uri)) {
@@ -188,6 +145,7 @@ public class HttpRequestResponseTest {
                     public void onResponseComplete(HttpStream stream, int errorCode) {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
+                        stream.close();
                     }
 
                     @Override
@@ -199,22 +157,9 @@ public class HttpRequestResponseTest {
                     }
                 };
 
-<<<<<<< HEAD
-                HttpRequestOptions reqOptions = new HttpRequestOptions();
-                stream = conn.makeRequest(request, reqOptions, streamHandler);
-                Assert.assertNotNull(stream);
+                conn.makeRequest(request, streamHandler);
                 // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);
-=======
-            conn.makeRequest(request, streamHandler);
-            // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
-            reqCompleted.get(60, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (stream != null) {
->>>>>>> fde0b0f4ecf0997c063f7fe5a98d0fa848ab6d0c
-                stream.close();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

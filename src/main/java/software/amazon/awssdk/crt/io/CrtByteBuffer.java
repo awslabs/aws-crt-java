@@ -49,7 +49,7 @@ public class CrtByteBuffer extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            releaseCrtByteBuffer(release());
+            releaseCrtByteBuffer(native_ptr());
         }
     }
 

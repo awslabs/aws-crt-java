@@ -23,7 +23,9 @@ public class CrtBufferPool extends CrtResource {
         this.bufferSize = bufferSize;
 
         for (int i = 0; i < numBuffers; i++) {
-            idleBuffers.add(addReferenceTo(CrtByteBuffer.alloc(bufferSize).withPool(this)));
+            try (CrtByteBuffer buffer = CrtByteBuffer.alloc(bufferSize).withPool(this)) {
+                idleBuffers.add(addReferenceTo(buffer));
+            }
         }
     }
 

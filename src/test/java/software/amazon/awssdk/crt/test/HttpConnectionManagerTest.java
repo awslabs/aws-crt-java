@@ -25,8 +25,8 @@ import software.amazon.awssdk.crt.Log;
 public class HttpConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
-    private final static int NUM_CONNECTIONS = 1;
-    private final static int NUM_REQUESTS = 2;
+    private final static int NUM_CONNECTIONS = 20;
+    private final static int NUM_REQUESTS = 100;
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
@@ -134,6 +134,9 @@ public class HttpConnectionManagerTest {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, NUM_REQUESTS);
         }
+
+        Log.log(Log.LogLevel.Trace, "EndTest");
+        CrtResource.logNativeResources();
 
         CrtResource.waitForNoResources();
     }

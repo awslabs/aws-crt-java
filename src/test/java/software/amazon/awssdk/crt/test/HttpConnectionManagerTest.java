@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -139,6 +140,12 @@ public class HttpConnectionManagerTest {
         CrtResource.logNativeResources();
 
         CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void connPoolParallelRequestMemLeakCheck() throws Exception {
+        Callable<Void> fn = () -> { testParallelRequests(); return null; };
+        CrtMemoryLeakDetector.leakCheck(fn);
     }
 
 }

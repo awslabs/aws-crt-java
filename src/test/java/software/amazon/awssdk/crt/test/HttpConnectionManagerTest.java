@@ -144,7 +144,7 @@ public class HttpConnectionManagerTest {
 
     @Test
     public void connPoolParallelRequestMemLeakCheck() throws Exception {
-        Callable<Void> fn = () -> { testParallelRequests(); return null; };
+        Callable<Void> fn = () -> { testParallelRequests(); Thread.sleep(2000); return null; };
         CrtMemoryLeakDetector.leakCheck(fn);
     }
 

@@ -17,6 +17,7 @@ package software.amazon.awssdk.crt.test;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -68,22 +69,24 @@ public class HttpConnectionTest {
                 continue;
             }
 
-            TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
-            HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
-            tlsOpts.close();
-
-            Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
-            Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
-            if (resp.exception != null) {
-                Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
+            try (TlsContextOptions tlsOpts = new TlsContextOptions()) {
+                tlsOpts.withCipherPreference(pref);
+                HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(),
+                        new TlsContext(tlsOpts));
+                Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
+                Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
+                if (resp.exception != null) {
+                    Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
+                }
             }
-
+            
             Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
         }
     }
 
     @Test
     public void testHttpConnection() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);

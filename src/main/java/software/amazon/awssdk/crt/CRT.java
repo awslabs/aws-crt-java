@@ -110,7 +110,6 @@ public final class CRT {
                 // Copy from jar stream to temp file
                 Files.deleteIfExists(libTempPath);
                 Files.copy(in, libTempPath);
-                in.close();
             }            
 
             File tempSharedLib = libTempPath.toFile();

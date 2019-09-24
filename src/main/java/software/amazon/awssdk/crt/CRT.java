@@ -103,14 +103,14 @@ public final class CRT {
             Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName);
 
             // open a stream to read the shared lib contents from this JAR
-            InputStream in = CRT.class.getResourceAsStream(libraryPath);
-            if (in == null) {
-                throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
-            }
-            // Copy from jar stream to temp file
-            Files.deleteIfExists(libTempPath);
-            Files.copy(in, libTempPath);
-            in.close();
+            try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
+                if (in == null) {
+                    throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
+                }
+                // Copy from jar stream to temp file
+                Files.deleteIfExists(libTempPath);
+                Files.copy(in, libTempPath);
+            }            
 
             File tempSharedLib = libTempPath.toFile();
             if (!tempSharedLib.setExecutable(true)) {

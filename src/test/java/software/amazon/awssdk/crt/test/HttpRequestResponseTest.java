@@ -18,6 +18,7 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -47,7 +48,6 @@ public class HttpRequestResponseTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final String EMPTY_BODY = "";
     private final static String TEST_DOC_LINE = "This is a sample to prove that http downloads and uploads work. It doesn't really matter what's in here, we mainly just need to verify the downloads and uploads work.";
-    private final static int TEST_DOC_NUM_LINES = 86401;
     private final static String TEST_DOC_SHA256 = "C7FDB5314B9742467B16BD5EA2F8012190B5E2C44A005F7984F89AAB58219534";
 
     private class TestHttpResponse {
@@ -224,6 +224,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpDelete() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, 200);
         testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -232,6 +233,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpGet() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, 200);
         testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -240,6 +242,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpPost() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, 200);
@@ -248,6 +251,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpPut() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -256,6 +260,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, 200);
         testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, 300);
         testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
@@ -264,6 +269,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpDownload() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com", "/http_test_doc.txt", EMPTY_BODY, 200);
 
         ByteBuffer body = response.bodyBuffer;
@@ -286,6 +292,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpUpload() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, 200);
 

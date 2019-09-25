@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -125,6 +126,8 @@ public class HttpConnectionManagerTest {
 
     @Test
     public void testParallelRequests() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
         CrtResource.waitForNoResources();
 
         Log.log(Log.LogLevel.Trace, "BeginTest");
@@ -144,7 +147,9 @@ public class HttpConnectionManagerTest {
 
     @Test
     public void connPoolParallelRequestMemLeakCheck() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Callable<Void> fn = () -> { testParallelRequests(); Thread.sleep(2000); return null; };
+
         CrtMemoryLeakDetector.leakCheck(fn);
     }
 

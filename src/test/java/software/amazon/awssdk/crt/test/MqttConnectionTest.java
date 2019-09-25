@@ -16,6 +16,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -57,7 +58,7 @@ class MqttConnectionFixture {
     Path pathToKey = null;
     Path pathToCa = null;
 
-    private void findCredentials() {
+    private boolean findCredentials() {
         try {
             pathToCert = Paths.get(TEST_CERTIFICATE);
             pathToKey = Paths.get(TEST_PRIVATEKEY);
@@ -77,8 +78,11 @@ class MqttConnectionFixture {
             if (pathToCa != null && !pathToCa.toFile().exists()) {
                 throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
             }
+            return true;
         } catch (InvalidPathException ex) {
-            throw new MissingCredentialsException("Exception thrown during credential resolve: " + ex);
+            return false;
+        } catch (MissingCredentialsException ex) {
+            return false;
         }
     }
 
@@ -90,7 +94,7 @@ class MqttConnectionFixture {
     }
 
     boolean connect(boolean cleanSession, int keepAliveMs) {
-        findCredentials();
+        Assume.assumeTrue(findCredentials());
 
         MqttConnectionEvents events = new MqttConnectionEvents(){
             @Override
@@ -165,6 +169,7 @@ public class MqttConnectionTest extends MqttConnectionFixture {
 
     @Test
     public void testConnectDisconnect() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
         disconnect();
         close();

@@ -3,6 +3,7 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.io.TlsContextOptions.TlsVersions;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
@@ -12,6 +13,7 @@ public class TlsContextOptionsTest {
 
     @Test
     public void testTlsContextOptionsAPI() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = new TlsContextOptions()) {

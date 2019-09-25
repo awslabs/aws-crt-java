@@ -16,6 +16,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -41,6 +42,7 @@ public class IotServiceTest extends MqttConnectionFixture {
 
     @Test
     public void testIotService() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect( true, (short)0);
 
         Consumer<MqttMessage> messageHandler = (message) -> {};

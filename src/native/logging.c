@@ -30,6 +30,10 @@
 #    endif
 #endif
 
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 JNIEXPORT
 void JNICALL
     Java_software_amazon_awssdk_crt_Log_log(JNIEnv *env, jclass jni_class, jint jni_level, jstring jni_logstring) {

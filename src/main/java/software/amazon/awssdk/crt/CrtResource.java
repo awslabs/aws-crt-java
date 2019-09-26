@@ -138,6 +138,13 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
+     * returns the native handle associated with this CRTResource.
+     */
+    public long getNativeHandle() {
+        return nativeHandle;
+    }
+    
+    /**
      * Increments the reference count to this resource.
      */
     void addRef() {
@@ -155,13 +162,6 @@ public abstract class CrtResource implements AutoCloseable {
      * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpConnectionPoolManager for an example.
      */
     protected abstract boolean canReleaseReferencesImmediately();
-    
-    /**
-     * returns the native handle associated with this CRTResource.
-     */
-    public long getNativeHandle() {
-        return nativeHandle;
-    }
 
     /**
      * Checks if this resource's native handle is NULL.  For always-null resources this is always true.  For all other

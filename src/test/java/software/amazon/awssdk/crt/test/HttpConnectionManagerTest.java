@@ -80,7 +80,7 @@ public class HttpConnectionManagerTest {
                         connPool.releaseConnection(conn);
                         requestCompleteFuture.completeExceptionally(throwable);
                     }
-                    Log.log(Log.LogLevel.Trace, "Acquired Connection");
+
                     int requestId = numRequestsMade.incrementAndGet();
                     conn.makeRequest(request, new CrtHttpStreamHandler() {
                         @Override
@@ -90,7 +90,6 @@ public class HttpConnectionManagerTest {
 
                         @Override
                         public void onResponseComplete(HttpStream stream, int errorCode) {
-                            Log.log(Log.LogLevel.Trace, "OnResponseComplete");
                             if (errorCode != CRT.AWS_CRT_SUCCESS) {
                                 numErrorCode.incrementAndGet();
                             }
@@ -129,8 +128,6 @@ public class HttpConnectionManagerTest {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         CrtResource.waitForNoResources();
-
-        Log.log(Log.LogLevel.Trace, "BeginTest");
 
         URI uri = new URI(endpoint);
 

@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * service endpoint
  */
 public class MqttConnection extends CrtResource {
-    private MqttClient client;
+    private final MqttClient client;
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
     private MqttConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
@@ -220,8 +220,6 @@ public class MqttConnection extends CrtResource {
                 tls != null ? tls.getNativeHandle() : 0,
                 clientId, cleanSession, keepAliveMs, pingTimeout);
 
-            addReferenceTo(tls);
-
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
         }
@@ -233,7 +231,7 @@ public class MqttConnection extends CrtResource {
      * @return When this future completes, the disconnection is complete
      */
     public CompletableFuture<Void> disconnect() {
-        CompletableFuture<Void> future = new CompletableFuture<Void>();
+        CompletableFuture<Void> future = new CompletableFuture<>();
         if (isNull()) {
             future.complete(null);
             return future;

@@ -113,14 +113,7 @@ class MqttConnectionFixture {
         try(EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            MqttClient client = new MqttClient(bootstrap);
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString())) {
-
-            assertNotNull(client);
-            assertTrue(!client.isNull());
-
-            connection = new MqttConnection(client, events);
-            assertNotNull(connection);
 
             int port = TEST_PORT;
             if (!pathToCa.toString().equals("")) {
@@ -133,8 +126,11 @@ class MqttConnectionFixture {
 
             cleanSession = true; // only true is supported right now
             String clientId = TEST_CLIENTID + (new Date()).toString();
-            try (TlsContext tls = new TlsContext(tlsOptions)) {
-                CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, tls, cleanSession, keepAliveMs, 0);
+            try (TlsContext tls = new TlsContext(tlsOptions);
+                MqttClient client = new MqttClient(bootstrap, tls)) {
+                connection = new MqttConnection(client, events);
+
+                CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, cleanSession, keepAliveMs, 0);
                 connected.get();
                 assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
                 return true;

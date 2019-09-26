@@ -16,7 +16,6 @@
 #include <jni.h>
 
 #include <aws/io/channel_bootstrap.h>
-#include <aws/io/logging.h>
 
 #include "crt.h"
 
@@ -75,9 +74,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
         return;
     }
 
-    AWS_LOGF_TRACE(AWS_LS_IO_GENERAL, "BEGIN Releasing client bootstrap");
     aws_client_bootstrap_release(bootstrap);
-    AWS_LOGF_TRACE(AWS_LS_IO_GENERAL, "END Releasing client bootstrap");
 }
 
 #if UINTPTR_MAX == 0xffffffff

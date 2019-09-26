@@ -115,7 +115,6 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     callback_data->elg_addr = elg_addr;
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     aws_event_loop_group_clean_up_async(elg, s_event_loop_group_cleanup_completion_callback, callback_data);

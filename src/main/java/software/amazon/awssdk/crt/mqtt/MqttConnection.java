@@ -37,6 +37,8 @@ public class MqttConnection extends CrtResource {
     private MqttConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
     private AsyncCallback disconnectAck;
+    private MqttClient mqttClient;
+    private CompletableFuture<Void> releaseComplete;
 
     public enum ConnectionState {
         DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
@@ -84,6 +86,7 @@ public class MqttConnection extends CrtResource {
         try {
             acquireNativeHandle(mqttConnectionNew(mqttClient.getNativeHandle(), this));
             addReferenceTo(mqttClient);
+            this.mqttClient = mqttClient;
             userConnectionCallbacks = callbacks;
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
@@ -95,8 +98,9 @@ public class MqttConnection extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        disconnect();
-        mqttConnectionDestroy(getNativeHandle());
+        releaseComplete = disconnect()
+            .whenComplete((result, ex) -> releaseReferences())
+            .whenComplete((result, ex) -> mqttConnectionDestroy(getNativeHandle()));
     }
 
     /**
@@ -104,7 +108,7 @@ public class MqttConnection extends CrtResource {
      * Resources that wait are responsible for calling releaseReferences() manually.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Returns the current connection state. This function should not be used often, it is much better to respond
@@ -178,7 +182,7 @@ public class MqttConnection extends CrtResource {
      * @return Future result is true if resuming a session, false if clean session
      */
     public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
-        return connect(clientId, endpoint, port, null, null, true, 0, 0);
+        return connect(clientId, endpoint, port, null, true, 0, 0);
     }
 
     /**
@@ -196,8 +200,10 @@ public class MqttConnection extends CrtResource {
      */
     public CompletableFuture<Boolean> connect(
         String clientId, String endpoint, int port, 
-        SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs, int pingTimeoutMs) 
+        SocketOptions socketOptions, boolean cleanSession, int keepAliveMs, int pingTimeoutMs)
             throws MqttException {
+
+        TlsContext tls = mqttClient.getTlsContext();
 
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));
@@ -227,16 +233,15 @@ public class MqttConnection extends CrtResource {
      * @return When this future completes, the disconnection is complete
      */
     public CompletableFuture<Void> disconnect() {
-        CompletableFuture<Void> emptyFuture = new CompletableFuture<Void>();
-        CompletableFuture<Void> releaseFuture = emptyFuture.whenComplete((result, ex) -> releaseReferences());
+        CompletableFuture<Void> future = new CompletableFuture<Void>();
         if (isNull()) {
-            releaseFuture.complete(null);
-            return releaseFuture;
+            future.complete(null);
+            return future;
         }
-        disconnectAck = AsyncCallback.wrapFuture(releaseFuture, null);
+        disconnectAck = AsyncCallback.wrapFuture(future, null);
         connectionState = ConnectionState.DISCONNECTING;
         mqttConnectionDisconnect(getNativeHandle());
-        return releaseFuture;
+        return future;
     }
 
     /**

@@ -100,6 +100,7 @@ public class HttpConnectionPoolManager extends CrtResource {
                                             port,
                                             maxConnections));
 
+        /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
          if (useTls) {
              addReferenceTo(tlsContext);

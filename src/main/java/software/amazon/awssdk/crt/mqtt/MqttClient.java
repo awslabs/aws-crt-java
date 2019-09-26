@@ -29,8 +29,10 @@ import software.amazon.awssdk.crt.io.TlsContext;
  */
 public class MqttClient extends CrtResource {
 
+    private TlsContext tlsContext;
+
     /**
-     * Creates a default MqttClient with a {@link ClientBootstrap} constructed with default settings
+     * Creates a default MqttClient with no TLS and a {@link ClientBootstrap} constructed with default settings
      * @throws CrtRuntimeException @see software.amazon.awssdk.crt.io.ClientBootstrap#constructor(EventLoopGroup) @see software.amazon.awssdk.crt.io.EventLoopGroup#constructor(int)
      */
     public MqttClient() throws CrtRuntimeException {
@@ -41,7 +43,7 @@ public class MqttClient extends CrtResource {
     }
 
     /**
-     * Creates an MqttClient from the provided {@link ClientBootstrap}
+     * Creates an MqttClient with no TLS from the provided {@link ClientBootstrap}
      * @param clientBootstrap The ClientBootstrap to use
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
@@ -49,6 +51,24 @@ public class MqttClient extends CrtResource {
         acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
         addReferenceTo(clientBootstrap);
     }
+
+    /**
+     * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
+     * @param clientBootstrap The ClientBootstrap to use
+     * @param tlsContext the tls context to use
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
+     */
+    public MqttClient(ClientBootstrap clientBootstrap, TlsContext context) throws CrtRuntimeException {
+        acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
+        addReferenceTo(clientBootstrap);
+        addReferenceTo(context);
+        this.tlsContext = tlsContext;
+    }
+
+    /**
+     * Gets the tls context used by all connections associated with this client.
+     */
+    public TlsContext getTlsContext() { return tlsContext; }
 
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call

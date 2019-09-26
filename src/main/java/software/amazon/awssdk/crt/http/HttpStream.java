@@ -33,9 +33,16 @@ public class HttpStream extends CrtResource {
         acquireNativeHandle(ptr);
     }
 
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 
+    /**
+     * Cleans up the stream's associated native handle
+     */
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {

@@ -79,6 +79,10 @@ public class HttpConnection extends CrtResource {
         return streamFuture;
     }
 
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 

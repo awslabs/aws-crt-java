@@ -88,6 +88,9 @@ public class CrtBufferPool extends CrtResource {
     @Override
     protected boolean isAlwaysNullResource() { return true; }
 
+    /**
+     * Cleans up the buffer pool internal state by failing all pending acquisitions.
+     */
     @Override
     protected void releaseNativeHandle() {
         isClosed.set(true);
@@ -99,6 +102,10 @@ public class CrtBufferPool extends CrtResource {
         }
     }
 
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 }

@@ -46,6 +46,9 @@ public class CrtByteBuffer extends CrtResource {
         directBuffer.clear();
     }
 
+    /**
+     * Cleans up the buffer's associated native handle
+     */
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
@@ -53,6 +56,10 @@ public class CrtByteBuffer extends CrtResource {
         }
     }
 
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 

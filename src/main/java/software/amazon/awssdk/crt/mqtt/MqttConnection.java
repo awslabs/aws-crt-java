@@ -33,11 +33,11 @@ import java.util.function.Consumer;
  * service endpoint
  */
 public class MqttConnection extends CrtResource {
+    private MqttClient client;
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
     private MqttConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
     private AsyncCallback disconnectAck;
-    private MqttClient mqttClient;
     private CompletableFuture<Void> releaseComplete;
 
     public enum ConnectionState {
@@ -86,7 +86,7 @@ public class MqttConnection extends CrtResource {
         try {
             acquireNativeHandle(mqttConnectionNew(mqttClient.getNativeHandle(), this));
             addReferenceTo(mqttClient);
-            this.mqttClient = mqttClient;
+            this.client = mqttClient;
             userConnectionCallbacks = callbacks;
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
@@ -203,7 +203,7 @@ public class MqttConnection extends CrtResource {
         SocketOptions socketOptions, boolean cleanSession, int keepAliveMs, int pingTimeoutMs)
             throws MqttException {
 
-        TlsContext tls = mqttClient.getTlsContext();
+        TlsContext tls = client.getTlsContext();
 
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));

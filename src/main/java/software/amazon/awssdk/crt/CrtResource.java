@@ -75,13 +75,6 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Increments the reference count to this resource.
-     */
-    void addRef() {
-        refCount.incrementAndGet();
-    }
-
-    /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
@@ -115,18 +108,6 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Required override method that must begin the release process of the acquired native handle
-     */
-    protected abstract void releaseNativeHandle();
-
-    /**
-     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpConnectionPoolManager for an example.
-     */
-    protected abstract boolean canReleaseReferencesImmediately();
-
-    /**
      * Begins the cleanup process associated with this native object and performs various debug-level bookkeeping operations.
      */
     private void release() {
@@ -156,6 +137,25 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    /**
+     * Increments the reference count to this resource.
+     */
+    void addRef() {
+        refCount.incrementAndGet();
+    }
+
+    /**
+     * Required override method that must begin the release process of the acquired native handle
+     */
+    protected abstract void releaseNativeHandle();
+
+    /**
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpConnectionPoolManager for an example.
+     */
+    protected abstract boolean canReleaseReferencesImmediately();
+    
     /**
      * returns the native handle associated with this CRTResource.
      */

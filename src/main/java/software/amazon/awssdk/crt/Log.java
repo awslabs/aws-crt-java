@@ -87,6 +87,18 @@ public class Log {
         }
     }
 
+    public static void initLoggingToStdout(LogLevel level) {
+        initLoggingToStdout(level.getValue());
+    }
+
+    public static void initLoggingToStderr(LogLevel level) {
+        initLoggingToStderr(level.getValue());
+    }
+
+    public static void initLoggingToFile(LogLevel level, String filename) {
+        initLoggingToFile(level.getValue(), filename);
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/

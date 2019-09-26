@@ -181,12 +181,10 @@
                                     <workingDirectory>${cmake.binaries}</workingDirectory>
                                     <arguments>
                                         <argument>-G${cmake.generator}</argument>
-                                        <argument>-DCMAKE_BUILD_TYPE=DEBUG</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
-                                        <argument>-DBUILD_DEPS=OFF</argument>
+                                        <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>-DCMAKE_PREFIX_PATH=/home/local/ANT/bambrose/projects/crt/install</argument>
-                                        <argument>-DCMAKE_INSTALL_PREFIX=/home/local/ANT/bambrose/projects/crt/install</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>

@@ -31,7 +31,7 @@ public final class ClientBootstrap extends CrtResource {
         try(EventLoopGroup elg = new EventLoopGroup(numThreads);
             HostResolver hr = new HostResolver(elg)) {
 
-            acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+            acquireNativeHandle(clientBootstrapNew(elg.getNativeHandle(), hr.getNativeHandle()));
 
             // Order is likely important here
             addReferenceTo(hr);
@@ -47,7 +47,7 @@ public final class ClientBootstrap extends CrtResource {
      * or if the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(EventLoopGroup elg, HostResolver hr) throws CrtRuntimeException {
-        acquire(clientBootstrapNew(elg.native_ptr(), hr.native_ptr()));
+        acquireNativeHandle(clientBootstrapNew(elg.getNativeHandle(), hr.getNativeHandle()));
 
         // Order is likely important here
         addReferenceTo(hr);
@@ -60,7 +60,7 @@ public final class ClientBootstrap extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            clientBootstrapDestroy(native_ptr());
+            clientBootstrapDestroy(getNativeHandle());
         }
     }
 

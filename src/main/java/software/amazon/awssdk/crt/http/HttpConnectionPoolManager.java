@@ -91,10 +91,10 @@ public class HttpConnectionPoolManager extends CrtResource {
             this.bufferPool = addReferenceTo(bufferPool);
         }
 
-        acquire(httpConnectionManagerNew(this,
-                                            clientBootstrap.native_ptr(),
-                                            socketOptions.native_ptr(),
-                                            useTls ? tlsContext.native_ptr() : 0,
+        acquireNativeHandle(httpConnectionManagerNew(this,
+                                            clientBootstrap.getNativeHandle(),
+                                            socketOptions.getNativeHandle(),
+                                            useTls ? tlsContext.getNativeHandle() : 0,
                                             windowSize,
                                             uri.getHost(),
                                             port,
@@ -139,7 +139,7 @@ public class HttpConnectionPoolManager extends CrtResource {
         CompletableFuture<HttpConnection> connRequest = new CompletableFuture<>();
         connectionAcquisitionRequests.add(connRequest);
 
-        httpConnectionManagerAcquireConnection(this, this.native_ptr());
+        httpConnectionManagerAcquireConnection(this, this.getNativeHandle());
         return connRequest;
     }
 
@@ -153,7 +153,7 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     protected void releaseConnectionPointer(long connection_ptr) {
         if (!isNull()) {
-            httpConnectionManagerReleaseConnection(this.native_ptr(), connection_ptr);
+            httpConnectionManagerReleaseConnection(this.getNativeHandle(), connection_ptr);
         }
     }
 
@@ -192,7 +192,7 @@ public class HttpConnectionPoolManager extends CrtResource {
              * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
              * connection shutdown messages to peers for any open Connections.
              */
-            httpConnectionManagerRelease(native_ptr());
+            httpConnectionManagerRelease(getNativeHandle());
         }
     }
 

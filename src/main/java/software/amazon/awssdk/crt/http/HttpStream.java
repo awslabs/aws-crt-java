@@ -30,7 +30,7 @@ public class HttpStream extends CrtResource {
     /* Native code will call this constructor during HttpConnection.makeRequest() */
     protected HttpStream(CrtByteBuffer streamBuffer, long ptr) {
         this.streamBuffer = streamBuffer;
-        acquire(ptr);
+        acquireNativeHandle(ptr);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class HttpStream extends CrtResource {
         if (!isNull()) {
             streamBuffer.releaseBackToPool();
             streamBuffer = null;
-            httpStreamRelease(native_ptr());
+            httpStreamRelease(getNativeHandle());
         }
     }
 
@@ -59,7 +59,7 @@ public class HttpStream extends CrtResource {
             throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
         }
         if (!isNull()) {
-            httpStreamIncrementWindow(native_ptr(), windowSize);
+            httpStreamIncrementWindow(getNativeHandle(), windowSize);
         }
     }
 
@@ -69,7 +69,7 @@ public class HttpStream extends CrtResource {
      */
     public int getResponseStatusCode() {
         if (!isNull()) {
-            return httpStreamGetResponseStatusCode(native_ptr());
+            return httpStreamGetResponseStatusCode(getNativeHandle());
         }
         throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }

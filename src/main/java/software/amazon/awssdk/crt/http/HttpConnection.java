@@ -33,7 +33,7 @@ public class HttpConnection extends CrtResource {
     private final HttpConnectionPoolManager manager;
 
     protected HttpConnection(HttpConnectionPoolManager manager, long connection) {
-        acquire(connection);
+        acquireNativeHandle(connection);
         this.manager = addReferenceTo(manager);
     }
 
@@ -61,7 +61,7 @@ public class HttpConnection extends CrtResource {
                 return;
             }
             try {
-                HttpStream stream = httpConnectionMakeRequest(native_ptr(),
+                HttpStream stream = httpConnectionMakeRequest(getNativeHandle(),
                         crtBuffer,
                         request.getMethod(),
                         request.getEncodedPath(),
@@ -88,7 +88,7 @@ public class HttpConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()){
-            manager.releaseConnectionPointer(native_ptr());
+            manager.releaseConnectionPointer(getNativeHandle());
         }
     }
 

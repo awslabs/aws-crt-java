@@ -63,7 +63,7 @@ public final class TlsContextOptions extends CrtResource {
      * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
     public TlsContextOptions() throws CrtRuntimeException {
-        acquire(tlsContextOptionsNew());
+        acquireNativeHandle(tlsContextOptionsNew());
     }
 
     @Override
@@ -75,7 +75,7 @@ public final class TlsContextOptions extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            tlsContextOptionsDestroy(native_ptr());
+            tlsContextOptionsDestroy(getNativeHandle());
         }
     }
 
@@ -92,7 +92,7 @@ public final class TlsContextOptions extends CrtResource {
         }
 
         this.tlsVersion = version;
-        tlsContextOptionsSetMinimumTlsVersion(native_ptr(), version.getValue());
+        tlsContextOptionsSetMinimumTlsVersion(getNativeHandle(), version.getValue());
     }
 
     /**
@@ -101,7 +101,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param alpn The ALPN protocol to use, e.g. "x-amzn-mqtt-ca"
      */
     public void setAlpnList(String alpn) {
-        tlsContextOptionsSetAlpn(native_ptr(), alpn);
+        tlsContextOptionsSetAlpn(getNativeHandle(), alpn);
     }
 
     /**
@@ -120,7 +120,7 @@ public final class TlsContextOptions extends CrtResource {
         }
 
         this.tlsCipherPreference = cipherPref;
-        tlsContextOptionsSetCipherPreference(native_ptr(), cipherPref.getValue());
+        tlsContextOptionsSetCipherPreference(getNativeHandle(), cipherPref.getValue());
     }
 
     /**
@@ -129,7 +129,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param privateKeyPath Path to PEM format private key
      */
     public void initMTLSFromPath(String certificatePath, String privateKeyPath) {
-        tlsContextOptionsInitMTLSFromPath(native_ptr(), certificatePath, privateKeyPath);
+        tlsContextOptionsInitMTLSFromPath(getNativeHandle(), certificatePath, privateKeyPath);
     }
 
     /**
@@ -138,7 +138,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Password PKCS12 password
      */
     public void initMTLSPkcs12(String pkcs12Path, String pkcs12Password) {
-        tlsContextOptionsInitMTLSPkcs12FromPath(native_ptr(), pkcs12Path, pkcs12Password);
+        tlsContextOptionsInitMTLSPkcs12FromPath(getNativeHandle(), pkcs12Path, pkcs12Password);
     }
 
     /**
@@ -149,7 +149,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param verify true to verify peers, false to skip verification
      */
     public void setVerifyPeer(boolean verify) {
-        tlsContextOptionsSetVerifyPeer(native_ptr(), verify);
+        tlsContextOptionsSetVerifyPeer(getNativeHandle(), verify);
     }
 
     /**
@@ -175,7 +175,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param caFile Path to the root certificate. Must be in PEM format.
      */
     public void overrideDefaultTrustStore(String caPath, String caFile) {
-        tlsContextOptionsOverrideDefaultTrustStoreFromPath(native_ptr(), caFile, caPath);
+        tlsContextOptionsOverrideDefaultTrustStoreFromPath(getNativeHandle(), caFile, caPath);
     }
 
     /**

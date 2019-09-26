@@ -31,7 +31,7 @@ public final class TlsContext extends CrtResource {
      * to allocate space for a native tls context
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
-        acquire(tlsContextNew(options.native_ptr()));
+        acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
     }
 
     /**
@@ -40,7 +40,7 @@ public final class TlsContext extends CrtResource {
      */
     public TlsContext() throws CrtRuntimeException  {
         try (TlsContextOptions options = new TlsContextOptions()) {
-            acquire(tlsContextNew(options.native_ptr()));
+            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
         }
     }
 
@@ -53,7 +53,7 @@ public final class TlsContext extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            tlsContextDestroy(native_ptr());
+            tlsContextDestroy(getNativeHandle());
         }
     }
 

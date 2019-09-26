@@ -80,12 +80,11 @@ public class MqttConnection extends CrtResource {
         if (mqttClient == null) {
             throw new MqttException("MqttClient must not be null");
         }
-
-        addReferenceTo(mqttClient);
-        userConnectionCallbacks = callbacks;
         
         try {
-            acquire(mqttConnectionNew(mqttClient.native_ptr(), this));
+            acquireNativeHandle(mqttConnectionNew(mqttClient.getNativeHandle(), this));
+            addReferenceTo(mqttClient);
+            userConnectionCallbacks = callbacks;
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
         }
@@ -97,7 +96,7 @@ public class MqttConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         disconnect();
-        mqttConnectionDestroy(native_ptr());
+        mqttConnectionDestroy(getNativeHandle());
     }
 
     @Override
@@ -120,7 +119,7 @@ public class MqttConnection extends CrtResource {
      */
     public void setLogin(String user, String pass) throws MqttException {
         try {
-            mqttConnectionSetLogin(native_ptr(), user, pass);
+            mqttConnectionSetLogin(getNativeHandle(), user, pass);
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }        
@@ -206,9 +205,9 @@ public class MqttConnection extends CrtResource {
         try {
             connectionState = ConnectionState.CONNECTING;
             mqttConnectionConnect(
-                native_ptr(), endpoint, (short) port, 
-                socketOptions != null ? socketOptions.native_ptr() : 0,
-                tls != null ? tls.native_ptr() : 0, 
+                getNativeHandle(), endpoint, (short) port,
+                socketOptions != null ? socketOptions.getNativeHandle() : 0,
+                tls != null ? tls.getNativeHandle() : 0,
                 clientId, cleanSession, keepAliveMs, pingTimeout);
 
             addReferenceTo(tls);
@@ -232,7 +231,7 @@ public class MqttConnection extends CrtResource {
         }
         disconnectAck = AsyncCallback.wrapFuture(releaseFuture, null);
         connectionState = ConnectionState.DISCONNECTING;
-        mqttConnectionDisconnect(native_ptr());
+        mqttConnectionDisconnect(getNativeHandle());
         return releaseFuture;
     }
 
@@ -252,7 +251,7 @@ public class MqttConnection extends CrtResource {
 
         AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+            int packetId = mqttConnectionSubscribe(getNativeHandle(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -275,7 +274,7 @@ public class MqttConnection extends CrtResource {
         }
 
         AsyncCallback unsubAck = AsyncCallback.wrapFuture(future, 0);
-        int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
+        int packetId = mqttConnectionUnsubscribe(getNativeHandle(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
         return future.thenApply(unused -> packetId);
     }
@@ -295,7 +294,7 @@ public class MqttConnection extends CrtResource {
 
         AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+            int packetId = mqttConnectionPublish(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -319,7 +318,7 @@ public class MqttConnection extends CrtResource {
         }
 
         try {
-            mqttConnectionSetWill(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
+            mqttConnectionSetWill(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());

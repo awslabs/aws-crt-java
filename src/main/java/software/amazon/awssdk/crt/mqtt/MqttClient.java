@@ -35,7 +35,7 @@ public class MqttClient extends CrtResource {
      */
     public MqttClient() throws CrtRuntimeException {
         try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
-            acquire(mqttClientNew(bootstrap.native_ptr()));
+            acquireNativeHandle(mqttClientNew(bootstrap.getNativeHandle()));
             addReferenceTo(bootstrap);
         }
     }
@@ -46,7 +46,7 @@ public class MqttClient extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
-        acquire(mqttClientNew(clientBootstrap.native_ptr()));
+        acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
         addReferenceTo(clientBootstrap);
     }
 
@@ -56,7 +56,7 @@ public class MqttClient extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            mqttClientDestroy(native_ptr());
+            mqttClientDestroy(getNativeHandle());
         }
     }
 

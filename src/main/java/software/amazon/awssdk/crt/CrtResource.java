@@ -143,7 +143,7 @@ public abstract class CrtResource implements AutoCloseable {
     public long getNativeHandle() {
         return nativeHandle;
     }
-    
+
     /**
      * Increments the reference count to this resource.
      */

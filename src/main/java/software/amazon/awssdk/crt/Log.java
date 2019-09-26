@@ -16,13 +16,21 @@ package software.amazon.awssdk.crt;
 
 /**
  * Static wrapper around native and crt logging.
+ *
+ * It is NOT safe to change the logging setup after it has been initialized.
  */
 public class Log {
 
+    /*
+     * System properties for automatic logging initialization on CRT initialization
+     */
     private static final String LOG_DESTINATION_PROPERTY_NAME = "aws.iot.sdk.log.destination";
     private static final String LOG_FILE_NAME_PROPERTY_NAME = "aws.iot.sdk.log.filename";
     private static final String LOG_LEVEL_PROPERTY_NAME = "aws.iot.sdk.log.level";
 
+    /**
+     * Enum that determines where logging should be routed to.
+     */
     private enum LogDestination {
         None,
         Stdout,
@@ -30,6 +38,9 @@ public class Log {
         File
     }
 
+    /**
+     * Enum that controls how detailed logging should be.
+     */
     public enum LogLevel {
         None(0),
         Fatal(1),
@@ -50,10 +61,19 @@ public class Log {
         }
     };
 
-    public static void log(LogLevel level, String logstring) {
-        log(level.getValue(), logstring);
+    /**
+     * Logs a message at the specified log level.
+     * @param level (for filtering purposes) level attached to the log invocation
+     * @param message log string to write
+     */
+    public static void log(LogLevel level, String message) {
+        log(level.getValue(), message);
     }
 
+    /**
+     * Examines logging-related system properties and initializes the logging system if they
+     * have been properly set.
+     */
     public static void initLoggingFromSystemProperties() throws IllegalArgumentException {
         String destinationString = System.getProperty(LOG_DESTINATION_PROPERTY_NAME);
         String filenameString = System.getProperty(LOG_FILE_NAME_PROPERTY_NAME);
@@ -87,14 +107,27 @@ public class Log {
         }
     }
 
+    /*
+     * Initializes logging to go to stdout
+     * @param level the filter level to apply to log calls
+     */
     public static void initLoggingToStdout(LogLevel level) {
         initLoggingToStdout(level.getValue());
     }
 
+    /*
+     * Initializes logging to go to stderr
+     * @param level the filter level to apply to log calls
+     */
     public static void initLoggingToStderr(LogLevel level) {
         initLoggingToStderr(level.getValue());
     }
 
+    /*
+     * Initializes logging to go to a file
+     * @param level the filter level to apply to log calls
+     * @param filename name of the file to direct logging to
+     */
     public static void initLoggingToFile(LogLevel level, String filename) {
         initLoggingToFile(level.getValue(), filename);
     }

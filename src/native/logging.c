@@ -37,7 +37,7 @@ void JNICALL
 
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);
 
-    AWS_LOGF(jni_level, AWS_LS_COMMON_GENERAL, raw_string);
+    AWS_LOGF(jni_level, AWS_LS_COMMON_GENERAL, "%s", raw_string);
 }
 
 static struct aws_logger s_logger;

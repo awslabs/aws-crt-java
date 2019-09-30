@@ -33,8 +33,8 @@ public class HttpConnection extends CrtResource {
     private final HttpConnectionPoolManager manager;
 
     protected HttpConnection(HttpConnectionPoolManager manager, long connection) {
-        this.manager = manager;
-        acquire(connection);
+        acquireNativeHandle(connection);
+        this.manager = addReferenceTo(manager);
     }
 
     /**
@@ -61,7 +61,7 @@ public class HttpConnection extends CrtResource {
                 return;
             }
             try {
-                HttpStream stream = httpConnectionMakeRequest(native_ptr(),
+                HttpStream stream = httpConnectionMakeRequest(getNativeHandle(),
                         crtBuffer,
                         request.getMethod(),
                         request.getEncodedPath(),
@@ -80,13 +80,19 @@ public class HttpConnection extends CrtResource {
     }
 
     /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    /**
      * Releases this HttpConnection back into the Connection Pool, and allows another Request to acquire this connection.
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()){
-            manager.releaseConnectionPointer(release());
-            super.close();
+            manager.releaseConnectionPointer(getNativeHandle());
         }
     }
 

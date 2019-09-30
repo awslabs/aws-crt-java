@@ -31,7 +31,7 @@ public final class TlsContext extends CrtResource {
      * to allocate space for a native tls context
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
-        acquire(tlsContextNew(options.native_ptr()));
+        acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
     }
 
     /**
@@ -39,18 +39,26 @@ public final class TlsContext extends CrtResource {
      * applications will only need to create one and re-use it for all connections.
      */
     public TlsContext() throws CrtRuntimeException  {
-        acquire(tlsContextNew(own(new TlsContextOptions()).native_ptr()));
+        try (TlsContextOptions options = new TlsContextOptions()) {
+            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+        }
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Frees all native resources associated with the context. This object is unusable after close is called.
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            tlsContextDestroy(release());
+            tlsContextDestroy(getNativeHandle());
         }
-        super.close();
     }
 
     /*******************************************************************************

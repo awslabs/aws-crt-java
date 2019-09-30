@@ -32,7 +32,7 @@ public interface CrtHttpStreamHandler {
      * @param responseStatusCode The HTTP Response Status Code
      * @param nextHeaders The headers received in the latest IO event.
      */
-    void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders);
+    void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders);
 
     /**
      * Called from Native once all HTTP Headers are processed. Will not be called if there are no Http Headers in the

@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -27,6 +28,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
@@ -37,50 +39,48 @@ public class HttpConnectionTest {
         boolean actuallyConnected = false;
         boolean exceptionThrown = false;
         Exception exception = null;
+        CompletableFuture<Void> shutdownComplete = null;
     }
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
-        HttpConnectionPoolManager connectionPool = null;
-        try {
-            connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
-            HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            resp.actuallyConnected = true;
-            conn.close();
-
+        try (HttpConnectionPoolManager connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri)) {
+            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
+            try (HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                resp.actuallyConnected = true;
+            }
         } catch (Exception e) {
             resp.exceptionThrown = true;
             resp.exception = e;
-        } finally {
-            if (connectionPool != null) {
-                connectionPool.close();
-            }
-            tlsContext.close();
-            sockOpts.close();
-            bootstrap.close();
         }
 
         return resp;
     }
 
-    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws CrtRuntimeException {
+    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws Exception {
         for (TlsCipherPreference pref: TlsCipherPreference.values()) {
             if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
                 continue;
             }
 
-            try (TlsContextOptions tlsOpts = new TlsContextOptions()) {
-                tlsOpts.withCipherPreference(pref);
-                HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(),
-                        new TlsContext(tlsOpts));
-                Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
-                Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
-                if (resp.exception != null) {
-                    Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
-                }
+            HttpConnectionTestResponse resp = null;
+            try(TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
+                ClientBootstrap bootstrap = new ClientBootstrap(1);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+                resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
             }
-            
-            Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+
+            Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
+            Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
+            if (resp.exception != null) {
+                Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
+            }
+
+            resp.shutdownComplete.get();
+
+            CrtResource.waitForNoResources();
         }
     }
 

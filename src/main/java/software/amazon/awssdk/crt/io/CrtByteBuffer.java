@@ -20,7 +20,7 @@ public class CrtByteBuffer extends CrtResource {
     /* Called by Native */
     private CrtByteBuffer(ByteBuffer javaBuffer, long nativeBufferPtr) {
         this.directBuffer = javaBuffer;
-        acquire(nativeBufferPtr);
+        acquireNativeHandle(nativeBufferPtr);
     }
 
     public void releaseBackToPool() {
@@ -41,18 +41,27 @@ public class CrtByteBuffer extends CrtResource {
      * Zero's out this Buffers Memory, and resets it's position and limit.
      */
     public void wipe() {
-        zeroCrtByteBuffer(native_ptr(), directBuffer.capacity());
+        zeroCrtByteBuffer(getNativeHandle(), directBuffer.capacity());
         // Set position to zero and limit to capacity.
         directBuffer.clear();
     }
 
+    /**
+     * Cleans up the buffer's associated native handle
+     */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            releaseCrtByteBuffer(release());
+            releaseCrtByteBuffer(getNativeHandle());
         }
-        super.close();
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     protected CrtByteBuffer withPool(CrtBufferPool pool) {
         if (this.pool != null) {

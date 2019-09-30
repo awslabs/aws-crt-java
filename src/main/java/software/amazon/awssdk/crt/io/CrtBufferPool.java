@@ -23,7 +23,9 @@ public class CrtBufferPool extends CrtResource {
         this.bufferSize = bufferSize;
 
         for (int i = 0; i < numBuffers; i++) {
-            idleBuffers.add(own(CrtByteBuffer.alloc(bufferSize).withPool(this)));
+            try (CrtByteBuffer buffer = CrtByteBuffer.alloc(bufferSize).withPool(this)) {
+                idleBuffers.add(addReferenceTo(buffer));
+            }
         }
     }
 
@@ -84,7 +86,13 @@ public class CrtBufferPool extends CrtResource {
     }
 
     @Override
-    public void close() {
+    protected boolean isNativeResource() { return false; }
+
+    /**
+     * Cleans up the buffer pool internal state by failing all pending acquisitions.
+     */
+    @Override
+    protected void releaseNativeHandle() {
         isClosed.set(true);
 
         closePendingAcquisitions(new RuntimeException("CrtBufferPool is Closing. Closing Pending Buffer Acquisitions."));
@@ -92,7 +100,12 @@ public class CrtBufferPool extends CrtResource {
         if (idleBuffers.size() != numBuffers) {
             throw new IllegalStateException("Can't close CrtBufferPool yet since some buffers are still in use");
         }
-
-        super.close();
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 }

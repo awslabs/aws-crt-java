@@ -22,6 +22,7 @@ import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 public class HttpConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
@@ -32,31 +33,15 @@ public class HttpConnectionManagerTest {
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
-    List<CrtResource> crtResources = new ArrayList<>();
-
-    private void addResource(CrtResource resource) {
-        crtResources.add(resource);
-    }
-
-    private void cleanupResources() {
-        for (CrtResource r: crtResources) {
-            r.close();
-        }
-    }
 
     private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections) {
-        ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
-        SocketOptions sockOpts = new SocketOptions();
-        TlsContext tlsContext =  new TlsContext();
+        try(ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
+            SocketOptions sockOpts = new SocketOptions();
+            TlsContext tlsContext =  new TlsContext()) {
 
-        addResource(bootstrap);
-        addResource(sockOpts);
-        addResource(tlsContext);
-
-        HttpConnectionPoolManager connPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
+            return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
                 HttpConnectionPoolManager.DEFAULT_MAX_BUFFER_SIZE, HttpConnectionPoolManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
-
-        return connPool;
+        }
     }
 
     private HttpRequest createHttpRequest(String method, String endpoint, String path, String requestBody) throws Exception{
@@ -80,6 +65,9 @@ public class HttpConnectionManagerTest {
         List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
 
         for (int i = 0; i < numRequests; i++) {
+
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
+
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
 
@@ -92,10 +80,11 @@ public class HttpConnectionManagerTest {
                         connPool.releaseConnection(conn);
                         requestCompleteFuture.completeExceptionally(throwable);
                     }
+
                     int requestId = numRequestsMade.incrementAndGet();
                     conn.makeRequest(request, new CrtHttpStreamHandler() {
                         @Override
-                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
+                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
                             reqIdToStatus.put(requestId, responseStatusCode);
                         }
 
@@ -114,10 +103,14 @@ public class HttpConnectionManagerTest {
 
         }
 
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "Waiting on requests");
+
         // Wait for all Requests to complete
         for (CompletableFuture f: requestCompleteFutures) {
             f.join();
         }
+
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "All requests done");
 
         // Verify we got some Http Status Code for each Request
         Assert.assertEquals(numRequests, reqIdToStatus.size());
@@ -133,25 +126,27 @@ public class HttpConnectionManagerTest {
     @Test
     public void testParallelRequests() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+
+        CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
 
-        HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS);
-        HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+        try (HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
+            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+            testParallelConnections(connectionPool, request, NUM_REQUESTS);
+        }
 
-        testParallelConnections(connectionPool, request, NUM_REQUESTS);
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "EndTest");
+        CrtResource.logNativeResources();
 
-        connectionPool.close();
-        cleanupResources();
-
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 
     @Test
     public void connPoolParallelRequestMemLeakCheck() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        Callable<Void> fn = () -> { testParallelRequests(); return null; };
+        Callable<Void> fn = () -> { testParallelRequests(); Thread.sleep(2000); return null; };
+
         CrtMemoryLeakDetector.leakCheck(fn);
     }
 

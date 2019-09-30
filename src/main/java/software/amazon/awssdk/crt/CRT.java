@@ -21,6 +21,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
+import software.amazon.awssdk.crt.Log;
+
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
  * platform out of aws-crt-java.jar. One instance of this class has to be created
@@ -130,6 +132,12 @@ public final class CRT {
             System.load(libTempPath.toString());
 
             awsCrtInit();
+
+            try {
+                Log.initLoggingFromSystemProperties();
+            } catch (IllegalArgumentException e) {
+                ;
+            }
         }
         catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());

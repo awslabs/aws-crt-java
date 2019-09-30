@@ -27,6 +27,7 @@
 
 #include "async_callback.h"
 #include "crt.h"
+#include "logging.h"
 
 struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();
@@ -248,6 +249,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_crt_http_stream_handler(JNIEnv *);
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
+    extern void s_cache_event_loop_group(JNIEnv *);
     extern void s_cache_crt_byte_buffer(JNIEnv * env);
 
     s_cache_java_byte_buffer(env);
@@ -259,18 +261,17 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_crt_http_stream_handler(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);
+    s_cache_event_loop_group(env);
     s_cache_crt_byte_buffer(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
 #endif
 
-// static struct aws_logger s_logger;
-
 static void s_jni_atexit(void) {
-    // aws_logger_clean_up(&s_logger);
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
+    aws_jni_cleanup_logging();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -281,13 +282,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
-
-    // struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
-    // if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
-    //     aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-    //     return;
-    // }
-    // aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);
 

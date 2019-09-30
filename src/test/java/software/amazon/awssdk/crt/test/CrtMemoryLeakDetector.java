@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import org.junit.Assert;
 
+import software.amazon.awssdk.crt.Log;
 
 /**
  * Checks that the CRT doesn't have any major memory leaks. Probably won't detect very small leaks but will likely find
@@ -12,10 +13,13 @@ import org.junit.Assert;
  */
 public class CrtMemoryLeakDetector {
     // Allow up to 512 byte increase in memory usage between CRT Test Runs
-    private final static int DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA = 512;
+    private final static int DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA = 1024;
     private final static int DEFAULT_NUM_LEAK_TEST_ITERATIONS = 20;
 
     private static long getEstimatedMemoryInUse() {
+
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral, "Checking Memory Usage");
+
         long estimatedMemInUse = Long.MAX_VALUE;
 
         for (int i = 0; i < 10; i++) {
@@ -25,6 +29,8 @@ public class CrtMemoryLeakDetector {
             // Take the minimum of several measurements to reduce noise
             estimatedMemInUse = Long.min(estimatedMemInUse, (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
         }
+
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral, String.format("MemUsage: %d", estimatedMemInUse));
 
         return estimatedMemInUse;
     }
@@ -56,7 +62,7 @@ public class CrtMemoryLeakDetector {
         long p50MemoryUsageDelta = memUseDeltas.get(memUseDeltas.size() / 2);
 
         if (p50MemoryUsageDelta > maxLeakage) {
-            Assert.fail("Potential Memory Leak! Memory usage Deltas: " + memUseDeltas.toString());
+            Assert.fail(String.format("Potential Memory Leak!\nMemory usage Deltas: %s\nMeasurements: %s\nDiff: %d", memUseDeltas.toString(), memoryUsedMeasurements.toString(), p50MemoryUsageDelta - maxLeakage) );
         }
     }
 }

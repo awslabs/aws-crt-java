@@ -41,9 +41,6 @@ public class HttpConnectionPoolManager extends CrtResource {
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
 
-    private final ClientBootstrap clientBootstrap;
-    private final SocketOptions socketOptions;
-    private final TlsContext tlsContext;
     private final int windowSize;
     private final URI uri;
     private final int port;
@@ -84,25 +81,30 @@ public class HttpConnectionPoolManager extends CrtResource {
             if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
         }
 
-        this.clientBootstrap = clientBootstrap;
-        this.socketOptions = socketOptions;
-        this.tlsContext = tlsContext;
         this.windowSize = windowSize;
         this.uri = uri;
         this.port = port;
         this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
         // TODO: We will need to create more buffers once we allow >1 HttpStream per HttpConnection (such as for Http/2)
-        this.bufferPool = own(new CrtBufferPool(maxConnections, bufferSize));
+        try (CrtBufferPool bufferPool = new CrtBufferPool(maxConnections, bufferSize)) {
+            this.bufferPool = addReferenceTo(bufferPool);
+        }
 
-        acquire(httpConnectionManagerNew(this,
-                                            clientBootstrap.native_ptr(),
-                                            socketOptions.native_ptr(),
-                                            useTls ? tlsContext.native_ptr() : 0,
+        acquireNativeHandle(httpConnectionManagerNew(this,
+                                            clientBootstrap.getNativeHandle(),
+                                            socketOptions.getNativeHandle(),
+                                            useTls ? tlsContext.getNativeHandle() : 0,
                                             windowSize,
                                             uri.getHost(),
                                             port,
                                             maxConnections));
+
+        /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
+         addReferenceTo(clientBootstrap);
+         if (useTls) {
+             addReferenceTo(tlsContext);
+         }
     }
 
     /** Called from Native when a new connection is acquired **/
@@ -138,7 +140,7 @@ public class HttpConnectionPoolManager extends CrtResource {
         CompletableFuture<HttpConnection> connRequest = new CompletableFuture<>();
         connectionAcquisitionRequests.add(connRequest);
 
-        httpConnectionManagerAcquireConnection(this, this.native_ptr());
+        httpConnectionManagerAcquireConnection(this, this.getNativeHandle());
         return connRequest;
     }
 
@@ -152,7 +154,7 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     protected void releaseConnectionPointer(long connection_ptr) {
         if (!isNull()) {
-            httpConnectionManagerReleaseConnection(this.native_ptr(), connection_ptr);
+            httpConnectionManagerReleaseConnection(this.getNativeHandle(), connection_ptr);
         }
     }
 
@@ -171,14 +173,23 @@ public class HttpConnectionPoolManager extends CrtResource {
      * begin releasing Native Resources that HttpConnectionPoolManager depends on.
      */
     private void onShutdownComplete() {
+        releaseReferences();
+
         this.shutdownComplete.complete(null);
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Closes this Connection Pool and any pending Connection Acquisitions
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         isClosed.set(true);
         closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
         if (!isNull()) {
@@ -186,23 +197,11 @@ public class HttpConnectionPoolManager extends CrtResource {
              * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
              * connection shutdown messages to peers for any open Connections.
              */
-            httpConnectionManagerRelease(release());
+            httpConnectionManagerRelease(getNativeHandle());
         }
-
-        try {
-            /*
-             * Wait for those shutdown messages to finish being sent. We MUST wait for shutdown to complete since
-             * the shutdown tasks that were scheduled are still using Native Resources that will likely be closed when
-             * this method returns (TlsContext, EventLoop, etc), and if they're closed before the shutdown tasks
-             * complete, it will likely lead to use-after-free errors and cause a Segfault.
-             */
-            shutdownComplete.get(60, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        super.close();
     }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************
      * Getter methods

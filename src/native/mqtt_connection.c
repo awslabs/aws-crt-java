@@ -40,12 +40,16 @@
 
 struct crt_async_callback g_async_callback;
 
+/* methods of CrtResource */
+static struct {
+    jmethodID release_references;
+} s_crt_resource;
+
 /* methods of MqttConnection */
 static struct {
     jmethodID on_connection_complete;
     jmethodID on_connection_interrupted;
     jmethodID on_connection_resumed;
-    jmethodID release_references;
 } s_mqtt_connection;
 
 void s_cache_mqtt_connection(JNIEnv *env) {
@@ -60,8 +64,8 @@ void s_cache_mqtt_connection(JNIEnv *env) {
 
     jclass crt_resource_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
     AWS_FATAL_ASSERT(crt_resource_class);
-    s_mqtt_connection.release_references = (*env)->GetMethodID(env, crt_resource_class, "releaseReferences", "()V");
-    AWS_FATAL_ASSERT(s_mqtt_connection.release_references);
+    s_crt_resource.release_references = (*env)->GetMethodID(env, crt_resource_class, "releaseReferences", "()V");
+    AWS_FATAL_ASSERT(s_crt_resource.release_references);
 }
 
 /* MqttConnection.MessageHandler */
@@ -296,7 +300,7 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
     (*env)->CallVoidMethod(
-            env, jni_connection->mqtt_connection, s_mqtt_connection.release_references);
+            env, jni_connection->mqtt_connection, s_crt_resource.release_references);
 
     s_mqtt_connection_destroy(env, jni_connection);
 }
@@ -312,6 +316,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttC
 
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (aws_mqtt_client_connection_disconnect(connection->client_connection, s_on_shutdown_disconnect_complete, connection) != AWS_OP_SUCCESS) {
+        /*
+         * This can happen under normal code paths if the client happens to be disconnected at cleanup/shutdown time.
+         * Log it (in case it was unexpected) and then invoke the shutdown callback manually.
+         */
         int error = aws_last_error();
         AWS_LOGF_WARN(AWS_LS_MQTT_CLIENT, "MqttConnection.mqtt_disconnect: error calling disconnect - %d(%s)", error, aws_error_str(error));
         s_on_shutdown_disconnect_complete(connection->client_connection, connection);
@@ -423,6 +431,10 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttConnection_mqttConnectionD
 
     if (aws_mqtt_client_connection_disconnect(connection->client_connection, s_on_connection_disconnected, disconnect_callback) != AWS_OP_SUCCESS) {
         int error = aws_last_error();
+        /*
+         * Disconnect invoked on a disconnected connection can happen under normal circumstances.  Invoke the callback
+         * manually since it won't get invoked otherwise.
+         */
         AWS_LOGF_WARN(AWS_LS_MQTT_CLIENT, "MqttConnection.mqtt_disconnect: error calling disconnect - %d(%s)", error, aws_error_str(error));
         s_on_connection_disconnected(connection->client_connection, disconnect_callback);
     }

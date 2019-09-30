@@ -67,7 +67,7 @@ public class Log {
      * @param message log string to write
      */
     public static void log(LogLevel level, String message) {
-        logNative(level.getValue(), message);
+        log(level.getValue(), message);
     }
 
     /**
@@ -135,7 +135,7 @@ public class Log {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void logNative(int level, String logstring);
+    private static native void log(int level, String logstring);
 
     private static native void initLoggingToStdout(int level);
     private static native void initLoggingToStderr(int level);

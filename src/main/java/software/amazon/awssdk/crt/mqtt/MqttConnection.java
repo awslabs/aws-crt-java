@@ -132,10 +132,8 @@ public class MqttConnection extends CrtResource {
     private void onConnectionInterrupted(int errorCode, AsyncCallback callback) {
         if (callback != null) {
             if (errorCode == 0) {
-                Log.log(Log.LogLevel.Trace, "onConnectionInterrupted with success callback");
                 callback.onSuccess();
             } else {
-                Log.log(Log.LogLevel.Trace, "onConnectionInterrupted with failure callback");
                 callback.onFailure(new MqttException(errorCode));
             }
         }

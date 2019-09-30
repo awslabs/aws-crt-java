@@ -279,11 +279,6 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class) {
     (void)jni_crt_class;
 
-    bool done = true;
-    while(!done) {
-        ;
-    }
-
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);

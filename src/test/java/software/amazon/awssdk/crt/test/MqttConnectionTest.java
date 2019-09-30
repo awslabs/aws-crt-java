@@ -132,7 +132,6 @@ class MqttConnectionFixture {
 
                 CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, cleanSession, keepAliveMs, 0);
                 connected.get();
-                assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
                 return true;
             }
         } catch (Exception ex) {
@@ -150,8 +149,7 @@ class MqttConnectionFixture {
         catch (Exception ex) {
             fail("Exception during disconnect: " + ex.getMessage());
         }
-        
-        assertEquals("DISCONNECTED", MqttConnection.ConnectionState.DISCONNECTED, connection.getState());
+
     }
 
     void close() {

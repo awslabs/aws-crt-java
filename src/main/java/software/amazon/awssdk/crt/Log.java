@@ -24,9 +24,9 @@ public class Log {
     /*
      * System properties for automatic logging initialization on CRT initialization
      */
-    private static final String LOG_DESTINATION_PROPERTY_NAME = "aws.iot.sdk.log.destination";
-    private static final String LOG_FILE_NAME_PROPERTY_NAME = "aws.iot.sdk.log.filename";
-    private static final String LOG_LEVEL_PROPERTY_NAME = "aws.iot.sdk.log.level";
+    private static final String LOG_DESTINATION_PROPERTY_NAME = "aws.crt.log.destination";
+    private static final String LOG_FILE_NAME_PROPERTY_NAME = "aws.crt.log.filename";
+    private static final String LOG_LEVEL_PROPERTY_NAME = "aws.crt.log.level";
 
     /**
      * Enum that determines where logging should be routed to.
@@ -67,7 +67,7 @@ public class Log {
      * @param message log string to write
      */
     public static void log(LogLevel level, String message) {
-        log(level.getValue(), message);
+        logNative(level.getValue(), message);
     }
 
     /**
@@ -135,7 +135,7 @@ public class Log {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void log(int level, String logstring);
+    private static native void logNative(int level, String logstring);
 
     private static native void initLoggingToStdout(int level);
     private static native void initLoggingToStderr(int level);

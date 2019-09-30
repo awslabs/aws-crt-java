@@ -62,7 +62,7 @@ public class MqttClient extends CrtResource {
         acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
         addReferenceTo(clientBootstrap);
         addReferenceTo(context);
-        this.tlsContext = tlsContext;
+        this.tlsContext = context;
     }
 
     /**

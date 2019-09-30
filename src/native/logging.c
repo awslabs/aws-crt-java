@@ -35,8 +35,12 @@
 #endif
 
 JNIEXPORT
-void JNICALL
-    Java_software_amazon_awssdk_crt_Log_log(JNIEnv *env, jclass jni_class, jint jni_level, jstring jni_logstring) {
+void JNICALL Java_software_amazon_awssdk_crt_Log_log(
+    JNIEnv *env,
+    jclass jni_class,
+    jint jni_level,
+    jint jni_subject,
+    jstring jni_logstring) {
     (void)jni_class;
 
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);

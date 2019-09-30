@@ -66,7 +66,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     public <T extends CrtResource> T addReferenceTo(T resource) {
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
         }
         resource.addRef();
         referencedResources.push(resource);
@@ -100,7 +100,7 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, String.format("acquireNativeHandle - %s acquired native pointer %d", canonicalName, handle));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s acquired native pointer %d", canonicalName, handle));
         }
 
         nativeHandle = handle;
@@ -112,7 +112,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     private void release() {
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s", this.getClass().getCanonicalName()));
         }
 
         if (isNativeResource()) {
@@ -198,7 +198,7 @@ public abstract class CrtResource implements AutoCloseable {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
         }
 
         if (remainingRefs > 0) {
@@ -219,7 +219,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     protected void releaseReferences() {
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
         }
 
         while(referencedResources.size() > 0) {
@@ -232,9 +232,9 @@ public abstract class CrtResource implements AutoCloseable {
      * Debug method to log all of the currently un-closed CRTResource objects.
      */
     public static void logNativeResources() {
-        Log.log(Log.LogLevel.Trace, "Dumping native object set:");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
         for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
-            Log.log(Log.LogLevel.Trace, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
         }
     }
 
@@ -249,7 +249,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             ++resourceCount;
-            Log.log(Log.LogLevel.Trace, String.format("incrementNativeObjectCount - count = %d", resourceCount));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("incrementNativeObjectCount - count = %d", resourceCount));
         } finally {
             lock.unlock();
         }
@@ -266,7 +266,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             --resourceCount;
-            Log.log(Log.LogLevel.Trace, String.format("decrementNativeObjectCount - count = %d", resourceCount));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("decrementNativeObjectCount - count = %d", resourceCount));
             if (resourceCount == 0) {
                 emptyResources.signal();
             }
@@ -290,7 +290,7 @@ public abstract class CrtResource implements AutoCloseable {
             long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS*1000;
             while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
                 emptyResources.await(1, TimeUnit.SECONDS);
-                Log.log(Log.LogLevel.Trace, "waitForNoResources - postWait");
+                Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, "waitForNoResources - postWait");
                 logNativeResources();
             }
             if (resourceCount != 0) {

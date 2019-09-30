@@ -18,7 +18,7 @@ public class CrtMemoryLeakDetector {
 
     private static long getEstimatedMemoryInUse() {
 
-        Log.log(Log.LogLevel.Trace, "Checking Memory Usage");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral, "Checking Memory Usage");
 
         long estimatedMemInUse = Long.MAX_VALUE;
 
@@ -30,7 +30,7 @@ public class CrtMemoryLeakDetector {
             estimatedMemInUse = Long.min(estimatedMemInUse, (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
         }
 
-        Log.log(Log.LogLevel.Trace, String.format("MemUsage: %d", estimatedMemInUse));
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral, String.format("MemUsage: %d", estimatedMemInUse));
 
         return estimatedMemInUse;
     }

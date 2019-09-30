@@ -59,7 +59,7 @@ public final class EventLoopGroup extends CrtResource {
      * Called from Native when the asynchronous cleanup process needed for event loop groups has completed.
      */
     private void onCleanupComplete() {
-        Log.log(Log.LogLevel.Trace, "EventLoopGroup.onCleanupComplete");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.IoEventLoop, "EventLoopGroup.onCleanupComplete");
 
         releaseReferences();
 

@@ -66,7 +66,7 @@ public class HttpConnectionManagerTest {
 
         for (int i = 0; i < numRequests; i++) {
 
-            Log.log(Log.LogLevel.Trace, String.format("Starting request %d", i));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
 
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
@@ -103,14 +103,14 @@ public class HttpConnectionManagerTest {
 
         }
 
-        Log.log(Log.LogLevel.Trace, "Waiting on requests");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "Waiting on requests");
 
         // Wait for all Requests to complete
         for (CompletableFuture f: requestCompleteFutures) {
             f.join();
         }
 
-        Log.log(Log.LogLevel.Trace, "All requests done");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "All requests done");
 
         // Verify we got some Http Status Code for each Request
         Assert.assertEquals(numRequests, reqIdToStatus.size());
@@ -136,7 +136,7 @@ public class HttpConnectionManagerTest {
             testParallelConnections(connectionPool, request, NUM_REQUESTS);
         }
 
-        Log.log(Log.LogLevel.Trace, "EndTest");
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "EndTest");
         CrtResource.logNativeResources();
 
         CrtResource.waitForNoResources();

@@ -61,13 +61,66 @@ public class Log {
         }
     };
 
+    public enum LogSubject {
+        // aws-c-common
+        CommonGeneral(0x000),
+        CommonTaskScheduler(0x001),
+
+        // aws-c-io
+        IoGeneral(0x400),
+        IoEventLoop(0x401),
+        IoSocket(0x402),
+        IoSocketHandler(0x403),
+        IoTls(0x404),
+        IoAlpn(0x405),
+        IoDns(0x406),
+        IoPki(0x407),
+        IoChannel(0x408),
+        IoChannelBootstrap(0x409),
+        IoFileUtils(0x40A),
+        IoSharedLibrary(0x40B),
+
+        // aws-c-http
+        HttpGeneral(0x800),
+        HttpConnection(0x801),
+        HttpServer(0x802),
+        HttpStream(0x803),
+        HttpConnectionManager(0x804),
+        HttpWebsocket(0x805),
+        HttpWebsocketSetup(0x806),
+
+        // aws-c-mqtt
+        MqttGeneral(0x1400),
+        MqttClient(0x1401),
+        MqttTopicTree(0x1402),
+
+        // aws-c-auth
+        AuthGeneral(0x1800),
+        AuthProfile(0x1801),
+        AuthCredentialsProvider(0x1802),
+        AuthSigning(0x1803),
+
+        // aws-crt-java, we're authoritative
+        JavaCrtGeneral(0x2400),
+        JavaCrtResource(0x2401)
+        ;
+
+        LogSubject(int value) {
+            this.value = value;
+        }
+
+        public int getValue() { return value; }
+
+        private int value;
+    };
+
     /**
      * Logs a message at the specified log level.
      * @param level (for filtering purposes) level attached to the log invocation
      * @param message log string to write
      */
-    public static void log(LogLevel level, String message) {
-        log(level.getValue(), message);
+    public static void log(LogLevel level, LogSubject subject, String message) {
+        log(level.getValue(), subject.getValue(), message);
     }
 
     /**
@@ -135,7 +188,7 @@ public class Log {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void log(int level, String logstring);
+    private static native void log(int level, int subject, String logstring);
 
     private static native void initLoggingToStdout(int level);
     private static native void initLoggingToStderr(int level);

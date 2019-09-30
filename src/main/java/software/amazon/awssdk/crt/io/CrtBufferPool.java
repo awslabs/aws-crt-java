@@ -86,7 +86,7 @@ public class CrtBufferPool extends CrtResource {
     }
 
     @Override
-    protected boolean isAlwaysNullResource() { return true; }
+    protected boolean isNativeResource() { return false; }
 
     /**
      * Cleans up the buffer pool internal state by failing all pending acquisitions.

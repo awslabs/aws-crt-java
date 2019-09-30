@@ -271,7 +271,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
 static void s_jni_atexit(void) {
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
-    aws_cleanup_logging();
+    aws_jni_cleanup_logging();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */

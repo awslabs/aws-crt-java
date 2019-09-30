@@ -90,7 +90,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToFile(
     s_aws_init_logging_internal(env, &log_options);
 }
 
-void aws_cleanup_logging() {
+void aws_jni_cleanup_logging() {
     if (aws_logger_get() == &s_logger) {
         aws_logger_set(NULL);
     }

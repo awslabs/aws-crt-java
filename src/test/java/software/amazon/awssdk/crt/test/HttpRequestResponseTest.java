@@ -119,7 +119,7 @@ public class HttpRequestResponseTest {
                 actuallyConnected = true;
                 CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
                     @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
                         response.statusCode = responseStatusCode;
                         Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
                         response.headers.addAll(Arrays.asList(nextHeaders));

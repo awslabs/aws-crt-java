@@ -83,8 +83,8 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
 
-        if (isAlwaysNullResource()) {
-            throw new IllegalStateException("Always-null resources cannot acquire a native pointer");
+        if (!isNativeResource()) {
+            throw new IllegalStateException("Non-native resources cannot acquire a native pointer");
         }
 
         String canonicalName = this.getClass().getCanonicalName();
@@ -115,7 +115,7 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, String.format("Releasing class %s", this.getClass().getCanonicalName()));
         }
 
-        if (!isAlwaysNullResource()) {
+        if (isNativeResource()) {
             if (isNull()) {
                 throw new IllegalStateException("Already Released Resource!");
             }
@@ -130,7 +130,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         releaseNativeHandle();
 
-        if (!isAlwaysNullResource()) {
+        if (isNativeResource()) {
             decrementNativeObjectCount();
 
             nativeHandle = 0;
@@ -184,10 +184,10 @@ public abstract class CrtResource implements AutoCloseable {
      */
 
     /**
-     * Is this an actual native resource (false) or does it just track native resources and use the close/shutdown/referencing
-     * aspects (true)?
+     * Is this an actual native resource (true) or does it just track native resources and use the close/shutdown/referencing
+     * aspects (false)?
      */
-    protected boolean isAlwaysNullResource() { return false; }
+    protected boolean isNativeResource() { return true; }
 
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's

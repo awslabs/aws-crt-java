@@ -232,7 +232,7 @@ void s_cache_crt_http_stream_handler(JNIEnv *env) {
         env,
         cls,
         "onResponseHeaders",
-        "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
+        "(Lsoftware/amazon/awssdk/crt/http/HttpStream;II[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
 
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeaders);
 
@@ -289,10 +289,6 @@ static int s_on_incoming_headers_fn(
     size_t num_headers,
     void *user_data) {
 
-    if (block_type != AWS_HTTP_HEADER_BLOCK_MAIN) {
-        return AWS_OP_SUCCESS;
-    }
-
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
     if (!http_stream_callback_is_valid(callback)) {
@@ -333,6 +329,7 @@ static int s_on_incoming_headers_fn(
         s_crt_http_stream_handler.onResponseHeaders,
         callback->java_http_stream,
         resp_status,
+        (jint)block_type,
         jHeaders);
 
     /* Mark all the Java Objects created since the last call to PushLocalFrame() as eligible for GC */

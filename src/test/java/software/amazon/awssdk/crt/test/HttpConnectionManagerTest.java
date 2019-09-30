@@ -84,7 +84,7 @@ public class HttpConnectionManagerTest {
                     int requestId = numRequestsMade.incrementAndGet();
                     conn.makeRequest(request, new CrtHttpStreamHandler() {
                         @Override
-                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
+                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
                             reqIdToStatus.put(requestId, responseStatusCode);
                         }
 

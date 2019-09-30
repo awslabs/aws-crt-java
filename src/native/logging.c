@@ -45,7 +45,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_log(
 
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);
 
-    AWS_LOGF(jni_level, AWS_LS_COMMON_GENERAL, "%s", raw_string);
+    AWS_LOGF(jni_level, jni_subject, "%s", raw_string);
 }
 
 static struct aws_logger s_logger;

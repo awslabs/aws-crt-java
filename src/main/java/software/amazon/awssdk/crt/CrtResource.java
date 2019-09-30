@@ -290,10 +290,11 @@ public abstract class CrtResource implements AutoCloseable {
             long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS*1000;
             while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
                 emptyResources.await(1, TimeUnit.SECONDS);
-                Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, "waitForNoResources - postWait");
-                logNativeResources();
             }
+
             if (resourceCount != 0) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
+                logNativeResources();
                 throw new InterruptedException();
             }
         } catch (InterruptedException e) {

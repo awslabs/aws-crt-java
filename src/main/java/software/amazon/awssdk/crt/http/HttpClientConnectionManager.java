@@ -32,7 +32,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 /**
  * Manages a Pool of Http Connections
  */
-public class HttpConnectionPoolManager extends CrtResource {
+public class HttpClientConnectionManager extends CrtResource {
     public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
@@ -53,13 +53,13 @@ public class HttpConnectionPoolManager extends CrtResource {
     /**
      * The queue of Connection Acquisition requests.
      */
-    private final Queue<CompletableFuture<HttpConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
+    private final Queue<CompletableFuture<HttpClientConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
 
-    public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
+    public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
         this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
     }
 
-    public HttpConnectionPoolManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
+    public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
                                       URI uri, int bufferSize, int windowSize, int maxConnections) {
 
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
@@ -86,12 +86,12 @@ public class HttpConnectionPoolManager extends CrtResource {
         this.port = port;
         this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
-        // TODO: We will need to create more buffers once we allow >1 HttpStream per HttpConnection (such as for Http/2)
+        // TODO: We will need to create more buffers once we allow >1 HttpStream per HttpClientConnection (such as for Http/2)
         try (CrtBufferPool bufferPool = new CrtBufferPool(maxConnections, bufferSize)) {
             this.bufferPool = addReferenceTo(bufferPool);
         }
 
-        acquireNativeHandle(httpConnectionManagerNew(this,
+        acquireNativeHandle(httpClientConnectionManagerNew(this,
                                             clientBootstrap.getNativeHandle(),
                                             socketOptions.getNativeHandle(),
                                             useTls ? tlsContext.getNativeHandle() : 0,
@@ -109,7 +109,7 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     /** Called from Native when a new connection is acquired **/
     private void onConnectionAcquired(long connection, int errorCode) {
-        CompletableFuture<HttpConnection> connectionRequest = connectionAcquisitionRequests.poll();
+        CompletableFuture<HttpClientConnection> connectionRequest = connectionAcquisitionRequests.poll();
 
         if (connectionRequest == null) {
             throw new IllegalStateException("No Future for Connection Acquisition");
@@ -120,7 +120,7 @@ public class HttpConnectionPoolManager extends CrtResource {
             return;
         }
 
-        HttpConnection conn = new HttpConnection(this, connection);
+        HttpClientConnection conn = new HttpClientConnection(this, connection);
         connectionRequest.complete(conn);
     }
 
@@ -129,39 +129,39 @@ public class HttpConnectionPoolManager extends CrtResource {
     }
 
     /**
-     * Request a HttpConnection from the Connection Pool.
-     * @return A Future for a HttpConnection that will be completed when a connection is acquired.
+     * Request a HttpClientConnection from the Connection Pool.
+     * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.
      */
-    public CompletableFuture<HttpConnection> acquireConnection() {
+    public CompletableFuture<HttpClientConnection> acquireConnection() {
         if (isClosed.get() || isNull()) {
-            throw new IllegalStateException("HttpConnectionPoolManager has been closed, can't acquire new connections");
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
 
-        CompletableFuture<HttpConnection> connRequest = new CompletableFuture<>();
+        CompletableFuture<HttpClientConnection> connRequest = new CompletableFuture<>();
         connectionAcquisitionRequests.add(connRequest);
 
-        httpConnectionManagerAcquireConnection(this, this.getNativeHandle());
+        httpClientConnectionManagerAcquireConnection(this, this.getNativeHandle());
         return connRequest;
     }
 
     /**
-     * Releases this HttpConnection back into the Connection Pool, and allows another Request to acquire this connection.
+     * Releases this HttpClientConnection back into the Connection Pool, and allows another Request to acquire this connection.
      * @param conn
      */
-    public void releaseConnection(HttpConnection conn) {
+    public void releaseConnection(HttpClientConnection conn) {
         conn.close();
     }
 
     protected void releaseConnectionPointer(long connection_ptr) {
         if (!isNull()) {
-            httpConnectionManagerReleaseConnection(this.getNativeHandle(), connection_ptr);
+            httpClientConnectionManagerReleaseConnection(this.getNativeHandle(), connection_ptr);
         }
     }
 
     private void closePendingAcquisitions(Throwable throwable) {
         while (connectionAcquisitionRequests.size() > 0) {
             // Remove and complete future from connectionAcquisitionRequests Queue
-            CompletableFuture<HttpConnection> future = connectionAcquisitionRequests.poll();
+            CompletableFuture<HttpClientConnection> future = connectionAcquisitionRequests.poll();
             if (future != null) {
                 future.completeExceptionally(throwable);
             }
@@ -170,7 +170,7 @@ public class HttpConnectionPoolManager extends CrtResource {
 
     /**
      * Called from Native when all Connections in this Connection Pool have finished shutting down and it is safe to
-     * begin releasing Native Resources that HttpConnectionPoolManager depends on.
+     * begin releasing Native Resources that HttpClientConnectionManager depends on.
      */
     private void onShutdownComplete() {
         releaseReferences();
@@ -197,7 +197,7 @@ public class HttpConnectionPoolManager extends CrtResource {
              * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
              * connection shutdown messages to peers for any open Connections.
              */
-            httpConnectionManagerRelease(getNativeHandle());
+            httpClientConnectionManagerRelease(getNativeHandle());
         }
     }
 
@@ -223,19 +223,19 @@ public class HttpConnectionPoolManager extends CrtResource {
      * Native methods
      ******************************************************************************/
 
-    private static native long httpConnectionManagerNew(HttpConnectionPoolManager thisObj,
-                                                        long client_bootstrap,
-                                                        long socketOptions,
-                                                        long tlsContext,
-                                                        int windowSize,
-                                                        String endpoint,
-                                                        int port,
-                                                        int maxConns) throws CrtRuntimeException;
+    private static native long httpClientConnectionManagerNew(HttpClientConnectionManager thisObj,
+                                                              long client_bootstrap,
+                                                              long socketOptions,
+                                                              long tlsContext,
+                                                              int windowSize,
+                                                              String endpoint,
+                                                              int port,
+                                                              int maxConns) throws CrtRuntimeException;
 
-    private static native void httpConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
+    private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 
-    private static native void httpConnectionManagerAcquireConnection(HttpConnectionPoolManager thisObj, long conn_manager) throws CrtRuntimeException;
+    private static native void httpClientConnectionManagerAcquireConnection(HttpClientConnectionManager thisObj, long conn_manager) throws CrtRuntimeException;
 
-    private static native void httpConnectionManagerReleaseConnection(long conn_manager, long connection) throws CrtRuntimeException;
+    private static native void httpClientConnectionManagerReleaseConnection(long conn_manager, long connection) throws CrtRuntimeException;
 
 }

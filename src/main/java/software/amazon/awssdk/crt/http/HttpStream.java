@@ -19,7 +19,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.CrtByteBuffer;
 
 /**
- * An HttpStream represents a single Http Request/Response pair within a HttpConnection, and wraps the native resources
+ * An HttpStream represents a single Http Request/Response pair within a HttpClientConnection, and wraps the native resources
  * from the aws-c-http library.
  *
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
@@ -27,7 +27,7 @@ import software.amazon.awssdk.crt.io.CrtByteBuffer;
 public class HttpStream extends CrtResource {
     private CrtByteBuffer streamBuffer;
 
-    /* Native code will call this constructor during HttpConnection.makeRequest() */
+    /* Native code will call this constructor during HttpClientConnection.makeRequest() */
     protected HttpStream(CrtByteBuffer streamBuffer, long ptr) {
         this.streamBuffer = streamBuffer;
         acquireNativeHandle(ptr);

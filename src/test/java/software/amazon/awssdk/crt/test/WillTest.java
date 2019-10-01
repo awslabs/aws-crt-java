@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
 
-public class WillTest extends MqttConnectionFixture {
+public class WillTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
     

@@ -24,21 +24,21 @@ import software.amazon.awssdk.crt.io.CrtByteBuffer;
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.
  *
- * HttpConnection represents a single connection to a HTTP service endpoint.
+ * HttpClientConnection represents a single connection to a HTTP service endpoint.
  *
  * This class is not thread safe and should not be called from different threads.
  */
-public class HttpConnection extends CrtResource {
+public class HttpClientConnection extends CrtResource {
 
-    private final HttpConnectionPoolManager manager;
+    private final HttpClientConnectionManager manager;
 
-    protected HttpConnection(HttpConnectionPoolManager manager, long connection) {
+    protected HttpClientConnection(HttpClientConnectionManager manager, long connection) {
         acquireNativeHandle(connection);
         this.manager = addReferenceTo(manager);
     }
 
     /**
-     * Schedules an HttpRequest on the Native EventLoop for this HttpConnection.
+     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
@@ -48,7 +48,7 @@ public class HttpConnection extends CrtResource {
      */
     public CompletableFuture<HttpStream> makeRequest(HttpRequest request, CrtHttpStreamHandler streamHandler) throws CrtRuntimeException {
         if (isNull()) {
-            throw new IllegalStateException("HttpConnection has been closed, can't make requests on it.");
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
 
         CompletableFuture<CrtByteBuffer> bufferFuture = manager.acquireBuffer();
@@ -61,7 +61,7 @@ public class HttpConnection extends CrtResource {
                 return;
             }
             try {
-                HttpStream stream = httpConnectionMakeRequest(getNativeHandle(),
+                HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
                         crtBuffer,
                         request.getMethod(),
                         request.getEncodedPath(),
@@ -87,7 +87,7 @@ public class HttpConnection extends CrtResource {
     protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
-     * Releases this HttpConnection back into the Connection Pool, and allows another Request to acquire this connection.
+     * Releases this HttpClientConnection back into the Connection Pool, and allows another Request to acquire this connection.
      */
     @Override
     protected void releaseNativeHandle() {
@@ -100,10 +100,10 @@ public class HttpConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpConnectionMakeRequest(long connection,
-                                                               CrtByteBuffer crtBuffer,
-                                                               String method,
-                                                               String uri,
-                                                               HttpHeader[] headers,
-                                                               CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
+    private static native HttpStream httpClientConnectionMakeRequest(long connection,
+                                                                     CrtByteBuffer crtBuffer,
+                                                                     String method,
+                                                                     String uri,
+                                                                     HttpHeader[] headers,
+                                                                     CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
 }

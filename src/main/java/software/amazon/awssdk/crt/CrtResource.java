@@ -159,7 +159,7 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
      * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpConnectionPoolManager for an example.
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
      */
     protected abstract boolean canReleaseReferencesImmediately();
 

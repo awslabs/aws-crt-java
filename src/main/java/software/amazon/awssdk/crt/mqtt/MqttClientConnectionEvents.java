@@ -18,7 +18,7 @@ package software.amazon.awssdk.crt.mqtt;
 /** 
  * Interface used to receive connection events from the CRT 
  */
-public interface MqttConnectionEvents {
+public interface MqttClientConnectionEvents {
     /**
      * connection was lost (or disconnected), reconnect will be attempted automatically until
      * disconnect() is called

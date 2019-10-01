@@ -23,8 +23,8 @@ import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
-import software.amazon.awssdk.crt.http.HttpConnection;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
+import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -92,12 +92,12 @@ public class HttpRequestResponseTest {
         return byteArrayToHex(digest.digest());
     }
 
-    private HttpConnectionPoolManager createConnectionPoolManager(URI uri) {
+    private HttpClientConnectionManager createConnectionPoolManager(URI uri) {
         try(ClientBootstrap bootstrap = new ClientBootstrap(1);
             SocketOptions sockOpts = new SocketOptions();
             TlsContext tlsContext =  new TlsContext()) {
 
-            return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri);
+            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri);
         }
     }
 
@@ -113,9 +113,9 @@ public class HttpRequestResponseTest {
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
 
         CompletableFuture<Void> shutdownComplete = null;
-        try (HttpConnectionPoolManager connPool = createConnectionPoolManager(uri)) {
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
             shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (HttpConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
                 CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
                     @Override
@@ -166,11 +166,11 @@ public class HttpRequestResponseTest {
         }
 
         for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpConnectionPoolManager.DEFAULT_MAX_BUFFER_SIZE);
+            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE);
         }
 
         for (Integer reqBodyUpdateSize: reqBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpConnectionPoolManager.DEFAULT_MAX_BUFFER_SIZE);
+            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE);
         }
 
         Assert.assertTrue(actuallyConnected);

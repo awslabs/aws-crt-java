@@ -172,10 +172,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     return (jlong)conn_manager;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerRelease(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_conn_manager) {
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerRelease(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager) {
 
     (void)jni_class;
 

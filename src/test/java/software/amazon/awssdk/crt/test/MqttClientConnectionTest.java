@@ -41,9 +41,9 @@ class MissingCredentialsException extends RuntimeException {
     }
 }
 
-class MqttConnectionFixture {
+class MqttClientConnectionFixture {
 
-    MqttConnection connection = null;
+    MqttClientConnection connection = null;
     private boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = System.getProperty("endpoint");
@@ -86,7 +86,7 @@ class MqttConnectionFixture {
         }
     }
 
-    MqttConnectionFixture() {
+    MqttClientConnectionFixture() {
     }
 
     boolean connect() {
@@ -96,7 +96,7 @@ class MqttConnectionFixture {
     boolean connect(boolean cleanSession, int keepAliveMs) {
         Assume.assumeTrue(findCredentials());
 
-        MqttConnectionEvents events = new MqttConnectionEvents(){
+        MqttClientConnectionEvents events = new MqttClientConnectionEvents(){
             @Override
             public void onConnectionResumed(boolean sessionPresent) {
                 System.out.println("Connection resumed");
@@ -128,7 +128,7 @@ class MqttConnectionFixture {
             String clientId = TEST_CLIENTID + (new Date()).toString();
             try (TlsContext tls = new TlsContext(tlsOptions);
                 MqttClient client = new MqttClient(bootstrap, tls)) {
-                connection = new MqttConnection(client, events);
+                connection = new MqttClientConnection(client, events);
 
                 CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, cleanSession, keepAliveMs, 0);
                 connected.get();
@@ -157,8 +157,8 @@ class MqttConnectionFixture {
     }
 }
 
-public class MqttConnectionTest extends MqttConnectionFixture {
-    public MqttConnectionTest() {
+public class MqttClientConnectionTest extends MqttClientConnectionFixture {
+    public MqttClientConnectionTest() {
     }
 
     @Test

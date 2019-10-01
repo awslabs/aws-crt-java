@@ -29,7 +29,7 @@ import software.amazon.awssdk.crt.mqtt.QualityOfService;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
-public class IotServiceTest extends MqttConnectionFixture {
+public class IotServiceTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
 

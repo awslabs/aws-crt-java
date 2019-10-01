@@ -28,7 +28,7 @@ import software.amazon.awssdk.crt.mqtt.*;
 import java.util.concurrent.CompletableFuture;
 import java.nio.ByteBuffer;
 
-public class PublishTest extends MqttConnectionFixture {
+public class PublishTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
 

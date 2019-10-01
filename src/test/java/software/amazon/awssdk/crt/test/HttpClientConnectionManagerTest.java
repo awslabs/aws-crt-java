@@ -15,7 +15,7 @@ import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -24,7 +24,7 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
 
-public class HttpConnectionManagerTest {
+public class HttpClientConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
@@ -34,13 +34,13 @@ public class HttpConnectionManagerTest {
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
 
-    private HttpConnectionPoolManager createConnectionPool(URI uri, int numThreads, int numConnections) {
+    private HttpClientConnectionManager createConnectionPool(URI uri, int numThreads, int numConnections) {
         try(ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
             SocketOptions sockOpts = new SocketOptions();
             TlsContext tlsContext =  new TlsContext()) {
 
-            return new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpConnectionPoolManager.DEFAULT_MAX_BUFFER_SIZE, HttpConnectionPoolManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
+            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri,
+                HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE, HttpClientConnectionManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
         }
     }
 
@@ -56,7 +56,7 @@ public class HttpConnectionManagerTest {
         return request;
     }
 
-    private void testParallelConnections(HttpConnectionPoolManager connPool, HttpRequest request, int numRequests) {
+    private void testParallelConnections(HttpClientConnectionManager connPool, HttpRequest request, int numRequests) {
         final AtomicInteger numRequestsMade = new AtomicInteger(0);
         final AtomicInteger numConnectionFailures = new AtomicInteger(0);
         final ConcurrentHashMap<Integer, Integer> reqIdToStatus = new ConcurrentHashMap<>();
@@ -131,7 +131,7 @@ public class HttpConnectionManagerTest {
 
         URI uri = new URI(endpoint);
 
-        try (HttpConnectionPoolManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
+        try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, NUM_REQUESTS);
         }

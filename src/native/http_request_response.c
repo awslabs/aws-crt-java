@@ -141,7 +141,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
     if (!callback) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: failed");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: failed");
         goto failed_callback_alloc;
     }
 
@@ -157,7 +157,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     callback->native_request = aws_http_message_new_request(allocator);
     if (!callback->native_request) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: failed");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: failed");
         goto failed_request_new;
     }
 
@@ -553,13 +553,13 @@ static bool s_fill_out_request(
 
     int result = aws_http_message_set_request_method(request, aws_jni_byte_cursor_from_jstring(env, jni_method));
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Method error");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Method error");
         return false;
     }
 
     result = aws_http_message_set_request_path(request, aws_jni_byte_cursor_from_jstring(env, jni_uri));
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Path error");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Path error");
         return false;
     }
 
@@ -576,7 +576,7 @@ static bool s_fill_out_request(
 
         result = aws_http_message_add_header(request, c_header);
         if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Header[%d] error", i);
+            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
             return false;
         }
     }
@@ -584,7 +584,7 @@ static bool s_fill_out_request(
     return true;
 }
 
-JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_httpConnectionMakeRequest(
+JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -599,12 +599,12 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Invalid jni_connection");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid jni_connection");
         return (jobject)NULL;
     }
 
     if (!jni_crt_http_callback_handler) {
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Invalid jni_callback_handler");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid jni_callback_handler");
         return (jobject)NULL;
     }
 
@@ -665,7 +665,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpConnection_ht
     if (!native_stream) {
         // Failed to create native aws_http_stream. Clean up callback_data.
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
-        aws_jni_throw_runtime_exception(env, "HttpConnection.MakeRequest: Unable to Execute Request");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
         http_stream_callback_release(env, callback_data);
         return NULL;
     } else if (!jHttpStream) {

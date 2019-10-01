@@ -22,8 +22,8 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpConnection;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
+import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
@@ -33,7 +33,7 @@ import software.amazon.awssdk.crt.Log;
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpConnectionTest {
+public class HttpClientConnectionTest {
 
     private class HttpConnectionTestResponse {
         boolean actuallyConnected = false;
@@ -44,9 +44,9 @@ public class HttpConnectionTest {
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
-        try (HttpConnectionPoolManager connectionPool = new HttpConnectionPoolManager(bootstrap, sockOpts, tlsContext, uri)) {
+        try (HttpClientConnectionManager connectionPool = new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri)) {
             resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
-            try (HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+            try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 resp.actuallyConnected = true;
             }
         } catch (Exception e) {

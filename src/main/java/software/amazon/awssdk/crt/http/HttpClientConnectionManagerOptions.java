@@ -22,7 +22,8 @@ import software.amazon.awssdk.crt.io.TlsContext;
 /**
  * Contains all the configuration options for a HttpConnectionPoolManager instance
  */
-public class HttpConnectionPoolManagerOptions {
+public class HttpClientConnectionManagerOptions {
+    public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
 
@@ -30,18 +31,19 @@ public class HttpConnectionPoolManagerOptions {
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
     private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
+    private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
     private int port;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
 
-    public HttpConnectionPoolManagerOptions() {
+    public HttpClientConnectionManagerOptions() {
     }
 
     /**
      * Sets the client bootstrap instance to use to create the pool's connections
      */
-    public HttpConnectionPoolManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
+    public HttpClientConnectionManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
         this.clientBootstrap = clientBootstrap;
         return this;
     }
@@ -54,7 +56,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the socket options to use for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withSocketOptions(SocketOptions socketOptions) {
+    public HttpClientConnectionManagerOptions withSocketOptions(SocketOptions socketOptions) {
         this.socketOptions = socketOptions;
         return this;
     }
@@ -67,7 +69,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the tls context to use for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withTlsContext(TlsContext tlsContext) {
+    public HttpClientConnectionManagerOptions withTlsContext(TlsContext tlsContext) {
         this.tlsContext = tlsContext;
         return this;
     }
@@ -80,7 +82,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the IO channel window size to use for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withWindowSize(int windowSize) {
+    public HttpClientConnectionManagerOptions withWindowSize(int windowSize) {
         this.windowSize = windowSize;
         return this;
     }
@@ -91,9 +93,23 @@ public class HttpConnectionPoolManagerOptions {
     public int getWindowSize() { return windowSize; }
 
     /**
+     * Sets the IO buffer size to use for connections in the connection pool
+     */
+    public HttpClientConnectionManagerOptions withBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+        return this;
+    }
+
+    /**
+     * Gets the IO buffer size to use for connections in the connection pool
+     */
+    public int getBufferSize() { return bufferSize; }
+
+
+    /**
      * Sets the URI to use for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withUri(URI uri) {
+    public HttpClientConnectionManagerOptions withUri(URI uri) {
         this.uri = uri;
         return this;
     }
@@ -106,7 +122,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the port to connect to for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withPort(int port) {
+    public HttpClientConnectionManagerOptions withPort(int port) {
         this.port = port;
         return this;
     }
@@ -119,7 +135,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the maximum number of connections allowed in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withMaxConnections(int maxConnections) {
+    public HttpClientConnectionManagerOptions withMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
         return this;
     }
@@ -132,7 +148,7 @@ public class HttpConnectionPoolManagerOptions {
     /**
      * Sets the proxy options for connections in the connection pool
      */
-    public HttpConnectionPoolManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
+    public HttpClientConnectionManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
         this.proxyOptions = proxyOptions;
         return this;
     }

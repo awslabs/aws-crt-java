@@ -47,20 +47,46 @@
 #    endif
 #endif
 
-/* methods of HttpConnectionPoolManager */
-static struct { jmethodID onConnectionAcquired; } s_http_connection_manager;
+/* methods of HttpClientConnectionManager */
+static struct {
+    jmethodID onConnectionAcquired;
+    jmethodID onShutdownComplete;
+} s_http_connection_manager;
 
 void s_cache_http_conn_manager(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpConnectionPoolManager");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnectionManager");
     AWS_FATAL_ASSERT(cls);
 
     s_http_connection_manager.onConnectionAcquired = (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
     AWS_FATAL_ASSERT(s_http_connection_manager.onConnectionAcquired);
+
+    s_http_connection_manager.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(s_http_connection_manager.onShutdownComplete);
 }
 
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolManager_httpConnectionManagerNew(
+struct http_conn_manager_callback_data {
+    JavaVM *jvm;
+    jobject java_http_conn_manager;
+};
+
+static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
+
+    struct http_conn_manager_callback_data *callback = (struct http_conn_manager_callback_data *)user_data;
+    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
+
+    (*env)->CallVoidMethod(env, callback->java_http_conn_manager, s_http_connection_manager.onShutdownComplete);
+
+    // We're done with this callback data, free it.
+    (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
+    aws_mem_release(aws_jni_get_allocator(), user_data);
+}
+
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerNew(
     JNIEnv *env,
     jclass jni_class,
+    jobject conn_manager_jobject,
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
@@ -120,6 +146,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
     }
 
+    struct http_conn_manager_callback_data *callback_data =
+        aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
+    callback_data->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    (void)jvmresult;
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
     struct aws_http_connection_manager_options manager_options = {0};
     manager_options.bootstrap = client_bootstrap;
     manager_options.initial_window_size = (size_t)jni_window_size;
@@ -128,6 +162,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     manager_options.host = endpoint;
     manager_options.port = port;
     manager_options.max_connections = (size_t)jni_max_conns;
+    manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
+    manager_options.shutdown_complete_user_data = callback_data;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;
@@ -165,10 +201,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolM
     return (jlong)conn_manager;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolManager_httpConnectionManagerRelease(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_conn_manager) {
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerRelease(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager) {
 
     (void)jni_class;
 
@@ -183,17 +220,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpConnectionPoolMa
     aws_http_connection_manager_release(conn_manager);
 }
 
-struct http_conn_acquire_callback_data {
-    JavaVM *jvm;
-    jobject java_http_conn_manager;
-};
-
 static void s_on_http_conn_acquisition_callback(
     struct aws_http_connection *connection,
     int error_code,
     void *user_data) {
 
-    struct http_conn_acquire_callback_data *callback = (struct http_conn_acquire_callback_data *)user_data;
+    struct http_conn_manager_callback_data *callback = (struct http_conn_manager_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jlong jni_connection = (jlong)connection;
     jint jni_error_code = (jint)error_code;
@@ -211,10 +243,14 @@ static void s_on_http_conn_acquisition_callback(
         s_http_connection_manager.onConnectionAcquired,
         jni_connection,
         jni_error_code);
+
+    // We're done with this callback data, free it.
+    (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
+    aws_mem_release(aws_jni_get_allocator(), user_data);
 }
 
 JNIEXPORT void JNICALL
-    Java_software_amazon_awssdk_crt_http_HttpConnectionPoolManager_httpConnectionManagerAcquireConnection(
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerAcquireConnection(
         JNIEnv *env,
         jclass jni_class,
         jobject conn_manager_jobject,
@@ -232,8 +268,8 @@ JNIEXPORT void JNICALL
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Requesting a new connection from conn_manager: %p", (void *)conn_manager);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct http_conn_acquire_callback_data *callback_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct http_conn_acquire_callback_data));
+    struct http_conn_manager_callback_data *callback_data =
+        aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
     callback_data->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
@@ -245,7 +281,7 @@ JNIEXPORT void JNICALL
 }
 
 JNIEXPORT void JNICALL
-    Java_software_amazon_awssdk_crt_http_HttpConnectionPoolManager_httpConnectionManagerReleaseConnection(
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerReleaseConnection(
         JNIEnv *env,
         jclass jni_class,
         jlong jni_conn_manager,

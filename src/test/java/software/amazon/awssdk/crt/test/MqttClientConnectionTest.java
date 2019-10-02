@@ -16,6 +16,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -40,14 +41,9 @@ class MissingCredentialsException extends RuntimeException {
     }
 }
 
-class MqttConnectionFixture {
-    EventLoopGroup elg = null;
-    HostResolver hr = null;
-    ClientBootstrap bootstrap = null;
-    TlsContextOptions tlsOptions = null;
-    TlsContext tls = null;
-    MqttClient client = null;
-    MqttConnection connection = null;
+class MqttClientConnectionFixture {
+
+    MqttClientConnection connection = null;
     private boolean disconnecting = false;
 
     static final String TEST_ENDPOINT = System.getProperty("endpoint");
@@ -62,7 +58,7 @@ class MqttConnectionFixture {
     Path pathToKey = null;
     Path pathToCa = null;
 
-    private void findCredentials() {
+    private boolean findCredentials() {
         try {
             pathToCert = Paths.get(TEST_CERTIFICATE);
             pathToKey = Paths.get(TEST_PRIVATEKEY);
@@ -82,12 +78,15 @@ class MqttConnectionFixture {
             if (pathToCa != null && !pathToCa.toFile().exists()) {
                 throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
             }
+            return true;
         } catch (InvalidPathException ex) {
-            throw new MissingCredentialsException("Exception thrown during credential resolve: " + ex);
+            return false;
+        } catch (MissingCredentialsException ex) {
+            return false;
         }
     }
 
-    MqttConnectionFixture() {
+    MqttClientConnectionFixture() {
     }
 
     boolean connect() {
@@ -95,18 +94,28 @@ class MqttConnectionFixture {
     }
 
     boolean connect(boolean cleanSession, int keepAliveMs) {
-        findCredentials();
+        Assume.assumeTrue(findCredentials());
 
-        try {
-            elg = new EventLoopGroup(1);
-            hr = new HostResolver(elg);
-            bootstrap = new ClientBootstrap(elg, hr);
-        } catch (CrtRuntimeException ex) {
-            fail("Exception during bootstrapping: " + ex.toString());
-        }
-        try {
+        MqttClientConnectionEvents events = new MqttClientConnectionEvents(){
+            @Override
+            public void onConnectionResumed(boolean sessionPresent) {
+                System.out.println("Connection resumed");
+            }
+
+            @Override
+            public void onConnectionInterrupted(int errorCode) {
+                if (!disconnecting) {
+                    System.out.println("Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                }
+            }
+        };
+
+        try(EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString())) {
+
             int port = TEST_PORT;
-            tlsOptions = TlsContextOptions.createWithMTLS(pathToCert.toString(), pathToKey.toString());
             if (!pathToCa.toString().equals("")) {
                 tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
             }
@@ -114,33 +123,17 @@ class MqttConnectionFixture {
                 tlsOptions.setAlpnList("x-amzn-mqtt-ca");
                 port = TEST_PORT_ALPN;
             }
-            tls = new TlsContext(tlsOptions);
-            client = new MqttClient(bootstrap, tls);
-            assertNotNull(client);
-            assertTrue(!client.isNull());
 
-            MqttConnectionEvents events = new MqttConnectionEvents(){
-                @Override
-                public void onConnectionResumed(boolean sessionPresent) {
-                    System.out.println("Connection resumed");
-                }
-            
-                @Override
-                public void onConnectionInterrupted(int errorCode) {
-                    if (!disconnecting) {
-                        System.out.println("Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
-                    }
-                }
-            };
-
-            connection = new MqttConnection(client, events);
-            assertNotNull(connection);
             cleanSession = true; // only true is supported right now
             String clientId = TEST_CLIENTID + (new Date()).toString();
-            CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, tls, cleanSession, keepAliveMs, 0);
-            connected.get();
-            assertEquals("CONNECTED", MqttConnection.ConnectionState.CONNECTED, connection.getState());
-            return true;
+            try (TlsContext tls = new TlsContext(tlsOptions);
+                MqttClient client = new MqttClient(bootstrap, tls)) {
+                connection = new MqttClientConnection(client, events);
+
+                CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null, cleanSession, keepAliveMs, 0);
+                connected.get();
+                return true;
+            }
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
         }
@@ -156,29 +149,24 @@ class MqttConnectionFixture {
         catch (Exception ex) {
             fail("Exception during disconnect: " + ex.getMessage());
         }
-        
-        assertEquals("DISCONNECTED", MqttConnection.ConnectionState.DISCONNECTED, connection.getState());
+
     }
 
     void close() {
         connection.close();
-        client.close();
-        tlsOptions.close();
-        tls.close();
-        bootstrap.close();
-        hr.close();
-        elg.close();
     }
 }
-public class MqttConnectionTest extends MqttConnectionFixture {
-    public MqttConnectionTest() {
+
+public class MqttClientConnectionTest extends MqttClientConnectionFixture {
+    public MqttClientConnectionTest() {
     }
 
     @Test
     public void testConnectDisconnect() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
         disconnect();
         close();
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 };

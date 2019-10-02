@@ -16,6 +16,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
@@ -29,7 +30,7 @@ import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
 
-public class WillTest extends MqttConnectionFixture {
+public class WillTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
     
@@ -41,6 +42,7 @@ public class WillTest extends MqttConnectionFixture {
 
     @Test
     public void testWill() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
 
         try {
@@ -54,6 +56,6 @@ public class WillTest extends MqttConnectionFixture {
 
         disconnect();
         close();
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 };

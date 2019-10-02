@@ -15,69 +15,69 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpConnection;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManagerOptions;
+import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpConnectionTest {
+public class HttpClientConnectionTest {
 
     private class HttpConnectionTestResponse {
         boolean actuallyConnected = false;
         boolean exceptionThrown = false;
         Exception exception = null;
+        CompletableFuture<Void> shutdownComplete = null;
     }
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
-        HttpConnectionPoolManager connectionPool = null;
-        try {
-            HttpConnectionPoolManagerOptions options = new HttpConnectionPoolManagerOptions();
-            options.withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri);
+        HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+        options.withClientBootstrap(bootstrap)
+            .withSocketOptions(sockOpts)
+            .withTlsContext(tlsContext)
+            .withUri(uri);
 
-            connectionPool = HttpConnectionPoolManager.create(options);
-            HttpConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            resp.actuallyConnected = true;
-            conn.close();
-
+        try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                resp.actuallyConnected = true;
+            }
         } catch (Exception e) {
             resp.exceptionThrown = true;
             resp.exception = e;
-        } finally {
-            if (connectionPool != null) {
-                connectionPool.close();
-            }
-            tlsContext.close();
-            sockOpts.close();
-            bootstrap.close();
         }
 
         return resp;
     }
 
-    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws CrtRuntimeException {
+    private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws Exception {
         for (TlsCipherPreference pref: TlsCipherPreference.values()) {
             if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
                 continue;
             }
 
-            TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
-            HttpConnectionTestResponse resp = testConnection(uri, new ClientBootstrap(1), new SocketOptions(), new TlsContext(tlsOpts));
-            tlsOpts.close();
+            HttpConnectionTestResponse resp = null;
+            try(TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
+                ClientBootstrap bootstrap = new ClientBootstrap(1);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+                resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+            }
 
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
             Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
@@ -85,12 +85,15 @@ public class HttpConnectionTest {
                 Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
             }
 
-            Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+            resp.shutdownComplete.get();
+
+            CrtResource.waitForNoResources();
         }
     }
 
     @Test
     public void testHttpConnection() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);

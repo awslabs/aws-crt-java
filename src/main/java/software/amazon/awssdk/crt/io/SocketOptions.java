@@ -80,18 +80,24 @@ public final class SocketOptions extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native socket options instance
      */
     public SocketOptions() throws CrtRuntimeException {
-        acquire(socketOptionsNew());
+        acquireNativeHandle(socketOptionsNew());
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Frees the native resources for this set of socket options
      */
     @Override
-    public void close() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
-            socketOptionsDestroy(release());
+            socketOptionsDestroy(getNativeHandle());
         }
-        super.close();
     }
 
     /**
@@ -99,7 +105,7 @@ public final class SocketOptions extends CrtResource {
      * @param domain
      */
     void setDomain(SocketDomain domain) {
-        socketOptionsSetDomain(native_ptr(), domain.getValue());
+        socketOptionsSetDomain(getNativeHandle(), domain.getValue());
     }
 
     /**
@@ -107,7 +113,7 @@ public final class SocketOptions extends CrtResource {
      * @param type
      */
     void setType(SocketType type) {
-        socketOptionsSetType(native_ptr(), type.getValue());
+        socketOptionsSetType(getNativeHandle(), type.getValue());
     }
 
     /**
@@ -115,7 +121,7 @@ public final class SocketOptions extends CrtResource {
      * @param timeoutMs The amount of time, in milliseconds, to wait for a connection to complete
      */
     void setConnectTimeoutMs(int timeoutMs) {
-        socketOptionsSetConnectTimeoutMs(native_ptr(), timeoutMs);
+        socketOptionsSetConnectTimeoutMs(getNativeHandle(), timeoutMs);
     }
 
     /**
@@ -123,7 +129,7 @@ public final class SocketOptions extends CrtResource {
      * @param intervalSeconds The amount of time, in seconds, between keepalive packet sends
      */
     void setKeepAliveIntervalSeconds(short intervalSeconds) {
-        socketOptionsSetKeepAliveIntervalSec(native_ptr(), intervalSeconds);
+        socketOptionsSetKeepAliveIntervalSec(getNativeHandle(), intervalSeconds);
     }
 
     /**
@@ -132,7 +138,7 @@ public final class SocketOptions extends CrtResource {
      *                       before timing out the socket connection
      */
     void setKeepAliveTimeoutSeconds(short timeoutSeconds) {
-        socketOptionsSetKeepAliveTimeoutSec(native_ptr(), timeoutSeconds);
+        socketOptionsSetKeepAliveTimeoutSec(getNativeHandle(), timeoutSeconds);
     }
 
     /*******************************************************************************

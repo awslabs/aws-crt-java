@@ -68,6 +68,16 @@ jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cur
 jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
 
 /*******************************************************************************
+ * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer
+ ******************************************************************************/
+void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject directBuf, struct aws_byte_buf *dst);
+
+/*******************************************************************************
+ * aws_jni_direct_byte_buffer_from_raw_ptr - Creates a Java Direct ByteBuffer from raw pointer and length
+ ******************************************************************************/
+jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, size_t capacity);
+
+/*******************************************************************************
  * aws_jni_direct_byte_buffer_from_byte_buf - Creates a Java DirectByteBuffer from a native aws_byte_buf
  ******************************************************************************/
 jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst);

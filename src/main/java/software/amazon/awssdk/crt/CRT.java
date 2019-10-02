@@ -21,6 +21,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
+import software.amazon.awssdk.crt.Log;
+
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
  * platform out of aws-crt-java.jar. One instance of this class has to be created
@@ -103,14 +105,14 @@ public final class CRT {
             Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName);
 
             // open a stream to read the shared lib contents from this JAR
-            InputStream in = CRT.class.getResourceAsStream(libraryPath);
-            if (in == null) {
-                throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
-            }
-            // Copy from jar stream to temp file
-            Files.deleteIfExists(libTempPath);
-            Files.copy(in, libTempPath);
-            in.close();
+            try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
+                if (in == null) {
+                    throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
+                }
+                // Copy from jar stream to temp file
+                Files.deleteIfExists(libTempPath);
+                Files.copy(in, libTempPath);
+            }            
 
             File tempSharedLib = libTempPath.toFile();
             if (!tempSharedLib.setExecutable(true)) {
@@ -130,6 +132,12 @@ public final class CRT {
             System.load(libTempPath.toString());
 
             awsCrtInit();
+
+            try {
+                Log.initLoggingFromSystemProperties();
+            } catch (IllegalArgumentException e) {
+                ;
+            }
         }
         catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());

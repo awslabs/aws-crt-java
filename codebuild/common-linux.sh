@@ -21,4 +21,6 @@ ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" 
 cd $CODEBUILD_SRC_DIR
 
 ulimit -c unlimited
-mvn -B test -DredirectTestOutputToFile=true -DreuseForks=false -Dendpoint=$ENDPOINT -Dcertificate=/tmp/certificate.pem -Dprivatekey=/tmp/privatekey.pem -Drootca=/tmp/AmazonRootCA1.pem -Dproxyhost=$PROXY_HOST -Dproxyport=$PROXY_PORT
+
+mvn -B test -DredirectTestOutputToFile=true -DreuseForks=false -Dendpoint=$ENDPOINT -Dcertificate=/tmp/certificate.pem -Dprivatekey=/tmp/privatekey.pem -Drootca=/tmp/AmazonRootCA1.pem -Daws.crt.debugnative=true -Dproxyhost=$PROXY_HOST -Dproxyport=$PROXY_PORT
+

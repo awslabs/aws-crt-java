@@ -16,23 +16,40 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.io.CrtByteBuffer;
 
 /**
- * An HttpStream represents a single Http Request/Response pair within a HttpConnection, and wraps the native resources
+ * An HttpStream represents a single Http Request/Response pair within a HttpClientConnection, and wraps the native resources
  * from the aws-c-http library.
  *
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
  */
 public class HttpStream extends CrtResource {
+    private CrtByteBuffer streamBuffer;
 
-    /* Native code can call this constructor */
-    protected HttpStream(long ptr) {
-        acquire(ptr);
+    /* Native code will call this constructor during HttpClientConnection.makeRequest() */
+    protected HttpStream(CrtByteBuffer streamBuffer, long ptr) {
+        this.streamBuffer = streamBuffer;
+        acquireNativeHandle(ptr);
     }
 
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
     @Override
-    public void close() {
-        httpStreamRelease(release());
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    /**
+     * Cleans up the stream's associated native handle
+     */
+    @Override
+    protected void releaseNativeHandle() {
+        if (!isNull()) {
+            streamBuffer.releaseBackToPool();
+            streamBuffer = null;
+            httpStreamRelease(getNativeHandle());
+        }
     }
 
     /**
@@ -48,7 +65,9 @@ public class HttpStream extends CrtResource {
         if (windowSize < 0) {
             throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
         }
-        httpStreamIncrementWindow(native_ptr(), windowSize);
+        if (!isNull()) {
+            httpStreamIncrementWindow(getNativeHandle(), windowSize);
+        }
     }
 
     /**
@@ -56,7 +75,10 @@ public class HttpStream extends CrtResource {
      * @return The Http Response Status Code
      */
     public int getResponseStatusCode() {
-        return httpStreamGetResponseStatusCode(native_ptr());
+        if (!isNull()) {
+            return httpStreamGetResponseStatusCode(getNativeHandle());
+        }
+        throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
     private static native void httpStreamRelease(long http_stream);

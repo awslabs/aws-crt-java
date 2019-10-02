@@ -18,16 +18,16 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
-import software.amazon.awssdk.crt.http.HttpConnection;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManager;
-import software.amazon.awssdk.crt.http.HttpConnectionPoolManagerOptions;
+import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestOptions;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -49,12 +49,11 @@ public class HttpRequestResponseTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final String EMPTY_BODY = "";
     private final static String TEST_DOC_LINE = "This is a sample to prove that http downloads and uploads work. It doesn't really matter what's in here, we mainly just need to verify the downloads and uploads work.";
-    private final static int TEST_DOC_NUM_LINES = 86401;
     private final static String TEST_DOC_SHA256 = "C7FDB5314B9742467B16BD5EA2F8012190B5E2C44A005F7984F89AAB58219534";
 
     private class TestHttpResponse {
         int statusCode = -1;
-        boolean hasBody = false;
+        int blockType = -1;
         List<HttpHeader> headers = new ArrayList<>();
         ByteBuffer bodyBuffer = ByteBuffer.wrap(new byte[16*1024*1024]); // Allow up to 16 MB Responses
         int onCompleteErrorCode = -1;
@@ -94,107 +93,98 @@ public class HttpRequestResponseTest {
         return byteArrayToHex(digest.digest());
     }
 
+    private HttpClientConnectionManager createConnectionPoolManager(URI uri) {
+        try(ClientBootstrap bootstrap = new ClientBootstrap(1);
+            SocketOptions sockOpts = new SocketOptions();
+            TlsContext tlsContext =  new TlsContext()) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                .withClientBootstrap(bootstrap)
+                .withSocketOptions(sockOpts)
+                .withTlsContext(tlsContext)
+                .withUri(uri);
+
+            return HttpClientConnectionManager.create(options);
+        }
+    }
+
     public TestHttpResponse getResponse(URI uri, HttpRequest request, String reqBody) throws Exception {
         boolean actuallyConnected = false;
-
-        ClientBootstrap bootstrap = new ClientBootstrap(1);
-        SocketOptions sockOpts = new SocketOptions();
-        TlsContext tlsContext =  new TlsContext();
 
         final ByteBuffer bodyBytesIn = ByteBuffer.wrap(reqBody.getBytes(UTF8));
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
 
         final TestHttpResponse response = new TestHttpResponse();
 
-        HttpConnectionPoolManager connPool = null;
-        HttpConnection conn = null;
-        HttpStream stream = null;
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
         List<Integer> reqBodyUpdateSizes = new ArrayList<>();
-        try {
-            HttpConnectionPoolManagerOptions options = new HttpConnectionPoolManagerOptions();
-            options.withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri);
 
-            connPool = HttpConnectionPoolManager.create(options);
-            conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS);
-            actuallyConnected = true;
-            CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders) {
-                    response.statusCode = responseStatusCode;
-                    Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
-                    response.headers.addAll(Arrays.asList(nextHeaders));
-                }
+        CompletableFuture<Void> shutdownComplete = null;
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                actuallyConnected = true;
+                CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                        response.statusCode = responseStatusCode;
+                        Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
+                        response.headers.addAll(Arrays.asList(nextHeaders));
+                    }
 
-                @Override
-                public void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
-                    response.hasBody = hasBody;
-                }
+                    @Override
+                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                        response.blockType = blockType;
+                    }
 
-                @Override
-                public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
-                    respBodyUpdateSizes.add(bodyBytesIn.remaining());
-                    int start = bodyBytesIn.position();
-                    response.bodyBuffer.put(bodyBytesIn);
-                    int amountRead = bodyBytesIn.position() - start;
+                    @Override
+                    public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+                        respBodyUpdateSizes.add(bodyBytesIn.remaining());
+                        int start = bodyBytesIn.position();
+                        response.bodyBuffer.put(bodyBytesIn);
+                        int amountRead = bodyBytesIn.position() - start;
 
-                    // Slide the window open by the number of bytes just read
-                    return amountRead;
-                }
+                        // Slide the window open by the number of bytes just read
+                        return amountRead;
+                    }
 
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    response.onCompleteErrorCode = errorCode;
-                    reqCompleted.complete(null);
-                }
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        response.onCompleteErrorCode = errorCode;
+                        reqCompleted.complete(null);
+                        stream.close();
+                    }
 
-                @Override
-                public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-                    reqBodyUpdateSizes.add(bodyBytesOut.remaining());
-                    transferData(bodyBytesIn, bodyBytesOut);
+                    @Override
+                    public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+                        reqBodyUpdateSizes.add(bodyBytesOut.remaining());
+                        transferData(bodyBytesIn, bodyBytesOut);
 
-                    return bodyBytesIn.remaining() == 0;
-                }
-            };
+                        return bodyBytesIn.remaining() == 0;
+                    }
+                };
 
-            HttpRequestOptions reqOptions = new HttpRequestOptions();
-            stream = conn.makeRequest(request, reqOptions, streamHandler);
-            Assert.assertNotNull(stream);
-            // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
-            reqCompleted.get(60, TimeUnit.SECONDS);
+                conn.makeRequest(request, streamHandler);
+                // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
+                reqCompleted.get(60, TimeUnit.SECONDS);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
-
-            if (connPool != null) {
-                connPool.close();
-            }
-
-            tlsContext.close();
-            sockOpts.close();
-            bootstrap.close();
         }
 
         for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
+            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpClientConnectionManagerOptions.DEFAULT_MAX_BUFFER_SIZE);
         }
 
         for (Integer reqBodyUpdateSize: reqBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpRequestOptions.DEFAULT_BODY_BUFFER_SIZE);
+            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpClientConnectionManagerOptions.DEFAULT_MAX_BUFFER_SIZE);
         }
 
-
         Assert.assertTrue(actuallyConnected);
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+
+        shutdownComplete.get();
+
+        CrtResource.waitForNoResources();
 
         return response;
     }
@@ -224,6 +214,8 @@ public class HttpRequestResponseTest {
             response = getResponse(uri, request, requestBody);
         } while (shouldRetry(response) && numAttempts < 3);
 
+        Assert.assertNotEquals(-1, response.blockType);
+
         boolean hasContentLengthHeader = false;
         for (HttpHeader h: response.headers) {
             if (h.getName().equals("Content-Length")) {
@@ -239,6 +231,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpDelete() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, 200);
         testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -247,6 +240,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpGet() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, 200);
         testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -255,6 +249,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpPost() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, 200);
@@ -263,6 +258,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpPut() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, 405);
@@ -271,6 +267,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, 200);
         testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, 300);
         testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
@@ -279,6 +276,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpDownload() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com", "/http_test_doc.txt", EMPTY_BODY, 200);
 
         ByteBuffer body = response.bodyBuffer;
@@ -301,6 +299,7 @@ public class HttpRequestResponseTest {
 
     @Test
     public void testHttpUpload() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, 200);
 

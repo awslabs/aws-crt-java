@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
@@ -29,19 +30,13 @@ import java.util.function.Consumer;
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub
  * functionality via the AWS Common Runtime
  * 
- * MqttConnection represents a single connection from one MqttClient to an MQTT
+ * MqttClientConnection represents a single connection from one MqttClient to an MQTT
  * service endpoint
  */
-public class MqttConnection extends CrtResource {
+public class MqttClientConnection extends CrtResource {
     private final MqttClient client;
-    private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
-    private MqttConnectionEvents userConnectionCallbacks;
+    private MqttClientConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
-    private AsyncCallback disconnectAck;
-
-    public enum ConnectionState {
-        DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING,
-    }
 
     /**
      * Wraps the handler provided by the user so that an MqttMessage can be constructed from the published
@@ -63,32 +58,32 @@ public class MqttConnection extends CrtResource {
     }
 
     /**
-     * Constructs a new MqttConnection. Connections are reusable after being disconnected.
+     * Constructs a new MqttClientConnection. Connections are reusable after being disconnected.
      * @param mqttClient Must be non-null
      * @throws MqttException If mqttClient is null
      */
-    public MqttConnection(MqttClient mqttClient) throws MqttException {
+    public MqttClientConnection(MqttClient mqttClient) throws MqttException {
         this(mqttClient, null);
     }
 
     /**
-     * Constructs a new MqttConnection. Connections are reusable after being disconnected.
+     * Constructs a new MqttClientConnection. Connections are reusable after being disconnected.
      * @param mqttClient Must be non-null
      * @param callbacks Optional handler for connection interruptions/resumptions
      * @throws MqttException If mqttClient is null
      */
-    public MqttConnection(MqttClient mqttClient, MqttConnectionEvents callbacks) throws MqttException {
+    public MqttClientConnection(MqttClient mqttClient, MqttClientConnectionEvents callbacks) throws MqttException {
         if (mqttClient == null) {
             throw new MqttException("MqttClient must not be null");
         }
-
-        client = mqttClient;
-        userConnectionCallbacks = callbacks;
         
         try {
-            acquire(mqttConnectionNew(client.native_ptr(), this));
+            acquireNativeHandle(mqttClientConnectionNew(mqttClient.getNativeHandle(), this));
+            addReferenceTo(mqttClient);
+            this.client = mqttClient;
+            userConnectionCallbacks = callbacks;
         } catch (CrtRuntimeException ex) {
-            throw new MqttException("Exception during mqttConnectionNew: " + ex.getMessage());
+            throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
     }
 
@@ -96,20 +91,16 @@ public class MqttConnection extends CrtResource {
      * Disconnects if necessary, and frees native resources associated with this connection
      */
     @Override
-    public void close() {
-        disconnect();
-        mqttConnectionDestroy(release());
-        super.close();
+    protected void releaseNativeHandle() {
+        mqttClientConnectionDestroy(getNativeHandle());
     }
 
     /**
-     * Returns the current connection state. This function should not be used often, it is much better to respond
-     * to events delivered via the MqttConnectionEvents interface provided at construction.
-     * @return The current connection state
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
      */
-    public ConnectionState getState() {
-        return connectionState;
-    }
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Sets the login credentials for the connection. Only valid before connect() has been called.
@@ -119,7 +110,7 @@ public class MqttConnection extends CrtResource {
      */
     public void setLogin(String user, String pass) throws MqttException {
         try {
-            mqttConnectionSetLogin(native_ptr(), user, pass);
+            mqttClientConnectionSetLogin(getNativeHandle(), user, pass);
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }        
@@ -127,31 +118,24 @@ public class MqttConnection extends CrtResource {
 
     // Called from native when the connection is established the first time
     private void onConnectionComplete(int errorCode, boolean sessionPresent) {
-        if (errorCode == 0) {
-            connectionState = ConnectionState.CONNECTED;
-            if (connectAck != null) {
+        if (connectAck != null) {
+            if (errorCode == 0) {
                 connectAck.onSuccess(sessionPresent);
-                connectAck = null;
-            }
-        } else {
-            connectionState = ConnectionState.DISCONNECTED;
-            if (connectAck != null) {
+            } else {
                 connectAck.onFailure(new MqttException(errorCode));
-                connectAck = null;
             }
+            connectAck = null;
         }
     }
 
     // Called when the connection drops or is disconnected. If errorCode == 0, the disconnect was intentional.
-    private void onConnectionInterrupted(int errorCode) {
-        connectionState = ConnectionState.DISCONNECTED;
-        if (disconnectAck != null) {
+    private void onConnectionInterrupted(int errorCode, AsyncCallback callback) {
+        if (callback != null) {
             if (errorCode == 0) {
-                disconnectAck.onSuccess();
+                callback.onSuccess();
             } else {
-                disconnectAck.onFailure(new MqttException(errorCode));
+                callback.onFailure(new MqttException(errorCode));
             }
-            disconnectAck = null;
         }
         if (userConnectionCallbacks != null) {
             userConnectionCallbacks.onConnectionInterrupted(errorCode);
@@ -160,7 +144,6 @@ public class MqttConnection extends CrtResource {
 
     // Called when a reconnect succeeds, and also on initial connection success.
     private void onConnectionResumed(boolean sessionPresent) {
-        connectionState = ConnectionState.CONNECTED;
         if (userConnectionCallbacks != null) {
             userConnectionCallbacks.onConnectionResumed(sessionPresent);
         }
@@ -174,7 +157,7 @@ public class MqttConnection extends CrtResource {
      * @return Future result is true if resuming a session, false if clean session
      */
     public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
-        return connect(clientId, endpoint, port, null, null, true, 0, 0);
+        return connect(clientId, endpoint, port, null, true, 0, 0);
     }
 
     /**
@@ -192,9 +175,11 @@ public class MqttConnection extends CrtResource {
      */
     public CompletableFuture<Boolean> connect(
         String clientId, String endpoint, int port, 
-        SocketOptions socketOptions, TlsContext tls, boolean cleanSession, int keepAliveMs, int pingTimeoutMs) 
+        SocketOptions socketOptions, boolean cleanSession, int keepAliveMs, int pingTimeoutMs)
             throws MqttException {
-            
+
+        TlsContext tls = client.getTlsContext();
+
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));
         if (port > Short.MAX_VALUE || port <= 0) {
@@ -203,11 +188,10 @@ public class MqttConnection extends CrtResource {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         connectAck = AsyncCallback.wrapFuture(future, null);
         try {
-            connectionState = ConnectionState.CONNECTING;
-            mqttConnectionConnect(
-                native_ptr(), endpoint, (short) port, 
-                socketOptions != null ? socketOptions.native_ptr() : 0,
-                tls != null ? tls.native_ptr() : 0, 
+            mqttClientConnectionConnect(
+                getNativeHandle(), endpoint, (short) port,
+                socketOptions != null ? socketOptions.getNativeHandle() : 0,
+                tls != null ? tls.getNativeHandle() : 0,
                 clientId, cleanSession, keepAliveMs, pingTimeout);
 
         } catch (CrtRuntimeException ex) {
@@ -226,9 +210,8 @@ public class MqttConnection extends CrtResource {
             future.complete(null);
             return future;
         }
-        disconnectAck = AsyncCallback.wrapFuture(future, null);
-        connectionState = ConnectionState.DISCONNECTING;
-        mqttConnectionDisconnect(native_ptr());
+        AsyncCallback disconnectAck = AsyncCallback.wrapFuture(future, null);
+        mqttClientConnectionDisconnect(getNativeHandle(), disconnectAck);
         return future;
     }
 
@@ -248,7 +231,7 @@ public class MqttConnection extends CrtResource {
 
         AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttConnectionSubscribe(native_ptr(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+            int packetId = mqttClientConnectionSubscribe(getNativeHandle(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -271,7 +254,7 @@ public class MqttConnection extends CrtResource {
         }
 
         AsyncCallback unsubAck = AsyncCallback.wrapFuture(future, 0);
-        int packetId = mqttConnectionUnsubscribe(native_ptr(), topic, unsubAck);
+        int packetId = mqttClientConnectionUnsubscribe(getNativeHandle(), topic, unsubAck);
         // When the future completes, complete the returned future with the packetId
         return future.thenApply(unused -> packetId);
     }
@@ -291,7 +274,7 @@ public class MqttConnection extends CrtResource {
 
         AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttConnectionPublish(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -315,7 +298,7 @@ public class MqttConnection extends CrtResource {
         }
 
         try {
-            mqttConnectionSetWill(native_ptr(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
+            mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -325,24 +308,24 @@ public class MqttConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttConnectionNew(long client, MqttConnection thisObj) throws CrtRuntimeException;
+    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj) throws CrtRuntimeException;
 
-    private static native void mqttConnectionDestroy(long connection);
+    private static native void mqttClientConnectionDestroy(long connection);
 
-    private static native void mqttConnectionConnect(
-        long connection, String endpoint, short port, 
+    private static native void mqttClientConnectionConnect(
+        long connection, String endpoint, short port,
         long socketOptions, long tlsContext, String clientId, 
         boolean cleanSession, int keepAliveMs, short pingTimeoutMs) throws CrtRuntimeException;
 
-    private static native void mqttConnectionDisconnect(long connection);
+    private static native void mqttClientConnectionDisconnect(long connection, AsyncCallback ack);
 
-    private static native short mqttConnectionSubscribe(long connection, String topic, int qos, MessageHandler handler, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqttClientConnectionSubscribe(long connection, String topic, int qos, MessageHandler handler, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native short mqttConnectionUnsubscribe(long connection, String topic, AsyncCallback ack);
+    private static native short mqttClientConnectionUnsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native short mqttConnectionPublish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqttClientConnectionPublish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native boolean mqttConnectionSetWill(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
+    private static native boolean mqttClientConnectionSetWill(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
     
-    private static native void mqttConnectionSetLogin(long connection, String username, String password) throws CrtRuntimeException;
+    private static native void mqttClientConnectionSetLogin(long connection, String username, String password) throws CrtRuntimeException;
 };

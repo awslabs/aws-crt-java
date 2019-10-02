@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 #include <aws/common/string.h>
+#include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/io/io.h>
@@ -26,6 +27,7 @@
 
 #include "async_callback.h"
 #include "crt.h"
+#include "logging.h"
 
 struct aws_allocator *aws_jni_get_allocator() {
     return aws_default_allocator();
@@ -164,16 +166,30 @@ void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
 }
 
 /**
- * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
+ * Populates a aws_byte_buf struct from a Java DirectByteBuffer Object
  */
-jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
-    jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst->buffer, (jlong)dst->capacity);
+void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject directBuf, struct aws_byte_buf *dst) {
+    dst->buffer = (*env)->GetDirectBufferAddress(env, directBuf);
+    dst->capacity = (size_t)(*env)->GetDirectBufferCapacity(env, directBuf);
+    dst->len = aws_jni_byte_buffer_get_position(env, directBuf);
+}
+
+jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, size_t capacity) {
+
+    jobject jByteBuf = (*env)->NewDirectByteBuffer(env, (void *)dst, (jlong)capacity);
     if (jByteBuf) {
-        aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)dst->len);
+        aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)capacity);
         aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
     }
 
     return jByteBuf;
+}
+
+/**
+ * Converts a Native aws_byte_cursor to a Java DirectByteBuffer
+ */
+jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst) {
+    return aws_jni_direct_byte_buffer_from_raw_ptr(env, (void *)dst->buffer, (jlong)dst->capacity);
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
@@ -189,13 +205,13 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
     jlong payload_size = (*env)->GetDirectBufferCapacity(env, byte_buffer);
     if (payload_size == -1) {
         aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
+            env, "MqttClientConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
         return aws_byte_cursor_from_array(NULL, 0);
     }
     jbyte *payload_data = (*env)->GetDirectBufferAddress(env, byte_buffer);
     if (!payload_data) {
         aws_jni_throw_runtime_exception(
-            env, "MqttConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
+            env, "MqttClientConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
         return aws_byte_cursor_from_array(NULL, 0);
     }
     return aws_byte_cursor_from_array((const uint8_t *)payload_data, (size_t)payload_size);
@@ -206,11 +222,22 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     return aws_string_new_from_c_str(allocator, (*env)->GetStringUTFChars(env, str, NULL));
 }
 
+void s_detach_jvm_from_thread(void *user_data) {
+    JavaVM *jvm = user_data;
+    (*jvm)->DetachCurrentThread(jvm);
+}
+
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
-    jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
-    (void)result;
-    AWS_FATAL_ASSERT(result == JNI_OK);
+    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+        (void)result;
+        AWS_FATAL_ASSERT(result == JNI_OK);
+        /* This should only happen in event loop threads, the JVM main thread attachment is
+         * managed by the JVM, so we only need to clean up event loop thread attachments */
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+    }
+
     return env;
 }
 
@@ -226,6 +253,9 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_crt_http_stream_handler(JNIEnv *);
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
+    extern void s_cache_event_loop_group(JNIEnv *);
+    extern void s_cache_crt_byte_buffer(JNIEnv * env);
+
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
     s_cache_async_callback(env);
@@ -235,17 +265,17 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_crt_http_stream_handler(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);
+    s_cache_event_loop_group(env);
+    s_cache_crt_byte_buffer(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
 #endif
 
-// static struct aws_logger s_logger;
-
 static void s_jni_atexit(void) {
-    // aws_logger_clean_up(&s_logger);
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
+    aws_jni_cleanup_logging();
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -256,13 +286,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
-
-    // struct aws_logger_standard_options log_options = {.level = AWS_LL_TRACE, .file = stderr};
-    // if (aws_logger_init_standard(&s_logger, allocator, &log_options)) {
-    //     aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-    //     return;
-    // }
-    // aws_logger_set(&s_logger);
 
     s_cache_jni_classes(env);
 

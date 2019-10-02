@@ -34,6 +34,6 @@ public class EventLoopGroupTest {
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
-        Assert.assertEquals(0, CrtResource.getAllocatedNativeResourceCount());
+        CrtResource.waitForNoResources();
     }
 };

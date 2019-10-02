@@ -32,22 +32,22 @@ public interface CrtHttpStreamHandler {
      * @param responseStatusCode The HTTP Response Status Code
      * @param nextHeaders The headers received in the latest IO event.
      */
-    void onResponseHeaders(HttpStream stream, int responseStatusCode, HttpHeader[] nextHeaders);
+    void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders);
 
     /**
      * Called from Native once all HTTP Headers are processed. Will not be called if there are no Http Headers in the
      * response. Guaranteed to be called exactly once if there is at least 1 Header.
      *
      * @param stream The HttpStream object
-     * @param hasBody True if the HTTP Response had a Body, false otherwise.
+     * @param blockType The type of the header block, corresponds to {@link HttpHeaderBlock}
      */
-    default void onResponseHeadersDone(HttpStream stream, boolean hasBody) {
+    default void onResponseHeadersDone(HttpStream stream, int blockType) {
         /* Optional Callback, do nothing by default */
     }
 
     /**
      * Called when new Response Body bytes have been received. Note that this function may be called multiple times over
-     * the lifetime of an HttpConnection as bytes are received.
+     * the lifetime of an HttpClientConnection as bytes are received.
      *
      * Users must read all data from bodyBytesIn before returning. If "bodyBytesIn.remaining() > 0" after this method
      * returns, then Native will assume there was a processing failure and abort the connection.
@@ -56,9 +56,9 @@ public interface CrtHttpStreamHandler {
      * the right to use DirectByteBuffers pointing to memory that only lives as long as the function call.
      *
      * Sliding Window:
-     * The Native HttpConnection EventLoop will keep sending data until the end of the sliding Window is reached.
+     * The Native HttpClientConnection EventLoop will keep sending data until the end of the sliding Window is reached.
      * The user application is responsible for setting the initial Window size appropriately when creating the
-     * HttpConnection, and for incrementing the sliding window appropriately throughout the lifetime of the HttpStream.
+     * HttpClientConnection, and for incrementing the sliding window appropriately throughout the lifetime of the HttpStream.
      *
      * For more info, see:
      *  - https://en.wikipedia.org/wiki/Sliding_window_protocol

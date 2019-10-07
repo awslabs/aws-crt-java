@@ -32,9 +32,9 @@ struct jni_tls_ctx_options {
     struct aws_string *private_key_path;
     struct aws_string *pkcs12_path;
     struct aws_string *pkcs12_password;
-    struct aws_byte_buf certifcate;
-    struct aws_byte_buf private_key;
-    struct aws_byte_buf ca_root;
+    jobject jni_certificate;
+    jobject jni_private_key;
+    jobject jni_ca_root;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -82,9 +82,15 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     aws_string_destroy(tls->private_key_path);
     aws_string_destroy(tls->pkcs12_path);
     aws_string_destroy_secure(tls->pkcs12_password);
-    aws_byte_buf_clean_up(&tls->certifcate);
-    aws_byte_buf_clean_up(&tls->private_key);
-    aws_byte_buf_clean_up(&tls->ca_root);
+    if (tls->jni_certificate) {
+        (*env)->DeleteGlobalRef(env, tls->jni_certificate);
+    }
+    if (tls->jni_private_key) {
+        (*env)->DeleteGlobalRef(env, tls->jni_private_key);
+    }
+    if (tls->jni_ca_root) {
+        (*env)->DeleteGlobalRef(env, tls->jni_ca_root);
+    }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, tls);
@@ -147,8 +153,14 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
         return;
     }
 
-    aws_jni_native_byte_buf_from_java_direct_byte_buf(env, jni_ca_root, &tls->ca_root);
-    struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_buf(&tls->ca_root);
+    if (!jni_ca_root) {
+        aws_jni_throw_runtime_exception(
+            env, "TlsContextOptions.tlsContextOptionsOverrideDefaultTrustStore: caRoot must be non-null");
+        return;
+    }
+
+    tls->jni_ca_root = (*env)->NewGlobalRef(env, jni_ca_root);
+    struct aws_byte_cursor ca_cursor = aws_jni_byte_cursor_from_direct_byte_buffer(env, tls->jni_ca_root);
     if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
         aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
     }
@@ -244,11 +256,11 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
         return;
     }
 
-    aws_jni_native_byte_buf_from_java_direct_byte_buf(env, jni_certificate, &tls->certifcate);
-    aws_jni_native_byte_buf_from_java_direct_byte_buf(env, jni_key, &tls->private_key);
+    tls->jni_certificate = (*env)->NewGlobalRef(env, jni_certificate);
+    tls->jni_private_key = (*env)->NewGlobalRef(env, jni_key);
 
-    struct aws_byte_cursor cert_cursor = aws_byte_cursor_from_buf(&tls->certifcate);
-    struct aws_byte_cursor key_cursor = aws_byte_cursor_from_buf(&tls->private_key);
+    struct aws_byte_cursor cert_cursor = aws_jni_byte_cursor_from_direct_byte_buffer(env, tls->jni_certificate);
+    struct aws_byte_cursor key_cursor = aws_jni_byte_cursor_from_direct_byte_buffer(env, tls->jni_private_key);
 
     aws_tls_ctx_options_init_client_mtls(
         &tls->options,

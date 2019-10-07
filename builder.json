@@ -3,7 +3,7 @@
     "hosts": {
         "linux": {
             "apt_packages": ["maven", "openjdk-8-jdk"],
-            "post_build_commands": [
+            "post_build_steps": [
                 ["./codebuild/get-secrets-linux.sh"],
                 ["ulimit", "-c", "unlimited"]
             ]

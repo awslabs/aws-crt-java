@@ -1,0 +1,36 @@
+{
+    "name": "aws-crt-java",
+    "hosts": {
+        "linux": {
+            "post_build_commands": [
+                ["./codebuild/get-secrets-linux.sh"],
+                ["ulimit", "-c", "unlimited"]
+            ]
+        },
+        "windows": {
+            "choco_packages": ["adoptopenjdk8", "maven"]
+        },
+        "al2012": {
+            "enabled": false
+        },
+        "manylinux": {
+            "enabled": false
+        }
+    },
+    "targets": {
+        "android": {
+            "enabled": false
+        }
+    },
+    "build": [
+        ["mvn", "-B", "compile"]
+    ],
+    "test": [
+        [
+            "mvn", "-B", "test",
+            "-DredirectTestOutputToFile=true", "-DreuseForks=false", "-Daws.crt.debugnative=true",
+            "-Dendpoint=$ENDPOINT", "-Dcertificate=/tmp/certificate.pem", "-Dprivatekey=/tmp/privatekey.pem",
+            "-Drootca=/tmp/AmazonRootCA1.pem"
+        ]
+    ]
+}

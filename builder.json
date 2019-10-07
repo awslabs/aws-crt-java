@@ -2,6 +2,7 @@
     "name": "aws-crt-java",
     "hosts": {
         "linux": {
+            "apt_packages": ["maven", "openjdk-8-jdk"],
             "post_build_commands": [
                 ["./codebuild/get-secrets-linux.sh"],
                 ["ulimit", "-c", "unlimited"]

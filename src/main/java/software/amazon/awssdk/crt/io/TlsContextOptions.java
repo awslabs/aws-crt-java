@@ -143,10 +143,10 @@ public final class TlsContextOptions extends CrtResource {
      * Sets the path to the certificate that identifies this TLS host. Must be in
      * PEM format.
      * 
-     * @param certificate PEM format certificate
-     * @param privateKey  PEM format private key
+     * @param certificate PEM armored certificate
+     * @param privateKey  PEM armored private key
      */
-    public void initMTLS(ByteBuffer certificate, ByteBuffer privateKey) {
+    public void initMTLS(String certificate, String privateKey) {
         tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
     }
 
@@ -201,8 +201,8 @@ public final class TlsContextOptions extends CrtResource {
      * 
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      */
-    public void overrideDefaultTrustStore(ByteBuffer caRoot) {
-        tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), ByteBufferUtils.toDirectBuffer(caRoot));
+    public void overrideDefaultTrustStore(String caRoot) {
+        tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), caRoot);
     }
 
     /**
@@ -271,7 +271,7 @@ public final class TlsContextOptions extends CrtResource {
     private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file,
             String ca_path);
     
-    private static native void tlsContextOptionsOverrideDefaultTrustStore(long tls, ByteBuffer caFile);
+    private static native void tlsContextOptionsOverrideDefaultTrustStore(long tls, String caRoot);
 
     private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
@@ -279,7 +279,7 @@ public final class TlsContextOptions extends CrtResource {
 
     private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
 
-    private static native void tlsContextOptionsInitMTLS(long tls, ByteBuffer cert, ByteBuffer key);
+    private static native void tlsContextOptionsInitMTLS(long tls, String cert, String key);
     
     private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
 

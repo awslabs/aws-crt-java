@@ -117,7 +117,7 @@ class MqttClientConnectionFixture {
 
             int port = TEST_PORT;
             if (!pathToCa.toString().equals("")) {
-                tlsOptions.overrideDefaultTrustStore(null, pathToCa.toString());
+                tlsOptions.overrideDefaultTrustStoreFromPath(null, pathToCa.toString());
             }
             if (TlsContextOptions.isAlpnSupported()) {
                 tlsOptions.setAlpnList("x-amzn-mqtt-ca");

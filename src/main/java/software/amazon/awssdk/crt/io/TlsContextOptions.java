@@ -14,8 +14,11 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.nio.ByteBuffer;
+
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 /**
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
@@ -137,6 +140,17 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Sets the path to the certificate that identifies this TLS host. Must be in
+     * PEM format.
+     * 
+     * @param certificate PEM format certificate
+     * @param privateKey  PEM format private key
+     */
+    public void initMTLS(ByteBuffer certificate, ByteBuffer privateKey) {
+        tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
+    }
+
+    /**
      * OSX only - Initializes MTLS with PKCS12 file and password
      * @param pkcs12Path Path to PKCS12 file
      * @param pkcs12Password PKCS12 password
@@ -178,8 +192,17 @@ public final class TlsContextOptions extends CrtResource {
      * @param caPath Path to the local trust store. Can be null.
      * @param caFile Path to the root certificate. Must be in PEM format.
      */
-    public void overrideDefaultTrustStore(String caPath, String caFile) {
+    public void overrideDefaultTrustStoreFromPath(String caPath, String caFile) {
         tlsContextOptionsOverrideDefaultTrustStoreFromPath(getNativeHandle(), caFile, caPath);
+    }
+
+    /**
+     * Helper function to provide a TlsContext-local trust store
+     * 
+     * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
+     */
+    public void overrideDefaultTrustStore(ByteBuffer caRoot) {
+        tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), ByteBufferUtils.toDirectBuffer(caRoot));
     }
 
     /**
@@ -245,13 +268,18 @@ public final class TlsContextOptions extends CrtResource {
     
     private static native void tlsContextOptionsSetMinimumTlsVersion(long tls, int version);
 
-    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file, String ca_path);
+    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file,
+            String ca_path);
+    
+    private static native void tlsContextOptionsOverrideDefaultTrustStore(long tls, ByteBuffer caFile);
 
     private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
     private static native void tlsContextOptionsSetCipherPreference(long tls, int cipherPref);
 
     private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
+
+    private static native void tlsContextOptionsInitMTLS(long tls, ByteBuffer cert, ByteBuffer key);
     
     private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
 

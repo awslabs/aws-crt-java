@@ -32,6 +32,9 @@ struct jni_tls_ctx_options {
     struct aws_string *private_key_path;
     struct aws_string *pkcs12_path;
     struct aws_string *pkcs12_password;
+    struct aws_string *certificate;
+    struct aws_string *private_key;
+    struct aws_string *ca_root;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -72,27 +75,16 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
         return;
     }
 
-    if (tls->ca_file) {
-        aws_string_destroy(tls->ca_file);
-    }
-    if (tls->ca_path) {
-        aws_string_destroy(tls->ca_path);
-    }
-    if (tls->alpn_list) {
-        aws_string_destroy(tls->alpn_list);
-    }
-    if (tls->certificate_path) {
-        aws_string_destroy(tls->certificate_path);
-    }
-    if (tls->private_key_path) {
-        aws_string_destroy(tls->private_key_path);
-    }
-    if (tls->pkcs12_path) {
-        aws_string_destroy(tls->pkcs12_path);
-    }
-    if (tls->pkcs12_password) {
-        aws_string_destroy_secure(tls->pkcs12_password);
-    }
+    aws_string_destroy(tls->ca_file);
+    aws_string_destroy(tls->ca_path);
+    aws_string_destroy(tls->alpn_list);
+    aws_string_destroy(tls->certificate_path);
+    aws_string_destroy(tls->private_key_path);
+    aws_string_destroy(tls->pkcs12_path);
+    aws_string_destroy_secure(tls->pkcs12_password);
+    aws_string_destroy_secure(tls->certificate);
+    aws_string_destroy_secure(tls->private_key);
+    aws_string_destroy_secure(tls->ca_root);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, tls);
@@ -138,7 +130,34 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
         ca_path = (const char *)aws_string_bytes(tls->ca_path);
     }
 
-    aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file);
+    if (aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file)) {
+        aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store_from_path failed");
+    }
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsOverrideDefaultTrustStore(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_ca_root) {
+    (void)jni_class;
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    if (!jni_ca_root) {
+        aws_jni_throw_runtime_exception(
+            env, "TlsContextOptions.tlsContextOptionsOverrideDefaultTrustStore: caRoot must be non-null");
+        return;
+    }
+
+    tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca_root);
+    struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
+    if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
+        aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
+    }
 }
 
 JNIEXPORT
@@ -209,6 +228,39 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
         aws_jni_get_allocator(),
         (const char *)aws_string_bytes(tls->certificate_path),
         (const char *)aws_string_bytes(tls->private_key_path));
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsInitMTLS(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_tls,
+    jstring jni_certificate,
+    jstring jni_key) {
+    (void)jni_class;
+    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
+    if (!tls) {
+        return;
+    }
+
+    if (!jni_certificate || !jni_key) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "TlsContextOptions.tlsContextOptionsInitMTLS: certificate and privateKey must be non-null");
+        return;
+    }
+
+    tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);
+    tls->private_key = aws_jni_new_string_from_jstring(env, jni_key);
+
+    struct aws_byte_cursor cert_cursor = aws_byte_cursor_from_string(tls->certificate);
+    struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
+
+    aws_tls_ctx_options_init_client_mtls(
+        &tls->options,
+        aws_jni_get_allocator(),
+        &cert_cursor,
+        &key_cursor);
 }
 
 #if defined(__APPLE__)

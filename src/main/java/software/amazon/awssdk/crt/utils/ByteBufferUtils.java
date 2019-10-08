@@ -65,4 +65,21 @@ public class ByteBufferUtils {
         in.position(in.position() + amtToTransfer);
         return amtToTransfer;
     }
+
+    /**
+     * Guarantees a DirectByteBuffer from a ByteBuffer. If the ByteBuffer is already direct, it will be returned
+     * and avoid an unnecessary copy.
+     * @param in Input ByteBuffer
+     * @return A ByteBuffer that is guaranteed to be directly allocated
+     */
+    public static ByteBuffer toDirectBuffer(ByteBuffer in) {
+        /* If the buffer is already direct, we can avoid an additional copy */
+        if (in.isDirect()) {
+            return in;
+        }
+
+        ByteBuffer direct = ByteBuffer.allocateDirect(in.capacity());
+        direct.put(in);
+        return direct;
+    }
 }

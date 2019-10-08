@@ -64,7 +64,7 @@ public class HttpClientConnectionTest {
             }
 
             HttpConnectionTestResponse resp = null;
-            try(TlsContextOptions tlsOpts = new TlsContextOptions().withCipherPreference(pref);
+            try(TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref);
                 ClientBootstrap bootstrap = new ClientBootstrap(1);
                 SocketOptions socketOptions = new SocketOptions();
                 TlsContext tlsCtx = new TlsContext(tlsOpts)) {

@@ -39,7 +39,7 @@ public final class TlsContext extends CrtResource {
      * applications will only need to create one and re-use it for all connections.
      */
     public TlsContext() throws CrtRuntimeException  {
-        try (TlsContextOptions options = new TlsContextOptions()) {
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
         }
     }

@@ -13,7 +13,9 @@
  * permissions and limitations under the License.
  */
 package software.amazon.awssdk.crt.mqtt;
+
 import java.nio.ByteBuffer;
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 /**
  * Represents a single message to be published or that was published to a connection
@@ -51,13 +53,6 @@ public final class MqttMessage {
 
     // Used mostly internally to retrieve the payload in order to pass it to native code
     ByteBuffer getPayloadDirect() {
-        /* If the buffer is already direct, we can avoid an additional copy */
-        if (payload.isDirect()) {
-            return payload;
-        }
-
-        ByteBuffer payloadDirect = ByteBuffer.allocateDirect(payload.capacity());
-        payloadDirect.put(payload);
-        return payloadDirect;
+        return ByteBufferUtils.toDirectBuffer(payload);
     }
 }

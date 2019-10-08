@@ -16,10 +16,12 @@
 package software.amazon.awssdk.crt.http;
 
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class HttpHeader {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
+    private final static CharsetEncoder ISO_8859_1 = StandardCharsets.ISO_8859_1.newEncoder();
     private byte[] name;  /* Not final, Native will manually set name after calling empty Constructor. */
     private byte[] value; /* Not final, Native will manually set value after calling empty Constructor. */
 
@@ -28,6 +30,16 @@ public class HttpHeader {
     private HttpHeader() {}
 
     public HttpHeader(String name, String value){
+        /**
+         * From RFC 2616, Http Headers must only contain characters from the ISO_8859_1 Character Set (aka Latin-1), if
+         * Clients want to send characters outside that Character Set then they must be HTTP encoded according to
+         * RFC 2047.
+         *  - https://www.rfc-editor.org/rfc/rfc2616.html#section-2.2
+         *  - https://www.rfc-editor.org/rfc/rfc2616.html#section-4.2
+         */
+        if (!ISO_8859_1.canEncode(name)) { throw new IllegalArgumentException("Can't encode Http Header name: " + name); }
+        if (!ISO_8859_1.canEncode(value)) { throw new IllegalArgumentException("Can't encode Http Header Value: " + value); }
+
         this.name = name.getBytes(UTF8);
         this.value = value.getBytes(UTF8);
     }

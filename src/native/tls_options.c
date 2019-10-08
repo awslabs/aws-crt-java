@@ -235,8 +235,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls,
-    jobject jni_certificate,
-    jobject jni_key) {
+    jstring jni_certificate,
+    jstring jni_key) {
     (void)jni_class;
     struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
     if (!tls) {

@@ -14,11 +14,9 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import java.nio.ByteBuffer;
-
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.utils.ByteBufferUtils;
+import software.amazon.awssdk.crt.utils.PemUtils;
 
 /**
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
@@ -145,8 +143,15 @@ public final class TlsContextOptions extends CrtResource {
      * 
      * @param certificate PEM armored certificate
      * @param privateKey  PEM armored private key
+     * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
      */
-    public void initMTLS(String certificate, String privateKey) {
+    public void initMTLS(String certificate, String privateKey) throws IllegalArgumentException {
+        certificate = PemUtils.removeInvalidPemChars(certificate);
+        certificate = PemUtils.cleanUpPem(certificate);
+        PemUtils.sanityCheck(certificate, 1, "CERTIFICATE");
+        privateKey = PemUtils.removeInvalidPemChars(privateKey);
+        privateKey = PemUtils.cleanUpPem(privateKey);
+        PemUtils.sanityCheck(privateKey, 1, "PRIVATE KEY");
         tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
     }
 
@@ -201,7 +206,12 @@ public final class TlsContextOptions extends CrtResource {
      * 
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      */
-    public void overrideDefaultTrustStore(String caRoot) {
+    public void overrideDefaultTrustStore(String caRoot) throws IllegalArgumentException {
+        caRoot = PemUtils.removeInvalidPemChars(caRoot);
+        caRoot = PemUtils.cleanUpPem(caRoot);
+        // 7 certs in the chain is the default supported by s2n:
+        // https://github.com/awslabs/s2n/blob/master/tls/s2n_x509_validator.c#L53
+        PemUtils.sanityCheck(caRoot, 7, "CERTIFICATE");
         tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), caRoot);
     }
 
@@ -221,7 +231,7 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an MTLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLSFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSFromPath(certificatePath, privateKeyPath);
         return options;
@@ -234,9 +244,17 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for creating a PKCS12 TLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password)
+            throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSPkcs12(pkcs12Path, pkcs12Password);
+        return options;
+    }
+    
+    public static TlsContextOptions createWithMTLS(String certificate, String privateKey)
+            throws CrtRuntimeException, IllegalArgumentException {
+        TlsContextOptions options = new TlsContextOptions();
+        options.initMTLS(certificate, privateKey);
         return options;
     }
 

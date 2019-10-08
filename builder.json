@@ -9,7 +9,10 @@
             ]
         },
         "windows": {
-            "choco_packages": ["adoptopenjdk8", "maven"]
+            "choco_packages": ["adoptopenjdk8", "maven"],
+            "build_env": {
+                "AWS_CMAKE_GENERATOR": "Visual Studio {generator_version}{generator_postfix}"
+            }
         },
         "al2012": {
             "enabled": false

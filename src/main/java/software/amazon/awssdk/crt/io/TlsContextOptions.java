@@ -63,7 +63,7 @@ public final class TlsContextOptions extends CrtResource {
      * Creates a new set of options that can be used to create a {@link TlsContext}
      * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
-    public TlsContextOptions() throws CrtRuntimeException {
+    private TlsContextOptions() throws CrtRuntimeException {
         acquireNativeHandle(tlsContextOptionsNew());
     }
 
@@ -225,6 +225,18 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Helper which creates a default set of TLS options for the current platform
+     * 
+     * @return A default configured set of options for a TLS server connection
+     * @throws CrtRuntimeException @see TlsContextOptions.TlsContextOptions()
+     */
+    public static TlsContextOptions createDefaultServer() throws CrtRuntimeException {
+        TlsContextOptions options = new TlsContextOptions();
+        options.setVerifyPeer(false);
+        return options;
+    }
+
+    /**
      * Helper which creates TLS options using a certificate and private key
      * @param certificatePath Path to a PEM format certificate
      * @param privateKeyPath Path to a PEM format private key
@@ -234,6 +246,22 @@ public final class TlsContextOptions extends CrtResource {
     public static TlsContextOptions createWithMTLSFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSFromPath(certificatePath, privateKeyPath);
+        return options;
+    }
+
+    /**
+     * Helper which creates TLS options using a certificate and private key
+     * 
+     * @param certificate String containing a PEM format certificate
+     * @param privateKey  String containing a PEM format private key
+     * @return A set of options for setting up an MTLS connection
+     * @throws CrtRuntimeException      @see #constructor()
+     * @throws IllegalArgumentException If either PEM fails to parse
+     */
+    public static TlsContextOptions createWithMTLS(String certificate, String privateKey)
+            throws CrtRuntimeException, IllegalArgumentException {
+        TlsContextOptions options = new TlsContextOptions();
+        options.initMTLS(certificate, privateKey);
         return options;
     }
 
@@ -248,13 +276,6 @@ public final class TlsContextOptions extends CrtResource {
             throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSPkcs12(pkcs12Path, pkcs12Password);
-        return options;
-    }
-    
-    public static TlsContextOptions createWithMTLS(String certificate, String privateKey)
-            throws CrtRuntimeException, IllegalArgumentException {
-        TlsContextOptions options = new TlsContextOptions();
-        options.initMTLS(certificate, privateKey);
         return options;
     }
 

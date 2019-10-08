@@ -274,7 +274,14 @@ public class PemUtils {
                         "PEM Object does not have expected type. " + "Expected Type: " + expectedPemTypeSubString
                                 + ", Actual BEGIN Type: " + beginType + ", Actual END Type: " + endType);
             }
+            if (base64Contents.length() == 0) {
+                throw new IllegalArgumentException("PEM Objet does not have any contents");
+            }
             objCount++;
+        }
+
+        if (objCount == 0) {
+            throw new IllegalArgumentException("PEM contains no objects, or is not a PEM");
         }
 
         if (beginCount != endCount || beginCount != objCount) {

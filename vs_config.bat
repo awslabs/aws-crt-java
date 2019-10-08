@@ -5,14 +5,14 @@
 :: Ensure all slashes in the path are windows style
 set ARG=%1
 set CMAKE_BINARIES=%CD%\%ARG:/=\%
-if ["%CMAKE_BINARIES%"] == [] (
+if "%CMAKE_BINARIES%" == "" (
     echo No CMake binaries directory specified
     goto :error
 )
 
 :: if the generator is specified, then we can narrow the search
-if not ["%AWS_CMAKE_GENERATOR%"] == [] (
-    echo Using AWS_CMAKE_GENERATOR from environment
+if not "%AWS_CMAKE_GENERATOR%" == "" (
+    echo Using AWS_CMAKE_GENERATOR %AWS_CMAKE_GENERATOR% from environment
     set GENERATOR=%AWS_CMAKE_GENERATOR%
     :: skip "Visual Studio ", then get the next 2 chars
     set VS_VERSION=%AWS_CMAKE_GENERATOR:"=%
@@ -29,7 +29,7 @@ for /f %%A in ('where vswhere') do (
 if [!VSWHERE_PATH!] == [] (
     :: This should only be possible on VS 2015, or someone with a really out of date 2017, pre 15.2
     echo vswhere could not be found, assuming default installation path for Visual Studio
-    
+
     :: Get the right version of Visual Studio if we know which we want, otherwise try
     :: everything in ascending version order to get the latest installed VS
     if [!VS_VERSION!] EQU [14] set TRY_VS14=1
@@ -48,7 +48,7 @@ if [!VSWHERE_PATH!] == [] (
         )
         if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat" (
             set VCVARSALL_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat"
-        ) 
+        )
         if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" (
             set VCVARSALL_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
         )

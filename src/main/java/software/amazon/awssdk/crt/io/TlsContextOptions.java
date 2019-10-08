@@ -138,7 +138,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Sets the path to the certificate that identifies this TLS host. Must be in
+     * Sets the certificate/key pair that identifies this TLS host. Must be in
      * PEM format.
      * 
      * @param certificate PEM armored certificate

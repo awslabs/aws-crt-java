@@ -61,7 +61,7 @@ public class PemUtils {
     }
 
     /**
-     * Removes characters that are not valid in PEM format. No other cleanup is
+     * Removes characters that are not valid in PEM format (non-base64 chars). No other cleanup is
      * done.
      * 
      * @param pem The input "dirty" PEM
@@ -75,7 +75,7 @@ public class PemUtils {
     }
 
     /**
-     * Removes characters that are not valid in PEM format. No other cleanup is
+     * Removes characters that are not valid in base64. No other cleanup is
      * done.
      * 
      * @param base64Contents The input "dirty" PEM
@@ -165,7 +165,7 @@ public class PemUtils {
     }
 
     /**
-     * Merge consecutive spaces into a single space (Eg "BEGIN CERTIFICATE", will
+     * Merge consecutive spaces into a single space (Eg "BEGIN     CERTIFICATE", will
      * become "BEGIN CERTIFICATE")
      * 
      * @param pem The input "dirty" PEM

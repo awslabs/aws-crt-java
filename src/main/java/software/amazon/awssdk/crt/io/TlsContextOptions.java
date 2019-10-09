@@ -14,6 +14,8 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.util.IllegalFormatException;
+
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.PemUtils;
@@ -146,12 +148,18 @@ public final class TlsContextOptions extends CrtResource {
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
      */
     public void initMTLS(String certificate, String privateKey) throws IllegalArgumentException {
-        certificate = PemUtils.removeInvalidPemChars(certificate);
-        certificate = PemUtils.cleanUpPem(certificate);
+        String cleanCertificate = PemUtils.cleanUpPem(certificate);
+        if (!cleanCertificate.equals(certificate)) {
+            throw new IllegalArgumentException("Certificate contains excess or illegal characters");
+        }
         PemUtils.sanityCheck(certificate, 1, "CERTIFICATE");
-        privateKey = PemUtils.removeInvalidPemChars(privateKey);
-        privateKey = PemUtils.cleanUpPem(privateKey);
+
+        String cleanPrivateKey = PemUtils.cleanUpPem(privateKey);
+        if (!cleanPrivateKey.equals(privateKey)) {
+            throw new IllegalArgumentException("Private key contains excess or illegal characters");
+        }
         PemUtils.sanityCheck(privateKey, 1, "PRIVATE KEY");
+
         tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
     }
 
@@ -207,8 +215,10 @@ public final class TlsContextOptions extends CrtResource {
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      */
     public void overrideDefaultTrustStore(String caRoot) throws IllegalArgumentException {
-        caRoot = PemUtils.removeInvalidPemChars(caRoot);
-        caRoot = PemUtils.cleanUpPem(caRoot);
+        String cleanCaRoot = PemUtils.cleanUpPem(caRoot);
+        if (!cleanCaRoot.equals(caRoot)) {
+            throw new IllegalArgumentException("Trust Store contains excess or illegal characters");
+        }
         // 7 certs in the chain is the default supported by s2n:
         // https://github.com/awslabs/s2n/blob/master/tls/s2n_x509_validator.c#L53
         PemUtils.sanityCheck(caRoot, 7, "CERTIFICATE");

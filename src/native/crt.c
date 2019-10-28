@@ -85,12 +85,14 @@ void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size
     for (int idx = 2; idx < stack_depth && idx < 5; ++idx) {
         if (idx > 2) {
             struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
-            aws_byte_buf_append(&buf, &newline);
+            aws_byte_buf_append_dynamic(&buf, &newline);
         }
         const char *caller = symbols[idx];
         struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
         aws_byte_buf_append_dynamic(&buf, &cursor);
     }
+
+    free(symbols);
 
     aws_mutex_lock(&tracker->mutex);
     struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
@@ -140,7 +142,7 @@ void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
     fprintf(stderr, "TRACKER: %zu bytes still allocated\n", tracker->allocated);
     aws_hash_table_foreach(&tracker->allocs, s_alloc_tracker_each, NULL);
     fflush(stderr);
-    abort();
+    //abort();
 }
 
 static void* s_jni_mem_acquire(struct aws_allocator *allocator, size_t size) {
@@ -184,7 +186,6 @@ struct aws_allocator *aws_jni_get_allocator() {
         struct aws_allocator *allocator = aws_default_allocator();
         struct alloc_tracker *tracker = aws_mem_calloc(allocator, 1, sizeof(struct alloc_tracker));
         s_alloc_tracker_init(tracker, allocator);
-
         s_jni_allocator.impl = tracker;
     }
     return &s_jni_allocator;

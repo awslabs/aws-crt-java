@@ -123,11 +123,11 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     const char *ca_path = NULL;
     if (jni_ca_file) {
         tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_file);
-        ca_file = (const char *)aws_string_bytes(tls->ca_file);
+        ca_file = aws_string_c_str(tls->ca_file);
     }
     if (jni_ca_path) {
         tls->ca_path = aws_jni_new_string_from_jstring(env, jni_ca_path);
-        ca_path = (const char *)aws_string_bytes(tls->ca_path);
+        ca_path = aws_string_c_str(tls->ca_path);
     }
 
     if (aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file)) {
@@ -173,7 +173,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     }
 
     tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
-    aws_tls_ctx_options_set_alpn_list(&tls->options, (const char *)aws_string_bytes(tls->alpn_list));
+    aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list));
 }
 
 JNIEXPORT
@@ -226,8 +226,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     aws_tls_ctx_options_init_client_mtls_from_path(
         &tls->options,
         aws_jni_get_allocator(),
-        (const char *)aws_string_bytes(tls->certificate_path),
-        (const char *)aws_string_bytes(tls->private_key_path));
+        aws_string_c_str(tls->certificate_path),
+        aws_string_c_str(tls->private_key_path));
 }
 
 JNIEXPORT
@@ -285,7 +285,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
     struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
     aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
-        &tls->options, aws_jni_get_allocator(), (const char *)aws_string_bytes(tls->pkcs12_path), &password);
+        &tls->options, aws_jni_get_allocator(), aws_string_c_str(tls->pkcs12_path), &password);
 }
 
 #endif /* __APPLE__ */

@@ -29,8 +29,40 @@
 #include "crt.h"
 #include "logging.h"
 
+void* s_jni_mem_acquire(struct aws_allocator *allocator, size_t size) {
+    struct aws_allocator *default_allocator = allocator->impl;
+    return aws_mem_acquire(default_allocator, size);
+}
+
+void s_jni_mem_release(struct aws_allocator *allocator, void *ptr) {
+    struct aws_allocator *default_allocator = allocator->impl;
+    aws_mem_release(default_allocator, ptr);
+}
+
+void* s_jni_mem_realloc(struct aws_allocator *allocator, void *ptr, size_t old_size, size_t new_size) {
+    (void)old_size;
+    (void)allocator;
+    /*struct aws_allocator *default_allocator = allocator->impl;*/
+    return realloc(ptr, new_size);
+}
+
+void* s_jni_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    struct aws_allocator *default_allocator = allocator->impl;
+    return aws_mem_calloc(default_allocator, num, size);
+}
+
+static struct aws_allocator s_jni_allocator = {
+    .mem_acquire = s_jni_mem_acquire,
+    .mem_release = s_jni_mem_release,
+    .mem_realloc = s_jni_mem_realloc,
+    .mem_calloc = s_jni_mem_calloc,
+};
+
 struct aws_allocator *aws_jni_get_allocator() {
-    return aws_default_allocator();
+    if (AWS_UNLIKELY(s_jni_allocator.impl == NULL)) {
+        s_jni_allocator.impl = aws_default_allocator();
+    }
+    return &s_jni_allocator;
 }
 
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {

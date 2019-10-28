@@ -82,7 +82,7 @@ void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size
 
     struct aws_byte_buf buf;
     aws_byte_buf_init(&buf, tracker->allocator, stack_depth * 128);
-    for (int idx = 2; idx < stack_depth && idx < 5; ++idx) {
+    for (int idx = 2; idx < stack_depth && idx < 10; ++idx) {
         if (idx > 2) {
             struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
             aws_byte_buf_append_dynamic(&buf, &newline);

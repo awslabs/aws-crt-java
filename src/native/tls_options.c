@@ -245,8 +245,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
 
     if (!jni_certificate || !jni_key) {
         aws_jni_throw_runtime_exception(
-            env,
-            "TlsContextOptions.tlsContextOptionsInitMTLS: certificate and privateKey must be non-null");
+            env, "TlsContextOptions.tlsContextOptionsInitMTLS: certificate and privateKey must be non-null");
         return;
     }
 
@@ -256,11 +255,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     struct aws_byte_cursor cert_cursor = aws_byte_cursor_from_string(tls->certificate);
     struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
 
-    aws_tls_ctx_options_init_client_mtls(
-        &tls->options,
-        aws_jni_get_allocator(),
-        &cert_cursor,
-        &key_cursor);
+    aws_tls_ctx_options_init_client_mtls(&tls->options, aws_jni_get_allocator(), &cert_cursor, &key_cursor);
 }
 
 #if defined(__APPLE__)

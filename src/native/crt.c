@@ -14,10 +14,7 @@
  */
 
 #include <aws/common/common.h>
-#include <aws/common/hash_table.h>
-#include <aws/common/mutex.h>
 #include <aws/common/string.h>
-#include <aws/common/system_info.h>
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
@@ -39,8 +36,16 @@
 #endif
 
 #if defined(ALLOC_TRACKING_ENABLED)
+
+#    include <aws/common/hash_table.h>
+#    include <aws/common/mutex.h>
+#    include <aws/common/priority_queue.h>
+#    include <aws/common/system_info.h>
+#    include <aws/common/time.h>
+
 struct alloc_t {
     size_t size;
+    time_t time;
     struct aws_byte_buf stacktrace;
 };
 
@@ -83,6 +88,7 @@ static void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_alloc
 static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size) {
     struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
     alloc->size = size;
+    alloc->time = time(NULL);
     aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 8 * 128);
 
     void *stack_frames[10];
@@ -130,11 +136,16 @@ static void s_alloc_tracker_update(struct alloc_tracker *tracker, void *ptr, siz
 }
 
 static int s_alloc_tracker_each(void *context, struct aws_hash_element *item) {
-    (void)context;
-    const void *addr = item->key;
+    struct aws_priority_queue *allocs = context;
     struct alloc_t *alloc = item->value;
-    fprintf(stderr, "ALLOC %zu bytes @ %p\n" PRInSTR "\n", alloc->size, addr, AWS_BYTE_BUF_PRI(alloc->stacktrace));
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_priority_queue_push(allocs, &alloc));
     return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
+}
+
+static int s_alloc_compare(const void *a, const void *b) {
+    const struct alloc_t *alloc_a = a;
+    const struct alloc_t *alloc_b = b;
+    return alloc_a->time > alloc_b->time;
 }
 
 static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
@@ -142,8 +153,18 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
         return;
     }
 
-    fprintf(stderr, "TRACKER: %zu bytes still allocated\n", tracker->allocated);
-    aws_hash_table_foreach(&tracker->allocs, s_alloc_tracker_each, NULL);
+    size_t num_allocs = aws_hash_table_get_entry_count(&tracker->allocs);
+    fprintf(stderr, "TRACKER: %zu bytes still allocated in %zu allocations\n", tracker->allocated, num_allocs);
+    /* sort allocs by time */
+    struct aws_priority_queue allocs;
+    aws_priority_queue_init_dynamic(&allocs, tracker->allocator, num_allocs, sizeof(struct alloc_t *), s_alloc_compare);
+    aws_hash_table_foreach(&tracker->allocs, s_alloc_tracker_each, &allocs);
+    while (aws_priority_queue_size(&allocs)) {
+        struct alloc_t *alloc = NULL;
+        aws_priority_queue_pop(&allocs, &alloc);
+        fprintf(
+            stderr, "ALLOC %zu bytes, stacktrace:\n" PRInSTR "\n", alloc->size, AWS_BYTE_BUF_PRI(alloc->stacktrace));
+    }
     fflush(stderr);
     // abort();
 }

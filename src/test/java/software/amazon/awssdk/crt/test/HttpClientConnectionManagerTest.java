@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -56,51 +58,53 @@ public class HttpClientConnectionManagerTest {
         return request;
     }
 
-    private void testParallelConnections(HttpClientConnectionManager connPool, HttpRequest request, int numRequests) {
+    private void testParallelConnections(HttpClientConnectionManager connPool, HttpRequest request, int numThreads, int numRequests) {
         final AtomicInteger numRequestsMade = new AtomicInteger(0);
         final AtomicInteger numConnectionFailures = new AtomicInteger(0);
         final ConcurrentHashMap<Integer, Integer> reqIdToStatus = new ConcurrentHashMap<>();
         final AtomicInteger numErrorCode = new AtomicInteger(0);
 
+        final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
         List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
 
         for (int i = 0; i < numRequests; i++) {
 
             Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
-
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
 
-            // Request a connection from the connection pool
-            connPool.acquireConnection()
-                // When the connection is acquired, submit a request on it
-                .whenComplete((conn, throwable) -> {
-                    if (throwable != null) {
-                        numConnectionFailures.incrementAndGet();
-                        connPool.releaseConnection(conn);
-                        requestCompleteFuture.completeExceptionally(throwable);
-                    }
-
-                    int requestId = numRequestsMade.incrementAndGet();
-                    conn.makeRequest(request, new CrtHttpStreamHandler() {
-                        @Override
-                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
-                            reqIdToStatus.put(requestId, responseStatusCode);
-                        }
-
-                        @Override
-                        public void onResponseComplete(HttpStream stream, int errorCode) {
-                            if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                                numErrorCode.incrementAndGet();
+            threadPool.execute(() -> {
+                // Request a connection from the connection pool
+                connPool.acquireConnection()
+                        // When the connection is acquired, submit a request on it
+                        .whenComplete((conn, throwable) -> {
+                            if (throwable != null) {
+                                numConnectionFailures.incrementAndGet();
+                                connPool.releaseConnection(conn);
+                                requestCompleteFuture.completeExceptionally(throwable);
                             }
-                            // When this Request is complete, release the conn back to the pool
-                            connPool.releaseConnection(conn);
-                            stream.close();
-                            requestCompleteFuture.complete(null);
-                        }
-                    });
-                });
 
+                            int requestId = numRequestsMade.incrementAndGet();
+                            conn.makeRequest(request, new CrtHttpStreamHandler() {
+                                @Override
+                                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                                        HttpHeader[] nextHeaders) {
+                                    reqIdToStatus.put(requestId, responseStatusCode);
+                                }
+
+                                @Override
+                                public void onResponseComplete(HttpStream stream, int errorCode) {
+                                    if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                                        numErrorCode.incrementAndGet();
+                                    }
+                                    // When this Request is complete, release the conn back to the pool
+                                    connPool.releaseConnection(conn);
+                                    stream.close();
+                                    requestCompleteFuture.complete(null);
+                                }
+                            });
+                        });
+            });
         }
 
         Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "Waiting on requests");
@@ -123,17 +127,16 @@ public class HttpClientConnectionManagerTest {
         Assert.assertEquals(0, numConnectionFailures.get());
     }
 
-    @Test
-    public void testParallelRequests() throws Exception {
+    public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
 
-        try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, NUM_THREADS, NUM_CONNECTIONS)) {
+        try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, numThreads, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
-            testParallelConnections(connectionPool, request, NUM_REQUESTS);
+            testParallelConnections(connectionPool, request, 1, numRequests);
         }
 
         Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "EndTest");
@@ -143,11 +146,38 @@ public class HttpClientConnectionManagerTest {
     }
 
     @Test
-    public void connPoolParallelRequestMemLeakCheck() throws Exception {
+    public void testSerialRequests() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        Callable<Void> fn = () -> { testParallelRequests(); Thread.sleep(2000); return null; };
+        Callable<Void> fn = () -> {
+            testParallelRequests(1, NUM_REQUESTS / NUM_THREADS);
+            Thread.sleep(2000);
+            return null;
+        };
 
-        CrtMemoryLeakDetector.leakCheck(fn);
+        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
     }
 
+    @Test
+    public void testParallelRequests() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TEST_DISABLED") == null);
+        Callable<Void> fn = () -> {
+            testParallelRequests(2, (NUM_REQUESTS / NUM_THREADS) * 2);
+            Thread.sleep(2000);
+            return null;
+        };
+
+        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
+    }
+
+    @Test
+    public void testMaxParallelRequests() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TEST_DISABLED") == null);
+        Callable<Void> fn = () -> {
+            testParallelRequests(NUM_THREADS, NUM_REQUESTS);
+            Thread.sleep(2000);
+            return null;
+        };
+
+        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
+    }
 }

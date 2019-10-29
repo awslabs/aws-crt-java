@@ -32,9 +32,13 @@
 #include "crt.h"
 #include "logging.h"
 
-#include <execinfo.h>
-#include <limits.h>
+#if defined(AWS_HAVE_EXECINFO)
+#    define ALLOC_TRACKING_ENABLED
+#    include <execinfo.h>
+#    include <limits.h>
+#endif
 
+#if defined(ALLOC_TRACKING_ENABLED)
 struct alloc_t {
     size_t size;
     struct aws_byte_buf stacktrace;
@@ -67,7 +71,7 @@ static void s_destroy_alloc(void *data) {
     aws_mem_release(allocator, alloc);
 }
 
-void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *allocator) {
+static void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *allocator) {
     tracker->allocator = allocator;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_mutex_init(&tracker->mutex));
     if (aws_hash_table_init(
@@ -76,7 +80,7 @@ void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *a
     }
 }
 
-void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size) {
+static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size) {
     struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
     alloc->size = size;
     aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 8 * 128);
@@ -102,7 +106,7 @@ void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size
     aws_mutex_unlock(&tracker->mutex);
 }
 
-void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
+static void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
     aws_mutex_lock(&tracker->mutex);
     struct aws_hash_element item;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove(&tracker->allocs, ptr, &item, NULL));
@@ -113,7 +117,7 @@ void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
     s_destroy_alloc(item.value);
 }
 
-void s_alloc_tracker_update(struct alloc_tracker *tracker, void *ptr, size_t size) {
+static void s_alloc_tracker_update(struct alloc_tracker *tracker, void *ptr, size_t size) {
     aws_mutex_lock(&tracker->mutex);
     struct aws_hash_element *item = NULL;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&tracker->allocs, ptr, &item));
@@ -125,7 +129,7 @@ void s_alloc_tracker_update(struct alloc_tracker *tracker, void *ptr, size_t siz
     aws_mutex_unlock(&tracker->mutex);
 }
 
-int s_alloc_tracker_each(void *context, struct aws_hash_element *item) {
+static int s_alloc_tracker_each(void *context, struct aws_hash_element *item) {
     (void)context;
     const void *addr = item->key;
     struct alloc_t *alloc = item->value;
@@ -133,7 +137,7 @@ int s_alloc_tracker_each(void *context, struct aws_hash_element *item) {
     return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
 }
 
-void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
+static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
     if (tracker->allocated == 0) {
         return;
     }
@@ -189,6 +193,11 @@ struct aws_allocator *aws_jni_get_allocator() {
     }
     return &s_jni_allocator;
 }
+#else
+struct aws_allocator *aws_jni_get_allocator() {
+    return aws_default_allocator();
+}
+#endif
 
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     va_list args;

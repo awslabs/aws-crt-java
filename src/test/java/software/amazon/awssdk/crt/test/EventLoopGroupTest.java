@@ -19,7 +19,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.hamcrest.Matcher.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 
@@ -35,8 +34,5 @@ public class EventLoopGroupTest {
             fail(ex.getMessage());
         }
         CrtResource.waitForNoResources();
-        // Log subjects and error messages take up a bit of space
-        long endMemory = CRT.nativeMemory();
-        assertTrue(endMemory < (16 * 1024));
     }
 };

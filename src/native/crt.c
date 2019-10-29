@@ -139,7 +139,7 @@ static int s_alloc_compare(const void *a, const void *b) {
 }
 
 static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
-    if (AWS_ATOMIC_VAR_INTVAL(&tracker->allocated) == 0) {
+    if (aws_atomic_load_int(&tracker->allocated) == 0) {
         return;
     }
 
@@ -147,7 +147,7 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
     fprintf(
         stderr,
         "TRACKER: %zu bytes still allocated in %zu allocations\n",
-        AWS_ATOMIC_VAR_INTVAL(&tracker->allocated),
+        aws_atomic_load_int(&tracker->allocated),
         num_allocs);
     /* sort allocs by time */
     struct aws_priority_queue allocs;

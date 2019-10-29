@@ -459,8 +459,9 @@ static void s_jni_atexit(void) {
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
     aws_jni_cleanup_logging();
-
+#if defined(ALLOC_TRACKING_ENABLED)
     s_alloc_tracker_dump((struct alloc_tracker *)s_jni_allocator.impl);
+#endif
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */

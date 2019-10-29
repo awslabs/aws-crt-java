@@ -15,9 +15,9 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.*;
@@ -35,5 +35,8 @@ public class EventLoopGroupTest {
             fail(ex.getMessage());
         }
         CrtResource.waitForNoResources();
+        // Log subjects and error messages take up a bit of space
+        long endMemory = CRT.nativeMemory();
+        assertTrue(endMemory < (16 * 1024));
     }
 };

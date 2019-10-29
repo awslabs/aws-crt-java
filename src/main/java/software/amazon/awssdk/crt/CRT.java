@@ -131,7 +131,7 @@ public final class CRT {
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
 
-            awsCrtInit();
+            awsCrtInit(Boolean.parseBoolean(System.getProperty("aws.crt.memory.tracing")));
 
             try {
                 Log.initLoggingFromSystemProperties();
@@ -154,7 +154,7 @@ public final class CRT {
     }
 
     // Called internally when bootstrapping the CRT, allows native code to do any static initialization it needs
-    private static native void awsCrtInit() throws CrtRuntimeException;
+    private static native void awsCrtInit(boolean memoryTracingEnabled) throws CrtRuntimeException;
 
     /**
      * Given an integer error code from an internal operation
@@ -162,4 +162,15 @@ public final class CRT {
      * @return A user-friendly description of the error
      */
     public static native String awsErrorString(int errorCode);
+
+    /**
+     * @return The number of bytes allocated in native resources
+     */
+    public static long nativeMemory() {
+        return awsNativeMemory();
+    }
+
+    private static native long awsNativeMemory();
+
+
 };

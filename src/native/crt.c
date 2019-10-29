@@ -64,7 +64,7 @@ static void s_destroy_alloc(void *data) {
     struct aws_allocator *allocator = ((struct alloc_tracker *)s_jni_allocator.impl)->allocator;
     struct alloc_t *alloc = data;
     aws_byte_buf_clean_up(&alloc->stacktrace);
-    aws_mem_release(allocator, data);
+    aws_mem_release(allocator, alloc);
 }
 
 void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *allocator) {
@@ -76,28 +76,26 @@ void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *a
 }
 
 void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size) {
-    void *stack_frames[32];
+    struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
+    alloc->size = size;
+    aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 8 * 128);
+
+    void *stack_frames[10];
     int stack_depth = backtrace(stack_frames, AWS_ARRAY_SIZE(stack_frames));
     char **symbols = backtrace_symbols(stack_frames, stack_depth);
-
-    struct aws_byte_buf buf;
-    aws_byte_buf_init(&buf, tracker->allocator, 8 * 128);
+    struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
     for (int idx = 2; idx < stack_depth && idx < 10; ++idx) {
         if (idx > 2) {
-            struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
-            aws_byte_buf_append_dynamic(&buf, &newline);
+            aws_byte_buf_append(&alloc->stacktrace, &newline);
         }
         const char *caller = symbols[idx];
         struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
-        aws_byte_buf_append_dynamic(&buf, &cursor);
+        aws_byte_buf_append(&alloc->stacktrace, &cursor);
     }
 
     free(symbols);
 
     aws_mutex_lock(&tracker->mutex);
-    struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
-    alloc->size = size;
-    alloc->stacktrace = buf;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_put(&tracker->allocs, ptr, alloc, NULL));
     tracker->allocated += size;
     aws_mutex_unlock(&tracker->mutex);
@@ -111,7 +109,7 @@ void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
     struct alloc_t *alloc = item.value;
     tracker->allocated -= alloc->size;
     aws_mutex_unlock(&tracker->mutex);
-    aws_mem_release(tracker->allocator, item.value);
+    s_destroy_alloc(item.value);
 }
 
 void s_alloc_tracker_update(struct alloc_tracker *tracker, void *ptr, size_t size) {

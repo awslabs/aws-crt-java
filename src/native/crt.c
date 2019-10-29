@@ -36,11 +36,11 @@
 #    include <limits.h>
 #endif
 
-#    include <aws/common/hash_table.h>
-#    include <aws/common/mutex.h>
-#    include <aws/common/priority_queue.h>
-#    include <aws/common/system_info.h>
-#    include <aws/common/time.h>
+#include <aws/common/hash_table.h>
+#include <aws/common/mutex.h>
+#include <aws/common/priority_queue.h>
+#include <aws/common/system_info.h>
+#include <aws/common/time.h>
 
 struct alloc_t {
     size_t size;
@@ -144,7 +144,11 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
     }
 
     size_t num_allocs = aws_hash_table_get_entry_count(&tracker->allocs);
-    fprintf(stderr, "TRACKER: %zu bytes still allocated in %zu allocations\n", AWS_ATOMIC_VAR_INTVAL(&tracker->allocated), num_allocs);
+    fprintf(
+        stderr,
+        "TRACKER: %zu bytes still allocated in %zu allocations\n",
+        AWS_ATOMIC_VAR_INTVAL(&tracker->allocated),
+        num_allocs);
     /* sort allocs by time */
     struct aws_priority_queue allocs;
     aws_priority_queue_init_dynamic(&allocs, tracker->allocator, num_allocs, sizeof(struct alloc_t *), s_alloc_compare);

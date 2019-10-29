@@ -247,12 +247,15 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     struct mqtt_jni_connection *jni_connection = connect_callback->connection;
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
+
+    /* temporarily raise the ref count on the connection while the callback is executing */
     (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.add_ref);
 
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback);
 
     mqtt_jni_async_callback_destroy(connect_callback);
 
+    /* undo the temporary ref count raise */
     (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.close);
 }
 

@@ -37,6 +37,6 @@ public class EventLoopGroupTest {
         CrtResource.waitForNoResources();
         // Log subjects and error messages take up a bit of space
         long endMemory = CRT.nativeMemory();
-        assertTrue(endMemory < (16 * 1024));
+        assertTrue(endMemory < (8 * 1024));
     }
 };

@@ -120,7 +120,7 @@ static void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove(&tracker->allocs, ptr, &item, NULL));
     AWS_FATAL_ASSERT(item.key && item.value);
     struct alloc_t *alloc = item.value;
-    aws_atomic_fetch_add(&tracker->allocated, alloc->size);
+    aws_atomic_fetch_sub(&tracker->allocated, alloc->size);
     aws_mutex_unlock(&tracker->mutex);
     s_destroy_alloc(item.value);
 }

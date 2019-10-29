@@ -41,7 +41,11 @@
 struct crt_async_callback g_async_callback;
 
 /* methods of CrtResource */
-static struct { jmethodID release_references; } s_crt_resource;
+static struct {
+    jmethodID release_references;
+    jmethodID add_ref;
+    jmethodID close;
+} s_crt_resource;
 
 /* methods of MqttClientConnection */
 static struct {
@@ -65,6 +69,12 @@ void s_cache_mqtt_connection(JNIEnv *env) {
     AWS_FATAL_ASSERT(crt_resource_class);
     s_crt_resource.release_references = (*env)->GetMethodID(env, crt_resource_class, "releaseReferences", "()V");
     AWS_FATAL_ASSERT(s_crt_resource.release_references);
+
+    s_crt_resource.add_ref = (*env)->GetMethodID(env, crt_resource_class, "addRef", "()V");
+    AWS_FATAL_ASSERT(s_crt_resource.add_ref);
+
+    s_crt_resource.close = (*env)->GetMethodID(env, crt_resource_class, "close", "()V");
+    AWS_FATAL_ASSERT(s_crt_resource.close);
 }
 
 /* MqttClientConnection.MessageHandler */
@@ -234,10 +244,16 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     (void)client_connection;
 
     struct mqtt_jni_async_callback *connect_callback = user_data;
+    struct mqtt_jni_connection *jni_connection = connect_callback->connection;
+
+    JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
+    (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.add_ref);
 
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback);
 
     mqtt_jni_async_callback_destroy(connect_callback);
+
+    (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.close);
 }
 
 static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection) {

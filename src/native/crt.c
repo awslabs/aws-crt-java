@@ -486,6 +486,7 @@ jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorString(JNIEnv *env, 
 
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
     (void)jni_crt_class;
     jlong allocated = 0;
     if (s_memory_tracing) {

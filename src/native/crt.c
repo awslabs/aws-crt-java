@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
@@ -29,8 +30,190 @@
 #include "crt.h"
 #include "logging.h"
 
-struct aws_allocator *aws_jni_get_allocator() {
+#if defined(AWS_HAVE_EXECINFO)
+#    define ALLOC_TRACKING_ENABLED
+#    include <execinfo.h>
+#    include <limits.h>
+#endif
+
+#include <aws/common/hash_table.h>
+#include <aws/common/mutex.h>
+#include <aws/common/priority_queue.h>
+#include <aws/common/system_info.h>
+#include <aws/common/time.h>
+
+struct alloc_t {
+    size_t size;
+    time_t time;
+    struct aws_byte_buf stacktrace;
+};
+
+struct alloc_tracker {
+    struct aws_allocator *allocator;
+    struct aws_atomic_var allocated;
+    struct aws_mutex mutex;
+    struct aws_hash_table allocs;
+};
+
+static void *s_jni_mem_acquire(struct aws_allocator *allocator, size_t size);
+static void s_jni_mem_release(struct aws_allocator *allocator, void *ptr);
+static void *s_jni_mem_realloc(struct aws_allocator *allocator, void *ptr, size_t old_size, size_t new_size);
+static void *s_jni_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size);
+
+static struct aws_allocator s_jni_allocator = {
+    .mem_acquire = s_jni_mem_acquire,
+    .mem_release = s_jni_mem_release,
+    .mem_realloc = s_jni_mem_realloc,
+    .mem_calloc = s_jni_mem_calloc,
+};
+
+/* for the hash table, to destroy elements */
+static void s_destroy_alloc(void *data) {
+    struct aws_allocator *allocator = ((struct alloc_tracker *)s_jni_allocator.impl)->allocator;
+    struct alloc_t *alloc = data;
+    aws_byte_buf_clean_up(&alloc->stacktrace);
+    aws_mem_release(allocator, alloc);
+}
+
+static void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_allocator *allocator) {
+    tracker->allocator = allocator;
+    aws_atomic_init_int(&tracker->allocated, 0);
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_mutex_init(&tracker->mutex));
+    if (aws_hash_table_init(
+            &tracker->allocs, tracker->allocator, 1024, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_alloc)) {
+        AWS_FATAL_ASSERT(!"FAILED TO INITIALIZE ALLOCATION TRACKER");
+    }
+}
+
+static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size_t size) {
+    struct alloc_t *alloc = aws_mem_calloc(tracker->allocator, 1, sizeof(struct alloc_t));
+    alloc->size = size;
+    alloc->time = time(NULL);
+
+#if defined(ALLOC_TRACKING_ENABLED)
+    aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 1600);
+    void *stack_frames[10];
+    int stack_depth = backtrace(stack_frames, AWS_ARRAY_SIZE(stack_frames));
+    char **symbols = backtrace_symbols(stack_frames, stack_depth);
+    struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
+    for (int idx = 2; idx < stack_depth && idx < 10; ++idx) {
+        if (idx > 2) {
+            aws_byte_buf_append(&alloc->stacktrace, &newline);
+        }
+        const char *caller = symbols[idx];
+        struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
+        aws_byte_buf_append(&alloc->stacktrace, &cursor);
+    }
+
+    free(symbols);
+#endif
+
+    aws_mutex_lock(&tracker->mutex);
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_put(&tracker->allocs, ptr, alloc, NULL));
+    aws_atomic_fetch_add(&tracker->allocated, size);
+    aws_mutex_unlock(&tracker->mutex);
+}
+
+static void s_alloc_tracker_untrack(struct alloc_tracker *tracker, void *ptr) {
+    aws_mutex_lock(&tracker->mutex);
+    struct aws_hash_element item;
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove(&tracker->allocs, ptr, &item, NULL));
+    AWS_FATAL_ASSERT(item.key && item.value);
+    struct alloc_t *alloc = item.value;
+    aws_atomic_fetch_sub(&tracker->allocated, alloc->size);
+    aws_mutex_unlock(&tracker->mutex);
+    s_destroy_alloc(item.value);
+}
+
+static int s_alloc_tracker_each(void *context, struct aws_hash_element *item) {
+    struct aws_priority_queue *allocs = context;
+    struct alloc_t *alloc = item->value;
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_priority_queue_push(allocs, &alloc));
+    return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
+}
+
+static int s_alloc_compare(const void *a, const void *b) {
+    const struct alloc_t *alloc_a = a;
+    const struct alloc_t *alloc_b = b;
+    return alloc_a->time > alloc_b->time;
+}
+
+static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
+    if (aws_atomic_load_int(&tracker->allocated) == 0) {
+        return;
+    }
+
+    size_t num_allocs = aws_hash_table_get_entry_count(&tracker->allocs);
+    fprintf(
+        stderr,
+        "TRACKER: %zu bytes still allocated in %zu allocations\n",
+        aws_atomic_load_int(&tracker->allocated),
+        num_allocs);
+    /* sort allocs by time */
+    struct aws_priority_queue allocs;
+    aws_priority_queue_init_dynamic(&allocs, tracker->allocator, num_allocs, sizeof(struct alloc_t *), s_alloc_compare);
+    aws_hash_table_foreach(&tracker->allocs, s_alloc_tracker_each, &allocs);
+    while (aws_priority_queue_size(&allocs)) {
+        struct alloc_t *alloc = NULL;
+        aws_priority_queue_pop(&allocs, &alloc);
+        fprintf(stderr, "ALLOC %zu bytes\n", alloc->size);
+        if (alloc->stacktrace.len) {
+            fprintf(stderr, "  stacktrace:\n" PRInSTR "\n", AWS_BYTE_BUF_PRI(alloc->stacktrace));
+        }
+    }
+    fflush(stderr);
+    // abort();
+}
+
+static void *s_jni_mem_acquire(struct aws_allocator *allocator, size_t size) {
+    struct alloc_tracker *tracker = allocator->impl;
+    void *ptr = aws_mem_acquire(tracker->allocator, size);
+    s_alloc_tracker_track(tracker, ptr, size);
+    return ptr;
+}
+
+static void s_jni_mem_release(struct aws_allocator *allocator, void *ptr) {
+    struct alloc_tracker *tracker = allocator->impl;
+    s_alloc_tracker_untrack(tracker, ptr);
+    aws_mem_release(tracker->allocator, ptr);
+}
+
+static void *s_jni_mem_realloc(struct aws_allocator *allocator, void *ptr, size_t old_size, size_t new_size) {
+    struct alloc_tracker *tracker = allocator->impl;
+    void *new_ptr = ptr;
+
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_mem_realloc(tracker->allocator, &new_ptr, old_size, new_size));
+
+    s_alloc_tracker_untrack(tracker, ptr);
+    s_alloc_tracker_track(tracker, new_ptr, new_size);
+
+    return new_ptr;
+}
+
+static void *s_jni_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    struct alloc_tracker *tracker = allocator->impl;
+    void *ptr = aws_mem_calloc(tracker->allocator, num, size);
+    s_alloc_tracker_track(tracker, ptr, num * size);
+    return ptr;
+}
+
+static bool s_memory_tracing = false;
+static struct aws_allocator *s_init_allocator() {
+    if (s_memory_tracing) {
+        struct aws_allocator *allocator = aws_default_allocator();
+        struct alloc_tracker *tracker = aws_mem_calloc(allocator, 1, sizeof(struct alloc_tracker));
+        s_alloc_tracker_init(tracker, allocator);
+        s_jni_allocator.impl = tracker;
+        return &s_jni_allocator;
+    }
     return aws_default_allocator();
+}
+static struct aws_allocator *s_allocator = NULL;
+struct aws_allocator *aws_jni_get_allocator() {
+    if (AWS_UNLIKELY(s_allocator == NULL)) {
+        s_allocator = s_init_allocator();
+    }
+    return s_allocator;
 }
 
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
@@ -272,12 +455,18 @@ static void s_jni_atexit(void) {
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
     aws_jni_cleanup_logging();
+
+    if (s_memory_tracing) {
+        s_alloc_tracker_dump((struct alloc_tracker *)s_jni_allocator.impl);
+    }
 }
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jboolean jni_memtrace) {
     (void)jni_crt_class;
+
+    s_memory_tracing = jni_memtrace != 0;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
@@ -293,4 +482,16 @@ jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorString(JNIEnv *env, 
     (void)jni_crt_class;
     const char *error_msg = aws_error_str(error_code);
     return (*env)->NewStringUTF(env, error_msg);
+}
+
+JNIEXPORT
+jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+    jlong allocated = 0;
+    if (s_memory_tracing) {
+        struct alloc_tracker *tracker = s_jni_allocator.impl;
+        allocated = (jlong)aws_atomic_load_int(&tracker->allocated);
+    }
+    return allocated;
 }

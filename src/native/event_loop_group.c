@@ -83,7 +83,10 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_IO_EVENT_LOOP, "Event Loop Shutdown Complete");
 
     // Tell the Java event loop group that cleanup is done.  This lets it release its references.
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JavaVM *jvm = callback_data->jvm;
+    JNIEnv *env = NULL;
+    /* fetch the env manually, rather than through the helper which will install an exit callback */
+    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, s_event_loop_group.onCleanupComplete);
 
     // Remove the ref that was probably keeping the Java event loop group alive.
@@ -92,6 +95,8 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     // We're done with this callback data, free it.
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, callback_data);
+
+    (*jvm)->DetachCurrentThread(jvm);
 }
 
 JNIEXPORT

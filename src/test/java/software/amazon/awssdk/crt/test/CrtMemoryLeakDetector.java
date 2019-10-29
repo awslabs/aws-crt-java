@@ -39,7 +39,8 @@ public class CrtMemoryLeakDetector {
                     (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
         }
 
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral, String.format("JVM MemUsage: %d", estimatedMemInUse));
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtGeneral,
+                String.format("JVM MemUsage: %d", estimatedMemInUse));
 
         return estimatedMemInUse;
     }
@@ -59,21 +60,24 @@ public class CrtMemoryLeakDetector {
             nativeSamples.add(getNativeMemoryInUse());
         }
 
+        // Get the median deltas
         List<Long> jvmDeltas = getDeltas(jvmSamples);
-        // Get the median delta
-        long p50MemoryUsageDelta = jvmDeltas.get(jvmDeltas.size() / 2);
-        if (p50MemoryUsageDelta > maxLeakage) {
-            Assert.fail(
-                    String.format("Potential Java Memory Leak!\nMemory usage Deltas: %s\nMeasurements: %s\nDiff: %d",
-                            jvmDeltas.toString(), jvmSamples.toString(), p50MemoryUsageDelta - maxLeakage));
-        }
+        long medianJvmDelta = jvmDeltas.get(jvmDeltas.size() / 2);
         List<Long> nativeDeltas = getDeltas(nativeSamples);
-        // Get the median delta
-        p50MemoryUsageDelta = nativeDeltas.get(nativeDeltas.size() / 2);
-        if (p50MemoryUsageDelta > maxLeakage) {
-            Assert.fail(
-                    String.format("Potential Native Memory Leak!\nMemory usage Deltas: %s\nMeasurements: %s\nDiff: %d",
-                            nativeDeltas.toString(), nativeSamples.toString(), p50MemoryUsageDelta - maxLeakage));
+        long medianNativeDelta = nativeDeltas.get(nativeDeltas.size() / 2);
+
+        String output = "";
+        if (medianJvmDelta > maxLeakage) {
+            output += "Potential Java Memory Leak!\n";
+        }
+        if (medianNativeDelta > maxLeakage) {
+            output += "Potential Native Memory Leak!\n";
+        }
+
+        if (output.length() > 0) {
+            Assert.fail(String.format(
+                    "%s\nJVM Usage Deltas: %s\nJVM Samples: %s\nNative Usage Deltas: %s\nNative Samples: %s\n", output,
+                    jvmDeltas.toString(), jvmSamples.toString(), nativeDeltas.toString(), nativeSamples.toString()));
         }
     }
 

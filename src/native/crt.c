@@ -31,7 +31,7 @@
 #include "logging.h"
 
 #if defined(AWS_HAVE_EXECINFO)
-#    define ALLOC_TRACKING_ENABLED
+#    define ALLOC_TRACE_AVAILABLE
 #    include <execinfo.h>
 #    include <limits.h>
 #endif
@@ -41,6 +41,9 @@
 #include <aws/common/priority_queue.h>
 #include <aws/common/system_info.h>
 #include <aws/common/time.h>
+
+/* 0 = off, 1 = bytes, 2 = stack traces */
+static int s_memory_tracing = 0;
 
 struct alloc_t {
     size_t size;
@@ -90,22 +93,24 @@ static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size
     alloc->size = size;
     alloc->time = time(NULL);
 
-#if defined(ALLOC_TRACKING_ENABLED)
-    aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 1600);
-    void *stack_frames[10];
-    int stack_depth = backtrace(stack_frames, AWS_ARRAY_SIZE(stack_frames));
-    char **symbols = backtrace_symbols(stack_frames, stack_depth);
-    struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
-    for (int idx = 2; idx < stack_depth && idx < 10; ++idx) {
-        if (idx > 2) {
-            aws_byte_buf_append(&alloc->stacktrace, &newline);
+#if defined(ALLOC_TRACE_AVAILABLE)
+    if (s_memory_tracing == 2) {
+        aws_byte_buf_init(&alloc->stacktrace, tracker->allocator, 1600);
+        void *stack_frames[10];
+        int stack_depth = backtrace(stack_frames, AWS_ARRAY_SIZE(stack_frames));
+        char **symbols = backtrace_symbols(stack_frames, stack_depth);
+        struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
+        for (int idx = 2; idx < stack_depth && idx < 10; ++idx) {
+            if (idx > 2) {
+                aws_byte_buf_append(&alloc->stacktrace, &newline);
+            }
+            const char *caller = symbols[idx];
+            struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
+            aws_byte_buf_append(&alloc->stacktrace, &cursor);
         }
-        const char *caller = symbols[idx];
-        struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
-        aws_byte_buf_append(&alloc->stacktrace, &cursor);
-    }
 
-    free(symbols);
+        free(symbols);
+    }
 #endif
 
     aws_mutex_lock(&tracker->mutex);
@@ -197,7 +202,6 @@ static void *s_jni_mem_calloc(struct aws_allocator *allocator, size_t num, size_
     return ptr;
 }
 
-static bool s_memory_tracing = false;
 static struct aws_allocator *s_init_allocator() {
     if (s_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
@@ -463,10 +467,13 @@ static void s_jni_atexit(void) {
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jboolean jni_memtrace) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
     (void)jni_crt_class;
 
-    s_memory_tracing = jni_memtrace != 0;
+    s_memory_tracing = jni_memtrace;
+#if !defined(ALLOC_TRACE_AVAILABLE)
+    s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
+#endif
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);

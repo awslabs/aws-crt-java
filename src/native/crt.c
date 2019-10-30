@@ -284,8 +284,9 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
         AWS_OP_SUCCESS ==
         aws_hash_table_init(
             &stacks, tracker->allocator, 64, s_stack_hash, s_stack_eq, NULL, s_stack_info_destroy));
-    /* insert only active stacks tally up sizes and counts */
+    /* collect active stacks, tally up sizes and counts */
     aws_hash_table_foreach(&tracker->allocs, s_collect_stack_stats, &stacks);
+    /* collect stack traces for active stacks */
     aws_hash_table_foreach(&stacks, s_collect_stack_trace, &tracker->stacks);
 #endif
     /* sort allocs by time */
@@ -655,7 +656,7 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
     (void)jni_crt_class;
 
-    s_memory_tracing = 2;//jni_memtrace;
+    s_memory_tracing = jni_memtrace;
 #if !defined(ALLOC_TRACE_AVAILABLE)
     s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
 #endif

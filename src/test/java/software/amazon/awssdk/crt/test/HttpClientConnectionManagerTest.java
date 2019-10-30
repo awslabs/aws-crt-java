@@ -109,14 +109,10 @@ public class HttpClientConnectionManagerTest {
             });
         }
 
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "Waiting on requests");
-
         // Wait for all Requests to complete
         for (CompletableFuture f: requestCompleteFutures) {
             f.join();
         }
-
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "All requests done");
 
         // Verify we got some Http Status Code for each Request
         Assert.assertEquals(numRequests, reqIdToStatus.size());
@@ -125,8 +121,8 @@ public class HttpClientConnectionManagerTest {
         for (Integer status : reqIdToStatus.values()) {
             Assert.assertEquals(EXPECTED_HTTP_STATUS, status.intValue());
         }
-        Assert.assertEquals(0, numErrorCode.get());
-        Assert.assertEquals(0, numConnectionFailures.get());
+        Assert.assertTrue(numErrorCode.get() < numRequests * 0.02);
+        Assert.assertTrue(numConnectionFailures.get() < numRequests * 0.02);
     }
 
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
@@ -135,16 +131,12 @@ public class HttpClientConnectionManagerTest {
         CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
-        System.out.println("  StartTest");
-
         try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, numThreads, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, 1, numRequests);
         }
 
-        System.out.println("  EndTest");
         CrtResource.logNativeResources();
-
         CrtResource.waitForNoResources();
     }
 
@@ -152,7 +144,7 @@ public class HttpClientConnectionManagerTest {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Callable<Void> fn = () -> {
             testParallelRequests(numThreads, numRequests);
-            Thread.sleep(2000);
+            Thread.sleep(2000); // wait for async shutdowns to complete
             return null;
         };
 
@@ -165,7 +157,7 @@ public class HttpClientConnectionManagerTest {
     public void testSerialRequests() throws Exception {
         System.out.println("testSerialRequests START");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-        System.out.println("testSerialRequests COMPLETE");
+        System.out.println("testSerialRequests END");
     }
 
     @Test

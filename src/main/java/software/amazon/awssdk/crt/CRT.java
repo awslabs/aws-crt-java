@@ -158,7 +158,7 @@ public final class CRT {
     }
 
     // Called internally when bootstrapping the CRT, allows native code to do any static initialization it needs
-    private static native void awsCrtInit(int  memoryTracingLevel) throws CrtRuntimeException;
+    private static native void awsCrtInit(int memoryTracingLevel) throws CrtRuntimeException;
 
     /**
      * Given an integer error code from an internal operation

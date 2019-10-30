@@ -255,11 +255,8 @@ void s_cache_crt_http_stream_handler(JNIEnv *env) {
 
 static jobjectArray s_java_headers_array_from_native(
     JNIEnv *env,
-    struct http_stream_callback_data *callback,
     const struct aws_http_header *header_array,
     size_t num_headers) {
-
-    // JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_FATAL_ASSERT(s_http_header.header_class);
     AWS_FATAL_ASSERT(s_http_header.constructor);
@@ -312,7 +309,7 @@ static int s_on_incoming_headers_fn(
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
-    jobjectArray jHeaders = s_java_headers_array_from_native(env, user_data, header_array, num_headers);
+    jobjectArray jHeaders = s_java_headers_array_from_native(env, header_array, num_headers);
     if (!jHeaders) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
@@ -570,11 +567,11 @@ static bool s_fill_out_request(
         jbyteArray jname = (*env)->GetObjectField(env, jHeader, s_http_header.name);
         jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
 
-        size_t name_len = (*env)->GetArrayLength(env, jname);
+        const size_t name_len = (*env)->GetArrayLength(env, jname);
         jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
         struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
 
-        size_t value_len = (*env)->GetArrayLength(env, jvalue);
+        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
         jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
         struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
 

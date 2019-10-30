@@ -96,7 +96,8 @@ static void s_destroy_stacktrace(void *data) {
 }
 
 static uint64_t s_stack_hash(const void *item) {
-    uint64_t value = (uint64_t)item;
+    /* yes, this truncates on 32-bit, no it doesn't matter, it's a hash */
+    size_t value = (size_t)item;
     return aws_hash_ptr((void *)value);
 }
 

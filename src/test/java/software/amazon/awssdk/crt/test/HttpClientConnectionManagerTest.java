@@ -31,6 +31,8 @@ public class HttpClientConnectionManagerTest {
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
     private final static int NUM_REQUESTS = 100;
+    private final static int GROWTH_PER_THREAD = 1024; // expected VM footprint growth per thread
+    private final static int FIXED_GROWTH = 1024; // base growth expected in the VM/GC to do just about anything
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
@@ -145,39 +147,29 @@ public class HttpClientConnectionManagerTest {
         CrtResource.waitForNoResources();
     }
 
-    @Test
-    public void testSerialRequests() throws Exception {
+    public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Callable<Void> fn = () -> {
-            testParallelRequests(1, NUM_REQUESTS / NUM_THREADS);
+            testParallelRequests(numThreads, numRequests);
             Thread.sleep(2000);
             return null;
         };
 
-        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
+        CrtMemoryLeakDetector.leakCheck(4, FIXED_GROWTH + (numThreads * GROWTH_PER_THREAD), fn);   
+    }
+
+    @Test
+    public void testSerialRequests() throws Exception {
+        testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 
     @Test
     public void testParallelRequests() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TEST_DISABLED") == null);
-        Callable<Void> fn = () -> {
-            testParallelRequests(2, (NUM_REQUESTS / NUM_THREADS) * 2);
-            Thread.sleep(2000);
-            return null;
-        };
-
-        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
+        testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TEST_DISABLED") == null);
-        Callable<Void> fn = () -> {
-            testParallelRequests(NUM_THREADS, NUM_REQUESTS);
-            Thread.sleep(2000);
-            return null;
-        };
-
-        CrtMemoryLeakDetector.leakCheck(2, 1024, fn);
+        testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 }

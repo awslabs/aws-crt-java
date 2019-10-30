@@ -14,6 +14,9 @@ import software.amazon.awssdk.crt.Log;
  * detect very small leaks but will likely find obvious large ones.
  */
 public class CrtMemoryLeakDetector {
+    static {
+        new CRT(); // force the CRT to load before doing anything
+    }
     // Allow up to 512 byte increase in memory usage between CRT Test Runs
     private final static int DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA = 1024;
     private final static int DEFAULT_NUM_LEAK_TEST_ITERATIONS = 20;
@@ -54,6 +57,8 @@ public class CrtMemoryLeakDetector {
         List<Long> jvmSamples = new ArrayList<>();
         List<Long> nativeSamples = new ArrayList<>();
         numIterations = Math.max(2, numIterations); // There need to be at least 2 iterations to get deltas
+
+        getJvmMemoryInUse(); // force a few GCs to get a good baseline
 
         for (int i = 0; i < numIterations; i++) {
             fn.call();

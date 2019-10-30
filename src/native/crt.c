@@ -64,9 +64,9 @@ struct stacktrace_t {
 static struct alloc_tracker {
     struct aws_allocator *allocator; /* underlying allocator */
     struct aws_atomic_var allocated; /* bytes currently allocated */
-    struct aws_mutex mutex;       /* protects everything below */
-    struct aws_hash_table allocs; /* live allocations, maps address -> alloc_t */
-    struct aws_hash_table stacks; /* unique stack traces, maps hash -> stacktrace_t */
+    struct aws_mutex mutex;          /* protects everything below */
+    struct aws_hash_table allocs;    /* live allocations, maps address -> alloc_t */
+    struct aws_hash_table stacks;    /* unique stack traces, maps hash -> stacktrace_t */
 } s_alloc_tracker;
 
 static void *s_jni_mem_acquire(struct aws_allocator *allocator, size_t size);
@@ -96,8 +96,9 @@ static void s_destroy_stacktrace(void *data) {
 }
 
 static uint64_t s_stack_hash(const void *item) {
-    uint64_t value = (uint64_t)item;
-    return aws_hash_ptr((void*)value);
+    /* yes, this truncates on 32-bit, no it doesn't matter, it's a hash */
+    size_t value = (size_t)item;
+    return aws_hash_ptr((void *)value);
 }
 
 static bool s_stack_eq(const void *a, const void *b) {
@@ -132,17 +133,18 @@ static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size
         /* capture stack frames */
         void *stack_frames[2 + ALLOC_TRACING_FRAMES];
         int stack_depth = backtrace(stack_frames, AWS_ARRAY_SIZE(stack_frames));
-        struct aws_byte_cursor stack_cursor = aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void*));
+        struct aws_byte_cursor stack_cursor = aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void *));
         /* hash the stack pointers */
         uint64_t stack_id = aws_hash_byte_cursor_ptr(&stack_cursor);
         alloc->stack = stack_id; /* associate the stack with the alloc */
         struct aws_hash_element *item = NULL;
         int was_created = 0;
-        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_create(&tracker->stacks, (void *)stack_id, &item, &was_created));
+        AWS_FATAL_ASSERT(
+            AWS_OP_SUCCESS == aws_hash_table_create(&tracker->stacks, (void *)stack_id, &item, &was_created));
         /* If this is a new stack, save it to the hash */
         if (was_created) {
             struct stacktrace_t *stack = aws_mem_calloc(tracker->allocator, 1, sizeof(struct stacktrace_t));
-            memcpy((void **)&stack->frames[0], &stack_frames[2], (stack_depth - 2) * sizeof(void*));
+            memcpy((void **)&stack->frames[0], &stack_frames[2], (stack_depth - 2) * sizeof(void *));
             item->value = stack;
         }
     }
@@ -211,14 +213,14 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
 }
 
 static int s_stack_info_compare_size(const void *a, const void *b) {
-    const struct stack_info_t *stack_a = *(const struct stack_info_t**)a;
-    const struct stack_info_t *stack_b = *(const struct stack_info_t**)b;
+    const struct stack_info_t *stack_a = *(const struct stack_info_t **)a;
+    const struct stack_info_t *stack_b = *(const struct stack_info_t **)b;
     return stack_b->size > stack_a->size;
 }
 
 static int s_stack_info_compare_count(const void *a, const void *b) {
-    const struct stack_info_t *stack_a = *(const struct stack_info_t**)a;
-    const struct stack_info_t *stack_b = *(const struct stack_info_t**)b;
+    const struct stack_info_t *stack_a = *(const struct stack_info_t **)a;
+    const struct stack_info_t *stack_b = *(const struct stack_info_t **)b;
     return stack_b->count > stack_a->count;
 }
 
@@ -235,7 +237,7 @@ static int s_collect_stack_stats(void *context, struct aws_hash_element *item) {
     struct alloc_t *alloc = item->value;
     struct aws_hash_element *stack_item = NULL;
     int was_created = 0;
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void*)alloc->stack, &stack_item, &was_created));
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void *)alloc->stack, &stack_item, &was_created));
     if (was_created) {
         struct aws_allocator *allocator = ((struct alloc_tracker *)s_jni_allocator.impl)->allocator;
         stack_item->value = aws_mem_calloc(allocator, 1, sizeof(struct stack_info_t));
@@ -262,8 +264,8 @@ static int s_insert_allocs(void *context, struct aws_hash_element *item) {
 }
 
 static int s_alloc_compare(const void *a, const void *b) {
-    const struct alloc_t *alloc_a = *(const struct alloc_t**)a;
-    const struct alloc_t *alloc_b = *(const struct alloc_t**)b;
+    const struct alloc_t *alloc_a = *(const struct alloc_t **)a;
+    const struct alloc_t *alloc_b = *(const struct alloc_t **)b;
     return alloc_a->time > alloc_b->time;
 }
 
@@ -283,8 +285,7 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
     struct aws_hash_table stacks; /* maps stack hash/id -> stack_info_t */
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS ==
-        aws_hash_table_init(
-            &stacks, tracker->allocator, 64, s_stack_hash, s_stack_eq, NULL, s_stack_info_destroy));
+        aws_hash_table_init(&stacks, tracker->allocator, 64, s_stack_hash, s_stack_eq, NULL, s_stack_info_destroy));
     /* collect active stacks, tally up sizes and counts */
     aws_hash_table_foreach(&tracker->allocs, s_collect_stack_stats, &stacks);
     /* collect stack traces for active stacks */

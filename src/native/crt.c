@@ -467,11 +467,6 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     return jArray;
 }
 
-bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount) {
-    (*env)->GetByteArrayRegion(env, src, 0, (jsize)amount, (jbyte *)dst);
-    return (*env)->ExceptionCheck(env);
-}
-
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
     return (*env)->ExceptionCheck(env);

@@ -468,11 +468,6 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     return jArray;
 }
 
-bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount) {
-    (*env)->GetByteArrayRegion(env, src, 0, (jsize)amount, (jbyte *)dst);
-    return (*env)->ExceptionCheck(env);
-}
-
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
     return (*env)->ExceptionCheck(env);
@@ -481,17 +476,6 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
 jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
     jobject jByteBuffer = (*env)->CallStaticObjectMethod(env, s_java_byte_buffer.cls, s_java_byte_buffer.wrap, jArray);
     return jByteBuffer;
-}
-
-/**
- * Converts a Java byte[] to a Native aws_byte_cursor
- */
-struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array) {
-
-    jboolean isCopy;
-    jbyte *data = (*env)->GetByteArrayElements(env, array, &isCopy);
-    jsize len = (*env)->GetArrayLength(env, array);
-    return aws_byte_cursor_from_array((const uint8_t *)data, (size_t)len);
 }
 
 /**

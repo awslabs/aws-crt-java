@@ -47,23 +47,26 @@ static int s_memory_tracing = 0;
 
 #define ALLOC_TRACING_FRAMES 8
 
+/* describes a single live allocation */
 struct alloc_t {
     size_t size;
     time_t time;
-    uint64_t stack;
+    uint64_t stack; /* hash of stack frame pointers */
 };
 
+/* one of these is stored per unique stack */
 struct stacktrace_t {
     void *const frames[ALLOC_TRACING_FRAMES];
 };
 
-struct alloc_tracker {
-    struct aws_allocator *allocator;
-    struct aws_atomic_var allocated;
+/* Tracking structure, used as the allocator impl */
+static struct alloc_tracker {
+    struct aws_allocator *allocator; /* underlying allocator */
+    struct aws_atomic_var allocated; /* bytes currently allocated */
     struct aws_mutex mutex;       /* protects everything below */
     struct aws_hash_table allocs; /* live allocations, maps address -> alloc_t */
     struct aws_hash_table stacks; /* unique stack traces, maps hash -> stacktrace_t */
-};
+} s_alloc_tracker;
 
 static void *s_jni_mem_acquire(struct aws_allocator *allocator, size_t size);
 static void s_jni_mem_release(struct aws_allocator *allocator, void *ptr);
@@ -75,6 +78,7 @@ static struct aws_allocator s_jni_allocator = {
     .mem_release = s_jni_mem_release,
     .mem_realloc = s_jni_mem_realloc,
     .mem_calloc = s_jni_mem_calloc,
+    .impl = &s_alloc_tracker,
 };
 
 /* for the hash table, to destroy elements */
@@ -388,9 +392,7 @@ static void *s_jni_mem_calloc(struct aws_allocator *allocator, size_t num, size_
 static struct aws_allocator *s_init_allocator() {
     if (s_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
-        struct alloc_tracker *tracker = aws_mem_calloc(allocator, 1, sizeof(struct alloc_tracker));
-        s_alloc_tracker_init(tracker, allocator);
-        s_jni_allocator.impl = tracker;
+        s_alloc_tracker_init(&s_alloc_tracker, allocator);
         return &s_jni_allocator;
     }
     return aws_default_allocator();

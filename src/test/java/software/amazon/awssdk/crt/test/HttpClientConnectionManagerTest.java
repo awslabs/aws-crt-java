@@ -110,19 +110,22 @@ public class HttpClientConnectionManagerTest {
         }
 
         // Wait for all Requests to complete
-        for (CompletableFuture f: requestCompleteFutures) {
+        for (CompletableFuture f : requestCompleteFutures) {
             f.join();
         }
+        
+        final int requiredSuccesses = (int) Math.floor(numRequests * 0.95);
+        final int allowedFailures = numRequests - requiredSuccesses;
 
         // Verify we got some Http Status Code for each Request
-        Assert.assertEquals(numRequests, reqIdToStatus.size());
+        Assert.assertTrue(reqIdToStatus.size() >= requiredSuccesses);
 
         // Verify Status code is Http 200 for each Request
         for (Integer status : reqIdToStatus.values()) {
             Assert.assertEquals(EXPECTED_HTTP_STATUS, status.intValue());
         }
-        Assert.assertTrue(numErrorCode.get() < numRequests * 0.02);
-        Assert.assertTrue(numConnectionFailures.get() < numRequests * 0.02);
+        Assert.assertTrue(numErrorCode.get() <= allowedFailures);
+        Assert.assertTrue(numConnectionFailures.get() <= allowedFailures);
     }
 
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {

@@ -483,17 +483,6 @@ jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) 
 }
 
 /**
- * Converts a Java byte[] to a Native aws_byte_cursor
- */
-struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array) {
-
-    jboolean isCopy;
-    jbyte *data = (*env)->GetByteArrayElements(env, array, &isCopy);
-    jsize len = (*env)->GetArrayLength(env, array);
-    return aws_byte_cursor_from_array((const uint8_t *)data, (size_t)len);
-}
-
-/**
  * Converts a Native aws_byte_cursor to a Java byte[]
  */
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {

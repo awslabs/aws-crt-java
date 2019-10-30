@@ -16,8 +16,7 @@
 package software.amazon.awssdk.crt.http;
 
 /**
- * Quality of Service associated with a publish action or subscription
- * [MQTT-4.3].
+ * Type of header block
  */
 public enum HttpHeaderBlock {
     

@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import org.junit.Assert;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 
 /**
@@ -72,6 +73,14 @@ public class CrtMemoryLeakDetector {
         }
         if (medianNativeDelta > maxLeakage) {
             output += "Potential Native Memory Leak!\n";
+        }
+
+        final List<String> resources = new ArrayList<>();
+        CrtResource.collectNativeResources((resource) -> {
+            resources.add(resource);
+        });
+        if (resources.size() > 0) {
+            output += resources.toString();
         }
 
         if (output.length() > 0) {

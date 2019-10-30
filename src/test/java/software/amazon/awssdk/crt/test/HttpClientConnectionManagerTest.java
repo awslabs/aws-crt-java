@@ -30,9 +30,9 @@ public class HttpClientConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
-    private final static int NUM_REQUESTS = 100;
+    private final static int NUM_REQUESTS = 1000;
+    private final static int NUM_ITERATIONS = 20;
     private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
-    private final static int FIXED_GROWTH = CrtMemoryLeakDetector.FIXED_EXECUTOR_GROWTH; // base growth expected in the VM/GC to do just about anything
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
@@ -155,7 +155,8 @@ public class HttpClientConnectionManagerTest {
             return null;
         };
 
-        CrtMemoryLeakDetector.leakCheck(4, FIXED_GROWTH + (numThreads * GROWTH_PER_THREAD), fn);   
+        final int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth + (numThreads * GROWTH_PER_THREAD), fn);   
     }
 
     @Test

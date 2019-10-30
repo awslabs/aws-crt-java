@@ -3,7 +3,12 @@ package software.amazon.awssdk.crt.test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.junit.Assert;
+import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -107,5 +112,57 @@ public class CrtMemoryLeakDetector {
         // Sort from smallest to largest
         memUseDeltas.sort(null);
         return memUseDeltas;
+    }
+
+    @Test
+    public void testLeakDetectorSerial() throws Exception {
+        //final int fixedGrowth = 512;
+        //final int growthPerThread = 1024;
+        leakCheck(20, 64, () -> {
+            Thread.sleep(1);
+            return null;
+        });
+    }
+
+    static final int FIXED_EXECUTOR_GROWTH = 2664;
+
+    private static void runViaThreadPool(int numThreads) throws Exception {
+        final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        leakCheck(20, FIXED_EXECUTOR_GROWTH, () -> {
+            for (int idx = 0; idx < 100; ++idx) {
+                CompletableFuture<Void> future = new CompletableFuture<>();
+                futures.add(future);
+                threadPool.execute(() -> {
+                    try {
+                        Thread.sleep(1);
+                    } catch (Exception ex) {
+                        // no op
+                    } finally {
+                        future.complete(null);
+                    }
+                });
+            }
+            
+            for (CompletableFuture f : futures) {
+                f.join();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void testLeakDetectorParallel_2() throws Exception {
+        runViaThreadPool(2);
+    }
+
+    @Test
+    public void testLeakDetectorParallel_8() throws Exception {
+        runViaThreadPool(8);
+    }
+
+    @Test
+    public void testLeakDetectorParallel_32() throws Exception {
+        runViaThreadPool(32);
     }
 }

@@ -90,7 +90,7 @@ public class CrtMemoryLeakDetector {
             resources.add(resource);
         });
         if (resources.size() > 0) {
-            output += resources.toString();
+            output += String.join("\n", resources);
         }
 
         if (output.length() > 0) {

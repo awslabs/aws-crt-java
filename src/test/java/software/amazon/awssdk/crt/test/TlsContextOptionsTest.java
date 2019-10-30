@@ -146,7 +146,8 @@ public class TlsContextOptionsTest {
 
     @Test
     public void testMTLS() {
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+	try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.initMTLS(TEST_CERT, TEST_KEY);
             try (TlsContext tls = new TlsContext(options)) {
                 assertNotNull(tls);
@@ -159,7 +160,8 @@ public class TlsContextOptionsTest {
     }
 
     public void testOverridingTrustStore() {
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+	try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.overrideDefaultTrustStore(ROOT_CA1);
         } catch (Exception ex) {
             fail(ex.toString());

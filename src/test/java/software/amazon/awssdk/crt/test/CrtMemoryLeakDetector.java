@@ -22,8 +22,7 @@ public class CrtMemoryLeakDetector {
     static {
         new CRT(); // force the CRT to load before doing anything
     };
-    // Allow up to 512 byte increase in memory usage between CRT Test Runs
-    private final static int DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA = 1024;
+    
     private final static int DEFAULT_NUM_LEAK_TEST_ITERATIONS = 20;
 
     private static long getNativeMemoryInUse() {
@@ -55,7 +54,7 @@ public class CrtMemoryLeakDetector {
     }
 
     public static void leakCheck(Callable<Void> fn) throws Exception {
-        leakCheck(DEFAULT_NUM_LEAK_TEST_ITERATIONS, DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA, fn);
+        leakCheck(DEFAULT_NUM_LEAK_TEST_ITERATIONS, expectedFixedGrowth(), fn);
     }
 
     public static void leakCheck(int numIterations, int maxLeakage, Callable<Void> fn) throws Exception {

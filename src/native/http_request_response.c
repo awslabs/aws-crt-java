@@ -259,7 +259,7 @@ static jobjectArray s_java_headers_array_from_native(
     const struct aws_http_header *header_array,
     size_t num_headers) {
 
-    //JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    // JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_FATAL_ASSERT(s_http_header.header_class);
     AWS_FATAL_ASSERT(s_http_header.constructor);
@@ -570,22 +570,13 @@ static bool s_fill_out_request(
         jbyteArray jname = (*env)->GetObjectField(env, jHeader, s_http_header.name);
         jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
 
-        struct aws_byte_buf header_buf;
-        aws_byte_buf_init(&header_buf, aws_jni_get_allocator(), 1024);
-
         size_t name_len = (*env)->GetArrayLength(env, jname);
         jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
         struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
-        aws_byte_buf_append(&header_buf, &name_cursor);
-        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
-        name_cursor = aws_byte_cursor_from_array(header_buf.buffer + (header_buf.len - name_len), name_len);
 
         size_t value_len = (*env)->GetArrayLength(env, jvalue);
         jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
         struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
-        aws_byte_buf_append(&header_buf, &value_cursor);
-        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
-        value_cursor = aws_byte_cursor_from_array(header_buf.buffer + (header_buf.len - value_len), value_len);
 
         struct aws_http_header c_header = {
             .name = name_cursor,
@@ -593,15 +584,15 @@ static bool s_fill_out_request(
         };
 
         result = aws_http_message_add_header(request, c_header);
-        aws_byte_buf_clean_up(&header_buf);
-        
+
+        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
+        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
+
         if (result != AWS_OP_SUCCESS) {
             aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
             return false;
         }
     }
-
-    
 
     return true;
 }

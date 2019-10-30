@@ -124,7 +124,7 @@ public class CrtMemoryLeakDetector {
         });
     }
 
-    static final int FIXED_EXECUTOR_GROWTH = 2664;
+    public static final int FIXED_EXECUTOR_GROWTH = 2664;
 
     private static void runViaThreadPool(int numThreads) throws Exception {
         final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);

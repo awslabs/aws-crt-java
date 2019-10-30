@@ -30,8 +30,8 @@ public class HttpClientConnectionManagerTest {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
-    private final static int NUM_REQUESTS = 1000;
-    private final static int NUM_ITERATIONS = 20;
+    private final static int NUM_REQUESTS = 60;
+    private final static int NUM_ITERATIONS = 10;
     private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
@@ -135,13 +135,14 @@ public class HttpClientConnectionManagerTest {
         CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
+        System.out.println("  StartTest");
 
         try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, numThreads, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, 1, numRequests);
         }
 
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, "EndTest");
+        System.out.println("  EndTest");
         CrtResource.logNativeResources();
 
         CrtResource.waitForNoResources();
@@ -155,22 +156,29 @@ public class HttpClientConnectionManagerTest {
             return null;
         };
 
-        final int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth + (numThreads * GROWTH_PER_THREAD), fn);   
+        
+        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth + (numThreads * GROWTH_PER_THREAD), fn);
     }
 
     @Test
     public void testSerialRequests() throws Exception {
+        System.out.println("testSerialRequests START");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+        System.out.println("testSerialRequests COMPLETE");
     }
 
     @Test
     public void testParallelRequests() throws Exception {
+        System.out.println("testParallelRequests START");
         testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
+        System.out.println("testParallelRequests END");
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        System.out.println("testMaxParallelRequests START");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+        System.out.println("testMaxParallelRequests END");
     }
 }

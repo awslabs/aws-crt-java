@@ -21,8 +21,7 @@ import software.amazon.awssdk.crt.Log;
 public class CrtMemoryLeakDetector {
     static {
         new CRT(); // force the CRT to load before doing anything
-        determineBaselineGrowth();
-    }
+    };
     // Allow up to 512 byte increase in memory usage between CRT Test Runs
     private final static int DEFAULT_ALLOWED_MEDIAN_MEMORY_BYTE_DELTA = 1024;
     private final static int DEFAULT_NUM_LEAK_TEST_ITERATIONS = 20;
@@ -117,8 +116,6 @@ public class CrtMemoryLeakDetector {
 
     @Test
     public void testLeakDetectorSerial() throws Exception {
-        //final int fixedGrowth = 512;
-        //final int growthPerThread = 1024;
         leakCheck(20, 64, () -> {
             Thread.sleep(1);
             return null;
@@ -134,6 +131,9 @@ public class CrtMemoryLeakDetector {
     }
 
     private static void determineBaselineGrowth() {
+
+        System.out.println("SAMPLING JVM HEAP GROWTH");
+
         getJvmMemoryInUse(); // force a few GCs to get a good baseline
 
         List<Long> jvmSamples = new ArrayList<>();
@@ -144,6 +144,7 @@ public class CrtMemoryLeakDetector {
             for (int idx = 0; idx < DEFAULT_NUM_LEAK_TEST_ITERATIONS; ++idx) {
                 CompletableFuture<Void> future = new CompletableFuture<>();
                 futures.add(future);
+                final int thisIdx = idx;
                 threadPool.execute(() -> {
                     try {
                         Thread.sleep(1);
@@ -154,14 +155,13 @@ public class CrtMemoryLeakDetector {
                     }
                 });
             }
-
             for (CompletableFuture f : futures) {
                 f.join();
             }
             return null;
         };
 
-        for (int i = 0; i < DEFAULT_NUM_LEAK_TEST_ITERATIONS; i++) {
+        for (int i = 0; i < DEFAULT_NUM_LEAK_TEST_ITERATIONS; ++i) {
             try {
                 fn.call();
                 jvmSamples.add(getJvmMemoryInUse());
@@ -169,16 +169,20 @@ public class CrtMemoryLeakDetector {
             }
         }
 
+        System.out.println("FINISHED SAMPLING");
+
         // Get the median deltas
         List<Long> jvmDeltas = getDeltas(jvmSamples);
         long medianJvmDelta = jvmDeltas.get(jvmDeltas.size() / 2);
-        FIXED_EXECUTOR_GROWTH = (int)medianJvmDelta;
+        FIXED_EXECUTOR_GROWTH = (int) medianJvmDelta;
+        
+        System.out.println("FIXED_EXECUTOR_GROWTH=" + medianJvmDelta);
     }
 
     private static void runViaThreadPool(int numThreads) throws Exception {
         final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        leakCheck(20, FIXED_EXECUTOR_GROWTH, () -> {
+        leakCheck(20, expectedFixedGrowth(), () -> {
             for (int idx = 0; idx < 100; ++idx) {
                 CompletableFuture<Void> future = new CompletableFuture<>();
                 futures.add(future);

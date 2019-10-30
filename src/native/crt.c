@@ -45,6 +45,7 @@
 /* 0 = off, 1 = bytes, 2 = stack traces */
 static int s_memory_tracing = 0;
 
+/* number of stack frames to collect per stack */
 #define ALLOC_TRACING_FRAMES 8
 
 /* describes a single live allocation */
@@ -88,7 +89,7 @@ static void s_destroy_alloc(void *data) {
     aws_mem_release(allocator, alloc);
 }
 
-static void s_destroy_stack(void *data) {
+static void s_destroy_stacktrace(void *data) {
     struct aws_allocator *allocator = ((struct alloc_tracker *)s_jni_allocator.impl)->allocator;
     struct stacktrace_t *stack = data;
     aws_mem_release(allocator, stack);
@@ -117,7 +118,7 @@ static void s_alloc_tracker_init(struct alloc_tracker *tracker, struct aws_alloc
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
             aws_hash_table_init(
-                &tracker->stacks, tracker->allocator, 1024, s_stack_hash, s_stack_eq, NULL, s_destroy_stack));
+                &tracker->stacks, tracker->allocator, 1024, s_stack_hash, s_stack_eq, NULL, s_destroy_stacktrace));
     }
 }
 

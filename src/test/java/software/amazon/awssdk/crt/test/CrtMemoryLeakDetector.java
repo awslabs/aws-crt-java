@@ -124,6 +124,8 @@ public class CrtMemoryLeakDetector {
         });
     }
 
+    // This is the median growth seen from thousands of samples of creating an executor with any number
+    // of threads and then running the empty jobs below. It seems to be relatively portable and consistent.
     public static final int FIXED_EXECUTOR_GROWTH = 2664;
 
     private static void runViaThreadPool(int numThreads) throws Exception {

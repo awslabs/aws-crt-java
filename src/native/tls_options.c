@@ -252,6 +252,12 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);
     tls->private_key = aws_jni_new_string_from_jstring(env, jni_key);
 
+    if (tls->certificate->len == 0 || tls->private_key->len == 0) {
+        aws_jni_throw_runtime_exception(
+            env, "TlsContextOptions.tlsContextOptionsInitMTLS: certificate and privateKey must be non-empty");
+        return;
+    }
+
     struct aws_byte_cursor cert_cursor = aws_byte_cursor_from_string(tls->certificate);
     struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
 

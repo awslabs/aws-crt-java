@@ -395,6 +395,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         return;
     }
 
+    struct aws_byte_cursor client_id;
+    AWS_ZERO_STRUCT(client_id);
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
     uint16_t port = jni_port;
     if (!port) {
@@ -430,7 +432,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         aws_tls_connection_options_set_server_name(tls_options, aws_jni_get_allocator(), &endpoint);
     }
 
-    struct aws_byte_cursor client_id = aws_jni_byte_cursor_from_jstring_acquire(env, jni_client_id);
+    client_id = aws_jni_byte_cursor_from_jstring_acquire(env, jni_client_id);
     bool clean_session = jni_clean_session != 0;
 
     struct aws_mqtt_connection_options connect_options;

@@ -144,7 +144,8 @@ static void s_alloc_tracker_track(struct alloc_tracker *tracker, void *ptr, size
         struct aws_hash_element *item = NULL;
         int was_created = 0;
         AWS_FATAL_ASSERT(
-            AWS_OP_SUCCESS == aws_hash_table_create(&tracker->stacks, (void *)(uintptr_t)stack_id, &item, &was_created));
+            AWS_OP_SUCCESS ==
+            aws_hash_table_create(&tracker->stacks, (void *)(uintptr_t)stack_id, &item, &was_created));
         /* If this is a new stack, save it to the hash */
         if (was_created) {
             struct stacktrace_t *stack = aws_mem_calloc(tracker->allocator, 1, sizeof(struct stacktrace_t));
@@ -241,7 +242,8 @@ static int s_collect_stack_stats(void *context, struct aws_hash_element *item) {
     struct alloc_t *alloc = item->value;
     struct aws_hash_element *stack_item = NULL;
     int was_created = 0;
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
+    AWS_FATAL_ASSERT(
+        AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
     if (was_created) {
         struct aws_allocator *allocator = ((struct alloc_tracker *)s_jni_allocator.impl)->allocator;
         stack_item->value = aws_mem_calloc(allocator, 1, sizeof(struct stack_info_t));

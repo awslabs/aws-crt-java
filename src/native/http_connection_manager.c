@@ -101,6 +101,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_http_connection_manager *conn_manager = NULL;
 
     if (!client_bootstrap) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
@@ -113,21 +114,21 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring(env, jni_endpoint);
+    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
 
     if (jni_port <= 0 || 65535 < jni_port) {
         aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
-        return (jlong)NULL;
+        goto cleanup;
     }
 
     if (jni_window_size <= 0) {
         aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
-        return (jlong)NULL;
+        goto cleanup;
     }
 
     if (jni_max_conns <= 0) {
         aws_jni_throw_runtime_exception(env, "Max Connections must be > 0");
-        return (jlong)NULL;
+        goto cleanup;
     }
 
     uint16_t port = (uint16_t)jni_port;
@@ -143,6 +144,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     struct http_conn_manager_callback_data *callback_data =
         aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
+    AWS_FATAL_ASSERT(callback_data);
     callback_data->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
@@ -164,11 +166,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         manager_options.tls_connection_options = &tls_conn_options;
     }
 
-    struct aws_http_connection_manager *conn_manager = aws_http_connection_manager_new(allocator, &manager_options);
+    conn_manager = aws_http_connection_manager_new(allocator, &manager_options);
 
     if (use_tls) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
     }
+
+cleanup:
+    aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
 
     return (jlong)conn_manager;
 }

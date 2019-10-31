@@ -559,9 +559,13 @@ jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_b
     return aws_jni_direct_byte_buffer_from_raw_ptr(env, (void *)dst->buffer, (jlong)dst->capacity);
 }
 
-struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str) {
+struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str) {
     return aws_byte_cursor_from_array(
         (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+}
+
+void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {
+    (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {
@@ -582,7 +586,10 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    return aws_string_new_from_c_str(allocator, (*env)->GetStringUTFChars(env, str, NULL));
+    const char *str_chars = (*env)->GetStringUTFChars(env, str, NULL);
+    struct aws_string *result = aws_string_new_from_c_str(allocator, str_chars);
+    (*env)->ReleaseStringUTFChars(env, str, str_chars);
+    return result;
 }
 
 void s_detach_jvm_from_thread(void *user_data) {

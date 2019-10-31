@@ -293,6 +293,13 @@ static int s_on_incoming_headers_fn(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
+    int resp_status = -1;
+    int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
+    if (err_code != AWS_OP_SUCCESS) {
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Invalid Incoming Response Status", (void *)stream);
+        return AWS_OP_ERR;
+    }
+
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     /* All New Java Objects created through JNI have Thread-local references in the current Environment Frame, and
@@ -313,12 +320,6 @@ static int s_on_incoming_headers_fn(
     if (!jHeaders) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    int resp_status = -1;
-    int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
-    if (err_code != AWS_OP_SUCCESS) {
-        return AWS_OP_ERR;
     }
 
     (*env)->CallVoidMethod(

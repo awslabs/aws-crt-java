@@ -25,7 +25,7 @@
 #include <aws/mqtt/mqtt.h>
 
 #if defined(__linux__)
-#include <s2n.h>
+#    include <s2n.h>
 #endif
 
 #include <stdio.h>
@@ -479,7 +479,7 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
 
 jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
     jobject jByteBuffer = (*env)->CallStaticObjectMethod(env, s_java_byte_buffer.cls, s_java_byte_buffer.wrap, jArray);
-    return ((*env)->ExceptionCheck(env)) ? NULL: jByteBuffer;
+    return ((*env)->ExceptionCheck(env)) ? NULL : jByteBuffer;
 }
 
 /**

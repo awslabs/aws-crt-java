@@ -184,6 +184,7 @@ static jobject s_new_mqtt_exception(JNIEnv *env, int error_code) {
 /*******************************************************************************
  * new
  ******************************************************************************/
+static void s_on_connection_disconnected(struct aws_mqtt_client_connection *client_connection, void *user_data);
 static void s_on_connection_complete(
     struct aws_mqtt_client_connection *client_connection,
     int error_code,
@@ -199,6 +200,10 @@ static void s_on_connection_complete(
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
             env, connection->mqtt_connection, s_mqtt_connection.on_connection_complete, error_code, session_present);
+        if ((*env)->ExceptionCheck(env)) {
+            aws_mqtt_client_connection_disconnect(client_connection, s_on_connection_disconnected, connect_callback);
+            return; /* callback will be cleaned up in s_on_connection_disconnected */
+        }
     }
 
     mqtt_jni_async_callback_destroy(connect_callback);
@@ -212,6 +217,7 @@ static void s_on_connection_interrupted_internal(
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
             env, connection->mqtt_connection, s_mqtt_connection.on_connection_interrupted, error_code, ack_callback);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 }
 
@@ -237,6 +243,7 @@ static void s_on_connection_resumed(
         JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
         (*env)->CallVoidMethod(
             env, connection->mqtt_connection, s_mqtt_connection.on_connection_resumed, session_present);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 }
 
@@ -250,6 +257,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
 
     /* temporarily raise the ref count on the connection while the callback is executing */
     (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.add_ref);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback);
 
@@ -257,6 +265,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
 
     /* undo the temporary ref count raise */
     (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.close);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection) {
@@ -326,6 +335,7 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
     (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.release_references);
+    (*env)->ExceptionCheck(env);
 
     s_mqtt_connection_destroy(env, jni_connection);
 }
@@ -488,6 +498,7 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
         (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_success);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 }
 
@@ -500,6 +511,7 @@ static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int 
         jobject jni_reason = s_new_mqtt_exception(env, error_code);
         (*env)->CallVoidMethod(env, callback->async_callback, g_async_callback.on_failure, jni_reason);
         (*env)->DeleteLocalRef(env, jni_reason);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 }
 
@@ -558,6 +570,7 @@ static void s_on_subscription_delivered(
     (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)payload->len, (const signed char *)payload->ptr);
     (*env)->CallVoidMethod(env, callback->async_callback, s_message_handler.deliver, jni_payload);
     (*env)->DeleteLocalRef(env, jni_payload);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 JNIEXPORT

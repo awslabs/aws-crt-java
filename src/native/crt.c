@@ -475,7 +475,7 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
 
 jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
     jobject jByteBuffer = (*env)->CallStaticObjectMethod(env, s_java_byte_buffer.cls, s_java_byte_buffer.wrap, jArray);
-    return jByteBuffer;
+    return ((*env)->ExceptionCheck(env)) ? NULL: jByteBuffer;
 }
 
 /**
@@ -507,7 +507,7 @@ jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_
  */
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
     jint position = (*env)->CallIntMethod(env, java_byte_buffer, s_java_byte_buffer.get_position);
-    return (int)position;
+    return ((*env)->ExceptionCheck(env)) ? -1 : (int)position;
 }
 
 /**
@@ -515,6 +515,7 @@ int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
  */
 void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
     (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, position);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 /**
@@ -522,6 +523,7 @@ void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint positi
  */
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
     (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, limit);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 /**

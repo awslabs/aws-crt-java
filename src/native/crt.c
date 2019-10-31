@@ -24,6 +24,8 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
 
+#include <s2n.h>
+
 #include <stdio.h>
 
 #include "async_callback.h"
@@ -581,6 +583,7 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
 
 void s_detach_jvm_from_thread(void *user_data) {
     JavaVM *jvm = user_data;
+    s2n_cleanup(); /* must clean up s2n's thread local storage */
     (*jvm)->DetachCurrentThread(jvm);
 }
 

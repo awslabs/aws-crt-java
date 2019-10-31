@@ -402,13 +402,13 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
             env,
             "MqttClientConnection.mqtt_new: Endpoint should be in the format hostname:port and port must be between 1 "
             "and 65535");
-        return;
+        goto cleanup;
     }
 
     struct mqtt_jni_async_callback *connect_callback = mqtt_jni_async_callback_new(connection, NULL);
     if (connect_callback == NULL) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_connect: Failed to create async callback");
-        return;
+        goto cleanup;
     }
 
     struct aws_socket_options default_socket_options;
@@ -447,15 +447,15 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.user_data = connect_callback;
 
     int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
-
-    aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_client_id, client_id);
-
     if (result != AWS_OP_SUCCESS) {
         mqtt_jni_async_callback_destroy(connect_callback);
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");
     }
+
+cleanup:
+    aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_client_id, client_id);
 }
 
 /*******************************************************************************
@@ -619,7 +619,6 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
         }
     }
 
-
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
     enum aws_mqtt_qos qos = jni_qos;
 
@@ -680,7 +679,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jni_topic = (*env)->NewGlobalRef(env, jni_topic);
     unsub_ack->jni_objects[0] = jni_topic;
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
-    unsub_ack->strings[0] = (const char*)topic.ptr; /* string will be cleaned up in callback after unsub */
+    unsub_ack->strings[0] = (const char *)topic.ptr; /* string will be cleaned up in callback after unsub */
 
     uint16_t msg_id =
         aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_op_complete, unsub_ack);

@@ -107,7 +107,7 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jst
 
 /********************************************************************************
  * aws_jni_byte_cursor_from_jstring_release - Releases the string back to the JVM
- ********************************************************************************/ 
+ ********************************************************************************/
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur);
 
 /*******************************************************************************

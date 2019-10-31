@@ -77,6 +77,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
 
     (*env)->CallVoidMethod(env, callback->java_http_conn_manager, s_http_connection_manager.onShutdownComplete);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // We're done with this callback data, free it.
     (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
@@ -214,6 +215,7 @@ static void s_on_http_conn_acquisition_callback(
         s_http_connection_manager.onConnectionAcquired,
         jni_connection,
         jni_error_code);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // We're done with this callback data, free it.
     (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);

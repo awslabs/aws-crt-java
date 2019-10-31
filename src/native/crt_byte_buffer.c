@@ -58,7 +58,7 @@ void s_cache_crt_byte_buffer(JNIEnv *env) {
 jobject aws_crt_byte_buffer_get_direct_buffer(JNIEnv *env, jobject crtBuffer) {
     // The the DirectByteBuffer from the CrtByteBuffer
     jobject jByteBuffer = (*env)->CallObjectMethod(env, crtBuffer, s_crt_byte_buffer.getBuffer);
-    return jByteBuffer;
+    return ((*env)->ExceptionCheck(env)) ? NULL : jByteBuffer;
 }
 
 JNIEXPORT jobject JNICALL

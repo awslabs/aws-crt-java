@@ -113,7 +113,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring(env, jni_endpoint);
+    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
 
     if (jni_port <= 0 || 65535 < jni_port) {
         aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
@@ -169,6 +169,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     if (use_tls) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
     }
+
+    aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
 
     return (jlong)conn_manager;
 }

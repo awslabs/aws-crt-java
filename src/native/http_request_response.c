@@ -556,13 +556,17 @@ static bool s_fill_out_request(
     jstring jni_uri,
     jobjectArray jni_headers) {
 
-    int result = aws_http_message_set_request_method(request, aws_jni_byte_cursor_from_jstring(env, jni_method));
+    struct aws_byte_cursor method_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_method);
+    int result = aws_http_message_set_request_method(request, method_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Method error");
         return false;
     }
 
-    result = aws_http_message_set_request_path(request, aws_jni_byte_cursor_from_jstring(env, jni_uri));
+    struct aws_byte_cursor path_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
+    result = aws_http_message_set_request_path(request, path_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Path error");
         return false;
@@ -575,10 +579,11 @@ static bool s_fill_out_request(
         jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
 
         const size_t name_len = (*env)->GetArrayLength(env, jname);
+        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
+
         jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
         struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
 
-        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
         jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
         struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
 
@@ -591,6 +596,10 @@ static bool s_fill_out_request(
 
         (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
         (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
+
+        (*env)->DeleteLocalRef(env, jname);
+        (*env)->DeleteLocalRef(env, jvalue);
+        (*env)->DeleteLocalRef(env, jHeader);
 
         if (result != AWS_OP_SUCCESS) {
             aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);

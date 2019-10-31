@@ -275,6 +275,10 @@ static jobjectArray s_java_headers_array_from_native(
         (*env)->SetObjectField(env, jHeader, s_http_header.name, actual_name);
         (*env)->SetObjectField(env, jHeader, s_http_header.value, actual_value);
         (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
+
+        (*env)->DeleteLocalRef(env, actual_name);
+        (*env)->DeleteLocalRef(env, actual_value);
+        (*env)->DeleteLocalRef(env, jHeader);
     }
 
     return jArray;
@@ -330,6 +334,8 @@ static int s_on_incoming_headers_fn(
         resp_status,
         (jint)block_type,
         jHeaders);
+
+    (*env)->DeleteLocalRef(env, jHeaders);
 
     /* Mark all the Java Objects created since the last call to PushLocalFrame() as eligible for GC */
     (*env)->PopLocalFrame(env, NULL);

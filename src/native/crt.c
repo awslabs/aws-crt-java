@@ -520,16 +520,18 @@ int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
  * Set the Buffer Position (the next element to read/write)
  */
 void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
-    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, position);
+    jobject val = (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, position);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    (*env)->DeleteLocalRef(env, val);
 }
 
 /**
  * Set the Buffer Limit (the max allowed element to read/write)
  */
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
-    (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, limit);
+    jobject val = (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, limit);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    (*env)->DeleteLocalRef(env, val);
 }
 
 /**

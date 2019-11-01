@@ -314,7 +314,7 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
             struct aws_hash_element *item = NULL;
             AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&stacks, (void *)(uintptr_t)alloc->stack, &item));
             struct stack_info_t *stack = item->value;
-            fprintf(stderr, "  stacktrace:\n%s\n", (const char *)aws_string_bytes(stack->trace));
+            fprintf(stderr, "  stacktrace:\n%s\n", aws_string_c_str(stack->trace));
         }
 #endif
     }
@@ -336,7 +336,7 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
         struct stack_info_t *stack = NULL;
         aws_priority_queue_pop(&stacks_by_size, &stack);
         fprintf(stderr, "%zu bytes in %zu allocations:\n", stack->size, stack->count);
-        fprintf(stderr, "%s\n", (const char *)aws_string_bytes(stack->trace));
+        fprintf(stderr, "%s\n", aws_string_c_str(stack->trace));
     }
     aws_priority_queue_clean_up(&stacks_by_size);
 
@@ -357,7 +357,7 @@ static void s_alloc_tracker_dump(struct alloc_tracker *tracker) {
         struct stack_info_t *stack = NULL;
         aws_priority_queue_pop(&stacks_by_count, &stack);
         fprintf(stderr, "%zu allocations leaking %zu bytes:\n", stack->count, stack->size);
-        fprintf(stderr, "%s\n", (const char *)aws_string_bytes(stack->trace));
+        fprintf(stderr, "%s\n", aws_string_c_str(stack->trace));
     }
     aws_priority_queue_clean_up(&stacks_by_count);
     aws_hash_table_clean_up(&stacks);

@@ -313,10 +313,10 @@ static int s_on_incoming_headers_fn(
      *   - byte[] name, byte[] val, HttpHeader, HttpHeader[]
      */
     jint frameCapacity = (jint)(num_headers * 4);
-    jint result = (*env)->PushLocalFrame(env, frameCapacity);
+    jint result = (*env)->EnsureLocalCapacity(env, frameCapacity);
 
     if (result != 0) {
-        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to PushLocalFrame. Possibly OutOfMemory.", (void *)stream);
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to EnsureLocalCapacity. Possibly OutOfMemory.", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
@@ -336,9 +336,6 @@ static int s_on_incoming_headers_fn(
         jHeaders);
 
     (*env)->DeleteLocalRef(env, jHeaders);
-
-    /* Mark all the Java Objects created since the last call to PushLocalFrame() as eligible for GC */
-    (*env)->PopLocalFrame(env, NULL);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);

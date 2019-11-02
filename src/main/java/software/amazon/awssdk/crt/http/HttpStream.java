@@ -16,7 +16,6 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.io.CrtByteBuffer;
 
 /**
  * An HttpStream represents a single Http Request/Response pair within a HttpClientConnection, and wraps the native resources
@@ -25,11 +24,9 @@ import software.amazon.awssdk.crt.io.CrtByteBuffer;
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
  */
 public class HttpStream extends CrtResource {
-    private CrtByteBuffer streamBuffer;
 
     /* Native code will call this constructor during HttpClientConnection.makeRequest() */
-    protected HttpStream(CrtByteBuffer streamBuffer, long ptr) {
-        this.streamBuffer = streamBuffer;
+    protected HttpStream(long ptr) {
         acquireNativeHandle(ptr);
     }
 
@@ -46,8 +43,6 @@ public class HttpStream extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            streamBuffer.releaseBackToPool();
-            streamBuffer = null;
             httpStreamRelease(getNativeHandle());
         }
     }

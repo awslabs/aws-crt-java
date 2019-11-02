@@ -629,7 +629,6 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
     extern void s_cache_event_loop_group(JNIEnv *);
-    extern void s_cache_crt_byte_buffer(JNIEnv * env);
 
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
@@ -641,7 +640,6 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);
-    s_cache_crt_byte_buffer(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)

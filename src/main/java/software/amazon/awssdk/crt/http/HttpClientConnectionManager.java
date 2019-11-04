@@ -30,7 +30,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Manages a Pool of Http Connections
  */
 public class HttpClientConnectionManager extends CrtResource {
-    public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
     private static final String HTTP = "http";
@@ -52,11 +51,11 @@ public class HttpClientConnectionManager extends CrtResource {
     private final Queue<CompletableFuture<HttpClientConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
 
     public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
-        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
+        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
     }
 
     public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
-                                      URI uri, int bufferSize, int windowSize, int maxConnections) {
+                                      URI uri, int windowSize, int maxConnections) {
 
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
@@ -65,7 +64,6 @@ public class HttpClientConnectionManager extends CrtResource {
         if (clientBootstrap == null || clientBootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
         if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
         if (HTTPS.equals(uri.getScheme()) && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
-        if (bufferSize <= 0) { throw new  IllegalArgumentException("Buffer Size must be greater than zero."); }
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 

@@ -165,14 +165,6 @@ public class HttpRequestResponseTest {
             throw new RuntimeException(e);
         }
 
-        for (Integer respBodyUpdateSize: respBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", respBodyUpdateSize <= HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE);
-        }
-
-        for (Integer reqBodyUpdateSize: reqBodyUpdateSizes) {
-            Assert.assertTrue("Incorrect Update Size", reqBodyUpdateSize <= HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE);
-        }
-
         Assert.assertTrue(actuallyConnected);
 
         shutdownComplete.get();

@@ -63,19 +63,13 @@ public interface CrtHttpStreamHandler {
      * For more info, see:
      *  - https://en.wikipedia.org/wiki/Sliding_window_protocol
      *
-     * @param bodyBytesIn The HTTP Body Bytes received in the last IO Event. The user MUST either copy all bytes from
-     *                      this Buffer, since there will not be another chance to read this data.
+     * @param bodyBytesIn The HTTP Body Bytes received in the last IO Event.
      * @return The number of bytes to move the sliding window by. Repeatedly returning zero will eventually cause the
      *          sliding window to fill up and data to stop flowing until the user slides the window back open.
      */
-    default int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+    default int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
         /* Optional Callback, ignore incoming response body by default unless user wants to capture it. */
-        int amtRead = bodyBytesIn.remaining();
-
-        /* Set Read position to Read limit so Native knows we processed this data. */
-        bodyBytesIn.position(bodyBytesIn.limit());
-
-        return amtRead;
+        return bodyBytesIn.length;
     }
 
     /**

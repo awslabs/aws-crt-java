@@ -18,7 +18,6 @@ package software.amazon.awssdk.crt.http;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.CrtByteBuffer;
 
 
 /**
@@ -51,18 +50,11 @@ public class HttpClientConnection extends CrtResource {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
 
-        CompletableFuture<CrtByteBuffer> bufferFuture = manager.acquireBuffer();
-
         CompletableFuture<HttpStream> streamFuture = new CompletableFuture<>();
 
-        bufferFuture.whenComplete((crtBuffer, throwable) -> {
-            if (throwable != null) {
-                streamFuture.completeExceptionally(throwable);
-                return;
-            }
+
             try {
                 HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                        crtBuffer,
                         request.getMethod(),
                         request.getEncodedPath(),
                         request.getHeaders(),
@@ -74,7 +66,6 @@ public class HttpClientConnection extends CrtResource {
             } catch (Exception e) {
                 streamFuture.completeExceptionally(e);
             }
-        });
 
         return streamFuture;
     }
@@ -101,7 +92,6 @@ public class HttpClientConnection extends CrtResource {
      * Native methods
      ******************************************************************************/
     private static native HttpStream httpClientConnectionMakeRequest(long connection,
-                                                                     CrtByteBuffer crtBuffer,
                                                                      String method,
                                                                      String uri,
                                                                      HttpHeader[] headers,

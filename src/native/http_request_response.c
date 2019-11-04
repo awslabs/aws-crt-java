@@ -23,8 +23,6 @@
 #include <aws/io/logging.h>
 #include <aws/io/stream.h>
 
-#include "crt_byte_buffer.h"
-
 #if _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
@@ -82,19 +80,18 @@ void s_cache_http_stream(JNIEnv *env) {
     // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
     s_http_stream_handler.stream_class = (*env)->NewGlobalRef(env, s_http_stream_handler.stream_class);
 
-    s_http_stream_handler.constructor =
-        (*env)->GetMethodID(env, cls, "<init>", "(Lsoftware/amazon/awssdk/crt/io/CrtByteBuffer;J)V");
+    s_http_stream_handler.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
     AWS_FATAL_ASSERT(s_http_stream_handler.constructor);
 
     s_http_stream_handler.close = (*env)->GetMethodID(env, cls, "close", "()V");
     AWS_FATAL_ASSERT(s_http_stream_handler.close);
 }
 
-static jobject s_java_http_stream_from_native_new(JNIEnv *env, jobject crtBuffer, struct aws_http_stream *stream) {
+static jobject s_java_http_stream_from_native_new(JNIEnv *env, struct aws_http_stream *stream) {
     jlong jni_native_ptr = (jlong)stream;
     AWS_ASSERT(jni_native_ptr);
     return (*env)->NewObject(
-        env, s_http_stream_handler.stream_class, s_http_stream_handler.constructor, crtBuffer, jni_native_ptr);
+        env, s_http_stream_handler.stream_class, s_http_stream_handler.constructor, jni_native_ptr);
 }
 
 static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream) {
@@ -116,12 +113,8 @@ struct http_stream_callback_data {
     struct aws_input_stream native_outgoing_body;
     bool native_outgoing_body_done;
 
-    struct aws_byte_buf native_body_buf;
     jobject java_crt_http_callback_handler;
     jobject java_http_stream;
-
-    /* Direct Byte Buffer that points to native_body_buf struct above*/
-    jobject java_body_buf;
 };
 
 static int s_native_outgoing_body_read(struct aws_input_stream *input_stream, struct aws_byte_buf *dst);
@@ -133,10 +126,7 @@ struct aws_input_stream_vtable s_native_outgoing_body_vtable = {
 };
 
 // If error occurs, A Java exception is thrown and NULL is returned.
-static struct http_stream_callback_data *http_stream_callback_alloc(
-    JNIEnv *env,
-    jobject crtBuffer,
-    jobject java_callback_handler) {
+static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env, jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
@@ -163,16 +153,6 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     aws_http_message_set_body_stream(callback->native_request, &callback->native_outgoing_body);
 
-    jobject java_direct_buf = aws_crt_byte_buffer_get_direct_buffer(env, crtBuffer);
-    aws_jni_native_byte_buf_from_java_direct_byte_buf(env, java_direct_buf, &callback->native_body_buf);
-
-    /* Tell the JVM we have a reference to both the Java ByteBuffer and the callback handler (so they're not GC'd) */
-    callback->java_body_buf = (*env)->NewGlobalRef(env, java_direct_buf);
-    if (!callback->java_body_buf) {
-        /* Local ref to java_body_buf is cleaned up automatically */
-        goto failed_java_body_buf_ref;
-    }
-
     callback->java_crt_http_callback_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     if (!callback->java_crt_http_callback_handler) {
         goto failed_callback_handler_ref;
@@ -181,8 +161,6 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
     return callback;
 
 failed_callback_handler_ref:
-    (*env)->DeleteGlobalRef(env, callback->java_body_buf);
-failed_java_body_buf_ref:
     aws_http_message_destroy(callback->native_request);
 failed_request_new:
     aws_mutex_clean_up(&callback->setup_lock);
@@ -197,11 +175,8 @@ static void http_stream_callback_release(JNIEnv *env, struct http_stream_callbac
         s_java_http_stream_from_native_delete(env, callback->java_http_stream);
     }
 
-    // Mark our Callback Java Objects as eligible for Garbage Collection
-    (*env)->DeleteGlobalRef(env, callback->java_body_buf);
     (*env)->DeleteGlobalRef(env, callback->java_crt_http_callback_handler);
 
-    aws_byte_buf_clean_up(&callback->native_body_buf);
     aws_http_message_destroy(callback->native_request);
     aws_mutex_clean_up(&callback->setup_lock);
     aws_mem_release(aws_jni_get_allocator(), callback);
@@ -240,8 +215,8 @@ void s_cache_crt_http_stream_handler(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeadersDone);
 
-    s_crt_http_stream_handler.onResponseBody = (*env)->GetMethodID(
-        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
+    s_crt_http_stream_handler.onResponseBody =
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;[B)I");
     AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseBody);
 
     s_crt_http_stream_handler.onResponseComplete =
@@ -375,43 +350,27 @@ static int s_on_incoming_header_block_done_fn(
     return AWS_OP_SUCCESS;
 }
 
-/**
- * Copies src to dest. If dest is too small, src->ptr will be incremented to point to the next byte that wasn't copied,
- * and src->len will be decremented to the number of bytes remaining.
- */
-static void aws_byte_buf_transfer_best_effort(struct aws_byte_buf *dst, struct aws_byte_cursor *src) {
-    size_t dst_remaining = (dst->capacity - dst->len);
-    size_t amt_to_copy = (dst_remaining < src->len) ? dst_remaining : src->len;
+static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
+    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
-    memcpy(dst->buffer + dst->len, src->ptr, amt_to_copy);
-
-    dst->len += amt_to_copy;
-    src->ptr += amt_to_copy;
-    src->len -= amt_to_copy;
-}
-
-// Returns AWS_OP_SUCCESS or AWS_OP_ERR
-static int s_resp_body_publish_to_java(
-    struct aws_http_stream *stream,
-    struct http_stream_callback_data *callback,
-    size_t *out_window_update_size) {
-
-    // Return early if there's nothing to publish
-    if (callback->native_body_buf.len == 0) {
-        return AWS_OP_SUCCESS;
+    if (!http_stream_callback_is_valid(callback)) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
-    // Set read start position to zero
+    size_t total_window_increment = 0;
+
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-    aws_jni_byte_buffer_set_position(env, callback->java_body_buf, 0);
-    aws_jni_byte_buffer_set_limit(env, callback->java_body_buf, (jint)callback->native_body_buf.len);
+    jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)data->len);
+    (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)data->len, (const signed char *)data->ptr);
 
     jint window_increment = (*env)->CallIntMethod(
         env,
         callback->java_crt_http_callback_handler,
         s_crt_http_stream_handler.onResponseBody,
         callback->java_http_stream,
-        callback->java_body_buf);
+        jni_payload);
+
+    (*env)->DeleteLocalRef(env, jni_payload);
 
     if ((*env)->ExceptionCheck(env)) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onResponseBody", (void *)stream);
@@ -423,42 +382,7 @@ static int s_resp_body_publish_to_java(
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
-    // We can check the ByteBuffer read position to verify that the user callback actually read all the data
-    // they claimed to be able to read.
-    size_t read_position = aws_jni_byte_buffer_get_position(env, callback->java_body_buf);
-    if (read_position != callback->native_body_buf.len) {
-        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: ByteBuffer.remaining() > 0 after onResponseBody", (void *)stream);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    // Publish to Java succeeded, set resp body buffer position to zero
-    callback->native_body_buf.len = 0;
-    *out_window_update_size = window_increment;
-    return AWS_OP_SUCCESS;
-}
-
-static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
-
-    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
-
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    struct aws_byte_cursor body_in_remaining = *data;
-    size_t total_window_increment = 0;
-
-    while (body_in_remaining.len > 0) {
-        size_t curr_window_increment = 0;
-        aws_byte_buf_transfer_best_effort(&callback->native_body_buf, &body_in_remaining);
-
-        int result = s_resp_body_publish_to_java(stream, callback, &curr_window_increment);
-        if (result != AWS_OP_SUCCESS) {
-            return AWS_OP_ERR;
-        }
-
-        total_window_increment += curr_window_increment;
-    }
+    total_window_increment += window_increment;
 
     if (total_window_increment > 0) {
         aws_http_stream_update_window(stream, total_window_increment);
@@ -501,33 +425,25 @@ static int s_native_outgoing_body_read(struct aws_input_stream *input_stream, st
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
-    uint8_t *out = &(dst->buffer[dst->len]);
     size_t out_remaining = dst->capacity - dst->len;
 
-    size_t buf_capacity = callback->native_body_buf.capacity;
-    size_t request_size = (buf_capacity > out_remaining) ? out_remaining : buf_capacity;
-
-    jobject jByteBuffer = callback->java_body_buf;
-
-    aws_jni_byte_buffer_set_position(env, jByteBuffer, 0);
-    aws_jni_byte_buffer_set_limit(env, jByteBuffer, (jint)request_size);
+    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dst->buffer + dst->len, out_remaining);
 
     jboolean isDone = (*env)->CallBooleanMethod(
         env,
         callback->java_crt_http_callback_handler,
         s_crt_http_stream_handler.sendOutgoingBody,
         callback->java_http_stream,
-        jByteBuffer);
+        direct_buffer);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
-    size_t amt_written = aws_jni_byte_buffer_get_position(env, jByteBuffer);
-    AWS_FATAL_ASSERT(amt_written <= out_remaining);
-
-    memcpy(out, callback->native_body_buf.buffer, amt_written);
+    size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
     dst->len += amt_written;
+
+    (*env)->DeleteLocalRef(env, direct_buffer);
 
     if (isDone) {
         callback->native_outgoing_body_done = isDone;
@@ -614,7 +530,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
-    jobject crtBuffer,
     jstring jni_method,
     jstring jni_uri,
     jobjectArray jni_headers,
@@ -634,8 +549,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         return (jobject)NULL;
     }
 
-    struct http_stream_callback_data *callback_data =
-        http_stream_callback_alloc(env, crtBuffer, jni_crt_http_callback_handler);
+    struct http_stream_callback_data *callback_data = http_stream_callback_alloc(env, jni_crt_http_callback_handler);
     if (!callback_data) {
         // Exception already thrown
         return (jobject)NULL;
@@ -676,7 +590,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
             (void *)native_conn,
             (void *)native_stream);
 
-        jHttpStream = s_java_http_stream_from_native_new(env, crtBuffer, native_stream);
+        jHttpStream = s_java_http_stream_from_native_new(env, native_stream);
         if (jHttpStream) {
             // Call NewGlobalRef() so that jHttpStream reference doesn't get Garbage collected can can be used from
             // callbacks.

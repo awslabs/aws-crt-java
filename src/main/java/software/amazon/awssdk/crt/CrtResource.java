@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.Log;
 
@@ -228,14 +229,22 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    public static void collectNativeResources(Consumer<String> fn) {
+        for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
+            String resource = String.format(" * %s class instance using native pointer %d", entry.getValue(),
+                    entry.getKey().longValue());
+            fn.accept(resource);
+        }
+    }
+
     /**
      * Debug method to log all of the currently un-closed CRTResource objects.
      */
     public static void logNativeResources() {
         Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
-        for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format(" * %s class instance using native pointer %d", entry.getValue(), entry.getKey().longValue()));
-        }
+        collectNativeResources((resource) -> {
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, resource);
+        });
     }
 
     /**

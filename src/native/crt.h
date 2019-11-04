@@ -78,11 +78,6 @@ void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject dire
 jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, size_t capacity);
 
 /*******************************************************************************
- * aws_jni_direct_byte_buffer_from_byte_buf - Creates a Java DirectByteBuffer from a native aws_byte_buf
- ******************************************************************************/
-jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst);
-
-/*******************************************************************************
  * aws_jni_byte_buffer_get_position - Gets the Read/Write Position of a ByteBuffer
  ******************************************************************************/
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer);
@@ -98,10 +93,17 @@ void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint positi
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit);
 
 /*******************************************************************************
- * aws_jni_byte_cursor_from_jstring - Creates an aws_byte_cursor from the UTF-8
+ * aws_jni_byte_cursor_from_jstring_acquire - Creates an aws_byte_cursor from the UTF-8
  * characters extracted from the supplied jstring. The string value is null-terminated.
+ * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
+ * it's no longer needed, or it will leak.
  ******************************************************************************/
-struct aws_byte_cursor aws_jni_byte_cursor_from_jstring(JNIEnv *env, jstring str);
+struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str);
+
+/********************************************************************************
+ * aws_jni_byte_cursor_from_jstring_release - Releases the string back to the JVM
+ ********************************************************************************/
+void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur);
 
 /*******************************************************************************
  * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the

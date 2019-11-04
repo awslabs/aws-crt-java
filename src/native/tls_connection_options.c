@@ -83,12 +83,13 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnecti
         return;
     }
 
-    struct aws_byte_cursor server_name_cursor = aws_jni_byte_cursor_from_jstring(env, jni_server_name);
+    struct aws_byte_cursor server_name_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_server_name);
     struct aws_allocator *allocator = aws_jni_get_allocator();
     if (aws_tls_connection_options_set_server_name(options, allocator, &server_name_cursor)) {
         aws_jni_throw_runtime_exception(
             env, "TlsConnectionOptions.tlsConnectionOptionsSetServerName: Unable to set server name");
     }
+    aws_jni_byte_cursor_from_jstring_release(env, jni_server_name, server_name_cursor);
 }
 
 JNIEXPORT
@@ -104,12 +105,13 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnecti
         return;
     }
 
-    struct aws_byte_cursor alpn_list_cursor = aws_jni_byte_cursor_from_jstring(env, jni_alpn_list);
+    struct aws_byte_cursor alpn_list_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_alpn_list);
     struct aws_allocator *allocator = aws_jni_get_allocator();
     if (aws_tls_connection_options_set_alpn_list(options, allocator, (char *)alpn_list_cursor.ptr)) {
         aws_jni_throw_runtime_exception(
             env, "TlsConnectionOptions.tlsConnectionOptionsSetAlpnList: Unable to set alpn list");
     }
+    aws_jni_byte_cursor_from_jstring_release(env, jni_alpn_list, alpn_list_cursor);
 }
 
 #if UINTPTR_MAX == 0xffffffff

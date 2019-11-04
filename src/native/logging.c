@@ -44,8 +44,8 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_log(
     (void)jni_class;
 
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);
-
     AWS_LOGF(jni_level, jni_subject, "%s", raw_string);
+    (*env)->ReleaseStringUTFChars(env, jni_logstring, raw_string);
 }
 
 static struct aws_logger s_logger;
@@ -85,13 +85,13 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToFile(
     JNIEnv *env,
     jclass jni_crt_class,
     jint level,
-    jstring filename) {
+    jstring jni_filename) {
     (void)jni_crt_class;
 
-    struct aws_logger_standard_options log_options = {.level = level,
-                                                      .filename = (*env)->GetStringUTFChars(env, filename, NULL)};
-
+    const char *filename = (*env)->GetStringUTFChars(env, jni_filename, NULL);
+    struct aws_logger_standard_options log_options = {.level = level, .filename = filename};
     s_aws_init_logging_internal(env, &log_options);
+    (*env)->ReleaseStringUTFChars(env, jni_filename, filename);
 }
 
 void aws_jni_cleanup_logging() {

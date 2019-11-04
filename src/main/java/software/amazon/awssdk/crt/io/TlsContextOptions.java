@@ -14,8 +14,11 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.util.IllegalFormatException;
+
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.utils.PemUtils;
 
 /**
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
@@ -62,7 +65,7 @@ public final class TlsContextOptions extends CrtResource {
      * Creates a new set of options that can be used to create a {@link TlsContext}
      * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
-    public TlsContextOptions() throws CrtRuntimeException {
+    private TlsContextOptions() throws CrtRuntimeException {
         acquireNativeHandle(tlsContextOptionsNew());
     }
 
@@ -137,6 +140,24 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Sets the certificate/key pair that identifies this TLS host. Must be in
+     * PEM format.
+     * 
+     * @param certificate PEM armored certificate
+     * @param privateKey  PEM armored private key
+     * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
+     */
+    public void initMTLS(String certificate, String privateKey) throws IllegalArgumentException {
+        certificate = PemUtils.cleanUpPem(certificate);
+        PemUtils.sanityCheck(certificate, 1, "CERTIFICATE");
+
+        privateKey = PemUtils.cleanUpPem(privateKey);
+        PemUtils.sanityCheck(privateKey, 1, "PRIVATE KEY");
+
+        tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
+    }
+
+    /**
      * OSX only - Initializes MTLS with PKCS12 file and password
      * @param pkcs12Path Path to PKCS12 file
      * @param pkcs12Password PKCS12 password
@@ -178,8 +199,21 @@ public final class TlsContextOptions extends CrtResource {
      * @param caPath Path to the local trust store. Can be null.
      * @param caFile Path to the root certificate. Must be in PEM format.
      */
-    public void overrideDefaultTrustStore(String caPath, String caFile) {
+    public void overrideDefaultTrustStoreFromPath(String caPath, String caFile) {
         tlsContextOptionsOverrideDefaultTrustStoreFromPath(getNativeHandle(), caFile, caPath);
+    }
+
+    /**
+     * Helper function to provide a TlsContext-local trust store
+     * 
+     * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
+     */
+    public void overrideDefaultTrustStore(String caRoot) throws IllegalArgumentException {
+        caRoot = PemUtils.cleanUpPem(caRoot);
+        // 7 certs in the chain is the default supported by s2n:
+        // https://github.com/awslabs/s2n/blob/master/tls/s2n_x509_validator.c#L53
+        PemUtils.sanityCheck(caRoot, 7, "CERTIFICATE");
+        tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), caRoot);
     }
 
     /**
@@ -192,15 +226,43 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Helper which creates a default set of TLS options for the current platform
+     * 
+     * @return A default configured set of options for a TLS server connection
+     * @throws CrtRuntimeException @see TlsContextOptions.TlsContextOptions()
+     */
+    public static TlsContextOptions createDefaultServer() throws CrtRuntimeException {
+        TlsContextOptions options = new TlsContextOptions();
+        options.setVerifyPeer(false);
+        return options;
+    }
+
+    /**
      * Helper which creates TLS options using a certificate and private key
      * @param certificatePath Path to a PEM format certificate
      * @param privateKeyPath Path to a PEM format private key
      * @return A set of options for setting up an MTLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLS(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLSFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSFromPath(certificatePath, privateKeyPath);
+        return options;
+    }
+
+    /**
+     * Helper which creates TLS options using a certificate and private key
+     * 
+     * @param certificate String containing a PEM format certificate
+     * @param privateKey  String containing a PEM format private key
+     * @return A set of options for setting up an MTLS connection
+     * @throws CrtRuntimeException      @see #constructor()
+     * @throws IllegalArgumentException If either PEM fails to parse
+     */
+    public static TlsContextOptions createWithMTLS(String certificate, String privateKey)
+            throws CrtRuntimeException, IllegalArgumentException {
+        TlsContextOptions options = new TlsContextOptions();
+        options.initMTLS(certificate, privateKey);
         return options;
     }
 
@@ -211,7 +273,8 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for creating a PKCS12 TLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password)
+            throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMTLSPkcs12(pkcs12Path, pkcs12Password);
         return options;
@@ -245,13 +308,18 @@ public final class TlsContextOptions extends CrtResource {
     
     private static native void tlsContextOptionsSetMinimumTlsVersion(long tls, int version);
 
-    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file, String ca_path);
+    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file,
+            String ca_path);
+    
+    private static native void tlsContextOptionsOverrideDefaultTrustStore(long tls, String caRoot);
 
     private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
 
     private static native void tlsContextOptionsSetCipherPreference(long tls, int cipherPref);
 
     private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
+
+    private static native void tlsContextOptionsInitMTLS(long tls, String cert, String key);
     
     private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
 

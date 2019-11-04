@@ -18,14 +18,11 @@ import java.net.URI;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.CrtBufferPool;
-import software.amazon.awssdk.crt.io.CrtByteBuffer;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -44,7 +41,6 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int maxConnections;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
-    private final CrtBufferPool bufferPool;
 
     /**
      * The queue of Connection Acquisition requests.
@@ -127,11 +123,6 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyAuthorizationUsername,
                                             proxyAuthorizationPassword));
 
-        // TODO: We will need to create more buffers once we allow >1 HttpStream per HttpClientConnection (such as for Http/2)
-        try (CrtBufferPool bufferPool = new CrtBufferPool(maxConnections, bufferSize)) {
-            this.bufferPool = addReferenceTo(bufferPool);
-        }
-
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
          if (useTls) {
@@ -154,10 +145,6 @@ public class HttpClientConnectionManager extends CrtResource {
 
         HttpClientConnection conn = new HttpClientConnection(this, connection);
         connectionRequest.complete(conn);
-    }
-
-    protected CompletableFuture<CrtByteBuffer> acquireBuffer() {
-        return this.bufferPool.acquireBuffer();
     }
 
     /**

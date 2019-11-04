@@ -138,11 +138,10 @@ public class HttpRequestResponseTest {
                     }
 
                     @Override
-                    public int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
-                        respBodyUpdateSizes.add(bodyBytesIn.remaining());
-                        int start = bodyBytesIn.position();
+                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                        respBodyUpdateSizes.add(bodyBytesIn.length);
                         response.bodyBuffer.put(bodyBytesIn);
-                        int amountRead = bodyBytesIn.position() - start;
+                        int amountRead = bodyBytesIn.length;
 
                         // Slide the window open by the number of bytes just read
                         return amountRead;
@@ -157,6 +156,7 @@ public class HttpRequestResponseTest {
 
                     @Override
                     public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+
                         reqBodyUpdateSizes.add(bodyBytesOut.remaining());
                         transferData(bodyBytesIn, bodyBytesOut);
 

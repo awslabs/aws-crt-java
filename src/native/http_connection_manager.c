@@ -175,11 +175,23 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_http_proxy_options proxy_options;
     AWS_ZERO_STRUCT(proxy_options);
 
-    struct aws_byte_cursor proxy_host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
-    struct aws_byte_cursor proxy_authorization_username =
-        aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_username);
-    struct aws_byte_cursor proxy_authorization_password =
-        aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
+    struct aws_byte_cursor proxy_host;
+    AWS_ZERO_STRUCT(proxy_host);
+    if (jni_proxy_host != NULL) {
+        proxy_host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
+    }
+
+    struct aws_byte_cursor proxy_authorization_username;
+    AWS_ZERO_STRUCT(proxy_authorization_username);
+    if (jni_proxy_authorization_username != NULL) {
+        proxy_authorization_username = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_username);
+    }
+
+    struct aws_byte_cursor proxy_authorization_password;
+    AWS_ZERO_STRUCT(proxy_authorization_password);
+    if (jni_proxy_authorization_password != NULL) {
+        proxy_authorization_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
+    }
 
     struct aws_tls_connection_options proxy_tls_conn_options = {0};
     if (jni_proxy_host != NULL) {
@@ -201,9 +213,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     conn_manager = aws_http_connection_manager_new(allocator, &manager_options);
 
-    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_host);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_authorization_username);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_password, proxy_authorization_password);
+    if (jni_proxy_host != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_host);
+    }
+
+    if (jni_proxy_authorization_username != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_authorization_username);
+    }
+
+    if (jni_proxy_authorization_password != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_password, proxy_authorization_password);
+    }
 
     if (use_tls) {
         aws_tls_connection_options_clean_up(&tls_conn_options);

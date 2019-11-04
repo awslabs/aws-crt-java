@@ -43,8 +43,7 @@ public class HttpClientConnectionManagerTest {
             SocketOptions sockOpts = new SocketOptions();
             TlsContext tlsContext =  new TlsContext()) {
 
-            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri,
-                HttpClientConnectionManager.DEFAULT_MAX_BUFFER_SIZE, HttpClientConnectionManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
+            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri, HttpClientConnectionManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
         }
     }
 

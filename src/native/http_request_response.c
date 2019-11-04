@@ -316,7 +316,8 @@ static int s_on_incoming_headers_fn(
     jint result = (*env)->EnsureLocalCapacity(env, frameCapacity);
 
     if (result != 0) {
-        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to EnsureLocalCapacity. Possibly OutOfMemory.", (void *)stream);
+        AWS_LOGF_ERROR(
+            AWS_LS_HTTP_STREAM, "id=%p: Failed to EnsureLocalCapacity. Possibly OutOfMemory.", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 

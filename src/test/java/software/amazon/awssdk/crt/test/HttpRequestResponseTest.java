@@ -200,7 +200,7 @@ public class HttpRequestResponseTest {
             try {
                 response = getResponse(uri, request, requestBody);
             } catch (Exception ex) {
-                //do nothing just let it rety
+                //do nothing just let it retry
             }
 
         } while ((response == null || shouldRetry(response)) && numAttempts < 3);

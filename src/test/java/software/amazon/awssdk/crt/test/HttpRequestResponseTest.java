@@ -196,8 +196,14 @@ public class HttpRequestResponseTest {
         int numAttempts = 0;
         do {
             numAttempts++;
-            response = getResponse(uri, request, requestBody);
-        } while (shouldRetry(response) && numAttempts < 3);
+            response = null;
+            try {
+                response = getResponse(uri, request, requestBody);
+            } catch (Exception ex) {
+                //do nothing just let it rety
+            }
+
+        } while ((response == null || shouldRetry(response)) && numAttempts < 3);
 
         Assert.assertNotEquals(-1, response.blockType);
 

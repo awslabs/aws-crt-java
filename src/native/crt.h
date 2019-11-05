@@ -48,11 +48,6 @@ bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount);
 
 /*******************************************************************************
- * aws_java_byte_array_to_java_byte_buffer - Creates a Java ByteBuffer Object from a Java byte[]
- ******************************************************************************/
-jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray);
-
-/*******************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray - Creates an aws_byte_cursor from a jbyteArray.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array);

@@ -122,7 +122,6 @@ struct mqtt_jni_async_callback {
     struct mqtt_jni_connection *connection;
     jobject async_callback;
     jobject jni_objects[2]; /* store pinned objects here, they will be un-pinned in clean_up */
-    const char *strings[2]; /* store cursor/char* -> string references to pinned objects here, matched to jni_objects */
 };
 
 static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
@@ -156,10 +155,6 @@ static void mqtt_jni_async_callback_destroy(struct mqtt_jni_async_callback *call
     for (size_t idx = 0; idx < AWS_ARRAY_SIZE(callback->jni_objects); ++idx) {
         jobject obj = callback->jni_objects[idx];
         if (obj) {
-            const char *str = callback->strings[idx];
-            if (str) {
-                (*env)->ReleaseStringUTFChars(env, obj, str);
-            }
             (*env)->DeleteGlobalRef(env, obj);
         }
     }
@@ -677,14 +672,10 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
         goto error_cleanup;
     }
 
-    /* pin the topic so it lives as long as the unsub request */
-    jni_topic = (*env)->NewGlobalRef(env, jni_topic);
-    unsub_ack->jni_objects[0] = jni_topic;
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
-    unsub_ack->strings[0] = (const char *)topic.ptr; /* string will be cleaned up in callback after unsub */
-
     uint16_t msg_id =
         aws_mqtt_client_connection_unsubscribe(connection->client_connection, &topic, s_on_op_complete, unsub_ack);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.mqtt_unsubscribe: aws_mqtt_client_connection_unsubscribe failed");
@@ -726,14 +717,11 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
         goto error_cleanup;
     }
 
-    /* pin topic to pub_ack's lifetime */
-    jni_topic = (*env)->NewGlobalRef(env, jni_topic);
-    pub_ack->jni_objects[0] = jni_topic;
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
 
     /* pin the buffer, to be released in pub ack, avoids a copy */
     jni_payload = (*env)->NewGlobalRef(env, jni_payload);
-    pub_ack->jni_objects[1] = jni_payload;
+    pub_ack->jni_objects[0] = jni_payload;
     struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;

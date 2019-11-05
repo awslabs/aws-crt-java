@@ -475,11 +475,6 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
     return (*env)->ExceptionCheck(env);
 }
 
-jobject aws_java_byte_array_to_java_byte_buffer(JNIEnv *env, jbyteArray jArray) {
-    jobject jByteBuffer = (*env)->CallStaticObjectMethod(env, s_java_byte_buffer.cls, s_java_byte_buffer.wrap, jArray);
-    return ((*env)->ExceptionCheck(env)) ? NULL : jByteBuffer;
-}
-
 /**
  * Converts a Native aws_byte_cursor to a Java byte[]
  */
@@ -491,17 +486,6 @@ jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cur
         }
     }
     return NULL;
-}
-
-/**
- * Converts a Native aws_byte_cursor to a Java ByteBuffer Object
- */
-jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
-    AWS_FATAL_ASSERT(env);
-    jbyteArray jArray = aws_jni_byte_array_from_cursor(env, native_data);
-    jobject jByteBuffer = aws_java_byte_array_to_java_byte_buffer(env, jArray);
-
-    return jByteBuffer;
 }
 
 /**

@@ -16,7 +16,7 @@ set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies buil
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
-set(AWS_C_COMMON_SHA "v0.4.15")
+set(AWS_C_COMMON_SHA "v0.4.16")
 include(BuildAwsCCommon)
 
 if (UNIX AND NOT APPLE)
@@ -42,7 +42,7 @@ set(AWS_C_MQTT_SHA "v0.4.13")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "v0.4.11")
+set(AWS_C_HTTP_SHA "v0.4.12")
 include(BuildAwsCHttp)
 
 set(AWS_C_CAL_URL "https://github.com/awslabs/aws-c-cal.git")

@@ -107,7 +107,7 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
 
 /*******************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray_acquire - Creates an aws_byte_cursor from the
- * bytes extracted from the supplied jbyteArray. 
+ * bytes extracted from the supplied jbyteArray.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
  ******************************************************************************/

@@ -15,11 +15,9 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
@@ -32,7 +30,6 @@ import software.amazon.awssdk.crt.mqtt.QualityOfService;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 
 public class SelfPubSubTest extends MqttClientConnectionFixture {
     @Rule
@@ -54,10 +51,9 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
         try {
             Consumer<MqttMessage> messageHandler = (message) -> {
-                ByteBuffer payload = message.getPayload();
-                assertTrue("Payload buffer is array of bytes", payload.hasArray());
+                byte[] payload = message.getPayload();
                 try {
-                    String contents = new String(payload.array(), "UTF-8");
+                    String contents = new String(payload, "UTF-8");
                     assertEquals("Message is intact", TEST_PAYLOAD, contents);
                 } catch (UnsupportedEncodingException ex) {
                     fail("Unable to decode payload: " + ex.getMessage());
@@ -71,9 +67,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
             assertEquals("Single subscription", 1, subsAcked);
 
-            ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
-            payload.put(TEST_PAYLOAD.getBytes());
-            MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
             CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();

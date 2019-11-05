@@ -534,6 +534,16 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
     (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
 }
 
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
+    size_t len = (*env)->GetArrayLength(env, array);
+    jbyte *bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    return aws_byte_cursor_from_array(bytes, len);
+}
+
+void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
+    (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+}
+
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {
     jlong payload_size = (*env)->GetDirectBufferCapacity(env, byte_buffer);
     if (payload_size == -1) {

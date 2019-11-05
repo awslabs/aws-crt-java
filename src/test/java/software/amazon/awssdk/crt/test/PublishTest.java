@@ -15,7 +15,6 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.fail;
@@ -26,7 +25,6 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
-import java.nio.ByteBuffer;
 
 public class PublishTest extends MqttClientConnectionFixture {
     @Rule
@@ -46,9 +44,7 @@ public class PublishTest extends MqttClientConnectionFixture {
         connect();
         
         try {
-            ByteBuffer payload = ByteBuffer.allocateDirect(TEST_PAYLOAD.length());
-            payload.put(TEST_PAYLOAD.getBytes());
-            MqttMessage message = new MqttMessage(TEST_TOPIC, payload);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
             CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
             published.thenApply(packetId -> pubsAcked++);
             published.get();

@@ -24,25 +24,6 @@ public class ByteBufferUtils {
     private ByteBufferUtils() {}
 
     /**
-     * Allocates a new backing byte[] with a new ByteBuffer, and copies the contents of the input buffer to the copy.
-     *
-     * @param input The ByteBuffer to copy
-     * @return A new ByteBuffer containing a deep copy of the input ByteBuffer.
-     */
-    public static ByteBuffer deepCopy(ByteBuffer input) {
-        // Allocate a new ByteBuffer that's large enough to store a copy
-        ByteBuffer deepCopy = ByteBuffer.allocate(input.remaining());
-
-        // Copy contents of input buffer to new Buffer
-        deepCopy.put(input);
-
-        // Flip deepCopy from Write mode to Read Mode
-        deepCopy.flip();
-
-        return deepCopy;
-    }
-
-    /**
      * Transfers as much data as possible from an input ByteBuffer to an output ByteBuffer
      * @param in The input ByteBuffer
      * @param out The output ByteBuffer
@@ -64,22 +45,5 @@ public class ByteBufferUtils {
         // Increment the read position of the original input buffer by the number of bytes transferred
         in.position(in.position() + amtToTransfer);
         return amtToTransfer;
-    }
-
-    /**
-     * Guarantees a DirectByteBuffer from a ByteBuffer. If the ByteBuffer is already direct, it will be returned
-     * and avoid an unnecessary copy.
-     * @param in Input ByteBuffer
-     * @return A ByteBuffer that is guaranteed to be directly allocated
-     */
-    public static ByteBuffer toDirectBuffer(ByteBuffer in) {
-        /* If the buffer is already direct, we can avoid an additional copy */
-        if (in.isDirect()) {
-            return in;
-        }
-
-        ByteBuffer direct = ByteBuffer.allocateDirect(in.capacity());
-        direct.put(in);
-        return direct;
     }
 }

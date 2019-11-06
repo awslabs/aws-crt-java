@@ -52,7 +52,6 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     private HttpClientConnectionManager(HttpClientConnectionManagerOptions options) {
-
         URI uri = options.getUri();
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }

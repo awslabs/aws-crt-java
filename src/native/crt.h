@@ -106,6 +106,19 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jst
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur);
 
 /*******************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_acquire - Creates an aws_byte_cursor from the
+ * bytes extracted from the supplied jbyteArray.
+ * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
+ * it's no longer needed, or it will leak.
+ ******************************************************************************/
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
+
+/********************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
+ ********************************************************************************/
+void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
+
+/*******************************************************************************
  * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the
  * direct byte buffer. Note that the buffer is not reference pinned, so the cursor
  * is only valid for the current JNI call

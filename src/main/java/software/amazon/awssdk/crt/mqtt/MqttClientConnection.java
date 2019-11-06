@@ -20,9 +20,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.Log;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -53,7 +51,7 @@ public class MqttClientConnection extends CrtResource {
 
         /* called from native when a message is delivered */
         void deliver(byte[] payload) {
-            callback.accept(new MqttMessage(topic, ByteBuffer.wrap(payload)));
+            callback.accept(new MqttMessage(topic, payload));
         }
     }
 
@@ -274,7 +272,7 @@ public class MqttClientConnection extends CrtResource {
 
         AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect(), pubAck);
+            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayload(), pubAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }
@@ -298,7 +296,7 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-            mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayloadDirect());
+            mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), qos.getValue(), retain, message.getPayload());
         }
         catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
@@ -323,9 +321,9 @@ public class MqttClientConnection extends CrtResource {
 
     private static native short mqttClientConnectionUnsubscribe(long connection, String topic, AsyncCallback ack);
 
-    private static native short mqttClientConnectionPublish(long connection, String topic, int qos, boolean retain, ByteBuffer payload, AsyncCallback ack) throws CrtRuntimeException;
+    private static native short mqttClientConnectionPublish(long connection, String topic, int qos, boolean retain, byte[] payload, AsyncCallback ack) throws CrtRuntimeException;
 
-    private static native boolean mqttClientConnectionSetWill(long connection, String topic, int qos, boolean retain, ByteBuffer payload) throws CrtRuntimeException;
+    private static native boolean mqttClientConnectionSetWill(long connection, String topic, int qos, boolean retain, byte[] payload) throws CrtRuntimeException;
     
     private static native void mqttClientConnectionSetLogin(long connection, String username, String password) throws CrtRuntimeException;
 };

@@ -7,7 +7,7 @@ phases:
       - sudo dpkg --add-architecture i386
       - sudo apt-get update -y
       - sudo apt-get install gcc gcc-multilib -y
-      - sudo apt-get install g++-multilib cmake3 -y
+      - sudo apt-get install g++-multilib cmake -y
       - sudo apt-get install ninja-build -y
       - sudo apt-get install openjdk-8-jdk-headless:i386 -y
       - sudo apt-get install maven -y

@@ -7,6 +7,7 @@ phases:
       - sudo dpkg --add-architecture i386
       - sudo apt-get update -y
       - sudo apt-get install gcc gcc-multilib g++-multilib cmake ninja-build openjdk-8-jdk-headless:i386 maven -y
+      - sudo apt-get -y install squid
   pre_build:
     commands:
       - export CC=gcc

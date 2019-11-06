@@ -121,7 +121,7 @@ struct mqtt_jni_connection {
 struct mqtt_jni_async_callback {
     struct mqtt_jni_connection *connection;
     jobject async_callback;
-    jobject jni_objects[2]; /* store pinned objects here, they will be un-pinned in clean_up */
+    struct aws_byte_buf buffer; /* payloads or other pinned resources go in here, freed when callback is delivered */
 };
 
 static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
@@ -140,7 +140,7 @@ static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
     callback->connection = connection;
     callback->async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
 
-    AWS_ZERO_ARRAY(callback->jni_objects);
+    aws_byte_buf_init(&callback->buffer, aws_jni_get_allocator(), 0);
 
     return callback;
 }
@@ -152,12 +152,7 @@ static void mqtt_jni_async_callback_destroy(struct mqtt_jni_async_callback *call
         (*env)->DeleteGlobalRef(env, callback->async_callback);
     }
 
-    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(callback->jni_objects); ++idx) {
-        jobject obj = callback->jni_objects[idx];
-        if (obj) {
-            (*env)->DeleteGlobalRef(env, obj);
-        }
-    }
+    aws_byte_buf_clean_up(&callback->buffer);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, callback);
@@ -702,7 +697,7 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jstring jni_topic,
     jint jni_qos,
     jboolean jni_retain,
-    jobject jni_payload,
+    jbyteArray jni_payload,
     jobject jni_ack) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
@@ -718,18 +713,17 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     }
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
-
-    /* pin the buffer, to be released in pub ack, avoids a copy */
-    jni_payload = (*env)->NewGlobalRef(env, jni_payload);
-    pub_ack->jni_objects[0] = jni_payload;
-    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
+    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
+    aws_byte_buf_append_dynamic(&pub_ack->buffer, &payload);
+
     uint16_t msg_id = aws_mqtt_client_connection_publish(
         connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
 
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
@@ -754,7 +748,7 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnec
     jstring jni_topic,
     jint jni_qos,
     jboolean jni_retain,
-    jobject jni_payload) {
+    jbyteArray jni_payload) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -762,20 +756,15 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnec
         return 0;
     }
 
-    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_direct_byte_buffer(env, jni_payload);
-
-    /* exception will already have been thrown, so just return failure */
-    if (!payload.ptr) {
-        return false;
-    }
-
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
+    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
     int result = aws_mqtt_client_connection_set_will(connection->client_connection, &topic, qos, retain, &payload);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
     return (result == AWS_OP_SUCCESS);
 }
 

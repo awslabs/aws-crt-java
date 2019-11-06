@@ -14,23 +14,19 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-import java.nio.ByteBuffer;
-import software.amazon.awssdk.crt.utils.ByteBufferUtils;
-
 /**
  * Represents a single message to be published or that was published to a connection
  */
 public final class MqttMessage {
     private String topic;
-    private final ByteBuffer payload;
+    private final byte[] payload;
 
     /**
      * Constructs a new payload
      * @param topic The topic this message is to be published on or was published to
-     * @param payload The message payload. Note that for minimal copies/maximum efficiency, this should be a direct
-     *                buffer allocated via {@link java.nio.ByteBuffer#allocateDirect(int)}
+     * @param payload The message payload. 
      */
-    public MqttMessage(String topic, ByteBuffer payload) {
+    public MqttMessage(String topic, byte[] payload) {
         this.topic = topic;
         this.payload = payload;
     }
@@ -47,12 +43,7 @@ public final class MqttMessage {
      * Gets the message payload
      * @return Message payload
      */
-    public ByteBuffer getPayload() {
+    public byte[] getPayload() {
         return payload;
-    }
-
-    // Used mostly internally to retrieve the payload in order to pass it to native code
-    ByteBuffer getPayloadDirect() {
-        return ByteBufferUtils.toDirectBuffer(payload);
     }
 }

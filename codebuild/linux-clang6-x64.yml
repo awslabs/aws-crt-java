@@ -8,7 +8,8 @@ phases:
       - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
       - sudo apt-get update -y
       - sudo apt-get install clang-6.0 cmake3 cppcheck clang-format-6.0 ninja-build -y -f
-
+      - sudo apt-get -y install squid
+      - squid3 -YC -f /etc/squid3/squid.conf
   pre_build:
     commands:
       - export CC=clang-6.0

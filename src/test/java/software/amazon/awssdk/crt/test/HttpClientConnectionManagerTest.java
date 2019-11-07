@@ -18,7 +18,9 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -38,12 +40,34 @@ public class HttpClientConnectionManagerTest {
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
 
-    private HttpClientConnectionManager createConnectionPool(URI uri, int numThreads, int numConnections) {
-        try(ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
+    static final String PROXY_HOST = System.getProperty("proxyhost");
+    static final String PROXY_PORT = System.getProperty("proxyport");
+
+    private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections) {
+        return createConnectionManager(uri, numThreads, numConnections, null, 0);
+    }
+
+    private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
+        try (ClientBootstrap bootstrap = new ClientBootstrap(numThreads);
             SocketOptions sockOpts = new SocketOptions();
             TlsContext tlsContext =  new TlsContext()) {
 
-            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri, HttpClientConnectionManager.DEFAULT_MAX_WINDOW_SIZE, numConnections);
+            HttpProxyOptions proxyOptions = null;
+            if (proxyHost != null) {
+                proxyOptions = new HttpProxyOptions();
+                proxyOptions.setHost(proxyHost);
+                proxyOptions.setPort(proxyPort);
+            }
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            options.withClientBootstrap(bootstrap)
+                .withSocketOptions(sockOpts)
+                .withTlsContext(tlsContext)
+                .withUri(uri)
+                .withMaxConnections(numConnections)
+                .withProxyOptions(proxyOptions);
+
+            return HttpClientConnectionManager.create(options);
         }
     }
 
@@ -133,7 +157,8 @@ public class HttpClientConnectionManagerTest {
         CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
-        try (HttpClientConnectionManager connectionPool = createConnectionPool(uri, numThreads, NUM_CONNECTIONS)) {
+
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, numThreads, NUM_CONNECTIONS)) {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, 1, numRequests);
         }
@@ -174,5 +199,30 @@ public class HttpClientConnectionManagerTest {
         System.out.println("testMaxParallelRequests START");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
         System.out.println("testMaxParallelRequests END");
+    }
+
+    @Test
+    public void testParallelRequestsWithLocalProxy() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        String proxyHost = PROXY_HOST;
+        int proxyPort = 0;
+        if (PROXY_PORT != null) {
+            proxyPort = Integer.parseInt(PROXY_PORT);
+        }
+
+        Assume.assumeTrue(proxyHost != null && proxyHost.length() > 0 && proxyPort > 0);
+
+        CrtResource.waitForNoResources();
+
+        URI uri = new URI(endpoint);
+
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, NUM_THREADS, NUM_CONNECTIONS, proxyHost, proxyPort)) {
+            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+
+            testParallelConnections(connectionPool, request, 1, NUM_REQUESTS);
+        }
+
+        CrtResource.waitForNoResources();
     }
 }

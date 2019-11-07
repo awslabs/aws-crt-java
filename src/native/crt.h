@@ -73,11 +73,6 @@ void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject dire
 jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, size_t capacity);
 
 /*******************************************************************************
- * aws_jni_direct_byte_buffer_from_byte_buf - Creates a Java DirectByteBuffer from a native aws_byte_buf
- ******************************************************************************/
-jobject aws_jni_direct_byte_buffer_from_byte_buf(JNIEnv *env, const struct aws_byte_buf *dst);
-
-/*******************************************************************************
  * aws_jni_byte_buffer_get_position - Gets the Read/Write Position of a ByteBuffer
  ******************************************************************************/
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer);

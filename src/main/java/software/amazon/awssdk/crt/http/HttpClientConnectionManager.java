@@ -30,8 +30,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Manages a Pool of Http Connections
  */
 public class HttpClientConnectionManager extends CrtResource {
-    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
-    public static final int DEFAULT_MAX_CONNECTIONS = 2;
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
@@ -40,7 +38,6 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int windowSize;
     private final URI uri;
     private final int port;
-    private final boolean useTls;
     private final int maxConnections;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
@@ -50,36 +47,65 @@ public class HttpClientConnectionManager extends CrtResource {
      */
     private final Queue<CompletableFuture<HttpClientConnection>> connectionAcquisitionRequests = new ConcurrentLinkedQueue<>();
 
-    public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,  URI uri) {
-        this(clientBootstrap, socketOptions, tlsContext, uri, DEFAULT_MAX_WINDOW_SIZE, DEFAULT_MAX_CONNECTIONS);
+    public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
+        return new HttpClientConnectionManager(options);
     }
 
-    public HttpClientConnectionManager(ClientBootstrap clientBootstrap, SocketOptions socketOptions, TlsContext tlsContext,
-                                      URI uri, int windowSize, int maxConnections) {
-
+    private HttpClientConnectionManager(HttpClientConnectionManagerOptions options) {
+        URI uri = options.getUri();
         if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
         if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
         if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
         if (uri.getHost() == null) { throw new IllegalArgumentException("URI does not have a Host name"); }
+
+        ClientBootstrap clientBootstrap = options.getClientBootstrap();
         if (clientBootstrap == null || clientBootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
+
+        SocketOptions socketOptions = options.getSocketOptions();
         if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
-        if (HTTPS.equals(uri.getScheme()) && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+
+        boolean useTls = HTTPS.equals(uri.getScheme());
+        TlsContext tlsContext = options.getTlsContext();
+        if (useTls && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+
+        int windowSize = options.getWindowSize();
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
+
+        int bufferSize = options.getBufferSize();
+        if (bufferSize <= 0) { throw new  IllegalArgumentException("Buffer Size must be greater than zero."); }
+
+        int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
         int port = uri.getPort();
-
         /* Pick a default port based on the scheme if one wasn't set in the URI */
         if (port == -1) {
             if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
             if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
         }
 
+        HttpProxyOptions proxyOptions = options.getProxyOptions();
+
         this.windowSize = windowSize;
         this.uri = uri;
         this.port = port;
-        this.useTls = HTTPS.equals(uri.getScheme());
         this.maxConnections = maxConnections;
+
+        String proxyHost = null;
+        int proxyPort = 0;
+        TlsContext proxyTlsContext = null;
+        int proxyAuthorizationType = 0;
+        String proxyAuthorizationUsername = null;
+        String proxyAuthorizationPassword = null;
+
+        if (proxyOptions != null) {
+            proxyHost = proxyOptions.getHost();
+            proxyPort = proxyOptions.getPort();
+            proxyTlsContext = proxyOptions.getTlsContext();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
+            proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+        }
 
         acquireNativeHandle(httpClientConnectionManagerNew(this,
                                             clientBootstrap.getNativeHandle(),
@@ -88,7 +114,13 @@ public class HttpClientConnectionManager extends CrtResource {
                                             windowSize,
                                             uri.getHost(),
                                             port,
-                                            maxConnections));
+                                            maxConnections,
+                                            proxyHost,
+                                            proxyPort,
+                                            proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
+                                            proxyAuthorizationType,
+                                            proxyAuthorizationUsername,
+                                            proxyAuthorizationPassword));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -210,13 +242,20 @@ public class HttpClientConnectionManager extends CrtResource {
      ******************************************************************************/
 
     private static native long httpClientConnectionManagerNew(HttpClientConnectionManager thisObj,
-                                                              long client_bootstrap,
-                                                              long socketOptions,
-                                                              long tlsContext,
-                                                              int windowSize,
-                                                              String endpoint,
-                                                              int port,
-                                                              int maxConns) throws CrtRuntimeException;
+                                                        long client_bootstrap,
+                                                        long socketOptions,
+                                                        long tlsContext,
+                                                        int windowSize,
+                                                        String endpoint,
+                                                        int port,
+                                                        int maxConns,
+                                                        String proxyHost,
+                                                        int proxyPort,
+                                                        long proxyTlsContext,
+                                                        int proxyAuthorizationType,
+                                                        String proxyAuthorizationUsername,
+                                                        String proxyAuthorizationPassword
+                                                        ) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

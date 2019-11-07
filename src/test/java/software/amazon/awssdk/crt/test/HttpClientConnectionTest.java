@@ -24,6 +24,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
@@ -44,7 +45,13 @@ public class HttpClientConnectionTest {
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
-        try (HttpClientConnectionManager connectionPool = new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri)) {
+        HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+        options.withClientBootstrap(bootstrap)
+            .withSocketOptions(sockOpts)
+            .withTlsContext(tlsContext)
+            .withUri(uri);
+
+        try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
             resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 resp.actuallyConnected = true;

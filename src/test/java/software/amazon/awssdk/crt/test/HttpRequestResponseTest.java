@@ -25,6 +25,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -97,7 +98,13 @@ public class HttpRequestResponseTest {
             SocketOptions sockOpts = new SocketOptions();
             TlsContext tlsContext =  new TlsContext()) {
 
-            return new HttpClientConnectionManager(bootstrap, sockOpts, tlsContext, uri);
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                .withClientBootstrap(bootstrap)
+                .withSocketOptions(sockOpts)
+                .withTlsContext(tlsContext)
+                .withUri(uri);
+
+            return HttpClientConnectionManager.create(options);
         }
     }
 

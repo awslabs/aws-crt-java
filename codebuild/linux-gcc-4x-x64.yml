@@ -5,8 +5,6 @@ phases:
     commands:
       - sudo apt-get update -y
       - sudo apt-get install gcc cmake3 ninja-build -y
-      - sudo apt-get -y install squid
-      - squid3 -YC -f /etc/squid3/squid.conf
   pre_build:
     commands:
       - export CC=gcc

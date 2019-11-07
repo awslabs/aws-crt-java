@@ -6,8 +6,6 @@ phases:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
       - sudo apt-get install gcc-6 cmake3 ninja-build -y
-      - sudo apt-get -y install squid
-      - squid3 -YC -f /etc/squid3/squid.conf
   pre_build:
     commands:
       - export CC=gcc-6

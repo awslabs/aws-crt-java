@@ -75,6 +75,13 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
             assertEquals("Published", 1, pubsAcked);
 
+            published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            published.thenApply(unused -> pubsAcked++);
+            packetId = published.get();
+
+            assertNotSame(0, packetId);
+            assertEquals("Published", 2, pubsAcked);
+
             CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
             unsubscribed.thenApply(unused -> subsAcked--);
             packetId = unsubscribed.get();

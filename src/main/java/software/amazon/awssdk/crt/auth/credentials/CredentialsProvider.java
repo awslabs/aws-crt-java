@@ -19,27 +19,23 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 
 /**
  *
  */
 public class CredentialsProvider extends CrtResource implements ICredentialsProvider {
 
-    public CredentialsProvider(long nativeProvider) {
-        acquireNativeHandle(nativeProvider);
-    }
+    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+
+    public CredentialsProvider() {}
 
     /**
      * Request credentials from the provider
      * @return A Future for Credentials that will be completed when they are acquired.
      */
     public CompletableFuture<Credentials> getCredentials() throws CrtRuntimeException {
-        if (isClosed.get() || isNull()) {
-            throw new IllegalStateException("CredentialsProvider can't acquire new connections");
-        }
-
-        CompletableFuture<Credentials> credentialsRequest = new CompletableFuture<>();
-        return credentialsRequest;
+        return null;
     }
 
     /**
@@ -57,7 +53,20 @@ public class CredentialsProvider extends CrtResource implements ICredentialsProv
      * Resources that wait are responsible for calling releaseReferences() manually.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    protected boolean canReleaseReferencesImmediately() { return false; }
+
+    /**
+     * Called from Native when the asynchronous shutdown process needed for credentials providers has completed.
+     */
+    private void onShutdownComplete() {
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.AuthCredentialsProvider, "CredentialsProvider.onShutdownComplete");
+
+        releaseReferences();
+
+        this.shutdownComplete.complete(null);
+    }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************
      * native methods

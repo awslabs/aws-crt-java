@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/auth/auth.h>
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/string.h>
@@ -238,6 +239,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
     extern void s_cache_event_loop_group(JNIEnv *);
+    extern void s_cache_credentials_provider_methods(JNIEnv *);
 
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
@@ -249,12 +251,14 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);
+    s_cache_credentials_provider_methods(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)
 #endif
 
 static void s_jni_atexit(void) {
+    aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
     aws_jni_cleanup_logging();
@@ -279,6 +283,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
+    aws_auth_library_init(allocator);
 
     s_cache_jni_classes(env);
 

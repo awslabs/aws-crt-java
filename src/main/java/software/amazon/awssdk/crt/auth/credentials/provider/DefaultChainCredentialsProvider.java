@@ -18,36 +18,34 @@ import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 
-public class DefaultChainCredentialsProviderBuilder {
+public class DefaultChainCredentialsProvider extends CredentialsProvider {
+    public class DefaultChainCredentialsProviderBuilder {
 
-    private ClientBootstrap clientBootstrap;
+        private ClientBootstrap clientBootstrap;
 
-    public DefaultChainCredentialsProviderBuilder() {}
+        public DefaultChainCredentialsProviderBuilder() {}
 
-    public DefaultChainCredentialsProviderBuilder withClientBoostrap(ClientBootstrap clientBootstrap) {
-        this.clientBootstrap = clientBootstrap;
+        public DefaultChainCredentialsProviderBuilder withClientBoostrap(ClientBootstrap clientBootstrap) {
+            this.clientBootstrap = clientBootstrap;
 
-        return this;
+            return this;
+        }
+
+        public CredentialsProvider build() {
+            return new DefaultChainCredentialsProvider(clientBootstrap);
+        }
     }
 
-    public CredentialsProvider build() {
-        long providerHandle = defaultChainCredentialsProviderNew(clientBootstrap.native_ptr());
-
-        if (providerHandle == 0) {
-            return null;
-        }
-
-        CredentialsProvider provider = new CredentialsProvider(providerHandle);
-        if (provider != null) {
-            provider.addReferenceTo(clientBootstrap);
-        }
-
-        return provider;
+    public DefaultChainCredentialsProvider(ClientBootstrap clientBootstrap) {
+        super();
+        long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());
+        acquireNativeHandle(nativeHandle);
+        addReferenceTo(clientBootstrap);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long defaultChainCredentialsProviderNew(long bootstrapHandle);
+    private static native long defaultChainCredentialsProviderNew(DefaultChainCredentialsProvider provider, long bootstrapHandle);
 }

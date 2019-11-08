@@ -728,7 +728,6 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     struct aws_byte_cursor pinned_payload = aws_byte_cursor_from_buf(&pub_ack->buffer);
     struct aws_byte_cursor pinned_topic = aws_byte_cursor_advance(&pinned_payload, topic.len);
 
-
     uint16_t msg_id = aws_mqtt_client_connection_publish(
         connection->client_connection, &pinned_topic, qos, retain, &pinned_payload, s_on_op_complete, pub_ack);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);

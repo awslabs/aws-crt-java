@@ -94,24 +94,21 @@ public class TlsContextOptionsTest {
         CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            for (TlsVersions tlsVersion: TlsContextOptions.TlsVersions.values()) {
-                options.setMinimumTlsVersion(tlsVersion);
-            }
-
-            options.setMinimumTlsVersion(TlsVersions.TLS_VER_SYS_DEFAULTS);
-
-            for (TlsCipherPreference pref: TlsCipherPreference.values()) {
+            for (TlsCipherPreference pref : TlsCipherPreference.values()) {
                 if (TlsContextOptions.isCipherPreferenceSupported(pref)) {
                     options.setCipherPreference(pref);
                 }
             }
-
+            Assert.assertNotEquals(0, options.getNativeHandle());
+        }
+        
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             boolean exceptionThrown = false;
 
             try {
                 options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06);
-                options.setMinimumTlsVersion(TlsVersions.TLSv1_2);
-                Assert.fail();
+                options.minTlsVersion = TlsVersions.TLSv1_2;
+                Assert.assertNotEquals(0, options.getNativeHandle());
             } catch (IllegalArgumentException e) {
                 exceptionThrown = true;
             }

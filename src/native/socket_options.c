@@ -32,7 +32,14 @@
 #endif
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(JNIEnv *env, jclass jni_class, jint domain, jint type, jint connect_timeout_ms, jint keep_alive_interval_secs, jint keep_alive_timeout_secs) {
+jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
+    JNIEnv *env,
+    jclass jni_class,
+    jint domain,
+    jint type,
+    jint connect_timeout_ms,
+    jint keep_alive_interval_secs,
+    jint keep_alive_timeout_secs) {
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =

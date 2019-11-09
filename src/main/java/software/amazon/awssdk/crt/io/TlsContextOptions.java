@@ -14,7 +14,9 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.util.ArrayList;
 import java.util.IllegalFormatException;
+import java.util.List;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -58,15 +60,76 @@ public final class TlsContextOptions extends CrtResource {
         int getValue() { return version; }
     }
 
-    private TlsVersions tlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
-    private TlsCipherPreference tlsCipherPreference = TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT;
+    /**
+     * Sets the minimum acceptable TLS version that the {@link TlsContext} will
+     * allow. Not compatible with setCipherPreference() API.
+     *
+     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS 
+     * as this will update if the OS TLS is updated
+     */
+    public TlsVersions minTlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
+    /**
+     * Sets the TLS Cipher Preferences that can be negotiated and used during the
+     * TLS Connection. Not compatible with setMinimumTlsVersion() API.
+     *
+     */
+    public TlsCipherPreference tlsCipherPreference = TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT;
+    /**
+     * Sets the ALPN protocol list that will be provided when a TLS connection
+     * starts e.g. "x-amzn-mqtt-ca"
+     */
+    public List<String> alpnList = new ArrayList<>();
+    /**
+     * Set whether or not the peer should be verified. Default is true for clients,
+     * and false for servers. If you are in a development or debugging environment,
+     * you can disable this to avoid or diagnose trust store issues. This should
+     * always be true on clients in the wild. If you set this to true on a server,
+     * it will validate every client connection.
+     */
+    public boolean verifyPeer = false;
+
+    private String certificate;
+    private String privateKey;
+    private String certificatePath;
+    private String privateKeyPath;
+    private String caRoot;
+    private String caFile;
+    private String caDir;
+    private String pkcs12Path;
+    private String pkcs12Password;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
      * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
     private TlsContextOptions() throws CrtRuntimeException {
-        acquireNativeHandle(tlsContextOptionsNew());
+        
+    }
+
+    @Override
+    public long getNativeHandle() {
+        if (super.getNativeHandle() == 0) {
+            if (tlsCipherPreference != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT
+                    && minTlsVersion != TlsVersions.TLS_VER_SYS_DEFAULTS) {
+                throw new IllegalStateException("tlsCipherPreference and minTlsVersion are mutually exclusive");
+            }
+            acquireNativeHandle(tlsContextOptionsNew(
+                minTlsVersion.getValue(),
+                tlsCipherPreference.getValue(),
+                alpnList.size() > 0 ? String.join(";", alpnList) : null,
+                certificate,
+                privateKey,
+                certificatePath,
+                privateKeyPath,
+                caRoot,
+                caFile,
+                caDir,
+                verifyPeer,
+                pkcs12Path,
+                pkcs12Password
+            ));
+        }
+        return super.getNativeHandle();
     }
 
     /**
@@ -86,48 +149,16 @@ public final class TlsContextOptions extends CrtResource {
         }
     }
 
-    /**
-     * Sets the minimum acceptable TLS version that the {@link TlsContext} will allow. Not compatible with
-     * setCipherPreference() API.
-     *
-     * @param version Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
-     * as this will update if the OS TLS is updated
-     */
-    public void setMinimumTlsVersion(TlsVersions version) {
-        if (this.tlsCipherPreference != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT && version != TlsVersions.TLS_VER_SYS_DEFAULTS) {
-            throw new IllegalArgumentException("Currently only setMinimumTlsVersion() or setCipherPreference() may be used, not both.");
-        }
-
-        this.tlsVersion = version;
-        tlsContextOptionsSetMinimumTlsVersion(getNativeHandle(), version.getValue());
-    }
-
-    /**
-     * Sets the ALPN protocol list that will be provided when a TLS connection
-     * starts
-     * @param alpn The ALPN protocol to use, e.g. "x-amzn-mqtt-ca"
-     */
-    public void setAlpnList(String alpn) {
-        tlsContextOptionsSetAlpn(getNativeHandle(), alpn);
-    }
-
-    /**
-     * Sets the TLS Cipher Preferences that can be negotiated and used during the TLS Connection. Not compatible with
-     * setMinimumTlsVersion() API.
-     *
-     * @param cipherPref The Cipher Preference to use
-     */
     public void setCipherPreference(TlsCipherPreference cipherPref) {
         if(!isCipherPreferenceSupported(cipherPref)) {
             throw new IllegalArgumentException("TlsCipherPreference is not supported on this platform: " + cipherPref.name());
         }
 
-        if (this.tlsVersion != TlsVersions.TLS_VER_SYS_DEFAULTS && cipherPref != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT) {
+        if (this.minTlsVersion != TlsVersions.TLS_VER_SYS_DEFAULTS && cipherPref != TlsCipherPreference.TLS_CIPHER_SYSTEM_DEFAULT) {
             throw new IllegalArgumentException("Currently only setMinimumTlsVersion() or setCipherPreference() may be used, not both.");
         }
 
         this.tlsCipherPreference = cipherPref;
-        tlsContextOptionsSetCipherPreference(getNativeHandle(), cipherPref.getValue());
     }
 
     /**
@@ -136,7 +167,8 @@ public final class TlsContextOptions extends CrtResource {
      * @param privateKeyPath Path to PEM format private key
      */
     public void initMTLSFromPath(String certificatePath, String privateKeyPath) {
-        tlsContextOptionsInitMTLSFromPath(getNativeHandle(), certificatePath, privateKeyPath);
+        this.certificatePath = certificatePath;
+        this.privateKeyPath = privateKeyPath;
     }
 
     /**
@@ -148,13 +180,11 @@ public final class TlsContextOptions extends CrtResource {
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
      */
     public void initMTLS(String certificate, String privateKey) throws IllegalArgumentException {
-        certificate = PemUtils.cleanUpPem(certificate);
+        this.certificate = PemUtils.cleanUpPem(certificate);
         PemUtils.sanityCheck(certificate, 1, "CERTIFICATE");
 
-        privateKey = PemUtils.cleanUpPem(privateKey);
+        this.privateKey = PemUtils.cleanUpPem(privateKey);
         PemUtils.sanityCheck(privateKey, 1, "PRIVATE KEY");
-
-        tlsContextOptionsInitMTLS(getNativeHandle(), certificate, privateKey);
     }
 
     /**
@@ -163,18 +193,13 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Password PKCS12 password
      */
     public void initMTLSPkcs12(String pkcs12Path, String pkcs12Password) {
-        tlsContextOptionsInitMTLSPkcs12FromPath(getNativeHandle(), pkcs12Path, pkcs12Password);
-    }
-
-    /**
-     * Set whether or not the peer should be verified. Default is true for clients, and false for servers.
-     * If you are in a development or debugging environment, you can disable this to avoid or diagnose trust
-     * store issues. This should always be true on clients in the wild.
-     * If you set this to true on a server, it will validate every client connection.
-     * @param verify true to verify peers, false to skip verification
-     */
-    public void setVerifyPeer(boolean verify) {
-        tlsContextOptionsSetVerifyPeer(getNativeHandle(), verify);
+        if (this.certificate != null || this.privateKey != null || this.certificatePath != null
+                || this.privateKeyPath != null) {
+            throw new IllegalArgumentException(
+                    "PKCS#12 and MTLS via certificate/private key pair are mutually exclusive");
+        }
+        this.pkcs12Path = pkcs12Path;
+        this.pkcs12Password = pkcs12Password;
     }
 
     /**
@@ -200,7 +225,11 @@ public final class TlsContextOptions extends CrtResource {
      * @param caFile Path to the root certificate. Must be in PEM format.
      */
     public void overrideDefaultTrustStoreFromPath(String caPath, String caFile) {
-        tlsContextOptionsOverrideDefaultTrustStoreFromPath(getNativeHandle(), caFile, caPath);
+        if (this.caRoot != null) {
+            throw new IllegalArgumentException("Certificate authority is already specified via PEM buffer");
+        }
+        this.caDir = caPath;
+        this.caFile = caFile;
     }
 
     /**
@@ -209,19 +238,20 @@ public final class TlsContextOptions extends CrtResource {
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      */
     public void overrideDefaultTrustStore(String caRoot) throws IllegalArgumentException {
-        caRoot = PemUtils.cleanUpPem(caRoot);
+        if (this.caFile != null || this.caDir != null) {
+            throw new IllegalArgumentException("Certificate authority is already specified via path(s)");
+        }
+        this.caRoot = PemUtils.cleanUpPem(caRoot);
         // 7 certs in the chain is the default supported by s2n:
         // https://github.com/awslabs/s2n/blob/master/tls/s2n_x509_validator.c#L53
-        PemUtils.sanityCheck(caRoot, 7, "CERTIFICATE");
-        tlsContextOptionsOverrideDefaultTrustStore(getNativeHandle(), caRoot);
+        PemUtils.sanityCheck(this.caRoot, 7, "CERTIFICATE");
     }
 
     /**
      * Helper which creates a default set of TLS options for the current platform
      * @return A default configured set of options for a TLS client connection
-     * @throws CrtRuntimeException @see TlsContextOptions.TlsContextOptions()
      */
-    public static TlsContextOptions createDefaultClient() throws CrtRuntimeException {
+    public static TlsContextOptions createDefaultClient() {
         return new TlsContextOptions();
     }
 
@@ -229,11 +259,10 @@ public final class TlsContextOptions extends CrtResource {
      * Helper which creates a default set of TLS options for the current platform
      * 
      * @return A default configured set of options for a TLS server connection
-     * @throws CrtRuntimeException @see TlsContextOptions.TlsContextOptions()
      */
-    public static TlsContextOptions createDefaultServer() throws CrtRuntimeException {
+    public static TlsContextOptions createDefaultServer() {
         TlsContextOptions options = new TlsContextOptions();
-        options.setVerifyPeer(false);
+        options.verifyPeer = false;
         return options;
     }
 
@@ -290,40 +319,72 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     public TlsContextOptions withMinimumTlsVersion(TlsVersions version) {
-        setMinimumTlsVersion(version);
+        minTlsVersion = version;
         return this;
     }
 
     public TlsContextOptions withAlpnList(String alpnList) {
-        setAlpnList(alpnList);
+        String[] parts = alpnList.split(";");
+        for (String part : parts) {
+            this.alpnList.add(part);
+        }
         return this;
+    }
+
+    public TlsContextOptions withMtls(String certificate, String privateKey) {
+        this.initMTLS(certificate, privateKey);
+        return this;
+    }
+
+    public TlsContextOptions withMtlsFromPath(String certificatePath, String privateKeyPath) {
+        this.initMTLSFromPath(certificatePath, privateKeyPath);
+        return this;
+    }
+
+    public TlsContextOptions withCertificateAuthority(String caRoot) {
+        this.overrideDefaultTrustStore(caRoot);
+        return this;
+    }
+
+    public TlsContextOptions withCertificateAuthorityFromPath(String caDirPath, String caFilePath) {
+        this.overrideDefaultTrustStoreFromPath(caDirPath, caFilePath);
+        return this;
+    }
+
+    public TlsContextOptions withPkcs12(String pkcs12Path, String pkcs12Password) {
+        this.initMTLSPkcs12(pkcs12Path, pkcs12Password);
+        return this;
+    }
+
+    public TlsContextOptions withVerifyPeer(boolean verify) {
+        this.verifyPeer = verify;
+        return this;
+    }
+
+    public TlsContextOptions withVerifyPeer() {
+        return this.withVerifyPeer(true);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long tlsContextOptionsNew() throws CrtRuntimeException;
+    private static native long tlsContextOptionsNew(
+                int minTlsVersion,
+                int cipherPref,
+                String alpn,
+                String certificate,
+                String privateKey,
+                String certificatePath,
+                String privateKeyPath,
+                String caRoot,
+                String caFile,
+                String caDir,
+                boolean verifyPeer,
+                String pkcs12Path,
+                String pkcs12Password
+            );
 
     private static native void tlsContextOptionsDestroy(long elg);
-    
-    private static native void tlsContextOptionsSetMinimumTlsVersion(long tls, int version);
-
-    private static native void tlsContextOptionsOverrideDefaultTrustStoreFromPath(long tls, String ca_file,
-            String ca_path);
-    
-    private static native void tlsContextOptionsOverrideDefaultTrustStore(long tls, String caRoot);
-
-    private static native void tlsContextOptionsSetAlpn(long tls, String alpn);
-
-    private static native void tlsContextOptionsSetCipherPreference(long tls, int cipherPref);
-
-    private static native void tlsContextOptionsInitMTLSFromPath(long tls, String cert_path, String key_path);
-
-    private static native void tlsContextOptionsInitMTLS(long tls, String cert, String key);
-    
-    private static native void tlsContextOptionsInitMTLSPkcs12FromPath(long tls, String pkcs12_path, String pkcs12_password);
-
-    private static native void tlsContextOptionsSetVerifyPeer(long tls, boolean verify);
 
     private static native boolean tlsContextOptionsIsAlpnAvailable();
 

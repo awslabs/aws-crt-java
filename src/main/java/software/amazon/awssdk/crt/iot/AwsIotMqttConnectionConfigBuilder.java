@@ -147,7 +147,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      */
     AwsIotMqttConnectionConfigBuilder withWebsocket() {
         this.params.useWebsocket = true;
-        this.tlsOptions.setAlpnList("");
+        this.tlsOptions.alpnList.clear();
         this.params.port = 443;
         return this;
     }

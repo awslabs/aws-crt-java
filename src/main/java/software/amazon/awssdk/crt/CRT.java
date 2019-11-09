@@ -16,9 +16,6 @@ package software.amazon.awssdk.crt;
 
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
 import software.amazon.awssdk.crt.Log;

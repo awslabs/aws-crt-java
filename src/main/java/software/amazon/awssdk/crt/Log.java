@@ -157,6 +157,8 @@ public class Log {
 
                 initLoggingToFile(level.getValue(), filenameString);
                 break;
+            case None:
+                break;
         }
     }
 

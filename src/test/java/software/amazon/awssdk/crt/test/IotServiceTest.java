@@ -22,6 +22,8 @@ import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
@@ -41,6 +43,7 @@ public class IotServiceTest extends MqttClientConnectionFixture {
 
     @Test
     public void testIotService() {
+        Log.initLoggingToStderr(LogLevel.Trace);
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect( true, (short)0);
 

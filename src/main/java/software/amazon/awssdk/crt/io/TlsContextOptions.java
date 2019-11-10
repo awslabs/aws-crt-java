@@ -326,6 +326,7 @@ public final class TlsContextOptions extends CrtResource {
     public TlsContextOptions withAlpnList(String alpnList) {
         String[] parts = alpnList.split(";");
         for (String part : parts) {
+            System.out.println("ALPN: " + part);
             this.alpnList.add(part);
         }
         return this;

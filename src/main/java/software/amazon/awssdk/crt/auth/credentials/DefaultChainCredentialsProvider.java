@@ -12,32 +12,47 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package software.amazon.awssdk.crt.auth.credentials.provider;
+package software.amazon.awssdk.crt.auth.credentials;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 
+/**
+ * A class that wraps the default AWS credentials provider chain
+ */
 public class DefaultChainCredentialsProvider extends CredentialsProvider {
-    public class DefaultChainCredentialsProviderBuilder {
+
+    /**
+     * A simple builder class for the default credentials provider chain and its options
+     * Does not add reference to CRT resources
+     */
+    static public class DefaultChainCredentialsProviderBuilder {
 
         private ClientBootstrap clientBootstrap;
 
         public DefaultChainCredentialsProviderBuilder() {}
 
-        public DefaultChainCredentialsProviderBuilder withClientBoostrap(ClientBootstrap clientBootstrap) {
+        public DefaultChainCredentialsProviderBuilder withClientBootstrap(ClientBootstrap clientBootstrap) {
             this.clientBootstrap = clientBootstrap;
 
             return this;
         }
 
-        public CredentialsProvider build() {
-            return new DefaultChainCredentialsProvider(clientBootstrap);
+        public ClientBootstrap getClientBootstrap() { return clientBootstrap; }
+
+        public DefaultChainCredentialsProvider build() {
+            return new DefaultChainCredentialsProvider(this);
         }
     }
 
-    public DefaultChainCredentialsProvider(ClientBootstrap clientBootstrap) {
+    private DefaultChainCredentialsProvider(DefaultChainCredentialsProviderBuilder builder) {
         super();
+        ClientBootstrap clientBootstrap = builder.getClientBootstrap();
+        if (clientBootstrap == null) {
+            throw new IllegalArgumentException("DefaultChainCredentialsProvider: clientBootstrap must be non-null");
+        }
+
         long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);

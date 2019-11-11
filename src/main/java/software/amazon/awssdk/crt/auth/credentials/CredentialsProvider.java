@@ -16,13 +16,11 @@ package software.amazon.awssdk.crt.auth.credentials;
 
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 
 /**
- *
+ * A base class that represents a source of AWS credentials
  */
 public class CredentialsProvider extends CrtResource implements ICredentialsProvider {
 
@@ -34,12 +32,33 @@ public class CredentialsProvider extends CrtResource implements ICredentialsProv
      * Request credentials from the provider
      * @return A Future for Credentials that will be completed when they are acquired.
      */
-    public CompletableFuture<Credentials> getCredentials() throws CrtRuntimeException {
-        return null;
+    public CompletableFuture<Credentials> getCredentials() {
+        CompletableFuture<Credentials> future = new CompletableFuture<>();
+        try {
+            credentialsProviderGetCredentials(this, future, getNativeHandle());
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+
+        return future;
     }
 
     /**
-     *
+     * Completion callback for credentials fetching.  Alternatively the future could have been completed
+     * at the JNI layer.
+     * @param future the future that the credentials should be applied to
+     * @param credentials the fetched credentials, if successful
+     */
+    private void onGetCredentialsComplete(CompletableFuture<Credentials> future, Credentials credentials) {
+        if (credentials != null) {
+            future.complete(credentials);
+        } else {
+            future.completeExceptionally(new RuntimeException("Failed to get a valid set of credentials"));
+        }
+    }
+
+    /**
+     * Begins the release process of the provider's native handle
      */
     @Override
     protected void releaseNativeHandle() {
@@ -71,5 +90,6 @@ public class CredentialsProvider extends CrtResource implements ICredentialsProv
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void credentialsProviderDestroy(CredentialsProvider thisObj, long ncp);
+    private static native void credentialsProviderDestroy(CredentialsProvider thisObj, long nativeHandle);
+    private static native void credentialsProviderGetCredentials(CredentialsProvider thisObj, CompletableFuture<Credentials> future, long nativeHandle);
 }

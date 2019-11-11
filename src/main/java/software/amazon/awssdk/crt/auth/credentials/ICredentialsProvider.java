@@ -26,6 +26,6 @@ public interface ICredentialsProvider {
      * Request credentials from the provider
      * @return A Future for Credentials that will be completed when they are acquired.
      */
-    CompletableFuture<Credentials> getCredentials() throws CrtRuntimeException;
+    CompletableFuture<Credentials> getCredentials();
 
 }

@@ -14,19 +14,25 @@
  */
 package software.amazon.awssdk.crt.auth.credentials;
 
+/**
+ * A class representing a set of AWS credentials.
+ */
 public class Credentials {
 
-    private final String accessKeyId;
-    private final String secretAccessKey;
-    private final String sessionToken;
+    /* settable from native */
+    private byte[] accessKeyId;
+    private byte[] secretAccessKey;
+    private byte[] sessionToken;
 
-    public Credentials(String accessKeyId, String secretAccessKey, String sessionToken) {
+    public Credentials() {}
+
+    public Credentials(byte[] accessKeyId, byte[] secretAccessKey, byte[] sessionToken) {
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
         this.sessionToken = sessionToken;
     }
 
-    public String getAccessKeyId() { return accessKeyId; }
-    public String getSecretAccessKey() { return secretAccessKey; }
-    public String getSessionToken() { return sessionToken; }
+    public byte[] getAccessKeyId() { return accessKeyId; }
+    public byte[] getSecretAccessKey() { return secretAccessKey; }
+    public byte[] getSessionToken() { return sessionToken; }
 }

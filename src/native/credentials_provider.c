@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include <aws/auth/credentials.h>
+#include <aws/common/string.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -31,15 +32,55 @@
 #    endif
 #endif
 
-/* callback methods needed in EventLoopGroup */
-static struct { jmethodID onShutdownComplete; } s_credentials_provider_methods;
+/* callback methods and fields needed */
+static struct {
+    jmethodID on_shutdown_complete_method_id;
+    jmethodID on_get_credentials_complete_method_id;
+} s_credentials_provider_properties;
 
-void s_cache_credentials_provider_methods(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/CredentialsProvider");
-    AWS_FATAL_ASSERT(cls);
+static struct {
+    jclass credentials_class;
+    jmethodID constructor_method_id;
+    jfieldID access_key_id_field_id;
+    jfieldID secret_access_key_field_id;
+    jfieldID session_token_field_id;
+} s_credentials_properties;
 
-    s_credentials_provider_methods.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(s_credentials_provider_methods.onShutdownComplete);
+void s_cache_credentials_ids(JNIEnv *env) {
+    jclass provider_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CredentialsProvider");
+    AWS_FATAL_ASSERT(provider_class);
+
+    s_credentials_provider_properties.on_shutdown_complete_method_id =
+        (*env)->GetMethodID(env, provider_class, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(s_credentials_provider_properties.on_shutdown_complete_method_id);
+
+    s_credentials_provider_properties.on_get_credentials_complete_method_id = (*env)->GetMethodID(
+        env,
+        provider_class,
+        "onGetCredentialsComplete",
+        "(Ljava/util/concurrent/CompletableFuture;Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
+    AWS_FATAL_ASSERT(s_credentials_provider_properties.on_get_credentials_complete_method_id);
+
+    s_credentials_properties.credentials_class =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/Credentials");
+    AWS_FATAL_ASSERT(s_credentials_properties.credentials_class);
+    s_credentials_properties.credentials_class = (*env)->NewGlobalRef(env, s_credentials_properties.credentials_class);
+
+    s_credentials_properties.constructor_method_id =
+        (*env)->GetMethodID(env, s_credentials_properties.credentials_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(s_credentials_properties.constructor_method_id);
+
+    s_credentials_properties.access_key_id_field_id =
+        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "accessKeyId", "[B");
+    AWS_FATAL_ASSERT(s_credentials_properties.access_key_id_field_id);
+
+    s_credentials_properties.secret_access_key_field_id =
+        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "secretAccessKey", "[B");
+    AWS_FATAL_ASSERT(s_credentials_properties.secret_access_key_field_id);
+
+    s_credentials_properties.session_token_field_id =
+        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "sessionToken", "[B");
+    AWS_FATAL_ASSERT(s_credentials_properties.session_token_field_id);
 }
 
 struct aws_credentials_provider_shutdown_callback_data {
@@ -51,35 +92,33 @@ struct aws_credentials_provider_shutdown_callback_data {
 static void s_on_shutdown_complete(void *user_data) {
     struct aws_credentials_provider_shutdown_callback_data *callback_data = user_data;
 
-    AWS_LOGF_DEBUG(AWS_LS_AUTH_CREDENTIALS_PROVIDER, "Credentials provider shutdown complete");
+    AWS_LOGF_DEBUG(AWS_LS_AUTH_CREDENTIALS_PROVIDER, "Credentials providers shutdown complete");
 
-    // Tell the Java credentials provider that shutdown is done.  This lets it release its references.
-    JavaVM *jvm = callback_data->jvm;
-    JNIEnv *env = NULL;
-    /* fetch the env manually, rather than through the helper which will install an exit callback */
-    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
+    // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
     (*env)->CallVoidMethod(
-        env, callback_data->java_credentials_provider, s_credentials_provider_methods.onShutdownComplete);
+        env,
+        callback_data->java_credentials_provider,
+        s_credentials_provider_properties.on_shutdown_complete_method_id);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
-    // Remove the ref that was probably keeping the Java event loop group alive.
+    // Remove the global ref added at the beginning of shutdown
     (*env)->DeleteGlobalRef(env, callback_data->java_credentials_provider);
 
     // We're done with this callback data, free it.
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, callback_data);
-
-    (*jvm)->DetachCurrentThread(jvm);
 }
 
 JNIEXPORT jlong JNICALL
-    Java_software_amazon_awssdk_crt_auth_credentials_provider_StaticCredentialsProviderBuilder_staticCredentialsProviderNew(
+    Java_software_amazon_awssdk_crt_auth_credentials_StaticCredentialsProvider_staticCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
         jobject java_credentials_provider,
-        jstring access_key_id,
-        jstring secret_access_key,
-        jstring session_token) {
+        jbyteArray access_key_id,
+        jbyteArray secret_access_key,
+        jbyteArray session_token) {
 
     (void)jni_class;
 
@@ -94,30 +133,34 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_static_options options;
     AWS_ZERO_STRUCT(options);
-    options.access_key_id = aws_jni_byte_cursor_from_jstring_acquire(env, access_key_id);
-    options.secret_access_key = aws_jni_byte_cursor_from_jstring_acquire(env, secret_access_key);
+    options.access_key_id = aws_jni_byte_cursor_from_jbyteArray_acquire(env, access_key_id);
+    options.secret_access_key = aws_jni_byte_cursor_from_jbyteArray_acquire(env, secret_access_key);
     if (session_token) {
-        options.session_token = aws_jni_byte_cursor_from_jstring_acquire(env, session_token);
+        options.session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, session_token);
     }
     options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
     options.shutdown_options.shutdown_user_data = callback_data;
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_static(allocator, &options);
-
-    aws_jni_byte_cursor_from_jstring_release(env, access_key_id, options.access_key_id);
-    aws_jni_byte_cursor_from_jstring_release(env, secret_access_key, options.secret_access_key);
-
-    if (session_token) {
-        aws_jni_byte_cursor_from_jstring_release(env, session_token, options.session_token);
+    if (provider == NULL) {
+        aws_mem_release(allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
+    } else {
+        callback_data->provider = provider;
     }
 
-    callback_data->provider = provider;
+    aws_jni_byte_cursor_from_jbyteArray_release(env, access_key_id, options.access_key_id);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, secret_access_key, options.secret_access_key);
+
+    if (session_token) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, session_token, options.session_token);
+    }
 
     return (jlong)provider;
 }
 
 JNIEXPORT jlong JNICALL
-    Java_software_amazon_awssdk_crt_auth_credentials_provider_DefaultChainCredentialsProviderBuilder_defaultChainCredentialsProviderNew(
+    Java_software_amazon_awssdk_crt_auth_credentials_DefaultChainCredentialsProvider_defaultChainCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
         jobject java_credentials_provider,
@@ -141,14 +184,18 @@ JNIEXPORT jlong JNICALL
     options.shutdown_options.shutdown_user_data = callback_data;
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_chain_default(allocator, &options);
-
-    callback_data->provider = provider;
+    if (provider == NULL) {
+        aws_mem_release(allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
+    } else {
+        callback_data->provider = provider;
+    }
 
     return (jlong)provider;
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_auth_CredentialsProvider_credentialsProviderDestroy(
+void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderDestroy(
     JNIEnv *env,
     jclass jni_cp,
     jobject cp_jobject,
@@ -162,6 +209,114 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_CredentialsProvider_credential
     }
 
     aws_credentials_provider_release(provider);
+}
+
+struct aws_credentials_provider_get_credentials_callback_data {
+    JavaVM *jvm;
+    struct aws_credentials_provider *provider;
+    jobject java_credentials_provider;
+    jobject java_credentials_future;
+};
+
+static void s_on_get_credentials_callback(struct aws_credentials *credentials, void *user_data) {
+    struct aws_credentials_provider_get_credentials_callback_data *callback_data = user_data;
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    jobject java_credentials = NULL;
+    jbyteArray access_key_id = NULL;
+    jbyteArray secret_access_key = NULL;
+    jbyteArray session_token = NULL;
+
+    if (credentials) {
+        java_credentials = (*env)->NewObject(
+            env, s_credentials_properties.credentials_class, s_credentials_properties.constructor_method_id);
+        if (java_credentials != NULL) {
+            struct aws_byte_cursor access_key_id_cursor = aws_byte_cursor_from_string(credentials->access_key_id);
+            access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
+
+            struct aws_byte_cursor secret_access_key_cursor =
+                aws_byte_cursor_from_string(credentials->secret_access_key);
+            secret_access_key = aws_jni_byte_array_from_cursor(env, &secret_access_key_cursor);
+
+            if (credentials->session_token != NULL) {
+                struct aws_byte_cursor session_token_cursor = aws_byte_cursor_from_string(credentials->session_token);
+                session_token = aws_jni_byte_array_from_cursor(env, &session_token_cursor);
+            }
+
+            (*env)->SetObjectField(
+                env, java_credentials, s_credentials_properties.access_key_id_field_id, access_key_id);
+            (*env)->SetObjectField(
+                env, java_credentials, s_credentials_properties.secret_access_key_field_id, secret_access_key);
+            if (session_token != NULL) {
+                (*env)->SetObjectField(
+                    env, java_credentials, s_credentials_properties.session_token_field_id, session_token);
+            }
+        }
+    }
+
+    (*env)->CallVoidMethod(
+        env,
+        callback_data->java_credentials_provider,
+        s_credentials_provider_properties.on_get_credentials_complete_method_id,
+        callback_data->java_credentials_future,
+        java_credentials);
+
+    if (java_credentials != NULL) {
+        (*env)->DeleteLocalRef(env, access_key_id);
+        (*env)->DeleteLocalRef(env, secret_access_key);
+        if (session_token) {
+            (*env)->DeleteLocalRef(env, session_token);
+        }
+        (*env)->DeleteLocalRef(env, java_credentials);
+    }
+
+    (*env)->DeleteGlobalRef(env, callback_data->java_credentials_provider);
+    (*env)->DeleteGlobalRef(env, callback_data->java_credentials_future);
+
+    aws_credentials_provider_release(callback_data->provider);
+
+    // We're done with this callback data, free it.
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderGetCredentials(
+    JNIEnv *env,
+    jclass jni_cp,
+    jobject java_credentials_provider,
+    jobject java_credentials_future,
+    jlong native_credentials_provider) {
+    (void)jni_cp;
+    struct aws_credentials_provider *provider = (struct aws_credentials_provider *)native_credentials_provider;
+    if (!provider) {
+        aws_jni_throw_runtime_exception(
+            env, "CredentialsProvider.credentialsProviderGetCredentials: instance should be non-null");
+        return;
+    }
+
+    if (java_credentials_provider == NULL || java_credentials_future == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "CredentialsProvider.credentialsProviderGetCredentials: called with null parameters");
+        return;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_get_credentials_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_get_credentials_callback_data));
+    callback_data->java_credentials_provider = (*env)->NewGlobalRef(env, java_credentials_provider);
+    callback_data->java_credentials_future = (*env)->NewGlobalRef(env, java_credentials_future);
+    callback_data->provider = provider;
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    aws_credentials_provider_acquire(provider);
+
+    if (aws_credentials_provider_get_credentials(provider, s_on_get_credentials_callback, callback_data)) {
+        aws_jni_throw_runtime_exception(env, "CredentialsProvider.credentialsProviderGetCredentials: call failure");
+        aws_credentials_provider_release(provider);
+    }
 }
 
 #if UINTPTR_MAX == 0xffffffff

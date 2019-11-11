@@ -15,14 +15,20 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.lang.InterruptedException;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.providers.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.providers.DefaultChainCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 
 public class CredentialsProviderTest {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -30,17 +36,17 @@ public class CredentialsProviderTest {
     static private String SESSION_TOKEN = "session_token";
 
     public CredentialsProviderTest() {}
-    
+
     @Test
     public void testCreateDestroyStatic() {
-        StaticCredentialsProviderBuilder builder = new StaticCredentialsProviderBuilder();
-        builder.withAccessKeyId(ACCESS_KEY_ID);
-        builder.withSecretAccessKey(SECRET_ACCESS_KEY);
-        builder.withSessionToken(SESSION_TOKEN);
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
+        builder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
+        builder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
+        builder.withSessionToken(SESSION_TOKEN.getBytes());
 
         try (StaticCredentialsProvider provider = builder.build()) {
             assertNotNull(provider);
-            assertTrue(provider.getNativeHandle != 0);
+            assertTrue(provider.getNativeHandle() != 0);
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
@@ -49,14 +55,35 @@ public class CredentialsProviderTest {
     }
 
     @Test
+    public void testGetCredentialsStatic() {
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
+        builder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
+        builder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
+        builder.withSessionToken(SESSION_TOKEN.getBytes());
+
+        try (StaticCredentialsProvider provider = builder.build()) {
+            CompletableFuture<Credentials> future = provider.getCredentials();
+            Credentials credentials = future.get();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+
+        CrtResource.waitForNoResources();
+    }
+
+
+    @Test
     public void testCreateDestroyDefaultChain() {
-        try (ClientBootstrap bootstrap = new ClientBootstrap()) {
-            DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProviderBuilder();
+        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+            DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
             try (DefaultChainCredentialsProvider provider = builder.build()) {
                 assertNotNull(provider);
-                assertTrue(provider.getNativeHandle != 0);
+                assertTrue(provider.getNativeHandle() != 0);
             }
         } catch (Exception e) {
             fail(e.getMessage());
@@ -64,4 +91,26 @@ public class CredentialsProviderTest {
 
         CrtResource.waitForNoResources();
     }
+
+    @Test
+    public void testGetCredentialsDefaultChain() {
+        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+            DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
+            builder.withClientBootstrap(bootstrap);
+
+            try (DefaultChainCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                /*
+                 * This may or may not succeed depending on the test environment and setting up the environment to force the test
+                 * to always succeed or fail would mean modifying the environment from Java, which is gross.
+                 */
+                Credentials credentials = future.get();
+            }
+        } catch (Exception e) {
+            ;
+        } finally {
+            CrtResource.waitForNoResources();
+        }
+    }
+
 };

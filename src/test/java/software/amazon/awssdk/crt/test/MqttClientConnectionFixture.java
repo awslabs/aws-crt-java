@@ -121,7 +121,7 @@ public class MqttClientConnectionFixture {
         try (EventLoopGroup elg = new EventLoopGroup(1);
                 HostResolver hr = new HostResolver(elg);
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLSFromPath(pathToCert.toString(),
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(pathToCert.toString(),
                         pathToKey.toString())) {
 
             int port = TEST_PORT;

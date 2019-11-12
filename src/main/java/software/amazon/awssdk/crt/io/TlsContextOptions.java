@@ -166,7 +166,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param certificatePath Path to PEM format certificate
      * @param privateKeyPath Path to PEM format private key
      */
-    public void initMTLSFromPath(String certificatePath, String privateKeyPath) {
+    public void initMtlsFromPath(String certificatePath, String privateKeyPath) {
         this.certificatePath = certificatePath;
         this.privateKeyPath = privateKeyPath;
     }
@@ -179,7 +179,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param privateKey  PEM armored private key
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
      */
-    public void initMTLS(String certificate, String privateKey) throws IllegalArgumentException {
+    public void initMtls(String certificate, String privateKey) throws IllegalArgumentException {
         this.certificate = PemUtils.cleanUpPem(certificate);
         PemUtils.sanityCheck(certificate, 1, "CERTIFICATE");
 
@@ -192,7 +192,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Path Path to PKCS12 file
      * @param pkcs12Password PKCS12 password
      */
-    public void initMTLSPkcs12(String pkcs12Path, String pkcs12Password) {
+    public void initMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         if (this.certificate != null || this.privateKey != null || this.certificatePath != null
                 || this.privateKeyPath != null) {
             throw new IllegalArgumentException(
@@ -273,9 +273,10 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an MTLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLSFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
-        options.initMTLSFromPath(certificatePath, privateKeyPath);
+        options.initMtlsFromPath(certificatePath, privateKeyPath);
+        options.verifyPeer = true;
         return options;
     }
 
@@ -288,10 +289,11 @@ public final class TlsContextOptions extends CrtResource {
      * @throws CrtRuntimeException      @see #constructor()
      * @throws IllegalArgumentException If either PEM fails to parse
      */
-    public static TlsContextOptions createWithMTLS(String certificate, String privateKey)
+    public static TlsContextOptions createWithMtls(String certificate, String privateKey)
             throws CrtRuntimeException, IllegalArgumentException {
         TlsContextOptions options = new TlsContextOptions();
-        options.initMTLS(certificate, privateKey);
+        options.initMtls(certificate, privateKey);
+        options.verifyPeer = true;
         return options;
     }
 
@@ -302,10 +304,11 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for creating a PKCS12 TLS connection
      * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMTLSPkcs12(String pkcs12Path, String pkcs12Password)
+    public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password)
             throws CrtRuntimeException {
         TlsContextOptions options = new TlsContextOptions();
-        options.initMTLSPkcs12(pkcs12Path, pkcs12Password);
+        options.initMtlsPkcs12(pkcs12Path, pkcs12Password);
+        options.verifyPeer = true;
         return options;
     }
 
@@ -333,12 +336,12 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     public TlsContextOptions withMtls(String certificate, String privateKey) {
-        this.initMTLS(certificate, privateKey);
+        this.initMtls(certificate, privateKey);
         return this;
     }
 
     public TlsContextOptions withMtlsFromPath(String certificatePath, String privateKeyPath) {
-        this.initMTLSFromPath(certificatePath, privateKeyPath);
+        this.initMtlsFromPath(certificatePath, privateKeyPath);
         return this;
     }
 
@@ -352,8 +355,8 @@ public final class TlsContextOptions extends CrtResource {
         return this;
     }
 
-    public TlsContextOptions withPkcs12(String pkcs12Path, String pkcs12Password) {
-        this.initMTLSPkcs12(pkcs12Path, pkcs12Password);
+    public TlsContextOptions withMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
+        this.initMtlsPkcs12(pkcs12Path, pkcs12Password);
         return this;
     }
 

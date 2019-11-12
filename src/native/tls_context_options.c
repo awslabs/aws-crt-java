@@ -73,15 +73,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     AWS_FATAL_ASSERT(tls);
     aws_tls_ctx_options_init_default_client(&tls->options, aws_jni_get_allocator());
 
-    tls->options.minimum_tls_version = (enum aws_tls_versions)jni_min_tls_version;
-    tls->options.cipher_pref = (enum aws_tls_cipher_pref)jni_cipher_pref;
-    tls->options.verify_peer = jni_verify_peer != 0;
-
-    if (jni_alpn) {
-        tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
-        aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list));
-    }
-
+    /* Certs or paths will cause an init, which overwrites other fields, so do those first */
     if (jni_certificate && jni_private_key) {
         tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);
         tls->private_key = aws_jni_new_string_from_jstring(env, jni_private_key);
@@ -90,9 +82,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
 
         aws_tls_ctx_options_init_client_mtls(&tls->options, aws_jni_get_allocator(), &cert_cursor, &key_cursor);
-    }
-
-    if (jni_cert_path && jni_key_path) {
+    } else if (jni_cert_path && jni_key_path) {
         tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_cert_path);
         tls->private_key_path = aws_jni_new_string_from_jstring(env, jni_key_path);
         aws_tls_ctx_options_init_client_mtls_from_path(
@@ -102,7 +92,13 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_string_c_str(tls->private_key_path));
     }
 
-    if (jni_ca_filepath || jni_ca_dirpath) {
+    if (jni_ca) {
+        tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);
+        struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
+        if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
+        }
+    } else if (jni_ca_filepath || jni_ca_dirpath) {
         const char *ca_file = NULL;
         const char *ca_path = NULL;
         if (jni_ca_filepath) {
@@ -119,14 +115,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
     }
 
-    if (jni_ca) {
-        tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);
-        struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
-        if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
-        }
-    }
-
 #if defined(__APPLE__)
     if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
@@ -138,6 +126,17 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 #endif
     (void)jni_pkcs12_path;
     (void)jni_pkcs12_password;
+
+    /* apply the rest of the non-init settings */
+    tls->options.minimum_tls_version = (enum aws_tls_versions)jni_min_tls_version;
+    tls->options.cipher_pref = (enum aws_tls_cipher_pref)jni_cipher_pref;
+    tls->options.verify_peer = jni_verify_peer != 0;
+
+    if (jni_alpn) {
+        tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
+        aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list));
+    }
+
     return (jlong)tls;
 }
 

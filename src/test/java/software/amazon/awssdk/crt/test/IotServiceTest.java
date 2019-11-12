@@ -19,8 +19,6 @@ import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -31,9 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
 public class IotServiceTest extends MqttClientConnectionFixture {
-    @Rule
-    public Timeout testTimeout = Timeout.seconds(15);
-
     public IotServiceTest() {
     }
 

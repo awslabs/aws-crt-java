@@ -16,6 +16,7 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/string.h>
+#include <aws/common/system_info.h>
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
@@ -280,9 +281,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     (void)jni_crt_class;
 
     s_memory_tracing = jni_memtrace;
-#if !defined(ALLOC_TRACE_AVAILABLE)
-    s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
-#endif
+    void *stack[1];
+    if (0 == aws_backtrace(stack, 1)) {
+        s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
+    }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);

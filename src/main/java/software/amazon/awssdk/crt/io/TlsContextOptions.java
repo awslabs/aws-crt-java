@@ -149,6 +149,13 @@ public final class TlsContextOptions extends CrtResource {
         }
     }
 
+    @Override
+    public void close() {
+        if (!isNull()) {
+            super.close();
+        }
+    }
+
     public void setCipherPreference(TlsCipherPreference cipherPref) {
         if(!isCipherPreferenceSupported(cipherPref)) {
             throw new IllegalArgumentException("TlsCipherPreference is not supported on this platform: " + cipherPref.name());
@@ -252,7 +259,9 @@ public final class TlsContextOptions extends CrtResource {
      * @return A default configured set of options for a TLS client connection
      */
     public static TlsContextOptions createDefaultClient() {
-        return new TlsContextOptions();
+        TlsContextOptions options = new TlsContextOptions();
+        options.verifyPeer = true;
+        return options;
     }
 
     /**
@@ -329,7 +338,6 @@ public final class TlsContextOptions extends CrtResource {
     public TlsContextOptions withAlpnList(String alpnList) {
         String[] parts = alpnList.split(";");
         for (String part : parts) {
-            System.out.println("ALPN: " + part);
             this.alpnList.add(part);
         }
         return this;

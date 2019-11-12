@@ -41,7 +41,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
     public static AwsIotMqttConnectionConfigBuilder newMtlsBuilderFromPath(String certPath, String privateKeyPath) {
         AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
         builder.params.port = 8883;
-        builder.tlsOptions = TlsContextOptions.createWithMTLSFromPath(certPath, privateKeyPath);
+        builder.tlsOptions = TlsContextOptions.createWithMtlsFromPath(certPath, privateKeyPath);
         if (TlsContextOptions.isAlpnSupported()) {
             builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
         }
@@ -57,7 +57,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
     public static AwsIotMqttConnectionConfigBuilder newMtlsBuilder(String certificate, String privateKey) {
         AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
         builder.params.port = 8883;
-        builder.tlsOptions = TlsContextOptions.createWithMTLS(certificate, privateKey);
+        builder.tlsOptions = TlsContextOptions.createWithMtls(certificate, privateKey);
         if (TlsContextOptions.isAlpnSupported()) {
             builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
         }
@@ -73,6 +73,12 @@ public final class AwsIotMqttConnectionConfigBuilder {
     public static AwsIotMqttConnectionConfigBuilder newMtlsBuilder(byte[] certificate, byte[] privateKey)
             throws UnsupportedEncodingException {
         return newMtlsBuilder(new String(certificate, "UTF8"), new String(privateKey, "UTF8"));
+    }
+
+    public static AwsIotMqttConnectionConfigBuilder newMtlsPkcs12Builder(String pkcs12Path, String pkcs12Password) {
+        AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
+        builder.tlsOptions = TlsContextOptions.createWithMtlsPkcs12(pkcs12Path, pkcs12Password);
+        return builder;
     }
 
     /**

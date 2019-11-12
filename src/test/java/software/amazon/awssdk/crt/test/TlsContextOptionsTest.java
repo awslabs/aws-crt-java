@@ -108,7 +108,7 @@ public class TlsContextOptionsTest {
             try {
                 options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06);
                 options.minTlsVersion = TlsVersions.TLSv1_2;
-                Assert.assertNotEquals(0, options.getNativeHandle());
+                Assert.assertEquals(0, options.getNativeHandle()); // Will never get here
             } catch (IllegalArgumentException e) {
                 exceptionThrown = true;
             }
@@ -145,7 +145,7 @@ public class TlsContextOptionsTest {
     public void testMTLS() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.initMTLS(TEST_CERT, TEST_KEY);
+            options.initMtls(TEST_CERT, TEST_KEY);
             try (TlsContext tls = new TlsContext(options)) {
                 assertNotNull(tls);
             } catch (Exception ex) {

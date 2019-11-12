@@ -100,9 +100,8 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
-     * @throws CrtRuntimeException If the system is not able to allocate space for a native tls context options structure
      */
-    private TlsContextOptions() throws CrtRuntimeException {
+    private TlsContextOptions() {
         
     }
 
@@ -151,6 +150,7 @@ public final class TlsContextOptions extends CrtResource {
 
     @Override
     public void close() {
+        // It is perfectly acceptable for this to have never created a native resource
         if (!isNull()) {
             super.close();
         }
@@ -243,6 +243,7 @@ public final class TlsContextOptions extends CrtResource {
      * Helper function to provide a TlsContext-local trust store
      * 
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
+     * @throws IllegalArgumentException if the CA Root PEM file is malformed
      */
     public void overrideDefaultTrustStore(String caRoot) throws IllegalArgumentException {
         if (this.caFile != null || this.caDir != null) {
@@ -280,9 +281,8 @@ public final class TlsContextOptions extends CrtResource {
      * @param certificatePath Path to a PEM format certificate
      * @param privateKeyPath Path to a PEM format private key
      * @return A set of options for setting up an MTLS connection
-     * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) throws CrtRuntimeException {
+    public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) {
         TlsContextOptions options = new TlsContextOptions();
         options.initMtlsFromPath(certificatePath, privateKeyPath);
         options.verifyPeer = true;
@@ -295,11 +295,10 @@ public final class TlsContextOptions extends CrtResource {
      * @param certificate String containing a PEM format certificate
      * @param privateKey  String containing a PEM format private key
      * @return A set of options for setting up an MTLS connection
-     * @throws CrtRuntimeException      @see #constructor()
      * @throws IllegalArgumentException If either PEM fails to parse
      */
     public static TlsContextOptions createWithMtls(String certificate, String privateKey)
-            throws CrtRuntimeException, IllegalArgumentException {
+            throws IllegalArgumentException {
         TlsContextOptions options = new TlsContextOptions();
         options.initMtls(certificate, privateKey);
         options.verifyPeer = true;
@@ -311,10 +310,8 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Path The path to a PKCS12 file @see #setPkcs12Path(String)
      * @param pkcs12Password The PKCS12 password @see #setPkcs12Password(String)
      * @return A set of options for creating a PKCS12 TLS connection
-     * @throws CrtRuntimeException @see #constructor()
      */
-    public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password)
-            throws CrtRuntimeException {
+    public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         TlsContextOptions options = new TlsContextOptions();
         options.initMtlsPkcs12(pkcs12Path, pkcs12Password);
         options.verifyPeer = true;

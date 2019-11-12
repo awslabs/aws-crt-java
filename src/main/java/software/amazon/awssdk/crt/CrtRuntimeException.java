@@ -19,7 +19,25 @@ package software.amazon.awssdk.crt;
  * the JNI bindings to the AWS Common Runtime
  */
 public class CrtRuntimeException extends RuntimeException {
+
+    private static final long serialVersionUID = 0; // Shut up linters
+
+    static {
+        new CRT();
+    }
+
+    public final int errorCode;
+    public final String errorName;
+
     CrtRuntimeException(String msg) {
         super(msg);
+        errorCode = -1;
+        errorName = "UNKNOWN";
+    }
+
+    CrtRuntimeException(int errorCode, String msg) {
+        super(String.format("%s: %s(%d) %s", msg, CRT.awsErrorName(errorCode), errorCode, CRT.awsErrorString(errorCode)));
+        this.errorCode = errorCode;
+        this.errorName = CRT.awsErrorName(errorCode);
     }
 };

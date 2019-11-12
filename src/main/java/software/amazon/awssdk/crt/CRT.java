@@ -165,6 +165,15 @@ public final class CRT {
     public static native String awsErrorString(int errorCode);
 
     /**
+     * Given an integer error code from an internal operation
+     * 
+     * @param errorCode An error code returned from an exception or other native
+     *                  function call
+     * @return A string identifier for the error
+     */
+    public static native String awsErrorName(int errorCode);
+
+    /**
      * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing > 0, this will
      *         be a non-zero value. Otherwise, no tracing will be done, and the value will always be 0
      */

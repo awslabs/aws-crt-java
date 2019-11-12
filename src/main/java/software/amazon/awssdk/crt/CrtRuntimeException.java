@@ -14,6 +14,9 @@
  */
 package software.amazon.awssdk.crt;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * This exception will be thrown by any exceptional cases encountered within
  * the JNI bindings to the AWS Common Runtime
@@ -29,15 +32,18 @@ public class CrtRuntimeException extends RuntimeException {
     public final int errorCode;
     public final String errorName;
 
+    private final static Pattern crtExFormat = Pattern.compile("aws_last_error: (.+)\\(([-0-9]+)\\),");
+
     CrtRuntimeException(String msg) {
         super(msg);
-        errorCode = -1;
-        errorName = "UNKNOWN";
-    }
-
-    CrtRuntimeException(int errorCode, String msg) {
-        super(String.format("%s: %s(%d) %s", msg, CRT.awsErrorName(errorCode), errorCode, CRT.awsErrorString(errorCode)));
-        this.errorCode = errorCode;
-        this.errorName = CRT.awsErrorName(errorCode);
+        
+        Matcher matcher = crtExFormat.matcher(msg);
+        if (matcher.matches()) {
+            errorName = matcher.group(1);
+            errorCode = Integer.parseInt(matcher.group(2));
+        } else {
+            errorCode = -1;
+            errorName = "UNKNOWN";
+        }
     }
 };

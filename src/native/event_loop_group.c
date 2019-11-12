@@ -50,7 +50,7 @@ jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *elg = aws_mem_calloc(allocator, 1, sizeof(struct aws_event_loop_group));
     AWS_FATAL_ASSERT(elg);
-    
+
     int result = aws_event_loop_group_default_init(elg, allocator, (uint16_t)num_threads);
     if (result != AWS_OP_SUCCESS) {
         aws_event_loop_group_clean_up(elg);

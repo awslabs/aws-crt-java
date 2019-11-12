@@ -57,7 +57,14 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
 
     int error = aws_last_error();
     char exception[1280];
-    snprintf(exception, sizeof(exception), "%s (aws_last_error: %s(%d), %s)", buf, aws_error_name(error), error, aws_error_str(error));
+    snprintf(
+        exception,
+        sizeof(exception),
+        "%s (aws_last_error: %s(%d), %s)",
+        buf,
+        aws_error_name(error),
+        error,
+        aws_error_str(error));
     jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
     (*env)->ThrowNew(env, runtime_exception, exception);
 }

@@ -275,12 +275,6 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
     (void)jni_crt_class;
 
-    /*
-    bool done = false;
-    while (!done) {
-        ;
-    }
-*/
     s_memory_tracing = jni_memtrace;
 #if !defined(ALLOC_TRACE_AVAILABLE)
     s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;

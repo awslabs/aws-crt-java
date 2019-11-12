@@ -109,7 +109,7 @@ public class TlsContextOptionsTest {
                 options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06);
                 options.minTlsVersion = TlsVersions.TLSv1_2;
                 Assert.assertEquals(0, options.getNativeHandle()); // Will never get here
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 exceptionThrown = true;
             }
 

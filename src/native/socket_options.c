@@ -40,6 +40,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     jint connect_timeout_ms,
     jint keep_alive_interval_secs,
     jint keep_alive_timeout_secs) {
+    (void)env;
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =
@@ -49,8 +50,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     options->domain = domain;
     options->type = type;
     options->connect_timeout_ms = connect_timeout_ms;
-    options->keep_alive_interval_sec = keep_alive_interval_secs;
-    options->keep_alive_timeout_sec = keep_alive_timeout_secs;
+    options->keep_alive_interval_sec = (short)keep_alive_interval_secs;
+    options->keep_alive_timeout_sec = (short)keep_alive_timeout_secs;
 
     return (jlong)options;
 }

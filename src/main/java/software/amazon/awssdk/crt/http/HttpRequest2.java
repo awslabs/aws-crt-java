@@ -28,17 +28,7 @@ public class HttpRequest2 extends CrtResource {
     private AwsInputStream bodyStream;
 
     public HttpRequest2() {
-        this(null);
-    }
-
-    public HttpRequest2(AwsInputStream bodyStream) {
         acquireNativeHandle(httpRequest2New());
-
-        this.bodyStream = bodyStream;
-        if (bodyStream != null) {
-            httpRequest2SetBodyStream(getNativeHandle(), bodyStream.getNativeHandle());
-            addReferenceTo(bodyStream);
-        }
     }
 
     /**
@@ -67,6 +57,26 @@ public class HttpRequest2 extends CrtResource {
         httpRequest2SetPath(getNativeHandle(), path);
     }
 
+    public void setBodyStream(AwsInputStream stream) {
+        if (stream == bodyStream) {
+            return;
+        }
+
+        if (bodyStream != null) {
+            removeReferenceTo(bodyStream);
+        }
+
+        httpRequest2SetBodyStream(getNativeHandle(),  stream != null ? stream.getNativeHandle() : 0);
+        if (stream != null) {
+            addReferenceTo(stream);
+        }
+
+        this.bodyStream = stream;
+    }
+
+    public AwsInputStream getBodyStream() {
+        return bodyStream;
+    }
 
     /**
      * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.

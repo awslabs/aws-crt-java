@@ -33,7 +33,8 @@ public class HttpClientConnection extends CrtResource {
 
     protected HttpClientConnection(HttpClientConnectionManager manager, long connection) {
         acquireNativeHandle(connection);
-        this.manager = addReferenceTo(manager);
+        addReferenceTo(manager);
+        this.manager = manager;
     }
 
     /**
@@ -55,10 +56,10 @@ public class HttpClientConnection extends CrtResource {
 
             try {
                 HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                        request.getMethod(),
-                        request.getEncodedPath(),
-                        request.getHeaders(),
-                        streamHandler);
+                    request.getMethod(),
+                    request.getEncodedPath(),
+                    request.getHeaders(),
+                    streamHandler);
                 if (stream == null || stream.isNull()) {
                     streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
                 }

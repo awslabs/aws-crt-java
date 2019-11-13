@@ -31,10 +31,8 @@
 #    endif
 #endif
 
-
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpRequest2_httpRequest2New(
-    JNIEnv *env,
-    jclass jni_class) {
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpRequest2_httpRequest2New(JNIEnv *env, jclass jni_class) {
 
     (void)jni_class;
 
@@ -42,8 +40,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpRequest2_httpRe
 
     struct aws_http_message *request = aws_http_message_new_request(allocator);
     if (request == NULL) {
-        aws_jni_throw_runtime_exception(
-                env, "HttpRequest2.httpRequest2New: failed to create request");
+        aws_jni_throw_runtime_exception(env, "HttpRequest2.httpRequest2New: failed to create request");
     }
 
     return (jlong)request;
@@ -121,7 +118,7 @@ static jstring s_jstring_from_cursor(JNIEnv *env, struct aws_byte_cursor *cursor
 
     temp_buf.buffer[temp_buf.len++] = 0;
 
-    jstring java_string = (*env)->NewStringUTF(env, (const char *) temp_buf.buffer);
+    jstring java_string = (*env)->NewStringUTF(env, (const char *)temp_buf.buffer);
 
     aws_byte_buf_clean_up(&temp_buf);
 
@@ -161,7 +158,6 @@ jstring JNICALL Java_software_amazon_awssdk_crt_http_HttpRequest2_httpRequest2Ge
 
     return s_jstring_from_cursor(env, &method_cursor);
 }
-
 
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)

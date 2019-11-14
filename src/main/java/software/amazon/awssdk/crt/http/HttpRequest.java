@@ -15,6 +15,8 @@
 
 package software.amazon.awssdk.crt.http;
 
+import software.amazon.awssdk.crt.io.IAwsInputStream;
+
 /**
  * Represents a single Client Request to be sent on a HTTP connection
  */
@@ -22,16 +24,18 @@ public class HttpRequest {
     private final String method;
     private final String encodedPath;
     private final HttpHeader[] headers;
+    private final IAwsInputStream bodyStream;
 
     public HttpRequest(String method, String encodedPath) {
-        this(method, encodedPath, new HttpHeader[]{});
+        this(method, encodedPath, new HttpHeader[]{}, null);
     }
 
-    public HttpRequest(String method, String encodedPath, HttpHeader[] headers) {
+    public HttpRequest(String method, String encodedPath, HttpHeader[] headers, IAwsInputStream bodyStream) {
         if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
         this.method = method;
         this.encodedPath = encodedPath;
         this.headers = headers;
+        this.bodyStream = bodyStream;
     }
 
     public String getMethod() {
@@ -45,4 +49,6 @@ public class HttpRequest {
     public HttpHeader[] getHeaders() {
         return headers;
     }
+
+    public IAwsInputStream getBodyStream() { return bodyStream; }
 }

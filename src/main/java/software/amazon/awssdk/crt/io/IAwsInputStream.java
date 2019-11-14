@@ -16,23 +16,11 @@ package software.amazon.awssdk.crt.io;
 
 
 /**
- * This class is a factory for a byte array based aws_input_stream native resource.
+ * This class represents something that can be instantiated into an aws_input_stream C object.  Java InputStream is not an appropriate
+ * abstraction for what we need (arbitrarily seekable).
  */
-public class ByteArrayAwsInputStream implements IAwsInputStream {
+public interface IAwsInputStream {
 
-    byte[] data;
+    long createNativeStreamHandle();
 
-    public ByteArrayAwsInputStream(byte[] data) {
-        super();
-        this.data = data;
-    }
-
-    public long createNativeStreamHandle() {
-        return awsInputStreamByteArrayNew(data);
-    }
-
-    /*******************************************************************************
-     * native methods
-     ******************************************************************************/
-    private static native long awsInputStreamByteArrayNew(byte[] data);
 };

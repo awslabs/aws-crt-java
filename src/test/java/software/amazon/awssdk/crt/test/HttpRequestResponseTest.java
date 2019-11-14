@@ -29,7 +29,9 @@ import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.io.ByteArrayAwsInputStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.IAwsInputStream;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -108,16 +110,14 @@ public class HttpRequestResponseTest {
         }
     }
 
-    public TestHttpResponse getResponse(URI uri, HttpRequest request, String reqBody) throws Exception {
+    public TestHttpResponse getResponse(URI uri, HttpRequest request) throws Exception {
         boolean actuallyConnected = false;
 
-        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(reqBody.getBytes(UTF8));
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
 
         final TestHttpResponse response = new TestHttpResponse();
 
         List<Integer> respBodyUpdateSizes = new ArrayList<>();
-        List<Integer> reqBodyUpdateSizes = new ArrayList<>();
 
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
@@ -152,15 +152,6 @@ public class HttpRequestResponseTest {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
                         stream.close();
-                    }
-
-                    @Override
-                    public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-
-                        reqBodyUpdateSizes.add(bodyBytesOut.remaining());
-                        transferData(bodyBytesIn, bodyBytesOut);
-
-                        return bodyBytesIn.remaining() == 0;
                     }
                 };
 
@@ -197,7 +188,9 @@ public class HttpRequestResponseTest {
                     new HttpHeader("Host", uri.getHost()),
                     new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
                 };
-        HttpRequest request = new HttpRequest(method, path, requestHeaders);
+        IAwsInputStream bodyStream = new ByteArrayAwsInputStream(requestBody.getBytes(UTF8));
+
+        HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
 
         TestHttpResponse response = null;
         int numAttempts = 0;
@@ -205,7 +198,7 @@ public class HttpRequestResponseTest {
             numAttempts++;
             response = null;
             try {
-                response = getResponse(uri, request, requestBody);
+                response = getResponse(uri, request);
             } catch (Exception ex) {
                 //do nothing just let it retry
             }

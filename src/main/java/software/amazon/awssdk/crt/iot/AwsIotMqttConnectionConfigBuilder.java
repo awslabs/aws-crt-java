@@ -29,7 +29,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
     private TlsContextOptions tlsOptions;
 
     private AwsIotMqttConnectionConfigBuilder() {
-        this.params.username = String.format("?SDK=JavaV2&Version=%s", new PackageInfo().toString());
+        
     }
 
     /**
@@ -44,6 +44,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
         builder.tlsOptions = TlsContextOptions.createWithMtlsFromPath(certPath, privateKeyPath);
         if (TlsContextOptions.isAlpnSupported()) {
             builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
+            builder.params.port = 443;
         }
         return builder;
     }
@@ -60,6 +61,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
         builder.tlsOptions = TlsContextOptions.createWithMtls(certificate, privateKey);
         if (TlsContextOptions.isAlpnSupported()) {
             builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
+            builder.params.port = 443;
         }
         return builder;
     }
@@ -188,6 +190,16 @@ public final class AwsIotMqttConnectionConfigBuilder {
      */
     AwsIotMqttConnectionConfigBuilder withSocketOptions(SocketOptions socketOptions) {
         this.params.socketOptions = socketOptions;
+        return this;
+    }
+
+    AwsIotMqttConnectionConfigBuilder withUsername(String username) {
+        this.params.username = String.format("%s?SDK=JavaV2&Version=%s", username, new PackageInfo().toString());
+        return this;
+    }
+
+    AwsIotMqttConnectionConfigBuilder withPassword(String password) {
+        this.params.password = password;
         return this;
     }
 

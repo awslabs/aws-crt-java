@@ -78,7 +78,7 @@ public final class SocketOptions extends CrtResource {
     /**
      * Sets the socket domain
      */
-    public SocketDomain domain = SocketDomain.IPv4;
+    public SocketDomain domain = SocketDomain.IPv6;
     /**
      * Sets the socket type
      */

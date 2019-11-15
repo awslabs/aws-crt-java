@@ -83,7 +83,7 @@ static struct { jmethodID deliver; } s_message_handler;
 void s_cache_message_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttClientConnection$MessageHandler");
     AWS_FATAL_ASSERT(cls);
-    s_message_handler.deliver = (*env)->GetMethodID(env, cls, "deliver", "([B)V");
+    s_message_handler.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;[B)V");
     AWS_FATAL_ASSERT(s_message_handler.deliver);
 }
 
@@ -569,8 +569,14 @@ static void s_on_subscription_delivered(
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);
     (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)payload->len, (const signed char *)payload->ptr);
-    (*env)->CallVoidMethod(env, callback->async_callback, s_message_handler.deliver, jni_payload);
+
+    jstring jni_topic = aws_jni_string_from_cursor(env, topic);
+
+    (*env)->CallVoidMethod(env, callback->async_callback, s_message_handler.deliver, jni_topic, jni_payload);
+
     (*env)->DeleteLocalRef(env, jni_payload);
+    (*env)->DeleteLocalRef(env, jni_topic);
+
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 

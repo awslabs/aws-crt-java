@@ -16,6 +16,7 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/string.h>
+#include <aws/common/system_info.h>
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
@@ -55,8 +56,16 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     vsnprintf(buf, sizeof(buf), msg, args);
     va_end(args);
 
+    int error = aws_last_error();
     char exception[1280];
-    snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(aws_last_error()));
+    snprintf(
+        exception,
+        sizeof(exception),
+        "%s (aws_last_error: %s(%d), %s)",
+        buf,
+        aws_error_name(error),
+        error,
+        aws_error_str(error));
     jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
@@ -272,9 +281,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     (void)jni_crt_class;
 
     s_memory_tracing = jni_memtrace;
-#if !defined(ALLOC_TRACE_AVAILABLE)
-    s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
-#endif
+    void *stack[1];
+    if (0 == aws_backtrace(stack, 1)) {
+        s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
+    }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
@@ -289,6 +299,13 @@ JNIEXPORT
 jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorString(JNIEnv *env, jclass jni_crt_class, jint error_code) {
     (void)jni_crt_class;
     const char *error_msg = aws_error_str(error_code);
+    return (*env)->NewStringUTF(env, error_msg);
+}
+
+JNIEXPORT
+jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorName(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    (void)jni_crt_class;
+    const char *error_msg = aws_error_name(error_code);
     return (*env)->NewStringUTF(env, error_msg);
 }
 

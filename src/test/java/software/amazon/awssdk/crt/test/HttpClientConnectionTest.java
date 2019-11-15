@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
@@ -29,7 +28,6 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.Log;
 
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;

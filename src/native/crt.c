@@ -302,3 +302,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     }
     return allocated;
 }
+
+jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
+    struct aws_string *string = aws_string_new_from_array(aws_jni_get_allocator(), native_data->ptr, native_data->len);
+    if (string == NULL) {
+        return NULL;
+    }
+
+    jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
+    aws_string_destroy(string);
+
+    return java_string;
+}

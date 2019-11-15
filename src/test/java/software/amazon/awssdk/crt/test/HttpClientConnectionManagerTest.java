@@ -23,9 +23,7 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.io.ByteArrayAwsInputStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.IAwsInputStream;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
@@ -80,8 +78,7 @@ public class HttpClientConnectionManagerTest {
                         new HttpHeader("Host", uri.getHost()),
                         new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
                 };
-        IAwsInputStream bodyStream = new ByteArrayAwsInputStream(requestBody.getBytes(UTF8));
-        HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
+        HttpRequest request = new HttpRequest(method, path, requestHeaders);
 
         return request;
     }

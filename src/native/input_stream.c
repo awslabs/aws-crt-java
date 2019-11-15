@@ -83,6 +83,7 @@ static struct aws_input_stream_vtable s_aws_input_stream_byte_array_vtable = {
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_ByteArrayAwsInputStream_awsInputStreamByteArrayNew(
     JNIEnv *env,
     jclass jni_class,
+    jobject java_stream,
     jbyteArray stream_data) {
 
     (void)jni_class;

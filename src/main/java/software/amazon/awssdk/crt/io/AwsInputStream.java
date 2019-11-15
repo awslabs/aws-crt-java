@@ -17,22 +17,32 @@ package software.amazon.awssdk.crt.io;
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
- * This class wraps a byte array based aws_input_stream native resource.
+ * This class wraps an aws_input_stream native resource.  Java InputStream is not an appropriate
+ * abstraction for what we need (arbitrarily seekable).
  */
-public class ByteArrayAwsInputStream extends AwsInputStream {
+public class AwsInputStream extends CrtResource {
 
-    byte[] data;
+    public AwsInputStream() {}
 
-    public ByteArrayAwsInputStream(byte[] data) {
-        super();
-        this.data = data;
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
-        long nativeHandle = awsInputStreamByteArrayNew(this, data);
-        acquireNativeHandle(nativeHandle);
+    /**
+     * Cleans up the stream's associated native handle
+     */
+    @Override
+    protected void releaseNativeHandle() {
+        if (!isNull()) {
+            awsInputStreamDestroy(getNativeHandle());
+        }
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long awsInputStreamByteArrayNew(ByteArrayAwsInputStream thisObj, byte[] data);
+    private static native void awsInputStreamDestroy(long stream_handler);
 };

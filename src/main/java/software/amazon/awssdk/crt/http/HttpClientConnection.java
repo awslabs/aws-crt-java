@@ -18,7 +18,7 @@ package software.amazon.awssdk.crt.http;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.IAwsInputStream;
+
 
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.
@@ -55,13 +55,10 @@ public class HttpClientConnection extends CrtResource {
 
 
             try {
-                IAwsInputStream bodyStream = request.getBodyStream();
-
                 HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
                     request.getMethod(),
                     request.getEncodedPath(),
                     request.getHeaders(),
-                    bodyStream != null ? bodyStream.createNativeStreamHandle() : 0,
                     streamHandler);
                 if (stream == null || stream.isNull()) {
                     streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
@@ -99,6 +96,5 @@ public class HttpClientConnection extends CrtResource {
                                                                      String method,
                                                                      String uri,
                                                                      HttpHeader[] headers,
-                                                                     long bodyStreamHandle,
                                                                      CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
 }

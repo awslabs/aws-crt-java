@@ -18,11 +18,11 @@ package software.amazon.awssdk.crt.http;
 import java.nio.ByteBuffer;
 
 /**
- * Interface that Native code knows how to call when handling Http Request/Responses
+ * Interface that Native code knows how to call when handling Http Responses
  *
  * Maps 1-1 to the Native Http API here: https://github.com/awslabs/aws-c-http/blob/master/include/aws/http/request_response.h
  */
-public interface CrtHttpStreamHandler {
+public interface HttpStreamResponseHandler {
 
     /**
      * Called from Native when new Http Headers have been received.
@@ -78,21 +78,5 @@ public interface CrtHttpStreamHandler {
      * @param errorCode
      */
     void onResponseComplete(HttpStream stream, int errorCode);
-
-    /**
-     * Called from Native when the Http Request has a Body (Eg PUT/POST requests).
-     * Note that this function may be called many times as Native sends the Request Body.
-     *
-     * Do NOT keep a reference to this ByteBuffer past the lifetime of this function call. The CommonRuntime reserves
-     * the right to use DirectByteBuffers pointing to memory that only lives as long as the function call.
-     *
-     * @param stream The HttpStream for this Request/Response Pair
-     * @param bodyBytesOut The Buffer to write the Request Body Bytes to.
-     * @return True if Request body is complete, false otherwise.
-     */
-    default boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-        /* Optional Callback, return empty request body by default unless user wants to return one. */
-        return true;
-    }
 
 }

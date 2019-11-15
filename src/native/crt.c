@@ -235,7 +235,8 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_message_handler(JNIEnv *);
     extern void s_cache_mqtt_exception(JNIEnv *);
     extern void s_cache_http_conn_manager(JNIEnv *);
-    extern void s_cache_crt_http_stream_handler(JNIEnv *);
+    extern void s_cache_http_response_stream_handler(JNIEnv *);
+    extern void s_cache_http_request_body_stream(JNIEnv *);
     extern void s_cache_http_header(JNIEnv *);
     extern void s_cache_http_stream(JNIEnv *);
     extern void s_cache_event_loop_group(JNIEnv *);
@@ -247,7 +248,8 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
     s_cache_http_conn_manager(env);
-    s_cache_crt_http_stream_handler(env);
+    s_cache_http_response_stream_handler(env);
+    s_cache_http_request_body_stream(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);

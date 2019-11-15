@@ -51,7 +51,7 @@ public class HttpStream extends CrtResource {
      * Opens the Sliding Read/Write Window by the number of bytes passed as an argument for this HttpStream.
      *
      * This function should only be called if the user application previously returned less than the length of the input
-     * ByteBuffer from a onResponseBody() call in a CrtHttpStreamHandler, and should be <= to the total number of
+     * ByteBuffer from a onResponseBody() call in a HttpResponseStreamHandler, and should be <= to the total number of
      * un-acked bytes.
      *
      * @param windowSize How many bytes to increment the sliding window by.

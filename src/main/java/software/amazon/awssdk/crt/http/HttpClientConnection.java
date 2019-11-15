@@ -46,7 +46,7 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public CompletableFuture<HttpStream> makeRequest(HttpRequest request, CrtHttpStreamHandler streamHandler) throws CrtRuntimeException {
+    public CompletableFuture<HttpStream> makeRequest(HttpRequest request, HttpResponseStreamHandler streamHandler) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
@@ -59,6 +59,7 @@ public class HttpClientConnection extends CrtResource {
                     request.getMethod(),
                     request.getEncodedPath(),
                     request.getHeaders(),
+                    request.getBodyStream(),
                     streamHandler);
                 if (stream == null || stream.isNull()) {
                     streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
@@ -96,5 +97,6 @@ public class HttpClientConnection extends CrtResource {
                                                                      String method,
                                                                      String uri,
                                                                      HttpHeader[] headers,
-                                                                     CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
+                                                                     HttpRequestBodyStream bodyStream,
+                                                                     HttpResponseStreamHandler responseHandler) throws CrtRuntimeException;
 }

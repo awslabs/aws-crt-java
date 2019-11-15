@@ -22,16 +22,18 @@ public class HttpRequest {
     private final String method;
     private final String encodedPath;
     private final HttpHeader[] headers;
+    private HttpRequestBodyStream bodyStream;
 
     public HttpRequest(String method, String encodedPath) {
-        this(method, encodedPath, new HttpHeader[]{});
+        this(method, encodedPath, new HttpHeader[]{}, null);
     }
 
-    public HttpRequest(String method, String encodedPath, HttpHeader[] headers) {
+    public HttpRequest(String method, String encodedPath, HttpHeader[] headers, HttpRequestBodyStream bodyStream) {
         if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
         this.method = method;
         this.encodedPath = encodedPath;
         this.headers = headers;
+        this.bodyStream = bodyStream;
     }
 
     public String getMethod() {
@@ -44,5 +46,9 @@ public class HttpRequest {
 
     public HttpHeader[] getHeaders() {
         return headers;
+    }
+
+    public HttpRequestBodyStream getBodyStream() {
+        return bodyStream;
     }
 }

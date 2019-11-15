@@ -14,8 +14,6 @@
  */
 package software.amazon.awssdk.crt;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.LinkedList;
@@ -37,7 +35,41 @@ public abstract class CrtResource implements AutoCloseable {
     private static final long DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 30;
     private static final long NULL = 0;
 
-    private static final ConcurrentHashMap<Long, String> NATIVE_RESOURCES = new ConcurrentHashMap<>();
+    public class ResourceInstance {
+        public final long nativeHandle;
+        public final String canonicalName;
+        private Throwable instantiation;
+
+        public ResourceInstance(long handle, String name) {
+            nativeHandle = handle;
+            canonicalName = name;
+            try {
+                throw new RuntimeException();
+            } catch (RuntimeException ex) {
+                instantiation = ex;
+            }
+        }
+
+        public String location() {
+            String str = "";
+            StackTraceElement[] stack = instantiation.getStackTrace();
+            // skip ctor and acquireNativeHandle()
+            for (int frameIdx = 2; frameIdx < stack.length; ++frameIdx) {
+                StackTraceElement frame = stack[frameIdx];
+                str += frame.toString() + "\n";
+            }
+            return str;
+        }
+
+        @Override
+        public String toString() {
+            String str = canonicalName + " allocated at:\n";
+            str += location();
+            return str;
+        }
+    }
+
+    private static final ConcurrentHashMap<Long, ResourceInstance> NATIVE_RESOURCES = new ConcurrentHashMap<>();
 
     /*
      * Primarily intended for testing only.  Tracks the number of non-closed resources and signals
@@ -94,7 +126,7 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire NULL Pointer: " + canonicalName);
         }
 
-        String lastValue = NATIVE_RESOURCES.put(handle, canonicalName);
+        ResourceInstance lastValue = NATIVE_RESOURCES.put(handle, new ResourceInstance(handle, canonicalName));
 
         if (lastValue != null) {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
@@ -230,10 +262,16 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     public static void collectNativeResources(Consumer<String> fn) {
-        for (Map.Entry<Long, String> entry : NATIVE_RESOURCES.entrySet()) {
-            String resource = String.format(" * %s class instance using native pointer %d", entry.getValue(),
-                    entry.getKey().longValue());
-            fn.accept(resource);
+        collectNativeResource((ResourceInstance resource) -> {
+            String str = String.format(" * Address: %d: %s", resource.nativeHandle,
+                    resource.toString());
+            fn.accept(str);
+        });
+    }
+    
+    public static void collectNativeResource(Consumer<ResourceInstance> fn) {
+        for (Map.Entry<Long, ResourceInstance> entry : NATIVE_RESOURCES.entrySet()) {
+            fn.accept(entry.getValue());
         }
     }
 

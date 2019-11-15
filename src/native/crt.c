@@ -309,7 +309,7 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
         return NULL;
     }
 
-    jstring java_string = (*env)->NewStringUTF(env, (const char *)string->bytes);
+    jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
     aws_string_destroy(string);
 
     return java_string;

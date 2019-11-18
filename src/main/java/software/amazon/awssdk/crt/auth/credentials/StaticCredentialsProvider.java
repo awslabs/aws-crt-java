@@ -17,12 +17,12 @@ package software.amazon.awssdk.crt.auth.credentials;
 import java.lang.IllegalArgumentException;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CrtCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 /**
  * A class that wraps the a credentials provider that returns a fixed set of credentials
  */
-public class StaticCredentialsProvider extends CrtCredentialsProvider {
+public class StaticCredentialsProvider extends CredentialsProvider {
 
     /**
      * A simple builder class for a static credentials provider and its options

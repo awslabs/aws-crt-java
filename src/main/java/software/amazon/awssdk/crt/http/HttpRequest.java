@@ -24,10 +24,22 @@ public class HttpRequest {
     private final HttpHeader[] headers;
     private HttpRequestBodyStream bodyStream;
 
+    /**
+     *
+     * @param method http verb to use
+     * @param encodedPath path of the http request
+     */
     public HttpRequest(String method, String encodedPath) {
         this(method, encodedPath, new HttpHeader[]{}, null);
     }
 
+    /**
+     *
+     * @param method http verb to use
+     * @param encodedPath path of the http request
+     * @param headers set of http request headers to include
+     * @param bodyStream (optional) interface to an object that will stream out the request body
+     */
     public HttpRequest(String method, String encodedPath, HttpHeader[] headers, HttpRequestBodyStream bodyStream) {
         if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
         this.method = method;

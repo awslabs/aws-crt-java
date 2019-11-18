@@ -241,6 +241,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     extern void s_cache_http_stream(JNIEnv *);
     extern void s_cache_event_loop_group(JNIEnv *);
     extern void s_cache_credentials_ids(JNIEnv *);
+    extern void s_cache_signing_jni_ids(JNIEnv *);
 
     s_cache_java_byte_buffer(env);
     s_cache_mqtt_connection(env);
@@ -254,6 +255,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);
     s_cache_credentials_ids(env);
+    s_cache_signing_jni_ids(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)

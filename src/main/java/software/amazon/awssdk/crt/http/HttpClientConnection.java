@@ -33,7 +33,8 @@ public class HttpClientConnection extends CrtResource {
 
     protected HttpClientConnection(HttpClientConnectionManager manager, long connection) {
         acquireNativeHandle(connection);
-        this.manager = addReferenceTo(manager);
+        addReferenceTo(manager);
+        this.manager = manager;
     }
 
     /**

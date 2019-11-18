@@ -16,7 +16,7 @@ package software.amazon.awssdk.crt;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeUnit;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Condition;
@@ -80,7 +80,7 @@ public abstract class CrtResource implements AutoCloseable {
     private static final Lock lock = new ReentrantLock();
     private static final Condition emptyResources  = lock.newCondition();
 
-    private final LinkedList<CrtResource> referencedResources = new LinkedList<>();
+    private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
     private long nativeHandle;
     private AtomicInteger refCount = new AtomicInteger(1);
 
@@ -93,18 +93,43 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Marks a resource as referenced by this resource.  It is not safe to change the resource dependency graph after resource construction.
-     * @param resource The referenced subresource
-     * @return The original resource.
+     * Marks a resource as referenced by this resource.
+     * @param resource The resource to add a reference to
      */
-    public <T extends CrtResource> T addReferenceTo(T resource) {
+    protected void addReferenceTo(CrtResource resource) {
+        resource.addRef();
+        synchronized(this) {
+            referencedResources.add(resource);
+        }
+
         if (debugNativeObjects) {
             Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
         }
-        resource.addRef();
-        referencedResources.push(resource);
+    }
 
-        return resource;
+    /**
+     * Removes a reference from this resource to another.
+     * @param resource The resource to remove a reference to
+     */
+    protected void removeReferenceTo(CrtResource resource) {
+        boolean removed = false;
+        synchronized(this) {
+            removed = referencedResources.remove(resource);
+        }
+
+        if (debugNativeObjects) {
+            if (removed) {
+                Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s is removing a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+            } else {
+                Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s erroneously tried to remove a reference to instance of class %s that it was not referencing", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+            }
+        }
+
+        if (!removed) {
+            return;
+        }
+
+        resource.decRef();
     }
 
     /**
@@ -222,12 +247,16 @@ public abstract class CrtResource implements AutoCloseable {
      */
     protected boolean isNativeResource() { return true; }
 
+    @Override
+    public void close() {
+        decRef();
+    }
+
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
      */
-    @Override
-    public void close() {
+    protected void decRef() {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
@@ -255,9 +284,12 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
         }
 
-        while(referencedResources.size() > 0) {
-            CrtResource r = referencedResources.pop();
-            r.close();
+        synchronized(this) {
+            for (CrtResource resource : referencedResources) {
+                resource.decRef();
+            }
+
+            referencedResources.clear();
         }
     }
 

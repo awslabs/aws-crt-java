@@ -15,14 +15,13 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
@@ -30,9 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
 public class IotServiceTest extends MqttClientConnectionFixture {
-    @Rule
-    public Timeout testTimeout = Timeout.seconds(15);
-
     public IotServiceTest() {
     }
 
@@ -42,6 +38,7 @@ public class IotServiceTest extends MqttClientConnectionFixture {
 
     @Test
     public void testIotService() {
+        Log.initLoggingToStderr(LogLevel.Trace);
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect( true, (short)0);
 

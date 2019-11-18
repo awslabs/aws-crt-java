@@ -21,7 +21,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * This class wraps the aws_tls_context from aws-c-io to provide
  * access to TLS configuration contexts in the AWS Common Runtime.
  */
-public final class TlsContext extends CrtResource {
+public class TlsContext extends CrtResource {
 
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
@@ -64,7 +64,7 @@ public final class TlsContext extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long tlsContextNew(long options) throws CrtRuntimeException;
+    protected static native long tlsContextNew(long options) throws CrtRuntimeException;
 
     private static native void tlsContextDestroy(long elg);
 };

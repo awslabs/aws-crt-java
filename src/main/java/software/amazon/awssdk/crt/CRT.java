@@ -16,9 +16,6 @@ package software.amazon.awssdk.crt;
 
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
 import software.amazon.awssdk.crt.Log;
@@ -166,6 +163,15 @@ public final class CRT {
      * @return A user-friendly description of the error
      */
     public static native String awsErrorString(int errorCode);
+
+    /**
+     * Given an integer error code from an internal operation
+     * 
+     * @param errorCode An error code returned from an exception or other native
+     *                  function call
+     * @return A string identifier for the error
+     */
+    public static native String awsErrorName(int errorCode);
 
     /**
      * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing > 0, this will

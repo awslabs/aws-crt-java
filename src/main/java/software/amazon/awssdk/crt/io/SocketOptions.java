@@ -76,11 +76,47 @@ public final class SocketOptions extends CrtResource {
     }
 
     /**
-     * Creates a new set of socket options
-     * @throws CrtRuntimeException If the system is unable to allocate space for a native socket options instance
+     * Sets the socket domain
      */
-    public SocketOptions() throws CrtRuntimeException {
-        acquireNativeHandle(socketOptionsNew());
+    public SocketDomain domain = SocketDomain.IPv6;
+    /**
+     * Sets the socket type
+     */
+    public SocketType type = SocketType.STREAM;
+    /**
+     * Sets the number of milliseconds before a connection will be considered timed out
+     */
+    public int connectTimeoutMs = 3000;
+    /**
+     * Sets the number of seconds between TCP keepalive packets being sent to the peer
+     * 0 disables keepalive
+     */
+    public int keepAliveIntervalSecs = 0;
+    /**
+     * Sets the number of seconds to wait for a keepalive response before considering the connection timed out
+     * 0 disables keepalive
+     */
+    public int keepAliveTimeoutSecs = 0;
+
+    /**
+     * Creates a new set of socket options
+     */
+    public SocketOptions() {
+        
+    }
+
+    @Override
+    public long getNativeHandle() {
+        if (super.getNativeHandle() == 0) {
+            acquireNativeHandle(socketOptionsNew(
+                domain.getValue(),
+                type.getValue(),
+                connectTimeoutMs,
+                keepAliveIntervalSecs,
+                keepAliveTimeoutSecs
+            ));   
+        }
+        return super.getNativeHandle();
     }
 
     /**
@@ -100,61 +136,10 @@ public final class SocketOptions extends CrtResource {
         }
     }
 
-    /**
-     * Sets the socket domain
-     * @param domain
-     */
-    void setDomain(SocketDomain domain) {
-        socketOptionsSetDomain(getNativeHandle(), domain.getValue());
-    }
-
-    /**
-     * Sets the socket type
-     * @param type
-     */
-    void setType(SocketType type) {
-        socketOptionsSetType(getNativeHandle(), type.getValue());
-    }
-
-    /**
-     * Sets the number of milliseconds before a connection will be considered timed out
-     * @param timeoutMs The amount of time, in milliseconds, to wait for a connection to complete
-     */
-    void setConnectTimeoutMs(int timeoutMs) {
-        socketOptionsSetConnectTimeoutMs(getNativeHandle(), timeoutMs);
-    }
-
-    /**
-     * Sets the number of seconds between TCP keepalive packets being sent to the peer
-     * @param intervalSeconds The amount of time, in seconds, between keepalive packet sends
-     */
-    void setKeepAliveIntervalSeconds(short intervalSeconds) {
-        socketOptionsSetKeepAliveIntervalSec(getNativeHandle(), intervalSeconds);
-    }
-
-    /**
-     * Sets the number of seconds to wait for a keepalive response before considering the connection timed out
-     * @param timeoutSeconds The amount of time, in seconds, to wait for a keepalive to be acknowledged by the peer
-     *                       before timing out the socket connection
-     */
-    void setKeepAliveTimeoutSeconds(short timeoutSeconds) {
-        socketOptionsSetKeepAliveTimeoutSec(getNativeHandle(), timeoutSeconds);
-    }
-
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long socketOptionsNew() throws CrtRuntimeException;
+    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs);
 
     private static native void socketOptionsDestroy(long elg);
-    
-    private static native void socketOptionsSetDomain(long tls, int domain);
-
-    private static native void socketOptionsSetType(long tls, int type);
-
-    private static native void socketOptionsSetConnectTimeoutMs(long tls, int connect_timeout_ms);
-
-    private static native void socketOptionsSetKeepAliveIntervalSec(long tls, short keep_alive_interval);
-
-    private static native void socketOptionsSetKeepAliveTimeoutSec(long tls, short keep_alive_timeout);
 };

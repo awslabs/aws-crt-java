@@ -59,10 +59,10 @@ public class HttpClientConnectionManager extends CrtResource {
         if (uri.getHost() == null) { throw new IllegalArgumentException("URI does not have a Host name"); }
 
         ClientBootstrap clientBootstrap = options.getClientBootstrap();
-        if (clientBootstrap == null || clientBootstrap.isNull()) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
+        if (clientBootstrap == null) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
 
         SocketOptions socketOptions = options.getSocketOptions();
-        if (socketOptions == null || socketOptions.isNull()) { throw new IllegalArgumentException("SocketOptions must not be null"); }
+        if (socketOptions == null) { throw new IllegalArgumentException("SocketOptions must not be null"); }
 
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = options.getTlsContext();

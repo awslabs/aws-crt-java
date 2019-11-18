@@ -41,16 +41,14 @@ public class MqttClientConnection extends CrtResource {
      * buffer and topic
      */
     private class MessageHandler {
-        String topic;
         Consumer<MqttMessage> callback;
 
-        private MessageHandler(String topic, Consumer<MqttMessage> callback) {
+        private MessageHandler(Consumer<MqttMessage> callback) {
             this.callback = callback;
-            this.topic = topic;
         }
 
         /* called from native when a message is delivered */
-        void deliver(byte[] payload) {
+        void deliver(String topic, byte[] payload) {
             callback.accept(new MqttMessage(topic, payload));
         }
     }
@@ -229,7 +227,7 @@ public class MqttClientConnection extends CrtResource {
 
         AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttClientConnectionSubscribe(getNativeHandle(), topic, qos.getValue(), new MessageHandler(topic, handler), subAck);
+            int packetId = mqttClientConnectionSubscribe(getNativeHandle(), topic, qos.getValue(), new MessageHandler(handler), subAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         }

@@ -121,7 +121,7 @@ public class MqttClientConnectionFixture {
         try (EventLoopGroup elg = new EventLoopGroup(1);
                 HostResolver hr = new HostResolver(elg);
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMTLSFromPath(pathToCert.toString(),
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(pathToCert.toString(),
                         pathToKey.toString())) {
 
             int port = TEST_PORT;
@@ -129,7 +129,7 @@ public class MqttClientConnectionFixture {
                 tlsOptions.overrideDefaultTrustStoreFromPath(null, pathToCa.toString());
             }
             if (TlsContextOptions.isAlpnSupported()) {
-                tlsOptions.setAlpnList("x-amzn-mqtt-ca");
+                tlsOptions.withAlpnList("x-amzn-mqtt-ca");
                 port = TEST_PORT_ALPN;
             }
 

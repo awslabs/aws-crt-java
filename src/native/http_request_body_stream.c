@@ -15,32 +15,32 @@
 
 #include "http_request_body_stream.h"
 
+#include <aws/http/http.h>
+#include <aws/io/stream.h>
+
 #include <crt.h>
 #include <jni.h>
-
 
 static struct {
     jmethodID send_outgoing_body;
     jmethodID reset_position;
 } s_http_request_body_stream;
 
-void s_cache_http_request_body_stream(JNIEnv *) {
+void s_cache_http_request_body_stream(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpRequestBodyStream");
     AWS_FATAL_ASSERT(cls);
 
-    s_http_request_body_stream.send_outgoing_body = (*env)->GetMethodID(
-            env, cls, "sendRequestBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)Z");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.send_outgoing_body);
+    s_http_request_body_stream.send_outgoing_body =
+        (*env)->GetMethodID(env, cls, "sendRequestBody", "(Ljava/nio/ByteBuffer;)Z");
+    AWS_FATAL_ASSERT(s_http_request_body_stream.send_outgoing_body);
 
-    s_http_request_body_stream.reset_position = (*env)->GetMethodID(
-            env, cls, "resetPosition", "()V");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.reset_position);
+    s_http_request_body_stream.reset_position = (*env)->GetMethodID(env, cls, "resetPosition", "()Z");
+    AWS_FATAL_ASSERT(s_http_request_body_stream.reset_position);
 }
 
 struct aws_http_request_body_stream_impl {
     JavaVM *jvm;
     jobject http_request_body_stream;
-    jobject http_stream;
     bool body_done;
 };
 
@@ -57,9 +57,13 @@ static int s_aws_input_stream_seek(
         }
 
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
-        if (!(*env)->CallBooleanMethod(env, impl->http_request_body_stream,
-                                            s_http_request_body_stream.reset_position)) {
+        if (!(*env)->CallBooleanMethod(
+                env, impl->http_request_body_stream, s_http_request_body_stream.reset_position)) {
             result = AWS_OP_ERR;
+        }
+
+        if ((*env)->ExceptionCheck(env)) {
+            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
     }
 
@@ -84,23 +88,19 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
 
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
 
-    size_t out_remaining = dst->capacity - dst->len;
+    size_t out_remaining = dest->capacity - dest->len;
 
-    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dst->buffer + dst->len, out_remaining);
+    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
 
     impl->body_done = (*env)->CallBooleanMethod(
-            env,
-            impl->http_request_body_stream,
-            s_http_request_body_stream.send_outgoing_body,
-            impl->http_stream,
-            direct_buffer);
+        env, impl->http_request_body_stream, s_http_request_body_stream.send_outgoing_body, direct_buffer);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
     size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-    dst->len += amt_written;
+    dest->len += amt_written;
 
     (*env)->DeleteLocalRef(env, direct_buffer);
 
@@ -127,10 +127,6 @@ static void s_aws_input_stream_destroy(struct aws_input_stream *stream) {
     struct aws_http_request_body_stream_impl *impl = stream->impl;
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
 
-    if (impl->http_stream != NULL) {
-        (*env)->DeleteGlobalRef(env, impl->http_stream);
-    }
-
     if (impl->http_request_body_stream != NULL) {
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
@@ -144,14 +140,22 @@ static struct aws_input_stream_vtable s_aws_input_stream_vtable = {
     .get_status = s_aws_input_stream_get_status,
     .get_length = s_aws_input_stream_get_length,
     .destroy = s_aws_input_stream_destroy,
-    };
+};
 
-struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(struct aws_allocator *allocator, JNIEnv *env, jobject http_request_body_stream, jobject http_stream) {
+struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
+    struct aws_allocator *allocator,
+    JNIEnv *env,
+    jobject http_request_body_stream) {
     struct aws_input_stream *input_stream = NULL;
     struct aws_http_request_body_stream_impl *impl = NULL;
 
     aws_mem_acquire_many(
-            allocator, 2, &input_stream, sizeof(struct aws_input_stream), &impl, sizeof(struct aws_http_request_body_stream_impl));
+        allocator,
+        2,
+        &input_stream,
+        sizeof(struct aws_input_stream),
+        &impl,
+        sizeof(struct aws_http_request_body_stream_impl));
 
     if (!input_stream) {
         return NULL;
@@ -166,11 +170,6 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
 
     jint jvmresult = (*env)->GetJavaVM(env, &impl->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
-
-    impl->http_stream = (*env)->NewGlobalRef(env, http_stream);
-    if (impl->http_stream == NULL) {
-        goto on_error;
-    }
 
     if (http_request_body_stream != NULL) {
         impl->http_request_body_stream = (*env)->NewGlobalRef(env, http_request_body_stream);

@@ -28,7 +28,7 @@ import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
-import software.amazon.awssdk.crt.http.HttpResponseStreamHandler;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -121,7 +121,7 @@ public class HttpRequestResponseTest {
             shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
-                HttpResponseStreamHandler streamHandler = new HttpResponseStreamHandler() {
+                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
                         response.statusCode = responseStatusCode;
@@ -188,7 +188,7 @@ public class HttpRequestResponseTest {
         final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
         HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
             @Override
-            public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
                 transferData(bodyBytesIn, bodyBytesOut);
 
                 return bodyBytesIn.remaining() == 0;

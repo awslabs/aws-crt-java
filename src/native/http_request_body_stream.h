@@ -21,6 +21,9 @@
 struct aws_allocator;
 struct aws_input_stream;
 
-struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(struct aws_allocator *allocator, JNIEnv *env, jobject http_request_body_stream);
+struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
+    struct aws_allocator *allocator,
+    JNIEnv *env,
+    jobject http_request_body_stream);
 
 #endif /* AWS_JNI_CRT_HTTP_REQUEST_BODY_STREAM_H */

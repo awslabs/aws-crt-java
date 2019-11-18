@@ -35,7 +35,7 @@ public interface HttpRequestBodyStream {
      * @param bodyBytesOut The Buffer to write the Request Body Bytes to.
      * @return True if Request body is complete, false otherwise.
      */
-    default boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
+    default boolean sendRequestBody(ByteBuffer bodyBytesOut) {
         /* Optional Callback, return empty request body by default unless user wants to return one. */
         return true;
     }

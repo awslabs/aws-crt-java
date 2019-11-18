@@ -15,13 +15,13 @@
 package software.amazon.awssdk.crt.auth.credentials;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.CrtCredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 
 /**
  * A class that wraps the default AWS credentials provider chain
  */
-public class DefaultChainCredentialsProvider extends CredentialsProvider {
+public class DefaultChainCredentialsProvider extends CrtCredentialsProvider {
 
     /**
      * A simple builder class for the default credentials provider chain and its options

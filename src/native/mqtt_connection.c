@@ -101,6 +101,17 @@ void s_cache_mqtt_exception(JNIEnv *env) {
 }
 
 /*******************************************************************************
+ * mqtt_jni_async_callback - carries an AsyncCallback around as user data to mqtt
+ * async ops, and is used to deliver callbacks. Also hangs on to JNI references
+ * to buffers and strings that need to outlive the request
+ ******************************************************************************/
+struct mqtt_jni_async_callback {
+    struct mqtt_jni_connection *connection;
+    jobject async_callback;
+    struct aws_byte_buf buffer; /* payloads or other pinned resources go in here, freed when callback is delivered */
+};
+
+/*******************************************************************************
  * mqtt_jni_connection - represents an aws_mqtt_client_connection to Java
  ******************************************************************************/
 struct mqtt_jni_connection {
@@ -111,17 +122,7 @@ struct mqtt_jni_connection {
 
     JavaVM *jvm;
     jobject mqtt_connection; /* MqttClientConnection instance */
-};
-
-/*******************************************************************************
- * mqtt_jni_async_callback - carries an AsyncCallback around as user data to mqtt
- * async ops, and is used to deliver callbacks. Also hangs on to JNI references
- * to buffers and strings that need to outlive the request
- ******************************************************************************/
-struct mqtt_jni_async_callback {
-    struct mqtt_jni_connection *connection;
-    jobject async_callback;
-    struct aws_byte_buf buffer; /* payloads or other pinned resources go in here, freed when callback is delivered */
+    struct mqtt_jni_async_callback *on_message;
 };
 
 static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
@@ -266,6 +267,10 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
 static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection) {
     if (connection == NULL) {
         return;
+    }
+
+    if (connection->on_message) {
+        mqtt_jni_async_callback_destroy(connection->on_message);
     }
 
     if (connection->mqtt_connection) {
@@ -566,6 +571,10 @@ static void s_on_subscription_delivered(
     AWS_FATAL_ASSERT(user_data);
 
     struct mqtt_jni_async_callback *callback = user_data;
+    if (!callback->async_callback) {
+        return;
+    }
+    
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);
     (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)payload->len, (const signed char *)payload->ptr);
@@ -593,11 +602,6 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_subscribe: Invalid connection");
-        return 0;
-    }
-
-    if (!jni_handler) {
-        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_subscribe: Invalid handler");
         return 0;
     }
 
@@ -648,6 +652,52 @@ error_cleanup:
     }
 
     return 0;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionOnMessage(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jobject jni_handler) {
+    (void)jni_class;
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqttClientConnectionOnMessage: Invalid connection");
+        return;
+    }
+
+    if (!jni_handler) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqttClientConnectionOnMessage: Invalid handler");
+        return;
+    }
+
+    struct mqtt_jni_async_callback *handler = mqtt_jni_async_callback_new(connection, jni_handler);
+    if (!handler) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.mqttClientConnectionOnMessage: Unable to allocate handler");
+        return;
+    }
+
+    if (aws_mqtt_client_connection_set_on_any_publish_handler(
+        connection->client_connection, s_on_subscription_delivered, handler)) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.mqttClientConnectionOnMessage: Failed to install on_any_publish_handler");
+        goto error_cleanup;
+    }
+
+    if (connection->on_message) {
+        mqtt_jni_async_callback_destroy(connection->on_message);
+    }
+
+    connection->on_message = handler;
+
+    return;
+
+error_cleanup:
+    if (handler) {
+        mqtt_jni_async_callback_destroy(handler);
+    }
 }
 
 /*******************************************************************************

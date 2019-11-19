@@ -17,6 +17,7 @@
 #include <jni.h>
 #include <string.h>
 
+#include <aws/auth/signing.h>
 #include <aws/auth/credentials.h>
 #include <aws/common/string.h>
 
@@ -122,45 +123,87 @@ void s_cache_signing_jni_ids(JNIEnv *env) {
     AWS_FATAL_ASSERT(s_http_request_properties.constructor_method_id);
 }
 
-JNIEXPORT jlong JNICALL
-    Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerNew(JNIEnv *env, jclass jni_class) {
+struct s_aws_sign_request_callback_data {
+    JavaVM *jvm;
+    jobject java_future;
+    jobject java_original_request;
+    struct aws_http_message *native_request;
+    struct aws_signable *original_message_signable;
+};
 
-    (void)jni_class;
-    (void)env;
+static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
 
-    return 0;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    (*env)->DeleteGlobalRef(env, callback_data->java_future);
+    (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
+
+    if (callback_data->original_message) {
+        aws_http_message_release(callback_data->original_message);
+    }
+
+    if (callback_data->original_message)
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
-JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerDestroy(
-    JNIEnv *env,
-    jclass jni_class,
-    jobject java_signer,
-    jlong signer_native_handle) {
+static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
-    (void)jni_class;
-    (void)env;
-    (void)java_signer;
-    (void)signer_native_handle;
+    struct s_aws_sign_request_callback_data *callback_data = userdata;
+
+    s_cleanup_callback_data(callback_data);
 }
 
+static void
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSignRequest(
     JNIEnv *env,
     jclass jni_class,
-    jobject java_signer,
     jobject java_http_request,
     jobject java_signing_config,
-    jobject java_future,
-    jlong signer_native_handle) {
+    jobject java_future) {
 
     (void)jni_class;
     (void)env;
-    (void)java_signer;
     (void)java_http_request;
     (void)java_signing_config;
     (void)java_future;
-    (void)signer_native_handle;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_sign_request_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
+    if (callback_data == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
+        return;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    callback_data->java_future = (*env)->NewGlobalRef(env, java_future);
+    callback_data->java_original_request = (*env)->NewGlobalRef(env, java_http_request);
+
+    /* Build a native aws_signing_config_aws object */
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+
+    if (s_build_signing_config(java_signing_config, &signing_config)) {
+        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
+        s_cleanup_callback_data(callback_data);
+        return;
+    }
+
+    /* Build a native request */
+    struct aws_http_message *message = aws_http_message_new(allocator);
+    ??
+
+    /* Wrap the native request in a signable */
+    ??
+
+    /* Sign the native request */
+    if (aws_sign_request_aws(allocator, signable, (struct aws_signing_config_base *)&signing_config, s_aws_signing_complete, callback_data)) {
+        aws_jni_throw_runtime_exception(env, "??");
+        s_cleanup_callback_data(callback_data);
+    }
 }
 
 #if UINTPTR_MAX == 0xffffffff

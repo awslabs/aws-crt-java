@@ -574,7 +574,7 @@ static void s_on_subscription_delivered(
     if (!callback->async_callback) {
         return;
     }
-    
+
     JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
     jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);
     (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)payload->len, (const signed char *)payload->ptr);
@@ -680,7 +680,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     if (aws_mqtt_client_connection_set_on_any_publish_handler(
-        connection->client_connection, s_on_subscription_delivered, handler)) {
+            connection->client_connection, s_on_subscription_delivered, handler)) {
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.mqttClientConnectionOnMessage: Failed to install on_any_publish_handler");
         goto error_cleanup;

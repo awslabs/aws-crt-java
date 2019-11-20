@@ -56,6 +56,10 @@ static struct {
     jmethodID constructor_method_id;
 } s_http_request_properties;
 
+static struct {
+    jmethodID get_native_handle_method_id;
+} s_crt_resource_properties;
+
 void s_cache_signing_jni_ids(JNIEnv *env) {
     /* AwsSigningConfig */
     jclass aws_signing_config_class =
@@ -121,14 +125,24 @@ void s_cache_signing_jni_ids(JNIEnv *env) {
         "(Ljava/lang/String;Ljava/lang/String;[Lsoftware/amazon/awssdk/crt/http/HttpHeader;Lsoftware/amazon/awssdk/crt/"
         "http/HttpRequestBodyStream;)V");
     AWS_FATAL_ASSERT(s_http_request_properties.constructor_method_id);
+
+    /* CrtResource */
+    jclass crt_resource_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
+    AWS_FATAL_ASSERT(crt_resource_class);
+
+    s_crt_resource_properties.get_native_handle_method_id = (*env)->GetMethodID(env, crt_resource_class, "getNativeHandle", "()J");
+    AWS_FATAL_ASSERT(s_crt_resource_properties.get_native_handle_method_id);
 }
 
 struct s_aws_sign_request_callback_data {
     JavaVM *jvm;
     jobject java_future;
     jobject java_original_request;
+    jobject java_sign_param_predicate;
     struct aws_http_message *native_request;
     struct aws_signable *original_message_signable;
+    struct aws_string *region;
+    struct aws_string *service;
 };
 
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
@@ -138,6 +152,10 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     (*env)->DeleteGlobalRef(env, callback_data->java_future);
     (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
 
+    if (callback_data->java_sign_param_predicate) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_sign_param_predicate);
+    }
+
     if (callback_data->native_request) {
         aws_http_message_release(callback_data->native_request);
     }
@@ -146,6 +164,9 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
         aws_signable_destroy(callback_data->original_message_signable);
     }
 
+    aws_string_destroy(callback_data->region);
+    aws_string_destroy(callback_data->service);
+
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
@@ -153,10 +174,73 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
+    ??;
+
     s_cleanup_callback_data(callback_data);
 }
 
-static void
+static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_data) {
+    (void)name;
+
+    struct s_aws_sign_request_callback_data *callback_data = user_data;
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    jstring parameter_name = ??;
+
+    bool result = (*env)->CallBooleanMethod(env, callback_data->java_sign_param_predicate, s_predicate_properties.test_method_id, (jobject) parameter_name);
+
+    ??(parameter_name);
+
+    return result;
+}
+
+/*
+struct aws_signing_config_aws {
+
+    struct aws_credentials_provider *credentials_provider;
+
+};
+
+ */
+
+static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callback_data *callback_data, jobject java_config, struct aws_signing_config_aws *config) {
+    (void)callback_data;
+    (void)java_config;
+    (void)config;
+
+    config->config_type = AWS_SIGNING_CONFIG_AWS;
+    config->algorithm = (enum aws_signing_algorithm) (*env)->GetIntField(env, java_config, s_aws_signing_config_properties.algorithm_field_id);
+
+    jstring region = (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.region_field_id);
+    callback_data->region = aws_jni_new_string_from_jstring(env, region);
+    config->region = aws_byte_cursor_from_string(callback_data->region);
+
+    jstring service = (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.service_field_id);
+    callback_data->service = aws_jni_new_string_from_jstring(env, service);
+    config->service = aws_byte_cursor_from_string(callback_data->service);
+
+    int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, s_aws_signing_config_properties.time_field_id);
+    aws_date_time_init_epoch_millis(&config->date, (uint64_t) epoch_time_millis);
+
+    jobject sign_param_predicate = (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.should_sign_parameter_field_id);
+    if (sign_param_predicate != NULL) {
+        callback_data->java_sign_param_predicate = (*env)->NewGlobalRef(env, sign_param_predicate);
+        if (callback_data->java_sign_param_predicate == NULL) {
+            return AWS_OP_ERR;
+        }
+
+        config->should_sign_param = s_should_sign_param;
+        config->should_sign_param_ud = callback_data;
+    }
+
+    config->use_double_uri_encode = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.use_double_uri_encode_field_id);
+    config->should_normalize_uri_path = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.should_normalize_uri_path_field_id);
+    config->sign_body = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.sign_body_field_id);
+
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSignRequest(
     JNIEnv *env,
@@ -188,12 +272,16 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
 
-    if (s_build_signing_config(java_signing_config, &signing_config)) {
+    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
         aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
         s_cleanup_callback_data(callback_data);
         return;
     }
 
+#ifndef NEVER
+    aws_jni_throw_runtime_exception(env, "Not yet implemented");
+    s_cleanup_callback_data(callback_data);
+#else
     /* Build a native request */
     struct aws_http_message *message = aws_http_message_new(allocator);
     callback_data->native_request = message;
@@ -207,6 +295,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         aws_jni_throw_runtime_exception(env, "??");
         s_cleanup_callback_data(callback_data);
     }
+#endif
 }
 
 #if UINTPTR_MAX == 0xffffffff

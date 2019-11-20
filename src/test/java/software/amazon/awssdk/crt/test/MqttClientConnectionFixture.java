@@ -69,7 +69,7 @@ public class MqttClientConnectionFixture {
         try {
             pathToCert = Paths.get(TEST_CERTIFICATE);
             pathToKey = Paths.get(TEST_PRIVATEKEY);
-            pathToCa = Paths.get(TEST_ROOTCA);
+            //pathToCa = Paths.get(TEST_ROOTCA);
             if (pathToCert == null || pathToCert.toString().equals("")) {
                 throw new MissingCredentialsException("Certificate not provided");
             }
@@ -82,9 +82,9 @@ public class MqttClientConnectionFixture {
             if (!pathToKey.toFile().exists()) {
                 throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
             }
-            if (pathToCa != null && !pathToCa.toFile().exists()) {
-                throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
-            }
+            // if (pathToCa != null && !pathToCa.toFile().exists()) {
+            //     throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
+            // }
             return true;
         } catch (InvalidPathException ex) {
             return false;
@@ -125,9 +125,9 @@ public class MqttClientConnectionFixture {
                         pathToKey.toString())) {
 
             int port = TEST_PORT;
-            if (!pathToCa.toString().equals("")) {
-                tlsOptions.overrideDefaultTrustStoreFromPath(null, pathToCa.toString());
-            }
+            // if (!pathToCa.toString().equals("")) {
+            //     tlsOptions.overrideDefaultTrustStoreFromPath(null, pathToCa.toString());
+            // }
             if (TlsContextOptions.isAlpnSupported()) {
                 tlsOptions.withAlpnList("x-amzn-mqtt-ca");
                 port = TEST_PORT_ALPN;

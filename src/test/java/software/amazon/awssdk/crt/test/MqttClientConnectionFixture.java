@@ -59,7 +59,7 @@ public class MqttClientConnectionFixture {
     static final String TEST_ROOTCA = System.getProperty("rootca");
     static final short TEST_PORT = 8883;
     static final short TEST_PORT_ALPN = 443;
-    static final String TEST_CLIENTID = "sdk-java-v2-" + UUID.randomUUID();
+    static final String TEST_CLIENTID = "aws-crt-java-";
 
     Path pathToCert = null;
     Path pathToKey = null;
@@ -134,7 +134,7 @@ public class MqttClientConnectionFixture {
             }
 
             cleanSession = true; // only true is supported right now
-            String clientId = TEST_CLIENTID + (new Date()).toString();
+            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
             try (TlsContext tls = new TlsContext(tlsOptions); MqttClient client = new MqttClient(bootstrap, tls)) {
                 connection = new MqttClientConnection(client, events);
 

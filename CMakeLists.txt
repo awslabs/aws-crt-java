@@ -102,9 +102,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(UseJava)
 include(AwsPlatformDetect)
 
-# Generate the java interface classes and headers first so they can be added to any generated projects
-add_subdirectory("src/main/java/software/amazon/awssdk/crt")
-
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"
         )

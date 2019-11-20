@@ -21,6 +21,11 @@ package software.amazon.awssdk.crt;
  */
 public class Log {
 
+    // Log must initialize the CRT in case it is the first API call made
+    static {
+        new CRT();
+    }
+
     /*
      * System properties for automatic logging initialization on CRT initialization
      */
@@ -156,6 +161,8 @@ public class Log {
                 }
 
                 initLoggingToFile(level.getValue(), filenameString);
+                break;
+            case None:
                 break;
         }
     }

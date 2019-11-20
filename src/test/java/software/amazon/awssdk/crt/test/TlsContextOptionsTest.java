@@ -94,25 +94,22 @@ public class TlsContextOptionsTest {
         CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            for (TlsVersions tlsVersion: TlsContextOptions.TlsVersions.values()) {
-                options.setMinimumTlsVersion(tlsVersion);
-            }
-
-            options.setMinimumTlsVersion(TlsVersions.TLS_VER_SYS_DEFAULTS);
-
-            for (TlsCipherPreference pref: TlsCipherPreference.values()) {
+            for (TlsCipherPreference pref : TlsCipherPreference.values()) {
                 if (TlsContextOptions.isCipherPreferenceSupported(pref)) {
                     options.setCipherPreference(pref);
                 }
             }
-
+            Assert.assertNotEquals(0, options.getNativeHandle());
+        }
+        
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             boolean exceptionThrown = false;
 
             try {
                 options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06);
-                options.setMinimumTlsVersion(TlsVersions.TLSv1_2);
-                Assert.fail();
-            } catch (IllegalArgumentException e) {
+                options.minTlsVersion = TlsVersions.TLSv1_2;
+                Assert.assertEquals(0, options.getNativeHandle()); // Will never get here
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 exceptionThrown = true;
             }
 
@@ -148,7 +145,7 @@ public class TlsContextOptionsTest {
     public void testMTLS() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.initMTLS(TEST_CERT, TEST_KEY);
+            options.initMtls(TEST_CERT, TEST_KEY);
             try (TlsContext tls = new TlsContext(options)) {
                 assertNotNull(tls);
             } catch (Exception ex) {

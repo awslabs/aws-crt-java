@@ -50,12 +50,22 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
 /*******************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray - Creates an aws_byte_cursor from a jbyteArray.
  ******************************************************************************/
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array);
+
+/*******************************************************************************
+ * aws_jni_byte_array_from_cursor - Creates a jbyteArray from a aws_byte_cursor.
+ ******************************************************************************/
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
 
 /*******************************************************************************
  * jni_byte_buffer_copy_from_cursor - Creates a Java ByteBuffer from a native aws_byte_cursor
  ******************************************************************************/
 jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
+
+/*******************************************************************************
+ * aws_jni_string_from_cursor - Creates a Java String from a cursor.
+ ******************************************************************************/
+jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
 
 /*******************************************************************************
  * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer

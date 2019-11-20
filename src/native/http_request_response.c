@@ -154,10 +154,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
-    if (!callback) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: failed");
-        goto on_error;
-    }
+    AWS_FATAL_ASSERT(callback);
 
     // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
     jint jvmresult = (*env)->GetJavaVM(env, &callback->jvm);
@@ -174,21 +171,21 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
     }
 
     callback->native_request = aws_http_message_new_request(allocator);
-    if (!callback->native_request) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: failed");
-        goto on_error;
-    }
+    AWS_FATAL_ASSERT(callback->native_request);
 
     aws_http_message_set_body_stream(callback->native_request, callback->outgoing_body_stream);
 
-    callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
-    if (!callback->java_http_response_stream_handler) {
-        goto on_error;
-    }
+    callback->java_crt_http_callback_handler = (*env)->NewGlobalRef(env, java_callback_handler);
+    AWS_FATAL_ASSERT(callback->java_crt_http_callback_handler);
 
     return callback;
+}
 
-on_error:
+static void http_stream_callback_release(JNIEnv *env, struct http_stream_callback_data *callback) {
+
+    if (callback->java_http_stream) {
+        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
+    }
 
     http_stream_callback_destroy(env, callback);
 
@@ -434,7 +431,7 @@ static bool s_fill_out_request(
     int result = aws_http_message_set_request_method(request, method_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Method error");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
         return false;
     }
 
@@ -442,7 +439,7 @@ static bool s_fill_out_request(
     result = aws_http_message_set_request_path(request, path_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Path error");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
         return false;
     }
 
@@ -499,7 +496,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid jni_connection");
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
         return (jobject)NULL;
     }
 

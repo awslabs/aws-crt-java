@@ -138,11 +138,13 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     (*env)->DeleteGlobalRef(env, callback_data->java_future);
     (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
 
-    if (callback_data->original_message) {
-        aws_http_message_release(callback_data->original_message);
+    if (callback_data->native_request) {
+        aws_http_message_release(callback_data->native_request);
     }
 
-    if (callback_data->original_message)
+    if (callback_data->original_message_signable) {
+        aws_signable_destroy(callback_data->original_message_signable);
+    }
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -194,6 +196,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 
     /* Build a native request */
     struct aws_http_message *message = aws_http_message_new(allocator);
+    callback_data->native_request = message;
     ??
 
     /* Wrap the native request in a signable */

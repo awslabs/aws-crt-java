@@ -17,9 +17,9 @@
 #include <jni.h>
 #include <string.h>
 
-#include <aws/auth/signing.h>
 #include <aws/auth/credentials.h>
 #include <aws/auth/signable.h>
+#include <aws/auth/signing.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 
@@ -58,9 +58,7 @@ static struct {
     jmethodID constructor_method_id;
 } s_http_request_properties;
 
-static struct {
-    jmethodID get_native_handle_method_id;
-} s_crt_resource_properties;
+static struct { jmethodID get_native_handle_method_id; } s_crt_resource_properties;
 
 void s_cache_signing_jni_ids(JNIEnv *env) {
     /* AwsSigningConfig */
@@ -132,7 +130,8 @@ void s_cache_signing_jni_ids(JNIEnv *env) {
     jclass crt_resource_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
     AWS_FATAL_ASSERT(crt_resource_class);
 
-    s_crt_resource_properties.get_native_handle_method_id = (*env)->GetMethodID(env, crt_resource_class, "getNativeHandle", "()J");
+    s_crt_resource_properties.get_native_handle_method_id =
+        (*env)->GetMethodID(env, crt_resource_class, "getNativeHandle", "()J");
     AWS_FATAL_ASSERT(s_crt_resource_properties.get_native_handle_method_id);
 }
 
@@ -193,34 +192,41 @@ static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_d
 
     jstring parameter_name = aws_jni_string_from_cursor(env, name);
 
-    bool result = (*env)->CallBooleanMethod(env, callback_data->java_sign_param_predicate, s_predicate_properties.test_method_id, (jobject) parameter_name);
+    bool result = (*env)->CallBooleanMethod(
+        env, callback_data->java_sign_param_predicate, s_predicate_properties.test_method_id, (jobject)parameter_name);
 
     (*env)->DeleteGlobalRef(env, parameter_name);
 
     return result;
 }
 
-
-static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callback_data *callback_data, jobject java_config, struct aws_signing_config_aws *config) {
+static int s_build_signing_config(
+    JNIEnv *env,
+    struct s_aws_sign_request_callback_data *callback_data,
+    jobject java_config,
+    struct aws_signing_config_aws *config) {
     (void)callback_data;
     (void)java_config;
     (void)config;
 
     config->config_type = AWS_SIGNING_CONFIG_AWS;
-    config->algorithm = (enum aws_signing_algorithm) (*env)->GetIntField(env, java_config, s_aws_signing_config_properties.algorithm_field_id);
+    config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
+        env, java_config, s_aws_signing_config_properties.algorithm_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
     config->region = aws_byte_cursor_from_string(callback_data->region);
 
-    jstring service = (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.service_field_id);
+    jstring service =
+        (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.service_field_id);
     callback_data->service = aws_jni_new_string_from_jstring(env, service);
     config->service = aws_byte_cursor_from_string(callback_data->service);
 
     int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, s_aws_signing_config_properties.time_field_id);
-    aws_date_time_init_epoch_millis(&config->date, (uint64_t) epoch_time_millis);
+    aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);
 
-    jobject sign_param_predicate = (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.should_sign_parameter_field_id);
+    jobject sign_param_predicate =
+        (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.should_sign_parameter_field_id);
     if (sign_param_predicate != NULL) {
         callback_data->java_sign_param_predicate = (*env)->NewGlobalRef(env, sign_param_predicate);
         AWS_FATAL_ASSERT(callback_data->java_sign_param_predicate != NULL);
@@ -229,12 +235,16 @@ static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callbac
         config->should_sign_param_ud = callback_data;
     }
 
-    config->use_double_uri_encode = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.use_double_uri_encode_field_id);
-    config->should_normalize_uri_path = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.should_normalize_uri_path_field_id);
+    config->use_double_uri_encode =
+        (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.use_double_uri_encode_field_id);
+    config->should_normalize_uri_path =
+        (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.should_normalize_uri_path_field_id);
     config->sign_body = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.sign_body_field_id);
 
-    jobject provider = (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.credentials_provider_field_id);
-    config->credentials_provider = (void *)(*env)->CallLongMethod(env, provider, s_crt_resource_properties.get_native_handle_method_id);
+    jobject provider =
+        (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.credentials_provider_field_id);
+    config->credentials_provider =
+        (void *)(*env)->CallLongMethod(env, provider, s_crt_resource_properties.get_native_handle_method_id);
 
     return AWS_OP_SUCCESS;
 }
@@ -254,7 +264,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     (void)java_future;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct s_aws_sign_request_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
+    struct s_aws_sign_request_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
     if (callback_data == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
         return;
@@ -283,13 +294,18 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     /* Build a native request */
     struct aws_http_message *message = aws_http_message_new(allocator);
     callback_data->native_request = message;
-    ??
+    ? ?
 
-    /* Wrap the native request in a signable */
-    ??
+      /* Wrap the native request in a signable */
+        ? ?
 
-    /* Sign the native request */
-    if (aws_sign_request_aws(allocator, signable, (struct aws_signing_config_base *)&signing_config, s_aws_signing_complete, callback_data)) {
+          /* Sign the native request */
+        if (aws_sign_request_aws(
+                allocator,
+                signable,
+                (struct aws_signing_config_base *)&signing_config,
+                s_aws_signing_complete,
+                callback_data)) {
         aws_jni_throw_runtime_exception(env, "??");
         s_cleanup_callback_data(callback_data);
     }

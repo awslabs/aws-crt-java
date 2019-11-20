@@ -288,6 +288,11 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
     (void)jni_crt_class;
 
+    bool done = false;
+    while (!done) {
+        ;
+    }
+
     s_memory_tracing = jni_memtrace;
     void *stack[1];
     if (0 == aws_backtrace(stack, 1)) {

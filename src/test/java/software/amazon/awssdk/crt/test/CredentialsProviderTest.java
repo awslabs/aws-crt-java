@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CrtCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;

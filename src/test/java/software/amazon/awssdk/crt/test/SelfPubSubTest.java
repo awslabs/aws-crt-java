@@ -60,7 +60,64 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                 }
             };
 
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
+                    messageHandler);
+            subscribed.thenApply(unused -> subsAcked++);
+            int packetId = subscribed.get();
+
+            assertNotSame(0, packetId);
+            assertEquals("Single subscription", 1, subsAcked);
+
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
+            CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            published.thenApply(unused -> pubsAcked++);
+            packetId = published.get();
+
+            assertNotSame(0, packetId);
+            assertEquals("Published", 1, pubsAcked);
+
+            published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            published.thenApply(unused -> pubsAcked++);
+            packetId = published.get();
+
+            assertNotSame(0, packetId);
+            assertEquals("Published", 2, pubsAcked);
+
+            CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
+            unsubscribed.thenApply(unused -> subsAcked--);
+            packetId = unsubscribed.get();
+
+            assertNotSame(0, packetId);
+            assertEquals("No Subscriptions", 0, subsAcked);
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+
+        disconnect();
+        close();
+        CrtResource.waitForNoResources();
+    }
+    
+    @Test
+    public void testPubSubOnMessage() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        connect();
+
+        try {
+            Consumer<MqttMessage> messageHandler = (message) -> {
+                byte[] payload = message.getPayload();
+                try {
+                    assertEquals(TEST_TOPIC, message.getTopic());
+                    String contents = new String(payload, "UTF-8");
+                    assertEquals("Message is intact", TEST_PAYLOAD, contents);
+                } catch (UnsupportedEncodingException ex) {
+                    fail("Unable to decode payload: " + ex.getMessage());
+                }
+            };
+
+            connection.onMessage(messageHandler);
+
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);
             subscribed.thenApply(unused -> subsAcked++);
             int packetId = subscribed.get();
 

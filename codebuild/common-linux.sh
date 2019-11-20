@@ -5,8 +5,9 @@ set -e
 env
 
 # Enable squid-based integration tests
+# These steps are very specific to ubuntu 14.
 sudo apt-get -y install squid
-sudo service squid restart
+squid3 -YC -f /etc/squid3/squid.conf || sudo service squid restart
 
 PROXY_HOST="127.0.0.1"
 PROXY_PORT="3128"

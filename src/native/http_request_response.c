@@ -165,31 +165,17 @@ static struct http_stream_callback_data *http_stream_callback_alloc(
 
     callback->outgoing_body_stream =
         aws_input_stream_new_from_java_http_request_body_stream(allocator, env, java_request_body_stream);
-    if (callback->outgoing_body_stream == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: failed");
-        goto on_error;
-    }
+    AWS_FATAL_ASSERT(callback->outgoing_body_stream != NULL);
 
     callback->native_request = aws_http_message_new_request(allocator);
     AWS_FATAL_ASSERT(callback->native_request);
 
     aws_http_message_set_body_stream(callback->native_request, callback->outgoing_body_stream);
 
-    callback->java_crt_http_callback_handler = (*env)->NewGlobalRef(env, java_callback_handler);
-    AWS_FATAL_ASSERT(callback->java_crt_http_callback_handler);
+    callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
+    AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
 
     return callback;
-}
-
-static void http_stream_callback_release(JNIEnv *env, struct http_stream_callback_data *callback) {
-
-    if (callback->java_http_stream) {
-        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
-    }
-
-    http_stream_callback_destroy(env, callback);
-
-    return NULL;
 }
 
 // Return whether the Java HttpStream object was successfully created.

@@ -19,7 +19,9 @@
 
 #include <aws/auth/signing.h>
 #include <aws/auth/credentials.h>
+#include <aws/auth/signable.h>
 #include <aws/common/string.h>
+#include <aws/http/request_response.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -170,14 +172,17 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
+#ifdef NEVER
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    ??;
+    (void)error_code;
+    (void)result;
 
     s_cleanup_callback_data(callback_data);
 }
+#endif // NEVER
 
 static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_data) {
     (void)name;
@@ -186,23 +191,15 @@ static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_d
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jstring parameter_name = ??;
+    jstring parameter_name = aws_jni_string_from_cursor(env, name);
 
     bool result = (*env)->CallBooleanMethod(env, callback_data->java_sign_param_predicate, s_predicate_properties.test_method_id, (jobject) parameter_name);
 
-    ??(parameter_name);
+    (*env)->DeleteGlobalRef(env, parameter_name);
 
     return result;
 }
 
-/*
-struct aws_signing_config_aws {
-
-    struct aws_credentials_provider *credentials_provider;
-
-};
-
- */
 
 static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callback_data *callback_data, jobject java_config, struct aws_signing_config_aws *config) {
     (void)callback_data;
@@ -226,9 +223,7 @@ static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callbac
     jobject sign_param_predicate = (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.should_sign_parameter_field_id);
     if (sign_param_predicate != NULL) {
         callback_data->java_sign_param_predicate = (*env)->NewGlobalRef(env, sign_param_predicate);
-        if (callback_data->java_sign_param_predicate == NULL) {
-            return AWS_OP_ERR;
-        }
+        AWS_FATAL_ASSERT(callback_data->java_sign_param_predicate != NULL);
 
         config->should_sign_param = s_should_sign_param;
         config->should_sign_param_ud = callback_data;
@@ -237,6 +232,9 @@ static int s_build_signing_config(JNIEnv *env, struct s_aws_sign_request_callbac
     config->use_double_uri_encode = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.use_double_uri_encode_field_id);
     config->should_normalize_uri_path = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.should_normalize_uri_path_field_id);
     config->sign_body = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.sign_body_field_id);
+
+    jobject provider = (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.credentials_provider_field_id);
+    config->credentials_provider = (void *)(*env)->CallLongMethod(env, provider, s_crt_resource_properties.get_native_handle_method_id);
 
     return AWS_OP_SUCCESS;
 }

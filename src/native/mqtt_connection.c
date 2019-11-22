@@ -118,24 +118,7 @@ struct mqtt_jni_connection {
     struct aws_atomic_var ref_count;
 };
 
-static void mqtt_jni_async_callback_destroy(struct mqtt_jni_async_callback *callback);
-
-static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection) {
-    if (connection == NULL) {
-        return;
-    }
-
-    if (connection->on_message) {
-        mqtt_jni_async_callback_destroy(connection->on_message);
-    }
-
-    if (connection->mqtt_connection) {
-        (*env)->DeleteGlobalRef(env, connection->mqtt_connection);
-    }
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, connection);
-}
+static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection);
 
 static void s_mqtt_jni_connection_acquire(struct mqtt_jni_connection *connection) {
     size_t old_value = aws_atomic_fetch_add(&connection->ref_count, 1);
@@ -174,43 +157,6 @@ static void s_mqtt_jni_connection_release(JNIEnv *env, struct mqtt_jni_connectio
             s_on_shutdown_disconnect_complete(connection->client_connection, connection);
         }
     }
-}
-
-static struct mqtt_jni_connection *s_mqtt_connection_new(
-    JNIEnv *env,
-    struct aws_mqtt_client *client,
-    jobject java_mqtt_connection) {
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    struct mqtt_jni_connection *connection = aws_mem_calloc(allocator, 1, sizeof(struct mqtt_jni_connection));
-    if (!connection) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.mqtt_connect: Out of memory allocating JNI connection");
-        return NULL;
-    }
-
-    aws_atomic_store_int(&connection->ref_count, 1);
-    connection->client = client;
-    connection->mqtt_connection = (*env)->NewGlobalRef(env, java_mqtt_connection);
-    jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
-
-    connection->client_connection = aws_mqtt_client_connection_new(client);
-    if (!connection->client_connection) {
-        aws_jni_throw_runtime_exception(
-            env,
-            "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new "
-            "connection");
-        goto on_error;
-    }
-
-    return connection;
-
-on_error:
-
-    s_mqtt_jni_connection_release(env, connection);
-
-    return NULL;
 }
 
 static struct mqtt_jni_async_callback *mqtt_jni_async_callback_new(
@@ -347,6 +293,60 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     s_mqtt_jni_connection_release(env, jni_connection);
+}
+
+static struct mqtt_jni_connection *s_mqtt_connection_new(
+    JNIEnv *env,
+    struct aws_mqtt_client *client,
+    jobject java_mqtt_connection) {
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+
+    struct mqtt_jni_connection *connection = aws_mem_calloc(allocator, 1, sizeof(struct mqtt_jni_connection));
+    if (!connection) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.mqtt_connect: Out of memory allocating JNI connection");
+        return NULL;
+    }
+
+    aws_atomic_store_int(&connection->ref_count, 1);
+    connection->client = client;
+    connection->mqtt_connection = (*env)->NewGlobalRef(env, java_mqtt_connection);
+    jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    connection->client_connection = aws_mqtt_client_connection_new(client);
+    if (!connection->client_connection) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new "
+            "connection");
+        goto on_error;
+    }
+
+    return connection;
+
+on_error:
+
+    s_mqtt_jni_connection_release(env, connection);
+
+    return NULL;
+}
+
+static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection) {
+    if (connection == NULL) {
+        return;
+    }
+
+    if (connection->on_message) {
+        mqtt_jni_async_callback_destroy(connection->on_message);
+    }
+
+    if (connection->mqtt_connection) {
+        (*env)->DeleteGlobalRef(env, connection->mqtt_connection);
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, connection);
 }
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionNew(

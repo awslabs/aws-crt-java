@@ -138,15 +138,4 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
  ******************************************************************************/
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm);
 
-
-/*
- * Shared java object jni ids
- */
-struct aws_crt_resource_properties {
-    jmethodID add_ref_method_id;
-    jmethodID dec_ref_method_id;
-};
-
-extern struct aws_crt_resource_properties g_crt_resource_properties;
-
 #endif /* AWS_JNI_CRT_H */

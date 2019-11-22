@@ -128,7 +128,7 @@ static void s_mqtt_jni_connection_acquire(struct mqtt_jni_connection *connection
 
 static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection *connection, void *user_data);
 
-static void s_mqtt_jni_connection_release(JNIEnv *env, struct mqtt_jni_connection *connection) {
+static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection) {
     size_t old_value = aws_atomic_fetch_sub(&connection->ref_count, 1);
 
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection release, ref count now = %d", (int)old_value - 1);
@@ -226,7 +226,7 @@ static void s_on_connection_complete(
 
     mqtt_jni_async_callback_destroy(connect_callback);
 
-    s_mqtt_jni_connection_release(env, connection);
+    s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_interrupted_internal(
@@ -280,7 +280,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     mqtt_jni_async_callback_destroy(connect_callback);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
-    s_mqtt_jni_connection_release(env, jni_connection);
+    s_mqtt_jni_connection_release(jni_connection);
 }
 
 static struct mqtt_jni_connection *s_mqtt_connection_new(
@@ -315,7 +315,7 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
 
 on_error:
 
-    s_mqtt_jni_connection_release(env, connection);
+    s_mqtt_jni_connection_release(connection);
 
     return NULL;
 }
@@ -387,7 +387,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     (void)env;
 
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
-    s_mqtt_jni_connection_release(env, connection);
+    s_mqtt_jni_connection_release(connection);
 }
 
 /*******************************************************************************
@@ -470,7 +470,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
 
     int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
     if (result != AWS_OP_SUCCESS) {
-        s_mqtt_jni_connection_release(env, connection);
+        s_mqtt_jni_connection_release(connection);
         mqtt_jni_async_callback_destroy(connect_callback);
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");

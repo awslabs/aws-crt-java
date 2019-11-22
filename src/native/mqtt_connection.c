@@ -126,19 +126,7 @@ static void s_mqtt_jni_connection_acquire(struct mqtt_jni_connection *connection
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection acquire, ref count now = %d", (int)old_value + 1);
 }
 
-static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection *connection, void *user_data) {
-    (void)connection;
-
-    struct mqtt_jni_connection *jni_connection = (struct mqtt_jni_connection *)user_data;
-
-    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection shutdown complete, releasing references");
-
-    JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
-    (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.release_references);
-    (*env)->ExceptionCheck(env);
-
-    s_mqtt_connection_destroy(env, jni_connection);
-}
+static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection *connection, void *user_data);
 
 static void s_mqtt_jni_connection_release(JNIEnv *env, struct mqtt_jni_connection *connection) {
     size_t old_value = aws_atomic_fetch_sub(&connection->ref_count, 1);
@@ -372,6 +360,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
         connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
 
     return (jlong)connection;
+}
+
+static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection *connection, void *user_data) {
+    (void)connection;
+
+    struct mqtt_jni_connection *jni_connection = (struct mqtt_jni_connection *)user_data;
+
+    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection shutdown complete, releasing references");
+
+    JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
+    (*env)->CallVoidMethod(env, jni_connection->mqtt_connection, s_crt_resource.release_references);
+    (*env)->ExceptionCheck(env);
+
+    s_mqtt_connection_destroy(env, jni_connection);
 }
 
 /*******************************************************************************

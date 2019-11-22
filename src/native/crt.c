@@ -234,6 +234,20 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
+struct aws_crt_resource_properties g_crt_resource_properties;
+
+void s_cache_crt_resource_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
+    AWS_FATAL_ASSERT(cls);
+
+    g_crt_resource_properties.add_ref_method_id = (*env)->GetMethodID(env, cls, "addRef", "()V");
+    AWS_FATAL_ASSERT(g_crt_resource_properties.add_ref_method_id);
+
+    g_crt_resource_properties.dec_ref_method_id = (*env)->GetMethodID(env, cls, "decRef", "()V");
+    AWS_FATAL_ASSERT(g_crt_resource_properties.dec_ref_method_id);
+}
+
+
 #if defined(_MSC_VER)
 #    pragma warning(push)
 #    pragma warning(disable : 4210) /* non-standard extension used: function given file scope */
@@ -258,6 +272,7 @@ static void s_cache_jni_classes(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_event_loop_group(env);
+    s_cache_crt_resource_properties(env);
 }
 #if defined(_MSC_VER)
 #    pragma warning(pop)

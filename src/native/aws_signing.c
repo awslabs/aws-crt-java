@@ -287,6 +287,19 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         return;
     }
 
+    struct aws_http_message *native_request = s_build_native_http_request_from_java_request(??);
+    if (native_request == NULL) {
+        ??;
+        return;
+    }
+
+    struct aws_signable *signable = aws_signable_new_http_request(allocator, native_request);
+    if (signable == NULL) {
+        ??;
+        return;
+    }
+
+    /* */
 #ifndef NEVER
     aws_jni_throw_runtime_exception(env, "Not yet implemented");
     s_cleanup_callback_data(callback_data);

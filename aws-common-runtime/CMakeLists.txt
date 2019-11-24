@@ -42,7 +42,7 @@ set(AWS_C_MQTT_SHA "v0.4.17")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "v0.4.16")
+set(AWS_C_HTTP_SHA "v0.4.17")
 include(BuildAwsCHttp)
 
 set(AWS_C_CAL_URL "https://github.com/awslabs/aws-c-cal.git")
@@ -50,7 +50,7 @@ set(AWS_C_CAL_SHA "v0.2.0")
 include(BuildAwsCCal)
 
 set(AWS_C_AUTH_URL "https://github.com/awslabs/aws-c-auth.git")
-set(AWS_C_AUTH_SHA "v0.3.1")
+set(AWS_C_AUTH_SHA "v0.3.2")
 include(BuildAwsCAuth)
 
 add_dependencies(AwsCIO AwsCCommon)

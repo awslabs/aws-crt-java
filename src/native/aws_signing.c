@@ -13,7 +13,10 @@
  * permissions and limitations under the License.
  */
 
-#include <crt.h>
+#include "crt.h"
+#include "http_request_utils.h"
+#include "java_class_ids.h"
+
 #include <jni.h>
 #include <string.h>
 
@@ -22,8 +25,6 @@
 #include <aws/auth/signing.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
-
-#include "http_request_utils.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -36,122 +37,6 @@
 #        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #    endif
 #endif
-
-static struct {
-    jclass aws_signing_config_class;
-    jfieldID algorithm_field_id;
-    jfieldID region_field_id;
-    jfieldID service_field_id;
-    jfieldID time_field_id;
-    jfieldID credentials_provider_field_id;
-    jfieldID should_sign_parameter_field_id;
-    jfieldID use_double_uri_encode_field_id;
-    jfieldID should_normalize_uri_path_field_id;
-    jfieldID sign_body_field_id;
-} s_aws_signing_config_properties;
-
-static struct {
-    jclass predicate_class;
-    jmethodID test_method_id;
-} s_predicate_properties;
-
-static struct {
-    jclass http_request_class;
-    jmethodID constructor_method_id;
-    jfieldID method_field_id;
-    jfieldID encoded_path_field_id;
-    jfieldID headers_field_id;
-    jfieldID body_stream_field_id;
-} s_http_request_properties;
-
-static struct { jmethodID get_native_handle_method_id; } s_crt_resource_properties;
-
-void s_cache_signing_jni_ids(JNIEnv *env) {
-    /* AwsSigningConfig */
-    jclass aws_signing_config_class =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/signing/AwsSigningConfig");
-    AWS_FATAL_ASSERT(aws_signing_config_class);
-    s_aws_signing_config_properties.aws_signing_config_class = aws_signing_config_class;
-
-    s_aws_signing_config_properties.algorithm_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signingAlgorithm", "I");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.algorithm_field_id);
-
-    s_aws_signing_config_properties.region_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "region", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.region_field_id);
-
-    s_aws_signing_config_properties.service_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "service", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.service_field_id);
-
-    s_aws_signing_config_properties.time_field_id = (*env)->GetFieldID(env, aws_signing_config_class, "time", "J");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.time_field_id);
-
-    s_aws_signing_config_properties.credentials_provider_field_id = (*env)->GetFieldID(
-        env,
-        aws_signing_config_class,
-        "credentialsProvider",
-        "Lsoftware/amazon/awssdk/crt/auth/credentials/CredentialsProvider;");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.credentials_provider_field_id);
-
-    s_aws_signing_config_properties.should_sign_parameter_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignParameter", "Ljava/util/function/Predicate;");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.should_sign_parameter_field_id);
-
-    s_aws_signing_config_properties.use_double_uri_encode_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "useDoubleUriEncode", "Z");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.use_double_uri_encode_field_id);
-
-    s_aws_signing_config_properties.should_normalize_uri_path_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.should_normalize_uri_path_field_id);
-
-    s_aws_signing_config_properties.sign_body_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "Z");
-    AWS_FATAL_ASSERT(s_aws_signing_config_properties.sign_body_field_id);
-
-    /* Predicate */
-    jclass predicate_class = (*env)->FindClass(env, "java/util/function/Predicate");
-    AWS_FATAL_ASSERT(predicate_class);
-    s_predicate_properties.predicate_class = predicate_class;
-
-    s_predicate_properties.test_method_id = (*env)->GetMethodID(env, predicate_class, "test", "(Ljava/lang/Object;)Z");
-    AWS_FATAL_ASSERT(s_predicate_properties.test_method_id);
-
-    /* HttpRequest */
-    jclass http_request_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpRequest");
-    AWS_FATAL_ASSERT(http_request_class);
-    s_http_request_properties.http_request_class = http_request_class;
-
-    s_http_request_properties.constructor_method_id = (*env)->GetMethodID(
-        env,
-        http_request_class,
-        "<init>",
-        "(Ljava/lang/String;Ljava/lang/String;[Lsoftware/amazon/awssdk/crt/http/HttpHeader;Lsoftware/amazon/awssdk/crt/"
-        "http/HttpRequestBodyStream;)V");
-    AWS_FATAL_ASSERT(s_http_request_properties.constructor_method_id);
-
-    s_http_request_properties.method_field_id = (*env)->GetFieldID(env, http_request_class, "method", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(s_http_request_properties.method_field_id);
-
-    s_http_request_properties.encoded_path_field_id = (*env)->GetFieldID(env, http_request_class, "encodedPath", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(s_http_request_properties.encoded_path_field_id);
-
-    s_http_request_properties.headers_field_id = (*env)->GetFieldID(env, http_request_class, "headers", "[Lsoftware/amazon/awssdk/crt/http/HttpHeader;");
-    AWS_FATAL_ASSERT(s_http_request_properties.headers_field_id);
-
-    s_http_request_properties.body_stream_field_id = (*env)->GetFieldID(env, http_request_class, "bodyStream", "Lsoftware/amazon/awssdk/crt/http/HttpRequestBodyStream;");
-    AWS_FATAL_ASSERT(s_http_request_properties.body_stream_field_id);
-
-    /* CrtResource */
-    jclass crt_resource_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
-    AWS_FATAL_ASSERT(crt_resource_class);
-
-    s_crt_resource_properties.get_native_handle_method_id =
-        (*env)->GetMethodID(env, crt_resource_class, "getNativeHandle", "()J");
-    AWS_FATAL_ASSERT(s_crt_resource_properties.get_native_handle_method_id);
-}
 
 struct s_aws_sign_request_callback_data {
     JavaVM *jvm;
@@ -189,12 +74,107 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
+static jobject s_create_signed_java_http_request(
+    JNIEnv *env,
+    struct aws_http_message *native_request,
+    jobject java_original_request) {
+    jstring jni_uri = NULL;
+    jobjectArray jni_headers = NULL;
+    jobject http_request = NULL;
+
+    jstring jni_method = (*env)->GetObjectField(env, java_original_request, http_request_properties.method_field_id);
+    jobject jni_body_stream =
+        (*env)->GetObjectField(env, java_original_request, http_request_properties.body_stream_field_id);
+
+    struct aws_byte_cursor path_cursor;
+    if (aws_http_message_get_request_path(native_request, &path_cursor)) {
+        goto done;
+    }
+
+    jni_uri = aws_jni_string_from_cursor(env, &path_cursor);
+    if (jni_uri == NULL) {
+        goto done;
+    }
+
+    jni_headers = aws_java_headers_array_from_http_headers(env, aws_http_message_get_headers(native_request));
+    if (jni_headers == NULL) {
+        goto done;
+    }
+
+    http_request = (*env)->NewObject(
+        env,
+        http_request_properties.http_request_class,
+        http_request_properties.constructor_method_id,
+        jni_method,
+        jni_uri,
+        jni_headers,
+        jni_body_stream);
+
+done:
+
+    if (jni_uri != NULL) {
+        (*env)->DeleteLocalRef(env, jni_uri);
+    }
+
+    if (jni_headers != NULL) {
+        (*env)->DeleteLocalRef(env, jni_headers);
+    }
+
+    return http_request;
+}
+
+static void s_complete_signing_exceptionally(
+    JNIEnv *env,
+    struct s_aws_sign_request_callback_data *callback_data,
+    int error_code) {
+
+    jint jni_error_code = error_code;
+    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_str(error_code));
+    jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
+    AWS_FATAL_ASSERT(jni_error_string);
+
+    jobject crt_exception = (*env)->NewObject(
+        env,
+        crt_runtime_exception_properties.crt_runtime_exception_class,
+        crt_runtime_exception_properties.constructor_method_id,
+        jni_error_code,
+        jni_error_string);
+    AWS_FATAL_ASSERT(crt_exception);
+
+    (*env)->CallBooleanMethod(
+        env, callback_data->java_future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
+
+    (*env)->DeleteLocalRef(env, jni_error_string);
+}
+
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    (void)error_code;
-    (void)result;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
+        s_complete_signing_exceptionally(
+            env, callback_data, (error_code != AWS_ERROR_SUCCESS) ? error_code : AWS_ERROR_UNKNOWN);
+        goto done;
+    }
+
+    if (aws_apply_signing_result_to_http_request(callback_data->native_request, aws_jni_get_allocator(), result)) {
+        s_complete_signing_exceptionally(env, callback_data, aws_last_error());
+        goto done;
+    }
+
+    jobject java_signed_request =
+        s_create_signed_java_http_request(env, callback_data->native_request, callback_data->java_original_request);
+    if (java_signed_request == NULL) {
+        s_complete_signing_exceptionally(env, callback_data, aws_last_error());
+        goto done;
+    }
+
+    (*env)->CallBooleanMethod(
+        env, callback_data->java_future, completable_future_properties.complete_method_id, java_signed_request);
+
+done:
 
     s_cleanup_callback_data(callback_data);
 }
@@ -209,9 +189,9 @@ static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_d
     jstring parameter_name = aws_jni_string_from_cursor(env, name);
 
     bool result = (*env)->CallBooleanMethod(
-        env, callback_data->java_sign_param_predicate, s_predicate_properties.test_method_id, (jobject)parameter_name);
+        env, callback_data->java_sign_param_predicate, predicate_properties.test_method_id, (jobject)parameter_name);
 
-    (*env)->DeleteGlobalRef(env, parameter_name);
+    (*env)->DeleteLocalRef(env, parameter_name);
 
     return result;
 }
@@ -227,22 +207,21 @@ static int s_build_signing_config(
 
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
-        env, java_config, s_aws_signing_config_properties.algorithm_field_id);
+        env, java_config, aws_signing_config_properties.algorithm_field_id);
 
-    jstring region = (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.region_field_id);
+    jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
     config->region = aws_byte_cursor_from_string(callback_data->region);
 
-    jstring service =
-        (jstring)(*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.service_field_id);
+    jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
     callback_data->service = aws_jni_new_string_from_jstring(env, service);
     config->service = aws_byte_cursor_from_string(callback_data->service);
 
-    int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, s_aws_signing_config_properties.time_field_id);
+    int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, aws_signing_config_properties.time_field_id);
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);
 
     jobject sign_param_predicate =
-        (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.should_sign_parameter_field_id);
+        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.should_sign_parameter_field_id);
     if (sign_param_predicate != NULL) {
         callback_data->java_sign_param_predicate = (*env)->NewGlobalRef(env, sign_param_predicate);
         AWS_FATAL_ASSERT(callback_data->java_sign_param_predicate != NULL);
@@ -252,15 +231,15 @@ static int s_build_signing_config(
     }
 
     config->use_double_uri_encode =
-        (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.use_double_uri_encode_field_id);
+        (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
     config->should_normalize_uri_path =
-        (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.should_normalize_uri_path_field_id);
-    config->sign_body = (*env)->GetBooleanField(env, java_config, s_aws_signing_config_properties.sign_body_field_id);
+        (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
+    config->sign_body = (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.sign_body_field_id);
 
     jobject provider =
-        (*env)->GetObjectField(env, java_config, s_aws_signing_config_properties.credentials_provider_field_id);
+        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
     config->credentials_provider =
-        (void *)(*env)->CallLongMethod(env, provider, s_crt_resource_properties.get_native_handle_method_id);
+        (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
 
     return AWS_OP_SUCCESS;
 }
@@ -303,10 +282,12 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         return;
     }
 
-    jstring java_method = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.method_field_id);
-    jstring java_uri = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.encoded_path_field_id);
-    jobjectArray java_headers = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.headers_field_id);
-    jobject java_http_request_body_stream = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.body_stream_field_id);
+    jstring java_method = (*env)->GetObjectField(env, java_http_request, http_request_properties.method_field_id);
+    jstring java_uri = (*env)->GetObjectField(env, java_http_request, http_request_properties.encoded_path_field_id);
+    jobjectArray java_headers =
+        (*env)->GetObjectField(env, java_http_request, http_request_properties.headers_field_id);
+    jobject java_http_request_body_stream =
+        (*env)->GetObjectField(env, java_http_request, http_request_properties.body_stream_field_id);
 
     callback_data->native_request = aws_http_request_new_from_java_http_request(
         env, java_method, java_uri, java_headers, java_http_request_body_stream);

@@ -13,7 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <crt.h>
+#include "crt.h"
+#include "java_class_ids.h"
+
 #include <jni.h>
 #include <string.h>
 
@@ -32,57 +34,6 @@
 #    endif
 #endif
 
-/* callback methods and fields needed */
-static struct {
-    jmethodID on_shutdown_complete_method_id;
-    jmethodID on_get_credentials_complete_method_id;
-} s_credentials_provider_properties;
-
-static struct {
-    jclass credentials_class;
-    jmethodID constructor_method_id;
-    jfieldID access_key_id_field_id;
-    jfieldID secret_access_key_field_id;
-    jfieldID session_token_field_id;
-} s_credentials_properties;
-
-void s_cache_credentials_ids(JNIEnv *env) {
-    jclass provider_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CredentialsProvider");
-    AWS_FATAL_ASSERT(provider_class);
-
-    s_credentials_provider_properties.on_shutdown_complete_method_id =
-        (*env)->GetMethodID(env, provider_class, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(s_credentials_provider_properties.on_shutdown_complete_method_id);
-
-    s_credentials_provider_properties.on_get_credentials_complete_method_id = (*env)->GetMethodID(
-        env,
-        provider_class,
-        "onGetCredentialsComplete",
-        "(Ljava/util/concurrent/CompletableFuture;Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
-    AWS_FATAL_ASSERT(s_credentials_provider_properties.on_get_credentials_complete_method_id);
-
-    s_credentials_properties.credentials_class =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/Credentials");
-    AWS_FATAL_ASSERT(s_credentials_properties.credentials_class);
-    s_credentials_properties.credentials_class = (*env)->NewGlobalRef(env, s_credentials_properties.credentials_class);
-
-    s_credentials_properties.constructor_method_id =
-        (*env)->GetMethodID(env, s_credentials_properties.credentials_class, "<init>", "()V");
-    AWS_FATAL_ASSERT(s_credentials_properties.constructor_method_id);
-
-    s_credentials_properties.access_key_id_field_id =
-        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "accessKeyId", "[B");
-    AWS_FATAL_ASSERT(s_credentials_properties.access_key_id_field_id);
-
-    s_credentials_properties.secret_access_key_field_id =
-        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "secretAccessKey", "[B");
-    AWS_FATAL_ASSERT(s_credentials_properties.secret_access_key_field_id);
-
-    s_credentials_properties.session_token_field_id =
-        (*env)->GetFieldID(env, s_credentials_properties.credentials_class, "sessionToken", "[B");
-    AWS_FATAL_ASSERT(s_credentials_properties.session_token_field_id);
-}
-
 struct aws_credentials_provider_shutdown_callback_data {
     JavaVM *jvm;
     struct aws_credentials_provider *provider;
@@ -100,7 +51,7 @@ static void s_on_shutdown_complete(void *user_data) {
     (*env)->CallVoidMethod(
         env,
         callback_data->java_crt_credentials_provider,
-        s_credentials_provider_properties.on_shutdown_complete_method_id);
+        credentials_provider_properties.on_shutdown_complete_method_id);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // Remove the global ref added at the beginning of shutdown
@@ -230,7 +181,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, v
 
     if (credentials) {
         java_credentials = (*env)->NewObject(
-            env, s_credentials_properties.credentials_class, s_credentials_properties.constructor_method_id);
+            env, credentials_properties.credentials_class, credentials_properties.constructor_method_id);
         if (java_credentials != NULL) {
             struct aws_byte_cursor access_key_id_cursor = aws_byte_cursor_from_string(credentials->access_key_id);
             access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
@@ -244,13 +195,12 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, v
                 session_token = aws_jni_byte_array_from_cursor(env, &session_token_cursor);
             }
 
+            (*env)->SetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id, access_key_id);
             (*env)->SetObjectField(
-                env, java_credentials, s_credentials_properties.access_key_id_field_id, access_key_id);
-            (*env)->SetObjectField(
-                env, java_credentials, s_credentials_properties.secret_access_key_field_id, secret_access_key);
+                env, java_credentials, credentials_properties.secret_access_key_field_id, secret_access_key);
             if (session_token != NULL) {
                 (*env)->SetObjectField(
-                    env, java_credentials, s_credentials_properties.session_token_field_id, session_token);
+                    env, java_credentials, credentials_properties.session_token_field_id, session_token);
             }
         }
     }
@@ -258,7 +208,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, v
     (*env)->CallVoidMethod(
         env,
         callback_data->java_crt_credentials_provider,
-        s_credentials_provider_properties.on_get_credentials_complete_method_id,
+        credentials_provider_properties.on_get_credentials_complete_method_id,
         callback_data->java_credentials_future,
         java_credentials);
 

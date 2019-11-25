@@ -15,29 +15,12 @@
 
 #include "http_request_utils.h"
 
+#include "crt.h"
+#include "java_class_ids.h"
+
 #include <aws/http/http.h>
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
-
-#include <crt.h>
-#include <jni.h>
-
-static struct {
-    jmethodID send_outgoing_body;
-    jmethodID reset_position;
-} s_http_request_body_stream;
-
-void s_cache_http_request_body_stream(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpRequestBodyStream");
-    AWS_FATAL_ASSERT(cls);
-
-    s_http_request_body_stream.send_outgoing_body =
-        (*env)->GetMethodID(env, cls, "sendRequestBody", "(Ljava/nio/ByteBuffer;)Z");
-    AWS_FATAL_ASSERT(s_http_request_body_stream.send_outgoing_body);
-
-    s_http_request_body_stream.reset_position = (*env)->GetMethodID(env, cls, "resetPosition", "()Z");
-    AWS_FATAL_ASSERT(s_http_request_body_stream.reset_position);
-}
 
 struct aws_http_request_body_stream_impl {
     JavaVM *jvm;
@@ -59,7 +42,7 @@ static int s_aws_input_stream_seek(
 
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
         if (!(*env)->CallBooleanMethod(
-                env, impl->http_request_body_stream, s_http_request_body_stream.reset_position)) {
+                env, impl->http_request_body_stream, http_request_body_stream_properties.reset_position)) {
             result = AWS_OP_ERR;
         }
 
@@ -94,7 +77,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
 
     impl->body_done = (*env)->CallBooleanMethod(
-        env, impl->http_request_body_stream, s_http_request_body_stream.send_outgoing_body, direct_buffer);
+        env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
@@ -222,8 +205,8 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
     for (jsize i = 0; i < num_headers; ++i) {
         jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
-        jbyteArray jname = (*env)->GetObjectField(env, jHeader, s_http_header.name);
-        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
+        jbyteArray jname = (*env)->GetObjectField(env, jHeader, http_header_properties.name);
+        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, http_header_properties.value);
 
         const size_t name_len = (*env)->GetArrayLength(env, jname);
         const size_t value_len = (*env)->GetArrayLength(env, jvalue);
@@ -256,7 +239,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
 
     if (jni_body_stream != NULL) {
         struct aws_input_stream *body_stream =
-            aws_input_stream_new_from_java_http_request_body_stream(allocator, env, java_request_body_stream);
+            aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
         if (body_stream == NULL) {
             aws_jni_throw_runtime_exception(env, "aws_fill_out_request: Error building body stream");
             goto on_error;
@@ -273,4 +256,60 @@ on_error:
     aws_http_message_destroy(request);
 
     return NULL;
+}
+
+jobjectArray aws_java_headers_array_from_native(
+    JNIEnv *env,
+    const struct aws_http_header *header_array,
+    size_t num_headers) {
+
+    jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, http_header_properties.header_class, NULL);
+
+    for (size_t i = 0; i < num_headers; i++) {
+        jobject jHeader =
+            (*env)->NewObject(env, http_header_properties.header_class, http_header_properties.constructor);
+
+        jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &(header_array[i].name));
+        jbyteArray actual_value = aws_jni_byte_array_from_cursor(env, &(header_array[i].value));
+
+        // Overwrite with actual values
+        (*env)->SetObjectField(env, jHeader, http_header_properties.name, actual_name);
+        (*env)->SetObjectField(env, jHeader, http_header_properties.value, actual_value);
+        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
+
+        (*env)->DeleteLocalRef(env, actual_name);
+        (*env)->DeleteLocalRef(env, actual_value);
+        (*env)->DeleteLocalRef(env, jHeader);
+    }
+
+    return jArray;
+}
+
+jobjectArray aws_java_headers_array_from_http_headers(JNIEnv *env, const struct aws_http_headers *headers) {
+
+    size_t header_count = aws_http_headers_count(headers);
+    jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)header_count, http_header_properties.header_class, NULL);
+
+    for (size_t i = 0; i < header_count; i++) {
+        struct aws_http_header header;
+        AWS_ZERO_STRUCT(header);
+        AWS_FATAL_ASSERT(aws_http_headers_get_index(headers, i, &header) == AWS_OP_SUCCESS);
+
+        jobject jHeader =
+            (*env)->NewObject(env, http_header_properties.header_class, http_header_properties.constructor);
+
+        jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &header.name);
+        jbyteArray actual_value = aws_jni_byte_array_from_cursor(env, &header.value);
+
+        // Overwrite with actual values
+        (*env)->SetObjectField(env, jHeader, http_header_properties.name, actual_name);
+        (*env)->SetObjectField(env, jHeader, http_header_properties.value, actual_value);
+        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
+
+        (*env)->DeleteLocalRef(env, actual_name);
+        (*env)->DeleteLocalRef(env, actual_value);
+        (*env)->DeleteLocalRef(env, jHeader);
+    }
+
+    return jArray;
 }

@@ -75,31 +75,35 @@ public class SigningTest {
 
     @Test
     public void testSigningProcess() throws Exception {
-        StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+        try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
             .withAccessKeyId("AKIDEXAMPLE".getBytes())
             .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
-            .build();
+            .build();) {
 
-        HttpRequest request = createSampleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+            HttpRequest request = createSampleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
 
-        Predicate<String> filterParam = param -> !param.equals("bad-param");
+            Predicate<String> filterParam = param -> !param.equals("bad-param");
 
-        AwsSigningConfig config = new AwsSigningConfig();
-        config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
-        config.setRegion("us-east-1");
-        config.setService("dummy");
-        config.setTime(Instant.now());
-        config.setCredentialsProvider(provider);
-        config.setShouldSignParameter(filterParam);
-        config.setUseDoubleUriEncode(true);
-        config.setShouldNormalizeUriPath(true);
-        config.setSignBody(false);
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+            config.setRegion("us-east-1");
+            config.setService("dummy");
+            config.setTime(Instant.now());
+            config.setCredentialsProvider(provider);
+            config.setShouldSignParameter(filterParam);
+            config.setUseDoubleUriEncode(true);
+            config.setShouldNormalizeUriPath(true);
+            config.setSignBody(false);
 
-        CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
-        try {
-            result.get();
-        } catch (Exception e) {
-            ;
+            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+            HttpRequest signedRequest = result.get();
+            assertNotNull(signedRequest);
+            assertTrue(signedRequest.getMethod().equals(request.getMethod()));
+
+            System.out.println(String.format("%s %s", signedRequest.getMethod(), signedRequest.getEncodedPath()));
+            for (HttpHeader header : signedRequest.getHeaders()) {
+                System.out.println(String.format("%s:%s", header.getName(), header.getValue()));
+            }
         }
 
         CrtResource.waitForNoResources();

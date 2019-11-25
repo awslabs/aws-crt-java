@@ -25,7 +25,7 @@ public class AwsSigner {
         CompletableFuture<HttpRequest> future = new CompletableFuture<HttpRequest>();
 
         try {
-            awsSignerSignRequest(request, config, future);
+            awsSignerSignRequest(request.getMethod(), request.getEncodedPath(), request.getHeaders(), request.getBodyStream(), config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
@@ -36,5 +36,11 @@ public class AwsSigner {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void awsSignerSignRequest(HttpRequest request, AwsSigningConfig config, CompletableFuture<HttpRequest> future) throws CrtRuntimeException;
+    private static native void awsSignerSignRequest(
+        String method,
+        String uri,
+        HttpHeader[] headers,
+        HttpRequestBodyStream bodyStream,
+        AwsSigningConfig config,
+        CompletableFuture<HttpRequest> future) throws CrtRuntimeException;
 }

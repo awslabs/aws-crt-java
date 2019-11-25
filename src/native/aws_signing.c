@@ -23,6 +23,8 @@
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 
+#include "http_request_utils.h"
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -56,6 +58,10 @@ static struct {
 static struct {
     jclass http_request_class;
     jmethodID constructor_method_id;
+    jfieldID method_field_id;
+    jfieldID encoded_path_field_id;
+    jfieldID headers_field_id;
+    jfieldID body_stream_field_id;
 } s_http_request_properties;
 
 static struct { jmethodID get_native_handle_method_id; } s_crt_resource_properties;
@@ -126,6 +132,18 @@ void s_cache_signing_jni_ids(JNIEnv *env) {
         "http/HttpRequestBodyStream;)V");
     AWS_FATAL_ASSERT(s_http_request_properties.constructor_method_id);
 
+    s_http_request_properties.method_field_id = (*env)->GetFieldID(env, http_request_class, "method", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s_http_request_properties.method_field_id);
+
+    s_http_request_properties.encoded_path_field_id = (*env)->GetFieldID(env, http_request_class, "encodedPath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s_http_request_properties.encoded_path_field_id);
+
+    s_http_request_properties.headers_field_id = (*env)->GetFieldID(env, http_request_class, "headers", "[Lsoftware/amazon/awssdk/crt/http/HttpHeader;");
+    AWS_FATAL_ASSERT(s_http_request_properties.headers_field_id);
+
+    s_http_request_properties.body_stream_field_id = (*env)->GetFieldID(env, http_request_class, "bodyStream", "Lsoftware/amazon/awssdk/crt/http/HttpRequestBodyStream;");
+    AWS_FATAL_ASSERT(s_http_request_properties.body_stream_field_id);
+
     /* CrtResource */
     jclass crt_resource_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtResource");
     AWS_FATAL_ASSERT(crt_resource_class);
@@ -171,7 +189,6 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
-#ifdef NEVER
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
@@ -181,7 +198,6 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     s_cleanup_callback_data(callback_data);
 }
-#endif // NEVER
 
 static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_data) {
     (void)name;
@@ -259,9 +275,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 
     (void)jni_class;
     (void)env;
-    (void)java_http_request;
-    (void)java_signing_config;
-    (void)java_future;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -275,7 +288,10 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     callback_data->java_future = (*env)->NewGlobalRef(env, java_future);
+    AWS_FATAL_ASSERT(callback_data->java_future != NULL);
+
     callback_data->java_original_request = (*env)->NewGlobalRef(env, java_http_request);
+    AWS_FATAL_ASSERT(callback_data->java_original_request != NULL);
 
     /* Build a native aws_signing_config_aws object */
     struct aws_signing_config_aws signing_config;
@@ -287,42 +303,36 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         return;
     }
 
-    struct aws_http_message *native_request = s_build_native_http_request_from_java_request(??);
-    if (native_request == NULL) {
-        ??;
+    jstring java_method = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.method_field_id);
+    jstring java_uri = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.encoded_path_field_id);
+    jobjectArray java_headers = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.headers_field_id);
+    jobject java_http_request_body_stream = (*env)->GetObjectField(env, java_http_request, s_http_request_properties.body_stream_field_id);
+
+    callback_data->native_request = aws_http_request_new_from_java_http_request(
+        env, java_method, java_uri, java_headers, java_http_request_body_stream);
+    if (callback_data->native_request == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
+        s_cleanup_callback_data(callback_data);
         return;
     }
 
-    struct aws_signable *signable = aws_signable_new_http_request(allocator, native_request);
-    if (signable == NULL) {
-        ??;
+    callback_data->original_message_signable = aws_signable_new_http_request(allocator, callback_data->native_request);
+    if (callback_data->original_message_signable == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to create signable from http request");
+        s_cleanup_callback_data(callback_data);
         return;
     }
 
-    /* */
-#ifndef NEVER
-    aws_jni_throw_runtime_exception(env, "Not yet implemented");
-    s_cleanup_callback_data(callback_data);
-#else
-    /* Build a native request */
-    struct aws_http_message *message = aws_http_message_new(allocator);
-    callback_data->native_request = message;
-    ? ?
-
-      /* Wrap the native request in a signable */
-        ? ?
-
-          /* Sign the native request */
-        if (aws_sign_request_aws(
-                allocator,
-                signable,
-                (struct aws_signing_config_base *)&signing_config,
-                s_aws_signing_complete,
-                callback_data)) {
-        aws_jni_throw_runtime_exception(env, "??");
+    /* Sign the native request */
+    if (aws_sign_request_aws(
+            allocator,
+            callback_data->original_message_signable,
+            (struct aws_signing_config_base *)&signing_config,
+            s_aws_signing_complete,
+            callback_data)) {
+        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for HttpRequest");
         s_cleanup_callback_data(callback_data);
     }
-#endif
 }
 
 #if UINTPTR_MAX == 0xffffffff

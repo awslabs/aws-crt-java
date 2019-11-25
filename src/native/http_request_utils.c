@@ -13,9 +13,10 @@
  * permissions and limitations under the License.
  */
 
-#include "http_request_body_stream.h"
+#include "http_request_utils.h"
 
 #include <aws/http/http.h>
+#include <aws/http/request_response.h>
 #include <aws/io/stream.h>
 
 #include <crt.h>
@@ -185,6 +186,91 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
 on_error:
 
     aws_input_stream_destroy(input_stream);
+
+    return NULL;
+}
+
+struct aws_http_message *aws_http_request_new_from_java_http_request(
+    JNIEnv *env,
+    jstring jni_method,
+    jstring jni_uri,
+    jobjectArray jni_headers,
+    jobject jni_body_stream) {
+
+    struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
+    if (request == NULL) {
+        aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
+        return NULL;
+    }
+
+    struct aws_byte_cursor method_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_method);
+    int result = aws_http_message_set_request_method(request, method_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
+    if (result != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
+        goto on_error;
+    }
+
+    struct aws_byte_cursor path_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
+    result = aws_http_message_set_request_path(request, path_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
+    if (result != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
+        goto on_error;
+    }
+
+    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
+    for (jsize i = 0; i < num_headers; ++i) {
+        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
+        jbyteArray jname = (*env)->GetObjectField(env, jHeader, s_http_header.name);
+        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
+
+        const size_t name_len = (*env)->GetArrayLength(env, jname);
+        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
+
+        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
+        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
+
+        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
+        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
+
+        struct aws_http_header c_header = {
+            .name = name_cursor,
+            .value = value_cursor,
+        };
+
+        result = aws_http_message_add_header(request, c_header);
+
+        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
+        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
+
+        (*env)->DeleteLocalRef(env, jname);
+        (*env)->DeleteLocalRef(env, jvalue);
+        (*env)->DeleteLocalRef(env, jHeader);
+
+        if (result != AWS_OP_SUCCESS) {
+            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
+            goto on_error;
+        }
+    }
+
+    if (jni_body_stream != NULL) {
+        struct aws_input_stream *body_stream =
+            aws_input_stream_new_from_java_http_request_body_stream(allocator, env, java_request_body_stream);
+        if (body_stream == NULL) {
+            aws_jni_throw_runtime_exception(env, "aws_fill_out_request: Error building body stream");
+            goto on_error;
+        }
+
+        aws_http_message_set_body_stream(request, body_stream);
+    }
+
+    return request;
+
+on_error:
+
+    /* Don't need to destroy input stream since it's the last thing created */
+    aws_http_message_destroy(request);
 
     return NULL;
 }

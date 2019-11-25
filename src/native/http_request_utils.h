@@ -13,12 +13,13 @@
  * permissions and limitations under the License.
  */
 
-#ifndef AWS_JNI_CRT_HTTP_REQUEST_BODY_STREAM_H
-#define AWS_JNI_CRT_HTTP_REQUEST_BODY_STREAM_H
+#ifndef AWS_JNI_CRT_HTTP_REQUEST_UTILS_H
+#define AWS_JNI_CRT_HTTP_REQUEST_UTILS_H
 
 #include <jni.h>
 
 struct aws_allocator;
+struct aws_http_message;
 struct aws_input_stream;
 
 struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
@@ -26,4 +27,11 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
     JNIEnv *env,
     jobject http_request_body_stream);
 
-#endif /* AWS_JNI_CRT_HTTP_REQUEST_BODY_STREAM_H */
+struct aws_http_message *aws_http_request_new_from_java_http_request(
+    JNIEnv *env,
+    jstring jni_method,
+    jstring jni_uri,
+    jobjectArray jni_headers,
+    jobject jni_body_stream);
+
+#endif /* AWS_JNI_CRT_HTTP_REQUEST_UTILS_H */

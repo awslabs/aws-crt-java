@@ -149,9 +149,10 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderDestroy(
     JNIEnv *env,
     jclass jni_cp,
-    jobject cp_jobject,
+    jobject cp_object,
     jlong cp_addr) {
     (void)jni_cp;
+    (void)cp_object;
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)cp_addr;
     if (!provider) {
         aws_jni_throw_runtime_exception(

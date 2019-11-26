@@ -22,6 +22,10 @@
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
 
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 struct aws_http_request_body_stream_impl {
     JavaVM *jvm;
     jobject http_request_body_stream;

@@ -129,7 +129,7 @@ static void s_complete_signing_exceptionally(
     int error_code) {
 
     jint jni_error_code = error_code;
-    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_str(error_code));
+    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
     jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
     AWS_FATAL_ASSERT(jni_error_string);
 

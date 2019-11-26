@@ -44,7 +44,8 @@ public class SigningTest {
 
     public SigningTest() {}
 
-    private HttpRequest createSampleRequest(String endpoint, String method, String path, String body) throws Exception {
+    private HttpRequest createSimpleRequest(String endpoint, String method, String path, String body) throws Exception {
+
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders =
@@ -73,21 +74,65 @@ public class SigningTest {
         return new HttpRequest(method, path, requestHeaders, bodyStream);
     }
 
+    /* post-vanilla-query test case */
+    private HttpRequest createSigv4TestSuiteRequest() throws Exception {
+
+        HttpHeader[] requestHeaders =
+                new HttpHeader[]{
+                    new HttpHeader("Host", "example.amazonaws.com")
+                };
+
+        String method = "POST";
+        String path = "/?Param1=value1";
+
+        return new HttpRequest(method, path, requestHeaders, null);
+    }
+
+    private HttpRequest createUnsignableRequest(String method, String path) throws Exception {
+
+        HttpHeader[] requestHeaders = new HttpHeader[]{
+            new HttpHeader("Authorization", "bad")
+        };
+
+        return new HttpRequest(method, path, requestHeaders, null);
+    }
+
+    private boolean hasHeader(HttpRequest request, String name) {
+        for (HttpHeader header : request.getHeaders()) {
+            if (header.getName().equals(name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasHeaderWithValue(HttpRequest request, String name, String value) {
+        for (HttpHeader header : request.getHeaders()) {
+            if (header.getName().equals(name) && header.getValue().equals(value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     @Test
-    public void testSigningProcess() throws Exception {
+    public void testSigningSuccess() throws Exception {
         try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
             .withAccessKeyId("AKIDEXAMPLE".getBytes())
             .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
             .build();) {
 
-            HttpRequest request = createSampleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+            HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
 
             Predicate<String> filterParam = param -> !param.equals("bad-param");
 
             AwsSigningConfig config = new AwsSigningConfig();
             config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
             config.setRegion("us-east-1");
-            config.setService("dummy");
+            config.setService("service");
             config.setTime(Instant.now());
             config.setCredentialsProvider(provider);
             config.setShouldSignParameter(filterParam);
@@ -98,17 +143,115 @@ public class SigningTest {
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             HttpRequest signedRequest = result.get();
             assertNotNull(signedRequest);
-            assertTrue(signedRequest.getMethod().equals(request.getMethod()));
 
-            System.out.println(String.format("%s %s", signedRequest.getMethod(), signedRequest.getEncodedPath()));
-            for (HttpHeader header : signedRequest.getHeaders()) {
-                System.out.println(String.format("%s:%s", header.getName(), header.getValue()));
-            }
+            assertTrue(hasHeader(signedRequest, "X-Amz-Date"));
+            assertTrue(hasHeader(signedRequest, "Authorization"));
         }
 
         CrtResource.waitForNoResources();
     }
 
+    @Test
+    public void testQuerySigningSuccess() throws Exception {
+        try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+            .withAccessKeyId("AKIDEXAMPLE".getBytes())
+            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .build();) {
+
+            HttpRequest request = createSigv4TestSuiteRequest();
+
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_QUERY_PARAM);
+            config.setRegion("us-east-1");
+            config.setService("service");
+            config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+            config.setCredentialsProvider(provider);
+            config.setUseDoubleUriEncode(true);
+            config.setShouldNormalizeUriPath(true);
+            config.setSignBody(false);
+
+            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+            HttpRequest signedRequest = result.get();
+            assertNotNull(signedRequest);
+
+            String path = signedRequest.getEncodedPath();
+
+            assertTrue(path.contains("X-Amz-Signature="));
+            assertTrue(path.contains("X-Amz-SignedHeaders=host"));
+            assertTrue(path.contains("X-Amz-Credential=AKIDEXAMPLE%2F20150830%2F"));
+            assertTrue(path.contains("X-Amz-Algorithm=AWS4-HMAC-SHA256"));
+        }
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testSigningBasicSigv4Test() throws Exception {
+        try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+            .withAccessKeyId("AKIDEXAMPLE".getBytes())
+            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .build();) {
+
+            HttpRequest request = createSigv4TestSuiteRequest();
+
+            Predicate<String> filterParam = param -> !param.equals("bad-param");
+
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+            config.setRegion("us-east-1");
+            config.setService("service");
+            config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+            config.setCredentialsProvider(provider);
+            config.setUseDoubleUriEncode(true);
+            config.setShouldNormalizeUriPath(true);
+            config.setSignBody(false);
+
+            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+            HttpRequest signedRequest = result.get();
+            assertNotNull(signedRequest);
+
+            assertTrue(hasHeaderWithValue(signedRequest, "X-Amz-Date", "20150830T123600Z"));
+
+            // expected authorization value for post-vanilla-query test
+            assertTrue(hasHeaderWithValue(signedRequest, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=28038455d6de14eafc1f9222cf5aa6f1a96197d7deb8263271d420d138af7f11"));
+        }
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void testSigningFailureBadRequest() throws Exception {
+        try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+            .withAccessKeyId("AKIDEXAMPLE".getBytes())
+            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .build();) {
+
+            // request is missing Host header
+            HttpRequest request = createUnsignableRequest("POST", "/bad");
+
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+            config.setRegion("us-east-1");
+            config.setService("service");
+            config.setTime(Instant.now());
+            config.setCredentialsProvider(provider);
+            config.setUseDoubleUriEncode(true);
+            config.setShouldNormalizeUriPath(true);
+            config.setSignBody(false);
+
+            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+            result.get();
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            assertTrue(cause != null);
+            assertTrue(cause.getClass() == CrtRuntimeException.class);
+            CrtRuntimeException crt = (CrtRuntimeException) cause;
+            assertTrue(crt.errorName.equals("AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER"));
+            throw crt;
+        } finally {
+            CrtResource.waitForNoResources();
+        }
+    }
 
 
 };

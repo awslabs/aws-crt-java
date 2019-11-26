@@ -14,6 +14,7 @@
  */
 
 #include <aws/auth/auth.h>
+#include <aws/common/allocator.h>
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/string.h>

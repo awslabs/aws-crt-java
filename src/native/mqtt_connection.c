@@ -333,6 +333,10 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteGlobalRef(env, connection->mqtt_connection);
     }
 
+    aws_mqtt_client_connection_destroy(connection->client_connection);
+
+    aws_tls_connection_options_clean_up(&connection->tls_options);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection);
 }

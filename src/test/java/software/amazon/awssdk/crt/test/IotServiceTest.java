@@ -38,7 +38,6 @@ public class IotServiceTest extends MqttClientConnectionFixture {
 
     @Test
     public void testIotService() {
-        Log.initLoggingToStderr(LogLevel.Trace);
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect( true, (short)0);
 

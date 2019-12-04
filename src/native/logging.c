@@ -51,11 +51,21 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_log(
 static struct aws_logger s_logger;
 static bool s_initialized_logger = false;
 
+extern int g_memory_tracing;
+
 static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_options *options) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    if (aws_logger_init_standard(&s_logger, allocator, options)) {
-        aws_jni_throw_runtime_exception(env, "Failed to initialize logging");
-        return;
+
+    if (g_memory_tracing == 0) {
+        if (aws_logger_init_standard(&s_logger, allocator, options)) {
+            aws_jni_throw_runtime_exception(env, "Failed to initialize standard logger");
+            return;
+        }
+    } else {
+        if (aws_logger_init_noalloc(&s_logger, allocator, options)) {
+            aws_jni_throw_runtime_exception(env, "Failed to initialize no-alloc logger");
+            return;
+        }
     }
 
     aws_logger_set(&s_logger);

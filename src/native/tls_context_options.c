@@ -61,9 +61,9 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_string_destroy(tls->private_key_path);
     aws_string_destroy(tls->pkcs12_path);
     aws_string_destroy_secure(tls->pkcs12_password);
-    aws_string_destroy_secure(tls->certificate);
+    aws_string_destroy(tls->certificate);
     aws_string_destroy_secure(tls->private_key);
-    aws_string_destroy_secure(tls->ca_root);
+    aws_string_destroy(tls->ca_root);
 
     aws_tls_ctx_options_clean_up(&tls->options);
 

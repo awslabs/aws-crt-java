@@ -30,7 +30,7 @@ if (UNIX AND NOT APPLE)
 endif()
 
 set(AWS_C_IO_URL "https://github.com/awslabs/aws-c-io.git")
-set(AWS_C_IO_SHA "v0.4.18")
+set(AWS_C_IO_SHA "v0.4.19")
 include(BuildAwsCIO)
 
 set(AWS_C_COMPRESSION_URL "https://github.com/awslabs/aws-c-compression.git")
@@ -38,7 +38,7 @@ set(AWS_C_COMPRESSION_SHA "v0.2.4")
 include(BuildAwsCCompression)
 
 set(AWS_C_MQTT_URL "https://github.com/awslabs/aws-c-mqtt.git")
-set(AWS_C_MQTT_SHA "v0.4.18")
+set(AWS_C_MQTT_SHA "v0.4.19")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")

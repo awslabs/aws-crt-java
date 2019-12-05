@@ -93,17 +93,11 @@ public class AwsSigningConfig {
     }
 
     private int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
-
     private String region;
-
     private String service;
-
     private long time = Instant.now().toEpochMilli();
-
     private CredentialsProvider credentialsProvider;
-
     private Predicate<String> shouldSignParameter;
-
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
     private int signBody = AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF.getNativeValue();

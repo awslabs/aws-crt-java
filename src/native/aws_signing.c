@@ -112,6 +112,14 @@ static jobject s_create_signed_java_http_request(
 
 done:
 
+    if (jni_method != NULL) {
+        (*env)->DeleteLocalRef(env, jni_method);
+    }
+
+    if (jni_body_stream != NULL) {
+        (*env)->DeleteLocalRef(env, jni_body_stream);
+    }
+
     if (jni_uri != NULL) {
         (*env)->DeleteLocalRef(env, jni_uri);
     }
@@ -145,6 +153,7 @@ static void s_complete_signing_exceptionally(
         env, callback_data->java_future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
 
     (*env)->DeleteLocalRef(env, jni_error_string);
+    (*env)->DeleteLocalRef(env, crt_exception);
 }
 
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -173,6 +182,8 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     (*env)->CallBooleanMethod(
         env, callback_data->java_future, completable_future_properties.complete_method_id, java_signed_request);
+
+    (*env)->DeleteLocalRef(env, java_signed_request);
 
 done:
 

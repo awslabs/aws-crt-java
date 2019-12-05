@@ -22,12 +22,13 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -108,23 +109,19 @@ public class HttpRequestResponseTest {
         }
     }
 
-    public TestHttpResponse getResponse(URI uri, HttpRequest request, String reqBody) throws Exception {
+    public TestHttpResponse getResponse(URI uri, HttpRequest request) throws Exception {
         boolean actuallyConnected = false;
 
-        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(reqBody.getBytes(UTF8));
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
 
         final TestHttpResponse response = new TestHttpResponse();
-
-        List<Integer> respBodyUpdateSizes = new ArrayList<>();
-        List<Integer> reqBodyUpdateSizes = new ArrayList<>();
 
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
             shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
-                CrtHttpStreamHandler streamHandler = new CrtHttpStreamHandler() {
+                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
                         response.statusCode = responseStatusCode;
@@ -139,7 +136,6 @@ public class HttpRequestResponseTest {
 
                     @Override
                     public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                        respBodyUpdateSizes.add(bodyBytesIn.length);
                         response.bodyBuffer.put(bodyBytesIn);
                         int amountRead = bodyBytesIn.length;
 
@@ -152,15 +148,6 @@ public class HttpRequestResponseTest {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
                         stream.close();
-                    }
-
-                    @Override
-                    public boolean sendRequestBody(HttpStream stream, ByteBuffer bodyBytesOut) {
-
-                        reqBodyUpdateSizes.add(bodyBytesOut.remaining());
-                        transferData(bodyBytesIn, bodyBytesOut);
-
-                        return bodyBytesIn.remaining() == 0;
                     }
                 };
 
@@ -197,15 +184,36 @@ public class HttpRequestResponseTest {
                     new HttpHeader("Host", uri.getHost()),
                     new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
                 };
-        HttpRequest request = new HttpRequest(method, path, requestHeaders);
+
+        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
+        HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                transferData(bodyBytesIn, bodyBytesOut);
+
+                return bodyBytesIn.remaining() == 0;
+            }
+
+            @Override
+            public boolean resetPosition() {
+                bodyBytesIn.position(0);
+
+                return true;
+            }
+        };
+
+        HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
 
         TestHttpResponse response = null;
         int numAttempts = 0;
         do {
+
+            request.getBodyStream().resetPosition();
+
             numAttempts++;
             response = null;
             try {
-                response = getResponse(uri, request, requestBody);
+                response = getResponse(uri, request);
             } catch (Exception ex) {
                 //do nothing just let it retry
             }

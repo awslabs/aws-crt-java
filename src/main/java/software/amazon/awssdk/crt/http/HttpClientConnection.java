@@ -18,7 +18,8 @@ package software.amazon.awssdk.crt.http;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStream;
 
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.
@@ -46,7 +47,7 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public CompletableFuture<HttpStream> makeRequest(HttpRequest request, CrtHttpStreamHandler streamHandler) throws CrtRuntimeException {
+    public CompletableFuture<HttpStream> makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
@@ -56,10 +57,11 @@ public class HttpClientConnection extends CrtResource {
 
             try {
                 HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                        request.getMethod(),
-                        request.getEncodedPath(),
-                        request.getHeaders(),
-                        streamHandler);
+                    request.getMethod(),
+                    request.getEncodedPath(),
+                    request.getHeaders(),
+                    request.getBodyStream(),
+                    streamHandler);
                 if (stream == null || stream.isNull()) {
                     streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
                 }
@@ -96,5 +98,6 @@ public class HttpClientConnection extends CrtResource {
                                                                      String method,
                                                                      String uri,
                                                                      HttpHeader[] headers,
-                                                                     CrtHttpStreamHandler crtHttpStreamHandler) throws CrtRuntimeException;
+                                                                     HttpRequestBodyStream bodyStream,
+                                                                     HttpStreamResponseHandler responseHandler) throws CrtRuntimeException;
 }

@@ -16,12 +16,12 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.CrtHttpStreamHandler;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -78,7 +78,7 @@ public class HttpClientConnectionManagerTest {
                         new HttpHeader("Host", uri.getHost()),
                         new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
                 };
-        HttpRequest request = new HttpRequest(method, path, requestHeaders);
+        HttpRequest request = new HttpRequest(method, path, requestHeaders, null);
 
         return request;
     }
@@ -110,7 +110,7 @@ public class HttpClientConnectionManagerTest {
                             }
 
                             int requestId = numRequestsMade.incrementAndGet();
-                            conn.makeRequest(request, new CrtHttpStreamHandler() {
+                            conn.makeRequest(request, new HttpStreamResponseHandler() {
                                 @Override
                                 public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
                                         HttpHeader[] nextHeaders) {

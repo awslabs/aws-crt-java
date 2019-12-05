@@ -163,6 +163,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     aws_string_destroy_secure(tls->private_key);
     aws_string_destroy_secure(tls->ca_root);
 
+    aws_tls_ctx_options_clean_up(&tls->options);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, tls);
 }

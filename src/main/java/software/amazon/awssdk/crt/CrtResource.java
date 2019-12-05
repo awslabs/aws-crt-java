@@ -14,7 +14,9 @@
  */
 package software.amazon.awssdk.crt;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Map;
@@ -39,10 +41,12 @@ public abstract class CrtResource implements AutoCloseable {
         public final long nativeHandle;
         public final String canonicalName;
         private Throwable instantiation;
+        private CrtResource wrapper;
 
-        public ResourceInstance(long handle, String name) {
+        public ResourceInstance(CrtResource wrapper, long handle, String name) {
             nativeHandle = handle;
             canonicalName = name;
+            this.wrapper = wrapper;
             try {
                 throw new RuntimeException();
             } catch (RuntimeException ex) {
@@ -67,6 +71,8 @@ public abstract class CrtResource implements AutoCloseable {
             str += location();
             return str;
         }
+
+        public CrtResource getWrapper() { return wrapper; }
     }
 
     private static final ConcurrentHashMap<Long, ResourceInstance> NATIVE_RESOURCES = new ConcurrentHashMap<>();
@@ -79,10 +85,14 @@ public abstract class CrtResource implements AutoCloseable {
     private static int resourceCount = 0;
     private static final Lock lock = new ReentrantLock();
     private static final Condition emptyResources  = lock.newCondition();
+    private static final AtomicLong nextId = new AtomicLong(0);
 
     private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
     private long nativeHandle;
     private AtomicInteger refCount = new AtomicInteger(1);
+    private long id = nextId.getAndAdd(1);
+    private Instant creationTime = Instant.now();
+    private String description;
 
     static {
         /* This will cause the JNI lib to be loaded the first time a CRT is created */
@@ -151,7 +161,7 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire NULL Pointer: " + canonicalName);
         }
 
-        ResourceInstance lastValue = NATIVE_RESOURCES.put(handle, new ResourceInstance(handle, canonicalName));
+        ResourceInstance lastValue = NATIVE_RESOURCES.put(handle, new ResourceInstance(this, handle, canonicalName));
 
         if (lastValue != null) {
             throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
@@ -263,7 +273,7 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
         }
 
-        if (remainingRefs > 0) {
+        if (remainingRefs != 0) {
             return;
         }
 
@@ -293,6 +303,25 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getResourceLogDescription() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(String.format("[%d : %s](%s) - %s", id, getClass().getSimpleName(), creationTime.toString(), description != null ? description : "<null>"));
+        synchronized(this) {
+            if (referencedResources.size() > 0) {
+                builder.append("\n   Forward references by Id: ");
+                for (CrtResource reference : referencedResources) {
+                    builder.append(String.format("%d", reference.id));
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
     public static void collectNativeResources(Consumer<String> fn) {
         collectNativeResource((ResourceInstance resource) -> {
             String str = String.format(" * Address: %d: %s", resource.nativeHandle,
@@ -311,9 +340,9 @@ public abstract class CrtResource implements AutoCloseable {
      * Debug method to log all of the currently un-closed CRTResource objects.
      */
     public static void logNativeResources() {
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
-        collectNativeResources((resource) -> {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, resource);
+        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
+        collectNativeResource((resource) -> {
+            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, resource.getWrapper().getResourceLogDescription());
         });
     }
 

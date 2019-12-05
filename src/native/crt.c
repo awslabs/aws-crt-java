@@ -34,11 +34,11 @@
 #include "logging.h"
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
-static int s_memory_tracing = 0;
+int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator() {
-    if (s_memory_tracing) {
+    if (g_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
-        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)s_memory_tracing, 8);
+        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
         return allocator;
     }
     return aws_default_allocator();
@@ -176,6 +176,7 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
 }
 
 void s_detach_jvm_from_thread(void *user_data) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
     JavaVM *jvm = user_data;
     (*jvm)->DetachCurrentThread(jvm);
 }
@@ -183,6 +184,7 @@ void s_detach_jvm_from_thread(void *user_data) {
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "aws_jni_get_thread_env returned detached, attaching");
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
         (void)result;
         AWS_FATAL_ASSERT(result == JNI_OK);
@@ -198,11 +200,16 @@ static void s_jni_atexit(void) {
     aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
-    aws_jni_cleanup_logging();
 
-    if (s_memory_tracing) {
+    if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_dump(tracer_allocator);
+    }
+
+    aws_jni_cleanup_logging();
+
+    if (g_memory_tracing) {
+        struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_destroy(tracer_allocator);
     }
 }
@@ -211,16 +218,12 @@ static void s_jni_atexit(void) {
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
     (void)jni_crt_class;
-    /*
-        bool done = false;
-        while (!done) {
-            ;
-        }
-    */
-    s_memory_tracing = jni_memtrace;
+
+    g_memory_tracing = jni_memtrace;
+
     void *stack[1];
     if (0 == aws_backtrace(stack, 1)) {
-        s_memory_tracing = (s_memory_tracing > 1) ? 1 : s_memory_tracing;
+        g_memory_tracing = (g_memory_tracing > 1) ? 1 : g_memory_tracing;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -252,7 +255,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     (void)env;
     (void)jni_crt_class;
     jlong allocated = 0;
-    if (s_memory_tracing) {
+    if (g_memory_tracing) {
         allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
     }
     return allocated;

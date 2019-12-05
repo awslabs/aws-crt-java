@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/auth/auth.h>
 #include <aws/common/allocator.h>
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
@@ -28,8 +29,8 @@
 
 #include <stdio.h>
 
-#include "async_callback.h"
 #include "crt.h"
+#include "java_class_ids.h"
 #include "logging.h"
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
@@ -71,48 +72,6 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
-/* methods of Java's ByteBuffer Class */
-static struct {
-    jclass cls;
-    jmethodID get_capacity; /* The total number of bytes in the internal byte array. Stays constant. */
-    jmethodID get_limit;    /* The max allowed read/write position of the Buffer. limit must be <= capacity. */
-    jmethodID set_limit;
-    jmethodID get_position; /* The current read/write position of the Buffer. position must be <= limit */
-    jmethodID set_position;
-    jmethodID get_remaining; /* Remaining number of bytes before the limit is reached. Equal to (limit - position). */
-    jmethodID wrap;          /* Creates a new ByteBuffer Object from a Java byte[]. */
-} s_java_byte_buffer = {0};
-
-void s_cache_java_byte_buffer(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "java/nio/ByteBuffer");
-    AWS_FATAL_ASSERT(cls);
-
-    // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
-    // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
-    s_java_byte_buffer.cls = (*env)->NewGlobalRef(env, cls);
-
-    s_java_byte_buffer.get_capacity = (*env)->GetMethodID(env, cls, "capacity", "()I");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.get_capacity);
-
-    s_java_byte_buffer.get_limit = (*env)->GetMethodID(env, cls, "limit", "()I");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.get_limit);
-
-    s_java_byte_buffer.set_limit = (*env)->GetMethodID(env, cls, "limit", "(I)Ljava/nio/Buffer;");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.set_limit);
-
-    s_java_byte_buffer.get_position = (*env)->GetMethodID(env, cls, "position", "()I");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.get_position);
-
-    s_java_byte_buffer.set_position = (*env)->GetMethodID(env, cls, "position", "(I)Ljava/nio/Buffer;");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.set_position);
-
-    s_java_byte_buffer.get_remaining = (*env)->GetMethodID(env, cls, "remaining", "()I");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.get_remaining);
-
-    s_java_byte_buffer.wrap = (*env)->GetStaticMethodID(env, cls, "wrap", "([B)Ljava/nio/ByteBuffer;");
-    AWS_FATAL_ASSERT(s_java_byte_buffer.wrap);
-}
-
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;
@@ -140,7 +99,7 @@ jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cur
  * Get the Buffer Position (the next element to read/write)
  */
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
-    jint position = (*env)->CallIntMethod(env, java_byte_buffer, s_java_byte_buffer.get_position);
+    jint position = (*env)->CallIntMethod(env, java_byte_buffer, byte_buffer_properties.get_position);
     return ((*env)->ExceptionCheck(env)) ? -1 : (int)position;
 }
 
@@ -148,7 +107,7 @@ int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
  * Set the Buffer Position (the next element to read/write)
  */
 void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
-    jobject val = (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_position, position);
+    jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_position, position);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     (*env)->DeleteLocalRef(env, val);
 }
@@ -157,7 +116,7 @@ void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint positi
  * Set the Buffer Limit (the max allowed element to read/write)
  */
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
-    jobject val = (*env)->CallObjectMethod(env, jByteBuf, s_java_byte_buffer.set_limit, limit);
+    jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_limit, limit);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     (*env)->DeleteLocalRef(env, val);
 }
@@ -237,36 +196,8 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
-#if defined(_MSC_VER)
-#    pragma warning(push)
-#    pragma warning(disable : 4210) /* non-standard extension used: function given file scope */
-#endif
-static void s_cache_jni_classes(JNIEnv *env) {
-    extern void s_cache_mqtt_connection(JNIEnv *);
-    extern void s_cache_message_handler(JNIEnv *);
-    extern void s_cache_mqtt_exception(JNIEnv *);
-    extern void s_cache_http_conn_manager(JNIEnv *);
-    extern void s_cache_crt_http_stream_handler(JNIEnv *);
-    extern void s_cache_http_header(JNIEnv *);
-    extern void s_cache_http_stream(JNIEnv *);
-    extern void s_cache_event_loop_group(JNIEnv *);
-
-    s_cache_java_byte_buffer(env);
-    s_cache_mqtt_connection(env);
-    s_cache_async_callback(env);
-    s_cache_message_handler(env);
-    s_cache_mqtt_exception(env);
-    s_cache_http_conn_manager(env);
-    s_cache_crt_http_stream_handler(env);
-    s_cache_http_header(env);
-    s_cache_http_stream(env);
-    s_cache_event_loop_group(env);
-}
-#if defined(_MSC_VER)
-#    pragma warning(pop)
-#endif
-
 static void s_jni_atexit(void) {
+    aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
 
@@ -289,6 +220,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     (void)jni_crt_class;
 
     g_memory_tracing = jni_memtrace;
+
     void *stack[1];
     if (0 == aws_backtrace(stack, 1)) {
         g_memory_tracing = (g_memory_tracing > 1) ? 1 : g_memory_tracing;
@@ -297,8 +229,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
+    aws_auth_library_init(allocator);
 
-    s_cache_jni_classes(env);
+    cache_java_class_ids(env);
 
     atexit(s_jni_atexit);
 }

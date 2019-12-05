@@ -46,4 +46,9 @@ public class CrtRuntimeException extends RuntimeException {
             errorName = "UNKNOWN";
         }
     }
+
+    CrtRuntimeException(int errorCode, String errorName) {
+        this.errorCode = errorCode;
+        this.errorName = errorName;
+    }
 };

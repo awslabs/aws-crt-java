@@ -13,7 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <crt.h>
+#include "crt.h"
+#include "java_class_ids.h"
+
 #include <jni.h>
 #include <string.h>
 
@@ -47,23 +49,6 @@
 #    endif
 #endif
 
-/* methods of HttpClientConnectionManager */
-static struct {
-    jmethodID onConnectionAcquired;
-    jmethodID onShutdownComplete;
-} s_http_connection_manager;
-
-void s_cache_http_conn_manager(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnectionManager");
-    AWS_FATAL_ASSERT(cls);
-
-    s_http_connection_manager.onConnectionAcquired = (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
-    AWS_FATAL_ASSERT(s_http_connection_manager.onConnectionAcquired);
-
-    s_http_connection_manager.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(s_http_connection_manager.onShutdownComplete);
-}
-
 struct http_conn_manager_callback_data {
     JavaVM *jvm;
     jobject java_http_conn_manager;
@@ -76,7 +61,8 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
 
-    (*env)->CallVoidMethod(env, callback->java_http_conn_manager, s_http_connection_manager.onShutdownComplete);
+    (*env)->CallVoidMethod(
+        env, callback->java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // We're done with this callback data, free it.
@@ -278,7 +264,7 @@ static void s_on_http_conn_acquisition_callback(
     (*env)->CallVoidMethod(
         env,
         callback->java_http_conn_manager,
-        s_http_connection_manager.onConnectionAcquired,
+        http_client_connection_manager_properties.onConnectionAcquired,
         jni_connection,
         jni_error_code);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));

@@ -74,7 +74,7 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
 
     aws_signing_config_properties.sign_body_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "Z");
+        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "I");
     AWS_FATAL_ASSERT(aws_signing_config_properties.sign_body_field_id);
 }
 

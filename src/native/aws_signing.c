@@ -234,7 +234,7 @@ static int s_build_signing_config(
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
     config->should_normalize_uri_path =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
-    config->sign_body = (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.sign_body_field_id);
+    config->body_signing_type = (*env)->GetIntField(env, java_config, aws_signing_config_properties.sign_body_field_id);
 
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);

@@ -138,7 +138,7 @@ public class SigningTest {
             config.setShouldSignParameter(filterParam);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(false);
+            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             HttpRequest signedRequest = result.get();
@@ -168,7 +168,7 @@ public class SigningTest {
             config.setCredentialsProvider(provider);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(false);
+            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             HttpRequest signedRequest = result.get();
@@ -204,7 +204,7 @@ public class SigningTest {
             config.setCredentialsProvider(provider);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(false);
+            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             HttpRequest signedRequest = result.get();
@@ -237,7 +237,7 @@ public class SigningTest {
             config.setCredentialsProvider(provider);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(false);
+            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             result.get();

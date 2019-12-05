@@ -16,6 +16,8 @@ package software.amazon.awssdk.crt.auth.signing;
 
 import java.time.Instant;
 import java.util.function.Predicate;
+import java.util.HashMap;
+import java.util.Map;
 
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
@@ -32,41 +34,85 @@ public class AwsSigningConfig {
             this.nativeValue = nativeValue;
         }
 
-        int getNativeValue() { return nativeValue; }
+        public int getNativeValue() { return nativeValue; }
 
-        int nativeValue;
+        public static AwsSigningAlgorithm getEnumValueFromInteger(int value) {
+            AwsSigningAlgorithm enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal signing algorithm value in signing configuration");
+        }
+
+        private static Map<Integer, AwsSigningAlgorithm> buildEnumMapping() {
+            Map<Integer, AwsSigningAlgorithm> enumMapping = new HashMap<Integer, AwsSigningAlgorithm>();
+            enumMapping.put(SIGV4_HEADER.getNativeValue(), SIGV4_HEADER);
+            enumMapping.put(SIGV4_QUERY_PARAM.getNativeValue(), SIGV4_QUERY_PARAM);
+
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsSigningAlgorithm> enumMapping = buildEnumMapping();
     }
 
-    int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
+    public enum AwsBodySigningConfigType {
+        AWS_BODY_SIGNING_OFF(0),
+        AWS_BODY_SIGNING_ON(1),
+        AWS_BODY_SIGNING_UNSIGNED_PAYLOAD(2);
 
-    String region;
+        AwsBodySigningConfigType(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
 
-    String service;
+        public int getNativeValue() { return nativeValue; }
 
-    long time = Instant.now().toEpochMilli();
+        public static AwsBodySigningConfigType getEnumValueFromInteger(int value) {
+            AwsBodySigningConfigType enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
 
-    CredentialsProvider credentialsProvider;
+            throw new RuntimeException("Illegal body signing config type value in signing configuration");
+        }
 
-    Predicate<String> shouldSignParameter;
+        private static Map<Integer, AwsBodySigningConfigType> buildEnumMapping() {
+            Map<Integer, AwsBodySigningConfigType> enumMapping = new HashMap<Integer, AwsBodySigningConfigType>();
+            enumMapping.put(AWS_BODY_SIGNING_OFF.getNativeValue(), AWS_BODY_SIGNING_OFF);
+            enumMapping.put(AWS_BODY_SIGNING_ON.getNativeValue(), AWS_BODY_SIGNING_ON);
+            enumMapping.put(AWS_BODY_SIGNING_UNSIGNED_PAYLOAD.getNativeValue(), AWS_BODY_SIGNING_UNSIGNED_PAYLOAD);
 
-    boolean useDoubleUriEncode = true;
-    boolean shouldNormalizeUriPath = true;
-    boolean signBody = false;
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsBodySigningConfigType> enumMapping = buildEnumMapping();
+    }
+
+    private int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
+
+    private String region;
+
+    private String service;
+
+    private long time = Instant.now().toEpochMilli();
+
+    private CredentialsProvider credentialsProvider;
+
+    private Predicate<String> shouldSignParameter;
+
+    private boolean useDoubleUriEncode = true;
+    private boolean shouldNormalizeUriPath = true;
+    private int signBody = AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF.getNativeValue();
 
     public AwsSigningConfig() {}
 
     public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
     public AwsSigningAlgorithm getSigningAlgorithm() {
-        switch(signingAlgorithm) {
-            case 0:
-                return AwsSigningAlgorithm.SIGV4_HEADER;
-
-            case 1:
-                return AwsSigningAlgorithm.SIGV4_QUERY_PARAM;
-
-            default:
-                throw new RuntimeException("Illegal signing algorithm value in signing configuration");
-        }
+        return AwsSigningAlgorithm.getEnumValueFromInteger(signingAlgorithm);
     }
 
     public void setRegion(String region) { this.region = region; }
@@ -90,8 +136,8 @@ public class AwsSigningConfig {
     public void setShouldNormalizeUriPath(boolean shouldNormalizeUriPath) { this.shouldNormalizeUriPath = shouldNormalizeUriPath; }
     public boolean getShouldNormalizeUriPath() { return shouldNormalizeUriPath; }
 
-    public void setSignBody(boolean signBody) { this.signBody = signBody; }
-    public boolean getSignBody() { return signBody; }
+    public void setSignBody(AwsBodySigningConfigType signBody) { this.signBody = signBody.getNativeValue(); }
+    public AwsBodySigningConfigType getSignBody() { return AwsBodySigningConfigType.getEnumValueFromInteger(signBody); }
 }
 
 

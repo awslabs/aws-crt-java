@@ -215,7 +215,7 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Increments the reference count to this resource.
      */
-    void addRef() {
+    public void addRef() {
         refCount.incrementAndGet();
     }
 

@@ -49,6 +49,28 @@ struct jni_tls_ctx_options {
 #    endif
 #endif
 
+static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
+    if (tls == NULL) {
+        return;
+    }
+
+    aws_string_destroy(tls->ca_file);
+    aws_string_destroy(tls->ca_path);
+    aws_string_destroy(tls->alpn_list);
+    aws_string_destroy(tls->certificate_path);
+    aws_string_destroy(tls->private_key_path);
+    aws_string_destroy(tls->pkcs12_path);
+    aws_string_destroy_secure(tls->pkcs12_password);
+    aws_string_destroy(tls->certificate);
+    aws_string_destroy_secure(tls->private_key);
+    aws_string_destroy(tls->ca_root);
+
+    aws_tls_ctx_options_clean_up(&tls->options);
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_mem_release(allocator, tls);
+}
+
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsNew(
     JNIEnv *env,
@@ -97,6 +119,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
         if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
+            goto on_error;
         }
     } else if (jni_ca_filepath || jni_ca_dirpath) {
         const char *ca_file = NULL;
@@ -112,6 +135,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
         if (aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file)) {
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store_from_path failed");
+            goto on_error;
         }
     }
 
@@ -138,6 +162,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     }
 
     return (jlong)tls;
+
+on_error:
+
+    s_jni_tls_ctx_options_destroy(tls);
+
+    return (jlong)0;
 }
 
 JNIEXPORT
@@ -147,26 +177,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     jlong jni_tls) {
     (void)env;
     (void)jni_class;
-    struct jni_tls_ctx_options *tls = (struct jni_tls_ctx_options *)jni_tls;
-    if (!tls) {
-        return;
-    }
 
-    aws_string_destroy(tls->ca_file);
-    aws_string_destroy(tls->ca_path);
-    aws_string_destroy(tls->alpn_list);
-    aws_string_destroy(tls->certificate_path);
-    aws_string_destroy(tls->private_key_path);
-    aws_string_destroy(tls->pkcs12_path);
-    aws_string_destroy_secure(tls->pkcs12_password);
-    aws_string_destroy_secure(tls->certificate);
-    aws_string_destroy_secure(tls->private_key);
-    aws_string_destroy_secure(tls->ca_root);
-
-    aws_tls_ctx_options_clean_up(&tls->options);
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, tls);
+    s_jni_tls_ctx_options_destroy((struct jni_tls_ctx_options *)jni_tls);
 }
 
 JNIEXPORT

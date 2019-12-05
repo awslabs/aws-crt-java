@@ -13,8 +13,11 @@
  * permissions and limitations under the License.
  */
 
-#include <crt.h>
 #include <jni.h>
+
+#include "crt.h"
+#include "http_request_utils.h"
+#include "java_class_ids.h"
 
 #include <aws/common/mutex.h>
 #include <aws/http/connection.h>
@@ -39,59 +42,11 @@
 #    endif
 #endif
 
-static struct {
-    jclass header_class;
-    jmethodID constructor;
-    jfieldID name;
-    jfieldID value;
-} s_http_header;
-
-void s_cache_http_header(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
-    AWS_FATAL_ASSERT(cls);
-    s_http_header.header_class = cls;
-
-    s_http_header.constructor = (*env)->GetMethodID(env, cls, "<init>", "()V");
-    AWS_FATAL_ASSERT(s_http_header.constructor);
-
-    s_http_header.name = (*env)->GetFieldID(env, cls, "name", "[B");
-    AWS_FATAL_ASSERT(s_http_header.name);
-
-    s_http_header.value = (*env)->GetFieldID(env, cls, "value", "[B");
-    AWS_FATAL_ASSERT(s_http_header.value);
-
-    // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
-    // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
-    s_http_header.header_class = (*env)->NewGlobalRef(env, s_http_header.header_class);
-}
-
-static struct {
-    jclass stream_class;
-    jmethodID constructor;
-    jmethodID close;
-} s_http_stream_handler;
-
-void s_cache_http_stream(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStream");
-    AWS_FATAL_ASSERT(cls);
-    s_http_stream_handler.stream_class = cls;
-
-    // FindClass() returns local JNI references that become eligible for GC once this native method returns to Java.
-    // Call NewGlobalRef() so that this class reference doesn't get Garbage collected.
-    s_http_stream_handler.stream_class = (*env)->NewGlobalRef(env, s_http_stream_handler.stream_class);
-
-    s_http_stream_handler.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
-    AWS_FATAL_ASSERT(s_http_stream_handler.constructor);
-
-    s_http_stream_handler.close = (*env)->GetMethodID(env, cls, "close", "()V");
-    AWS_FATAL_ASSERT(s_http_stream_handler.close);
-}
-
 static jobject s_java_http_stream_from_native_new(JNIEnv *env, struct aws_http_stream *stream) {
     jlong jni_native_ptr = (jlong)stream;
     AWS_ASSERT(jni_native_ptr);
     return (*env)->NewObject(
-        env, s_http_stream_handler.stream_class, s_http_stream_handler.constructor, jni_native_ptr);
+        env, http_stream_properties.stream_class, http_stream_properties.constructor, jni_native_ptr);
 }
 
 static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream) {
@@ -110,20 +65,38 @@ struct http_stream_callback_data {
     // TEMP: Until Java API changes to match "H1B" native HTTP API,
     // create aws_http_message and aws_input_stream under the hood.
     struct aws_http_message *native_request;
-    struct aws_input_stream native_outgoing_body;
-    bool native_outgoing_body_done;
 
-    jobject java_crt_http_callback_handler;
+    jobject java_http_response_stream_handler;
     jobject java_http_stream;
 };
 
-static int s_native_outgoing_body_read(struct aws_input_stream *input_stream, struct aws_byte_buf *dst);
-static int s_native_outgoing_body_status(struct aws_input_stream *input_stream, struct aws_stream_status *status);
+static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
 
-struct aws_input_stream_vtable s_native_outgoing_body_vtable = {
-    .read = s_native_outgoing_body_read,
-    .get_status = s_native_outgoing_body_status,
-};
+    if (callback == NULL) {
+        return;
+    }
+
+    if (callback->java_http_stream) {
+        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
+    }
+
+    if (callback->java_http_response_stream_handler != NULL) {
+        (*env)->DeleteGlobalRef(env, callback->java_http_response_stream_handler);
+    }
+
+    if (callback->native_request) {
+        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
+        if (input_stream != NULL) {
+            aws_input_stream_destroy(input_stream);
+        }
+
+        aws_http_message_destroy(callback->native_request);
+    }
+
+    aws_mutex_clean_up(&callback->setup_lock);
+
+    aws_mem_release(aws_jni_get_allocator(), callback);
+}
 
 // If error occurs, A Java exception is thrown and NULL is returned.
 static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env, jobject java_callback_handler) {
@@ -139,31 +112,10 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
 
     aws_mutex_init(&callback->setup_lock);
 
-    callback->native_outgoing_body.vtable = &s_native_outgoing_body_vtable;
-    callback->native_outgoing_body.impl = callback;
-
-    callback->native_request = aws_http_message_new_request(allocator);
-    AWS_FATAL_ASSERT(callback->native_request);
-
-    aws_http_message_set_body_stream(callback->native_request, &callback->native_outgoing_body);
-
-    callback->java_crt_http_callback_handler = (*env)->NewGlobalRef(env, java_callback_handler);
-    AWS_FATAL_ASSERT(callback->java_crt_http_callback_handler);
+    callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
+    AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
 
     return callback;
-}
-
-static void http_stream_callback_release(JNIEnv *env, struct http_stream_callback_data *callback) {
-
-    if (callback->java_http_stream) {
-        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
-    }
-
-    (*env)->DeleteGlobalRef(env, callback->java_crt_http_callback_handler);
-
-    aws_http_message_destroy(callback->native_request);
-    aws_mutex_clean_up(&callback->setup_lock);
-    aws_mem_release(aws_jni_get_allocator(), callback);
 }
 
 // Return whether the Java HttpStream object was successfully created.
@@ -173,74 +125,6 @@ static bool http_stream_callback_is_valid(struct http_stream_callback_data *call
     bool is_setup = (callback->java_http_stream != NULL);
     aws_mutex_unlock(&callback->setup_lock);
     return is_setup;
-}
-
-/* CrtHttpStreamHandler Java Methods */
-static struct {
-    jmethodID onResponseHeaders;
-    jmethodID onResponseHeadersDone;
-    jmethodID onResponseBody;
-    jmethodID onResponseComplete;
-    jmethodID sendOutgoingBody;
-} s_crt_http_stream_handler;
-
-void s_cache_crt_http_stream_handler(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/CrtHttpStreamHandler");
-    AWS_FATAL_ASSERT(cls);
-    s_crt_http_stream_handler.onResponseHeaders = (*env)->GetMethodID(
-        env,
-        cls,
-        "onResponseHeaders",
-        "(Lsoftware/amazon/awssdk/crt/http/HttpStream;II[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
-
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeaders);
-
-    s_crt_http_stream_handler.onResponseHeadersDone =
-        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseHeadersDone);
-
-    s_crt_http_stream_handler.onResponseBody =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;[B)I");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseBody);
-
-    s_crt_http_stream_handler.onResponseComplete =
-        (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.onResponseComplete);
-
-    s_crt_http_stream_handler.sendOutgoingBody = (*env)->GetMethodID(
-        env, cls, "sendRequestBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)Z");
-    AWS_FATAL_ASSERT(s_crt_http_stream_handler.sendOutgoingBody);
-}
-
-static jobjectArray s_java_headers_array_from_native(
-    JNIEnv *env,
-    const struct aws_http_header *header_array,
-    size_t num_headers) {
-
-    AWS_FATAL_ASSERT(s_http_header.header_class);
-    AWS_FATAL_ASSERT(s_http_header.constructor);
-    AWS_FATAL_ASSERT(s_http_header.name);
-    AWS_FATAL_ASSERT(s_http_header.value);
-
-    jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, s_http_header.header_class, NULL);
-
-    for (size_t i = 0; i < num_headers; i++) {
-        jobject jHeader = (*env)->NewObject(env, s_http_header.header_class, s_http_header.constructor);
-
-        jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &(header_array[i].name));
-        jbyteArray actual_value = aws_jni_byte_array_from_cursor(env, &(header_array[i].value));
-
-        // Overwrite with actual values
-        (*env)->SetObjectField(env, jHeader, s_http_header.name, actual_name);
-        (*env)->SetObjectField(env, jHeader, s_http_header.value, actual_value);
-        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
-
-        (*env)->DeleteLocalRef(env, actual_name);
-        (*env)->DeleteLocalRef(env, actual_value);
-        (*env)->DeleteLocalRef(env, jHeader);
-    }
-
-    return jArray;
 }
 
 static int s_on_incoming_headers_fn(
@@ -280,7 +164,7 @@ static int s_on_incoming_headers_fn(
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
-    jobjectArray jHeaders = s_java_headers_array_from_native(env, header_array, num_headers);
+    jobjectArray jHeaders = aws_java_headers_array_from_native(env, header_array, num_headers);
     if (!jHeaders) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
@@ -288,8 +172,8 @@ static int s_on_incoming_headers_fn(
 
     (*env)->CallVoidMethod(
         env,
-        callback->java_crt_http_callback_handler,
-        s_crt_http_stream_handler.onResponseHeaders,
+        callback->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onResponseHeaders,
         callback->java_http_stream,
         resp_status,
         (jint)block_type,
@@ -320,8 +204,8 @@ static int s_on_incoming_header_block_done_fn(
     jint jni_block_type = block_type;
     (*env)->CallVoidMethod(
         env,
-        callback->java_crt_http_callback_handler,
-        s_crt_http_stream_handler.onResponseHeadersDone,
+        callback->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onResponseHeadersDone,
         callback->java_http_stream,
         jni_block_type);
 
@@ -347,8 +231,8 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     jint window_increment = (*env)->CallIntMethod(
         env,
-        callback->java_crt_http_callback_handler,
-        s_crt_http_stream_handler.onResponseBody,
+        callback->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onResponseBody,
         callback->java_http_stream,
         jni_payload);
 
@@ -384,8 +268,8 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         jint jErrorCode = error_code;
         (*env)->CallVoidMethod(
             env,
-            callback->java_crt_http_callback_handler,
-            s_crt_http_stream_handler.onResponseComplete,
+            callback->java_http_response_stream_handler,
+            http_stream_response_handler_properties.onResponseComplete,
             callback->java_http_stream,
             jErrorCode);
 
@@ -395,117 +279,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         }
     }
 
-    http_stream_callback_release(env, callback);
-}
-
-static int s_native_outgoing_body_read(struct aws_input_stream *input_stream, struct aws_byte_buf *dst) {
-    struct http_stream_callback_data *callback = input_stream->impl;
-
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-
-    size_t out_remaining = dst->capacity - dst->len;
-
-    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dst->buffer + dst->len, out_remaining);
-
-    jboolean isDone = (*env)->CallBooleanMethod(
-        env,
-        callback->java_crt_http_callback_handler,
-        s_crt_http_stream_handler.sendOutgoingBody,
-        callback->java_http_stream,
-        direct_buffer);
-
-    if ((*env)->ExceptionCheck(env)) {
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-    dst->len += amt_written;
-
-    (*env)->DeleteLocalRef(env, direct_buffer);
-
-    if (isDone) {
-        callback->native_outgoing_body_done = isDone;
-    }
-
-    return AWS_OP_SUCCESS;
-}
-
-static int s_native_outgoing_body_status(struct aws_input_stream *input_stream, struct aws_stream_status *status) {
-    struct http_stream_callback_data *callback = input_stream->impl;
-
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    AWS_ZERO_STRUCT(*status);
-    status->is_end_of_stream = callback->native_outgoing_body_done;
-    return AWS_OP_SUCCESS;
-}
-
-/* If error occurs, A Java exception is thrown and false is returned. */
-static bool s_fill_out_request(
-    JNIEnv *env,
-    struct aws_http_message *request,
-    jstring jni_method,
-    jstring jni_uri,
-    jobjectArray jni_headers) {
-
-    struct aws_byte_cursor method_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_method);
-    int result = aws_http_message_set_request_method(request, method_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
-        return false;
-    }
-
-    struct aws_byte_cursor path_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
-    result = aws_http_message_set_request_path(request, path_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
-        return false;
-    }
-
-    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
-    for (jsize i = 0; i < num_headers; ++i) {
-        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
-        jbyteArray jname = (*env)->GetObjectField(env, jHeader, s_http_header.name);
-        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, s_http_header.value);
-
-        const size_t name_len = (*env)->GetArrayLength(env, jname);
-        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
-
-        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
-        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
-
-        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
-        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
-
-        struct aws_http_header c_header = {
-            .name = name_cursor,
-            .value = value_cursor,
-        };
-
-        result = aws_http_message_add_header(request, c_header);
-
-        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
-        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
-
-        (*env)->DeleteLocalRef(env, jname);
-        (*env)->DeleteLocalRef(env, jvalue);
-        (*env)->DeleteLocalRef(env, jHeader);
-
-        if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
-            return false;
-        }
-    }
-
-    return true;
+    http_stream_callback_destroy(env, callback);
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -515,7 +289,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     jstring jni_method,
     jstring jni_uri,
     jobjectArray jni_headers,
-    jobject jni_crt_http_callback_handler) {
+    jobject jni_http_request_body_stream,
+    jobject jni_http_response_callback_handler) {
 
     (void)jni_class;
 
@@ -526,20 +301,24 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         return (jobject)NULL;
     }
 
-    if (!jni_crt_http_callback_handler) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid jni_callback_handler");
+    if (!jni_http_response_callback_handler) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpClientConnection.MakeRequest: Invalid jni_http_response_callback_handler");
         return (jobject)NULL;
     }
 
-    struct http_stream_callback_data *callback_data = http_stream_callback_alloc(env, jni_crt_http_callback_handler);
+    struct http_stream_callback_data *callback_data =
+        http_stream_callback_alloc(env, jni_http_response_callback_handler);
     if (!callback_data) {
         // Exception already thrown
         return (jobject)NULL;
     }
 
-    if (!s_fill_out_request(env, callback_data->native_request, jni_method, jni_uri, jni_headers)) {
+    callback_data->native_request = aws_http_request_new_from_java_http_request(
+        env, jni_method, jni_uri, jni_headers, jni_http_request_body_stream);
+    if (callback_data->native_request == NULL) {
         // Exception already thrown
-        http_stream_callback_release(env, callback_data);
+        http_stream_callback_destroy(env, callback_data);
         return (jobject)NULL;
     }
 
@@ -588,7 +367,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         // Failed to create native aws_http_stream. Clean up callback_data.
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
-        http_stream_callback_release(env, callback_data);
+        http_stream_callback_destroy(env, callback_data);
         return NULL;
     } else if (!jHttpStream) {
         // Failed to create java HttpStream, but did create native aws_http_stream.

@@ -19,6 +19,7 @@
 #include <aws/io/logging.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -31,17 +32,6 @@
 #        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #    endif
 #endif
-
-/* callback methods needed in EventLoopGroup */
-static struct { jmethodID onCleanupComplete; } s_event_loop_group;
-
-void s_cache_event_loop_group(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/EventLoopGroup");
-    AWS_FATAL_ASSERT(cls);
-
-    s_event_loop_group.onCleanupComplete = (*env)->GetMethodID(env, cls, "onCleanupComplete", "()V");
-    AWS_FATAL_ASSERT(s_event_loop_group.onCleanupComplete);
-}
 
 JNIEXPORT
 jlong JNICALL
@@ -83,7 +73,7 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     JNIEnv *env = NULL;
     /* fetch the env manually, rather than through the helper which will install an exit callback */
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, s_event_loop_group.onCleanupComplete);
+    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // Remove the ref that was probably keeping the Java event loop group alive.

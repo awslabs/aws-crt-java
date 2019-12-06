@@ -245,10 +245,8 @@ public abstract class CrtResource implements AutoCloseable {
      *  (2) referencing of other resources and the resulting implied cleanup process
      *
      * Some classes don't represent an actual native resource.  Instead, they just want to use
-     * the reference and cleanup framework.  See CrtBufferPool for an example.
+     * the reference and cleanup framework.  See AwsIotMqttConnectionBuilder.java for example.
      *
-     * A solution that avoids this complication while not changing the buffer/buffer pool properties dramatically would
-     * be welcomed.
      */
 
     /**

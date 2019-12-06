@@ -19,17 +19,65 @@ import software.amazon.awssdk.crt.utils.PackageInfo;
 
 import java.io.UnsupportedEncodingException;
 
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
-public final class AwsIotMqttConnectionConfigBuilder {
-    private MqttConnectionConfig params = new MqttConnectionConfig();
-    private TlsContextOptions tlsOptions;
+/*
+ * A central class for building Mqtt connections without manually managing a large variety of native objects (some
+ * still need to be created though).
+ */
+public final class AwsIotMqttConnectionBuilder extends CrtResource {
+    public String clientId;
+    public String endpoint;
+    public int port;
+    public boolean useWebsocket = false;
+    public boolean cleanSession = true;
+    public int keepAliveSecs = 0;
+    public SocketOptions socketOptions;  // CrtResource
+    public MqttMessage will = null;
+    public String username;
+    public String password;
+    public ClientTlsContext tlsContext = null;  // CrtResource
+    public HttpProxyOptions proxyOptions = null;
 
-    private AwsIotMqttConnectionConfigBuilder() {
-        
+    private TlsContextOptions tlsOptions;  // CrtResource
+
+    private TlsContext tlsContext; // CrtResource
+    private MqttClient client; // CrtResource
+    private ClientBootstrap bootstrap; // CrtResource
+
+    private AwsIotMqttConnectionBuilder() {
+        socketOptions = new SocketOptions();
+        addReferenceTo(socketOptions);
+    }
+
+    /**
+     * Required override method that must begin the release process of the acquired native handle
+     */
+    protected abstract void releaseNativeHandle() {}
+
+    /**
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
+     */
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+
+    /**
+     * This class just tracks native resources: mqtt client, tls context, tls context options, client bootstrap
+     */
+    protected boolean isNativeResource() { return false; }
+
+
+    private void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
+        if (oldReference != newReference) {
+            addReferenceTo(newReference);
+            removeReferenceTo(oldReference);
+        }
     }
 
     /**
@@ -111,7 +159,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      * @param endpoint The IoT endpoint to connect to
      */
     AwsIotMqttConnectionConfigBuilder withEndpoint(String endpoint) {
-        this.params.endpoint = endpoint;
+        this.endpoint = endpoint;
         return this;
     }
 
@@ -122,7 +170,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      *             MQTT, or 443 for websockets
      */
     AwsIotMqttConnectionConfigBuilder withPort(short port) {
-        this.params.port = port;
+        this.port = port;
         return this;
     }
 
@@ -133,7 +181,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      *                  all devices/clients.
      */
     AwsIotMqttConnectionConfigBuilder withClientId(String clientId) {
-        this.params.clientId = clientId;
+        this.clientId = clientId;
         return this;
     }
 
@@ -145,7 +193,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      *                      this client connects, false to resume the session
      */
     AwsIotMqttConnectionConfigBuilder withCleanSession(boolean cleanSession) {
-        this.params.cleanSession = cleanSession;
+        this.cleanSession = cleanSession;
         return this;
     }
 
@@ -154,9 +202,9 @@ public final class AwsIotMqttConnectionConfigBuilder {
      * 443.
      */
     AwsIotMqttConnectionConfigBuilder withWebsocket() {
-        this.params.useWebsocket = true;
+        this.useWebsocket = true;
         this.tlsOptions.alpnList.clear();
-        this.params.port = 443;
+        this.port = 443;
         return this;
     }
 
@@ -168,7 +216,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      *                   service to keep the connection alive
      */
     AwsIotMqttConnectionConfigBuilder withKeepAliveSeconds(int keepAliveSecs) {
-        this.params.keepAliveSecs = keepAliveSecs;
+        this.keepAliveSecs = keepAliveSecs;
         return this;
     }
 
@@ -178,7 +226,7 @@ public final class AwsIotMqttConnectionConfigBuilder {
      * @param timeout_ms TCP socket timeout
      */
     AwsIotMqttConnectionConfigBuilder withTimeoutMs(int timeoutMs) {
-        this.params.socketOptions.connectTimeoutMs = timeoutMs;
+        this.socketOptions.connectTimeoutMs = timeoutMs;
         return this;
     }
 
@@ -189,31 +237,54 @@ public final class AwsIotMqttConnectionConfigBuilder {
      * @param socketOptions The socket settings
      */
     AwsIotMqttConnectionConfigBuilder withSocketOptions(SocketOptions socketOptions) {
-        this.params.socketOptions = socketOptions;
+        swapReferenceTo(this.socketOptions, socketOptions);
+        this.socketOptions = socketOptions;
         return this;
     }
 
     AwsIotMqttConnectionConfigBuilder withUsername(String username) {
-        this.params.username = String.format("%s?SDK=JavaV2&Version=%s", username, new PackageInfo().toString());
+        this.username = String.format("%s?SDK=JavaV2&Version=%s", username, new PackageInfo().toString());
         return this;
     }
 
     AwsIotMqttConnectionConfigBuilder withPassword(String password) {
-        this.params.password = password;
+        this.password = password;
         return this;
     }
 
-    /**
-     * Returns the configured MqttConnectionConfig
-     * 
-     * @returns The configured MqttConnectionConfig
-     */
-    MqttConnectionConfig build() {
-        if (tlsOptions != null) {
-            params.tlsContext = new ClientTlsContext(tlsOptions);
+
+    CompletableFuture<MqttClientConnection> build(MqttClientConnectionEvents callbacks) {
+        // Validate
+        if (bootstrap == null) {
+            throw new Exception(??);
         }
-        
-        return params;
+
+        // Lazy create
+        synchronized(this) {
+            if (tlsOptions != null && tlsContext == null) {
+                tlsContext = new TlsContext(tlsOptions);
+                addReferenceTo(tlsContext);
+            }
+
+            if (client == null) {
+                client = ??;
+                addReferenceTo(client);
+            }
+        }
+
+        // Connection create
+        MqttClientConnection connection = new MqttClientConnection(client, callbacks);
+        CompletableFuture<MqttClientConnection> futureConnection = new CompletableFuture<>();
+        futureConnection.whenComplete( (conn, error) ->
+            if (error) {
+                connection.disconnect().get();
+                connection.close();
+            });
+
+        // Connect
+        connection.
+
+        return futureConnection;
     }
 }
 

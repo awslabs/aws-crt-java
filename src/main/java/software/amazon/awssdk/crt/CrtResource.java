@@ -34,7 +34,7 @@ import software.amazon.awssdk.crt.Log;
  */
 public abstract class CrtResource implements AutoCloseable {
     private static final String NATIVE_DEBUG_PROPERTY_NAME = "aws.crt.debugnative";
-    private static final long DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 30;
+    private static final long DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 10;
     private static final long NULL = 0;
 
     public class ResourceInstance {

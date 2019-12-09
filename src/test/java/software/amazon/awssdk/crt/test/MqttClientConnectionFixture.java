@@ -132,7 +132,8 @@ public class MqttClientConnectionFixture {
                 .withCleanSession(true)
                 .withClientId(TEST_CLIENTID + (UUID.randomUUID()).toString())
                 .withConnectionEventCallbacks(events)
-                .withEndpoint(TEST_ENDPOINT);
+                .withEndpoint(TEST_ENDPOINT)
+                .withKeepAliveSeconds((int)TimeUnit.MILLISECONDS.convert(keepAliveMs, TimeUnit.SECONDS));
 
             connection = builder.build();
 

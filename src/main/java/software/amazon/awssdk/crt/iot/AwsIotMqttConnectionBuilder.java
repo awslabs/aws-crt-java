@@ -67,6 +67,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
     private AwsIotMqttConnectionBuilder(TlsContextOptions tlsOptions) {
         this.tlsOptions = tlsOptions;
         addReferenceTo(tlsOptions);
+        tlsOptions.decRef();
 
         if (TlsContextOptions.isAlpnSupported()) {
             this.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
@@ -303,6 +304,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
             if (tlsOptions != null && tlsContext == null) {
                 tlsContext = new ClientTlsContext(tlsOptions);
                 addReferenceTo(tlsContext);
+                tlsContext.decRef();
             }
 
             if (client == null) {
@@ -313,6 +315,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
                 }
 
                 addReferenceTo(client);
+                client.decRef();
             }
         }
 

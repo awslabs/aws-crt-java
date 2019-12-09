@@ -34,6 +34,16 @@ import java.util.function.Consumer;
 public class MqttClientConnection extends CrtResource {
     private final MqttClient client;
     private MqttClientConnectionEvents userConnectionCallbacks;
+
+    private String clientId;
+    private String endpoint;
+    private int port;
+
+    private SocketOptions socketOptions;
+    private boolean cleanSession = true;
+    private int keepAliveMs = 0;
+    private int pingTimeoutMs = 0;
+
     private AsyncCallback connectAck;
 
     /**
@@ -58,38 +68,39 @@ public class MqttClientConnection extends CrtResource {
      * disconnected.
      * 
      * @param mqttClient Must be non-null
+     * @param clientId Must be non-null
+     * @param endpoint Must be non-null
+     * @param port
      * @throws MqttException If mqttClient is null
      */
-    public MqttClientConnection(MqttClient mqttClient) throws MqttException {
-        this(mqttClient, null);
-    }
-
-    /**
-     * Constructs a new MqttClientConnection. Connections are reusable after being
-     * disconnected.
-     * 
-     * @param mqttClient Must be non-null
-     * @param callbacks  Optional handler for connection interruptions/resumptions
-     * @throws MqttException If mqttClient is null
-     */
-    public MqttClientConnection(MqttClient mqttClient, MqttClientConnectionEvents callbacks) throws MqttException {
+    public MqttClientConnection(MqttClient mqttClient, String clientId, String endpoint, int port) throws MqttException {
         if (mqttClient == null) {
-            throw new MqttException("MqttClient must not be null");
+            throw new MqttException("mqttClient must not be null");
+        }
+        if (clientId == null) {
+            throw new MqttException("clientId must not be null");
+        }
+        if (endpoint == null) {
+            throw new MqttException("endpoint must not be null");
+        }
+        if (port <= 0 || port > 65535) {
+            throw new MqttException("port must be a positive integer between 1 and 65535");
         }
 
         try {
             acquireNativeHandle(mqttClientConnectionNew(mqttClient.getNativeHandle(), this));
             addReferenceTo(mqttClient);
             this.client = mqttClient;
-            userConnectionCallbacks = callbacks;
+            this.clientId = clientId;
+            this.endpoint = endpoint;
+            this.port = port;
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
     }
 
     /**
-     * Disconnects if necessary, and frees native resources associated with this
-     * connection
+     * Frees native resources associated with this connection.
      */
     @Override
     protected void releaseNativeHandle() {
@@ -104,6 +115,71 @@ public class MqttClientConnection extends CrtResource {
     @Override
     protected boolean canReleaseReferencesImmediately() {
         return false;
+    }
+
+    public void setConnectionCallbacks(MqttClientConnectionEvents connectionCallbacks) {
+        this.userConnectionCallbacks = connectionCallbacks;
+    }
+
+    public MqttClientConnectionEvents getConnectionCallbacks() {
+        return userConnectionCallbacks;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setSocketOptions(SocketOptions socketOptions) {
+        swapReferenceTo(this.socketOptions, socketOptions);
+        this.socketOptions = socketOptions;
+    }
+
+    public SocketOptions getSocketOptions() {
+        return socketOptions;
+    }
+
+    public void setCleanSession(boolean cleanSession) {
+        this.cleanSession = cleanSession;
+    }
+
+    public boolean getCleanSession() {
+        return cleanSession;
+    }
+
+    public void setKeepAliveMs(int keepAliveMs) {
+        this.keepAliveMs = keepAliveMs;
+    }
+
+    public int getKeepAliveMs() {
+        return keepAliveMs;
+    }
+
+    public void setPingTimeoutMs(int pingTimeoutMs) {
+        this.pingTimeoutMs = pingTimeoutMs;
+    }
+
+    public int getPingTimeoutMs() {
+        return pingTimeoutMs;
     }
 
     /**
@@ -121,6 +197,8 @@ public class MqttClientConnection extends CrtResource {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }
     }
+
+
 
     // Called from native when the connection is established the first time
     private void onConnectionComplete(int errorCode, boolean sessionPresent) {
@@ -157,39 +235,12 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Connect to the service endpoint and start a session without TLS.
-     * 
-     * @param clientId The clientId provided to the service. Must be unique across
-     *                 all connected Things on the endpoint.
-     * @param endpoint The hostname of the service endpoint
-     * @param port     The port to connect to on the service endpoint host
-     * @return Future result is true if resuming a session, false if clean session
-     */
-    public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port) {
-        return connect(clientId, endpoint, port, null, true, 0, 0);
-    }
-
-    /**
      * Connect to the service endpoint and start a session
-     * 
-     * @param clientId      The clientId provided to the service. Must be unique
-     *                      across all connected Things on the endpoint.
-     * @param endpoint      The hostname of the service endpoint
-     * @param port          The port to connect to on the service endpoint host
-     * @param socketOptions Optional SocketOptions instance with options for this
-     *                      connection
-     * @param tls           Optional TLS context. If this is null, a TLS connection
-     *                      will not be attempted.
-     * @param cleanSession  Whether or not to completely restart the session. If
-     *                      false, topics that were already subscribed by this
-     *                      clientId will be resumed
-     * @param keepAliveMs   0 = no keepalive, non-zero = ms between keepalive
-     *                      packets
+     *
      * @return Future result is true if resuming a session, false if clean session
      * @throws MqttException If the port is out of range
      */
-    public CompletableFuture<Boolean> connect(String clientId, String endpoint, int port, SocketOptions socketOptions,
-            boolean cleanSession, int keepAliveMs, int pingTimeoutMs) throws MqttException {
+    public CompletableFuture<Boolean> connect() throws MqttException {
 
         TlsContext tls = client.getTlsContext();
 

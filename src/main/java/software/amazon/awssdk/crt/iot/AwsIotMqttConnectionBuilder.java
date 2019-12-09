@@ -18,52 +18,76 @@ package software.amazon.awssdk.crt.iot;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 import java.io.UnsupportedEncodingException;
+import java.util.concurrent.TimeUnit;
 
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.mqtt.MqttClient;
+import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
+import software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents;
+import software.amazon.awssdk.crt.mqtt.MqttException;
+import software.amazon.awssdk.crt.mqtt.MqttMessage;
+import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
 /*
  * A central class for building Mqtt connections without manually managing a large variety of native objects (some
  * still need to be created though).
  */
 public final class AwsIotMqttConnectionBuilder extends CrtResource {
-    public String clientId;
-    public String endpoint;
-    public int port;
-    public boolean useWebsocket = false;
-    public boolean cleanSession = true;
-    public int keepAliveSecs = 0;
-    public SocketOptions socketOptions;  // CrtResource
-    public MqttMessage will = null;
-    public String username;
-    public String password;
-    public ClientTlsContext tlsContext = null;  // CrtResource
-    public HttpProxyOptions proxyOptions = null;
+    private String clientId;
+    private String endpoint;
+    private int port;
+    private boolean useWebsocket = false;
+    private boolean cleanSession = true;
+    private int keepAliveSecs = 0;
+    private int pingTimeoutSecs = 0;
+    private SocketOptions socketOptions;  // CrtResource
+
+    private MqttMessage willMessage = null;
+    private QualityOfService willQos;
+    private boolean willRetain;
+
+    private String username;
+    private String password;
+    private ClientTlsContext tlsContext = null;  // CrtResource
+    private MqttClientConnectionEvents callbacks = null;
+
+    private HttpProxyOptions proxyOptions = null;
 
     private TlsContextOptions tlsOptions;  // CrtResource
 
-    private TlsContext tlsContext; // CrtResource
     private MqttClient client; // CrtResource
     private ClientBootstrap bootstrap; // CrtResource
 
-    private AwsIotMqttConnectionBuilder() {
-        socketOptions = new SocketOptions();
-        addReferenceTo(socketOptions);
+    private AwsIotMqttConnectionBuilder(TlsContextOptions tlsOptions) {
+        this.tlsOptions = tlsOptions;
+        addReferenceTo(tlsOptions);
+
+        if (TlsContextOptions.isAlpnSupported()) {
+            this.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
+            this.port = 443;
+        } else {
+            this.port = 8883;
+        }
     }
 
     /**
      * Required override method that must begin the release process of the acquired native handle
      */
-    protected abstract void releaseNativeHandle() {}
+    @Override
+    protected void releaseNativeHandle() {}
 
     /**
      * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
      * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
      * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
      */
+    @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 
 
@@ -72,28 +96,15 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      */
     protected boolean isNativeResource() { return false; }
 
-
-    private void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
-        if (oldReference != newReference) {
-            addReferenceTo(newReference);
-            removeReferenceTo(oldReference);
-        }
-    }
-
     /**
      * Create a new builder with mTLS file paths
      * 
      * @param certPath       - Path to certificate, in PEM format
      * @param privateKeyPath - Path to private key, in PEM format
      */
-    public static AwsIotMqttConnectionConfigBuilder newMtlsBuilderFromPath(String certPath, String privateKeyPath) {
-        AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
-        builder.params.port = 8883;
-        builder.tlsOptions = TlsContextOptions.createWithMtlsFromPath(certPath, privateKeyPath);
-        if (TlsContextOptions.isAlpnSupported()) {
-            builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
-            builder.params.port = 443;
-        }
+    public static AwsIotMqttConnectionBuilder newMtlsBuilderFromPath(String certPath, String privateKeyPath) {
+        AwsIotMqttConnectionBuilder builder = new AwsIotMqttConnectionBuilder(TlsContextOptions.createWithMtlsFromPath(certPath, privateKeyPath));
+
         return builder;
     }
 
@@ -103,14 +114,9 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * @param certificate - Certificate, in PEM format
      * @param privateKey  - Private key, in PEM format
      */
-    public static AwsIotMqttConnectionConfigBuilder newMtlsBuilder(String certificate, String privateKey) {
-        AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
-        builder.params.port = 8883;
-        builder.tlsOptions = TlsContextOptions.createWithMtls(certificate, privateKey);
-        if (TlsContextOptions.isAlpnSupported()) {
-            builder.tlsOptions.withAlpnList("x-amzn-mqtt-ca");
-            builder.params.port = 443;
-        }
+    public static AwsIotMqttConnectionBuilder newMtlsBuilder(String certificate, String privateKey) {
+        AwsIotMqttConnectionBuilder builder = new AwsIotMqttConnectionBuilder(TlsContextOptions.createWithMtls(certificate, privateKey));
+
         return builder;
     }
 
@@ -120,14 +126,14 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * @param certificate - Certificate, in PEM format
      * @param privateKey  - Private key, in PEM format
      */
-    public static AwsIotMqttConnectionConfigBuilder newMtlsBuilder(byte[] certificate, byte[] privateKey)
+    public static AwsIotMqttConnectionBuilder newMtlsBuilder(byte[] certificate, byte[] privateKey)
             throws UnsupportedEncodingException {
         return newMtlsBuilder(new String(certificate, "UTF8"), new String(privateKey, "UTF8"));
     }
 
-    public static AwsIotMqttConnectionConfigBuilder newMtlsPkcs12Builder(String pkcs12Path, String pkcs12Password) {
-        AwsIotMqttConnectionConfigBuilder builder = new AwsIotMqttConnectionConfigBuilder();
-        builder.tlsOptions = TlsContextOptions.createWithMtlsPkcs12(pkcs12Path, pkcs12Password);
+    public static AwsIotMqttConnectionBuilder newMtlsPkcs12Builder(String pkcs12Path, String pkcs12Password) {
+        AwsIotMqttConnectionBuilder builder = new AwsIotMqttConnectionBuilder(TlsContextOptions.createWithMtlsPkcs12(pkcs12Path, pkcs12Password));
+
         return builder;
     }
 
@@ -138,7 +144,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      *                    are stored in a directory (e.g. /etc/ssl/certs).
      * @param caFilePath - Single file containing all trust CAs, in PEM format
      */
-    AwsIotMqttConnectionConfigBuilder withCertificateAuthorityFromPath(String caDirPath, String caFilePath) {
+    public AwsIotMqttConnectionBuilder withCertificateAuthorityFromPath(String caDirPath, String caFilePath) {
         this.tlsOptions.overrideDefaultTrustStoreFromPath(caDirPath, caFilePath);
         return this;
     }
@@ -148,7 +154,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * 
      * @param caRoot - Buffer containing all trust CAs, in PEM format
      */
-    AwsIotMqttConnectionConfigBuilder withCertificateAuthority(String caRoot) {
+    public AwsIotMqttConnectionBuilder withCertificateAuthority(String caRoot) {
         this.tlsOptions.overrideDefaultTrustStore(caRoot);
         return this;
     }
@@ -158,7 +164,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * 
      * @param endpoint The IoT endpoint to connect to
      */
-    AwsIotMqttConnectionConfigBuilder withEndpoint(String endpoint) {
+    public AwsIotMqttConnectionBuilder withEndpoint(String endpoint) {
         this.endpoint = endpoint;
         return this;
     }
@@ -169,7 +175,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * @param port The port to connect to on the IoT endpoint. Usually 8883 for
      *             MQTT, or 443 for websockets
      */
-    AwsIotMqttConnectionConfigBuilder withPort(short port) {
+    public AwsIotMqttConnectionBuilder withPort(short port) {
         this.port = port;
         return this;
     }
@@ -180,7 +186,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * @param client_id The client id for this connection. Needs to be unique across
      *                  all devices/clients.
      */
-    AwsIotMqttConnectionConfigBuilder withClientId(String clientId) {
+    public AwsIotMqttConnectionBuilder withClientId(String clientId) {
         this.clientId = clientId;
         return this;
     }
@@ -189,10 +195,10 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * Determines whether or not the service should try to resume prior
      * subscriptions, if it has any
      * 
-     * @param clean_session true if the session should drop prior subscriptions when
+     * @param cleanSession true if the session should drop prior subscriptions when
      *                      this client connects, false to resume the session
      */
-    AwsIotMqttConnectionConfigBuilder withCleanSession(boolean cleanSession) {
+    public AwsIotMqttConnectionBuilder withCleanSession(boolean cleanSession) {
         this.cleanSession = cleanSession;
         return this;
     }
@@ -201,7 +207,7 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * Configures the connection to use MQTT over websockets. Forces the port to
      * 443.
      */
-    AwsIotMqttConnectionConfigBuilder withWebsocket() {
+    public AwsIotMqttConnectionBuilder withWebsocket() {
         this.useWebsocket = true;
         this.tlsOptions.alpnList.clear();
         this.port = 443;
@@ -212,20 +218,31 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * Configures MQTT keep-alive via PING messages. Note that this is not TCP
      * keepalive.
      * 
-     * @param keep_alive How often in seconds to send an MQTT PING message to the
+     * @param keepAliveSecs How often in seconds to send an MQTT PING message to the
      *                   service to keep the connection alive
      */
-    AwsIotMqttConnectionConfigBuilder withKeepAliveSeconds(int keepAliveSecs) {
+    public AwsIotMqttConnectionBuilder withKeepAliveSeconds(int keepAliveSecs) {
         this.keepAliveSecs = keepAliveSecs;
+        return this;
+    }
+
+    /**
+     * Controls ping timeout value.  If a response is not received within this
+     * interval, the connection will be reestablished.
+     *
+     * @param pingTimeoutSecs How long to wait for a ping response before resetting the connection.
+     */
+    public AwsIotMqttConnectionBuilder withPingTimeoutSeconds(int pingTimeoutSecs) {
+        this.pingTimeoutSecs = pingTimeoutSecs;
         return this;
     }
 
     /**
      * Configures the TCP socket connect timeout (in milliseconds)
      * 
-     * @param timeout_ms TCP socket timeout
+     * @param timeoutMs TCP socket timeout
      */
-    AwsIotMqttConnectionConfigBuilder withTimeoutMs(int timeoutMs) {
+    public AwsIotMqttConnectionBuilder withTimeoutMs(int timeoutMs) {
         this.socketOptions.connectTimeoutMs = timeoutMs;
         return this;
     }
@@ -236,55 +253,91 @@ public final class AwsIotMqttConnectionBuilder extends CrtResource {
      * 
      * @param socketOptions The socket settings
      */
-    AwsIotMqttConnectionConfigBuilder withSocketOptions(SocketOptions socketOptions) {
+    public AwsIotMqttConnectionBuilder withSocketOptions(SocketOptions socketOptions) {
         swapReferenceTo(this.socketOptions, socketOptions);
         this.socketOptions = socketOptions;
         return this;
     }
 
-    AwsIotMqttConnectionConfigBuilder withUsername(String username) {
+    public AwsIotMqttConnectionBuilder withUsername(String username) {
         this.username = String.format("%s?SDK=JavaV2&Version=%s", username, new PackageInfo().toString());
         return this;
     }
 
-    AwsIotMqttConnectionConfigBuilder withPassword(String password) {
+    public AwsIotMqttConnectionBuilder withPassword(String password) {
         this.password = password;
         return this;
     }
 
+    public AwsIotMqttConnectionBuilder withConnectionEventCallbacks(MqttClientConnectionEvents callbacks) {
+        this.callbacks = callbacks;
+        return this;
+    }
 
-    CompletableFuture<MqttClientConnection> build(MqttClientConnectionEvents callbacks) {
+    public AwsIotMqttConnectionBuilder withWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
+        this.willMessage = message;
+        this.willQos = qos;
+        this.willRetain = retain;
+
+        return this;
+    }
+
+    public AwsIotMqttConnectionBuilder withBootstrap(ClientBootstrap bootstrap) {
+        swapReferenceTo(this.bootstrap, bootstrap);
+        this.bootstrap = bootstrap;
+
+        return this;
+    }
+
+
+    public MqttClientConnection build() {
         // Validate
         if (bootstrap == null) {
-            throw new Exception(??);
+            throw new MqttException("client bootstrap must be non-null");
         }
 
         // Lazy create
+        // This does mean that once you call build() once, modifying the tls context options or client bootstrap
+        // has no affect on subsequently-created connections.
         synchronized(this) {
             if (tlsOptions != null && tlsContext == null) {
-                tlsContext = new TlsContext(tlsOptions);
+                tlsContext = new ClientTlsContext(tlsOptions);
                 addReferenceTo(tlsContext);
             }
 
             if (client == null) {
-                client = ??;
+                if (tlsContext == null) {
+                    client = new MqttClient(bootstrap);
+                } else {
+                    client = new MqttClient(bootstrap, tlsContext);
+                }
+
                 addReferenceTo(client);
             }
         }
 
         // Connection create
-        MqttClientConnection connection = new MqttClientConnection(client, callbacks);
-        CompletableFuture<MqttClientConnection> futureConnection = new CompletableFuture<>();
-        futureConnection.whenComplete( (conn, error) ->
-            if (error) {
-                connection.disconnect().get();
-                connection.close();
-            });
+        try (MqttClientConnection connection = new MqttClientConnection(client, clientId, endpoint, port)) {
+            connection.setConnectionCallbacks(callbacks);
+            connection.setSocketOptions(socketOptions);
+            connection.setCleanSession(cleanSession);
+            connection.setKeepAliveMs((int) TimeUnit.MILLISECONDS.convert(keepAliveSecs, TimeUnit.SECONDS));
+            connection.setPingTimeoutMs((int) TimeUnit.MILLISECONDS.convert(pingTimeoutSecs, TimeUnit.SECONDS));
 
-        // Connect
-        connection.
+            if (willMessage != null) {
+                connection.setWill(willMessage, willQos, willRetain);
+            }
 
-        return futureConnection;
+            if (username != null && password != null) {
+                connection.setLogin(username, password);
+            }
+
+            // We successfully built the connection, so let's let it escape the try-with-resources block
+            connection.addRef();
+
+            return connection;
+        }
     }
 }
+
 

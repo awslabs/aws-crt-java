@@ -142,6 +142,17 @@ public abstract class CrtResource implements AutoCloseable {
         resource.decRef();
     }
 
+    protected void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
+        if (oldReference != newReference) {
+            if (newReference != null) {
+                addReferenceTo(newReference);
+            }
+            if (oldReference != null) {
+                removeReferenceTo(oldReference);
+            }
+        }
+    }
+
     /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired

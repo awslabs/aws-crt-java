@@ -195,21 +195,19 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         if (isNativeResource()) {
-            if (isNull()) {
-                throw new IllegalStateException("Already Released Resource!");
+            if (nativeHandle != 0) {
+                /*
+                 * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
+                 * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
+                 * calls acquire on the native handle.
+                 */
+                NATIVE_RESOURCES.remove(nativeHandle);
             }
-
-            /*
-             * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
-             * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
-             * calls acquire on the native handle.
-             */
-            NATIVE_RESOURCES.remove(nativeHandle);
         }
 
         releaseNativeHandle();
 
-        if (isNativeResource()) {
+        if (nativeHandle != 0) {
             decrementNativeObjectCount();
 
             nativeHandle = 0;
@@ -318,7 +316,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     public String getResourceLogDescription() {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("[%d : %s](%s) - %s", id, getClass().getSimpleName(), creationTime.toString(), description != null ? description : "<null>"));
+        builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
         synchronized(this) {
             if (referencedResources.size() > 0) {
                 builder.append("\n   Forward references by Id: ");

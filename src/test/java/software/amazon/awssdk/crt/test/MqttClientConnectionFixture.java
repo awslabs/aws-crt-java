@@ -29,7 +29,6 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.iot.AwsIotMqttConnectionBuilder;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.nio.file.InvalidPathException;
@@ -58,6 +57,8 @@ public class MqttClientConnectionFixture {
     static final String TEST_CERTIFICATE = System.getProperty("certificate");
     static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
     static final String TEST_ROOTCA = System.getProperty("rootca");
+    static final short TEST_PORT = 8883;
+    static final short TEST_PORT_ALPN = 443;
     static final String TEST_CLIENTID = "aws-crt-java-";
 
     Path pathToCert = null;
@@ -118,28 +119,33 @@ public class MqttClientConnectionFixture {
         };
 
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            AwsIotMqttConnectionBuilder builder = AwsIotMqttConnectionBuilder.newMtlsBuilderFromPath(pathToCert.toString(),
-                 pathToKey.toString())) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(pathToCert.toString(),
+                        pathToKey.toString())) {
 
+            int port = TEST_PORT;
             if (!pathToCa.toString().equals("")) {
-                builder.withCertificateAuthorityFromPath(null, pathToCa.toString());
+                tlsOptions.overrideDefaultTrustStoreFromPath(null, pathToCa.toString());
+            }
+            if (TlsContextOptions.isAlpnSupported()) {
+                tlsOptions.withAlpnList("x-amzn-mqtt-ca");
+                port = TEST_PORT_ALPN;
             }
 
-            builder
-                .withBootstrap(bootstrap)
-                .withCleanSession(true)
-                .withClientId(TEST_CLIENTID + (UUID.randomUUID()).toString())
-                .withConnectionEventCallbacks(events)
-                .withEndpoint(TEST_ENDPOINT)
-                .withKeepAliveSeconds((int)TimeUnit.MILLISECONDS.convert(keepAliveMs, TimeUnit.SECONDS));
+            cleanSession = true; // only true is supported right now
+            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
+            try (TlsContext tls = new TlsContext(tlsOptions);
+                 MqttClient client = new MqttClient(bootstrap, tls)) {
 
-            connection = builder.build();
+                connection = new MqttClientConnection(client, clientId, TEST_ENDPOINT, port);
+                connection.setCleanSession(cleanSession);
+                connection.setKeepAliveMs(keepAliveMs);
 
-            CompletableFuture<Boolean> connected = connection.connect();
-            connected.get();
-            return true;
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
+                return true;
+            }
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
         }

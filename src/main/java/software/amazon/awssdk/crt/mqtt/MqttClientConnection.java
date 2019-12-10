@@ -67,10 +67,10 @@ public class MqttClientConnection extends CrtResource {
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
      * 
-     * @param mqttClient Must be non-null
-     * @param clientId Must be non-null
-     * @param endpoint Must be non-null
-     * @param port
+     * @param mqttClient Mqtt client to use.  Must be non-null.
+     * @param clientId Mqtt client id to use for this connection.  Must be non-null.
+     * @param endpoint Endpoint to connect to.  Must be non-null.
+     * @param port Port to connect on.
      * @throws MqttException If mqttClient is null
      */
     public MqttClientConnection(MqttClient mqttClient, String clientId, String endpoint, int port) throws MqttException {
@@ -117,67 +117,155 @@ public class MqttClientConnection extends CrtResource {
         return false;
     }
 
+    /**
+     * Configures the connection-related callbacks to use on this connection
+     *
+     * @param callbacks connection event callbacks to use
+     */
     public void setConnectionCallbacks(MqttClientConnectionEvents connectionCallbacks) {
         this.userConnectionCallbacks = connectionCallbacks;
     }
 
+    /**
+     * Queries the connection-related callbacks being used by this connection
+     *
+     * @return the connection event callbacks being used
+     */
     public MqttClientConnectionEvents getConnectionCallbacks() {
         return userConnectionCallbacks;
     }
 
+    /**
+     * Configures the client_id to use with this connection
+     *
+     * @param clientId The client id for this connection. Needs to be unique across
+     *                  all devices/clients.
+     */
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
+    /**
+     * Queries the client_id being used by this connection
+     *
+     * @return The client id for this connection.
+     */
     public String getClientId() {
         return clientId;
     }
 
+    /**
+     * Configures the IoT endpoint for this connection
+     *
+     * @param endpoint The IoT endpoint to connect to
+     */
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
     }
 
+    /**
+     * Queries the IoT endpoint used by this connection
+     *
+     * @return The IoT endpoint used by this connection
+     */
     public String getEndpoint() {
         return endpoint;
     }
 
+    /**
+     * Configures the port to connect to.
+     *
+     * @param port The port to connect to. Usually 8883 for MQTT, or 443 for websockets
+     */
     public void setPort(int port) {
         this.port = port;
     }
 
+    /**
+     * Queries the port to connect to.
+     *
+     * @return The port to connect to
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * Configures the common settings to use for this connection's socket
+     *
+     * @param socketOptions The socket settings
+     */
     public void setSocketOptions(SocketOptions socketOptions) {
         swapReferenceTo(this.socketOptions, socketOptions);
         this.socketOptions = socketOptions;
     }
 
+    /**
+     * Queries the common settings to use for this connection's socket
+     *
+     * @return The socket settings
+     */
     public SocketOptions getSocketOptions() {
         return socketOptions;
     }
 
+    /**
+     * Configures whether or not the service should try to resume prior subscriptions, if it has any
+     *
+     * @param cleanSession true if the session should drop prior subscriptions when
+     *                     a connection is established, false to resume the session
+     */
     public void setCleanSession(boolean cleanSession) {
         this.cleanSession = cleanSession;
     }
 
+    /**
+     * Queries whether or not the service should try to resume prior subscriptions, if it has any
+     *
+     * @return true if the session should drop prior subscriptions when
+     *                     a connection is established, false to resume the session
+     */
     public boolean getCleanSession() {
         return cleanSession;
     }
 
+    /**
+     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
+     * keepalive.
+     *
+     * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep connections alive
+     */
     public void setKeepAliveMs(int keepAliveMs) {
         this.keepAliveMs = keepAliveMs;
     }
 
+    /**
+     * Queries the MQTT keep-alive via PING messages.
+     *
+     * @return How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep connections alive
+     */
     public int getKeepAliveMs() {
         return keepAliveMs;
     }
 
+    /**
+     * Configures ping timeout value.  If a response is not received within this
+     * interval, the connection will be reestablished.
+     *
+     * @param pingTimeoutMs How long to wait for a ping response (in milliseconds) before resetting the connection
+     */
     public void setPingTimeoutMs(int pingTimeoutMs) {
         this.pingTimeoutMs = pingTimeoutMs;
     }
 
+    /**
+     * Queries ping timeout value.  If a response is not received within this
+     * interval, the connection will be reestablished.
+     *
+     * @return How long to wait for a ping response before resetting the connection
+     */
     public int getPingTimeoutMs() {
         return pingTimeoutMs;
     }
@@ -197,8 +285,6 @@ public class MqttClientConnection extends CrtResource {
             throw new MqttException("Failed to set login: " + ex.getMessage());
         }
     }
-
-
 
     // Called from native when the connection is established the first time
     private void onConnectionComplete(int errorCode, boolean sessionPresent) {

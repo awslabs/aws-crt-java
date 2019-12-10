@@ -317,3 +317,64 @@ jobjectArray aws_java_headers_array_from_http_headers(JNIEnv *env, const struct 
 
     return jArray;
 }
+
+jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message) {
+
+    jobject j_request = NULL;
+    jstring j_method_str = NULL;
+    jstring j_path_and_query = NULL;
+    jobjectArray j_headers_array = NULL;
+
+    struct aws_byte_cursor method;
+    AWS_ZERO_STRUCT(method);
+
+    aws_http_message_get_request_method(message, &method);
+    j_method_str = aws_jni_string_from_cursor(env, &method);
+
+    if (!j_method_str) {
+        goto done;
+    }
+
+    struct aws_byte_cursor path_and_query;
+    AWS_ZERO_STRUCT(path_and_query);
+
+    aws_http_message_get_request_path(message, &path_and_query);
+    j_path_and_query = aws_jni_string_from_cursor(env, &path_and_query);
+
+    if (!j_path_and_query) {
+        goto done;
+    }
+
+    const struct aws_http_headers *headers = aws_http_message_get_const_headers(message);
+    j_headers_array = aws_java_headers_array_from_http_headers(env, headers);
+
+    if (!j_headers_array) {
+        goto done;
+    }
+
+    /* Currently our only use case for this does not involve a body stream. We should come back and handle this
+       when it's not time sensitive to do so. */
+    j_request = (*env)->NewObject(
+        env,
+        http_request_properties.http_request_class,
+        http_request_properties.constructor_method_id,
+        j_method_str,
+        j_path_and_query,
+        j_headers_array,
+        NULL);
+
+done:
+    if (j_method_str) {
+        (*env)->DeleteLocalRef(env, j_method_str);
+    }
+
+    if (j_path_and_query) {
+        (*env)->DeleteLocalRef(env, j_path_and_query);
+    }
+
+    if (j_headers_array) {
+        (*env)->DeleteLocalRef(env, j_headers_array);
+    }
+
+    return j_request;
+}

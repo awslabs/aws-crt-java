@@ -15,13 +15,18 @@
 
 package software.amazon.awssdk.crt.http;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Represents a single Client Request to be sent on a HTTP connection
  */
 public class HttpRequest {
     private final String method;
-    private final String encodedPath;
-    private final HttpHeader[] headers;
+    private String encodedPath;
+    private List<HttpHeader> headers;
     private HttpRequestBodyStream bodyStream;
 
     /**
@@ -44,7 +49,7 @@ public class HttpRequest {
         if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
         this.method = method;
         this.encodedPath = encodedPath;
-        this.headers = headers;
+        this.headers = Arrays.asList(headers);
         this.bodyStream = bodyStream;
     }
 
@@ -56,8 +61,50 @@ public class HttpRequest {
         return encodedPath;
     }
 
-    public HttpHeader[] getHeaders() {
+    public List<HttpHeader> getHeaders() {
         return headers;
+    }
+
+    public void addHeader(final HttpHeader header) {
+        headers.add(header);
+    }
+
+    public void addHeader(final String headerName, final String headerValue) {
+        headers.add(new HttpHeader(headerName, headerValue));
+    }
+
+    public void addHeaders(final HttpHeader headers) {
+        this.headers.add(headers);
+    }
+
+    public void addQueryParam(final String paramName, final String paramValue, boolean urlEncode) {
+        String prefix = "?";
+        if (encodedPath != null) {
+            if (!encodedPath.contains("?")) {
+                prefix = "&";
+            }
+        } else {
+            encodedPath = "";
+        }
+
+        encodedPath += prefix;
+        try {
+            if (urlEncode) {
+                encodedPath += URLEncoder.encode(paramName, "UTF-8");
+            } else {
+                encodedPath += paramName;
+            }
+
+            encodedPath += "=";
+
+            if (urlEncode) {
+                encodedPath += URLEncoder.encode(paramValue, "UTF-8");
+            } else {
+                encodedPath += paramValue;
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 is not supported. You should set your computer on fire now and do something else with your life because computers were a mistake.");
+        }
     }
 
     public HttpRequestBodyStream getBodyStream() {

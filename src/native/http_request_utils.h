@@ -36,6 +36,8 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jobjectArray jni_headers,
     jobject jni_body_stream);
 
+jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message);
+
 jobjectArray aws_java_headers_array_from_native(
     JNIEnv *env,
     const struct aws_http_header *header_array,

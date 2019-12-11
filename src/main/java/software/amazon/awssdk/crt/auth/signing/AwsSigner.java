@@ -17,6 +17,7 @@ package software.amazon.awssdk.crt.auth.signing;
 import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 
 public class AwsSigner {
@@ -25,7 +26,8 @@ public class AwsSigner {
         CompletableFuture<HttpRequest> future = new CompletableFuture<HttpRequest>();
 
         try {
-            awsSignerSignRequest(request, config, future);
+            //JNI is much easier to deal with primitives, so go ahead and hoist the headers into an array.
+            awsSignerSignRequest(request, request.getHeadersAsArray(), config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
@@ -38,6 +40,7 @@ public class AwsSigner {
      ******************************************************************************/
     private static native void awsSignerSignRequest(
         HttpRequest request,
+        HttpHeader[] httpHeaders,
         AwsSigningConfig config,
         CompletableFuture<HttpRequest> future) throws CrtRuntimeException;
 }

@@ -53,7 +53,6 @@ struct java_http_request_properties {
     jmethodID constructor_method_id;
     jfieldID method_field_id;
     jfieldID encoded_path_field_id;
-    jfieldID headers_field_id;
     jfieldID body_stream_field_id;
 };
 extern struct java_http_request_properties http_request_properties;

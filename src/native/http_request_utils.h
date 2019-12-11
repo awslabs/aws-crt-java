@@ -36,6 +36,17 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jobjectArray jni_headers,
     jobject jni_body_stream);
 
+/* if this fails a java exception has been set. */
+int aws_apply_java_http_request_changes_to_native_request(
+    JNIEnv *env,
+    jstring jni_uri,
+    jobjectArray jni_headers,
+    jobject jni_body_stream,
+    struct aws_http_message *message);
+
+/* if this fails a java exception has been set. */
+jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message);
+
 jobjectArray aws_java_headers_array_from_native(
     JNIEnv *env,
     const struct aws_http_header *header_array,

@@ -112,10 +112,6 @@ static void s_cache_http_request(JNIEnv *env) {
         (*env)->GetFieldID(env, http_request_class, "encodedPath", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(http_request_properties.encoded_path_field_id);
 
-    http_request_properties.headers_field_id =
-        (*env)->GetFieldID(env, http_request_class, "headers", "[Lsoftware/amazon/awssdk/crt/http/HttpHeader;");
-    AWS_FATAL_ASSERT(http_request_properties.headers_field_id);
-
     http_request_properties.body_stream_field_id = (*env)->GetFieldID(
         env, http_request_class, "bodyStream", "Lsoftware/amazon/awssdk/crt/http/HttpRequestBodyStream;");
     AWS_FATAL_ASSERT(http_request_properties.body_stream_field_id);

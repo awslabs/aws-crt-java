@@ -15,13 +15,17 @@
 
 package software.amazon.awssdk.crt.http;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Represents a single Client Request to be sent on a HTTP connection
  */
 public class HttpRequest {
     private final String method;
-    private final String encodedPath;
-    private final HttpHeader[] headers;
+    private String encodedPath;
+    private List<HttpHeader> headers;
     private HttpRequestBodyStream bodyStream;
 
     /**
@@ -44,7 +48,7 @@ public class HttpRequest {
         if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
         this.method = method;
         this.encodedPath = encodedPath;
-        this.headers = headers;
+        this.headers = Arrays.asList(headers);
         this.bodyStream = bodyStream;
     }
 
@@ -56,8 +60,28 @@ public class HttpRequest {
         return encodedPath;
     }
 
-    public HttpHeader[] getHeaders() {
+    public void setEncodedPath(final String encodedPath) {
+        this.encodedPath = encodedPath;
+    }
+
+    public List<HttpHeader> getHeaders() {
         return headers;
+    }
+
+    public HttpHeader[] getHeadersAsArray() {
+        return headers.toArray(new HttpHeader[] {});
+    }
+
+    public void addHeader(final HttpHeader header) {
+        headers.add(header);
+    }
+
+    public void addHeader(final String headerName, final String headerValue) {
+        headers.add(new HttpHeader(headerName, headerValue));
+    }
+
+    public void addHeaders(final HttpHeader[] headers) {
+        Collections.addAll(this.headers, headers);
     }
 
     public HttpRequestBodyStream getBodyStream() {

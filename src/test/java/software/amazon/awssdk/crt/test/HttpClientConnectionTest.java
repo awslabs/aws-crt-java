@@ -25,6 +25,8 @@ import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -70,7 +72,9 @@ public class HttpClientConnectionTest {
 
             HttpConnectionTestResponse resp = null;
             try(TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref);
-                ClientBootstrap bootstrap = new ClientBootstrap(1);
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions socketOptions = new SocketOptions();
                 TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 

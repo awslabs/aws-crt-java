@@ -29,6 +29,8 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 
 public class CredentialsProviderTest {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -77,7 +79,9 @@ public class CredentialsProviderTest {
 
     @Test
     public void testCreateDestroyDefaultChain() {
-        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -94,7 +98,9 @@ public class CredentialsProviderTest {
 
     @Test
     public void testGetCredentialsDefaultChain() {
-        try (ClientBootstrap bootstrap = new ClientBootstrap(1)) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 

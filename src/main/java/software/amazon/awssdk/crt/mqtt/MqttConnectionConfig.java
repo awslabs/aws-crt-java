@@ -24,7 +24,6 @@ public final class MqttConnectionConfig extends CrtResource {
     /* connection */
     private String endpoint;
     private int port;
-    private boolean cleanSession = true;
     private SocketOptions socketOptions;
 
     /* mqtt */
@@ -35,6 +34,7 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveMs = 0;
     private int pingTimeoutMs = 0;
+    private boolean cleanSession = true;
 
     /* will */
     private MqttMessage willMessage = null;

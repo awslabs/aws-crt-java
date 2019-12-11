@@ -37,13 +37,14 @@ public final class MqttConnectionConfig extends CrtResource {
     private boolean cleanSession = true;
 
     /* will */
-    private MqttMessage willMessage = null;
+    private MqttMessage willMessage;
     private QualityOfService willQos;
     private boolean willRetain;
 
     /* websockets */
-    private boolean useWebsocket = false;
-    private HttpProxyOptions proxyOptions = null;
+    private boolean useWebsockets = false;
+    private HttpProxyOptions websocketProxyOptions;
+    private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     public MqttConnectionConfig() {}
 
@@ -303,5 +304,59 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public boolean getWillRetain() {
         return willRetain;
+    }
+
+    /**
+     * Configures whether or not to use websockets for the mqtt connection
+     *
+     * @param useWebsockets whether or not to use websockets
+     */
+    public void setUseWebsockets(boolean useWebsockets) {
+        this.useWebsockets = useWebsockets;
+    }
+
+    /**
+     * Queries whether or not to use websockets for the mqtt connection
+     *
+     * @return whether or not to use websockets
+     */
+    public boolean getUseWebsockets() {
+        return useWebsockets;
+    }
+
+    /**
+     * Configures proxy options for a websocket-based mqtt connection
+     *
+     * @param proxyOptions proxy options to use for the base http connection
+     */
+    public void setWebsocketProxyOptions(HttpProxyOptions proxyOptions) {
+        this.websocketProxyOptions = proxyOptions;
+    }
+
+    /**
+     * Queries proxy options for a websocket-based mqtt connection
+     *
+     * @return proxy options to use for the base http connection
+     */
+    public HttpProxyOptions getWebsocketProxyOptions() {
+        return websocketProxyOptions;
+    }
+
+    /**
+     * Configures the handshake http request transform to use when upgrading the connection
+     *
+     * @param handshakeTransform http request handshake transform
+     */
+    public void setWebsocketHandshakeTransform(Consumer<WebsocketHandshakeTransformArgs> handshakeTransform) {
+        this.websocketHandshakeTransform = handshakeTransform;
+    }
+
+    /**
+     * Queries the handshake http request transform to use when upgrading the connection
+     *
+     * @return http request handshake transform
+     */
+    public Consumer<WebsocketHandshakeTransformArgs> getWebsocketHandshakeTransform() {
+        return websocketHandshakeTransform;
     }
 }

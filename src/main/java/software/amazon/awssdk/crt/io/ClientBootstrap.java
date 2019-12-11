@@ -14,14 +14,19 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 
 /**
  * This class wraps the aws_client_bootstrap from aws-c-io to provide
  * a client context for all protocol stacks in the AWS Common Runtime.
  */
 public final class ClientBootstrap extends CrtResource {
+
+    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+
     /**
      * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
      * @param numThreads The number of Threads to use in the EventLoop
@@ -31,7 +36,7 @@ public final class ClientBootstrap extends CrtResource {
         try(EventLoopGroup elg = new EventLoopGroup(numThreads);
             HostResolver hr = new HostResolver(elg)) {
 
-            acquireNativeHandle(clientBootstrapNew(elg.getNativeHandle(), hr.getNativeHandle()));
+            acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
 
             // Order is likely important here
             addReferenceTo(hr);
@@ -47,7 +52,7 @@ public final class ClientBootstrap extends CrtResource {
      * or if the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(EventLoopGroup elg, HostResolver hr) throws CrtRuntimeException {
-        acquireNativeHandle(clientBootstrapNew(elg.getNativeHandle(), hr.getNativeHandle()));
+        acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
 
         // Order is likely important here
         addReferenceTo(hr);
@@ -59,7 +64,7 @@ public final class ClientBootstrap extends CrtResource {
      * Resources that wait are responsible for calling releaseReferences() manually.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Cleans up the client bootstrap's associated native handle
@@ -71,9 +76,22 @@ public final class ClientBootstrap extends CrtResource {
         }
     }
 
+    /**
+     * Called from Native when the asynchronous cleanup process needed for client bootstrap has completed.
+     */
+    private void onShutdownComplete() {
+        Log.log(Log.LogLevel.Trace, Log.LogSubject.IoChannelBootstrap, "ClientBootstrap.onShutdownComplete");
+
+        releaseReferences();
+
+        this.shutdownComplete.complete(null);
+    }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long clientBootstrapNew(long elg, long hr) throws CrtRuntimeException;
+    private static native long clientBootstrapNew(ClientBootstrap bootstrap, long elg, long hr) throws CrtRuntimeException;
     private static native void clientBootstrapDestroy(long bootstrap);
 };

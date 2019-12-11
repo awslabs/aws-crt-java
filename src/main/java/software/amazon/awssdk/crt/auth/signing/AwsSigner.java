@@ -27,8 +27,7 @@ public class AwsSigner {
 
         try {
             //JNI is much easier to deal with primitives, so go ahead and hoist the headers into an array.
-            HttpHeader[] tempHeadersToSign = new HttpHeader[request.getHeaders().size()];
-            tempHeadersToSign = request.getHeaders().toArray(tempHeadersToSign);
+            HttpHeader[] tempHeadersToSign = request.getHeaders().toArray(new HttpHeader[]{});
             awsSignerSignRequest(request, tempHeadersToSign, config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);

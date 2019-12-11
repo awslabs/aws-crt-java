@@ -103,7 +103,8 @@ public class HttpRequest {
                 encodedPath += paramValue;
             }
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("UTF-8 is not supported. You should set your computer on fire now and do something else with your life because computers were a mistake.");
+            // yeah, there's nothing to be done about this one.
+            Runtime.getRuntime().halt(-1);
         }
     }
 

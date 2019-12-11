@@ -18,6 +18,8 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -27,7 +29,7 @@ import java.util.function.Consumer;
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionality
  * via the AWS Common Runtime
- * 
+ *
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
@@ -35,6 +37,7 @@ public class MqttClientConnection extends CrtResource {
     private final MqttClient client;
     private MqttClientConnectionEvents userConnectionCallbacks;
     private AsyncCallback connectAck;
+    private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     /**
      * Wraps the handler provided by the user so that an MqttMessage can be
@@ -56,7 +59,7 @@ public class MqttClientConnection extends CrtResource {
     /**
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
-     * 
+     *
      * @param mqttClient Must be non-null
      * @throws MqttException If mqttClient is null
      */
@@ -67,7 +70,7 @@ public class MqttClientConnection extends CrtResource {
     /**
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
-     * 
+     *
      * @param mqttClient Must be non-null
      * @param callbacks  Optional handler for connection interruptions/resumptions
      * @throws MqttException If mqttClient is null
@@ -109,7 +112,7 @@ public class MqttClientConnection extends CrtResource {
     /**
      * Sets the login credentials for the connection. Only valid before connect()
      * has been called.
-     * 
+     *
      * @param user Login username
      * @param pass Login password
      * @throws MqttException If the username or password are null
@@ -158,7 +161,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Connect to the service endpoint and start a session without TLS.
-     * 
+     *
      * @param clientId The clientId provided to the service. Must be unique across
      *                 all connected Things on the endpoint.
      * @param endpoint The hostname of the service endpoint
@@ -171,7 +174,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Connect to the service endpoint and start a session
-     * 
+     *
      * @param clientId      The clientId provided to the service. Must be unique
      *                      across all connected Things on the endpoint.
      * @param endpoint      The hostname of the service endpoint
@@ -213,7 +216,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Disconnects the current session
-     * 
+     *
      * @return When this future completes, the disconnection is complete
      */
     public CompletableFuture<Void> disconnect() {
@@ -229,7 +232,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Subscribes to a topic
-     * 
+     *
      * @param topic   The topic to subscribe to
      * @param qos     {@link QualityOfService} for this subscription
      * @param handler A handler which can recieve an MqttMessage when a message is
@@ -257,10 +260,11 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Subscribes to a topic without a handler (messages will only be delivered to the OnMessage handler)
-     * 
-     * @param topic   The topic to subscribe to
-     * @param qos     {@link QualityOfService} for this subscription
+     * Subscribes to a topic without a handler (messages will only be delivered to
+     * the OnMessage handler)
+     *
+     * @param topic The topic to subscribe to
+     * @param qos   {@link QualityOfService} for this subscription
      * @return Future result is the packet/message id associated with the subscribe
      *         operation
      */
@@ -270,6 +274,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Sets a handler to be invoked whenever a message arrives, subscription or not
+     *
      * @param handler A handler which can receive any MqttMessage
      */
     public void onMessage(Consumer<MqttMessage> handler) {
@@ -278,7 +283,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Unsubscribes from a topic
-     * 
+     *
      * @param topic The topic to unsubscribe from
      * @return Future result is the packet/message id associated with the
      *         unsubscribe operation
@@ -298,7 +303,7 @@ public class MqttClientConnection extends CrtResource {
 
     /**
      * Publishes a message to a topic
-     * 
+     *
      * @param message The message to publish. The message contains the topic to
      *                publish to.
      * @param qos     The {@link QualityOfService} to use for the publish operation
@@ -328,7 +333,7 @@ public class MqttClientConnection extends CrtResource {
     /**
      * Sets the last will and testament message to be delivered to a topic when this
      * client disconnects
-     * 
+     *
      * @param message The message to publish as the will. The message contains the
      *                topic that the message will be published to on disconnect.
      * @param qos     The {@link QualityOfService} of the will message
@@ -348,6 +353,30 @@ public class MqttClientConnection extends CrtResource {
         } catch (CrtRuntimeException ex) {
             throw new MqttException("AWS CRT exception: " + ex.toString());
         }
+    }
+
+    public void useWebsockets(Consumer<WebsocketHandshakeTransformArgs> handshakeTransform) {
+        this.websocketHandshakeTransform = handshakeTransform;
+        mqttClientConnectionUseWebsockets(getNativeHandle());
+    }
+
+    // Called from native when a websocket handshake request is being prepared.
+    private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
+        CompletableFuture<Void> future = new CompletableFuture<Void>().whenComplete((x, throwable) -> {
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), throwable, nativeUserData);
+        });
+
+        WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);
+
+        if (websocketHandshakeTransform != null) {
+            websocketHandshakeTransform.accept(args);
+        } else {
+            args.complete();
+        }
+    }
+
+    public void setWebsocketProxyOptions(HttpProxyOptions proxyOptions) {
+        mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(), proxyOptions);
     }
 
     /*******************************************************************************
@@ -380,4 +409,12 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionSetLogin(long connection, String username, String password)
             throws CrtRuntimeException;
+
+    private static native void mqttClientConnectionUseWebsockets(long connection) throws CrtRuntimeException;
+
+    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, Throwable throwable,
+            long nativeUserData) throws CrtRuntimeException;
+
+    private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,
+            HttpProxyOptions proxyOptions) throws CrtRuntimeException;
 };

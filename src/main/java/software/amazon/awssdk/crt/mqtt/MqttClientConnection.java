@@ -18,6 +18,7 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -96,10 +97,9 @@ public class MqttClientConnection extends CrtResource {
 
             if (config.getUseWebsockets()) {
                 mqttClientConnectionUseWebsockets(getNativeHandle());
-            }
-
-            if (config.getWebsocketProxyOptions() != null) {
-                mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(), config.getWebsocketProxyOptions());
+                if (config.getWebsocketProxyOptions() != null) {
+                    mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(), config.getWebsocketProxyOptions());
+                }
             }
 
             addReferenceTo(config);
@@ -316,7 +316,7 @@ public class MqttClientConnection extends CrtResource {
     // Called from native when a websocket handshake request is being prepared.
     private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
         CompletableFuture<Void> future = new CompletableFuture<Void>().whenComplete((x, throwable) -> {
-            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), throwable, nativeUserData);
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), handshakeRequest.getEncodedPath(), handshakeRequest.getHeadersAsArray(), throwable, nativeUserData);
         });
 
         WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);
@@ -362,7 +362,7 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionUseWebsockets(long connection) throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, Throwable throwable,
+    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, String path, HttpHeader[] headers, Throwable throwable,
             long nativeUserData) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,

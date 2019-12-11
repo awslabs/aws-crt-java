@@ -853,6 +853,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
 }
 
+///////
 static void s_ws_handshake_destroy(struct mqtt_jni_ws_handshake *ws_handshake) {
     if (!ws_handshake) {
         return;
@@ -904,6 +905,7 @@ static void s_ws_handshake_transform(
     return;
 
 error:;
+
     int error_code = aws_last_error();
     s_ws_handshake_destroy(ws_handshake);
     complete_fn(request, error_code, complete_ctx);

@@ -177,6 +177,63 @@ on_error:
     return NULL;
 }
 
+int aws_apply_java_http_request_changes_to_native_request(
+    JNIEnv *env,
+    jstring jni_uri,
+    jobjectArray jni_headers,
+    jobject jni_body_stream,
+    struct aws_http_message *message) {
+
+    /* come back to this when we decide we need to. */
+    (void)jni_body_stream;
+
+    struct aws_http_headers *headers = aws_http_message_get_headers(message);
+    aws_http_headers_clear(headers);
+    int result = AWS_OP_SUCCESS;
+
+    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
+    for (jsize i = 0; i < num_headers; ++i) {
+        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
+        jbyteArray jname = (*env)->GetObjectField(env, jHeader, http_header_properties.name);
+        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, http_header_properties.value);
+
+        const size_t name_len = (*env)->GetArrayLength(env, jname);
+        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
+
+        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
+        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
+
+        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
+        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
+
+        result = aws_http_headers_add(headers, name_cursor, value_cursor);
+
+        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
+        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
+
+        (*env)->DeleteLocalRef(env, jname);
+        (*env)->DeleteLocalRef(env, jvalue);
+        (*env)->DeleteLocalRef(env, jHeader);
+
+        if (result != AWS_OP_SUCCESS) {
+            aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: Header[%d] error", i);
+            return result;
+        }
+    }
+
+    jbyte *path_and_query = (*env)->GetPrimitiveArrayCritical(env, jni_uri, NULL);
+    size_t path_and_query_len = (*env)->GetArrayLength(env, jni_uri);
+    struct aws_byte_cursor path_and_query_cur = aws_byte_cursor_from_array(path_and_query, path_and_query_len);
+    result = aws_http_message_set_request_path(message, path_and_query_cur);
+    (*env)->ReleasePrimitiveArrayCritical(env, jni_uri, path_and_query, 0);
+
+    if (result != AWS_OP_SUCCESS) {
+        aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: set uri failed");
+    }
+
+    return result;
+}
+
 struct aws_http_message *aws_http_request_new_from_java_http_request(
     JNIEnv *env,
     jstring jni_method,

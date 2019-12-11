@@ -15,9 +15,8 @@
 
 package software.amazon.awssdk.crt.http;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,8 +60,16 @@ public class HttpRequest {
         return encodedPath;
     }
 
+    public void setEncodedPath(final String encodedPath) {
+        this.encodedPath = encodedPath;
+    }
+
     public List<HttpHeader> getHeaders() {
         return headers;
+    }
+
+    public HttpHeader[] getHeadersAsArray() {
+        return headers.toArray(new HttpHeader[] {});
     }
 
     public void addHeader(final HttpHeader header) {
@@ -73,39 +80,8 @@ public class HttpRequest {
         headers.add(new HttpHeader(headerName, headerValue));
     }
 
-    public void addHeaders(final HttpHeader headers) {
-        this.headers.add(headers);
-    }
-
-    public void addQueryParam(final String paramName, final String paramValue, boolean urlEncode) {
-        String prefix = "?";
-        if (encodedPath != null) {
-            if (!encodedPath.contains("?")) {
-                prefix = "&";
-            }
-        } else {
-            encodedPath = "";
-        }
-
-        encodedPath += prefix;
-        try {
-            if (urlEncode) {
-                encodedPath += URLEncoder.encode(paramName, "UTF-8");
-            } else {
-                encodedPath += paramName;
-            }
-
-            encodedPath += "=";
-
-            if (urlEncode) {
-                encodedPath += URLEncoder.encode(paramValue, "UTF-8");
-            } else {
-                encodedPath += paramValue;
-            }
-        } catch (UnsupportedEncodingException e) {
-            // yeah, there's nothing to be done about this one.
-            Runtime.getRuntime().halt(-1);
-        }
+    public void addHeaders(final HttpHeader[] headers) {
+        Collections.addAll(this.headers, headers);
     }
 
     public HttpRequestBodyStream getBodyStream() {

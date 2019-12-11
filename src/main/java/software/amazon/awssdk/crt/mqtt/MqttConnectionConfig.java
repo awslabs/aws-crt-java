@@ -15,6 +15,8 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
+import java.util.function.Consumer;
+
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientTlsContext;

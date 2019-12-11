@@ -1,0 +1,307 @@
+
+/*
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+package software.amazon.awssdk.crt.mqtt;
+
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.io.ClientTlsContext;
+import software.amazon.awssdk.crt.io.SocketOptions;
+
+public final class MqttConnectionConfig extends CrtResource {
+    /* connection */
+    private String endpoint;
+    private int port;
+    private boolean cleanSession = true;
+    private SocketOptions socketOptions;
+
+    /* mqtt */
+    private MqttClient mqttClient;
+    private String clientId;
+    private String username;
+    private String password;
+    private MqttClientConnectionEvents connectionCallbacks;
+    private int keepAliveMs = 0;
+    private int pingTimeoutMs = 0;
+
+    /* will */
+    private MqttMessage willMessage = null;
+    private QualityOfService willQos;
+    private boolean willRetain;
+
+    /* websockets */
+    private boolean useWebsocket = false;
+    private HttpProxyOptions proxyOptions = null;
+
+    public MqttConnectionConfig() {}
+
+
+    /**
+     * Required override method that must begin the release process of the acquired native handle
+     */
+    @Override
+    protected void releaseNativeHandle() {}
+
+    /**
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
+    /**
+     * Configures the connection-related callbacks for a connection
+     *
+     * @param callbacks connection event callbacks to use
+     */
+    public void setConnectionCallbacks(MqttClientConnectionEvents connectionCallbacks) {
+        this.connectionCallbacks = connectionCallbacks;
+    }
+
+    /**
+     * Queries the connection-related callbacks for a connection
+     *
+     * @return the connection event callbacks to use
+     */
+    public MqttClientConnectionEvents getConnectionCallbacks() {
+        return connectionCallbacks;
+    }
+
+    /**
+     * Configures the client_id to use with a connection
+     *
+     * @param clientId The client id for a connection. Needs to be unique across
+     *                  all devices/clients.
+     */
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    /**
+     * Queries the client_id being used by a connection
+     *
+     * @return The client id for a connection.
+     */
+    public String getClientId() {
+        return clientId;
+    }
+
+    /**
+     * Configures the IoT endpoint for a connection
+     *
+     * @param endpoint The IoT endpoint to connect to
+     */
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
+    /**
+     * Queries the IoT endpoint used by a connection
+     *
+     * @return The IoT endpoint used by a connection
+     */
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    /**
+     * Configures the port to connect to.
+     *
+     * @param port The port to connect to. Usually 8883 for MQTT, or 443 for websockets
+     */
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    /**
+     * Queries the port to connect to.
+     *
+     * @return The port to connect to
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * Configures the common settings to use for a connection's socket
+     *
+     * @param socketOptions The socket settings
+     */
+    public void setSocketOptions(SocketOptions socketOptions) {
+        swapReferenceTo(this.socketOptions, socketOptions);
+        this.socketOptions = socketOptions;
+    }
+
+    /**
+     * Queries the common settings to use for a connection's socket
+     *
+     * @return The socket settings
+     */
+    public SocketOptions getSocketOptions() {
+        return socketOptions;
+    }
+
+    /**
+     * Configures whether or not the service should try to resume prior subscriptions, if it has any
+     *
+     * @param cleanSession true if the session should drop prior subscriptions when
+     *                     a connection is established, false to resume the session
+     */
+    public void setCleanSession(boolean cleanSession) {
+        this.cleanSession = cleanSession;
+    }
+
+    /**
+     * Queries whether or not the service should try to resume prior subscriptions, if it has any
+     *
+     * @return true if the session should drop prior subscriptions when
+     *                     a connection is established, false to resume the session
+     */
+    public boolean getCleanSession() {
+        return cleanSession;
+    }
+
+    /**
+     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
+     * keepalive.
+     *
+     * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
+     */
+    public void setKeepAliveMs(int keepAliveMs) {
+        this.keepAliveMs = keepAliveMs;
+    }
+
+    /**
+     * Queries the MQTT keep-alive via PING messages.
+     *
+     * @return How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
+     */
+    public int getKeepAliveMs() {
+        return keepAliveMs;
+    }
+
+    /**
+     * Configures ping timeout value.  If a response is not received within this
+     * interval, the connection will be reestablished.
+     *
+     * @param pingTimeoutMs How long to wait for a ping response (in milliseconds) before resetting the connection
+     */
+    public void setPingTimeoutMs(int pingTimeoutMs) {
+        this.pingTimeoutMs = pingTimeoutMs;
+    }
+
+    /**
+     * Queries ping timeout value.  If a response is not received within this
+     * interval, the connection will be reestablished.
+     *
+     * @return How long to wait for a ping response before resetting the connection
+     */
+    public int getPingTimeoutMs() {
+        return pingTimeoutMs;
+    }
+
+    /**
+     * Configures the mqtt client to use for a connection
+     *
+     * @param client the mqtt client to use
+     */
+    public void setMqttClient(MqttClient mqttClient) {
+        swapReferenceTo(this.mqttClient, mqttClient);
+        this.mqttClient = mqttClient;
+    }
+
+    /**
+     * Queries the mqtt client to use for a connection
+     *
+     * @return the mqtt client to use
+     */
+    public MqttClient getMqttClient() {
+        return mqttClient;
+    }
+
+    /**
+     * Sets the login credentials for a connection.
+     *
+     * @param user Login username
+     * @param pass Login password
+     */
+    public void setLogin(String user, String pass) throws MqttException {
+        this.username = user;
+        this.password = pass;
+    }
+
+    /**
+     * Queries the username to use as part of the CONNECT attempt
+     *
+     * @return username to use for the mqtt connect operation
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * Queries the password to use as part of the CONNECT attempt
+     *
+     * @return password to use for the mqtt connect operation
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Sets the last will and testament message to be delivered to a topic when a connection disconnects
+     *
+     * @param message The message to publish as the will. The message contains the
+     *                topic that the message will be published to on disconnect.
+     * @param qos     The {@link QualityOfService} of the will message
+     * @param retain  Whether or not the message should be retained by the broker to
+     *                be delivered to future subscribers
+     */
+    public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
+        this.willMessage = message;
+        this.willQos = qos;
+        this.willRetain = retain;
+    }
+
+    /**
+     * Queries the message to publish as the will
+     *
+     * @return the message to publish as the will
+     */
+    public MqttMessage getWillMessage() {
+        return willMessage;
+    }
+
+    /**
+     * Queries the quality of service for the will message's publish action
+     *
+     * @return the quality of service for the will message's publish action
+     */
+    public QualityOfService getWillQos() {
+        return willQos;
+    }
+
+    /**
+     * Queries whether or not the message should be retained by the broker to be delivered to future subscribers
+     *
+     * @return whether or not the message should be retained by the broker to be delivered to future subscribers
+     */
+    public boolean getWillRetain() {
+        return willRetain;
+    }
+}

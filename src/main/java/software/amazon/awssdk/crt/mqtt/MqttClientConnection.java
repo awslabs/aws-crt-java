@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -32,17 +33,8 @@ import java.util.function.Consumer;
  * MQTT service endpoint
  */
 public class MqttClientConnection extends CrtResource {
-    private final MqttClient client;
-    private MqttClientConnectionEvents userConnectionCallbacks;
 
-    private String clientId;
-    private String endpoint;
-    private int port;
-
-    private SocketOptions socketOptions;
-    private boolean cleanSession = true;
-    private int keepAliveMs = 0;
-    private int pingTimeoutMs = 0;
+    private MqttConnectionConfig config;
 
     private AsyncCallback connectAck;
 
@@ -73,27 +65,36 @@ public class MqttClientConnection extends CrtResource {
      * @param port Port to connect on.
      * @throws MqttException If mqttClient is null
      */
-    public MqttClientConnection(MqttClient mqttClient, String clientId, String endpoint, int port) throws MqttException {
-        if (mqttClient == null) {
+    public MqttClientConnection(MqttConnectionConfig config) throws MqttException {
+        if (config.getMqttClient() == null) {
             throw new MqttException("mqttClient must not be null");
         }
-        if (clientId == null) {
+        if (config.getClientId() == null) {
             throw new MqttException("clientId must not be null");
         }
-        if (endpoint == null) {
+        if (config.getEndpoint() == null) {
             throw new MqttException("endpoint must not be null");
         }
-        if (port <= 0 || port > 65535) {
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
             throw new MqttException("port must be a positive integer between 1 and 65535");
         }
 
         try {
-            acquireNativeHandle(mqttClientConnectionNew(mqttClient.getNativeHandle(), this));
-            addReferenceTo(mqttClient);
-            this.client = mqttClient;
-            this.clientId = clientId;
-            this.endpoint = endpoint;
-            this.port = port;
+            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
+
+            if (config.getPassword() != null && config.getUsername() != null) {
+                mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
+            }
+
+            MqttMessage message = config.getWillMessage();
+            if (message != null) {
+                mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), config.getWillQos().getValue(), config.getWillRetain(),
+                        message.getPayload());
+            }
+
+            addReferenceTo(config);
+            this.config = config;
+
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
@@ -115,175 +116,6 @@ public class MqttClientConnection extends CrtResource {
     @Override
     protected boolean canReleaseReferencesImmediately() {
         return false;
-    }
-
-    /**
-     * Configures the connection-related callbacks to use on this connection
-     *
-     * @param callbacks connection event callbacks to use
-     */
-    public void setConnectionCallbacks(MqttClientConnectionEvents connectionCallbacks) {
-        this.userConnectionCallbacks = connectionCallbacks;
-    }
-
-    /**
-     * Queries the connection-related callbacks being used by this connection
-     *
-     * @return the connection event callbacks being used
-     */
-    public MqttClientConnectionEvents getConnectionCallbacks() {
-        return userConnectionCallbacks;
-    }
-
-    /**
-     * Configures the client_id to use with this connection
-     *
-     * @param clientId The client id for this connection. Needs to be unique across
-     *                  all devices/clients.
-     */
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    /**
-     * Queries the client_id being used by this connection
-     *
-     * @return The client id for this connection.
-     */
-    public String getClientId() {
-        return clientId;
-    }
-
-    /**
-     * Configures the IoT endpoint for this connection
-     *
-     * @param endpoint The IoT endpoint to connect to
-     */
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    /**
-     * Queries the IoT endpoint used by this connection
-     *
-     * @return The IoT endpoint used by this connection
-     */
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    /**
-     * Configures the port to connect to.
-     *
-     * @param port The port to connect to. Usually 8883 for MQTT, or 443 for websockets
-     */
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    /**
-     * Queries the port to connect to.
-     *
-     * @return The port to connect to
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * Configures the common settings to use for this connection's socket
-     *
-     * @param socketOptions The socket settings
-     */
-    public void setSocketOptions(SocketOptions socketOptions) {
-        swapReferenceTo(this.socketOptions, socketOptions);
-        this.socketOptions = socketOptions;
-    }
-
-    /**
-     * Queries the common settings to use for this connection's socket
-     *
-     * @return The socket settings
-     */
-    public SocketOptions getSocketOptions() {
-        return socketOptions;
-    }
-
-    /**
-     * Configures whether or not the service should try to resume prior subscriptions, if it has any
-     *
-     * @param cleanSession true if the session should drop prior subscriptions when
-     *                     a connection is established, false to resume the session
-     */
-    public void setCleanSession(boolean cleanSession) {
-        this.cleanSession = cleanSession;
-    }
-
-    /**
-     * Queries whether or not the service should try to resume prior subscriptions, if it has any
-     *
-     * @return true if the session should drop prior subscriptions when
-     *                     a connection is established, false to resume the session
-     */
-    public boolean getCleanSession() {
-        return cleanSession;
-    }
-
-    /**
-     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
-     * keepalive.
-     *
-     * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
-     *                   service to keep connections alive
-     */
-    public void setKeepAliveMs(int keepAliveMs) {
-        this.keepAliveMs = keepAliveMs;
-    }
-
-    /**
-     * Queries the MQTT keep-alive via PING messages.
-     *
-     * @return How often in milliseconds to send an MQTT PING message to the
-     *                   service to keep connections alive
-     */
-    public int getKeepAliveMs() {
-        return keepAliveMs;
-    }
-
-    /**
-     * Configures ping timeout value.  If a response is not received within this
-     * interval, the connection will be reestablished.
-     *
-     * @param pingTimeoutMs How long to wait for a ping response (in milliseconds) before resetting the connection
-     */
-    public void setPingTimeoutMs(int pingTimeoutMs) {
-        this.pingTimeoutMs = pingTimeoutMs;
-    }
-
-    /**
-     * Queries ping timeout value.  If a response is not received within this
-     * interval, the connection will be reestablished.
-     *
-     * @return How long to wait for a ping response before resetting the connection
-     */
-    public int getPingTimeoutMs() {
-        return pingTimeoutMs;
-    }
-
-    /**
-     * Sets the login credentials for the connection. Only valid before connect()
-     * has been called.
-     * 
-     * @param user Login username
-     * @param pass Login password
-     * @throws MqttException If the username or password are null
-     */
-    public void setLogin(String user, String pass) throws MqttException {
-        try {
-            mqttClientConnectionSetLogin(getNativeHandle(), user, pass);
-        } catch (CrtRuntimeException ex) {
-            throw new MqttException("Failed to set login: " + ex.getMessage());
-        }
     }
 
     // Called from native when the connection is established the first time
@@ -308,15 +140,17 @@ public class MqttClientConnection extends CrtResource {
                 callback.onFailure(new MqttException(errorCode));
             }
         }
-        if (userConnectionCallbacks != null) {
-            userConnectionCallbacks.onConnectionInterrupted(errorCode);
+        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        if (callbacks != null) {
+            callbacks.onConnectionInterrupted(errorCode);
         }
     }
 
     // Called when a reconnect succeeds, and also on initial connection success.
     private void onConnectionResumed(boolean sessionPresent) {
-        if (userConnectionCallbacks != null) {
-            userConnectionCallbacks.onConnectionResumed(sessionPresent);
+        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        if (callbacks != null) {
+            callbacks.onConnectionResumed(sessionPresent);
         }
     }
 
@@ -328,19 +162,24 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Boolean> connect() throws MqttException {
 
-        TlsContext tls = client.getTlsContext();
+        TlsContext tls = config.getMqttClient().getTlsContext();
 
         // Just clamp the pingTimeout, no point in throwing
-        short pingTimeout = (short) Math.max(0, Math.min(pingTimeoutMs, Short.MAX_VALUE));
+        short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
+
+        short port = (short)config.getPort();
         if (port > Short.MAX_VALUE || port <= 0) {
             throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
         }
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         connectAck = AsyncCallback.wrapFuture(future, null);
+        SocketOptions socketOptions = config.getSocketOptions();
+
         try {
-            mqttClientConnectionConnect(getNativeHandle(), endpoint, (short) port,
+            mqttClientConnectionConnect(getNativeHandle(), config.getEndpoint(), port,
                     socketOptions != null ? socketOptions.getNativeHandle() : 0,
-                    tls != null ? tls.getNativeHandle() : 0, clientId, cleanSession, keepAliveMs, pingTimeout);
+                    tls != null ? tls.getNativeHandle() : 0, config.getClientId(), config.getCleanSession(),
+                    config.getKeepAliveMs(), pingTimeout);
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
@@ -459,31 +298,6 @@ public class MqttClientConnection extends CrtResource {
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
             return future;
-        }
-    }
-
-    /**
-     * Sets the last will and testament message to be delivered to a topic when this
-     * client disconnects
-     * 
-     * @param message The message to publish as the will. The message contains the
-     *                topic that the message will be published to on disconnect.
-     * @param qos     The {@link QualityOfService} of the will message
-     * @param retain  Whether or not the message should be retained by the broker to
-     *                be delivered to future subscribers
-     * @throws MqttException If the connection is already connected, or is otherwise
-     *                       unable to set the will
-     */
-    public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
-        if (isNull()) {
-            throw new MqttException("Invalid connection during setWill");
-        }
-
-        try {
-            mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), qos.getValue(), retain,
-                    message.getPayload());
-        } catch (CrtRuntimeException ex) {
-            throw new MqttException("AWS CRT exception: " + ex.toString());
         }
     }
 

@@ -54,12 +54,11 @@ public class HttpClientConnection extends CrtResource {
 
         CompletableFuture<HttpStream> streamFuture = new CompletableFuture<>();
 
-
             try {
                 HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
                     request.getMethod(),
                     request.getEncodedPath(),
-                    request.getHeaders(),
+                    request.getHeadersAsArray(),
                     request.getBodyStream(),
                     streamHandler);
                 if (stream == null || stream.isNull()) {

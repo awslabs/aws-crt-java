@@ -216,8 +216,19 @@ static void s_jni_atexit(void) {
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(JNIEnv *env, jclass jni_crt_class, jint jni_memtrace) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
+    JNIEnv *env,
+    jclass jni_crt_class,
+    jint jni_memtrace,
+    jboolean jni_debug_wait) {
     (void)jni_crt_class;
+
+    if (jni_debug_wait) {
+        bool done = false;
+        while (!done) {
+            ;
+        }
+    }
 
     g_memory_tracing = jni_memtrace;
 

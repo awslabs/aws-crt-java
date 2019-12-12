@@ -32,7 +32,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 public final class WebsocketHandshakeTransformArgs {
     private MqttClientConnection mqttConnection;
     private HttpRequest httpRequest;
-    private CompletableFuture<Void> future;
+    private CompletableFuture<HttpRequest> future;
 
     /**
      * @param mqttConnection mqtt client connection that is establishing a websocket connection
@@ -40,7 +40,7 @@ public final class WebsocketHandshakeTransformArgs {
      * @param future Future to complete when the transform is complete.
      */
     public WebsocketHandshakeTransformArgs(MqttClientConnection mqttConnection, HttpRequest httpRequest,
-            CompletableFuture<Void> future) {
+            CompletableFuture<HttpRequest> future) {
 
         this.mqttConnection = mqttConnection;
         this.httpRequest = httpRequest;
@@ -66,16 +66,12 @@ public final class WebsocketHandshakeTransformArgs {
         return httpRequest;
     }
 
-    public void setHttpRequest(HttpRequest request) {
-        this.httpRequest = request;
-    }
-
     /**
      * Mark the transform operation as successfully completed.
      * The websocket connection will proceed, using the http request.
      */
-    public void complete() {
-        future.complete(null);
+    public void complete(HttpRequest signedRequest) {
+        future.complete(signedRequest);
     }
 
     /**

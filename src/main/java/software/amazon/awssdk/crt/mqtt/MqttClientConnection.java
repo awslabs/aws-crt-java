@@ -323,8 +323,9 @@ public class MqttClientConnection extends CrtResource {
 
     // Called from native when a websocket handshake request is being prepared.
     private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
-        CompletableFuture<Void> future = new CompletableFuture<Void>().whenComplete((x, throwable) -> {
-            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), handshakeRequest.getEncodedPath(), handshakeRequest.getHeadersAsArray(), throwable, nativeUserData);
+        CompletableFuture<HttpRequest> future = new CompletableFuture<>();
+        future.whenComplete((x, throwable) -> {
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x.getEncodedPath(), x.getHeadersAsArray(), throwable, nativeUserData);
         });
 
         WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);
@@ -333,7 +334,7 @@ public class MqttClientConnection extends CrtResource {
         if (transform != null) {
             transform.accept(args);
         } else {
-            args.complete();
+            args.complete(handshakeRequest);
         }
     }
 

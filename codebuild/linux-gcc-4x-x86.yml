@@ -3,20 +3,12 @@ version: 0.2
 phases:
   install:
     commands:
-      - sudo add-apt-repository ppa:openjdk-r/ppa
-      - sudo dpkg --add-architecture i386
-      - sudo apt-get update -y
-      - sudo apt-get install gcc gcc-multilib g++-multilib cmake ninja-build openjdk-8-jdk-headless:i386 maven -y
   pre_build:
     commands:
       - export CC=gcc
   build:
     commands:
-      - echo Build started on `date`
-      - setarch i386 $CODEBUILD_SRC_DIR/codebuild/common-linux.sh -Punix-x86
-  post_build:
-    commands:
-      - echo Build completed on `date`
+      - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B compile -Punix-x86
 
 artifacts:
   discard-paths: yes

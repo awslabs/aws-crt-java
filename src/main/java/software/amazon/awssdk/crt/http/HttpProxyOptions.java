@@ -48,7 +48,7 @@ public class HttpProxyOptions {
             authType = val;
         }
 
-        int getValue() {
+        public int getValue() {
             return authType;
         }
     }

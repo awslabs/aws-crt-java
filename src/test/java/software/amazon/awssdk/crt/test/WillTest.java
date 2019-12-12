@@ -41,7 +41,9 @@ public class WillTest extends MqttClientConnectionFixture {
     protected void modifyConnectionConfiguration(MqttConnectionConfig config) {
         MqttMessage will = new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes());
 
-        config.setWill(will, QualityOfService.AT_LEAST_ONCE, false);
+        config.setWillMessage(will);
+        config.setWillQos(QualityOfService.AT_LEAST_ONCE);
+        config.setWillRetain(false);
     }
 
     @Test

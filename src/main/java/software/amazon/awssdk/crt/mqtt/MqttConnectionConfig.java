@@ -249,12 +249,30 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * Configures the username to use as part of the CONNECT attempt
+     *
+     * @param username username to use for the mqtt connect operation
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
      * Queries the username to use as part of the CONNECT attempt
      *
      * @return username to use for the mqtt connect operation
      */
     public String getUsername() {
         return username;
+    }
+
+    /**
+     * Configures the password to use as part of the CONNECT attempt
+     *
+     * @param password password to use for the mqtt connect operation
+     */
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     /**
@@ -267,27 +285,30 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Sets the last will and testament message to be delivered to a topic when a connection disconnects
+     * Configures the last will and testament message to be delivered to a topic when a connection disconnects
      *
-     * @param message The message to publish as the will. The message contains the
-     *                topic that the message will be published to on disconnect.
-     * @param qos     The {@link QualityOfService} of the will message
-     * @param retain  Whether or not the message should be retained by the broker to
-     *                be delivered to future subscribers
+     * @param willMessage the message to publish as the will
      */
-    public void setWill(MqttMessage message, QualityOfService qos, boolean retain) throws MqttException {
-        this.willMessage = message;
-        this.willQos = qos;
-        this.willRetain = retain;
+    public void setWillMessage(MqttMessage willMessage) {
+        this.willMessage = willMessage;
     }
 
     /**
-     * Queries the message to publish as the will
+     * Queries the last will and testament message to be delivered to a topic when a connection disconnects
      *
      * @return the message to publish as the will
      */
     public MqttMessage getWillMessage() {
         return willMessage;
+    }
+
+    /**
+     * Configures the quality of service for the will message's publish action
+     *
+     * @param qos the quality of service for the will message's publish action
+     */
+    public void setWillQos(QualityOfService qos) {
+        this.willQos = qos;
     }
 
     /**
@@ -297,6 +318,15 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public QualityOfService getWillQos() {
         return willQos;
+    }
+
+    /**
+     * Configures whether or not the message should be retained by the broker to be delivered to future subscribers
+     *
+     * @param retain whether or not the message should be retained by the broker to be delivered to future subscribers
+     */
+    public void setWillRetain(boolean retain) {
+        this.willRetain = retain;
     }
 
     /**
@@ -375,13 +405,16 @@ public final class MqttConnectionConfig extends CrtResource {
 
             clone.setMqttClient(getMqttClient());
             clone.setClientId(getClientId());
-            clone.setLogin(getUsername(), getPassword());
+            clone.setUsername(getUsername());
+            clone.setPassword(getPassword());
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
-            clone.setWill(getWillMessage(), getWillQos(), getWillRetain());
+            clone.setWillMessage(getWillMessage());
+            clone.setWillQos(getWillQos());
+            clone.setWillRetain(getWillRetain());
 
             clone.setUseWebsockets(getUseWebsockets());
             clone.setWebsocketProxyOptions(getWebsocketProxyOptions());

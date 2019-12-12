@@ -87,7 +87,7 @@ public final class MqttConnectionConfig extends CrtResource {
      * Configures the client_id to use with a connection
      *
      * @param clientId The client id for a connection. Needs to be unique across
-     *                  all devices/clients.
+     *                  all devices/clients.this.credentialsProvider
      */
     public void setClientId(String clientId) {
         this.clientId = clientId;
@@ -360,5 +360,36 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public Consumer<WebsocketHandshakeTransformArgs> getWebsocketHandshakeTransform() {
         return websocketHandshakeTransform;
+    }
+
+    /**
+     * Creates a (shallow) clone of this config object
+     *
+     * @return shallow clone of this config object
+     */
+    public MqttConnectionConfig clone() {
+        try (MqttConnectionConfig clone = new MqttConnectionConfig()) {
+            clone.setEndpoint(getEndpoint());
+            clone.setPort(getPort());
+            clone.setSocketOptions(getSocketOptions());
+
+            clone.setMqttClient(getMqttClient());
+            clone.setClientId(getClientId());
+            clone.setLogin(getUsername(), getPassword());
+            clone.setConnectionCallbacks(getConnectionCallbacks());
+            clone.setKeepAliveMs(getKeepAliveMs());
+            clone.setPingTimeoutMs(getPingTimeoutMs());
+            clone.setCleanSession(getCleanSession());
+
+            clone.setWill(getWillMessage(), getWillQos(), getWillRetain());
+
+            clone.setUseWebsockets(getUseWebsockets());
+            clone.setWebsocketProxyOptions(getWebsocketProxyOptions());
+            clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
+
+            // success, bump up the ref count so we can escape the try-with-resources block
+            clone.addRef();
+            return clone;
+        }
     }
 }

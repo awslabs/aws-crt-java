@@ -162,10 +162,6 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
 
-        if (!isNativeResource()) {
-            throw new IllegalStateException("Non-native resources cannot acquire a native pointer");
-        }
-
         String canonicalName = this.getClass().getCanonicalName();
 
         if (handle == NULL) {
@@ -194,15 +190,13 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s", this.getClass().getCanonicalName()));
         }
 
-        if (isNativeResource()) {
-            if (nativeHandle != 0) {
-                /*
-                 * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
-                 * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
-                 * calls acquire on the native handle.
-                 */
-                NATIVE_RESOURCES.remove(nativeHandle);
-            }
+        if (nativeHandle != 0) {
+            /*
+             * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
+             * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
+             * calls acquire on the native handle.
+             */
+            NATIVE_RESOURCES.remove(nativeHandle);
         }
 
         releaseNativeHandle();
@@ -257,12 +251,6 @@ public abstract class CrtResource implements AutoCloseable {
      * the reference and cleanup framework.  See AwsIotMqttConnectionBuilder.java for example.
      *
      */
-
-    /**
-     * Is this an actual native resource (true) or does it just track native resources and use the close/shutdown/referencing
-     * aspects (false)?
-     */
-    protected boolean isNativeResource() { return true; }
 
     @Override
     public void close() {

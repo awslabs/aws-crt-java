@@ -65,6 +65,8 @@ public class MqttClientConnectionFixture {
     Path pathToKey = null;
     Path pathToCa = null;
 
+    protected void modifyConnectionConfiguration(MqttConnectionConfig config) {}
+
     private boolean findCredentials() {
         try {
             pathToCert = Paths.get(TEST_CERTIFICATE);
@@ -118,11 +120,11 @@ public class MqttClientConnectionFixture {
             }
         };
 
-        try (EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(pathToCert.toString(),
-                        pathToKey.toString())) {
+        try(EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(pathToCert.toString(),
+                    pathToKey.toString())) {
 
             int port = TEST_PORT;
             if (!pathToCa.toString().equals("")) {
@@ -135,11 +137,22 @@ public class MqttClientConnectionFixture {
 
             cleanSession = true; // only true is supported right now
             String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-            try (TlsContext tls = new TlsContext(tlsOptions); MqttClient client = new MqttClient(bootstrap, tls)) {
-                connection = new MqttClientConnection(client, events);
+            try (TlsContext tls = new TlsContext(tlsOptions);
+                 MqttClient client = new MqttClient(bootstrap, tls);
+                 MqttConnectionConfig config = new MqttConnectionConfig()) {
 
-                CompletableFuture<Boolean> connected = connection.connect(clientId, TEST_ENDPOINT, port, null,
-                        cleanSession, keepAliveMs, 0);
+                config.setMqttClient(client);
+                config.setClientId(clientId);
+                config.setEndpoint(TEST_ENDPOINT);
+                config.setPort(port);
+                config.setCleanSession(cleanSession);
+                config.setKeepAliveMs(keepAliveMs);
+
+                modifyConnectionConfiguration(config);
+
+                connection = new MqttClientConnection(config);
+
+                CompletableFuture<Boolean> connected = connection.connect();
                 connected.get();
                 return true;
             }

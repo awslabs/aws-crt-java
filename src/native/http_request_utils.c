@@ -221,11 +221,9 @@ int aws_apply_java_http_request_changes_to_native_request(
         }
     }
 
-    jbyte *path_and_query = (*env)->GetPrimitiveArrayCritical(env, jni_uri, NULL);
-    size_t path_and_query_len = (*env)->GetArrayLength(env, jni_uri);
-    struct aws_byte_cursor path_and_query_cur = aws_byte_cursor_from_array(path_and_query, path_and_query_len);
+    struct aws_byte_cursor path_and_query_cur = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
     result = aws_http_message_set_request_path(message, path_and_query_cur);
-    (*env)->ReleasePrimitiveArrayCritical(env, jni_uri, path_and_query, 0);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_and_query_cur);
 
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: set uri failed");

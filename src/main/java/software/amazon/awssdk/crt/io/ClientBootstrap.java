@@ -22,22 +22,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * a client context for all protocol stacks in the AWS Common Runtime.
  */
 public final class ClientBootstrap extends CrtResource {
-    /**
-     * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
-     * @param numThreads The number of Threads to use in the EventLoop
-     * @throws CrtRuntimeException If the system is unable to allocate space for a native client bootstrap object
-     */
-    public ClientBootstrap(int numThreads) throws CrtRuntimeException {
-        try(EventLoopGroup elg = new EventLoopGroup(numThreads);
-            HostResolver hr = new HostResolver(elg)) {
-
-            acquireNativeHandle(clientBootstrapNew(elg.getNativeHandle(), hr.getNativeHandle()));
-
-            // Order is likely important here
-            addReferenceTo(hr);
-            addReferenceTo(elg);
-        }
-    }
 
     /**
      * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.

@@ -29,23 +29,6 @@ public final class ClientBootstrap extends CrtResource {
 
     /**
      * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
-     * @param numThreads The number of Threads to use in the EventLoop
-     * @throws CrtRuntimeException If the system is unable to allocate space for a native client bootstrap object
-     */
-    public ClientBootstrap(int numThreads) throws CrtRuntimeException {
-        try(EventLoopGroup elg = new EventLoopGroup(numThreads);
-            HostResolver hr = new HostResolver(elg)) {
-
-            acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
-
-            // Order is likely important here
-            addReferenceTo(hr);
-            addReferenceTo(elg);
-        }
-    }
-
-    /**
-     * Creates a new ClientBootstrap. Most applications will only ever need one instance of this.
      * @param hr A HostResolver instance, most applications only ever have one
      * @param elg An EventLoopGroup instance, most applications only ever have one
      * @throws CrtRuntimeException If the provided EventLoopGroup is null or invalid,

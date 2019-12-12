@@ -106,7 +106,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Marks a resource as referenced by this resource.
      * @param resource The resource to add a reference to
      */
-    protected void addReferenceTo(CrtResource resource) {
+    public void addReferenceTo(CrtResource resource) {
         resource.addRef();
         synchronized(this) {
             referencedResources.add(resource);
@@ -121,7 +121,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Removes a reference from this resource to another.
      * @param resource The resource to remove a reference to
      */
-    protected void removeReferenceTo(CrtResource resource) {
+    public void removeReferenceTo(CrtResource resource) {
         boolean removed = false;
         synchronized(this) {
             removed = referencedResources.remove(resource);

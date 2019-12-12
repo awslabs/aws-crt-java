@@ -287,7 +287,6 @@ static void s_cache_client_bootstrap(JNIEnv *env) {
 
     client_bootstrap_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(client_bootstrap_properties.onShutdownComplete);
-
 }
 
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;

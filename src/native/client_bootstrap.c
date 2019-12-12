@@ -84,8 +84,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    struct shutdown_callback_data *callback_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
+    struct shutdown_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
     if (!callback_data) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to allocate");
         return (jlong)NULL;

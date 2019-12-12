@@ -20,6 +20,10 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)

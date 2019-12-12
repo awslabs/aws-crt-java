@@ -975,6 +975,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jstring jni_proxy_authorization_username,
     jstring jni_proxy_authorization_password) {
 
+    (void)jni_class;
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
 
     struct aws_http_proxy_options proxy_options;

@@ -21,6 +21,7 @@
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
+#include <aws/http/request_response.h>
 #include <aws/io/channel.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/event_loop.h>
@@ -861,6 +862,8 @@ static void s_ws_handshake_destroy(struct mqtt_jni_ws_handshake *ws_handshake) {
     }
 
     s_mqtt_jni_connection_release(ws_handshake->connection);
+    aws_http_message_release(ws_handshake->http_request);
+
     aws_mem_release(aws_jni_get_allocator(), ws_handshake);
 }
 

@@ -18,6 +18,11 @@
 #include <aws/io/channel_bootstrap.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
+
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -31,10 +36,40 @@
 #    endif
 #endif
 
+struct shutdown_callback_data {
+    JavaVM *jvm;
+    jobject java_client_bootstrap;
+};
+
+static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callback_data *callback_data) {
+    if (!callback_data) {
+        return;
+    }
+
+    if (callback_data->java_client_bootstrap) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_client_bootstrap);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static void s_client_bootstrap_shutdown_complete(void *user_data) {
+    struct shutdown_callback_data *callback_data = user_data;
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    // Tell the Java ClientBootstrap that cleanup is done.  This lets it release its references.
+    (*env)->CallVoidMethod(env, callback_data->java_client_bootstrap, client_bootstrap_properties.onShutdownComplete);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
+    s_shutdown_callback_data_destroy(env, callback_data);
+}
+
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
+    jobject jni_bootstrap,
     jlong jni_elg,
     jlong jni_hr) {
     (void)jni_class;
@@ -52,14 +87,44 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, resolver, NULL);
-    if (!bootstrap) {
-        aws_jni_throw_runtime_exception(
-            env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
+
+    struct shutdown_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
+    if (!callback_data) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to allocate");
         return (jlong)NULL;
     }
 
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    if (jvmresult != 0) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to get JVM");
+        goto error;
+    }
+
+    callback_data->java_client_bootstrap = (*env)->NewGlobalRef(env, jni_bootstrap);
+    if (!callback_data->java_client_bootstrap) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global ref");
+        goto error;
+    }
+
+    struct aws_client_bootstrap_options bootstrap_options = {
+        .event_loop_group = elg,
+        .host_resolver = resolver,
+        .on_shutdown_complete = s_client_bootstrap_shutdown_complete,
+        .user_data = callback_data,
+    };
+
+    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, &bootstrap_options);
+    if (!bootstrap) {
+        aws_jni_throw_runtime_exception(
+            env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
+        goto error;
+    }
+
     return (jlong)bootstrap;
+
+error:
+    s_shutdown_callback_data_destroy(env, callback_data);
+    return (jlong)NULL;
 }
 
 JNIEXPORT

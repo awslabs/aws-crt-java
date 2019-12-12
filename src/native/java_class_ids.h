@@ -131,6 +131,12 @@ struct java_event_loop_group_properties {
 };
 extern struct java_event_loop_group_properties event_loop_group_properties;
 
+/* ClientBootstrap */
+struct java_client_bootstrap_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_client_bootstrap_properties client_bootstrap_properties;
+
 /* HttpClientConnectionManager */
 struct java_http_client_connection_manager_properties {
     jmethodID onConnectionAcquired;

@@ -279,6 +279,16 @@ static void s_cache_event_loop_group(JNIEnv *env) {
     AWS_FATAL_ASSERT(event_loop_group_properties.onCleanupComplete);
 }
 
+struct java_client_bootstrap_properties client_bootstrap_properties;
+
+static void s_cache_client_bootstrap(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ClientBootstrap");
+    AWS_FATAL_ASSERT(cls);
+
+    client_bootstrap_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(client_bootstrap_properties.onShutdownComplete);
+}
+
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
 static void s_cache_http_client_connection_manager(JNIEnv *env) {
@@ -392,6 +402,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_credentials(env);
     s_cache_async_callback(env);
     s_cache_event_loop_group(env);
+    s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);

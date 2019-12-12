@@ -375,7 +375,17 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures the handshake http request transform to use when upgrading the connection
+     * Set a transform operation to use on each websocket handshake http request.
+     * The transform may modify the http request before it is sent to the server.
+     * The transform MUST call complete() or completeExceptionally() when the transform is complete,
+     * failure to do so will stall the mqtt connection indefinitely.
+     * The transform operation may be asynchronous.
+     *
+     * The default websocket handshake http request uses path "/mqtt".
+     * All required headers for a websocket handshake are present,
+     * plus the optional header "Sec-WebSocket-Protocol: mqtt".
+     *
+     * This is only applicable to websocket-based mqtt connections.
      *
      * @param handshakeTransform http request handshake transform
      */

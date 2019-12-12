@@ -98,7 +98,15 @@ public class MqttClientConnection extends CrtResource {
             if (config.getUseWebsockets()) {
                 mqttClientConnectionUseWebsockets(getNativeHandle());
                 if (config.getWebsocketProxyOptions() != null) {
-                    mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(), config.getWebsocketProxyOptions());
+                    HttpProxyOptions options = config.getWebsocketProxyOptions();
+                    TlsContext proxyTlsContext = options.getTlsContext();
+                    mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(),
+                        options.getHost(),
+                        options.getPort(),
+                        proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
+                        options.getAuthorizationType(),
+                        options.getAuthorizationUsername(),
+                        options.getAuthorizationPassword));
                 }
             }
 
@@ -366,5 +374,10 @@ public class MqttClientConnection extends CrtResource {
             long nativeUserData) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,
-            HttpProxyOptions proxyOptions) throws CrtRuntimeException;
+                                                                    String proxyHost,
+                                                                    int proxyPort,
+                                                                    long proxyTlsContext,
+                                                                    int proxyAuthorizationType,
+                                                                    String proxyAuthorizationUsername,
+                                                                    String proxyAuthorizationPassword) throws CrtRuntimeException;
 };

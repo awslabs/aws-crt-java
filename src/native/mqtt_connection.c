@@ -961,6 +961,31 @@ done:
     s_ws_handshake_destroy(ws_handshake);
 }
 
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetWebsocketProxyOptions(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jstring jni_proxy_host,
+    jint jni_proxy_port,
+    jlong jni_proxy_tls_context,
+    jint jni_proxy_authorization_type,
+    jstring jni_proxy_authorization_username,
+    jstring jni_proxy_authorization_password) {
+
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    ??;
+
+    if (aws_mqtt_client_connection_set_websocket_proxy_options(connection->client_connection, &proxy_options)) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.setWebsocketProxyOptions: Failed to set proxy options");
+    }
+}
+
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

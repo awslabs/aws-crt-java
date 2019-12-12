@@ -39,6 +39,10 @@ public final class WebsocketHandshakeTransformArgs {
         return httpRequest;
     }
 
+    public void setHttpRequest(HttpRequest request) {
+        this.httpRequest = request;
+    }
+
     public void complete() {
         future.complete(null);
     }

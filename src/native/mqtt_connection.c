@@ -20,6 +20,7 @@
 #include <aws/common/mutex.h>
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
+#include <aws/http/connection.h>
 #include <aws/io/channel.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/event_loop.h>
@@ -34,6 +35,7 @@
 
 #include "crt.h"
 
+#include "http_request_utils.h"
 #include "java_class_ids.h"
 
 /*******************************************************************************
@@ -61,6 +63,17 @@ struct mqtt_jni_connection {
     struct mqtt_jni_async_callback *on_message;
 
     struct aws_atomic_var ref_count;
+};
+
+/*******************************************************************************
+ * mqtt_jni_ws_handshake - Data needed to perform the async websocket handshake
+ * transform operations. Destroyed when transform is complete.
+ ******************************************************************************/
+struct mqtt_jni_ws_handshake {
+    struct mqtt_jni_connection *connection;
+    struct aws_http_message *http_request;
+    aws_mqtt_transform_websocket_handshake_complete_fn *complete_fn;
+    void *complete_ctx;
 };
 
 static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *connection);
@@ -839,6 +852,179 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
 
     aws_jni_byte_cursor_from_jstring_release(env, jni_user, username);
     aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
+}
+
+///////
+static void s_ws_handshake_destroy(struct mqtt_jni_ws_handshake *ws_handshake) {
+    if (!ws_handshake) {
+        return;
+    }
+
+    s_mqtt_jni_connection_release(ws_handshake->connection);
+    aws_mem_release(aws_jni_get_allocator(), ws_handshake);
+}
+
+static void s_ws_handshake_transform(
+    struct aws_http_message *request,
+    void *user_data,
+    aws_mqtt_transform_websocket_handshake_complete_fn *complete_fn,
+    void *complete_ctx) {
+
+    struct mqtt_jni_connection *connection = user_data;
+
+    JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
+    struct aws_allocator *alloc = aws_jni_get_allocator();
+
+    struct mqtt_jni_ws_handshake *ws_handshake = aws_mem_calloc(alloc, 1, sizeof(struct mqtt_jni_ws_handshake));
+    if (!ws_handshake) {
+        goto error;
+    }
+
+    ws_handshake->connection = connection;
+    s_mqtt_jni_connection_acquire(ws_handshake->connection);
+
+    ws_handshake->complete_ctx = complete_ctx;
+    ws_handshake->complete_fn = complete_fn;
+    ws_handshake->http_request = request;
+
+    jobject java_http_request = aws_java_http_request_from_native(env, request);
+    if (!java_http_request) {
+        aws_raise_error(AWS_ERROR_UNKNOWN); /* TODO: given java exception, choose appropriate aws error code */
+        goto error;
+    }
+
+    (*env)->CallVoidMethod(
+        env,
+        connection->mqtt_connection,
+        mqtt_connection_properties.on_websocket_handshake,
+        java_http_request,
+        ws_handshake);
+
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
+    (*env)->DeleteLocalRef(env, java_http_request);
+
+    return;
+
+error:;
+
+    int error_code = aws_last_error();
+    s_ws_handshake_destroy(ws_handshake);
+    complete_fn(request, error_code, complete_ctx);
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionUseWebsockets(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
+    (void)jni_class;
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.useWebsockets: Invalid connection");
+        return;
+    }
+
+    if (aws_mqtt_client_connection_use_websockets(
+            connection->client_connection, s_ws_handshake_transform, connection, NULL, NULL)) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.useWebsockets: Failed to use websockets");
+        return;
+    }
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionWebsocketHandshakeComplete(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jstring jni_request_path,
+    jobjectArray jni_request_headers,
+    jobject jni_throwable,
+    jlong jni_user_data) {
+    (void)jni_class;
+    (void)jni_connection;
+
+    struct mqtt_jni_ws_handshake *ws_handshake = (void *)jni_user_data;
+    int error_code = AWS_ERROR_SUCCESS;
+
+    if (jni_throwable != NULL) {
+        error_code = AWS_ERROR_UNKNOWN; /* TODO: given java exception, choose appropriate aws error code */
+        goto done;
+    }
+
+    if (aws_apply_java_http_request_changes_to_native_request(
+            env, jni_request_path, jni_request_headers, NULL, ws_handshake->http_request)) {
+        error_code = aws_last_error();
+        goto done;
+    }
+
+done:
+    ws_handshake->complete_fn(ws_handshake->http_request, error_code, ws_handshake->complete_ctx);
+    s_ws_handshake_destroy(ws_handshake);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetWebsocketProxyOptions(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jstring jni_proxy_host,
+    jint jni_proxy_port,
+    jlong jni_proxy_tls_context,
+    jint jni_proxy_authorization_type,
+    jstring jni_proxy_authorization_username,
+    jstring jni_proxy_authorization_password) {
+
+    (void)jni_class;
+
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    if (!jni_proxy_host) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.setWebsocketProxyOptions: proxyHost must not be null.");
+        return;
+    }
+
+    proxy_options.host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
+    proxy_options.port = (uint16_t)jni_proxy_port;
+
+    proxy_options.auth_type = (enum aws_http_proxy_authentication_type)jni_proxy_authorization_type;
+
+    if (jni_proxy_authorization_username) {
+        proxy_options.auth_username = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_username);
+    }
+
+    if (jni_proxy_authorization_password) {
+        proxy_options.auth_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
+    }
+
+    struct aws_tls_connection_options proxy_tls_conn_options = {0};
+
+    if (jni_proxy_tls_context != 0) {
+        struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;
+        aws_tls_connection_options_init_from_ctx(&proxy_tls_conn_options, proxy_tls_ctx);
+        aws_tls_connection_options_set_server_name(
+            &proxy_tls_conn_options, aws_jni_get_allocator(), &proxy_options.host);
+        proxy_options.tls_options = &proxy_tls_conn_options;
+    }
+
+    if (aws_mqtt_client_connection_set_websocket_proxy_options(connection->client_connection, &proxy_options)) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.setWebsocketProxyOptions: Failed to set proxy options");
+    }
+
+    if (jni_proxy_authorization_password) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_password, proxy_options.auth_password);
+    }
+
+    if (jni_proxy_authorization_username) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_options.auth_username);
+    }
+
+    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_options.host);
 }
 
 #if UINTPTR_MAX == 0xffffffff

@@ -132,7 +132,7 @@ public final class CRT {
             try {
                 memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
             } catch (Exception ex) {}
-            awsCrtInit(memoryTracingLevel);
+            awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
 
             try {
                 Log.initLoggingFromSystemProperties();
@@ -155,7 +155,7 @@ public final class CRT {
     }
 
     // Called internally when bootstrapping the CRT, allows native code to do any static initialization it needs
-    private static native void awsCrtInit(int memoryTracingLevel) throws CrtRuntimeException;
+    private static native void awsCrtInit(int memoryTracingLevel, boolean debugWait) throws CrtRuntimeException;
 
     /**
      * Given an integer error code from an internal operation

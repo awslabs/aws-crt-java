@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.mqtt.MqttException;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
@@ -36,18 +37,19 @@ public class WillTest extends MqttClientConnectionFixture {
     static final String TEST_TOPIC = "/i/am/ded";
     static final String TEST_WILL = "i am ghost nao";
 
+    @Override
+    protected void modifyConnectionConfiguration(MqttConnectionConfig config) {
+        MqttMessage will = new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes());
+
+        config.setWillMessage(will);
+        config.setWillQos(QualityOfService.AT_LEAST_ONCE);
+        config.setWillRetain(false);
+    }
+
     @Test
     public void testWill() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
-
-        try {
-            MqttMessage will = new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes());
-            connection.setWill(will, QualityOfService.AT_LEAST_ONCE, false);
-        } catch (MqttException ex) {
-            fail("Exception while setting will: " + ex.toString());
-        }
-
         disconnect();
         close();
         CrtResource.waitForNoResources();

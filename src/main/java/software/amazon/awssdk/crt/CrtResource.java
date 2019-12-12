@@ -34,7 +34,7 @@ import software.amazon.awssdk.crt.Log;
  */
 public abstract class CrtResource implements AutoCloseable {
     private static final String NATIVE_DEBUG_PROPERTY_NAME = "aws.crt.debugnative";
-    private static final long DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 30;
+    private static final long DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 10;
     private static final long NULL = 0;
 
     public class ResourceInstance {
@@ -142,6 +142,17 @@ public abstract class CrtResource implements AutoCloseable {
         resource.decRef();
     }
 
+    protected void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
+        if (oldReference != newReference) {
+            if (newReference != null) {
+                addReferenceTo(newReference);
+            }
+            if (oldReference != null) {
+                removeReferenceTo(oldReference);
+            }
+        }
+    }
+
     /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
@@ -149,10 +160,6 @@ public abstract class CrtResource implements AutoCloseable {
     protected void acquireNativeHandle(long handle) {
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
-        }
-
-        if (!isNativeResource()) {
-            throw new IllegalStateException("Non-native resources cannot acquire a native pointer");
         }
 
         String canonicalName = this.getClass().getCanonicalName();
@@ -183,11 +190,7 @@ public abstract class CrtResource implements AutoCloseable {
             Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s", this.getClass().getCanonicalName()));
         }
 
-        if (isNativeResource()) {
-            if (isNull()) {
-                throw new IllegalStateException("Already Released Resource!");
-            }
-
+        if (nativeHandle != 0) {
             /*
              * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
              * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
@@ -198,7 +201,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         releaseNativeHandle();
 
-        if (isNativeResource()) {
+        if (nativeHandle != 0) {
             decrementNativeObjectCount();
 
             nativeHandle = 0;
@@ -245,17 +248,9 @@ public abstract class CrtResource implements AutoCloseable {
      *  (2) referencing of other resources and the resulting implied cleanup process
      *
      * Some classes don't represent an actual native resource.  Instead, they just want to use
-     * the reference and cleanup framework.  See CrtBufferPool for an example.
+     * the reference and cleanup framework.  See AwsIotMqttConnectionBuilder.java for example.
      *
-     * A solution that avoids this complication while not changing the buffer/buffer pool properties dramatically would
-     * be welcomed.
      */
-
-    /**
-     * Is this an actual native resource (true) or does it just track native resources and use the close/shutdown/referencing
-     * aspects (false)?
-     */
-    protected boolean isNativeResource() { return true; }
 
     @Override
     public void close() {
@@ -309,7 +304,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     public String getResourceLogDescription() {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("[%d : %s](%s) - %s", id, getClass().getSimpleName(), creationTime.toString(), description != null ? description : "<null>"));
+        builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
         synchronized(this) {
             if (referencedResources.size() > 0) {
                 builder.append("\n   Forward references by Id: ");

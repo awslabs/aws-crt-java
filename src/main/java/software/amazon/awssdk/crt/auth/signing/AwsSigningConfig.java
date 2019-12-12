@@ -20,11 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * A class representing
  */
-public class AwsSigningConfig {
+public class AwsSigningConfig extends CrtResource {
 
     public enum AwsSigningAlgorithm {
         SIGV4_HEADER(0),
@@ -104,6 +105,39 @@ public class AwsSigningConfig {
 
     public AwsSigningConfig() {}
 
+    public AwsSigningConfig clone() {
+        try (AwsSigningConfig clone = new AwsSigningConfig()) {
+
+            clone.setSigningAlgorithm(getSigningAlgorithm());
+            clone.setRegion(getRegion());
+            clone.setService(getService());
+            clone.setTime(getTime());
+            clone.setCredentialsProvider(getCredentialsProvider());
+            clone.setShouldSignParameter(getShouldSignParameter());
+            clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
+            clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
+            clone.setSignBody(getSignBody());
+
+            // success, bump up the ref count so we can escape the try-with-resources block
+            clone.addRef();
+            return clone;
+        }
+    }
+
+    /**
+     * Required override method that must begin the release process of the acquired native handle
+     */
+    @Override
+    protected void releaseNativeHandle() {}
+
+    /**
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() { return true; }
+
     public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
     public AwsSigningAlgorithm getSigningAlgorithm() {
         return AwsSigningAlgorithm.getEnumValueFromInteger(signingAlgorithm);
@@ -118,7 +152,11 @@ public class AwsSigningConfig {
     public void setTime(Instant time) { this.time = time.toEpochMilli(); }
     public Instant getTime() { return Instant.ofEpochMilli(time); }
 
-    public void setCredentialsProvider(CredentialsProvider credentialsProvider) { this.credentialsProvider = credentialsProvider; }
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
+        swapReferenceTo(this.credentialsProvider, credentialsProvider);
+        this.credentialsProvider = credentialsProvider;
+    }
+
     public CredentialsProvider getCredentialsProvider() { return credentialsProvider; }
 
     public void setShouldSignParameter(Predicate<String> shouldSignParameter) { this.shouldSignParameter = shouldSignParameter; }

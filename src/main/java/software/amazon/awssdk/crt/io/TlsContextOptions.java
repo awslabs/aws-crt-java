@@ -143,16 +143,9 @@ public final class TlsContextOptions extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        if (!isNull()) {
-            tlsContextOptionsDestroy(getNativeHandle());
-        }
-    }
-
-    @Override
-    public void close() {
         // It is perfectly acceptable for this to have never created a native resource
         if (!isNull()) {
-            super.close();
+            tlsContextOptionsDestroy(getNativeHandle());
         }
     }
 

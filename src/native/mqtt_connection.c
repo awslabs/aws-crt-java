@@ -845,14 +845,23 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     }
 
     struct aws_byte_cursor username = aws_jni_byte_cursor_from_jstring_acquire(env, jni_user);
-    struct aws_byte_cursor password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_pass);
+    struct aws_byte_cursor password;
+    struct aws_byte_cursor *password_ptr = NULL;
+    AWS_ZERO_STRUCT(password);
+    if (jni_pass != NULL) {
+        password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_pass);
+        password_ptr = &password;
+    }
 
-    if (aws_mqtt_client_connection_set_login(connection->client_connection, &username, &password)) {
+    if (aws_mqtt_client_connection_set_login(connection->client_connection, &username, password_ptr)) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_login: Failed to set login");
     }
 
     aws_jni_byte_cursor_from_jstring_release(env, jni_user, username);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
+
+    if (password.len > 0) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
+    }
 }
 
 ///////

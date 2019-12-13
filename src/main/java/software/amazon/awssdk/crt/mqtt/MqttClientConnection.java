@@ -85,7 +85,7 @@ public class MqttClientConnection extends CrtResource {
         try {
             acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
 
-            if (config.getPassword() != null && config.getUsername() != null) {
+            if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
 

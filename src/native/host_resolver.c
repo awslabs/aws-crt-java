@@ -52,7 +52,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     }
 
     struct aws_host_resolver *resolver = aws_mem_calloc(allocator, 1, sizeof(struct aws_host_resolver));
-    aws_host_resolver_init_default(resolver, allocator, (size_t)max_entries, el_group);
+    AWS_FATAL_ASSERT(resolver);
+
+    if (aws_host_resolver_init_default(resolver, allocator, (size_t)max_entries, el_group)) {
+        aws_jni_throw_runtime_exception(env, "aws_host_resolver_init_default failed");
+        aws_mem_release(allocator, resolver);
+        return (jlong)NULL;
+    }
 
     return (jlong)resolver;
 }

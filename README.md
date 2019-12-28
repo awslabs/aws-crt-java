@@ -9,7 +9,7 @@ This library is licensed under the Apache 2.0 License.
 ## Building
 
 ### Linux/Unix
-Requirements: 
+Requirements:
 * Clang 3.9+ or GCC 4.4+
 * cmake 3.1+
 * Java: Any JDK8 or above, ensure JAVA_HOME is set
@@ -49,15 +49,18 @@ From the aws-crt-java directory:
 From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-crt/)
 
 ## Testing
-Once you've set up an IoT Thing [here](https://console.aws.amazon.com/iot), put the certificates into the 
-src/test/resources/credentials directory. You should have:
-* AmazonRootCA1.pem - Amazon Web Services root certificate
-* <thingid>-certificate.pem.crt - Your Thing's cert
-* <thingid>-private.pem.key - Your Thing's private key
+Many tests require custom arguments. These tests will be quietly skipped if their arguments are not set.
+Arguments can be passed like so:
+```
+mvn test -Dcertificate=path/to/cert -Dprivatekey=path/to/key ...
+```
+Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
-If the certs are not found, then tests which connect to the IoT Core service will simply quietly be skipped
-```mvn test``` will run all of the JUnit tests
-
-If you are running the tests in a constrained environment where network access is not guaranteed/allowed,
-the network tests can be disabled by setting the Java system property NETWORK_TESTS_DISABLED. You can do
-this on the command line with ```mvn test -DargLine="-DNETWORK_TESTS_DISABLED=true"```.
+Full list of test arguments:
+- endpoint: AWS IoT service endpoint hostname
+- certificate: Path to the IoT thing certificate
+- privatekey: Path to the IoT thing private key
+- rootca: Path to the root certificate
+- proxyhost: Hostname of proxy
+- proxyport: Port of proxy
+- NETWORK_TESTS_DISABLED: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.

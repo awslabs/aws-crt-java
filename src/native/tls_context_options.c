@@ -93,29 +93,56 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls = aws_mem_calloc(allocator, 1, sizeof(struct jni_tls_ctx_options));
     AWS_FATAL_ASSERT(tls);
-    aws_tls_ctx_options_init_default_client(&tls->options, aws_jni_get_allocator());
+    aws_tls_ctx_options_init_default_client(&tls->options, allocator);
 
     /* Certs or paths will cause an init, which overwrites other fields, so do those first */
     if (jni_certificate && jni_private_key) {
         tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);
+        if (!tls->certificate) {
+            aws_jni_throw_runtime_exception(env, "failed to get certificate string");
+            goto on_error;
+        }
         tls->private_key = aws_jni_new_string_from_jstring(env, jni_private_key);
+        if (!tls->private_key) {
+            aws_jni_throw_runtime_exception(env, "failed to get privateKey string");
+            goto on_error;
+        }
 
         struct aws_byte_cursor cert_cursor = aws_byte_cursor_from_string(tls->certificate);
         struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
 
-        aws_tls_ctx_options_init_client_mtls(&tls->options, aws_jni_get_allocator(), &cert_cursor, &key_cursor);
+        if (aws_tls_ctx_options_init_client_mtls(&tls->options, allocator, &cert_cursor, &key_cursor)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls failed");
+            goto on_error;
+        }
     } else if (jni_cert_path && jni_key_path) {
         tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_cert_path);
+        if (!tls->certificate_path) {
+            aws_jni_throw_runtime_exception(env, "failed to get certificatePath string");
+            goto on_error;
+        }
         tls->private_key_path = aws_jni_new_string_from_jstring(env, jni_key_path);
-        aws_tls_ctx_options_init_client_mtls_from_path(
-            &tls->options,
-            aws_jni_get_allocator(),
-            aws_string_c_str(tls->certificate_path),
-            aws_string_c_str(tls->private_key_path));
+        if (!tls->private_key_path) {
+            aws_jni_throw_runtime_exception(env, "failed to get privateKeyPath string");
+            goto on_error;
+        }
+
+        if (aws_tls_ctx_options_init_client_mtls_from_path(
+                &tls->options,
+                allocator,
+                aws_string_c_str(tls->certificate_path),
+                aws_string_c_str(tls->private_key_path))) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_path failed");
+            goto on_error;
+        }
     }
 
     if (jni_ca) {
         tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);
+        if (!tls->ca_root) {
+            aws_jni_throw_runtime_exception(env, "failed to get caRoot string");
+            goto on_error;
+        }
         struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
         if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
@@ -126,10 +153,20 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         const char *ca_path = NULL;
         if (jni_ca_filepath) {
             tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_filepath);
+            if (!tls->ca_file) {
+                aws_jni_throw_runtime_exception(env, "failed to get caFile string");
+                goto on_error;
+            }
+
             ca_file = aws_string_c_str(tls->ca_file);
         }
         if (jni_ca_dirpath) {
             tls->ca_path = aws_jni_new_string_from_jstring(env, jni_ca_dirpath);
+            if (!tls->ca_path) {
+                aws_jni_throw_runtime_exception(env, "failed to get caPath string");
+                goto on_error;
+            }
+
             ca_path = aws_string_c_str(tls->ca_path);
         }
 
@@ -142,10 +179,22 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 #if defined(__APPLE__)
     if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
+        if (!tls->pkcs12_path) {
+            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Path string");
+            goto on_error;
+        }
         tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
+        if (!tls->pkcs12_password) {
+            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Password string");
+            goto on_error;
+        }
+
         struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
-        aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
-            &tls->options, aws_jni_get_allocator(), aws_string_c_str(tls->pkcs12_path), &password);
+        if (aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
+                &tls->options, allocator, aws_string_c_str(tls->pkcs12_path), &password)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
+            goto on_error;
+        }
     }
 #endif
     (void)jni_pkcs12_path;
@@ -158,7 +207,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
     if (jni_alpn) {
         tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
-        aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list));
+        if (!tls->alpn_list) {
+            aws_jni_throw_runtime_exception(env, "failed to get alpnList string");
+            goto on_error;
+        }
+
+        if (aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list))) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_set_alpn_list failed");
+            goto on_error;
+        }
     }
 
     return (jlong)tls;

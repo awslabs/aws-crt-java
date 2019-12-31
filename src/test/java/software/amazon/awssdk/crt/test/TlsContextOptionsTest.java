@@ -2,6 +2,9 @@ package software.amazon.awssdk.crt.test;
 
 import static software.amazon.awssdk.crt.io.TlsContextOptions.TlsVersions;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -33,7 +36,7 @@ public class TlsContextOptionsTest {
             + "U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs\n"
             + "N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv\n"
             + "o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU\n"
-            + "5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\n" 
+            + "5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\n"
             + "rqXRfboQnoZsG4q5WTP468SQvvG5\n"
             + "-----END CERTIFICATE-----";
     static final String TEST_CERT = "-----BEGIN CERTIFICATE-----\n"
@@ -56,7 +59,7 @@ public class TlsContextOptionsTest {
             + "Jc80acRjySG8q/gqwMMLOE+xqLgTzAHLYDnX2BZdaeIJWdgQP/YrWACrnYlVJ4kZ\n"
             + "fi3QiBU0b5OgQdwX0csr6NQ7fv5i9EiNdPf+Ll1gxQj0Q0AaJzb4+TUL4dHZV3L6\n"
             + "RRRK5KpTI3I+5A3vLSYSgwlVT+qB4J6+Z7O9SZX8s0xnm569tECbRnDDYv3E90SU\n"
-            + "QMN6Rzsr2crUzQSMq2hQTnrpFvRX52Yw7Dkz4SgkP3Q4xzvITPgA8REgHd4eDgrz\n" 
+            + "QMN6Rzsr2crUzQSMq2hQTnrpFvRX52Yw7Dkz4SgkP3Q4xzvITPgA8REgHd4eDgrz\n"
             + "36J362qmeHxjl/+KLxv/Vr4b\n"
             + "-----END CERTIFICATE-----";
 
@@ -85,8 +88,25 @@ public class TlsContextOptionsTest {
             + "J4/azOIeaM92B5h3Pv0gxBFK8YyjO8beXurx+79ENuOtfFxd8knOe/Mplcnpurjt\n"
             + "SeVJuG8CgYBxEYouOM9UuZlblXQXfudTWWf+x5CEWxyJgKaktHEh3iees1gB7ZPb\n"
             + "OewLa8AYVjqbNgS/r/aUFjpBbCov8ICxcy86SuGda10LDFX83sbyMm8XhktfyC3L\n"
-            + "54irVW5mNUDcA8s9+DloeTlUlJIr8J/RADC9rpqHLaZzcdvpIMhVsw==\n" 
+            + "54irVW5mNUDcA8s9+DloeTlUlJIr8J/RADC9rpqHLaZzcdvpIMhVsw==\n"
             + "-----END RSA PRIVATE KEY-----";
+
+    static final String TEST_CERT_PATH_PROPERTY = "certificate";
+    static final String TEST_KEY_PATH_PROPERTY = "privatekey";
+
+    // Skip test if system property, or the file it describes, cannot be found
+    private String getPathStringFromSystemProperty(String property) {
+        try {
+            String pathStr = System.getProperty(property);
+            Assume.assumeTrue("system property not set", pathStr != null && !pathStr.equals(""));
+            Path path = Paths.get(pathStr);
+            Assume.assumeTrue("file not found at " + pathStr, path.toFile().exists());
+            return path.toString();
+        } catch (Exception ex) {
+            Assume.assumeNoException("cannot use '" + property + "' file", ex);
+        }
+        return null; // unreachable
+    }
 
     @Test
     public void testTlsContextOptionsAPI() {
@@ -101,7 +121,7 @@ public class TlsContextOptionsTest {
             }
             Assert.assertNotEquals(0, options.getNativeHandle());
         }
-        
+
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             boolean exceptionThrown = false;
 
@@ -142,7 +162,7 @@ public class TlsContextOptionsTest {
     }
 
     @Test
-    public void testMTLS() {
+    public void testMtls() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.initMtls(TEST_CERT, TEST_KEY);
@@ -156,6 +176,50 @@ public class TlsContextOptionsTest {
         }
     }
 
+    @Test
+    public void testMtlsFromPath() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
+        String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
+
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.initMtlsFromPath(certPath, keyPath);
+            try (TlsContext tls = new TlsContext(options)) {
+                assertNotNull(tls);
+            } catch (Exception ex) {
+                fail(ex.toString());
+            }
+        } catch (Exception ex) {
+            fail(ex.toString());
+        }
+    }
+
+    // Test should fail to create TlsContext because the file paths are not valid
+    @Test
+    public void testMtlsFromBadPath() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        System.out.println("GOT HERE");
+        String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
+        String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
+
+        certPath = certPath + ".not.valid.path";
+        keyPath = keyPath + ".not.valid.path";
+
+        boolean successfullyCreatedTlsContext = false;
+
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.initMtlsFromPath(certPath, keyPath);
+            try (TlsContext tls = new TlsContext(options)) {
+                successfullyCreatedTlsContext = true;
+            }
+        } catch (Exception ex) {
+            // exceptions are expected
+        }
+
+        assertFalse(successfullyCreatedTlsContext);
+    }
+
+    @Test
     public void testOverridingTrustStore() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {

@@ -170,6 +170,10 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
     const char *str_chars = (*env)->GetStringUTFChars(env, str, NULL);
+    if (!str_chars) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
     struct aws_string *result = aws_string_new_from_c_str(allocator, str_chars);
     (*env)->ReleaseStringUTFChars(env, str, str_chars);
     return result;

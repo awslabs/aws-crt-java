@@ -95,14 +95,27 @@ public final class CRT {
 
     private static void loadLibraryFromJar() {
         try {
-            // Check tmpdir and give explicit errors
-            Path tmpdirPath = Paths.get(System.getProperty("java.io.tmpdir"));
-            File tmpdirFile = tmpdirPath.toFile();
-            if (!tmpdirFile.exists() || !tmpdirFile.isDirectory()) {
-                throw new NotDirectoryException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\"");
+            // Check java.io.tmpdir
+            String tmpdir = System.getProperty("java.io.tmpdir");
+            Path tmpdirPath;
+            try {
+                tmpdirPath = Paths.get(tmpdir).toAbsolutePath().normalize();
+                File tmpdirFile = tmpdirPath.toFile();
+                if (tmpdirFile.exists()) {
+                    if (!tmpdirFile.isDirectory()) {
+                        throw new NotDirectoryException(tmpdirPath.toString());
+                    }
+                } else {
+                    Files.createDirectories(tmpdirPath);
+                }
+
+                if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
+                    throw new AccessDeniedException(tmpdirPath.toString());
+                }
             }
-            if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                throw new AccessDeniedException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\"");
+            catch (Exception ex) {
+                String msg = "java.io.tmpdir=\"" + tmpdir + "\": Invalid directory";
+                throw new IOException(msg, ex);
             }
 
             // Prefix the lib

@@ -98,14 +98,11 @@ public final class CRT {
             // Check tmpdir and give explicit errors
             Path tmpdirPath = Paths.get(System.getProperty("java.io.tmpdir"));
             File tmpdirFile = tmpdirPath.toFile();
-            if (!tmpdirFile.exists()) {
-                throw new CrtRuntimeException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\" directory does not exist");
-            }
-            if (!tmpdirFile.isDirectory()) {
-                throw new CrtRuntimeException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\" is not a directory");
+            if (!tmpdirFile.exists() || !tmpdirFile.isDirectory()) {
+                throw new NotDirectoryException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\"");
             }
             if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                throw new CrtRuntimeException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\" directory lacks read/write permission");
+                throw new AccessDeniedException("java.io.tmpdir=\"" + tmpdirPath.toString() + "\"");
             }
 
             // Prefix the lib

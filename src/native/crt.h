@@ -49,6 +49,7 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
 
 /*******************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray - Creates an aws_byte_cursor from a jbyteArray.
+ * Returns cursor with NULL ptr and raises AWS_ERROR if error occurs.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array);
 
@@ -97,11 +98,13 @@ void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit);
  * characters extracted from the supplied jstring. The string value is null-terminated.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
+ * On failure, returns NULL cursor.ptr and raises AWS_ERROR.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str);
 
 /********************************************************************************
- * aws_jni_byte_cursor_from_jstring_release - Releases the string back to the JVM
+ * aws_jni_byte_cursor_from_jstring_release - Releases the string back to the JVM.
+ * If cur.ptr is NULL, nothing happens.
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur);
 
@@ -110,11 +113,13 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
  * bytes extracted from the supplied jbyteArray.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
+ * On failure, returns NULL cursor.ptr and raises AWS_ERROR.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
 
 /********************************************************************************
- * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
+ * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM.
+ * If cur.ptr is NULL, nothing happens.
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
 

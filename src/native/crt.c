@@ -133,22 +133,37 @@ jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, si
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str) {
-    return aws_byte_cursor_from_array(
-        (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+    const char *str_chars = (*env)->GetStringUTFChars(env, str, NULL);
+    if (!str_chars) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetStringUTFLength(env, str);
+    return aws_byte_cursor_from_array(str_chars, len);
 }
 
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {
-    (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    if (cur.ptr) {
+        (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
-    size_t len = (*env)->GetArrayLength(env, array);
     jbyte *bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    if (!bytes) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetArrayLength(env, array);
     return aws_byte_cursor_from_array(bytes, len);
 }
 
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
-    (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    if (cur.ptr) {
+        (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {

@@ -54,6 +54,18 @@ struct http_conn_manager_callback_data {
     jobject java_http_conn_manager;
 };
 
+static void s_http_conn_manager_callback_data_release(JNIEnv *env, struct http_conn_manager_callback_data *callback) {
+    if (!callback) {
+        return;
+    }
+
+    if (callback->java_http_conn_manager) {
+        (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback);
+}
+
 static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 
     struct http_conn_manager_callback_data *callback = (struct http_conn_manager_callback_data *)user_data;
@@ -66,8 +78,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // We're done with this callback data, free it.
-    (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
-    aws_mem_release(aws_jni_get_allocator(), user_data);
+    s_http_conn_manager_callback_data_release(env, callback);
 }
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerNew(
@@ -94,31 +105,47 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
     struct aws_http_connection_manager *conn_manager = NULL;
+    struct http_conn_manager_callback_data *callback_data = NULL;
+    struct aws_byte_cursor endpoint = {0};
+    struct aws_byte_cursor proxy_host = {0};
+    struct aws_byte_cursor proxy_authorization_username = {0};
+    struct aws_byte_cursor proxy_authorization_password = {0};
+    struct aws_tls_connection_options tls_conn_options = {0};
+    struct aws_tls_connection_options proxy_tls_conn_options = {0};
 
     if (!client_bootstrap) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
         return (jlong)NULL;
     }
 
     if (!socket_options) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "SocketOptions can't be null");
         return (jlong)NULL;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
+    endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
+    if (!endpoint.ptr) {
+        aws_jni_throw_runtime_exception(env, "URI host can't be null");
+        goto cleanup;
+    }
 
     if (jni_port <= 0 || 65535 < jni_port) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
         goto cleanup;
     }
 
     if (jni_window_size <= 0) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
         goto cleanup;
     }
 
     if (jni_max_conns <= 0) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Max Connections must be > 0");
         goto cleanup;
     }
@@ -126,21 +153,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     uint16_t port = (uint16_t)jni_port;
 
     int use_tls = (jni_tls_ctx != 0);
-
-    struct aws_tls_connection_options tls_conn_options = {0};
-
     if (use_tls) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
+        if (aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_connection_options_set_server_name failed");
+            goto cleanup;
+        }
     }
 
-    struct http_conn_manager_callback_data *callback_data =
-        aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
+    callback_data = aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
     AWS_FATAL_ASSERT(callback_data);
     callback_data->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
+    AWS_FATAL_ASSERT(callback_data->java_http_conn_manager);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     struct aws_http_connection_manager_options manager_options = {0};
@@ -161,26 +187,28 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_http_proxy_options proxy_options;
     AWS_ZERO_STRUCT(proxy_options);
 
-    struct aws_byte_cursor proxy_host;
-    AWS_ZERO_STRUCT(proxy_host);
     if (jni_proxy_host != NULL) {
         proxy_host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
+        AWS_FATAL_ASSERT(proxy_host.ptr);
     }
 
-    struct aws_byte_cursor proxy_authorization_username;
-    AWS_ZERO_STRUCT(proxy_authorization_username);
     if (jni_proxy_authorization_username != NULL) {
         proxy_authorization_username = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_username);
+        AWS_FATAL_ASSERT(proxy_authorization_username.ptr);
     }
 
-    struct aws_byte_cursor proxy_authorization_password;
-    AWS_ZERO_STRUCT(proxy_authorization_password);
     if (jni_proxy_authorization_password != NULL) {
         proxy_authorization_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
+        AWS_FATAL_ASSERT(proxy_authorization_password.ptr);
     }
 
-    struct aws_tls_connection_options proxy_tls_conn_options = {0};
     if (jni_proxy_host != NULL) {
+        if (jni_proxy_port <= 0 || 65535 < jni_proxy_port) {
+            aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+            aws_jni_throw_runtime_exception(env, "Proxy port must be between 1 and 65535");
+            goto cleanup;
+        }
+
         proxy_options.host = proxy_host;
         proxy_options.port = (uint16_t)jni_proxy_port;
         proxy_options.auth_type = jni_proxy_authorization_type;
@@ -190,7 +218,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         if (jni_proxy_tls_context != 0) {
             struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;
             aws_tls_connection_options_init_from_ctx(&proxy_tls_conn_options, proxy_tls_ctx);
-            aws_tls_connection_options_set_server_name(&proxy_tls_conn_options, allocator, &proxy_options.host);
+            if (aws_tls_connection_options_set_server_name(&proxy_tls_conn_options, allocator, &proxy_options.host)) {
+                aws_jni_throw_runtime_exception(env, "aws_tls_connection_options_set_server_name failed");
+                goto cleanup;
+            }
             proxy_options.tls_options = &proxy_tls_conn_options;
         }
 
@@ -198,29 +229,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     conn_manager = aws_http_connection_manager_new(allocator, &manager_options);
-
-    if (jni_proxy_host != NULL) {
-        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_host);
-    }
-
-    if (jni_proxy_authorization_username != NULL) {
-        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_authorization_username);
-    }
-
-    if (jni_proxy_authorization_password != NULL) {
-        aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_password, proxy_authorization_password);
-    }
-
-    if (use_tls) {
-        aws_tls_connection_options_clean_up(&tls_conn_options);
-    }
-
-    if (proxy_options.tls_options) {
-        aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
+    if (!conn_manager) {
+        aws_jni_throw_runtime_exception(env, "aws_http_connection_manager_new failed");
+        goto cleanup;
     }
 
 cleanup:
+
     aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_host);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_authorization_username);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_password, proxy_authorization_password);
+
+    aws_tls_connection_options_clean_up(&tls_conn_options);
+    aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
+
+    if (!conn_manager) {
+        s_http_conn_manager_callback_data_release(env, callback_data);
+    }
 
     return (jlong)conn_manager;
 }
@@ -236,6 +262,7 @@ JNIEXPORT void JNICALL
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
         return;
     }
@@ -270,8 +297,7 @@ static void s_on_http_conn_acquisition_callback(
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // We're done with this callback data, free it.
-    (*env)->DeleteGlobalRef(env, callback->java_http_conn_manager);
-    aws_mem_release(aws_jni_get_allocator(), user_data);
+    s_http_conn_manager_callback_data_release(env, callback);
 }
 
 JNIEXPORT void JNICALL
@@ -286,6 +312,7 @@ JNIEXPORT void JNICALL
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
         return;
     }
@@ -295,10 +322,12 @@ JNIEXPORT void JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_conn_manager_callback_data *callback_data =
         aws_mem_acquire(allocator, sizeof(struct http_conn_manager_callback_data));
+    AWS_FATAL_ASSERT(callback_data);
+
     callback_data->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
+    AWS_FATAL_ASSERT(callback_data->java_http_conn_manager);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     aws_http_connection_manager_acquire_connection(
@@ -318,11 +347,13 @@ JNIEXPORT void JNICALL
     struct aws_http_connection *conn = (struct aws_http_connection *)jni_conn;
 
     if (!conn_manager) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
         return;
     }
 
     if (!conn) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         aws_jni_throw_runtime_exception(env, "Connection can't be null");
         return;
     }
@@ -333,7 +364,10 @@ JNIEXPORT void JNICALL
         (void *)conn_manager,
         (void *)conn);
 
-    aws_http_connection_manager_release_connection(conn_manager, conn);
+    if (aws_http_connection_manager_release_connection(conn_manager, conn)) {
+        aws_jni_throw_runtime_exception(env, "aws_http_connection_manager_release_connection failed");
+        return;
+    }
 }
 
 #if UINTPTR_MAX == 0xffffffff

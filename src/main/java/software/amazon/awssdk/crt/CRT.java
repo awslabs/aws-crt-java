@@ -68,7 +68,7 @@ public final class CRT {
         } else if (name.contains("android")) {
             return "android";
         }
-            
+
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
@@ -89,17 +89,40 @@ public final class CRT {
                 return "armv8";
             }
         }
-        
+
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
     private static void loadLibraryFromJar() {
         try {
+            // Check java.io.tmpdir
+            String tmpdir = System.getProperty("java.io.tmpdir");
+            Path tmpdirPath;
+            try {
+                tmpdirPath = Paths.get(tmpdir).toAbsolutePath().normalize();
+                File tmpdirFile = tmpdirPath.toFile();
+                if (tmpdirFile.exists()) {
+                    if (!tmpdirFile.isDirectory()) {
+                        throw new NotDirectoryException(tmpdirPath.toString());
+                    }
+                } else {
+                    Files.createDirectories(tmpdirPath);
+                }
+
+                if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
+                    throw new AccessDeniedException(tmpdirPath.toString());
+                }
+            }
+            catch (Exception ex) {
+                String msg = "java.io.tmpdir=\"" + tmpdir + "\": Invalid directory";
+                throw new IOException(msg, ex);
+            }
+
             // Prefix the lib
             String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
-            Path libTempPath = Files.createTempFile(Paths.get(System.getProperty("java.io.tmpdir")), prefix, libraryName);
+            Path libTempPath = Files.createTempFile(tmpdirPath, prefix, libraryName);
 
             // open a stream to read the shared lib contents from this JAR
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
@@ -109,7 +132,7 @@ public final class CRT {
                 // Copy from jar stream to temp file
                 Files.deleteIfExists(libTempPath);
                 Files.copy(in, libTempPath);
-            }            
+            }
 
             File tempSharedLib = libTempPath.toFile();
             if (!tempSharedLib.setExecutable(true)) {
@@ -166,7 +189,7 @@ public final class CRT {
 
     /**
      * Given an integer error code from an internal operation
-     * 
+     *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
      * @return A string identifier for the error

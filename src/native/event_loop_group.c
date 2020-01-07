@@ -56,7 +56,7 @@ jlong JNICALL
 struct event_loop_group_cleanup_callback_data {
     JavaVM *jvm;
     jlong elg_addr;
-    jobject java_event_loop_group;
+    jweak weak_event_loop_group;
 };
 
 static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
@@ -71,13 +71,19 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     // Tell the Java event loop group that cleanup is done.  This lets it release its references.
     JavaVM *jvm = callback_data->jvm;
     JNIEnv *env = NULL;
+
     /* fetch the env manually, rather than through the helper which will install an exit callback */
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
-    // Remove the ref that was probably keeping the Java event loop group alive.
-    (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
+    jobject java_elg = (*env)->NewLocalRef(env, callback_data->weak_event_loop_group);
+    if (java_elg != NULL) {
+        (*env)->CallVoidMethod(env, java_elg, event_loop_group_properties.onCleanupComplete);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
+        (*env)->DeleteLocalRef(env, java_elg);
+    }
+
+    (*env)->DeleteWeakGlobalRef(env, callback_data->weak_event_loop_group);
 
     // We're done with this callback data, free it.
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -103,7 +109,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct event_loop_group_cleanup_callback_data *callback_data =
         aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
+    callback_data->weak_event_loop_group = (*env)->NewWeakGlobalRef(env, elg_jobject);
     callback_data->elg_addr = elg_addr;
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);

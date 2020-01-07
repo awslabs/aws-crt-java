@@ -95,7 +95,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult != 0);
+    AWS_FATAL_ASSERT(jvmresult == 0 && "Unable to acquire JNIEnv on this thread");
 
     callback_data->java_client_bootstrap = (*env)->NewGlobalRef(env, jni_bootstrap);
     AWS_FATAL_ASSERT(callback_data->java_client_bootstrap);

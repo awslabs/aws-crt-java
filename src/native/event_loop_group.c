@@ -74,12 +74,8 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
 
     /* fetch the env manually, rather than through the helper which will install an exit callback */
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
-
-    if (callback_data->java_event_loop_group != NULL) {
-        (*env)->CallVoidMethod(
-            env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
-    }
+    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     // Remove the ref that was probably keeping the Java event loop group alive.
     (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);

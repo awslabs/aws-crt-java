@@ -71,7 +71,6 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     // Tell the Java event loop group that cleanup is done.  This lets it release its references.
     JavaVM *jvm = callback_data->jvm;
     JNIEnv *env = NULL;
-
     /* fetch the env manually, rather than through the helper which will install an exit callback */
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);

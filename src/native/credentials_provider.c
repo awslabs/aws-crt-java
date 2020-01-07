@@ -57,7 +57,6 @@ static void s_on_shutdown_complete(void *user_data) {
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 
-    // Remove the global ref added at the beginning of shutdown
     (*env)->DeleteWeakGlobalRef(env, callback_data->weak_java_crt_credentials_provider);
 
     // We're done with this callback data, free it.

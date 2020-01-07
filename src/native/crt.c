@@ -227,9 +227,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     jboolean jni_debug_wait) {
     (void)jni_crt_class;
 
-    jobject test = (*env)->NewLocalRef(env, NULL);
-    AWS_FATAL_ASSERT(test == NULL);
-
     if (jni_debug_wait) {
         bool done = false;
         while (!done) {

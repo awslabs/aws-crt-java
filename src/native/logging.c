@@ -58,12 +58,12 @@ static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_
 
     if (g_memory_tracing == 0) {
         if (aws_logger_init_standard(&s_logger, allocator, options)) {
-            aws_jni_throw_runtime_exception(env, "Failed to initialize standard logger");
+            aws_jni_throw_last_error(env, "Failed to initialize standard logger");
             return;
         }
     } else {
         if (aws_logger_init_noalloc(&s_logger, allocator, options)) {
-            aws_jni_throw_runtime_exception(env, "Failed to initialize no-alloc logger");
+            aws_jni_throw_last_error(env, "Failed to initialize no-alloc logger");
             return;
         }
     }

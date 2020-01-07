@@ -96,12 +96,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_http_connection_manager *conn_manager = NULL;
 
     if (!client_bootstrap) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "ClientBootstrap can't be null");
         return (jlong)NULL;
     }
 
     if (!socket_options) {
-        aws_jni_throw_runtime_exception(env, "SocketOptions can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "SocketOptions can't be null");
         return (jlong)NULL;
     }
 
@@ -109,17 +109,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
 
     if (jni_port <= 0 || 65535 < jni_port) {
-        aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
+        aws_jni_throw_illegal_argument_exception(env, "Port must be between 1 and 65535");
         goto cleanup;
     }
 
     if (jni_window_size <= 0) {
-        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
+        aws_jni_throw_illegal_argument_exception(env, "Window Size must be > 0");
         goto cleanup;
     }
 
     if (jni_max_conns <= 0) {
-        aws_jni_throw_runtime_exception(env, "Max Connections must be > 0");
+        aws_jni_throw_illegal_argument_exception(env, "Max Connections must be > 0");
         goto cleanup;
     }
 
@@ -236,7 +236,7 @@ JNIEXPORT void JNICALL
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
-        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "Connection Manager can't be null");
         return;
     }
 
@@ -286,7 +286,7 @@ JNIEXPORT void JNICALL
     struct aws_http_connection_manager *conn_manager = (struct aws_http_connection_manager *)jni_conn_manager;
 
     if (!conn_manager) {
-        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "Connection Manager can't be null");
         return;
     }
 
@@ -318,12 +318,12 @@ JNIEXPORT void JNICALL
     struct aws_http_connection *conn = (struct aws_http_connection *)jni_conn;
 
     if (!conn_manager) {
-        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "Connection Manager can't be null");
         return;
     }
 
     if (!conn) {
-        aws_jni_throw_runtime_exception(env, "Connection can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "Connection can't be null");
         return;
     }
 

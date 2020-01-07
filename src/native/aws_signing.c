@@ -271,7 +271,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     struct s_aws_sign_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
     if (callback_data == NULL) {
-        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
+        aws_jni_throw_last_error(env, "Failed to allocated sign request callback data");
         return;
     }
 
@@ -289,7 +289,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     AWS_ZERO_STRUCT(signing_config);
 
     if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
-        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
+        aws_jni_throw_last_error(env, "Failed to allocated sign request callback data");
         s_cleanup_callback_data(callback_data);
         return;
     }
@@ -302,14 +302,14 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     callback_data->native_request = aws_http_request_new_from_java_http_request(
         env, java_method, java_uri, java_http_request_headers, java_http_request_body_stream);
     if (callback_data->native_request == NULL) {
-        aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
+        aws_jni_throw_last_error(env, "Failed to create native http request from Java HttpRequest");
         s_cleanup_callback_data(callback_data);
         return;
     }
 
     callback_data->original_message_signable = aws_signable_new_http_request(allocator, callback_data->native_request);
     if (callback_data->original_message_signable == NULL) {
-        aws_jni_throw_runtime_exception(env, "Failed to create signable from http request");
+        aws_jni_throw_last_error(env, "Failed to create signable from http request");
         s_cleanup_callback_data(callback_data);
         return;
     }
@@ -321,7 +321,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             (struct aws_signing_config_base *)&signing_config,
             s_aws_signing_complete,
             callback_data)) {
-        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for HttpRequest");
+        aws_jni_throw_last_error(env, "Failed to initiate signing process for HttpRequest");
         s_cleanup_callback_data(callback_data);
     }
 }

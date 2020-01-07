@@ -297,12 +297,12 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
+        aws_jni_throw_illegal_argument_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
         return (jobject)NULL;
     }
 
     if (!jni_http_response_callback_handler) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "HttpClientConnection.MakeRequest: Invalid jni_http_response_callback_handler");
         return (jobject)NULL;
     }
@@ -366,7 +366,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     if (!native_stream) {
         // Failed to create native aws_http_stream. Clean up callback_data.
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
+        aws_jni_throw_last_error(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
         http_stream_callback_destroy(env, callback_data);
         return NULL;
     } else if (!jHttpStream) {
@@ -395,7 +395,7 @@ JNIEXPORT void JNICALL
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
     if (stream == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        aws_jni_throw_illegal_argument_exception(env, "HttpStream is null.");
         return;
     }
 
@@ -413,7 +413,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
     if (stream == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        aws_jni_throw_illegal_argument_exception(env, "HttpStream is null.");
         return -1;
     }
 
@@ -421,7 +421,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     int err_code = aws_http_stream_get_incoming_response_status(stream, &status);
 
     if (err_code != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "Error Getting Response Status Code from HttpStream.");
+        aws_jni_throw_last_error(env, "Error Getting Response Status Code from HttpStream.");
         return -1;
     }
 
@@ -439,12 +439,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
 
     if (stream == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        aws_jni_throw_illegal_argument_exception(env, "HttpStream is null.");
         return;
     }
 
     if (window_update < 0) {
-        aws_jni_throw_runtime_exception(env, "Window Update is < 0");
+        aws_jni_throw_illegal_argument_exception(env, "Window Update is < 0");
         return;
     }
 

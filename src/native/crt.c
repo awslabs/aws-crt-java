@@ -51,7 +51,7 @@ struct aws_allocator *aws_jni_get_allocator() {
     return s_allocator;
 }
 
-void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
+void aws_jni_throw_last_error(JNIEnv *env, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
     char buf[1024];
@@ -70,6 +70,17 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
         aws_error_str(error));
     jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
     (*env)->ThrowNew(env, runtime_exception, exception);
+}
+
+void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+
+    jclass exc_class = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+    (*env)->ThrowNew(env, exc_class, buf);
 }
 
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
@@ -149,22 +160,6 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
 
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
     (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
-}
-
-struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {
-    jlong payload_size = (*env)->GetDirectBufferCapacity(env, byte_buffer);
-    if (payload_size == -1) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.mqtt_publish: Unable to get capacity of payload ByteBuffer");
-        return aws_byte_cursor_from_array(NULL, 0);
-    }
-    jbyte *payload_data = (*env)->GetDirectBufferAddress(env, byte_buffer);
-    if (!payload_data) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.mqtt_publish: Unable to get buffer from payload ByteBuffer");
-        return aws_byte_cursor_from_array(NULL, 0);
-    }
-    return aws_byte_cursor_from_array((const uint8_t *)payload_data, (size_t)payload_size);
 }
 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {

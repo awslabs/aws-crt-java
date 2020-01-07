@@ -81,6 +81,7 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
 
+    // Remove the ref that was probably keeping the Java event loop group alive.
     (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
 
     // We're done with this callback data, free it.

@@ -77,12 +77,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_hr;
 
     if (!elg) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
+        aws_jni_throw_illegal_argument_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
         return (jlong)NULL;
     }
 
     if (!resolver) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid HostResolver");
+        aws_jni_throw_illegal_argument_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid HostResolver");
         return (jlong)NULL;
     }
 
@@ -90,21 +90,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
 
     struct shutdown_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
     if (!callback_data) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to allocate");
+        aws_jni_throw_last_error(env, "ClientBootstrap.client_bootstrap_new: Unable to allocate");
         return (jlong)NULL;
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    if (jvmresult != 0) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to get JVM");
-        goto error;
-    }
+    AWS_FATAL_ASSERT(jvmresult != 0);
 
     callback_data->java_client_bootstrap = (*env)->NewGlobalRef(env, jni_bootstrap);
-    if (!callback_data->java_client_bootstrap) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global ref");
-        goto error;
-    }
+    AWS_FATAL_ASSERT(callback_data->java_client_bootstrap);
 
     struct aws_client_bootstrap_options bootstrap_options = {
         .event_loop_group = elg,
@@ -115,7 +109,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
 
     struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, &bootstrap_options);
     if (!bootstrap) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_last_error(
             env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
         goto error;
     }

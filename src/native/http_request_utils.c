@@ -216,7 +216,7 @@ int aws_apply_java_http_request_changes_to_native_request(
         (*env)->DeleteLocalRef(env, jHeader);
 
         if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: Header[%d] error", i);
+            aws_jni_throw_last_error(env, "HttpRequest.applyChangesToNativeRequest: Header[%d] error", i);
             return result;
         }
     }
@@ -226,7 +226,7 @@ int aws_apply_java_http_request_changes_to_native_request(
     aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_and_query_cur);
 
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: set uri failed");
+        aws_jni_throw_last_error(env, "HttpRequest.applyChangesToNativeRequest: set uri failed");
     }
 
     return result;
@@ -241,7 +241,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
 
     struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
     if (request == NULL) {
-        aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
+        aws_jni_throw_last_error(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
         return NULL;
     }
 
@@ -249,7 +249,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     int result = aws_http_message_set_request_method(request, method_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
+        aws_jni_throw_last_error(env, "HttpClientConnection.MakeRequest: Unable to set Method");
         goto on_error;
     }
 
@@ -257,7 +257,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     result = aws_http_message_set_request_path(request, path_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
+        aws_jni_throw_last_error(env, "HttpClientConnection.MakeRequest: Unable to set Path");
         goto on_error;
     }
 
@@ -291,7 +291,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
         (*env)->DeleteLocalRef(env, jHeader);
 
         if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
+            aws_jni_throw_last_error(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
             goto on_error;
         }
     }
@@ -300,7 +300,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
         struct aws_input_stream *body_stream =
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
         if (body_stream == NULL) {
-            aws_jni_throw_runtime_exception(env, "aws_fill_out_request: Error building body stream");
+            aws_jni_throw_last_error(env, "aws_fill_out_request: Error building body stream");
             goto on_error;
         }
 

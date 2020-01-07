@@ -45,8 +45,7 @@ jlong JNICALL
     if (result != AWS_OP_SUCCESS) {
         aws_event_loop_group_clean_up(elg);
         aws_mem_release(allocator, elg);
-        aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_default_init failed");
+        aws_jni_throw_last_error(env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_default_init failed");
         return (jlong)NULL;
     }
 
@@ -95,7 +94,7 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     (void)jni_elg;
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
     if (!elg) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "EventLoopGroup.eventLoopGroupDestroy: instance should be non-null at clean_up time");
         return;
     }

@@ -99,12 +99,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     if (jni_certificate && jni_private_key) {
         tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);
         if (!tls->certificate) {
-            aws_jni_throw_runtime_exception(env, "failed to get certificate string");
+            aws_jni_throw_last_error(env, "failed to get certificate string");
             goto on_error;
         }
         tls->private_key = aws_jni_new_string_from_jstring(env, jni_private_key);
         if (!tls->private_key) {
-            aws_jni_throw_runtime_exception(env, "failed to get privateKey string");
+            aws_jni_throw_last_error(env, "failed to get privateKey string");
             goto on_error;
         }
 
@@ -112,18 +112,18 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         struct aws_byte_cursor key_cursor = aws_byte_cursor_from_string(tls->private_key);
 
         if (aws_tls_ctx_options_init_client_mtls(&tls->options, allocator, &cert_cursor, &key_cursor)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_init_client_mtls failed");
             goto on_error;
         }
     } else if (jni_cert_path && jni_key_path) {
         tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_cert_path);
         if (!tls->certificate_path) {
-            aws_jni_throw_runtime_exception(env, "failed to get certificatePath string");
+            aws_jni_throw_last_error(env, "failed to get certificatePath string");
             goto on_error;
         }
         tls->private_key_path = aws_jni_new_string_from_jstring(env, jni_key_path);
         if (!tls->private_key_path) {
-            aws_jni_throw_runtime_exception(env, "failed to get privateKeyPath string");
+            aws_jni_throw_last_error(env, "failed to get privateKeyPath string");
             goto on_error;
         }
 
@@ -132,7 +132,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 allocator,
                 aws_string_c_str(tls->certificate_path),
                 aws_string_c_str(tls->private_key_path))) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_path failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_init_client_mtls_from_path failed");
             goto on_error;
         }
     }
@@ -140,12 +140,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     if (jni_ca) {
         tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);
         if (!tls->ca_root) {
-            aws_jni_throw_runtime_exception(env, "failed to get caRoot string");
+            aws_jni_throw_last_error(env, "failed to get caRoot string");
             goto on_error;
         }
         struct aws_byte_cursor ca_cursor = aws_byte_cursor_from_string(tls->ca_root);
         if (aws_tls_ctx_options_override_default_trust_store(&tls->options, &ca_cursor)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_override_default_trust_store failed");
             goto on_error;
         }
     } else if (jni_ca_filepath || jni_ca_dirpath) {
@@ -154,7 +154,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         if (jni_ca_filepath) {
             tls->ca_file = aws_jni_new_string_from_jstring(env, jni_ca_filepath);
             if (!tls->ca_file) {
-                aws_jni_throw_runtime_exception(env, "failed to get caFile string");
+                aws_jni_throw_last_error(env, "failed to get caFile string");
                 goto on_error;
             }
 
@@ -163,7 +163,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         if (jni_ca_dirpath) {
             tls->ca_path = aws_jni_new_string_from_jstring(env, jni_ca_dirpath);
             if (!tls->ca_path) {
-                aws_jni_throw_runtime_exception(env, "failed to get caPath string");
+                aws_jni_throw_last_error(env, "failed to get caPath string");
                 goto on_error;
             }
 
@@ -171,7 +171,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
 
         if (aws_tls_ctx_options_override_default_trust_store_from_path(&tls->options, ca_path, ca_file)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_override_default_trust_store_from_path failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_override_default_trust_store_from_path failed");
             goto on_error;
         }
     }
@@ -180,19 +180,19 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
         if (!tls->pkcs12_path) {
-            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Path string");
+            aws_jni_throw_last_error(env, "failed to get pkcs12Path string");
             goto on_error;
         }
         tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
         if (!tls->pkcs12_password) {
-            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Password string");
+            aws_jni_throw_last_error(env, "failed to get pkcs12Password string");
             goto on_error;
         }
 
         struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
         if (aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
                 &tls->options, allocator, aws_string_c_str(tls->pkcs12_path), &password)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
             goto on_error;
         }
     }
@@ -208,12 +208,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     if (jni_alpn) {
         tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);
         if (!tls->alpn_list) {
-            aws_jni_throw_runtime_exception(env, "failed to get alpnList string");
+            aws_jni_throw_last_error(env, "failed to get alpnList string");
             goto on_error;
         }
 
         if (aws_tls_ctx_options_set_alpn_list(&tls->options, aws_string_c_str(tls->alpn_list))) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_set_alpn_list failed");
+            aws_jni_throw_last_error(env, "aws_tls_ctx_options_set_alpn_list failed");
             goto on_error;
         }
     }
@@ -257,7 +257,7 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContext
     (void)jni_class;
 
     if (jni_cipher_pref < 0 || AWS_IO_TLS_CIPHER_PREF_END_RANGE <= jni_cipher_pref) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env,
             "TlsContextOptions.tlsContextOptionsSetCipherPreference: TlsCipherPreference is out of range: %d",
             (int)jni_cipher_pref);

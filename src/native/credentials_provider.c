@@ -95,7 +95,7 @@ JNIEXPORT jlong JNICALL
     struct aws_credentials_provider *provider = aws_credentials_provider_new_static(allocator, &options);
     if (provider == NULL) {
         aws_mem_release(allocator, callback_data);
-        aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
+        aws_jni_throw_last_error(env, "Failed to create static credentials provider");
     } else {
         callback_data->provider = provider;
     }
@@ -137,7 +137,7 @@ JNIEXPORT jlong JNICALL
     struct aws_credentials_provider *provider = aws_credentials_provider_new_chain_default(allocator, &options);
     if (provider == NULL) {
         aws_mem_release(allocator, callback_data);
-        aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
+        aws_jni_throw_last_error(env, "Failed to create default credentials provider chain");
     } else {
         callback_data->provider = provider;
     }
@@ -155,7 +155,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     (void)cp_object;
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)cp_addr;
     if (!provider) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "CredentialsProvider.credentialsProviderDestroy: instance should be non-null at destruction time");
         return;
     }
@@ -241,13 +241,13 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     (void)jni_cp;
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)native_credentials_provider;
     if (!provider) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "CredentialsProvider.credentialsProviderGetCredentials: instance should be non-null");
         return;
     }
 
     if (java_crt_credentials_provider == NULL || java_credentials_future == NULL) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "CredentialsProvider.credentialsProviderGetCredentials: called with null parameters");
         return;
     }
@@ -265,7 +265,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     aws_credentials_provider_acquire(provider);
 
     if (aws_credentials_provider_get_credentials(provider, s_on_get_credentials_callback, callback_data)) {
-        aws_jni_throw_runtime_exception(env, "CrtCredentialsProvider.credentialsProviderGetCredentials: call failure");
+        aws_jni_throw_last_error(env, "CrtCredentialsProvider.credentialsProviderGetCredentials: call failure");
         aws_credentials_provider_release(provider);
     }
 }

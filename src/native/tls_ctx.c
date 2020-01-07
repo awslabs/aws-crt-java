@@ -38,14 +38,14 @@ jlong JNICALL
     (void)jni_class;
     struct aws_tls_ctx_options *options = (struct aws_tls_ctx_options *)jni_options;
     if (!options) {
-        aws_jni_throw_runtime_exception(env, "TlsContext.tls_ctx_new: Invalid TlsOptions");
+        aws_jni_throw_illegal_argument_exception(env, "TlsContext.tls_ctx_new: Invalid TlsOptions");
         return (jlong)NULL;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_tls_ctx *tls_ctx = aws_tls_client_ctx_new(allocator, options);
     if (!tls_ctx) {
-        aws_jni_throw_runtime_exception(env, "TlsContext.tls_ctx_new: Failed to create new aws_tls_ctx");
+        aws_jni_throw_last_error(env, "TlsContext.tls_ctx_new: Failed to create new aws_tls_ctx");
         return (jlong)NULL;
     }
     return (jlong)tls_ctx;

@@ -23,12 +23,19 @@
 struct aws_allocator *aws_jni_get_allocator();
 
 /*******************************************************************************
- * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the
- * supplied message, sprintf formatted. Control WILL return from this function,
+ * aws_jni_throw_last_error - throws an crt.CrtRuntimeException based on
+ * aws_last_error(). Supplied message is sprintf formatted, along with info
+ * about the AWS error code. Control WILL return from this function,
  * so after calling it, make sure to clean up any native resources before exiting
  * the calling JNIEXPORT function.
  ******************************************************************************/
-void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
+void aws_jni_throw_last_error(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
+ * aws_jni_throw_illegal_argument_exception - throw IllegalArgumentException
+ * with supplied message, sprintf formatted.
+ ******************************************************************************/
+void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
@@ -117,13 +124,6 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
  * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
-
-/*******************************************************************************
- * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the
- * direct byte buffer. Note that the buffer is not reference pinned, so the cursor
- * is only valid for the current JNI call
- ******************************************************************************/
-struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer);
 
 /*******************************************************************************
  * aws_jni_new_string_from_jstring - Creates a new aws_string from the UTF-8

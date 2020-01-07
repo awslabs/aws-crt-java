@@ -35,14 +35,14 @@ JNIEXPORT jlong JNICALL
     (void)jni_class;
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
-        aws_jni_throw_runtime_exception(env, "Invalid ClientBootstrap");
+        aws_jni_throw_illegal_argument_exception(env, "Invalid ClientBootstrap");
         return (jlong)NULL;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt_client *client = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_client));
     if (!client) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_last_error(
             env, "MqttClient.mqtt_client_init: aws_mem_calloc failed, unable to allocate new aws_mqtt_client");
         return (jlong)NULL;
     }
@@ -51,7 +51,7 @@ JNIEXPORT jlong JNICALL
 
     int result = aws_mqtt_client_init(client, allocator, bootstrap);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "MqttClient.mqtt_client_init: aws_mqtt_client_init failed");
+        aws_jni_throw_last_error(env, "MqttClient.mqtt_client_init: aws_mqtt_client_init failed");
         goto error_cleanup;
     }
 
@@ -73,7 +73,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqttClien
     (void)jni_class;
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_mqtt_client;
     if (!client) {
-        aws_jni_throw_runtime_exception(env, "MqttClient.mqtt_client_clean_up: Invalid/null client");
+        aws_jni_throw_illegal_argument_exception(env, "MqttClient.mqtt_client_clean_up: Invalid/null client");
         return;
     }
 

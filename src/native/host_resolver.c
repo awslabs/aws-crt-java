@@ -42,12 +42,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     struct aws_event_loop_group *el_group = (struct aws_event_loop_group *)jni_elg;
 
     if (!el_group) {
-        aws_jni_throw_runtime_exception(env, "HostResolver.hostResolverNew: Invalid EventLoopGroup");
+        aws_jni_throw_illegal_argument_exception(env, "HostResolver.hostResolverNew: Invalid EventLoopGroup");
         return (jlong)NULL;
     }
 
     if (max_entries <= 0) {
-        aws_jni_throw_runtime_exception(env, "HostResolver.hostResolverNew: max_entries must be >= 0");
+        aws_jni_throw_illegal_argument_exception(env, "HostResolver.hostResolverNew: max_entries must be >= 0");
         return (jlong)NULL;
     }
 
@@ -55,7 +55,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     AWS_FATAL_ASSERT(resolver);
 
     if (aws_host_resolver_init_default(resolver, allocator, (size_t)max_entries, el_group)) {
-        aws_jni_throw_runtime_exception(env, "aws_host_resolver_init_default failed");
+        aws_jni_throw_last_error(env, "aws_host_resolver_init_default failed");
         aws_mem_release(allocator, resolver);
         return (jlong)NULL;
     }
@@ -74,7 +74,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostResol
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_host_resolver;
 
     if (!resolver) {
-        aws_jni_throw_runtime_exception(env, "HostResolver.hostResolverRelease: Invalid aws_host_resolver");
+        aws_jni_throw_illegal_argument_exception(env, "HostResolver.hostResolverRelease: Invalid aws_host_resolver");
         return;
     }
 

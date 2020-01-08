@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder;
 import java.lang.Thread;
+import java.util.function.Function;
 import java.nio.file.Paths;
 
 public class EventLoopGroupTest {
@@ -80,15 +81,29 @@ public class EventLoopGroupTest {
         }
     }
 
+    public static class MyFunction implements Function<byte[], byte[]> {
+        private EventLoopGroup elg;
+        private int id;
+        private int run;
+        public MyFunction(EventLoopGroup elg, int id) {
+            this.elg = elg;
+            this.id = id;
+        }
+
+        public byte[] apply(byte[] bytesIn) {
+            //System.out.println(String.format("task:%d run:%d", id, run));
+            bytesIn[1] = 4;
+            run += 1;
+            elg.scheduleTask(this);
+            return new byte[500];
+        }
+
+    }
+
     public static void main(String[] args) {
         EventLoopGroup elg = new EventLoopGroup(0);
         for (int i = 0; i < 1000; ++i) {
-
-            elg.scheduleTask((bytes) -> {
-                //System.out.println("Function:" + Integer.toString(bytes[5]));
-                return new byte[500];
-            });
-
+            elg.scheduleTask(new MyFunction(elg, i));
         }
         try {
             Thread.sleep(100);

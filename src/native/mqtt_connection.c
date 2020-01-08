@@ -60,7 +60,7 @@ struct mqtt_jni_connection {
     struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
-    jweak weak_java_mqtt_connection; /* MqttClientConnection instance */
+    jweak java_mqtt_connection; /* MqttClientConnection instance */
     struct mqtt_jni_async_callback *on_message;
 
     struct aws_atomic_var ref_count;
@@ -175,7 +175,7 @@ static void s_on_connection_complete(
     struct mqtt_jni_connection *connection = connect_callback->connection;
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->weak_java_mqtt_connection);
+    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection != NULL) {
         (*env)->CallVoidMethod(
             env, mqtt_connection, mqtt_connection_properties.on_connection_complete, error_code, session_present);
@@ -199,7 +199,7 @@ static void s_on_connection_interrupted_internal(
     jobject ack_callback) {
 
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->weak_java_mqtt_connection);
+    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
         (*env)->CallVoidMethod(
             env, mqtt_connection, mqtt_connection_properties.on_connection_interrupted, error_code, ack_callback);
@@ -229,7 +229,7 @@ static void s_on_connection_resumed(
 
     struct mqtt_jni_connection *connection = user_data;
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->weak_java_mqtt_connection);
+    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
 
         (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_resumed, session_present);
@@ -271,7 +271,7 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
 
     aws_atomic_store_int(&connection->ref_count, 1);
     connection->client = client;
-    connection->weak_java_mqtt_connection = (*env)->NewWeakGlobalRef(env, java_mqtt_connection);
+    connection->java_mqtt_connection = (*env)->NewWeakGlobalRef(env, java_mqtt_connection);
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
@@ -302,8 +302,8 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         mqtt_jni_async_callback_destroy(connection->on_message);
     }
 
-    if (connection->weak_java_mqtt_connection) {
-        (*env)->DeleteWeakGlobalRef(env, connection->weak_java_mqtt_connection);
+    if (connection->java_mqtt_connection) {
+        (*env)->DeleteWeakGlobalRef(env, connection->java_mqtt_connection);
     }
 
     aws_mqtt_client_connection_destroy(connection->client_connection);
@@ -348,7 +348,7 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->weak_java_mqtt_connection);
+    jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
     if (mqtt_connection != NULL) {
         (*env)->CallVoidMethod(env, mqtt_connection, crt_resource_properties.release_references);
 
@@ -916,7 +916,7 @@ static void s_ws_handshake_transform(
         goto error;
     }
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->weak_java_mqtt_connection);
+    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection != NULL) {
         (*env)->CallVoidMethod(
             env, mqtt_connection, mqtt_connection_properties.on_websocket_handshake, java_http_request, ws_handshake);

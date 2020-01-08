@@ -37,7 +37,7 @@
 struct aws_credentials_provider_shutdown_callback_data {
     JavaVM *jvm;
     struct aws_credentials_provider *provider;
-    jobject java_crt_credentials_provider;
+    jweak java_crt_credentials_provider;
 };
 
 static void s_on_shutdown_complete(void *user_data) {
@@ -48,14 +48,16 @@ static void s_on_shutdown_complete(void *user_data) {
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_crt_credentials_provider,
-        credentials_provider_properties.on_shutdown_complete_method_id);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    jobject java_crt_credentials_provider = (*env)->NewLocalRef(env, callback_data->java_crt_credentials_provider);
+    if (java_crt_credentials_provider != NULL) {
+        (*env)->CallVoidMethod(
+            env, java_crt_credentials_provider, credentials_provider_properties.on_shutdown_complete_method_id);
 
-    // Remove the global ref added at the beginning of shutdown
-    (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
+        (*env)->DeleteLocalRef(env, java_crt_credentials_provider);
+        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    }
+
+    (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
 
     // We're done with this callback data, free it.
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -77,7 +79,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_shutdown_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_shutdown_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -123,7 +125,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_shutdown_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_shutdown_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);

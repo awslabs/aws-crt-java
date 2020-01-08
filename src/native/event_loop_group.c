@@ -122,7 +122,7 @@ struct task_data {
 
 static void s_run_task(struct aws_task *task, void *arg, enum aws_task_status status) {
     (void)status;
-    struct task_data *task_data = AWS_CONTAINER_OF(task, struct task_data, task);
+    struct task_data *task_data = arg;
 
     AWS_LOGF_DEBUG(AWS_LS_IO_EVENT_LOOP, "Java Scheduled Task");
 
@@ -151,7 +151,7 @@ static void s_run_task(struct aws_task *task, void *arg, enum aws_task_status st
     jerr = (*jvm)->DetachCurrentThread(jvm);
     AWS_FATAL_ASSERT(jerr == JNI_OK && "Failed DetachCurrentThread");
 
-    aws_event_loop_schedule_task_now(task_data->loop, &task_data->task);
+    aws_event_loop_schedule_task_now(task_data->loop, task);
 }
 
 JNIEXPORT

@@ -101,7 +101,8 @@ public class EventLoopGroupTest {
     }
 
     public static void main(String[] args) {
-        EventLoopGroup elg = new EventLoopGroup(0);
+        EventLoopGroup elg = new EventLoopGroup(Runtime.getRuntime().availableProcessors() * 2);
+
         for (int i = 0; i < 1000; ++i) {
             elg.scheduleTask(new MyFunction(elg, i));
         }

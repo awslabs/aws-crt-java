@@ -15,6 +15,7 @@
 
 #include <jni.h>
 
+#include <aws/common/task_scheduler.h>
 #include <aws/io/event_loop.h>
 #include <aws/io/logging.h>
 
@@ -110,6 +111,76 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     aws_event_loop_group_clean_up_async(elg, s_event_loop_group_cleanup_completion_callback, callback_data);
+}
+
+struct task_data {
+    JavaVM *jvm;
+    struct aws_task task;
+    jobject jfunction;
+    struct aws_event_loop *loop;
+};
+
+static void s_run_task(struct aws_task *task, void *arg, enum aws_task_status status) {
+    (void)status;
+    struct task_data *task_data = AWS_CONTAINER_OF(task, struct task_data, task);
+
+    AWS_LOGF_DEBUG(AWS_LS_IO_EVENT_LOOP, "Java Scheduled Task");
+
+    JavaVM *jvm = task_data->jvm;
+    JNIEnv *env = NULL;
+    jint jerr = (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
+    AWS_FATAL_ASSERT(jerr == JNI_OK && "Failed AttachCurrentThread");
+    AWS_FATAL_ASSERT(env && "env NULL after AttachCurrentThread");
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/EventLoopGroup$FunctionWrapper");
+    AWS_FATAL_ASSERT(cls && "FindClass(FunctionWrapper) failed");
+
+    jmethodID method_id = (*env)->GetMethodID(env, cls, "deliver", "([B)[B");
+    AWS_FATAL_ASSERT(method_id && "deliver() method not found");
+
+    jbyteArray jarray = (*env)->NewByteArray(env, 128);
+    AWS_FATAL_ASSERT(jarray && "NewByteArray failed");
+
+    jobject jreturned = (*env)->CallObjectMethod(env, task_data->jfunction, method_id, jarray);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env) && "Exception from callback");
+
+    AWS_FATAL_ASSERT(jreturned != NULL);
+    (*env)->DeleteLocalRef(env, jreturned);
+    (*env)->DeleteLocalRef(env, jarray);
+
+    jerr = (*jvm)->DetachCurrentThread(jvm);
+    AWS_FATAL_ASSERT(jerr == JNI_OK && "Failed DetachCurrentThread");
+
+    aws_event_loop_schedule_task_now(task_data->loop, &task_data->task);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupScheduleTask(
+    JNIEnv *env,
+    jclass jni_elg,
+    jlong elg_addr,
+    jobject jfunction) {
+
+    (void)jni_elg;
+    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
+    AWS_FATAL_ASSERT(elg && "bad elg");
+    AWS_FATAL_ASSERT(jfunction && "bad function");
+
+    struct task_data *task_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct task_data));
+    AWS_FATAL_ASSERT(task_data && "calloc task failed");
+
+    task_data->jfunction = (*env)->NewGlobalRef(env, jfunction);
+    AWS_FATAL_ASSERT(task_data->jfunction && "NewGlobalRef failed");
+
+    jint jvmresult = (*env)->GetJavaVM(env, &task_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0 && "GetJavaVM failed");
+
+    aws_task_init(&task_data->task, s_run_task, task_data, "Java scheduled task");
+
+    task_data->loop = aws_event_loop_group_get_next_loop(elg);
+    AWS_FATAL_ASSERT(task_data->loop && "next loop failed");
+
+    aws_event_loop_schedule_task_now(task_data->loop, &task_data->task);
 }
 
 #if UINTPTR_MAX == 0xffffffff

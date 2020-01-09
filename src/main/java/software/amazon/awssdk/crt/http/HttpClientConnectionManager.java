@@ -40,7 +40,6 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int port;
     private final int maxConnections;
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     /**
      * The queue of Connection Acquisition requests.
@@ -120,13 +119,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername,
-                                            proxyAuthorizationPassword));
-
-        /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
-         addReferenceTo(clientBootstrap);
-         if (useTls) {
-             addReferenceTo(tlsContext);
-         }
+                                            proxyAuthorizationPassword),
+                                            (x)->httpClientConnectionManagerRelease(x));
     }
 
     /** Called from Native when a new connection is acquired **/
@@ -185,41 +179,6 @@ public class HttpClientConnectionManager extends CrtResource {
             }
         }
     }
-
-    /**
-     * Called from Native when all Connections in this Connection Pool have finished shutting down and it is safe to
-     * begin releasing Native Resources that HttpClientConnectionManager depends on.
-     */
-    private void onShutdownComplete() {
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
-
-    /**
-     * Closes this Connection Pool and any pending Connection Acquisitions
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        isClosed.set(true);
-        closePendingAcquisitions(new RuntimeException("Connection Manager Closing. Closing Pending Connection Acquisitions."));
-        if (!isNull()) {
-            /*
-             * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
-             * connection shutdown messages to peers for any open Connections.
-             */
-            httpClientConnectionManagerRelease(getNativeHandle());
-        }
-    }
-
-    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************
      * Getter methods

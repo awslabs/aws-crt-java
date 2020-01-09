@@ -14,10 +14,8 @@
  */
 package software.amazon.awssdk.crt.auth.credentials;
 
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.Log;
 
 /**
  * A base class that represents a source of AWS credentials
@@ -57,39 +55,9 @@ public class CredentialsProvider extends CrtResource {
         }
     }
 
-    /**
-     * Begins the release process of the provider's native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            credentialsProviderDestroy(this, getNativeHandle());
-        }
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
-
-    /**
-     * Called from Native when the asynchronous shutdown process needed for credentials providers has completed.
-     */
-    private void onShutdownComplete() {
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.AuthCredentialsProvider, "CrtCredentialsProvider.onShutdownComplete");
-
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
-    }
-
-    public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
-
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void credentialsProviderDestroy(CredentialsProvider thisObj, long nativeHandle);
+    protected static native void credentialsProviderDestroy(long nativeHandle);
     private static native void credentialsProviderGetCredentials(CredentialsProvider thisObj, CompletableFuture<Credentials> future, long nativeHandle);
 }

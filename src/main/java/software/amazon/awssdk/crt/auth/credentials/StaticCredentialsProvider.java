@@ -83,7 +83,7 @@ public class StaticCredentialsProvider extends CredentialsProvider {
         byte[] sessionToken = builder.getSessionToken();
 
         long nativeHandle = staticCredentialsProviderNew(this, accessKeyId, secretAccessKey, sessionToken);
-        acquireNativeHandle(nativeHandle);
+        acquireNativeHandle(nativeHandle, (x)->credentialsProviderDestroy(x));
     }
 
     /*******************************************************************************

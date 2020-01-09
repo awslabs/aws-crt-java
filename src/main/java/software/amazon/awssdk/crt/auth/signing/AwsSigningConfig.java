@@ -20,12 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * A class representing
  */
-public class AwsSigningConfig extends CrtResource {
+public class AwsSigningConfig {
 
     public enum AwsSigningAlgorithm {
         SIGV4_HEADER(0),
@@ -118,25 +117,9 @@ public class AwsSigningConfig extends CrtResource {
             clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
             clone.setSignBody(getSignBody());
 
-            // success, bump up the ref count so we can escape the try-with-resources block
-            clone.addRef();
             return clone;
         }
     }
-
-    /**
-     * Required override method that must begin the release process of the acquired native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {}
-
-    /**
-     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
 
     public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
     public AwsSigningAlgorithm getSigningAlgorithm() {

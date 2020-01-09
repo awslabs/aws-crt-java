@@ -54,8 +54,7 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
         }
 
         long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());
-        acquireNativeHandle(nativeHandle);
-        addReferenceTo(clientBootstrap);
+        acquireNativeHandle(nativeHandle, (x)->credentialsProviderDestroy(x));
     }
 
     /*******************************************************************************

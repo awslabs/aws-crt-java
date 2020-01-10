@@ -36,88 +36,128 @@
 #    endif
 #endif
 
-struct shutdown_callback_data {
+struct client_bootstrap_binding {
     JavaVM *jvm;
     jweak java_client_bootstrap;
+    jobject java_event_loop_group;
+    jobject java_host_resolver;
 };
 
-static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callback_data *callback_data) {
-    if (!callback_data) {
+static void s_client_bootstrap_binding_destroy(JNIEnv *env, struct client_bootstrap_binding *binding) {
+    if (!binding) {
         return;
     }
 
-    if (callback_data->java_client_bootstrap) {
-        (*env)->DeleteWeakGlobalRef(env, callback_data->java_client_bootstrap);
+    if (binding->java_client_bootstrap != NULL) {
+        (*env)->DeleteWeakGlobalRef(env, binding->java_client_bootstrap);
     }
 
-    aws_mem_release(aws_jni_get_allocator(), callback_data);
+    if (binding->java_event_loop_group != NULL) {
+        (*env)->DeleteGlobalRef(env, binding->java_event_loop_group);
+    }
+
+    if (binding->java_host_resolver != NULL) {
+        (*env)->DeleteGlobalRef(env, binding->java_host_resolver);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), binding);
+}
+
+static struct client_bootstrap_binding *s_client_bootstrap_binding_new(
+    JNIEnv *env,
+    jobject java_client_bootstrap,
+    jobject java_event_loop_group,
+    jobject java_host_resolver) {
+
+    struct client_bootstrap_binding *binding =
+        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct client_bootstrap_binding));
+    if (binding == NULL) {
+        return NULL;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
+    (void)jvmresult;
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    binding->java_client_bootstrap = (*env)->NewWeakGlobalRef(env, java_client_bootstrap);
+    if (binding->java_client_bootstrap == NULL) {
+        goto on_error;
+    }
+
+    binding->java_event_loop_group = (*env)->NewGlobalRef(env, java_event_loop_group);
+    if (binding->java_event_loop_group == NULL) {
+        goto on_error;
+    }
+
+    binding->java_host_resolver = (*env)->NewGlobalRef(env, java_host_resolver);
+    if (binding->java_host_resolver == NULL) {
+        goto on_error;
+    }
+
+    return binding;
+
+on_error:
+
+    s_client_bootstrap_binding_destroy(env, binding);
+
+    return NULL;
 }
 
 static void s_client_bootstrap_shutdown_complete(void *user_data) {
-    struct shutdown_callback_data *callback_data = user_data;
+    struct client_bootstrap_binding *binding = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
 
-    jobject java_client_bootstrap = (*env)->NewLocalRef(env, callback_data->java_client_bootstrap);
-    if (java_client_bootstrap) {
-        // Tell the Java ClientBootstrap that cleanup is done.  This lets it release its references.
-        (*env)->CallVoidMethod(env, java_client_bootstrap, client_bootstrap_properties.onShutdownComplete);
-        (*env)->DeleteLocalRef(env, java_client_bootstrap);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
-    }
-
-    s_shutdown_callback_data_destroy(env, callback_data);
+    s_client_bootstrap_binding_destroy(env, binding);
 }
 
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject jni_bootstrap,
-    jlong jni_elg,
-    jlong jni_hr) {
+    jobject java_bootstrap,
+    jobject java_elg,
+    jobject java_hr) {
     (void)jni_class;
-    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
-    struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_hr;
 
+    if (java_elg == NULL) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
+        return (jlong)NULL;
+    }
+
+    if (java_hr == NULL) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid HostResolver");
+        return (jlong)NULL;
+    }
+
+    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)(*env)->CallLongMethod(
+        env, java_elg, crt_resource_properties.get_native_handle_method_id);
     if (!elg) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid EventLoopGroup");
         return (jlong)NULL;
     }
 
+    struct aws_host_resolver *resolver = (struct aws_host_resolver *)(*env)->CallLongMethod(
+        env, java_hr, crt_resource_properties.get_native_handle_method_id);
     if (!resolver) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Invalid HostResolver");
         return (jlong)NULL;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    struct shutdown_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
-    if (!callback_data) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to allocate");
+    struct client_bootstrap_binding *binding = s_client_bootstrap_binding_new(env, java_bootstrap, java_elg, java_hr);
+    if (binding == NULL) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to construct binding");
         return (jlong)NULL;
-    }
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    if (jvmresult != 0) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to get JVM");
-        goto error;
-    }
-
-    callback_data->java_client_bootstrap = (*env)->NewWeakGlobalRef(env, jni_bootstrap);
-    if (!callback_data->java_client_bootstrap) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global weak ref");
-        goto error;
     }
 
     struct aws_client_bootstrap_options bootstrap_options = {
         .event_loop_group = elg,
         .host_resolver = resolver,
         .on_shutdown_complete = s_client_bootstrap_shutdown_complete,
-        .user_data = callback_data,
+        .user_data = binding,
     };
 
-    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, &bootstrap_options);
+    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(aws_jni_get_allocator(), &bootstrap_options);
     if (!bootstrap) {
         aws_jni_throw_runtime_exception(
             env, "ClientBootstrap.client_bootstrap_new: Unable to allocate new aws_client_bootstrap");
@@ -127,7 +167,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     return (jlong)bootstrap;
 
 error:
-    s_shutdown_callback_data_destroy(env, callback_data);
+
+    s_client_bootstrap_binding_destroy(env, binding);
     return (jlong)NULL;
 }
 

@@ -275,13 +275,7 @@ class Janitor {
         }
 
         JanitorState(Janitor parent, ThreadFactory factory) {
-            int nstripes;
-
-            if (Loader.getProperty(PROP_NSTRIPES) != null) {
-                nstripes = Integer.parseInt(Loader.getProperty(PROP_NSTRIPES));
-            } else {
-                nstripes = Runtime.getRuntime().availableProcessors() * DEFAULT_PROCESSOR_MULTIPLER;
-            }
+            int nstripes = Runtime.getRuntime().availableProcessors() * DEFAULT_PROCESSOR_MULTIPLER;
 
             if (nstripes <= 0) {
                 throw new IllegalArgumentException("Bad value for " + PROP_NSTRIPES + " property; must be positive");

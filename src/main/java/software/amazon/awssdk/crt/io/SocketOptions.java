@@ -114,26 +114,9 @@ public final class SocketOptions extends CrtResource {
                 connectTimeoutMs,
                 keepAliveIntervalSecs,
                 keepAliveTimeoutSecs
-            ));   
+            ), (x)->socketOptionsDestroy(x));
         }
         return super.getNativeHandle();
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees the native resources for this set of socket options
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            socketOptionsDestroy(getNativeHandle());
-        }
     }
 
     /*******************************************************************************

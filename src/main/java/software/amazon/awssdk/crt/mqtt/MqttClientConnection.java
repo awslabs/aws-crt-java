@@ -83,7 +83,7 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
+            acquireNativeHandle(mqttClientConnectionNew(this, config.getMqttClient()), (x)->mqttClientConnectionDestroy(x));
 
             if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
@@ -103,37 +103,18 @@ public class MqttClientConnection extends CrtResource {
                     mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(),
                         options.getHost(),
                         options.getPort(),
-                        proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
+                        proxyTlsContext,
                         options.getAuthorizationType().getValue(),
                         options.getAuthorizationUsername(),
                         options.getAuthorizationPassword());
                 }
             }
 
-            addReferenceTo(config);
             this.config = config;
 
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
-    }
-
-    /**
-     * Frees native resources associated with this connection.
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        mqttClientConnectionDestroy(getNativeHandle());
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the
-     * native handle is released or if it waits. Resources that wait are responsible
-     * for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return false;
     }
 
     // Called from native when the connection is established the first time
@@ -341,7 +322,7 @@ public class MqttClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj)
+    private static native long mqttClientConnectionNew(MqttClientConnection thisObj, MqttClient client)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDestroy(long connection);
@@ -377,7 +358,7 @@ public class MqttClientConnection extends CrtResource {
     private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,
                                                                     String proxyHost,
                                                                     int proxyPort,
-                                                                    long proxyTlsContext,
+                                                                    TlsContext proxyTlsContext,
                                                                     int proxyAuthorizationType,
                                                                     String proxyAuthorizationUsername,
                                                                     String proxyAuthorizationPassword) throws CrtRuntimeException;

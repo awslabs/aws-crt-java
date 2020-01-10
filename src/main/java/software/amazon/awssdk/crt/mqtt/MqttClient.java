@@ -37,8 +37,7 @@ public class MqttClient extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap) throws CrtRuntimeException {
-        acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
-        addReferenceTo(clientBootstrap);
+        this(clientBootstrap, null);
     }
 
     /**
@@ -48,9 +47,7 @@ public class MqttClient extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext context) throws CrtRuntimeException {
-        acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
-        addReferenceTo(clientBootstrap);
-        addReferenceTo(context);
+        acquireNativeHandle(mqttClientNew(clientBootstrap, context), (x)->mqttClientDestroy(x));
         this.tlsContext = context;
     }
 
@@ -58,28 +55,11 @@ public class MqttClient extends CrtResource {
      * Gets the tls context used by all connections associated with this client.
      */
     public TlsContext getTlsContext() { return tlsContext; }
-
-    /**
-     * Cleans up the native resources associated with this client. The client is unusable after this call
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            mqttClientDestroy(getNativeHandle());
-        }
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
     
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long mqttClientNew(long bootstrap) throws CrtRuntimeException;
+    private static native long mqttClientNew(ClientBootstrap bootstrap, TlsContext context) throws CrtRuntimeException;
 
     private static native void mqttClientDestroy(long client);
 }

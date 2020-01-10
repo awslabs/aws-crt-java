@@ -60,9 +60,6 @@ extern struct java_http_request_properties http_request_properties;
 /* CrtResource */
 struct java_crt_resource_properties {
     jmethodID get_native_handle_method_id;
-    jmethodID release_references;
-    jmethodID add_ref;
-    jmethodID close;
 };
 extern struct java_crt_resource_properties crt_resource_properties;
 
@@ -125,24 +122,19 @@ struct java_async_callback_properties {
 };
 extern struct java_async_callback_properties async_callback_properties;
 
-/* EventLoopGroup */
-struct java_event_loop_group_properties {
-    jmethodID onCleanupComplete;
+/* HttpClientConnection */
+struct java_http_client_connection_properties {
+    jclass http_client_connection_class;
+    jmethodID constructor;
 };
-extern struct java_event_loop_group_properties event_loop_group_properties;
+extern struct java_http_client_connection_properties http_client_connection_properties;
 
-/* ClientBootstrap */
-struct java_client_bootstrap_properties {
-    jmethodID onShutdownComplete;
+/* HttpException */
+struct java_http_exception_properties {
+    jclass http_exception_class;
+    jmethodID constructor;
 };
-extern struct java_client_bootstrap_properties client_bootstrap_properties;
-
-/* HttpClientConnectionManager */
-struct java_http_client_connection_manager_properties {
-    jmethodID onConnectionAcquired;
-    jmethodID onShutdownComplete;
-};
-extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
+extern struct java_http_exception_properties http_exception_properties;
 
 /* HttpHeader */
 struct java_http_header_properties {

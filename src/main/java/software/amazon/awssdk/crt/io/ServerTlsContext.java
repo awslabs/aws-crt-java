@@ -42,8 +42,6 @@ public final class ServerTlsContext extends TlsContext {
      * create one and re-use it for all connections.
      */
     public ServerTlsContext() throws CrtRuntimeException {
-        try (TlsContextOptions options = TlsContextOptions.createDefaultServer()) {
-            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-        }
+        super(TlsContextOptions.createDefaultServer());
     }
 };

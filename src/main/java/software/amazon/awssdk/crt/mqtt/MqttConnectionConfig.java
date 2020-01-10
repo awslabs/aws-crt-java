@@ -17,12 +17,11 @@ package software.amazon.awssdk.crt.mqtt;
 
 import java.util.function.Consumer;
 
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 
-public final class MqttConnectionConfig extends CrtResource {
+public final class MqttConnectionConfig {
     /* connection */
     private String endpoint;
     private int port;
@@ -49,21 +48,6 @@ public final class MqttConnectionConfig extends CrtResource {
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     public MqttConnectionConfig() {}
-
-
-    /**
-     * Required override method that must begin the release process of the acquired native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {}
-
-    /**
-     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Configures the connection-related callbacks for a connection
@@ -144,7 +128,6 @@ public final class MqttConnectionConfig extends CrtResource {
      * @param socketOptions The socket settings
      */
     public void setSocketOptions(SocketOptions socketOptions) {
-        swapReferenceTo(this.socketOptions, socketOptions);
         this.socketOptions = socketOptions;
     }
 
@@ -224,7 +207,6 @@ public final class MqttConnectionConfig extends CrtResource {
      * @param client the mqtt client to use
      */
     public void setMqttClient(MqttClient mqttClient) {
-        swapReferenceTo(this.mqttClient, mqttClient);
         this.mqttClient = mqttClient;
     }
 
@@ -408,31 +390,28 @@ public final class MqttConnectionConfig extends CrtResource {
      * @return shallow clone of this config object
      */
     public MqttConnectionConfig clone() {
-        try (MqttConnectionConfig clone = new MqttConnectionConfig()) {
-            clone.setEndpoint(getEndpoint());
-            clone.setPort(getPort());
-            clone.setSocketOptions(getSocketOptions());
+        MqttConnectionConfig clone = new MqttConnectionConfig();
+        clone.setEndpoint(getEndpoint());
+        clone.setPort(getPort());
+        clone.setSocketOptions(getSocketOptions());
 
-            clone.setMqttClient(getMqttClient());
-            clone.setClientId(getClientId());
-            clone.setUsername(getUsername());
-            clone.setPassword(getPassword());
-            clone.setConnectionCallbacks(getConnectionCallbacks());
-            clone.setKeepAliveMs(getKeepAliveMs());
-            clone.setPingTimeoutMs(getPingTimeoutMs());
-            clone.setCleanSession(getCleanSession());
+        clone.setMqttClient(getMqttClient());
+        clone.setClientId(getClientId());
+        clone.setUsername(getUsername());
+        clone.setPassword(getPassword());
+        clone.setConnectionCallbacks(getConnectionCallbacks());
+        clone.setKeepAliveMs(getKeepAliveMs());
+        clone.setPingTimeoutMs(getPingTimeoutMs());
+        clone.setCleanSession(getCleanSession());
 
-            clone.setWillMessage(getWillMessage());
-            clone.setWillQos(getWillQos());
-            clone.setWillRetain(getWillRetain());
+        clone.setWillMessage(getWillMessage());
+        clone.setWillQos(getWillQos());
+        clone.setWillRetain(getWillRetain());
 
-            clone.setUseWebsockets(getUseWebsockets());
-            clone.setWebsocketProxyOptions(getWebsocketProxyOptions());
-            clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
+        clone.setUseWebsockets(getUseWebsockets());
+        clone.setWebsocketProxyOptions(getWebsocketProxyOptions());
+        clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
-            // success, bump up the ref count so we can escape the try-with-resources block
-            clone.addRef();
-            return clone;
-        }
+        return clone;
     }
 }

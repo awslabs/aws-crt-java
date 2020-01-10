@@ -126,16 +126,6 @@ static void s_cache_crt_resource(JNIEnv *env) {
     crt_resource_properties.get_native_handle_method_id =
         (*env)->GetMethodID(env, crt_resource_class, "getNativeHandle", "()J");
     AWS_FATAL_ASSERT(crt_resource_properties.get_native_handle_method_id);
-
-    crt_resource_properties.release_references =
-        (*env)->GetMethodID(env, crt_resource_class, "releaseReferences", "()V");
-    AWS_FATAL_ASSERT(crt_resource_properties.release_references);
-
-    crt_resource_properties.add_ref = (*env)->GetMethodID(env, crt_resource_class, "addRef", "()V");
-    AWS_FATAL_ASSERT(crt_resource_properties.add_ref);
-
-    crt_resource_properties.close = (*env)->GetMethodID(env, crt_resource_class, "close", "()V");
-    AWS_FATAL_ASSERT(crt_resource_properties.close);
 }
 
 struct java_mqtt_connection_properties mqtt_connection_properties;
@@ -269,39 +259,31 @@ static void s_cache_async_callback(JNIEnv *env) {
     AWS_FATAL_ASSERT(async_callback_properties.on_failure);
 }
 
-struct java_event_loop_group_properties event_loop_group_properties;
+struct java_http_client_connection_properties http_client_connection_properties;
 
-static void s_cache_event_loop_group(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/EventLoopGroup");
-    AWS_FATAL_ASSERT(cls);
+static void s_cache_http_client_connection(JNIEnv *env) {
+    http_client_connection_properties.http_client_connection_class =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnection");
+    AWS_FATAL_ASSERT(http_client_connection_properties.http_client_connection_class);
 
-    event_loop_group_properties.onCleanupComplete = (*env)->GetMethodID(env, cls, "onCleanupComplete", "()V");
-    AWS_FATAL_ASSERT(event_loop_group_properties.onCleanupComplete);
+    http_client_connection_properties.constructor = (*env)->GetMethodID(
+        env,
+        http_client_connection_properties.http_client_connection_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/http/HttpClientConnectionManager;J)V");
+    AWS_FATAL_ASSERT(http_client_connection_properties.constructor);
 }
 
-struct java_client_bootstrap_properties client_bootstrap_properties;
+struct java_http_exception_properties http_exception_properties;
 
-static void s_cache_client_bootstrap(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ClientBootstrap");
-    AWS_FATAL_ASSERT(cls);
+static void s_cache_http_exception(JNIEnv *env) {
+    http_exception_properties.http_exception_class =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpException");
+    AWS_FATAL_ASSERT(http_exception_properties.http_exception_class);
 
-    client_bootstrap_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(client_bootstrap_properties.onShutdownComplete);
-}
-
-struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
-
-static void s_cache_http_client_connection_manager(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnectionManager");
-    AWS_FATAL_ASSERT(cls);
-
-    http_client_connection_manager_properties.onConnectionAcquired =
-        (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
-    AWS_FATAL_ASSERT(http_client_connection_manager_properties.onConnectionAcquired);
-
-    http_client_connection_manager_properties.onShutdownComplete =
-        (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
+    http_exception_properties.constructor =
+        (*env)->GetMethodID(env, http_exception_properties.http_exception_class, "<init>", "(I)V");
+    AWS_FATAL_ASSERT(http_exception_properties.constructor);
 }
 
 struct java_http_header_properties http_header_properties;
@@ -401,9 +383,8 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_credentials_provider(env);
     s_cache_credentials(env);
     s_cache_async_callback(env);
-    s_cache_event_loop_group(env);
-    s_cache_client_bootstrap(env);
-    s_cache_http_client_connection_manager(env);
+    s_cache_http_client_connection(env);
+    s_cache_http_exception(env);
     s_cache_http_header(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler(env);

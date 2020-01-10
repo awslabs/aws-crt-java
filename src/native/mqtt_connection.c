@@ -64,6 +64,9 @@ struct mqtt_jni_connection {
     struct mqtt_jni_async_callback *on_message;
 
     struct aws_atomic_var ref_count;
+
+    jobject java_mqtt_client;
+    jobject java_proxy_tls_options;
 };
 
 /*******************************************************************************
@@ -258,6 +261,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
 
 static struct mqtt_jni_connection *s_mqtt_connection_new(
     JNIEnv *env,
+    jobject java_mqtt_client,
     struct aws_mqtt_client *client,
     jobject java_mqtt_connection) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -271,9 +275,18 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
 
     aws_atomic_store_int(&connection->ref_count, 1);
     connection->client = client;
-    connection->java_mqtt_connection = (*env)->NewWeakGlobalRef(env, java_mqtt_connection);
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
+
+    connection->java_mqtt_connection = (*env)->NewWeakGlobalRef(env, java_mqtt_connection);
+    if (connection->java_mqtt_connection == NULL) {
+        goto on_error;
+    }
+
+    connection->java_mqtt_client = (*env)->NewGlobalRef(env, java_mqtt_client);
+    if (connection->java_mqtt_client == NULL) {
+        goto on_error;
+    }
 
     connection->client_connection = aws_mqtt_client_connection_new(client);
     if (!connection->client_connection) {
@@ -306,6 +319,10 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteWeakGlobalRef(env, connection->java_mqtt_connection);
     }
 
+    if (connection->java_mqtt_client) {
+        (*env)->DeleteGlobalRef(env, connection->java_mqtt_client);
+    }
+
     aws_mqtt_client_connection_destroy(connection->client_connection);
 
     aws_tls_connection_options_clean_up(&connection->tls_options);
@@ -317,18 +334,24 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionNew(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_client,
-    jobject jni_mqtt_connection) {
+    jobject java_mqtt_connection,
+    jobject java_mqtt_client) {
     (void)jni_class;
 
-    struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_client;
+    if (java_mqtt_client == NULL) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Client is invalid/null");
+        return (jlong)NULL;
+    }
+
+    struct aws_mqtt_client *client = (struct aws_mqtt_client *)(*env)->CallLongMethod(
+        env, java_mqtt_client, crt_resource_properties.get_native_handle_method_id);
     if (!client) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Client is invalid/null");
         return (jlong)NULL;
     }
 
     /* any error after this point needs to jump to error_cleanup */
-    struct mqtt_jni_connection *connection = s_mqtt_connection_new(env, client, jni_mqtt_connection);
+    struct mqtt_jni_connection *connection = s_mqtt_connection_new(env, java_mqtt_client, client, java_mqtt_connection);
     if (!connection) {
         return (jlong)NULL;
     }
@@ -344,18 +367,9 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
     struct mqtt_jni_connection *jni_connection = (struct mqtt_jni_connection *)user_data;
 
-    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection shutdown complete, releasing references");
+    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection shutdown complete");
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
-
-    jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
-        (*env)->CallVoidMethod(env, mqtt_connection, crt_resource_properties.release_references);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
-        (*env)->ExceptionCheck(env);
-    }
 
     s_mqtt_connection_destroy(env, jni_connection);
 }
@@ -994,7 +1008,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_connection,
     jstring jni_proxy_host,
     jint jni_proxy_port,
-    jlong jni_proxy_tls_context,
+    jobject java_proxy_tls_context,
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
     jstring jni_proxy_authorization_password) {
@@ -1027,8 +1041,26 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
 
     struct aws_tls_connection_options proxy_tls_conn_options = {0};
 
-    if (jni_proxy_tls_context != 0) {
-        struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;
+    if (java_proxy_tls_context != 0) {
+        struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)(*env)->CallLongMethod(
+            env, java_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
+        if (proxy_tls_ctx == NULL) {
+            aws_jni_throw_runtime_exception(
+                env, "MqttClientConnection.setWebsocketProxyOptions: unable to get proxy native tls context");
+            return;
+        }
+
+        if (connection->java_proxy_tls_options != NULL) {
+            (*env)->DeleteGlobalRef(env, connection->java_proxy_tls_options);
+        }
+
+        connection->java_proxy_tls_options = (*env)->NewGlobalRef(env, java_proxy_tls_context);
+        if (connection->java_proxy_tls_options == NULL) {
+            aws_jni_throw_runtime_exception(
+                env, "MqttClientConnection.setWebsocketProxyOptions: unable to ref proxy native tls context");
+            return;
+        }
+
         aws_tls_connection_options_init_from_ctx(&proxy_tls_conn_options, proxy_tls_ctx);
         aws_tls_connection_options_set_server_name(
             &proxy_tls_conn_options, aws_jni_get_allocator(), &proxy_options.host);
@@ -1047,6 +1079,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     if (jni_proxy_authorization_username) {
         aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_options.auth_username);
     }
+
+    aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
 
     aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_options.host);
 }

@@ -105,20 +105,19 @@ public class AwsSigningConfig {
     public AwsSigningConfig() {}
 
     public AwsSigningConfig clone() {
-        try (AwsSigningConfig clone = new AwsSigningConfig()) {
+        AwsSigningConfig clone = new AwsSigningConfig();
 
-            clone.setSigningAlgorithm(getSigningAlgorithm());
-            clone.setRegion(getRegion());
-            clone.setService(getService());
-            clone.setTime(getTime());
-            clone.setCredentialsProvider(getCredentialsProvider());
-            clone.setShouldSignParameter(getShouldSignParameter());
-            clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
-            clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
-            clone.setSignBody(getSignBody());
+        clone.setSigningAlgorithm(getSigningAlgorithm());
+        clone.setRegion(getRegion());
+        clone.setService(getService());
+        clone.setTime(getTime());
+        clone.setCredentialsProvider(getCredentialsProvider());
+        clone.setShouldSignParameter(getShouldSignParameter());
+        clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
+        clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
+        clone.setSignBody(getSignBody());
 
-            return clone;
-        }
+        return clone;
     }
 
     public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
@@ -136,7 +135,6 @@ public class AwsSigningConfig {
     public Instant getTime() { return Instant.ofEpochMilli(time); }
 
     public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
-        swapReferenceTo(this.credentialsProvider, credentialsProvider);
         this.credentialsProvider = credentialsProvider;
     }
 

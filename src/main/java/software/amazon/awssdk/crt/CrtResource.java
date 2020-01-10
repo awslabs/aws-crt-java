@@ -75,14 +75,14 @@ public abstract class CrtResource implements AutoCloseable {
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
-    protected void acquireNativeHandle(long handle, Consumer<long> releaser) {
+    protected void acquireNativeHandle(long handle, Consumer<Long> releaser) {
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
 
         String canonicalName = this.getClass().getCanonicalName();
 
-        if (handle == NULL) {
+        if (handle == 0) {
             throw new IllegalStateException("Can't acquire NULL Pointer: " + canonicalName);
         }
 
@@ -104,7 +104,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Checks if this resource's native handle is NULL.
      */
     public boolean isNull() {
-        return (nativeHandle == NULL);
+        return (nativeHandle == null);
     }
 
     @Override

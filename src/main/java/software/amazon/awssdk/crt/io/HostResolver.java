@@ -25,30 +25,12 @@ public class HostResolver extends CrtResource {
     }
 
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
-        acquireNativeHandle(hostResolverNew(elg.getNativeHandle(), maxEntries));
-        addReferenceTo(elg);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Cleans up the resolver's associated native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            hostResolverRelease(getNativeHandle());
-        }
+        acquireNativeHandle(hostResolverNew(elg, maxEntries), (x)->hostResolverRelease(x));
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long hostResolverNew(long el_group, int max_entries) throws CrtRuntimeException;
+    private static native long hostResolverNew(EventLoopGroup elg, int max_entries) throws CrtRuntimeException;
     private static native void hostResolverRelease(long host_resolver);
 }

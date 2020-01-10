@@ -126,27 +126,9 @@ public final class TlsContextOptions extends CrtResource {
                 verifyPeer,
                 pkcs12Path,
                 pkcs12Password
-            ));
+            ), (x)->tlsContextOptionsDestroy(x));
         }
         return super.getNativeHandle();
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees the native resources associated with this instance
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        // It is perfectly acceptable for this to have never created a native resource
-        if (!isNull()) {
-            tlsContextOptionsDestroy(getNativeHandle());
-        }
     }
 
     public void setCipherPreference(TlsCipherPreference cipherPref) {

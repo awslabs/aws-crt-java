@@ -1,5 +1,5 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
+#this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
 # This job is responsible for artifacting the JAR which will have all of the other shared libs stuffed
 # into it once all platforms are built and artifacted
 phases:

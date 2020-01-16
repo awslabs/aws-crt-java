@@ -28,7 +28,7 @@
     <scm>
         <connection>scm:git:git://github.com/awslabs/aws-crt-java.git</connection>
         <developerConnection>scm:git:ssh://github.com:awslabs/aws-crt-java.git</developerConnection>
-        <url>http://github.com/awslabs/aws-crt-java/tree/master</url>
+        <url>https://github.com/awslabs/aws-crt-java/tree/master</url>
     </scm>
 
     <properties>

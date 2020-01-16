@@ -1,5 +1,5 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
+#this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
 # This job is responsible for artifacting the JAR which will have all of the other shared libs stuffed
 # into it once all platforms are built and artifacted
 phases:
@@ -7,7 +7,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-8-jdk-headless maven -y -f
+      - sudo apt-get install awscli openjdk-8-jdk-headless maven -y -f
 
   pre_build:
     commands:

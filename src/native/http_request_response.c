@@ -68,6 +68,7 @@ struct http_stream_callback_data {
 
     jobject java_http_response_stream_handler;
     jobject java_http_stream;
+    jobject java_http_client_connection;
 };
 
 static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
@@ -82,6 +83,10 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
 
     if (callback->java_http_response_stream_handler != NULL) {
         (*env)->DeleteGlobalRef(env, callback->java_http_response_stream_handler);
+    }
+
+    if (callback->java_http_client_connection != NULL) {
+        (*env)->DeleteGlobalRef(env, callback->java_http_client_connection);
     }
 
     if (callback->native_request) {
@@ -99,7 +104,7 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
 }
 
 // If error occurs, A Java exception is thrown and NULL is returned.
-static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env, jobject java_callback_handler) {
+static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env, jobject java_callback_handler, jobject java_http_client_connection) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
@@ -113,9 +118,24 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
     aws_mutex_init(&callback->setup_lock);
 
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
-    AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
+    if (callback->java_http_response_stream_handler == NULL) {
+        aws_jni_throw_runtime_exception(env, "HttpStream create - failed to create ref to callback handler");
+        goto error;
+    }
+
+    callback->java_http_client_connection = (*env)->NewGlobalRef(env, java_http_client_connection);
+    if (callback->java_http_client_connection == NULL) {
+        aws_jni_throw_runtime_exception(env, "HttpStream create - failed to create ref to http connection");
+        goto error;
+    }
 
     return callback;
+
+error:
+
+    http_stream_callback_destroy(env, callback);
+
+    return NULL;
 }
 
 // Return whether the Java HttpStream object was successfully created.
@@ -285,6 +305,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
     JNIEnv *env,
     jclass jni_class,
+    jobject java_connection,
     jlong jni_connection,
     jstring jni_method,
     jstring jni_uri,
@@ -308,7 +329,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     }
 
     struct http_stream_callback_data *callback_data =
-        http_stream_callback_alloc(env, jni_http_response_callback_handler);
+        http_stream_callback_alloc(env, jni_http_response_callback_handler, java_connection);
     if (!callback_data) {
         // Exception already thrown
         return (jobject)NULL;

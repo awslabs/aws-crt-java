@@ -67,6 +67,14 @@ class Janitor {
     }
 
     /**
+     * testing only
+     */
+    void waitForNoReferences(long millis) throws InterruptedException {
+        wake();
+        state.waitForNoReferences(millis);
+    }
+
+    /**
      * Represents a pending cleanup action tracked by a Janitor. By invoking clean() on a Mess, the cleanup action will
      * execute immediately, and the overhead for tracking the pending cleanup can be avoided.
      *
@@ -358,6 +366,10 @@ class Janitor {
 
         Mess register(Object referent, Runnable cleanup) {
             return getStripe().add(referent, cleanup);
+        }
+
+        void waitForNoReferences(long millis) throws InterruptedException {
+            cleaner.join(millis);
         }
     }
 

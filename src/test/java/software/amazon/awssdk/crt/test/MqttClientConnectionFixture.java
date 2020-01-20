@@ -138,8 +138,9 @@ public class MqttClientConnectionFixture {
             cleanSession = true; // only true is supported right now
             String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
             try (TlsContext tls = new TlsContext(tlsOptions);
-                 MqttClient client = new MqttClient(bootstrap, tls);
-                 MqttConnectionConfig config = new MqttConnectionConfig()) {
+                 MqttClient client = new MqttClient(bootstrap, tls)) {
+
+                MqttConnectionConfig config = new MqttConnectionConfig();
 
                 config.setMqttClient(client);
                 config.setClientId(clientId);

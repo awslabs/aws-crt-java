@@ -40,7 +40,6 @@ public class HttpClientConnectionTest {
         boolean actuallyConnected = false;
         boolean exceptionThrown = false;
         Exception exception = null;
-        CompletableFuture<Void> shutdownComplete = null;
     }
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
@@ -52,7 +51,6 @@ public class HttpClientConnectionTest {
             .withUri(uri);
 
         try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
-            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 resp.actuallyConnected = true;
             }
@@ -86,8 +84,6 @@ public class HttpClientConnectionTest {
             if (resp.exception != null) {
                 Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
             }
-
-            resp.shutdownComplete.get();
 
             CrtResource.waitForNoResources();
         }

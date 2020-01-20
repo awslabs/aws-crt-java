@@ -100,7 +100,6 @@ extern struct java_byte_buffer_properties byte_buffer_properties;
 
 /* CredentialsProvider */
 struct java_credentials_provider_properties {
-    jmethodID on_shutdown_complete_method_id;
     jmethodID on_get_credentials_complete_method_id;
 };
 extern struct java_credentials_provider_properties credentials_provider_properties;

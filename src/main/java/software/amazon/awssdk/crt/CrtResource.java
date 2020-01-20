@@ -33,9 +33,11 @@ import software.amazon.awssdk.crt.Log;
  * that the first time a resource is referenced, the CRT will be loaded and bound.
  */
 public abstract class CrtResource implements AutoCloseable {
+    private static final long CLEANUP_TIMEOUT_MILLIS = 300 * 1000;
+
     private static final Janitor RESOURCE_JANITOR = new Janitor();
 
-    public class NativeHandleWrapper {
+    public static class NativeHandleWrapper {
         private boolean released = false;
         private long handle;
         private Consumer<Long> releaser;
@@ -88,9 +90,11 @@ public abstract class CrtResource implements AutoCloseable {
 
         Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s acquired native pointer %d", canonicalName, handle));
 
-        nativeHandle = new NativeHandleWrapper(handle, releaser);
+        NativeHandleWrapper wrapper = new NativeHandleWrapper(handle, releaser);
 
-        mess = RESOURCE_JANITOR.register(this, ()->nativeHandle.release());
+        mess = RESOURCE_JANITOR.register(this, wrapper::release);
+
+        this.nativeHandle = wrapper;
     }
 
     /**
@@ -112,5 +116,12 @@ public abstract class CrtResource implements AutoCloseable {
         ;
     }
 
+    public static void waitForNoResources() {
+        try {
+            RESOURCE_JANITOR.waitForNoReferences(CLEANUP_TIMEOUT_MILLIS);
+        } catch (InterruptedException ex) {
+            throw new CrtRuntimeException("Cleanup timeout");
+        }
+    }
 
 }

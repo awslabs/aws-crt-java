@@ -31,15 +31,12 @@ public class ClientBootstrapTest {
     
     @Test
     public void testCreateDestroy() throws ExecutionException, InterruptedException {
-        EventLoopGroup elg = new EventLoopGroup(1);
-        HostResolver hostResolver = new HostResolver(elg);
-        ClientBootstrap bootstrap = new ClientBootstrap(elg, hostResolver);
+        try (EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hostResolver = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hostResolver)) {
 
-        assertNotNull(bootstrap);
-        bootstrap.close();
-        bootstrap.getShutdownCompleteFuture().get();
-        hostResolver.close();
-        elg.close();
+            assertNotNull(bootstrap);
+        }
 
         CrtResource.waitForNoResources();
     }

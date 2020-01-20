@@ -31,6 +31,12 @@ struct aws_allocator *aws_jni_get_allocator();
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
+ * aws_jni_create_runtime_exception - creates a crt.CrtRuntimeException with the
+ * supplied message, sprintf formatted.
+ ******************************************************************************/
+jobject aws_jni_create_runtime_exception(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
  ******************************************************************************/
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);

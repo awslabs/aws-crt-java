@@ -145,7 +145,7 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
 
     if (env != NULL) {
-        (*env)->CallVoidMethod(
+        (*env)->CallBooleanMethod(
             env, binding->java_shutdown_complete_future, completable_future_properties.complete_method_id);
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 

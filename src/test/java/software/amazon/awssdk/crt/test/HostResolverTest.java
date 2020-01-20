@@ -16,23 +16,26 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 
-public class EventLoopGroupTest {
-    public EventLoopGroupTest() {}
+import java.util.concurrent.ExecutionException;
 
+import static org.junit.Assert.*;
+
+public class HostResolverTest {
+    public HostResolverTest() {}
+    
     @Test
-    public void testCreateDestroy() {
-        try (EventLoopGroup elg = new EventLoopGroup(1)) {
-            assertNotNull(elg);
-            assertTrue(!elg.isNull());
-        } catch (CrtRuntimeException ex) {
-            fail(ex.getMessage());
+    public void testCreateDestroy() throws ExecutionException, InterruptedException {
+        try (EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hostResolver = new HostResolver(elg)) {
+
+            assertNotNull(hostResolver);
         }
+
         CrtResource.waitForNoResources();
     }
 };

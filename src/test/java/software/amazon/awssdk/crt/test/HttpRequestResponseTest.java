@@ -31,10 +31,10 @@ import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -101,7 +101,7 @@ public class HttpRequestResponseTest {
             HostResolver resolver = new HostResolver(eventLoopGroup);
             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
             SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+            ClientTlsContext tlsContext =  new ClientTlsContext()) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
                 .withClientBootstrap(bootstrap)
@@ -120,9 +120,7 @@ public class HttpRequestResponseTest {
 
         final TestHttpResponse response = new TestHttpResponse();
 
-        CompletableFuture<Void> shutdownComplete = null;
         try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
                 HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
@@ -164,8 +162,6 @@ public class HttpRequestResponseTest {
         }
 
         Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get();
 
         CrtResource.waitForNoResources();
 

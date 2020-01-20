@@ -68,8 +68,48 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
         aws_error_name(error),
         error,
         aws_error_str(error));
-    jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
+    jclass runtime_exception = crt_runtime_exception_properties.crt_runtime_exception_class;
     (*env)->ThrowNew(env, runtime_exception, exception);
+}
+
+jobject aws_jni_create_runtime_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+
+    int error = aws_last_error();
+    char exception[1280];
+    snprintf(
+            exception,
+            sizeof(exception),
+            "%s (aws_last_error: %s(%d), %s)",
+            buf,
+            aws_error_name(error),
+            error,
+            aws_error_str(error));
+
+    jobject runtime_exception = NULL;
+    jstring message = NULL;
+
+    struct aws_byte_cursor message_cursor;
+    AWS_ZERO_STRUCT(message_cursor);
+    message = aws_jni_string_from_cursor(env, &message_cursor);
+
+    if (message == NULL) {
+        goto cleanup;
+    }
+
+    runtime_exception = (*env)->NewObject(env, crt_runtime_exception_properties.crt_runtime_exception_class, crt_runtime_exception_properties.constructor_method_id, message);
+
+cleanup:
+
+    if (message != NULL) {
+        (*env)->DeleteLocalRef(env, message);
+    }
+
+    return runtime_exception;
 }
 
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {

@@ -446,7 +446,7 @@ static void s_on_http_conn_acquisition_callback(
             java_http_conn_manager,
             (jlong)connection);
         if (http_connection != NULL) {
-            (*env)->CallVoidMethod(
+            (*env)->CallBooleanMethod(
                 env, java_completable_future, completable_future_properties.complete_method_id, http_connection);
             is_failure = false;
         }
@@ -463,7 +463,7 @@ static void s_on_http_conn_acquisition_callback(
                 env, http_exception_properties.http_exception_class, http_exception_properties.constructor, (jint)ec);
 
             // null or non-null, we need to fail the future
-            (*env)->CallVoidMethod(
+            (*env)->CallBooleanMethod(
                 env,
                 java_completable_future,
                 completable_future_properties.complete_exceptionally_method_id,

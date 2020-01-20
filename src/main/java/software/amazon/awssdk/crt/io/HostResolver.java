@@ -25,12 +25,12 @@ public class HostResolver extends CrtResource {
     }
 
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
-        acquireNativeHandle(hostResolverNew(elg, maxEntries), (x)->hostResolverRelease(x));
+        acquireNativeHandle(hostResolverNew(elg, elg.getNativeHandle(), maxEntries), (x)->hostResolverRelease(x));
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long hostResolverNew(EventLoopGroup elg, int max_entries) throws CrtRuntimeException;
+    private static native long hostResolverNew(EventLoopGroup elg, long elg_handle, int max_entries) throws CrtRuntimeException;
     private static native void hostResolverRelease(long host_resolver);
 }

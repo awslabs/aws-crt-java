@@ -54,7 +54,8 @@ public class HttpClientConnection extends CrtResource {
         CompletableFuture<HttpStream> streamFuture = new CompletableFuture<>();
 
             try {
-                HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                HttpStream stream = httpClientConnectionMakeRequest(this,
+                    getNativeHandle(),
                     request.getMethod(),
                     request.getEncodedPath(),
                     request.getHeadersAsArray(),
@@ -74,7 +75,8 @@ public class HttpClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpClientConnectionMakeRequest(long connection,
+    private static native HttpStream httpClientConnectionMakeRequest(HttpClientConnection thisObj,
+                                                                     long connectionHandle,
                                                                      String method,
                                                                      String uri,
                                                                      HttpHeader[] headers,

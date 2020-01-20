@@ -65,7 +65,7 @@ static struct host_resolver_binding *s_host_resolver_binding_new(
 
     binding->resolver = resolver;
     binding->java_event_loop_group = (*env)->NewGlobalRef(env, java_event_loop_group);
-    if (binding->java_event_loop_group != NULL) {
+    if (binding->java_event_loop_group == NULL) {
         goto on_error;
     }
 
@@ -82,6 +82,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     JNIEnv *env,
     jclass jni_class,
     jobject java_elg,
+    jlong jni_elg_handle,
     jint max_entries) {
 
     (void)jni_class;
@@ -95,8 +96,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
         return (jlong)NULL;
     }
 
-    struct aws_event_loop_group *el_group = (struct aws_event_loop_group *)(*env)->CallLongMethod(
-        env, java_elg, crt_resource_properties.get_native_handle_method_id);
+    struct aws_event_loop_group *el_group = (struct aws_event_loop_group *)jni_elg_handle;
     if (el_group == NULL) {
         aws_jni_throw_runtime_exception(env, "HostResolver.hostResolverNew: Invalid EventLoopGroup");
         return (jlong)NULL;

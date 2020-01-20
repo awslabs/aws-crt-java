@@ -26,8 +26,8 @@ import software.amazon.awssdk.crt.CrtResource;
 public class HttpStream extends CrtResource {
 
     /* Native code will call this constructor during HttpClientConnection.makeRequest() */
-    protected HttpStream(long ptr) {
-        acquireNativeHandle(ptr, (x)->httpStreamRelease(x));
+    protected HttpStream(long streamHandle) {
+        acquireNativeHandle(streamHandle, (x)->httpStreamRelease(x));
     }
 
     /**

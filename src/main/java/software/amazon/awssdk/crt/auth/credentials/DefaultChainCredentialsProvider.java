@@ -53,7 +53,7 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
             throw new IllegalArgumentException("DefaultChainCredentialsProvider: clientBootstrap must be non-null");
         }
 
-        long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());
+        long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap);
         acquireNativeHandle(nativeHandle, (x)->credentialsProviderDestroy(x));
     }
 
@@ -61,5 +61,5 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
      * Native methods
      ******************************************************************************/
 
-    private static native long defaultChainCredentialsProviderNew(DefaultChainCredentialsProvider provider, long bootstrapHandle);
+    private static native long defaultChainCredentialsProviderNew(DefaultChainCredentialsProvider provider, ClientBootstrap bootstrap);
 }

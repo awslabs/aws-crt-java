@@ -84,14 +84,6 @@ public class CrtMemoryLeakDetector {
             output += "Potential Native Memory Leak!\n";
         }
 
-        final List<String> resources = new ArrayList<>();
-        CrtResource.collectNativeResources((resource) -> {
-            resources.add(resource);
-        });
-        if (resources.size() > 0) {
-            output += String.join("\n", resources);
-        }
-
         if (output.length() > 0) {
             Assert.fail(String.format(
                     "%s\nJVM Usage Deltas: %s\nJVM Samples: %s\nNative Usage Deltas: %s\nNative Samples: %s\n", output,

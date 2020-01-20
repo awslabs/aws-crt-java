@@ -33,7 +33,7 @@ public class CredentialsProvider extends CrtResource {
     public CompletableFuture<Credentials> getCredentials() {
         CompletableFuture<Credentials> future = new CompletableFuture<>();
         try {
-            credentialsProviderGetCredentials(this, future, getNativeHandle());
+            credentialsProviderGetCredentials(future, getNativeHandle());
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
@@ -59,5 +59,5 @@ public class CredentialsProvider extends CrtResource {
      * native methods
      ******************************************************************************/
     protected static native void credentialsProviderDestroy(long nativeHandle);
-    private static native void credentialsProviderGetCredentials(CredentialsProvider thisObj, CompletableFuture<Credentials> future, long nativeHandle);
+    private static native void credentialsProviderGetCredentials(CompletableFuture<Credentials> future, long nativeHandle);
 }

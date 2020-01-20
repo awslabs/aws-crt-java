@@ -209,10 +209,6 @@ static void s_cache_credentials_provider(JNIEnv *env) {
     jclass provider_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CredentialsProvider");
     AWS_FATAL_ASSERT(provider_class);
 
-    credentials_provider_properties.on_shutdown_complete_method_id =
-        (*env)->GetMethodID(env, provider_class, "onShutdownComplete", "()V");
-    AWS_FATAL_ASSERT(credentials_provider_properties.on_shutdown_complete_method_id);
-
     credentials_provider_properties.on_get_credentials_complete_method_id = (*env)->GetMethodID(
         env,
         provider_class,

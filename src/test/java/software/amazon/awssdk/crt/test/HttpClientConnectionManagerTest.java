@@ -24,10 +24,10 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
 
 public class HttpClientConnectionManagerTest {
@@ -54,7 +54,7 @@ public class HttpClientConnectionManagerTest {
             HostResolver resolver = new HostResolver(eventLoopGroup);
             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
             SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+            ClientTlsContext tlsContext =  new ClientTlsContext()) {
 
             HttpProxyOptions proxyOptions = null;
             if (proxyHost != null) {
@@ -167,7 +167,6 @@ public class HttpClientConnectionManagerTest {
             testParallelConnections(connectionPool, request, 1, numRequests);
         }
 
-        CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
 

@@ -129,6 +129,18 @@
                 <cmake.cflags/>
             </properties>
         </profile>
+        <profile>
+            <id>linux-armv7</id>
+            <activation>
+                <os>
+                    <family>linux</family>
+                    <arch>armv7</arch>
+                </os>
+            </activation>
+            <properties>
+                <cmake.cflags/>
+            </properties>
+        </profile>
         <!-- 32-bit Unix -->
         <profile>
             <id>unix-x86</id>

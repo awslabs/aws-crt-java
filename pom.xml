@@ -138,7 +138,7 @@
                 </os>
             </activation>
             <properties>
-                <cmake.cflags/>
+                <cmake.cflags>-arch armv7</cmake.cflags>
             </properties>
         </profile>
         <!-- 32-bit Unix -->

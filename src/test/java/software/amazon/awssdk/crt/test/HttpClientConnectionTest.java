@@ -81,8 +81,8 @@ public class HttpClientConnectionTest {
                 resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
             }
 
-            Assert.assertEquals("URI: " + uri.toString(), expectConnected, resp.actuallyConnected);
-            Assert.assertEquals("URI: " + uri.toString(), expectConnected, !resp.exceptionThrown);
+            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, resp.actuallyConnected);
+            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, !resp.exceptionThrown);
             if (resp.exception != null) {
                 Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
             }

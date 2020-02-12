@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(aws-crt-jni C Java)
+option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
@@ -24,30 +25,29 @@ if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
     set(FIND_LIBRARY_USE_LIB64_PATHS true)
 endif()
 
-option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
-
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
+message(STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_LIBDIR}")
+# This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
+set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
+string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
+# Append that generated list to the module search path
+list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
+
 # Local CMake scripts
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if (BUILD_DEPS)
-    # This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
-    set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
-    string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
-    # Append that generated list to the module search path
-    list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
-
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/aws-common-runtime/aws-c-common/cmake")
+    message(STATUS ${CMAKE_MODULE_PATH})
     include(AwsFindPackage)
 
     set(IN_SOURCE_BUILD ON)
     set(BUILD_TESTING OFF)
     add_subdirectory(aws-common-runtime/aws-c-common)
     if (UNIX AND NOT APPLE)
-        list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/aws-common-runtime/s2n/cmake/modules")
-        find_package(LibCrypto REQUIRED)
         add_subdirectory(aws-common-runtime/s2n)
     endif()
     add_subdirectory(aws-common-runtime/aws-c-io)
@@ -151,6 +151,8 @@ aws_use_package(aws-c-http)
 aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-cal)
 aws_use_package(aws-c-auth)
+
+target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 
 if (UNIX AND NOT APPLE)
     message(STATUS "Linking libcrypto: ${LibCrypto_STATIC_LIBRARY}")

@@ -97,7 +97,6 @@ public class HttpClientConnectionManagerTest {
         List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
 
         for (int i = 0; i < numRequests; i++) {
-
             Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
             CompletableFuture requestCompleteFuture = new CompletableFuture();
             requestCompleteFutures.add(requestCompleteFuture);
@@ -186,23 +185,17 @@ public class HttpClientConnectionManagerTest {
 
     @Test
     public void testSerialRequests() throws Exception {
-        System.out.println("testSerialRequests START");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-        System.out.println("testSerialRequests END");
     }
 
     @Test
     public void testParallelRequests() throws Exception {
-        System.out.println("testParallelRequests START");
         testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
-        System.out.println("testParallelRequests END");
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
-        System.out.println("testMaxParallelRequests START");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-        System.out.println("testMaxParallelRequests END");
     }
 
     @Test

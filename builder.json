@@ -1,0 +1,7 @@
+{
+    "name": "aws-crt-java",
+    "packages": ["maven"],
+    "build_steps": [
+        "mvn test"
+    ]
+}

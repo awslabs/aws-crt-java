@@ -57,6 +57,7 @@
             </activation>
             <properties>
                 <cmake.target>ALL_BUILD</cmake.target>
+                <cmake.buildtype></cmake.buildtype>
                 <cmake.cflags/>
             </properties>
         </profile>

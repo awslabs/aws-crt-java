@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(aws-crt-jni C Java)
+project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 
 if (POLICY CMP0069)

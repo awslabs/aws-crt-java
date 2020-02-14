@@ -56,6 +56,9 @@
                 <cmake.command>"${project.basedir}/vs_cmake.bat"</cmake.command>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.cflags/>
+                <libcrypto.include/>
+                <libcrypto.static/>
+                <libcrypto.shared/>
             </properties>
             <build>
                 <plugins>
@@ -187,6 +190,10 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>-DLibCrypto_INCLUDE_DIR=${libcrypto.include}</argument>
+                                        <argument>-DLibCrypto_STATIC_LIBRARY=${libcrypto.static}</argument>
+                                        <argument>-DLibCrypto_SHARED_LIBRARY=${libcrypto.shared}</argument>
+                                        <argument>-Wno-unused-variables</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>

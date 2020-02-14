@@ -3,5 +3,16 @@
     "packages": ["maven"],
     "build_steps": [
         "mvn test"
-    ]
+    ],
+    "target": {
+        "linux": {
+            "variables": {
+                "openssl_include": "/opt/openssl/include",
+                "openssl_lib": "/opt/openssl/lib"
+            },
+            "!build_steps": [
+                ["mvn", "test", "-Dlibcrypto.include={openssl_include}", "-Dlibcrypto.shared={openssl_lib}/libcrypto.so -Dlibcrypto.static={openssl_lib}/libcrypto.a"]
+            ]
+        }
+    }
 }

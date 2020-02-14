@@ -4,7 +4,7 @@
     "build_steps": [
         "mvn test"
     ],
-    "target": {
+    "targets": {
         "linux": {
             "variables": {
                 "openssl_include": "/opt/openssl/include",

@@ -56,9 +56,9 @@
                 <cmake.command>"${project.basedir}/vs_cmake.bat"</cmake.command>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.cflags/>
-                <libcrypto.include/>
-                <libcrypto.static/>
-                <libcrypto.shared/>
+                <libcrypto.include></libcrypto.include>
+                <libcrypto.static></libcrypto.static>
+                <libcrypto.shared></libcrypto.shared>
             </properties>
             <build>
                 <plugins>

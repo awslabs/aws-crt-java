@@ -142,6 +142,7 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>-DS2N_NO_PQ_ASM=ON</argument>
                                         <argument>-DLibCrypto_INCLUDE_DIR=${libcrypto.include}</argument>
                                         <argument>-DLibCrypto_STATIC_LIBRARY=${libcrypto.static}</argument>
                                         <argument>-DLibCrypto_SHARED_LIBRARY=${libcrypto.shared}</argument>

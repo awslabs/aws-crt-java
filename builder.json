@@ -11,7 +11,7 @@
                 "openssl_lib": "/opt/openssl/lib"
             },
             "!build_steps": [
-                ["mvn", "-B", "test", "-Dlibcrypto.include={openssl_include}", "-Dlibcrypto.shared={openssl_lib}/libcrypto.so -Dlibcrypto.static={openssl_lib}/libcrypto.a"]
+                ["mvn", "-B", "test", "-Dlibcrypto.include={openssl_include}", "-Dlibcrypto.shared={openssl_lib}/libcrypto.so", "-Dlibcrypto.static={openssl_lib}/libcrypto.a"]
             ]
         }
     }

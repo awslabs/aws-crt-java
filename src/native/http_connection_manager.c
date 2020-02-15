@@ -159,6 +159,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.max_connections = (size_t)jni_max_conns;
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
     manager_options.shutdown_complete_user_data = callback_data;
+    manager_options.monitoring_options = NULL;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;

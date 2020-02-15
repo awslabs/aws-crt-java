@@ -43,6 +43,9 @@ Requirements:
 3) cd aws-crt-java
 4) mvn compile
 
+NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
+CMake can find Visual Studio.
+
 ## Installing
 From the aws-crt-java directory:
 ```mvn install```

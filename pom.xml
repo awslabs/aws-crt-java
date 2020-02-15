@@ -35,6 +35,9 @@
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.binaries>target/cmake-build</cmake.binaries>
+        <libcrypto.include></libcrypto.include>
+        <libcrypto.static></libcrypto.static>
+        <libcrypto.shared></libcrypto.shared>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,54 +56,10 @@
                 </os>
             </activation>
             <properties>
-                <cmake.command>"${project.basedir}/vs_cmake.bat"</cmake.command>
                 <cmake.target>ALL_BUILD</cmake.target>
+                <cmake.buildtype></cmake.buildtype>
                 <cmake.cflags/>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.3.2</version>
-                        <executions>
-                            <execution>
-                                <id>configure-visual-studio</id>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>"${project.basedir}/vs_config.bat"</executable>
-                                    <arguments>
-                                        <argument>${cmake.binaries}</argument>
-                                    </arguments>
-                                    <workingDirectory>.</workingDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>properties-maven-plugin</artifactId>
-                        <version>1.0.0</version>
-                        <executions>
-                            <execution>
-                                <id>read-cmake-vs-generator</id>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>read-project-properties</goal>
-                                </goals>
-                                <configuration>
-                                    <files>
-                                        <file>${cmake.binaries}/cmake.properties</file>
-                                    </files>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
         <profile>
@@ -111,7 +70,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.generator>Unix Makefiles</cmake.generator>
                 <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
@@ -124,7 +82,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.generator>Unix Makefiles</cmake.generator>
                 <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
@@ -180,11 +137,17 @@
                                     <executable>${cmake.command}</executable>
                                     <workingDirectory>${cmake.binaries}</workingDirectory>
                                     <arguments>
-                                        <argument>-G${cmake.generator}</argument>
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
+                                        <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
+                                        <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>-DS2N_NO_PQ_ASM=ON</argument>
+                                        <argument>-DLibCrypto_INCLUDE_DIR=${libcrypto.include}</argument>
+                                        <argument>-DLibCrypto_STATIC_LIBRARY=${libcrypto.static}</argument>
+                                        <argument>-DLibCrypto_SHARED_LIBRARY=${libcrypto.shared}</argument>
+                                        <argument>-Wno-unused-variables</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>

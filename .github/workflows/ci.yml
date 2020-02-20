@@ -73,13 +73,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [v6, v7, arm64]
+        arch: [armv6, armv7, arm64]
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-alpine-arm-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
+        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-alpine-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --env GITHUB_REF $DOCKER_IMAGE -p ${{ env.PACKAGE_NAME }} build downstream
 

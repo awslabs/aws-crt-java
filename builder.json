@@ -16,6 +16,9 @@
             }
         },
         "alpine": {
+            "packages": [
+                "openjdk8"
+            ],
             "build_env": {
                 "JAVA_HOME": "/usr/lib/jvm/java-1.8-openjdk"
             }

@@ -78,6 +78,7 @@ jobs:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
+        curl -sSL https://raw.githubusercontent.com/awslabs/aws-crt-builder/${{ env.BUILDER_VERSION }}/.github/workflows/install_buildx.sh | bash
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-alpine-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE

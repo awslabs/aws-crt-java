@@ -40,6 +40,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if (BUILD_DEPS)
     message(STATUS "Building dependencies from submodules")
+    message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/aws-common-runtime/aws-c-common/cmake")
     include(AwsFindPackage)
 

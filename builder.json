@@ -29,12 +29,14 @@
             "variables": {
                 "openssl_path": "/opt/openssl"
             },
+            "build_env": {
+                "CMAKE_PREFIX_PATH": "{openssl_path}"
+            },
             "!build_steps": [
                 [
                     "mvn",
                     "-B",
-                    "test",
-                    "-Dlibcrypto.path={openssl_path}"
+                    "test"
                 ]
             ]
         }

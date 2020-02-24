@@ -35,7 +35,6 @@
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.binaries>target/cmake-build</cmake.binaries>
-        <libcrypto.path></libcrypto.path>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -138,7 +137,7 @@
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
-                                        <argument>-DCMAKE_PREFIX_PATH="${cmake.binaries}/install;${libcrypto.path}"</argument>
+                                        <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>

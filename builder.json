@@ -27,7 +27,7 @@
     "targets": {
         "linux": {
             "variables": {
-                "openssl_path": "/opt/openssl",
+                "openssl_path": "/opt/openssl"
             },
             "!build_steps": [
                 [

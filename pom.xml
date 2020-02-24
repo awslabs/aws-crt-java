@@ -138,7 +138,7 @@
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
-                                        <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install;${libcrypto.path}</argument>
+                                        <argument>-DCMAKE_PREFIX_PATH=${libcrypto.path};${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>

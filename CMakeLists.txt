@@ -117,7 +117,6 @@ set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
-aws_use_package(aws-c-io)
 aws_use_package(aws-c-http)
 aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-cal)
@@ -156,8 +155,3 @@ endif ()
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
-
-if (UNIX AND NOT APPLE)
-    message(STATUS "Linking libcrypto: ${LibCrypto_STATIC_LIBRARY}")
-    target_link_libraries(${PROJECT_NAME} ${LibCrypto_STATIC_LIBRARY})
-endif()

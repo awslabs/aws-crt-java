@@ -6,6 +6,7 @@
     "build_steps": [
         "mvn -B test"
     ],
+    "test_steps": [],
     "hosts": {
         "ubuntu": {
             "packages": [

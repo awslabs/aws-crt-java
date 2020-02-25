@@ -123,7 +123,7 @@ aws_use_package(aws-c-cal)
 aws_use_package(aws-c-auth)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
-
+message(STATUS "DEP_AWS_LIBS: ${DEP_AWS_LIBS}")
 message(STATUS "LibCrypto_FOUND: ${LibCrypto_FOUND}")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)

@@ -175,7 +175,7 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s acquired native pointer %d", canonicalName, handle));
+            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s(%d) acquired native pointer %d", canonicalName, id, handle));
         }
 
         nativeHandle = handle;

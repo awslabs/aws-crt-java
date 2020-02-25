@@ -124,6 +124,8 @@ aws_use_package(aws-c-auth)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 
+message(STATUS "LibCrypto_FOUND: ${LibCrypto_FOUND}")
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # for non-msvc, library output will control the shared lib output
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})

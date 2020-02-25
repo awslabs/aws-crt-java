@@ -163,8 +163,6 @@
                                         <argument>${cmake.libcrypto_shared}</argument>
                                         <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
-                                        <argument>--trace-expand</argument>
-                                        <argument>--trace-source=CMakeLists.txt</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>

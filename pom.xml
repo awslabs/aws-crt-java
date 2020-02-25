@@ -35,6 +35,9 @@
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.binaries>target/cmake-build</cmake.binaries>
+        <cmake.libcrypto_include>""</cmake.libcrypto_include>
+        <cmake.libcrypto_shared>""</cmake.libcrypto_shared>
+        <cmake.libcrypto_static>""</cmake.libcrypto_static>
         <libcrypto.path></libcrypto.path>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -108,6 +111,19 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
+        <profile>
+            <id>use-custom-libcrypto</id>
+            <activation>
+                <property>
+                    <name>libcrypto.path</name>
+                </property>
+            </activation>
+            <properties>
+                <cmake.libcrypto_include>-DLibCrypto_INCLUDE_DIR=${libcrypto.path}/include</cmake.libcrypto_include>
+                <cmake.libcrypto_shared>-DLibCrypto_SHARED_LIBRARY=${libcrypto.path}/lib/libcrypto.so</cmake.libcrypto_shared>
+                <cmake.libcrypto_static>-DLibCrypto_STATIC_LIBRARY=${libcrypto.path}/lib/libcrypto.a</cmake.libcrypto_static>
+            </properties>
+        </profile>
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>
@@ -138,11 +154,14 @@
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
-                                        <argument>-DCMAKE_PREFIX_PATH=${libcrypto.path};${cmake.binaries}/install</argument>
+                                        <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
                                         <argument>-DS2N_NO_PQ_ASM=ON</argument>
+                                        <argument>${cmake.libcrypto_include}</argument>
+                                        <argument>${cmake.libcrypto_shared}</argument>
+                                        <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${project.basedir}</argument>
                                     </arguments>

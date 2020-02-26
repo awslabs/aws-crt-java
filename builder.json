@@ -28,12 +28,7 @@
                 "openssl_path": "/opt/openssl"
             },
             "!build_steps": [
-                [
-                    "mvn",
-                    "-B",
-                    "test",
-                    "-Dlibcrypto.path={openssl_path}"
-                ]
+                "mvn -B test -Dlibcrypto.path={openssl_path}"
             ]
         }
     }

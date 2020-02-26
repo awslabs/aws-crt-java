@@ -84,10 +84,8 @@ public final class CRT {
             } else {
                 return "armv6";
             }
-        } else if (arch.startsWith("arm64")) {
-            if (arch.contains("v8")) {
-                return "armv8";
-            }
+        } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
+            return "armv8";
         } else if (arch.startsWith("aarch64")) {
            return "armv8";
         } else if (arch.equals("arm")) {

@@ -111,6 +111,7 @@ file(GLOB CRT_JAVA_SRC
 
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
+message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
 set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java

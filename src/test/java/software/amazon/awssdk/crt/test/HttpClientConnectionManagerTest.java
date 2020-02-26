@@ -181,7 +181,13 @@ public class HttpClientConnectionManagerTest {
 
         
         int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth + (numThreads * GROWTH_PER_THREAD), fn);
+        if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
+            // On Mac, JVM seems to expand by about 4K no matter how careful we are
+            fixedGrowth = 4096;
+        } else {
+            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+        }
+        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
     }
 
     @Test

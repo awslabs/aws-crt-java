@@ -16,13 +16,10 @@
                 "JAVA_HOME": "/usr/lib/jvm/java-8-openjdk-amd64"
             }
         },
-        "alpine": {
+        "raspbian": {
             "packages": [
-                "openjdk8"
-            ],
-            "build_env": {
-                "JAVA_HOME": "/usr/lib/jvm/java-1.8-openjdk"
-            }
+                "openjdk-8-jdk-headless"
+            ]
         }
     },
     "targets": {

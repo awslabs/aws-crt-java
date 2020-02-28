@@ -70,6 +70,7 @@ jobs:
         docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
 
   linux-arm:
+    name: ARM (${{ matrix.arch }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -80,21 +81,6 @@ jobs:
         curl -sSL -o builder ${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
-
-  linux-arm64:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [arm64]
-    steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        curl -sSL https://raw.githubusercontent.com/awslabs/aws-crt-builder/${{ env.BUILDER_VERSION }}/.github/workflows/install_buildx.sh | bash
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream 
 
   windows:
     runs-on: windows-latest

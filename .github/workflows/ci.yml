@@ -7,7 +7,7 @@ on:
       - '!master'
 
 env:
-  BUILDER_VERSION: v0.4.6
+  BUILDER_VERSION: mips-arm
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
   LINUX_BASE_IMAGE: ubuntu-16-x64
@@ -28,7 +28,7 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ matrix.image }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} default-downstream
+        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   al2:
     runs-on: ubuntu-latest
@@ -39,7 +39,7 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-x64:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} default-downstream
+        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream
       
   clang-compat:
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} default-downstream --compiler=clang-${{ matrix.version }}
+        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream --compiler=clang-${{ matrix.version }}
 
   gcc-compat:
     runs-on: ubuntu-latest
@@ -67,22 +67,19 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} default-downstream --compiler=gcc-${{ matrix.version }}
+        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
 
-  linux-arm32:
+  linux-arm:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv6, armv7]
+        arch: [armv6, armv7, arm64]
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
-        curl -sSL https://raw.githubusercontent.com/awslabs/aws-crt-builder/${{ env.BUILDER_VERSION }}/.github/workflows/install_buildx.sh | bash
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-raspbian-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} downstream
+        curl -sSL -o builder ${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   linux-arm64:
     runs-on: ubuntu-latest
@@ -97,7 +94,7 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-${{ matrix.arch }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
-        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} downstream
+        docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --spec=downstream 
 
   windows:
     runs-on: windows-latest
@@ -105,7 +102,7 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} default-downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   osx:
     runs-on: macos-latest
@@ -114,6 +111,6 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} default-downstream
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
       

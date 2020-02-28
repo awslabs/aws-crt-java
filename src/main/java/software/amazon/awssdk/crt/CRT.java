@@ -89,7 +89,7 @@ public final class CRT {
         } else if (arch.startsWith("aarch64")) {
            return "armv8";
         } else if (arch.equals("arm")) {
-           return "armv7";
+           return "armv6";
         }
 
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);

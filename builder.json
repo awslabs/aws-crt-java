@@ -16,7 +16,7 @@
                 "JAVA_HOME": "/usr/lib/jvm/java-8-openjdk-amd64"
             }
         },
-        "raspbian": {
+        "debian": {
             "packages": [
                 "openjdk-8-jdk-headless"
             ]
@@ -29,11 +29,12 @@
     },
     "targets": {
         "linux": {
-            "variables": {
-                "openssl_path": "/opt/openssl"
-            },
+            "imports": ["libcrypto"],
             "!build_steps": [
-                "mvn -B test -Dlibcrypto.path={openssl_path}"
+                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "pkg_setup": [
+                "mkdir -p /usr/share/man/man1"
             ]
         }
     }

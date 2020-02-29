@@ -9,6 +9,7 @@
     "test_steps": [
         "mvn -B test"
     ],
+    "build_dir": "target/cmake-build",
     "hosts": {
         "ubuntu": {
             "packages": [
@@ -31,7 +32,7 @@
     },
     "targets": {
         "linux": {
-            "imports": ["libcrypto"],
+            "imports": ["s2n"],
             "!build_steps": [
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],

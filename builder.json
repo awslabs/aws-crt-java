@@ -33,9 +33,9 @@
             "!build_steps": [
                 "mvn -B test -Dlibcrypto.path={libcrypto_path}"
             ],
-            "pkg_setup": [
-                "mkdir -p /usr/share/man/man1"
-            ]
+            // "pkg_setup": [
+            //     "mkdir -p /usr/share/man/man1"
+            // ]
         }
     }
 }

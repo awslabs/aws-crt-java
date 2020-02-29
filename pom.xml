@@ -149,8 +149,10 @@
                                 </goals>
                                 <configuration>
                                     <executable>${cmake.command}</executable>
-                                    <workingDirectory>${cmake.binaries}</workingDirectory>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
                                     <arguments>
+                                        <argument>-B${cmake.binaries}</argument>
+                                        <argument>-H${project.basedir}</argument>
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
@@ -163,7 +165,6 @@
                                         <argument>${cmake.libcrypto_shared}</argument>
                                         <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
-                                        <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>

@@ -35,10 +35,10 @@
             ],
             "architectures": {
                 "armv6": {
-                    "!build_steps": "mvn -B test -Dlibcrypto.path={libcrypto_path} -Dmaven.test.skip=1"
+                    "!build_steps": "mvn -B test -Dlibcrypto.path={libcrypto_path} -DskipTests=true"
                 },
                 "armv7": {
-                    "!build_steps": "mvn -B test -Dlibcrypto.path={libcrypto_path} -Dmaven.test.skip=1"
+                    "!build_steps": "mvn -B test -Dlibcrypto.path={libcrypto_path} -DskipTests=true"
                 }
             }
         }

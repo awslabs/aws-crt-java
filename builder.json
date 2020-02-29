@@ -4,9 +4,11 @@
         "maven"
     ],
     "build_steps": [
+        "mvn -B compile"
+    ],
+    "test_steps": [
         "mvn -B test"
     ],
-    "test_steps": [],
     "hosts": {
         "ubuntu": {
             "packages": [
@@ -31,14 +33,17 @@
         "linux": {
             "imports": ["libcrypto"],
             "!build_steps": [
+                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "!test_steps": [
                 "mvn -B test -Dlibcrypto.path={libcrypto_path}"
             ],
             "architectures": {
                 "armv6": {
-                    "!build_steps": "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+                    "run_tests": false
                 },
                 "armv7": {
-                    "!build_steps": "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+                    "run_tests": false
                 }
             }
         }

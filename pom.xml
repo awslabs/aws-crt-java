@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.amazon.awssdk.crt</groupId>
     <artifactId>aws-crt</artifactId>
@@ -35,9 +35,9 @@
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.binaries>target/cmake-build</cmake.binaries>
-        <cmake.libcrypto_include>""</cmake.libcrypto_include>
-        <cmake.libcrypto_shared>""</cmake.libcrypto_shared>
-        <cmake.libcrypto_static>""</cmake.libcrypto_static>
+        <cmake.libcrypto_include>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_include>
+        <cmake.libcrypto_shared>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_shared>
+        <cmake.libcrypto_static>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_static>
         <libcrypto.path></libcrypto.path>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -46,7 +46,7 @@
 
     <profiles>
         <profile>
-            <!-- Windows profile: find cmake generators and use ALL_BUILD target 
+            <!-- Windows profile: find cmake generators and use ALL_BUILD target
                 NOTE: CMake generator will be cached to target/cmake-build/cmake.properties, delete or edit this
                 file to change VS version
                 -->
@@ -220,10 +220,10 @@
                         <version>2.2.1</version>
                         <executions>
                             <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar-no-fork</goal>
-                            </goals>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -234,10 +234,10 @@
                         <version>2.9.1</version>
                         <executions>
                             <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -278,8 +278,8 @@
             <resource>
                 <directory>${cmake.binaries}/lib</directory>
                 <excludes>
-                    <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
-                    <exclude>**/*.pdb</exclude><!-- do not package pdbs, comment this out to debug C code -->
+                    <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
+                    <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
                 </excludes>
             </resource>
         </resources>

@@ -41,10 +41,64 @@
             ],
             "architectures": {
                 "armv6": {
-                    "run_tests": false
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "build_env": {},
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-Btarget/cmake-build",
+                        "-H.",
+                        "-DCMAKE_PREFIX_PATH=target/cmake-build/install",
+                        "-DCMAKE_INSTALL_PREFIX=target/cmake-build/install",
+                        "-DLibCrypto_INCLUDE_DIR={libcrypto_path}/include",
+                        "-DLibCrypto_SHARED_LIBRARY={libcrypto_path}/lib/libcrypto.so",
+                        "-DLibCrypto_STATIC_LIBRARY={libcrypto_path}/lib/libcrypto.a",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
                 },
                 "armv7": {
-                    "run_tests": false
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "build_env": {},
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-Btarget/cmake-build",
+                        "-H.",
+                        "-DCMAKE_PREFIX_PATH=target/cmake-build/install",
+                        "-DCMAKE_INSTALL_PREFIX=target/cmake-build/install",
+                        "-DLibCrypto_INCLUDE_DIR={libcrypto_path}/include",
+                        "-DLibCrypto_SHARED_LIBRARY={libcrypto_path}/lib/libcrypto.so",
+                        "-DLibCrypto_STATIC_LIBRARY={libcrypto_path}/lib/libcrypto.a",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
+                },
+                "arm64": {
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "build_env": {},
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-Btarget/cmake-build",
+                        "-H.",
+                        "-DCMAKE_PREFIX_PATH=target/cmake-build/install",
+                        "-DCMAKE_INSTALL_PREFIX=target/cmake-build/install",
+                        "-DLibCrypto_INCLUDE_DIR={libcrypto_path}/include",
+                        "-DLibCrypto_SHARED_LIBRARY={libcrypto_path}/lib/libcrypto.so",
+                        "-DLibCrypto_STATIC_LIBRARY={libcrypto_path}/lib/libcrypto.a",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
                 }
             }
         }

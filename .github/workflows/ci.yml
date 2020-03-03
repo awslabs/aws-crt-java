@@ -80,7 +80,7 @@ jobs:
       run: |
         curl -sSL -o builder ${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --spec=downstream
+        ./builder build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --target=linux-${{ matrix.arch }} --spec=downstream
 
   windows:
     runs-on: windows-latest

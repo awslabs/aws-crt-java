@@ -9,24 +9,22 @@
     "test_steps": [
         "mvn -B test"
     ],
+    "imports": [
+        "JDK8"
+    ],
     "build_dir": "target/cmake-build",
+    "build_env": {
+        "JAVA_HOME": "{java_home}"
+    },
     "hosts": {
         "ubuntu": {
             "packages": [
                 "openjdk-8-jdk-headless"
-            ],
-            "build_env": {
-                "JAVA_HOME": "/usr/lib/jvm/java-8-openjdk-amd64"
-            }
+            ]
         },
         "debian": {
             "packages": [
                 "openjdk-8-jdk-headless"
-            ]
-        },
-        "alpine": {
-            "packages": [
-                "openjdk8"
             ]
         }
     },

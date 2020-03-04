@@ -105,8 +105,12 @@ class JDK8(Builder.Import):
 
         jdk_home = glob.glob(os.path.join(install_dir, 'jdk*'))[0]
         assert jdk_home
-        self.path = str(Path(os.path.join(install_dir, jdk_home)
-                             ).relative_to(env.source_dir))
+
+        # Use absolute path for local, relative for cross-compile
+        self.path = jdk_home
+        if env.toolchain.cross_compile:
+            self.path = str(Path(os.path.join(install_dir, jdk_home)
+                                ).relative_to(env.source_dir))
 
         env.variables['java_home'] = self.path
         self.installed = True

@@ -10,6 +10,7 @@ phases:
   build:
     commands:
       - cd aws-crt-java
+      - git submodule update --init
       - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B compile
   post_build:
     commands:

@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.amazon.awssdk.crt</groupId>
     <artifactId>aws-crt</artifactId>
@@ -35,9 +35,10 @@
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.binaries>target/cmake-build</cmake.binaries>
-        <libcrypto.include></libcrypto.include>
-        <libcrypto.static></libcrypto.static>
-        <libcrypto.shared></libcrypto.shared>
+        <cmake.libcrypto_include>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_include>
+        <cmake.libcrypto_shared>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_shared>
+        <cmake.libcrypto_static>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_static>
+        <libcrypto.path></libcrypto.path>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,7 +46,7 @@
 
     <profiles>
         <profile>
-            <!-- Windows profile: find cmake generators and use ALL_BUILD target 
+            <!-- Windows profile: find cmake generators and use ALL_BUILD target
                 NOTE: CMake generator will be cached to target/cmake-build/cmake.properties, delete or edit this
                 file to change VS version
                 -->
@@ -110,6 +111,19 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
+        <profile>
+            <id>use-custom-libcrypto</id>
+            <activation>
+                <property>
+                    <name>libcrypto.path</name>
+                </property>
+            </activation>
+            <properties>
+                <cmake.libcrypto_include>-DLibCrypto_INCLUDE_DIR=${libcrypto.path}/include</cmake.libcrypto_include>
+                <cmake.libcrypto_shared>-DLibCrypto_SHARED_LIBRARY=${libcrypto.path}/lib/libcrypto.so</cmake.libcrypto_shared>
+                <cmake.libcrypto_static>-DLibCrypto_STATIC_LIBRARY=${libcrypto.path}/lib/libcrypto.a</cmake.libcrypto_static>
+            </properties>
+        </profile>
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>
@@ -135,20 +149,22 @@
                                 </goals>
                                 <configuration>
                                     <executable>${cmake.command}</executable>
-                                    <workingDirectory>${cmake.binaries}</workingDirectory>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
                                     <arguments>
+                                        <argument>-B${cmake.binaries}</argument>
+                                        <argument>-H${project.basedir}</argument>
                                         <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>-DBUILD_TESTING=OFF</argument>
                                         <argument>-DS2N_NO_PQ_ASM=ON</argument>
-                                        <argument>-DLibCrypto_INCLUDE_DIR=${libcrypto.include}</argument>
-                                        <argument>-DLibCrypto_STATIC_LIBRARY=${libcrypto.static}</argument>
-                                        <argument>-DLibCrypto_SHARED_LIBRARY=${libcrypto.shared}</argument>
+                                        <argument>${cmake.libcrypto_include}</argument>
+                                        <argument>${cmake.libcrypto_shared}</argument>
+                                        <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
-                                        <argument>${project.basedir}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -204,10 +220,10 @@
                         <version>2.2.1</version>
                         <executions>
                             <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar-no-fork</goal>
-                            </goals>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -218,10 +234,10 @@
                         <version>2.9.1</version>
                         <executions>
                             <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -262,8 +278,8 @@
             <resource>
                 <directory>${cmake.binaries}/lib</directory>
                 <excludes>
-                    <exclude>**/*.ilk</exclude><!-- no one needs incremental linker files in their jar -->
-                    <exclude>**/*.pdb</exclude><!-- do not package pdbs, comment this out to debug C code -->
+                    <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
+                    <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
                 </excludes>
             </resource>
         </resources>

@@ -1,25 +1,85 @@
 {
     "name": "aws-crt-java",
-    "packages": ["maven"],
+    "packages": [
+        "maven"
+    ],
     "build_steps": [
+        "mvn -B compile"
+    ],
+    "test_steps": [
         "mvn -B test"
     ],
+    "imports": [
+        "JDK8"
+    ],
+    "build_dir": "target/cmake-build",
+    "build_env": {
+        "JAVA_HOME": "{java_home}"
+    },
     "hosts": {
         "ubuntu": {
             "packages": [
-                "openjdk-8-jdk"
+                "openjdk-8-jdk-headless"
+            ]
+        },
+        "debian": {
+            "packages": [
+                "openjdk-8-jdk-headless"
             ]
         }
     },
     "targets": {
         "linux": {
-            "variables": {
-                "openssl_include": "/opt/openssl/include",
-                "openssl_lib": "/opt/openssl/lib"
-            },
+            "imports": [
+                "s2n"
+            ],
             "!build_steps": [
-                ["mvn", "-B", "test", "-Dlibcrypto.include={openssl_include}", "-Dlibcrypto.shared={openssl_lib}/libcrypto.so", "-Dlibcrypto.static={openssl_lib}/libcrypto.a"]
-            ]
+                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "!test_steps": [
+                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "architectures": {
+                "armv6": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
+                },
+                "armv7": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
+                },
+                "arm64": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF",
+                        "-DS2N_NO_PQ_ASM=ON"
+                    ]
+                }
+            }
         }
     }
 }

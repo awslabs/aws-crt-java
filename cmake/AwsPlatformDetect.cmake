@@ -19,6 +19,7 @@ function(aws_detect_target_platform out_os out_arch)
         SOURCES "${THIS_FILE_DIR}/archdetect.c"
         OUTPUT_VARIABLE ARCH_OUTPUT
     )
+
     # Find the error in the output, then strip the identifier off
     string(REGEX MATCH "ARCH ([a-zA-Z0-9_]+)" ARCH "${ARCH_OUTPUT}")
     string(REPLACE "ARCH " "" ARCH "${ARCH}")

@@ -7,12 +7,16 @@ if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
 endif()
 
+if (POLICY CMP0077)
+    cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables
+endif()
+
 if (DEFINED CMAKE_PREFIX_PATH)
-    file(TO_CMAKE_PATH ${CMAKE_PREFIX_PATH} CMAKE_PREFIX_PATH)
+    file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}" CMAKE_PREFIX_PATH)
 endif()
 
 if (DEFINED CMAKE_INSTALL_PREFIX)
-    file(TO_CMAKE_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX)
+    file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -111,10 +115,17 @@ file(GLOB CRT_JAVA_SRC
 
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
+message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
 set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
+aws_use_package(aws-c-http)
+aws_use_package(aws-c-mqtt)
+aws_use_package(aws-c-auth)
+
+target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # for non-msvc, library output will control the shared lib output
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
@@ -134,6 +145,8 @@ else ()
 endif ()
 
 # find JNI and add the include path
+set(JAVA_AWT_LIBRARY NotNeeded)
+set(JAVA_AWT_INCLUDE_PATH NotNeeded)
 find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS} "src/native")
 
@@ -144,15 +157,3 @@ endif ()
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
-
-aws_use_package(aws-c-http)
-aws_use_package(aws-c-mqtt)
-aws_use_package(aws-c-cal)
-aws_use_package(aws-c-auth)
-
-target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
-
-if (UNIX AND NOT APPLE)
-    message(STATUS "Linking libcrypto: ${LibCrypto_STATIC_LIBRARY}")
-    target_link_libraries(${PROJECT_NAME} ${LibCrypto_STATIC_LIBRARY})
-endif()

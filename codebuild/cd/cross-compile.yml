@@ -9,6 +9,7 @@ phases:
       - echo Build started on `date`
   build:
     commands:
+      - cd aws-crt-java
       - ./codebuild/cd/cross-unix-build.sh --target=$AWS_CRT_TARGET
   post_build:
     commands:

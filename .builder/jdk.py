@@ -17,10 +17,8 @@ from pathlib import Path
 import tarfile
 import zipfile
 from urllib.request import urlretrieve
-import pprint
 
 import Builder
-pprint.pprint(Builder)
 util = Builder.Util
 
 URLs = {

@@ -107,7 +107,7 @@ class JDK8(Builder.Import):
         assert jdk_home
 
         # OSX is special and has a Contents/Home folder inside the distro
-        if env.spec.target = 'macos':
+        if env.spec.target == 'macos':
             jdk_home = os.path.join(jdk_home, 'Contents', 'Home')
 
         # Use absolute path for local, relative for cross-compile

@@ -8,7 +8,7 @@ cd `dirname $0`/../..
 
 python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
 chmod a+x builder
-./builder build -p aws-crt-java --target=$1
+./builder build -p aws-crt-java $*
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)

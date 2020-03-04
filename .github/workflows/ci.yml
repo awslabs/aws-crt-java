@@ -78,7 +78,7 @@ jobs:
     steps:
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
-        curl -sSL -o builder ${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_VERSION }}/builder?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --target=linux-${{ matrix.arch }} --spec=downstream
 

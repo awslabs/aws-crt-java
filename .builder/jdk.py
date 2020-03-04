@@ -55,7 +55,7 @@ class JDK8(Builder.Import):
             if javac_path:
                 javac_path = javac_path.replace(
                     os.pathsep + 'bin' + os.pathsep + '.+$', '')
-            prefixes = [javac_path, os.environ['JAVA_HOME']]
+            prefixes = [javac_path, os.environ.get('JAVA_HOME', None)]
             required_files = [
                 ['include/jni.h'],
                 ['lib/**/libjvm.so', '**/lib/**/libjvm.so'],

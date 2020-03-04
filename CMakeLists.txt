@@ -121,11 +121,6 @@ set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
 aws_use_package(aws-c-http)
-aws_use_package(aws-c-mqtt)
-aws_use_package(aws-c-cal)
-aws_use_package(aws-c-auth)
-aws_use_package(aws-c-common)
-aws_use_package(aws-c-io)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 

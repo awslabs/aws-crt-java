@@ -73,14 +73,14 @@ class JDK8(Builder.Import):
 
                 if found >= len(required_files):
                     print('Found existing JDK8 at {}'.format(prefix))
-                    env.variables['java_home'] = self.path = prefix
+                    self.path = prefix
+                    env.variables['java_home'] = self.path
                     self.installed = True
                     return
 
         target = '{}-{}'.format(env.spec.target, env.spec.arch)
         if target not in URLs:
-            print('WARNING: No pre-built binaries for {} are available'.format(target))
-            return
+            raise EnvironmentError('No pre-built binaries for {} are available, please install JDK8 or greater and set JAVA_HOME'.format(target))
 
         install_dir = os.path.join(env.deps_dir, self.name.lower())
         # If path is going to be relative, it has to be relative to the source directory

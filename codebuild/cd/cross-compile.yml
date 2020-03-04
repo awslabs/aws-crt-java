@@ -13,4 +13,3 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-

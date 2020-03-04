@@ -9,7 +9,7 @@ phases:
       - echo Build started on `date`
   build:
     commands:
-      - $CODEBUILD_SRC_DIR/codebuild/cd/cross-unix-build.sh --target=$AWS_CRT_TARGET
+      - ./codebuild/cd/cross-unix-build.sh --target=$AWS_CRT_TARGET
   post_build:
     commands:
       - echo Build completed on `date`

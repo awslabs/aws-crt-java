@@ -5,6 +5,8 @@ set -x
 
 cd `dirname $0`/../..
 
+git submodule update --init
+
 mvn -B compile
 mvn test -DNETWORK_TESTS_DISABLED=1
 # Upload the lib to S3

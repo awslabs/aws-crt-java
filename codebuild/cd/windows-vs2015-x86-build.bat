@@ -6,6 +6,8 @@ echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR=Visual Studio 14 2015
 
+git submodule update --init
+
 mvn -X compile || goto error
 
 for /f %%A in ('git describe --tags') do (

@@ -99,7 +99,7 @@ class JDK8(Builder.Import):
             with tarfile.open(filename) as tar:
                 tar.extractall(install_dir, numeric_owner=True)
         else:
-            with zipfile.open(filename) as zip:
+            with zipfile.ZipFile(filename) as zip:
                 zip.extractall(install_dir)
         os.remove(filename)
 

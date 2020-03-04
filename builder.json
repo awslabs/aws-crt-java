@@ -45,7 +45,6 @@
                     "!build_steps": [
                         "build"
                     ],
-                    "build_env": {},
                     "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
@@ -59,7 +58,6 @@
                     "!build_steps": [
                         "build"
                     ],
-                    "build_env": {},
                     "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
@@ -73,7 +71,6 @@
                     "!build_steps": [
                         "build"
                     ],
-                    "build_env": {},
                     "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",

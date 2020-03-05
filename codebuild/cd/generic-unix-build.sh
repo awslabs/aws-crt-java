@@ -14,5 +14,4 @@ chmod a+x builder
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)
-find . -name "*.so"
-aws s3 cp --recursive target/cmake-build/aws-crt-java/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp --recursive target/cmake-build//lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib

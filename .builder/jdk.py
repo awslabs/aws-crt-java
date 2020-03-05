@@ -60,7 +60,7 @@ class JDK8(Builder.Import):
             prefixes = [javac_path, *jni_h, os.environ.get('JAVA_HOME', None)]
             required_files = [
                 ['include/jni.h'],
-                ['lib/**/libjvm.so', '**/lib/**/libjvm.so'],
+                ['lib/**/libjvm.so', '**/lib/**/libjvm.so', 'lib/**/jvm.dll', '**/lib/**/jvm.dll'],
             ]
             found = 0
             for prefix in prefixes:
@@ -70,6 +70,7 @@ class JDK8(Builder.Import):
                     for path in paths:
                         full_path = os.path.join(prefix, path)
                         if glob.glob(full_path, recursive=True):
+                            print('JDK8: Found {}'.format(full_path))
                             found += 1
                             break
 

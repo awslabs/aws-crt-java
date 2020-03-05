@@ -99,7 +99,13 @@
             ],
             "!build_env": {
                 "JAVA_HOME": "/usr/local/openjdk8"
-            }
+            },
+            "!build_steps": [
+                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "!test_steps": [
+                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+            ],
         }
     }
 }

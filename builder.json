@@ -41,6 +41,9 @@
             ],
             "architectures": {
                 "armv6": {
+                    "pkg_setup": [
+                        "service docker start"
+                    ],
                     "!packages": [],
                     "!build_steps": [
                         "build"
@@ -54,6 +57,9 @@
                     ]
                 },
                 "armv7": {
+                    "pkg_setup": [
+                        "service docker start"
+                    ],
                     "!packages": [],
                     "!build_steps": [
                         "build"
@@ -67,6 +73,9 @@
                     ]
                 },
                 "arm64": {
+                    "pkg_setup": [
+                        "service docker start"
+                    ],
                     "!packages": [],
                     "!build_steps": [
                         "build"

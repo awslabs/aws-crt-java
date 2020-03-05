@@ -53,17 +53,15 @@ class JDK8(Builder.Import):
         if not env.toolchain.cross_compile:
             javac_path = util.where('javac')
             if javac_path:
-                javac_path = javac_path.replace(
-                    os.pathsep + 'bin' + os.pathsep + '.+$', '')
-            jni_h = glob.glob('/usr/**/jni.h', recursive=True)
-            jni_h = [j.replace('/include/jni.h', '') for j in jni_h]
-            prefixes = [javac_path, *jni_h, os.environ.get('JAVA_HOME', None)]
+                javac_path = javac_path.replace('/bin/javac', '')
+            prefixes = [javac_path, os.environ.get('JAVA_HOME', None)]
             required_files = [
                 ['include/jni.h'],
-                ['lib/**/libjvm.so', '**/lib/**/libjvm.so', 'lib/**/jvm.dll', '**/lib/**/jvm.dll'],
+                ['lib/**/libjvm.so', '**/lib/**/libjvm.so',
+                    'lib/**/jvm.dll', '**/lib/**/jvm.dll'],
             ]
             found = 0
-            
+
             for paths in required_files:
                 path_found = False
                 for path in paths:
@@ -72,7 +70,6 @@ class JDK8(Builder.Import):
                             continue
                         full_path = os.path.join(prefix, path)
                         if glob.glob(full_path, recursive=True):
-                            print('JDK8: Found {}'.format(full_path))
                             found += 1
                             path_found = True
                             break
@@ -88,7 +85,8 @@ class JDK8(Builder.Import):
 
         target = '{}-{}'.format(env.spec.target, env.spec.arch)
         if target not in URLs:
-            raise EnvironmentError('No pre-built binaries for {} are available, please install JDK8 or greater and set JAVA_HOME'.format(target))
+            raise EnvironmentError(
+                'No pre-built binaries for {} are available, please install JDK8 or greater and set JAVA_HOME'.format(target))
 
         install_dir = os.path.join(env.deps_dir, self.name.lower())
         # If path is going to be relative, it has to be relative to the source directory
@@ -122,7 +120,7 @@ class JDK8(Builder.Import):
         self.path = jdk_home
         if env.toolchain.cross_compile:
             self.path = str(Path(os.path.join(install_dir, jdk_home)
-                                ).relative_to(env.source_dir))
+                                 ).relative_to(env.source_dir))
 
         env.variables['java_home'] = self.path
         self.installed = True

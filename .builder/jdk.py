@@ -63,23 +63,28 @@ class JDK8(Builder.Import):
                 ['lib/**/libjvm.so', '**/lib/**/libjvm.so', 'lib/**/jvm.dll', '**/lib/**/jvm.dll'],
             ]
             found = 0
-            for prefix in prefixes:
-                if not prefix:
-                    continue
-                for paths in required_files:
-                    for path in paths:
+            
+            for paths in required_files:
+                path_found = False
+                for path in paths:
+                    for prefix in prefixes:
+                        if not prefix:
+                            continue
                         full_path = os.path.join(prefix, path)
                         if glob.glob(full_path, recursive=True):
                             print('JDK8: Found {}'.format(full_path))
                             found += 1
+                            path_found = True
                             break
+                    if path_found:
+                        break
 
-                if found >= len(required_files):
-                    print('Found existing JDK8 at {}'.format(prefix))
-                    self.path = prefix
-                    env.variables['java_home'] = self.path
-                    self.installed = True
-                    return
+            if found >= len(required_files):
+                print('Found existing JDK8 at {}'.format(prefix))
+                self.path = prefix
+                env.variables['java_home'] = self.path
+                self.installed = True
+                return
 
         target = '{}-{}'.format(env.spec.target, env.spec.arch)
         if target not in URLs:

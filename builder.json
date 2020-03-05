@@ -105,7 +105,7 @@
             ],
             "!test_steps": [
                 "mvn -B test -Dlibcrypto.path={libcrypto_path}"
-            ],
+            ]
         }
     }
 }

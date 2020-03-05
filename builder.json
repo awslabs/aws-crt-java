@@ -92,7 +92,7 @@
         },
         "freebsd": {
             "packages": ["openjdk8"],
-            "build_env": {
+            "!build_env": {
                 "JAVA_HOME": "/usr/local/openjdk8"
             }
         }

@@ -10,6 +10,7 @@ phases:
   build:
     commands:
       - cd aws-crt-java
+      - git submodule update --init
       - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B compile -Punix-x86
   post_build:
     commands:

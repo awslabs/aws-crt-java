@@ -1,0 +1,16 @@
+version: 0.2
+#this buildspec assumes the ubuntu aws-common-runtime/ubuntu-16.04:x64 image
+# AWS_CRT_TARGET should be defined by codebuild/codepipeline
+phases:
+  install:
+    commands:
+  pre_build:
+    commands:
+      - echo Build started on `date`
+  build:
+    commands:
+      - cd aws-crt-java
+      - ./codebuild/cd/cross-unix-build.sh --target=$AWS_CRT_TARGET
+  post_build:
+    commands:
+      - echo Build completed on `date`

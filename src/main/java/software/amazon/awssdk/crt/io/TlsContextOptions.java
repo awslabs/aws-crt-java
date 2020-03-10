@@ -243,9 +243,8 @@ public final class TlsContextOptions extends CrtResource {
             throw new IllegalArgumentException("Certificate authority is already specified via path(s)");
         }
         this.caRoot = PemUtils.cleanUpPem(caRoot);
-        // 7 certs in the chain is the default supported by s2n:
-        // https://github.com/awslabs/s2n/blob/master/tls/s2n_x509_validator.c#L53
-        PemUtils.sanityCheck(this.caRoot, 7, "CERTIFICATE");
+        // 1024 certs in the chain is the default supported by s2n:
+        PemUtils.sanityCheck(this.caRoot, 1024, "CERTIFICATE");
     }
 
     /**

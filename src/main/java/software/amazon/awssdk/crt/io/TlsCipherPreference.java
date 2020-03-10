@@ -28,8 +28,12 @@ public enum TlsCipherPreference {
     TLS_CIPHER_SYSTEM_DEFAULT(0),
 
     /**
-     * This TlsCipherPreference contains BIKE and SIKE Draft Hybrid TLS Ciphers at the top of the preference list.
-     *     - For more info see: https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     * This TlsCipherPreference contains BIKE Round 1 and SIKE Round 1 Draft Hybrid TLS Ciphers at the top of the
+     * preference list.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
      *
      * These Hybrid TLS ciphers perform two Key Exchanges (1 ECDHE + 1 Post-Quantum) during the TLS Handshake in order
      * to combine the security of Classical ECDHE Key Exchange with the conjectured quantum-resistance of newly
@@ -43,7 +47,42 @@ public enum TlsCipherPreference {
      *
      * This Cipher Preference may stop being supported at any time.
      */
-    TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06(1);
+    TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06(1),
+
+    /**
+     * This TlsCipherPreference contains SIKE Round 1 Draft Hybrid TLS Ciphers at the top of the preference list.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
+     *
+     * This Cipher Preference may stop being supported at any time.
+     */
+    TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2019_11(2),
+
+    /**
+     * This TlsCipherPreference contains BIKE Round 2, SIKE Round 2, BIKE Round 1, and SIKE Round 1 Draft Hybrid TLS
+     * Ciphers at the top of the preference list.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
+     *
+     * This Cipher Preference may stop being supported at any time.
+     */
+    TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_02(3),
+
+    /**
+     * This TlsCipherPreference contains SIKE Round 2 and SIKE Round 1 Draft Hybrid TLS Ciphers at the top of the
+     * preference list.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
+     *
+     * This Cipher Preference may stop being supported at any time.
+     */
+    TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02(4);
 
     private int val;
 

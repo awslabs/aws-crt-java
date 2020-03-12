@@ -52,7 +52,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "armv7": {
@@ -67,7 +67,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "arm64": {
@@ -82,7 +82,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
+                        "-DBUILD_TESTING=OFF"
                     ]
                 }
             }

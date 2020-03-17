@@ -49,8 +49,10 @@ class JDK8(Builder.Import):
 
         sh = env.shell
 
+        target = '{}-{}'.format(env.spec.target, env.spec.arch)
+
         # If this is a local build, check the local machine
-        if not env.toolchain.cross_compile:
+        if not env.toolchain.cross_compile or target not in URLs:
             javac_path = util.where('javac')
             if javac_path:
                 javac_path = javac_path.replace('/bin/javac', '')
@@ -83,7 +85,6 @@ class JDK8(Builder.Import):
                 self.installed = True
                 return
 
-        target = '{}-{}'.format(env.spec.target, env.spec.arch)
         if target not in URLs:
             raise EnvironmentError(
                 'No pre-built binaries for {} are available, please install JDK8 or greater and set JAVA_HOME'.format(target))

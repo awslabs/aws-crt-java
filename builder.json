@@ -52,8 +52,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
-                        "-DS2N_NO_PQ_ASM=ON"
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "armv7": {
@@ -68,8 +67,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
-                        "-DS2N_NO_PQ_ASM=ON"
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "arm64": {
@@ -84,8 +82,7 @@
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
-                        "-DS2N_NO_PQ_ASM=ON"
+                        "-DBUILD_TESTING=OFF"
                     ]
                 }
             }

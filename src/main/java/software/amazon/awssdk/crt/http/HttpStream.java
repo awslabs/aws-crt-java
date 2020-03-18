@@ -70,10 +70,7 @@ public class HttpStream extends CrtResource {
      */
     public void activate() {
         if (!isNull()) {
-            System.out.println("calling activate");
             httpStreamActivate(getNativeHandle(), this);
-            System.out.println("activate called");
-
         }
     }
 

@@ -6,7 +6,16 @@ cd `dirname $0`/../..
 
 git submodule update --init
 
-AWS_CRT_TARGET=`uname | tr '[:upper:]' '[:lower:]'`-`uname -m`
+AWS_CRT_HOST=`uname | tr '[:upper:]' '[:lower:]'`-`uname -m`
+
+if [ -z "$AWS_CRT_TARGET" ]; then
+    AWS_CRT_TARGET=$AWS_CRT_HOST
+fi
+
+SKIP_INSTALL=
+if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
+    SKIP_INSTALL=--skip-install
+fi
 
 python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
 chmod a+x builder

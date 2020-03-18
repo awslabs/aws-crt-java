@@ -21,6 +21,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 
+import static software.amazon.awssdk.crt.CRT.awsLastError;
+
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.
  *
@@ -47,32 +49,22 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public CompletableFuture<HttpStream> makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler) throws CrtRuntimeException {
+    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
 
-        CompletableFuture<HttpStream> streamFuture = new CompletableFuture<>();
+        HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
+            request.getMethod(),
+            request.getEncodedPath(),
+            request.getHeadersAsArray(),
+            request.getBodyStream(),
+            streamHandler);
+        if (stream == null || stream.isNull()) {
+            throw new CrtRuntimeException(awsLastError(), "HttpStream   creation failed");
+        }
 
-            try {
-                HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                    request.getMethod(),
-                    request.getEncodedPath(),
-                    request.getHeadersAsArray(),
-                    request.getBodyStream(),
-                    streamHandler);
-                if (stream == null || stream.isNull()) {
-                    streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
-                    return streamFuture;
-                }
-
-                stream.activate();
-                streamFuture.complete(stream);
-            } catch (Throwable e) {
-                streamFuture.completeExceptionally(e);
-            }
-
-        return streamFuture;
+        return stream;
     }
 
     /**

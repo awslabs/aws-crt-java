@@ -156,7 +156,7 @@ static void s_complete_signing_exceptionally(
     (*env)->DeleteLocalRef(env, crt_exception);
 
     /* we're already bailing at this point, just put this here to make the JVM happy. */
-    (*env)->ExceptionCheck(env);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -190,7 +190,7 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
        we cross the barrier. */
-    (*env)->ExceptionCheck(env);
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
 done:
 
@@ -211,9 +211,7 @@ static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_d
 
     (*env)->DeleteLocalRef(env, parameter_name);
 
-    if ((*env)->ExceptionCheck(env)) {
-        return false;
-    }
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     return result;
 }

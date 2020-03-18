@@ -70,7 +70,10 @@ public class HttpStream extends CrtResource {
      */
     public void activate() {
         if (!isNull()) {
-            httpStreamActivate(getNativeHandle());
+            System.out.println("calling activate");
+            httpStreamActivate(getNativeHandle(), this);
+            System.out.println("activate called");
+
         }
     }
 
@@ -87,6 +90,6 @@ public class HttpStream extends CrtResource {
 
     private static native void httpStreamRelease(long http_stream);
     private static native void httpStreamIncrementWindow(long http_stream, int window_size);
-    private static native void httpStreamActivate(long http_stream);
+    private static native void httpStreamActivate(long http_stream, HttpStream streamObj);
     private static native int  httpStreamGetResponseStatusCode(long http_stream);
 }

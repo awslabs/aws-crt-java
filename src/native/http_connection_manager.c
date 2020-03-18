@@ -60,15 +60,13 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
-
     jobject java_http_conn_manager = (*env)->NewLocalRef(env, callback->java_http_conn_manager);
     if (java_http_conn_manager != NULL) {
         (*env)->CallVoidMethod(
             env, java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
 
-        (*env)->DeleteLocalRef(env, java_http_conn_manager);
-
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
     // We're done with this callback data, free it.

@@ -63,6 +63,7 @@ public class HttpClientConnection extends CrtResource {
                     streamHandler);
                 if (stream == null || stream.isNull()) {
                     streamFuture.completeExceptionally(new RuntimeException("HttpStream creation failed"));
+                    return streamFuture;
                 }
 
                 stream.activate();

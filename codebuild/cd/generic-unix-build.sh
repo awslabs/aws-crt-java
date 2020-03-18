@@ -8,7 +8,7 @@ git submodule update --init
 
 AWS_CRT_TARGET=`uname | tr '[:upper:]' '[:lower:]'`-`uname -m`
 
-python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/freebsd/builder.pyz?date=`date +%s`', 'builder')"
+python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
 chmod a+x builder
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET
 

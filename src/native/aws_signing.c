@@ -154,6 +154,9 @@ static void s_complete_signing_exceptionally(
 
     (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
+
+    /* we're already bailing at this point, just put this here to make the JVM happy. */
+    (*env)->ExceptionCheck(env);
 }
 
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -185,6 +188,10 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     (*env)->DeleteLocalRef(env, java_signed_request);
 
+    /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
+       we cross the barrier. */
+    (*env)->ExceptionCheck(env);
+
 done:
 
     s_cleanup_callback_data(callback_data);
@@ -203,6 +210,10 @@ static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_d
         env, callback_data->java_sign_param_predicate, predicate_properties.test_method_id, (jobject)parameter_name);
 
     (*env)->DeleteLocalRef(env, parameter_name);
+
+    if ((*env)->ExceptionCheck(env)) {
+        return false;
+    }
 
     return result;
 }
@@ -251,6 +262,10 @@ static int s_build_signing_config(
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
     config->credentials_provider =
         (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+
+    if ((*env)->ExceptionCheck(env)) {
+        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
 
     return AWS_OP_SUCCESS;
 }

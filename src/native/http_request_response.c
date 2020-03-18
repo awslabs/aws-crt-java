@@ -59,7 +59,6 @@ static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStre
  * callbacks.
  ******************************************************************************/
 struct http_stream_callback_data {
-    struct aws_mutex setup_lock;
     JavaVM *jvm;
 
     // TEMP: Until Java API changes to match "H1B" native HTTP API,
@@ -93,8 +92,6 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
         aws_http_message_destroy(callback->native_request);
     }
 
-    aws_mutex_clean_up(&callback->setup_lock);
-
     aws_mem_release(aws_jni_get_allocator(), callback);
 }
 
@@ -110,21 +107,10 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    aws_mutex_init(&callback->setup_lock);
-
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
 
     return callback;
-}
-
-// Return whether the Java HttpStream object was successfully created.
-static bool http_stream_callback_is_valid(struct http_stream_callback_data *callback) {
-    // Lock to be sure that the setup attempt is finished
-    aws_mutex_lock(&callback->setup_lock);
-    bool is_setup = (callback->java_http_stream != NULL);
-    aws_mutex_unlock(&callback->setup_lock);
-    return is_setup;
 }
 
 static int s_on_incoming_headers_fn(
@@ -135,10 +121,6 @@ static int s_on_incoming_headers_fn(
     void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
-
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
 
     int resp_status = -1;
     int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
@@ -196,10 +178,6 @@ static int s_on_incoming_header_block_done_fn(
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jint jni_block_type = block_type;
     (*env)->CallVoidMethod(
@@ -218,10 +196,6 @@ static int s_on_incoming_header_block_done_fn(
 
 static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
-
-    if (!http_stream_callback_is_valid(callback)) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
 
     size_t total_window_increment = 0;
 
@@ -263,20 +237,17 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     // Don't invoke Java callbacks if Java HttpStream failed to completely setup
-    if (http_stream_callback_is_valid(callback)) {
+    jint jErrorCode = error_code;
+    (*env)->CallVoidMethod(
+        env,
+        callback->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onResponseComplete,
+        callback->java_http_stream,
+        jErrorCode);
 
-        jint jErrorCode = error_code;
-        (*env)->CallVoidMethod(
-            env,
-            callback->java_http_response_stream_handler,
-            http_stream_response_handler_properties.onResponseComplete,
-            callback->java_http_stream,
-            jErrorCode);
-
-        if ((*env)->ExceptionCheck(env)) {
-            // Close the Connection if the Java Callback throws an Exception
-            aws_http_connection_close(aws_http_stream_get_connection(stream));
-        }
+    if ((*env)->ExceptionCheck(env)) {
+        // Close the Connection if the Java Callback throws an Exception
+        aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
     http_stream_callback_destroy(env, callback);
@@ -337,11 +308,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     struct aws_http_stream *native_stream = NULL;
     jobject jHttpStream = NULL;
 
-    // There's a Data Race between this thread writing to callback_data->java_http_stream and the EventLoop thread
-    // reading callback_data->java_http_stream when calling the callbacks, add a lock so that
-    // callbacks will wait for setup to complete.
-    aws_mutex_lock(&callback_data->setup_lock);
-
     // This call schedules tasks on the Native Event loop thread to begin sending HttpRequest and receive the response.
     native_stream = aws_http_connection_make_request(native_conn, &request_options);
     if (native_stream) {
@@ -358,9 +324,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
             callback_data->java_http_stream = (*env)->NewGlobalRef(env, jHttpStream);
         }
     }
-
-    // Now that callback_data->java_http_stream has been written, the EventLoop thread may begin using this callback.
-    aws_mutex_unlock(&callback_data->setup_lock);
 
     // Check for errors that might have occurred while holding the lock.
     if (!native_stream) {
@@ -385,6 +348,27 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     }
 
     return callback_data->java_http_stream;
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamActivate(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_stream) {
+    (void)jni_class;
+
+    struct aws_http_stream *stream = (struct aws_http_stream *)jni_stream;
+
+    if (stream == NULL) {
+        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        return;
+    }
+
+    AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Activating Stream. stream: %p", (void *)stream);
+
+    if (aws_http_stream_activate(stream)) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
+    }
 }
 
 JNIEXPORT void JNICALL

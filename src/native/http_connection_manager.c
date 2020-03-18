@@ -92,7 +92,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_proxy_tls_context,
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
-    jstring jni_proxy_authorization_password) {
+    jstring jni_proxy_authorization_password,
+    jboolean jni_enable_back_pressure) {
 
     (void)jni_class;
 
@@ -160,6 +161,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
     manager_options.shutdown_complete_user_data = callback_data;
     manager_options.monitoring_options = NULL;
+    manager_options.enable_read_back_pressure = jni_enable_back_pressure;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;

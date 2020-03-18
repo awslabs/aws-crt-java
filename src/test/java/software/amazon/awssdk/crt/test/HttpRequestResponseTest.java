@@ -357,5 +357,4 @@ public class HttpRequestResponseTest {
         Assert.assertNotNull("Response Body did not contain \"data\" JSON key:\n" + body, echoedBody);
         Assert.assertEquals(bodyToSend, echoedBody);
     }
-
 }

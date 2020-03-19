@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -ex
 
@@ -19,7 +19,7 @@ fi
 
 python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
 chmod a+x builder
-./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=0
+./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)

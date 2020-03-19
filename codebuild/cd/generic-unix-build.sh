@@ -12,9 +12,13 @@ if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
 fi
 
+LIB_PATH=target/cmake-build/lib
 SKIP_INSTALL=
+
+# Cross compiles do not need local installs, and they have a different lib output path
 if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
     SKIP_INSTALL=--skip-install
+    LIB_PATH=target/cmake-build/aws-crt-java/lib
 fi
 
 python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
@@ -23,4 +27,4 @@ chmod a+x builder
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)
-aws s3 cp --recursive target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib

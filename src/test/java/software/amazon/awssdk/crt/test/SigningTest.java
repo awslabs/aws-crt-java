@@ -130,7 +130,8 @@ public class SigningTest {
             Predicate<String> filterParam = param -> !param.equals("bad-param");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(Instant.now());
@@ -162,7 +163,8 @@ public class SigningTest {
             HttpRequest request = createSigv4TestSuiteRequest();
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_QUERY_PARAM);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.QUERY_PARAM);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
@@ -170,6 +172,7 @@ public class SigningTest {
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
                 config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setExpirationInSeconds(60);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -181,6 +184,7 @@ public class SigningTest {
                 assertTrue(path.contains("X-Amz-SignedHeaders=host"));
                 assertTrue(path.contains("X-Amz-Credential=AKIDEXAMPLE%2F20150830%2F"));
                 assertTrue(path.contains("X-Amz-Algorithm=AWS4-HMAC-SHA256"));
+                assertTrue(path.contains("X-Amz-Expires=60"));
             }
         }
 
@@ -199,7 +203,8 @@ public class SigningTest {
             Predicate<String> filterParam = param -> !param.equals("bad-param");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
@@ -233,7 +238,8 @@ public class SigningTest {
             HttpRequest request = createUnsignableRequest("POST", "/bad");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(Instant.now());

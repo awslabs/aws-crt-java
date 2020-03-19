@@ -219,10 +219,12 @@ static int s_build_signing_config(
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.algorithm_field_id);
+    config->transform = (enum aws_signing_algorithm)(*env)->GetIntField(
+        env, java_config, aws_signing_config_properties.transform_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
-    config->region = aws_byte_cursor_from_string(callback_data->region);
+    config->region_config = aws_byte_cursor_from_string(callback_data->region);
 
     jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
     callback_data->service = aws_jni_new_string_from_jstring(env, service);
@@ -251,6 +253,15 @@ static int s_build_signing_config(
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
     config->credentials_provider =
         (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+
+    jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
+    if (credentials != NULL) {
+        /* TODO */
+        config->credentials = NULL;
+    }
+
+    config->expiration_in_seconds =
+        (uint64_t)(*env)->GetLongField(env, java_config, aws_signing_config_properties.expiration_in_seconds_field_id);
 
     return AWS_OP_SUCCESS;
 }

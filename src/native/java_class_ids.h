@@ -35,6 +35,7 @@ struct java_aws_signing_config_properties {
     jfieldID time_field_id;
     jfieldID credentials_field_id;
     jfieldID credentials_provider_field_id;
+    jfieldID ecc_key_pair_field_id;
     jfieldID should_sign_parameter_field_id;
     jfieldID use_double_uri_encode_field_id;
     jfieldID should_normalize_uri_path_field_id;

@@ -21,6 +21,7 @@ import java.util.Map;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.cal.EccKeyPair;
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
@@ -133,6 +134,7 @@ public class AwsSigningConfig extends CrtResource {
     private long time = Instant.now().toEpochMilli();
     private CredentialsProvider credentialsProvider;
     private Credentials credentials;
+    private EccKeyPair eccKeyPair;
     private Predicate<String> shouldSignParameter;
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
@@ -156,6 +158,7 @@ public class AwsSigningConfig extends CrtResource {
             clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
             clone.setSignBody(getSignBody());
             clone.setExpirationInSeconds(getExpirationInSeconds());
+            clone.setEccKeyPair(getEccKeyPair());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();
@@ -205,6 +208,13 @@ public class AwsSigningConfig extends CrtResource {
 
     public void setCredentials(Credentials credentials) { this.credentials = credentials; }
     public Credentials getCredentials() { return credentials; }
+
+    public void setEccKeyPair(EccKeyPair keyPair) {
+        swapReferenceTo(this.eccKeyPair, keyPair);
+        this.eccKeyPair = keyPair;
+    }
+
+    public EccKeyPair getEccKeyPair() { return eccKeyPair; }
 
     public void setShouldSignParameter(Predicate<String> shouldSignParameter) { this.shouldSignParameter = shouldSignParameter; }
     public Predicate<String> getShouldSignParameter() { return shouldSignParameter; }

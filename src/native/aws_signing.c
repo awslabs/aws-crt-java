@@ -296,13 +296,22 @@ static int s_build_signing_config(
 
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
-    config->credentials_provider =
-        (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+    if (provider != NULL) {
+        config->credentials_provider =
+            (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+    }
 
     jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
     if (credentials != NULL) {
         callback_data->credentials = s_credentials_new_from_java_credentials(env, credentials);
         config->credentials = callback_data->credentials;
+    }
+
+    jobject ecc_key_pair =
+        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.ecc_key_pair_field_id);
+    if (ecc_key_pair != NULL) {
+        config->ecc_signing_key =
+            (void *)(*env)->CallLongMethod(env, ecc_key_pair, crt_resource_properties.get_native_handle_method_id);
     }
 
     config->expiration_in_seconds =

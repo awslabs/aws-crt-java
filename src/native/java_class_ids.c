@@ -69,6 +69,10 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         env, aws_signing_config_class, "credentials", "Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.credentials_field_id);
 
+    aws_signing_config_properties.ecc_key_pair_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "eccKeyPair", "Lsoftware/amazon/awssdk/crt/cal/EccKeyPair;");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.ecc_key_pair_field_id);
+
     aws_signing_config_properties.should_sign_parameter_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignParameter", "Ljava/util/function/Predicate;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_sign_parameter_field_id);

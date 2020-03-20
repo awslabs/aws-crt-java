@@ -400,6 +400,17 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.constructor_method_id);
 }
 
+struct java_ecc_key_pair_properties ecc_key_pair_properties;
+
+static void s_cache_ecc_key_pair(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/cal/EccKeyPair");
+    AWS_FATAL_ASSERT(cls);
+    ecc_key_pair_properties.ecc_key_pair_class = (*env)->NewGlobalRef(env, cls);
+
+    ecc_key_pair_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(ecc_key_pair_properties.constructor);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -421,4 +432,5 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_stream_response_handler(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
+    s_cache_ecc_key_pair(env);
 }

@@ -15,7 +15,11 @@
 
 #include <jni.h>
 
+#include <aws/auth/credentials.h>
 #include <aws/cal/ecc.h>
+
+#include "credentials.h"
+#include "crt.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -36,6 +40,29 @@ void JNICALL
     struct aws_ecc_key_pair *key_pair = (struct aws_ecc_key_pair *)ekp_addr;
 
     aws_ecc_key_pair_release(key_pair);
+}
+
+JNIEXPORT
+jlong JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairNewFromCredentials(
+    JNIEnv *env,
+    jclass jni_class,
+    jobject credentials) {
+
+    (void)jni_class;
+
+    struct aws_credentials *native_credentials = aws_credentials_new_from_java_credentials(env, credentials);
+    if (native_credentials == NULL) {
+        return (jlong)0;
+    }
+
+    struct aws_ecc_key_pair *key_pair =
+        aws_ecc_key_pair_new_ecdsa_p256_key_from_aws_credentials(aws_jni_get_allocator(), native_credentials);
+
+    aws_credentials_release(native_credentials);
+
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
+    return (jlong)key_pair;
 }
 
 #if UINTPTR_MAX == 0xffffffff

@@ -14,6 +14,7 @@
  */
 package software.amazon.awssdk.crt.cal;
 
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
@@ -27,7 +28,7 @@ public final class EccKeyPair extends CrtResource {
     /**
      * Creates a new ecc key pair.  Only called from native at the moment.
      */
-    public EccKeyPair(long nativeHandle) {
+    private EccKeyPair(long nativeHandle) {
         acquireNativeHandle(nativeHandle);
     }
 
@@ -44,12 +45,23 @@ public final class EccKeyPair extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            eccKeyPairRelease(this, getNativeHandle());
+            eccKeyPairRelease(getNativeHandle());
         }
+    }
+
+    static public EccKeyPair newDeriveFromCredentials(Credentials credentials) {
+        long nativeHandle = eccKeyPairNewFromCredentials(credentials);
+        if (nativeHandle != 0) {
+            return new EccKeyPair(nativeHandle);
+        }
+
+        return null;
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void eccKeyPairRelease(EccKeyPair thisObj, long elg);
+    private static native long eccKeyPairNewFromCredentials(Credentials credentials);
+    private static native void eccKeyPairRelease(long elg);
+
 };

@@ -14,6 +14,8 @@
  */
 
 #include "crt.h"
+
+#include "credentials.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
@@ -23,6 +25,7 @@
 #include <aws/auth/credentials.h>
 #include <aws/auth/signable.h>
 #include <aws/auth/signing.h>
+#include <aws/cal/ecc.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 
@@ -37,46 +40,6 @@
 #        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #    endif
 #endif
-
-static struct aws_credentials *s_credentials_new_from_java_credentials(JNIEnv *env, jobject java_credentials) {
-    if (java_credentials == NULL) {
-        return NULL;
-    }
-
-    jbyteArray access_key_id =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id);
-    jbyteArray secret_access_key =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.secret_access_key_field_id);
-    jbyteArray session_token =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
-
-    if (access_key_id == NULL || secret_access_key == NULL) {
-        return NULL;
-    }
-
-    struct aws_credentials *credentials = NULL;
-
-    struct aws_byte_cursor access_key_id_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, access_key_id);
-    struct aws_byte_cursor secret_access_key_cursor =
-        aws_jni_byte_cursor_from_jbyteArray_acquire(env, secret_access_key);
-
-    struct aws_byte_cursor session_token_cursor;
-    AWS_ZERO_STRUCT(session_token_cursor);
-    if (session_token != NULL) {
-        session_token_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, session_token);
-    }
-
-    credentials = aws_credentials_new(
-        aws_jni_get_allocator(), access_key_id_cursor, secret_access_key_cursor, session_token_cursor, UINT64_MAX);
-
-    aws_jni_byte_cursor_from_jbyteArray_release(env, access_key_id, access_key_id_cursor);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, secret_access_key, secret_access_key_cursor);
-    if (session_token != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, session_token, session_token_cursor);
-    }
-
-    return credentials;
-}
 
 struct s_aws_sign_request_callback_data {
     JavaVM *jvm;
@@ -303,7 +266,7 @@ static int s_build_signing_config(
 
     jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
     if (credentials != NULL) {
-        callback_data->credentials = s_credentials_new_from_java_credentials(env, credentials);
+        callback_data->credentials = aws_credentials_new_from_java_credentials(env, credentials);
         config->credentials = callback_data->credentials;
     }
 
@@ -354,9 +317,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     AWS_ZERO_STRUCT(signing_config);
 
     if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
-        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
-        s_cleanup_callback_data(callback_data);
-        return;
+        aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
+        goto on_error;
     }
 
     jstring java_method = (*env)->GetObjectField(env, java_http_request, http_request_properties.method_field_id);
@@ -368,15 +330,13 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         env, java_method, java_uri, java_http_request_headers, java_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
-        s_cleanup_callback_data(callback_data);
-        return;
+        goto on_error;
     }
 
     callback_data->original_message_signable = aws_signable_new_http_request(allocator, callback_data->native_request);
     if (callback_data->original_message_signable == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create signable from http request");
-        s_cleanup_callback_data(callback_data);
-        return;
+        goto on_error;
     }
 
     /* Sign the native request */
@@ -387,36 +347,14 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             s_aws_signing_complete,
             callback_data)) {
         aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for HttpRequest");
-        s_cleanup_callback_data(callback_data);
-    }
-}
-
-JNIEXPORT
-jobject JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_deriveEccKeyPairFromCredentialsInternal(
-    JNIEnv *env,
-    jclass jni_class,
-    jobject credentials) {
-
-    struct aws_credentials *native_credentials = s_credentials_new_from_java_credentials(env, credentials);
-    if (native_credentials == NULL) {
-        return (jobject)NULL;
+        goto on_error;
     }
 
-    jobject java_key_pair = NULL;
-    struct aws_ecc_key_pair *key_pair =
-        aws_ecc_key_pair_new_ecdsa_p256_key_from_aws_credentials(aws_jni_get_allocator(), native_credentials);
-    if (key_pair == NULL) {
-        goto done;
-    }
+    return;
 
-    java_key_pair = (*env)->NewObject(
-        env, ecc_key_pair_properties.ecc_key_pair_class, ecc_key_pair_properties.constructor, (long)key_pair);
+on_error:
 
-done:
-
-    aws_credentials_release(native_credentials);
-
-    return java_key_pair;
+    s_cleanup_callback_data(callback_data);
 }
 
 #if UINTPTR_MAX == 0xffffffff

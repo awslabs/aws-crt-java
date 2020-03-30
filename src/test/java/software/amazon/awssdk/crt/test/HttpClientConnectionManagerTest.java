@@ -114,7 +114,7 @@ public class HttpClientConnectionManagerTest {
                             }
 
                             int requestId = numRequestsMade.incrementAndGet();
-                            conn.makeRequest(request, new HttpStreamResponseHandler() {
+                            HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
                                 @Override
                                 public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
                                         HttpHeader[] nextHeaders) {
@@ -132,6 +132,10 @@ public class HttpClientConnectionManagerTest {
                                     requestCompleteFuture.complete(null);
                                 }
                             });
+
+                            if (stream != null) {
+                                stream.activate();
+                            }
                         });
             });
         }

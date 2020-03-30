@@ -36,6 +36,7 @@ public class HttpClientConnectionManagerOptions {
     private int port;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private boolean enableReadBackPressure;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -157,5 +158,18 @@ public class HttpClientConnectionManagerOptions {
      * Gets the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+    /**
+     * If true, the read back pressure mechanism is enabled for connections.
+     */
+    public boolean isReadBackPressureEnabled() { return enableReadBackPressure; }
+
+    /**
+     * If true, the read back pressure mechanism is enabled for connections. Defaults to false
+     */
+    public HttpClientConnectionManagerOptions withReadBackPressureEnabled(boolean enableReadBackPressure) {
+        this.enableReadBackPressure = enableReadBackPressure;
+        return this;
+    }
 }
 

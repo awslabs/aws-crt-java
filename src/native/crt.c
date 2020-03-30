@@ -252,6 +252,13 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 }
 
 JNIEXPORT
+jint JNICALL Java_software_amazon_awssdk_crt_CRT_awsLastError(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+    return aws_last_error();
+}
+
+JNIEXPORT
 jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorString(JNIEnv *env, jclass jni_crt_class, jint error_code) {
     (void)jni_crt_class;
     const char *error_msg = aws_error_str(error_code);

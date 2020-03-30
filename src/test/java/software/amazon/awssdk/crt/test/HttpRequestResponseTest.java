@@ -155,7 +155,7 @@ public class HttpRequestResponseTest {
                     }
                 };
 
-                conn.makeRequest(request, streamHandler);
+                conn.makeRequest(request, streamHandler).activate();
                 // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);
             }
@@ -358,4 +358,57 @@ public class HttpRequestResponseTest {
         Assert.assertEquals(bodyToSend, echoedBody);
     }
 
+    @Test
+    public void testHttpRequestUnActivated() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        URI uri = new URI("https://httpbin.org");
+
+        HttpHeader[] requestHeaders =
+                new HttpHeader[]{
+                        new HttpHeader("Host", uri.getHost())
+                };
+
+        HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
+
+        CompletableFuture<Void> shutdownComplete = null;
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                        // do nothing
+                    }
+
+                    @Override
+                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                        // do nothing
+                    }
+
+                    @Override
+                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                        //do nothing
+                        return bodyBytesIn.length;
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        //do nothing.
+                    }
+                };
+
+                HttpStream stream = conn.makeRequest(request, streamHandler);
+                stream.close();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (shutdownComplete != null) {
+            shutdownComplete.get();
+        }
+
+        CrtResource.waitForNoResources();
+    }
 }

@@ -120,7 +120,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername,
-                                            proxyAuthorizationPassword));
+                                            proxyAuthorizationPassword,
+                                            options.isReadBackPressureEnabled()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -254,8 +255,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long proxyTlsContext,
                                                         int proxyAuthorizationType,
                                                         String proxyAuthorizationUsername,
-                                                        String proxyAuthorizationPassword
-                                                        ) throws CrtRuntimeException;
+                                                        String proxyAuthorizationPassword,
+                                                        boolean isReadBackPressureEnabled) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

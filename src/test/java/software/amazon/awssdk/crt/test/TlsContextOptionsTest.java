@@ -198,7 +198,6 @@ public class TlsContextOptionsTest {
     @Test
     public void testMtlsFromBadPath() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        System.out.println("GOT HERE");
         String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
         String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
 

@@ -297,7 +297,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     struct aws_http_make_request_options request_options = {
         .self_size = sizeof(request_options),
         .request = callback_data->native_request,
-        .manual_window_management = true,
         /* Set Callbacks */
         .on_response_headers = s_on_incoming_headers_fn,
         .on_response_header_block_done = s_on_incoming_header_block_done_fn,

@@ -36,7 +36,7 @@ public class HttpClientConnectionManagerOptions {
     private int port;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
-    private boolean enableReadBackPressure;
+    private boolean manualWindowManagement = false;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -160,15 +160,25 @@ public class HttpClientConnectionManagerOptions {
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
 
     /**
-     * If true, the read back pressure mechanism is enabled for connections.
+     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
+     * putting the data into a queue for another thread to process and need to make sure the memory
+     * usage is bounded (e.g. reactive streams).
+     * If this is enabled, you must call HttpStream.UpdateWindow() for every
+     * byte read from the OnIncomingBody callback.
      */
-    public boolean isReadBackPressureEnabled() { return enableReadBackPressure; }
+    public boolean isManualWindowManagement() { return manualWindowManagement; }
 
     /**
-     * If true, the read back pressure mechanism is enabled for connections. Defaults to false
+     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
+     * putting the data into a queue for another thread to process and need to make sure the memory
+     * usage is bounded (e.g. reactive streams).
+     * If this is enabled, you must call HttpStream.UpdateWindow() for every
+     * byte read from the OnIncomingBody callback.
      */
-    public HttpClientConnectionManagerOptions withReadBackPressureEnabled(boolean enableReadBackPressure) {
-        this.enableReadBackPressure = enableReadBackPressure;
+    public HttpClientConnectionManagerOptions withManualWindowManagement(boolean manualWindowManagement) {
+        this.manualWindowManagement = manualWindowManagement;
         return this;
     }
 }

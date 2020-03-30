@@ -91,7 +91,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
     jstring jni_proxy_authorization_password,
-    jboolean jni_enable_back_pressure) {
+    jboolean jni_manual_window_management) {
 
     (void)jni_class;
 
@@ -159,7 +159,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
     manager_options.shutdown_complete_user_data = callback_data;
     manager_options.monitoring_options = NULL;
-    manager_options.enable_read_back_pressure = jni_enable_back_pressure;
+    /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
+    manager_options.enable_read_back_pressure = jni_manual_window_management;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;

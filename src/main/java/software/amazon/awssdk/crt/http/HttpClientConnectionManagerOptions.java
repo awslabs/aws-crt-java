@@ -36,6 +36,7 @@ public class HttpClientConnectionManagerOptions {
     private int port;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private boolean manualWindowManagement = false;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -157,5 +158,28 @@ public class HttpClientConnectionManagerOptions {
      * Gets the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+    /**
+     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
+     * putting the data into a queue for another thread to process and need to make sure the memory
+     * usage is bounded (e.g. reactive streams).
+     * If this is enabled, you must call HttpStream.UpdateWindow() for every
+     * byte read from the OnIncomingBody callback.
+     */
+    public boolean isManualWindowManagement() { return manualWindowManagement; }
+
+    /**
+     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
+     * putting the data into a queue for another thread to process and need to make sure the memory
+     * usage is bounded (e.g. reactive streams).
+     * If this is enabled, you must call HttpStream.UpdateWindow() for every
+     * byte read from the OnIncomingBody callback.
+     */
+    public HttpClientConnectionManagerOptions withManualWindowManagement(boolean manualWindowManagement) {
+        this.manualWindowManagement = manualWindowManagement;
+        return this;
+    }
 }
 

@@ -17,10 +17,9 @@ Requirements:
 
 Building:
 1) apt-get install cmake3 maven openjdk-8-jdk-headless -y
-2) git clone https://github.com/awslabs/aws-crt-java.git
+2) git clone --recursive https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+4) mvn compile
 
 ### OSX
 Requirements:

@@ -17,6 +17,9 @@ package software.amazon.awssdk.crt.cal;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.CrtResource;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class puts an opaque wrapper around aws_ecc_key_pair from aws-c-cal.  Currently, it is only intended to be
  * cached and returned to native code by a signing invocation.
@@ -24,6 +27,39 @@ import software.amazon.awssdk.crt.CrtResource;
  * If there's a compelling reason, we can add accessors and conversions to/from Java's KeyPair.
  */
 public final class EccKeyPair extends CrtResource {
+
+    /* Needs to stay in sync with aws_ecc_curve_name */
+    public enum AwsEccCurve {
+        AWS_ECDSA_P256(0),
+        AWS_ECDSA_P384(1);
+
+        AwsEccCurve(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public int getNativeValue() { return nativeValue; }
+
+        public static AwsEccCurve getEnumValueFromInteger(int value) {
+            AwsEccCurve enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal ecc curve name value");
+        }
+
+        private static Map<Integer, AwsEccCurve> buildEnumMapping() {
+            Map<Integer, AwsEccCurve> enumMapping = new HashMap<Integer, AwsEccCurve>();
+            enumMapping.put(AWS_ECDSA_P256.getNativeValue(), AWS_ECDSA_P256);
+            enumMapping.put(AWS_ECDSA_P384.getNativeValue(), AWS_ECDSA_P384);
+
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsEccCurve> enumMapping = buildEnumMapping();
+    }
 
     /**
      * Creates a new ecc key pair.  Only called from native at the moment.
@@ -49,8 +85,8 @@ public final class EccKeyPair extends CrtResource {
         }
     }
 
-    static public EccKeyPair newDeriveFromCredentials(Credentials credentials) {
-        long nativeHandle = eccKeyPairNewFromCredentials(credentials);
+    static public EccKeyPair newDeriveFromCredentials(Credentials credentials, AwsEccCurve curve) {
+        long nativeHandle = eccKeyPairNewFromCredentials(credentials, curve.getNativeValue());
         if (nativeHandle != 0) {
             return new EccKeyPair(nativeHandle);
         }
@@ -61,7 +97,7 @@ public final class EccKeyPair extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long eccKeyPairNewFromCredentials(Credentials credentials);
+    private static native long eccKeyPairNewFromCredentials(Credentials credentials, int curve);
     private static native void eccKeyPairRelease(long elg);
 
 };

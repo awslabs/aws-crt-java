@@ -272,7 +272,7 @@ public class SigningTest {
         HttpRequest request = createSigv4TestSuiteRequest();
         Credentials credentials = new Credentials(TEST_ACCESS_KEY_ID, TEST_SECRET_ACCESS_KEY, null);
 
-        try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials);
+        try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials, EccKeyPair.AwsEccCurve.AWS_ECDSA_P256);
              AwsSigningConfig config = new AwsSigningConfig()) {
             config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
             config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.QUERY_PARAM);

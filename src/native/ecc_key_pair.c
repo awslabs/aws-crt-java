@@ -46,7 +46,8 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairNewFromCredentials(
     JNIEnv *env,
     jclass jni_class,
-    jobject credentials) {
+    jobject credentials,
+    jint curve) {
 
     (void)jni_class;
 
@@ -55,8 +56,19 @@ jlong JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairNewFromCr
         return (jlong)0;
     }
 
-    struct aws_ecc_key_pair *key_pair =
-        aws_ecc_key_pair_new_ecdsa_p256_key_from_aws_credentials(aws_jni_get_allocator(), native_credentials);
+    enum aws_ecc_curve_name curve_name = curve;
+
+    struct aws_ecc_key_pair *key_pair = NULL;
+
+    switch (curve_name) {
+        case AWS_CAL_ECDSA_P256:
+            key_pair =
+                aws_ecc_key_pair_new_ecdsa_p256_key_from_aws_credentials(aws_jni_get_allocator(), native_credentials);
+            break;
+
+        default:
+            break;
+    }
 
     aws_credentials_release(native_credentials);
 

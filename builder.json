@@ -78,6 +78,47 @@
                 }
             }
         },
+        "android": {
+            "imports": [
+                "s2n",
+                "android-sdk"
+            ],
+            "build_env": {
+                "ANDROID_SDK_ROOT": "{android_sdk_path}"
+            },
+            "!build_steps": [
+                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "!test_steps": [
+                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+            ],
+            "architectures": {
+                "armv7": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
+                    ]
+                },
+                "arm64": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
+                    ]
+                }
+            }
+        },
         "freebsd": {
             "imports": [
                 "s2n"

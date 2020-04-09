@@ -47,8 +47,6 @@ if (ANDROID)
     set(LibCrypto_INCLUDE_DIR "${ANDROID_DEPS_DIR}/libcrypto/include" CACHE INTERNAL "")
     set(LibCrypto_STATIC_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.a" CACHE INTERNAL "")
     set(LibCrypto_SHARED_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.so" CACHE INTERNAL "")
-#    set(LibCrypto_LIBRARY "${LibCrypto_STATIC_LIBRARY}" CACHE INTERNAL "")
-#    set(LibCrypto_FOUND true PARENT_SCOPE)
 
     if (NOT EXISTS ${LibCrypto_INCLUDE_DIR}/openssl/crypto.h OR
         NOT EXISTS ${LibCrypto_STATIC_LIBRARY} OR

@@ -42,6 +42,21 @@ list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 # Local CMake scripts
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+if (ANDROID)
+    set(ANDROID_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
+    set(LibCrypto_INCLUDE_DIR "${ANDROID_DEPS_DIR}/libcrypto/include" CACHE INTERNAL "")
+    set(LibCrypto_STATIC_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.a" CACHE INTERNAL "")
+    set(LibCrypto_SHARED_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.so" CACHE INTERNAL "")
+#    set(LibCrypto_LIBRARY "${LibCrypto_STATIC_LIBRARY}" CACHE INTERNAL "")
+#    set(LibCrypto_FOUND true PARENT_SCOPE)
+
+    if (NOT EXISTS ${LibCrypto_INCLUDE_DIR}/openssl/crypto.h OR
+        NOT EXISTS ${LibCrypto_STATIC_LIBRARY} OR
+        NOT EXISTS ${LibCrypto_SHARED_LIBRARY})
+        message(FATAL_ERROR "Could not find libcrypto at ${CMAKE_BINARY_DIR}/deps/libcrypto")
+    endif()
+endif()
+
 if (BUILD_DEPS)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/aws-common-runtime/aws-c-common/cmake")
     include(AwsFindPackage)
@@ -144,11 +159,15 @@ else ()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
-# find JNI and add the include path
-set(JAVA_AWT_LIBRARY NotNeeded)
-set(JAVA_AWT_INCLUDE_PATH NotNeeded)
-find_package(JNI REQUIRED)
-include_directories(${JNI_INCLUDE_DIRS} "src/native")
+# find JNI and add the include path (except on android where gradle injects it)
+if (NOT ANDROID)
+    set(JAVA_AWT_LIBRARY NotNeeded)
+    set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+    find_package(JNI REQUIRED)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${JNI_INCLUDE_DIRS})
+endif()
+
+target_include_directories(${PROJECT_NAME} PRIVATE "src/native")
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")

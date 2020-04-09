@@ -189,7 +189,11 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     JNIEnv *env = NULL;
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "aws_jni_get_thread_env returned detached, attaching");
+#ifdef ANDROID
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+#else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+#endif
         (void)result;
         AWS_FATAL_ASSERT(result == JNI_OK);
         /* This should only happen in event loop threads, the JVM main thread attachment is

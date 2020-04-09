@@ -15,16 +15,26 @@
  */
 package software.amazon.awssdk.crt.utils;
 
+import software.amazon.awssdk.crt.CRT;
+
 public final class PackageInfo {
     public class Version {
         private final String version;
         public final int major;
         public final int minor;
         public final int patch;
+        public final String tag;
 
         public Version(String v) {
             version = v != null ? v : "UNKNOWN";
             
+            int dashIdx = version.indexOf('-');
+            if (dashIdx != -1) {
+                tag = version.substring(dashIdx + 1);
+            } else {
+                tag = "";
+            }
+
             v = version.replace("-.+$", ""); // remove -SNAPSHOT or any other suffix
             String[] parts = v.split("\\.", 3);
 
@@ -51,7 +61,16 @@ public final class PackageInfo {
     public Version version;
 
     public PackageInfo() {
-        version = new Version(PackageInfo.class.getPackage().getImplementationVersion());
+        Package pkg = CRT.class.getPackage();
+        String pkgVersion = pkg.getSpecificationVersion();
+        if (pkgVersion == null) {
+            pkgVersion = pkg.getImplementationVersion();
+        }
+        // There is no JAR/manifest during internal tests
+        if (pkgVersion == null) {
+            pkgVersion = "0.0.0-UNITTEST";
+        }
+        version = new Version(pkgVersion);
     }
     
 }

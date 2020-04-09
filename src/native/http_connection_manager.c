@@ -60,15 +60,13 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
-
     jobject java_http_conn_manager = (*env)->NewLocalRef(env, callback->java_http_conn_manager);
     if (java_http_conn_manager != NULL) {
         (*env)->CallVoidMethod(
             env, java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
 
-        (*env)->DeleteLocalRef(env, java_http_conn_manager);
-
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
     // We're done with this callback data, free it.
@@ -92,7 +90,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_proxy_tls_context,
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
-    jstring jni_proxy_authorization_password) {
+    jstring jni_proxy_authorization_password,
+    jboolean jni_manual_window_management) {
 
     (void)jni_class;
 
@@ -160,6 +159,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
     manager_options.shutdown_complete_user_data = callback_data;
     manager_options.monitoring_options = NULL;
+    /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
+    manager_options.enable_read_back_pressure = jni_manual_window_management;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;

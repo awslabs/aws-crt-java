@@ -34,7 +34,7 @@ public class CrtRuntimeException extends RuntimeException {
 
     private final static Pattern crtExFormat = Pattern.compile("aws_last_error: (.+)\\(([-0-9]+)\\),");
 
-    CrtRuntimeException(String msg) {
+    public CrtRuntimeException(String msg) {
         super(msg);
         
         Matcher matcher = crtExFormat.matcher(msg);
@@ -47,7 +47,7 @@ public class CrtRuntimeException extends RuntimeException {
         }
     }
 
-    CrtRuntimeException(int errorCode, String errorName) {
+    public CrtRuntimeException(int errorCode, String errorName) {
         this.errorCode = errorCode;
         this.errorName = errorName;
     }

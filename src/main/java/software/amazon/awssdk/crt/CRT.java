@@ -183,6 +183,11 @@ public final class CRT {
     private static native void awsCrtInit(int memoryTracingLevel, boolean debugWait) throws CrtRuntimeException;
 
     /**
+     * Returns the last error on the current thread.
+     */
+    public static native int awsLastError();
+
+    /**
      * Given an integer error code from an internal operation
      * @param errorCode An error code returned from an exception or other native function call
      * @return A user-friendly description of the error

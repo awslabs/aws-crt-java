@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
+# usage: fetch_libcrypto.sh (armeabi-v7a|arm64-v8a|x86|x86_64)
+
 set -ex
 
 if [ $# -eq 0 ]; then
     $0 armeabi-v7a
     $0 arm64-v8a
+    $0 x86
+    $0 x86_64
     exit 0
 fi
 

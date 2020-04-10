@@ -17,17 +17,14 @@ package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Arrays;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -41,6 +38,7 @@ import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 public class SigningTest {
 
     public static String METHOD = "POST";
+    public static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public SigningTest() {}
 
@@ -133,7 +131,7 @@ public class SigningTest {
                 config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.now());
+                config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setShouldSignParameter(filterParam);
                 config.setUseDoubleUriEncode(true);
@@ -165,7 +163,7 @@ public class SigningTest {
                 config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_QUERY_PARAM);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+                config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
@@ -202,7 +200,7 @@ public class SigningTest {
                 config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+                config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
@@ -236,7 +234,7 @@ public class SigningTest {
                 config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.now());
+                config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);

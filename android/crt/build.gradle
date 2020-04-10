@@ -14,7 +14,7 @@ android {
     ndkVersion "21.0.6113669"
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 26
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -30,6 +30,15 @@ android {
             cmake {
                 arguments "-DBUILD_DEPS=ON"
             }
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['../../src/main/java']
+        }
+        androidTest {
+            setRoot '../../src/test/java'
         }
     }
 

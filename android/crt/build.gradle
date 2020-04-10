@@ -24,11 +24,6 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        //testInstrumentationRunnerArguments clearPackageData: 'true'
-
-        // testOptions {
-        //     execution 'ANDROIDX_TEST_ORCHESTRATOR'
-        // }
 
         consumerProguardFiles 'consumer-rules.pro'
 
@@ -80,5 +75,4 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.2.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:runner:1.2.0'
-    //androidTestUtil 'androidx.test:orchestrator:1.2.0'
 }

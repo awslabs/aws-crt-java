@@ -14,7 +14,6 @@
  */
 package software.amazon.awssdk.crt.auth.signing;
 
-import java.time.Instant;
 import java.util.function.Predicate;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,7 +95,7 @@ public class AwsSigningConfig extends CrtResource {
     private int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
     private String region;
     private String service;
-    private long time = Instant.now().toEpochMilli();
+    private long time = System.currentTimeMillis();
     private CredentialsProvider credentialsProvider;
     private Predicate<String> shouldSignParameter;
     private boolean useDoubleUriEncode = true;
@@ -149,8 +148,8 @@ public class AwsSigningConfig extends CrtResource {
     public void setService(String service) { this.service = service; }
     public String getService() { return service; }
 
-    public void setTime(Instant time) { this.time = time.toEpochMilli(); }
-    public Instant getTime() { return Instant.ofEpochMilli(time); }
+    public void setTime(long time) { this.time = time; }
+    public long getTime() { return this.time; }
 
     public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         swapReferenceTo(this.credentialsProvider, credentialsProvider);

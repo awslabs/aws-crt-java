@@ -165,6 +165,7 @@
                                         <argument>${cmake.libcrypto_shared}</argument>
                                         <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
+                                        <argument>${cmake.generator}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -312,6 +313,7 @@
             <!-- make build dir for cmake -->
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
                 <executions>
                     <execution>
                         <id>create-build-dir</id>
@@ -324,6 +326,22 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <property environment="env"/>
+                                <condition property="cmake.generator" value="-G${env.AWS_CMAKE_GENERATOR}" else="-DGENERATOR_DUMMY=1">
+                                    <isset property="env.AWS_CMAKE_GENERATOR" />
+                                </condition>
+                                <echo message="Generator = ${cmake.generator}"/>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

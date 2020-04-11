@@ -336,7 +336,7 @@
                             <exportAntProperties>true</exportAntProperties>
                             <target>
                                 <property environment="env"/>
-                                <condition property="cmake.generator" value="-G${env.AWS_CMAKE_GENERATOR}" else="">
+                                <condition property="cmake.generator" value="-G${env.AWS_CMAKE_GENERATOR}" else="-DGENERATOR_DUMMY=1">
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>

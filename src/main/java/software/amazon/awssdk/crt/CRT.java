@@ -37,6 +37,19 @@ public final class CRT {
             // otherwise, load from the jar this class is in
             loadLibraryFromJar();
         }
+
+        // Initialize the CRT
+        int memoryTracingLevel = 0;
+        try {
+            memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
+        } catch (Exception ex) {}
+        awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
+
+        try {
+            Log.initLoggingFromSystemProperties();
+        } catch (IllegalArgumentException e) {
+            ;
+        }
     }
 
     public static class UnknownPlatformException extends Exception {
@@ -153,18 +166,6 @@ public final class CRT {
 
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
-
-            int memoryTracingLevel = 0;
-            try {
-                memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
-            } catch (Exception ex) {}
-            awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
-
-            try {
-                Log.initLoggingFromSystemProperties();
-            } catch (IllegalArgumentException e) {
-                ;
-            }
         }
         catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());

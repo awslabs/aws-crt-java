@@ -34,7 +34,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpClientConnectionTest {
+public class HttpClientConnectionTest extends CrtTestFixture {
 
     private class HttpConnectionTestResponse {
         boolean actuallyConnected = false;
@@ -71,14 +71,19 @@ public class HttpClientConnectionTest {
             }
 
             HttpConnectionTestResponse resp = null;
-            try(TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref);
-                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                SocketOptions socketOptions = new SocketOptions();
-                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+            try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()
+                    .withCipherPreference(pref)) {
+                if (getContext().trustStore != null) {
+                    tlsOpts.withCertificateAuthority(new String(getContext().trustStore));
+                }
+                try (   EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                        HostResolver resolver = new HostResolver(eventLoopGroup);
+                        ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                        SocketOptions socketOptions = new SocketOptions();
+                        TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+                    resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+                }
             }
 
             Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, resp.actuallyConnected);

@@ -27,8 +27,12 @@ import java.util.*;
 public final class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
+    private static final CrtPlatform s_platform;
 
     static {
+        // Scan for and invoke any platform specific initialization
+        s_platform = findPlatformImpl();
+        jvmInit();
         try {
             // If the lib is already present/loaded or is in java.library.path, just use it
             System.loadLibrary(CRT_LIB_NAME);
@@ -36,9 +40,6 @@ public final class CRT {
             // otherwise, load from the jar this class is in
             loadLibraryFromJar();
         }
-
-        // Scan for and invoke any platform specific initialization
-        awsCrtJavaInit();
 
         // Initialize the CRT
         int memoryTracingLevel = 0;
@@ -184,34 +185,36 @@ public final class CRT {
     }
 
 
-    private static Class<?> findplatformImpl() {
+    private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
+            // Search for test impl first, fall back to crt
+            "software.amazon.awssdk.crt.test.CrtPlatformImpl",
             "software.amazon.awssdk.crt.CrtPlatformImpl",
-            "software.amazon.awssdk.crt.test.CrtPlatformImpl"
         };
         for (String platformImpl : platforms) {
             try {
-                return classLoader.loadClass(platformImpl);
-            } catch (ClassNotFoundException ex) { }
+                Class<?> platformClass = classLoader.loadClass(platformImpl);
+                CrtPlatform instance = (CrtPlatform) platformClass.newInstance();
+                return instance;
+            } catch (ClassNotFoundException ex) {
+
+            } catch (IllegalAccessException | InstantiationException ex) {
+                throw new CrtRuntimeException(ex.toString());
+            }
         }
         return null;
     }
 
-    private static void awsCrtJavaInit() {
-        Class<?> platformImpl = findplatformImpl();
-        if (platformImpl == null) {
-            return;
-        }
 
-        try {
-            Method init = platformImpl.getDeclaredMethod("awsCrtJavaInit", new Class<?>[] {});
-            if (init != null) {
-                init.invoke(null, new Object[] {});
-            }            
-        } catch (NoSuchMethodException ex) {
-        } catch (IllegalAccessException | InvocationTargetException ex) {
-            throw new CrtRuntimeException(ex.toString());
+    public static CrtPlatform getPlatformImpl() {
+        return s_platform;
+    }
+
+    private static void jvmInit() {
+        CrtPlatform platform = getPlatformImpl();
+        if (platform != null) {
+            platform.jvmInit();
         }
     }
 

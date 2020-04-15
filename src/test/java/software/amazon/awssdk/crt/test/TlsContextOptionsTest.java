@@ -16,7 +16,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.utils.PemUtils;
 
-public class TlsContextOptionsTest {
+public class TlsContextOptionsTest extends CrtTestFixture {
 
     static final String BAD_CERT = "--- THIS IS NOT A CERT ---";
     static final String ROOT_CA1 = "-----BEGIN CERTIFICATE-----\n"

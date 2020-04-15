@@ -32,7 +32,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
-public class CredentialsProviderTest {
+public class CredentialsProviderTest extends CrtTestFixture  {
     static private String ACCESS_KEY_ID = "access_key_id";
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";

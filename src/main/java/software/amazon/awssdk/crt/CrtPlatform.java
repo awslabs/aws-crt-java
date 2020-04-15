@@ -16,5 +16,12 @@
 package software.amazon.awssdk.crt;
 
 public abstract class CrtPlatform {
-    static void awsCrtJavaInit() {}
+    // Called before any native code is loaded, just to configure the JVM
+    public void jvmInit() {}
+    
+    // Called before every JUnit test
+    public void testSetup(Object context) {}
+    
+    // Called after every JUnit test
+    public void testTearDown(Object context) {}
 }

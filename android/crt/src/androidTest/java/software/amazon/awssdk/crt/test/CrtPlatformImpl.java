@@ -16,18 +16,22 @@
 package software.amazon.awssdk.crt.test;
 
 import android.Manifest;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 import software.amazon.awssdk.crt.CrtPlatform;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 
-// Ensure that android JUnitTestRunner test arguments get turned into system properties
-class CrtPlatformImpl extends CrtPlatform {
-    public static void awsCrtJavaInit() {
+public class CrtPlatformImpl extends CrtPlatform {
+    public void jvmInit() {
+        // Ensure that android JUnitTestRunner test arguments get turned into system properties
         Bundle testArgs = InstrumentationRegistry.getArguments();
         if (testArgs != null) {
             final Set<String> keys = testArgs.keySet();
@@ -37,6 +41,21 @@ class CrtPlatformImpl extends CrtPlatform {
                 }
             }
         }
+    }
+
+    public void testSetup(Object context) {
+        CrtTestContext ctx = (CrtTestContext) context;
+        AssetManager assets = InstrumentationRegistry.getInstrumentation().getContext().getResources().getAssets();
+        try (InputStream trustStoreStream = assets.open("ca-certificates.crt");) {
+            ctx.trustStore = new byte[trustStoreStream.available()];
+            trustStoreStream.read(ctx.trustStore);
+        } catch (IOException ex) {
+            throw new CrtRuntimeException(ex.toString());
+        }
+    }
+
+    public void testTearDown(Object context) {
+
     }
 }
 

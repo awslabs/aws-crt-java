@@ -36,7 +36,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
-public class SigningTest {
+public class SigningTest extends CrtTestFixture {
 
     public static String METHOD = "POST";
     public static SimpleDateFormat DATE_FORMAT = dateFormat();

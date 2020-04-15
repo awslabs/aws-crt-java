@@ -18,7 +18,7 @@ import software.amazon.awssdk.crt.Log;
  * Checks that the CRT doesn't have any major memory leaks. Probably won't
  * detect very small leaks but will likely find obvious large ones.
  */
-public class CrtMemoryLeakDetector {
+public class CrtMemoryLeakDetector extends CrtTestFixture  {
     static {
         new CRT(); // force the CRT to load before doing anything
     };

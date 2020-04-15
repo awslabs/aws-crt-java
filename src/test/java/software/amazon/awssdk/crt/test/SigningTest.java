@@ -19,6 +19,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -38,7 +39,13 @@ import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 public class SigningTest {
 
     public static String METHOD = "POST";
-    public static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    public static SimpleDateFormat DATE_FORMAT = dateFormat();
+
+    private static SimpleDateFormat dateFormat() {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format;
+    }
 
     public SigningTest() {}
 

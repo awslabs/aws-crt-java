@@ -199,10 +199,16 @@ public final class CRT {
     }
 
     private static void awsCrtJavaInit() {
-        Class <?> platformImpl = findplatformImpl();
+        Class<?> platformImpl = findplatformImpl();
+        if (platformImpl == null) {
+            return;
+        }
+
         try {
             Method init = platformImpl.getDeclaredMethod("awsCrtJavaInit", new Class<?>[] {});
-            init.invoke(null, new Object[] {});
+            if (init != null) {
+                init.invoke(null, new Object[] {});
+            }            
         } catch (NoSuchMethodException ex) {
         } catch (IllegalAccessException | InvocationTargetException ex) {
             throw new CrtRuntimeException(ex.toString());

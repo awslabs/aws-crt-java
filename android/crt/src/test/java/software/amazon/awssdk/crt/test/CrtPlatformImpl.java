@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import android.Manifest;
 import android.os.Bundle;
 
 import androidx.test.platform.app.InstrumentationRegistry;

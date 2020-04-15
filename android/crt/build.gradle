@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
 
 preBuild.doFirst {
     println('Installing libcrypto prebuilt binaries')
@@ -40,10 +41,12 @@ android {
 
     sourceSets {
         main {
-            java.srcDirs = ['../../src/main/java']
+            java.srcDir '../../src/main/java'
         }
         androidTest {
             setRoot '../../src/test'
+            java.srcDir '../../src/test/java'
+            java.srcDir 'src/test/java'
         }
     }
 
@@ -75,4 +78,5 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.2.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:monitor:1.2.0@aar'
 }

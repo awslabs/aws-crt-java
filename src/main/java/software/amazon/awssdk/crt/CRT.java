@@ -15,11 +15,10 @@
 package software.amazon.awssdk.crt;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.*;
 import java.util.*;
-
-import software.amazon.awssdk.crt.Log;
-
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
  * platform out of aws-crt-java.jar. One instance of this class has to be created
@@ -37,6 +36,9 @@ public final class CRT {
             // otherwise, load from the jar this class is in
             loadLibraryFromJar();
         }
+
+        // Scan for and invoke any platform specific initialization
+        awsCrtJavaInit();
 
         // Initialize the CRT
         int memoryTracingLevel = 0;
@@ -178,6 +180,32 @@ public final class CRT {
         catch (Exception ex) {
             System.err.println("Unable to unpack AWS CRT lib: " + ex.toString());
             ex.printStackTrace();
+        }
+    }
+
+
+    private static Class<?> findplatformImpl() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        String[] platforms = new String[] {
+            "software.amazon.awssdk.crt.CrtPlatformImpl",
+            "software.amazon.awssdk.crt.test.CrtPlatformImpl"
+        };
+        for (String platformImpl : platforms) {
+            try {
+                return classLoader.loadClass(platformImpl);
+            } catch (ClassNotFoundException ex) { }
+        }
+        return null;
+    }
+
+    private static void awsCrtJavaInit() {
+        Class <?> platformImpl = findplatformImpl();
+        try {
+            Method init = platformImpl.getDeclaredMethod("awsCrtJavaInit", new Class<?>[] {});
+            init.invoke(null, new Object[] {});
+        } catch (NoSuchMethodException ex) {
+        } catch (IllegalAccessException | InvocationTargetException ex) {
+            throw new CrtRuntimeException(ex.toString());
         }
     }
 

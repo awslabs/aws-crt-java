@@ -27,9 +27,10 @@ import java.util.Set;
 
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.utils.PackageInfo;
 
-
-public class CrtPlatformImpl extends CrtPlatform {
+// Overrides just for testing
+public class CrtPlatformImpl extends software.amazon.awssdk.crt.CrtPlatformImpl {
     public void jvmInit() {
         // Ensure that android JUnitTestRunner test arguments get turned into system properties
         Bundle testArgs = InstrumentationRegistry.getArguments();
@@ -41,6 +42,10 @@ public class CrtPlatformImpl extends CrtPlatform {
                 }
             }
         }
+    }
+
+    public PackageInfo.Version getVersion() {
+        return new PackageInfo.Version("0.0.0-UNITTEST");
     }
 
     private static byte[] assetContents(String filename) {

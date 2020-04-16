@@ -1,3 +1,4 @@
+
 /*
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -17,17 +18,8 @@ package software.amazon.awssdk.crt;
 
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
-public abstract class CrtPlatform {
-    // Called before any native code is loaded, just to configure the JVM
-    public void jvmInit() {}
-
+public class CrtPlatformImpl extends CrtPlatform {
     public PackageInfo.Version getVersion() {
-        return new PackageInfo.Version("0.0.0-UNKNOWN");
+        return new PackageInfo.Version(BuildConfig.VERSION_NAME);
     }
-
-    // Called before every JUnit test
-    public void testSetup(Object context) {}
-    
-    // Called after every JUnit test
-    public void testTearDown(Object context) {}
 }

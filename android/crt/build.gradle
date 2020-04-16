@@ -1,3 +1,5 @@
+import java.util.regex.Pattern
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
@@ -7,6 +9,49 @@ preBuild.doFirst {
     println('Installing libcrypto prebuilt binaries')
     def exec = (project.file('fetch_libcrypto.sh').absolutePath).execute()
     exec.waitForProcessOutput(System.out, System.err)
+}
+
+Properties getGitTag() {
+    def gitTag = "git describe --tags".execute().text.trim()
+    println("gitTag=${gitTag}")
+    def version = new Properties()
+    def versionPattern = Pattern.compile('v(\\d+).(\\d+).(\\d+)(-(.+))?')
+    def matcher = versionPattern.matcher(gitTag)
+    if (matcher.matches()) {
+        version['major'] = matcher.group(1)
+        version['minor'] = matcher.group(2)
+        version['patch'] = matcher.group(3)
+        if (matcher.groupCount() > 4) {
+            version['tag'] = matcher.group(5)
+        }
+    }
+    println("VERSION=${version}")
+    return version
+}
+
+ext {
+    gitVersionName = {
+        def version = getGitTag()
+        def name = "${version['major']}.${version['minor']}.${version['patch']}"
+        println("versionName=${name}")
+        return name
+    }
+    gitVersionCode = {
+        def version = getGitTag()
+        try {
+            def major = version['major'] as int
+            def minor = version['minor'] as int
+            def patch = version['patch'] as int
+            println("major=${major}, minor=${minor}, patch=${patch}")
+            return (major * 1000) + (minor * 100) + patch
+        } catch (Exception ex) {
+            return 0
+        }
+    }
+    gitVersionTag = {
+        def version = getGitTag()
+        return version['tag'] != '' ? '-' + version['tag'] : version['tag']
+    }
 }
 
 android {
@@ -21,8 +66,8 @@ android {
     defaultConfig {
         minSdkVersion 26
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        versionCode = gitVersionCode()
+        versionName = gitVersionName()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -42,6 +87,7 @@ android {
     sourceSets {
         main {
             java.srcDir '../../src/main/java'
+            java.srcDir 'src/main/java'
         }
         androidTest {
             setRoot '../../src/test'
@@ -52,9 +98,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            versionNameSuffix = gitVersionTag()
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            versionNameSuffix ""
         }
     }
 

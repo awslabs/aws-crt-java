@@ -35,6 +35,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -97,19 +98,25 @@ public class HttpRequestResponseTest extends CrtTestFixture {
     }
 
     private HttpClientConnectionManager createConnectionPoolManager(URI uri) {
-        try(EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-            HostResolver resolver = new HostResolver(eventLoopGroup);
-            ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-            SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+        try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()) {
+            CrtTestContext ctx = getContext();
+            if (ctx.trustStore != null) {
+                tlsOpts.overrideDefaultTrustStore(new String(ctx.trustStore));
+            }
+            try(EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContext tlsContext =  new TlsContext(tlsOpts)) {
 
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                .withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri);
+                HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                        .withClientBootstrap(bootstrap)
+                        .withSocketOptions(sockOpts)
+                        .withTlsContext(tlsContext)
+                        .withUri(uri);
 
-            return HttpClientConnectionManager.create(options);
+                return HttpClientConnectionManager.create(options);
+            }
         }
     }
 

@@ -68,8 +68,9 @@ public final class CRT {
         return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
     }
 
-    private static String getOSIdentifier() throws UnknownPlatformException {
-        String name = normalize(System.getProperty("os.name"));
+    public static String getOSIdentifier() throws UnknownPlatformException {
+        CrtPlatform platform = getPlatformImpl();
+        String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
         if (name.contains("windows")) {
             return "windows";
@@ -88,8 +89,10 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
-    private static String getArchIdentifier() throws UnknownPlatformException {
-        String arch = normalize(System.getProperty("os.arch"));
+    public static String getArchIdentifier() throws UnknownPlatformException {
+        CrtPlatform platform = getPlatformImpl();
+        String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
+
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {

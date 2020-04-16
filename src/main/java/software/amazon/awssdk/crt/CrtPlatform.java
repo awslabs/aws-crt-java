@@ -25,6 +25,14 @@ public abstract class CrtPlatform {
         return new PackageInfo.Version("0.0.0-UNKNOWN");
     }
 
+    public String getOSIdentifier() {
+        return System.getProperty("os.name");
+    }
+
+    public String getArchIdentifier() {
+        return System.getProperty("os.arch");
+    }
+
     // Called before every JUnit test
     public void testSetup(Object context) {}
     

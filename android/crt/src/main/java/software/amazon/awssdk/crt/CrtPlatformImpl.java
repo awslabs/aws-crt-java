@@ -19,6 +19,10 @@ package software.amazon.awssdk.crt;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 public class CrtPlatformImpl extends CrtPlatform {
+    public String getOSIdentifier() {
+        return "android";
+    }
+
     public PackageInfo.Version getVersion() {
         return new PackageInfo.Version(BuildConfig.VERSION_NAME);
     }

@@ -189,13 +189,17 @@ public class HttpClientConnectionManagerTest extends CrtTestFixture  {
             return null;
         };
 
-        
-        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-        // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
-        // we're running, 4K worth of growth in the JVM only is acceptable.
-        fixedGrowth = Math.max(fixedGrowth, 4096);
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no observable correlation
+        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we don't bother.
+        // If we have a leak, we should have it on all platforms, and we'll catch it elsewhere.
+        if (CRT.getOSIdentifier() != "android") {
+            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
+            // we're running, 4K worth of growth in the JVM only is acceptable.
+            fixedGrowth = Math.max(fixedGrowth, 4096);
+            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        }
     }
 
     @Test

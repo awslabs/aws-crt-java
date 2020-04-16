@@ -21,14 +21,20 @@ public abstract class CrtPlatform {
     // Called before any native code is loaded, just to configure the JVM
     public void jvmInit() {}
 
+    // Gets the package version. If not overridden, the Java Package that the
+    // CRT class is in will be read for version info.
     public PackageInfo.Version getVersion() {
-        return new PackageInfo.Version("0.0.0-UNKNOWN");
+        return null;
     }
 
+    // Get the OS identifier, used to determine platform and to load the
+    // JNI library
     public String getOSIdentifier() {
         return System.getProperty("os.name");
     }
 
+    // Get the architecture, used to determine platform and to load the
+    // JNI library
     public String getArchIdentifier() {
         return System.getProperty("os.arch");
     }

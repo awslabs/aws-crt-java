@@ -142,7 +142,7 @@ public class Log {
             return;
         }
 
-        // If no destination was specified, default to stderr
+        // If no destination wasn't specified, default to stderr
         if (destinationString == null) {
             destinationString = "Stderr";
         }

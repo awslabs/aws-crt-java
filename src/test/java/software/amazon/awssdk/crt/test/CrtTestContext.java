@@ -19,4 +19,12 @@ package software.amazon.awssdk.crt.test;
 public class CrtTestContext {
     // Trust store PEM blob
     public byte[] trustStore = null;
+    // IoT Thing certificate for testing
+    public byte[] iotClientCertificate = null;
+    // IoT Thing private key for testing
+    public byte[] iotClientPrivateKey = null;
+    // IoT ATS endpoint for testing
+    public String iotEndpoint = null;
+    // IoT CA Root
+    public byte[] iotCARoot = null;
 }

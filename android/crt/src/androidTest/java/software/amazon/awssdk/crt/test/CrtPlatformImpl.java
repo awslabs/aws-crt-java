@@ -43,15 +43,24 @@ public class CrtPlatformImpl extends CrtPlatform {
         }
     }
 
-    public void testSetup(Object context) {
-        CrtTestContext ctx = (CrtTestContext) context;
+    private static byte[] assetContents(String filename) {
         AssetManager assets = InstrumentationRegistry.getInstrumentation().getContext().getResources().getAssets();
-        try (InputStream trustStoreStream = assets.open("ca-certificates.crt");) {
-            ctx.trustStore = new byte[trustStoreStream.available()];
-            trustStoreStream.read(ctx.trustStore);
+        try (InputStream assetStream = assets.open(filename);) {
+            byte[] contents = new byte[assetStream.available()];
+            assetStream.read(contents);
+            return contents;
         } catch (IOException ex) {
             throw new CrtRuntimeException(ex.toString());
         }
+    }
+
+    public void testSetup(Object context) {
+        CrtTestContext ctx = (CrtTestContext) context;
+        ctx.trustStore = assetContents("ca-certificates.crt");
+        ctx.iotClientCertificate = assetContents("certificate.pem");
+        ctx.iotClientPrivateKey = assetContents("privatekey.pem");
+        ctx.iotEndpoint = new String(assetContents("endpoint.txt")).trim();
+        ctx.iotCARoot = assetContents("AmazonRootCA1.pem");
     }
 
     public void testTearDown(Object context) {

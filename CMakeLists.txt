@@ -42,6 +42,8 @@ list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 # Local CMake scripts
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/lib")
+
 if (ANDROID)
     set(ANDROID_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
     set(LibCrypto_INCLUDE_DIR "${ANDROID_DEPS_DIR}/libcrypto/include" CACHE INTERNAL "")
@@ -52,6 +54,7 @@ if (ANDROID)
         NOT EXISTS ${LibCrypto_STATIC_LIBRARY})
         message(FATAL_ERROR "Could not find libcrypto at ${CMAKE_BINARY_DIR}/deps/libcrypto")
     endif()
+    set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/../../../lib")
 endif()
 
 if (BUILD_DEPS)
@@ -128,7 +131,7 @@ file(GLOB CRT_JAVA_SRC
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
 message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
-set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})

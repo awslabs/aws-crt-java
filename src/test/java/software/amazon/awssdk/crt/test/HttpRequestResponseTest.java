@@ -98,25 +98,19 @@ public class HttpRequestResponseTest extends CrtTestFixture {
     }
 
     private HttpClientConnectionManager createConnectionPoolManager(URI uri) {
-        try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()) {
-            CrtTestContext ctx = getContext();
-            if (ctx.trustStore != null) {
-                tlsOpts.overrideDefaultTrustStore(new String(ctx.trustStore));
-            }
-            try(EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext =  new TlsContext(tlsOpts)) {
+        try(EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+            HostResolver resolver = new HostResolver(eventLoopGroup);
+            ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+            SocketOptions sockOpts = new SocketOptions();
+            TlsContext tlsContext =  createHttpClientTlsContext()) {
 
-                HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                        .withClientBootstrap(bootstrap)
-                        .withSocketOptions(sockOpts)
-                        .withTlsContext(tlsContext)
-                        .withUri(uri);
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                    .withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri);
 
-                return HttpClientConnectionManager.create(options);
-            }
+            return HttpClientConnectionManager.create(options);
         }
     }
 

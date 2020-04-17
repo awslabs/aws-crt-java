@@ -17,6 +17,8 @@ package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtPlatform;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.test.CrtTestContext;
 
 import org.junit.Before;
@@ -48,4 +50,33 @@ public class CrtTestFixture {
         context = null;
     }
 
+    private TlsContext createTlsContextOptions(byte[] trustStore) {
+        try (TlsContextOptions tlsOpts = configureTlsContextOptions(TlsContextOptions.createDefaultClient(),
+                trustStore)) {
+            return new TlsContext(tlsOpts);
+        }        
+    }
+
+    private TlsContextOptions configureTlsContextOptions(TlsContextOptions tlsOpts, byte[] trustStore) {
+        if (trustStore != null) {
+            tlsOpts.withCertificateAuthority(new String(trustStore));
+        }
+        return tlsOpts;
+    }
+
+    public TlsContext createHttpClientTlsContext() {
+        return createTlsContextOptions(context.trustStore);
+    }
+
+    public TlsContext createHttpClientTlsContext(TlsContextOptions tlsOpts) {
+        return new TlsContext(configureTlsContextOptions(tlsOpts, context.trustStore));
+    }
+
+    public TlsContext createIotClientTlsContext() {
+        return createTlsContextOptions(context.iotCARoot);
+    }
+
+    public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
+        return new TlsContext(configureTlsContextOptions(tlsOpts, context.iotCARoot));
+    }
 }

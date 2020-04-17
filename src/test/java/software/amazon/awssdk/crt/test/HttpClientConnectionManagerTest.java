@@ -51,33 +51,28 @@ public class HttpClientConnectionManagerTest extends CrtTestFixture  {
     }
 
     private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
-        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
-            if (getContext().trustStore != null) {
-                tlsOptions.withCertificateAuthority(new String(getContext().trustStore));
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContext tlsContext = createHttpClientTlsContext()) {
+
+            HttpProxyOptions proxyOptions = null;
+            if (proxyHost != null) {
+                proxyOptions = new HttpProxyOptions();
+                proxyOptions.setHost(proxyHost);
+                proxyOptions.setPort(proxyPort);
             }
-            try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                 HostResolver resolver = new HostResolver(eventLoopGroup);
-                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                 SocketOptions sockOpts = new SocketOptions();
-                 TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
-                HttpProxyOptions proxyOptions = null;
-                if (proxyHost != null) {
-                    proxyOptions = new HttpProxyOptions();
-                    proxyOptions.setHost(proxyHost);
-                    proxyOptions.setPort(proxyPort);
-                }
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            options.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(numConnections)
+                    .withProxyOptions(proxyOptions);
 
-                HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
-                options.withClientBootstrap(bootstrap)
-                        .withSocketOptions(sockOpts)
-                        .withTlsContext(tlsContext)
-                        .withUri(uri)
-                        .withMaxConnections(numConnections)
-                        .withProxyOptions(proxyOptions);
-
-                return HttpClientConnectionManager.create(options);
-            }
+            return HttpClientConnectionManager.create(options);
         }
     }
 

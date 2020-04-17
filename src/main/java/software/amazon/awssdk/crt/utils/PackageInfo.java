@@ -16,9 +16,10 @@
 package software.amazon.awssdk.crt.utils;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtPlatform;
 
 public final class PackageInfo {
-    public class Version {
+    public static class Version {
         private final String version;
         public final int major;
         public final int minor;
@@ -61,6 +62,12 @@ public final class PackageInfo {
     public Version version;
 
     public PackageInfo() {
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            version = platform.getVersion();
+            return;
+        }
+
         Package pkg = CRT.class.getPackage();
         String pkgVersion = pkg.getSpecificationVersion();
         if (pkgVersion == null) {

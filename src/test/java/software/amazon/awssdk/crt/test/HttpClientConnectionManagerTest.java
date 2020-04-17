@@ -29,8 +29,9 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpClientConnectionManagerTest {
+public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
@@ -51,10 +52,10 @@ public class HttpClientConnectionManagerTest {
 
     private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-            HostResolver resolver = new HostResolver(eventLoopGroup);
-            ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-            SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContext tlsContext = createHttpClientTlsContext()) {
 
             HttpProxyOptions proxyOptions = null;
             if (proxyHost != null) {
@@ -65,11 +66,11 @@ public class HttpClientConnectionManagerTest {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri)
-                .withMaxConnections(numConnections)
-                .withProxyOptions(proxyOptions);
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(numConnections)
+                    .withProxyOptions(proxyOptions);
 
             return HttpClientConnectionManager.create(options);
         }
@@ -183,13 +184,17 @@ public class HttpClientConnectionManagerTest {
             return null;
         };
 
-        
-        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-        // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
-        // we're running, 4K worth of growth in the JVM only is acceptable.
-        fixedGrowth = Math.max(fixedGrowth, 4096);
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no observable correlation
+        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we don't bother.
+        // If we have a leak, we should have it on all platforms, and we'll catch it elsewhere.
+        if (CRT.getOSIdentifier() != "android") {
+            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
+            // we're running, 4K worth of growth in the JVM only is acceptable.
+            fixedGrowth = Math.max(fixedGrowth, 4096);
+            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        }
     }
 
     @Test

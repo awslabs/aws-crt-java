@@ -35,6 +35,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -48,7 +49,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class HttpRequestResponseTest {
+public class HttpRequestResponseTest extends HttpClientTestFixture {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final String EMPTY_BODY = "";
     private final static String TEST_DOC_LINE = "This is a sample to prove that http downloads and uploads work. It doesn't really matter what's in here, we mainly just need to verify the downloads and uploads work.";
@@ -101,13 +102,13 @@ public class HttpRequestResponseTest {
             HostResolver resolver = new HostResolver(eventLoopGroup);
             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
             SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+            TlsContext tlsContext =  createHttpClientTlsContext()) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                .withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri);
+                    .withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri);
 
             return HttpClientConnectionManager.create(options);
         }

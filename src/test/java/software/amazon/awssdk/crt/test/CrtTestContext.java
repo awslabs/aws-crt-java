@@ -15,20 +15,16 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Test;
-import org.junit.Assert;
-import software.amazon.awssdk.crt.utils.PackageInfo;
-
-public class PackageInfoTest extends CrtTestFixture  {
-    public PackageInfoTest() {}
-    
-    @Test
-    public void testPackageInfo() {
-        PackageInfo pkgInfo = new PackageInfo();
-        Assert.assertNotEquals("UNKNOWN", pkgInfo.version.toString());
-        Assert.assertEquals(0, pkgInfo.version.major);
-        Assert.assertEquals(0, pkgInfo.version.minor);
-        Assert.assertEquals(0, pkgInfo.version.patch);
-        Assert.assertEquals("UNITTEST", pkgInfo.version.tag);
-    }
-};
+// Encapsulates any platform-specific configuration for tests
+public class CrtTestContext {
+    // Trust store PEM blob
+    public byte[] trustStore = null;
+    // IoT Thing certificate for testing
+    public byte[] iotClientCertificate = null;
+    // IoT Thing private key for testing
+    public byte[] iotClientPrivateKey = null;
+    // IoT ATS endpoint for testing
+    public String iotEndpoint = null;
+    // IoT CA Root
+    public byte[] iotCARoot = null;
+}

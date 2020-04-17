@@ -3,6 +3,11 @@
 set(THIS_FILE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(aws_detect_target_platform out_os out_arch)
+    if (CMAKE_CROSSCOMPILING AND CMAKE_SYSTEM_NAME STREQUAL "Android")
+        set(${out_os} "android" PARENT_SCOPE)
+        set(${out_arch} "${ANDROID_ABI}" PARENT_SCOPE)
+        return()
+    endif()
     try_compile(
         RESULT_UNUSED
         ${CMAKE_CURRENT_BINARY_DIR}

@@ -21,14 +21,17 @@ cmake_binary_dir=../../target/cmake-build
 android_abi=$1
 
 # Map android ABI -> the ABI name we use for prebuilt libs
-AWS_ANDROID_ABI=arm
-if [ $android_abi == 'arm64-v8a' ]; then
+if [ $android_abi == 'armeabi-v7a' ]; then
+    AWS_ANDROID_ABI=arm
+elif [ $android_abi == 'arm64-v8a' ]; then
     AWS_ANDROID_ABI=arm64
 elif [ $android_abi == 'x86' ]; then
     AWS_ANDROID_ABI=x86
 elif [ $android_abi == 'x86_64' ]; then
     AWS_ANDROID_ABI=x86_64
 fi
+
+[ ! -z "${AWS_ANDROID_ABI}" ]
 
 echo "Installing libcrypto for Android ${AWS_ANDROID_ABI}"
 

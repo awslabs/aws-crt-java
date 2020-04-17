@@ -49,8 +49,7 @@ if (ANDROID)
     set(LibCrypto_SHARED_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.so" CACHE INTERNAL "")
 
     if (NOT EXISTS ${LibCrypto_INCLUDE_DIR}/openssl/crypto.h OR
-        NOT EXISTS ${LibCrypto_STATIC_LIBRARY} OR
-        NOT EXISTS ${LibCrypto_SHARED_LIBRARY})
+        NOT EXISTS ${LibCrypto_STATIC_LIBRARY})
         message(FATAL_ERROR "Could not find libcrypto at ${CMAKE_BINARY_DIR}/deps/libcrypto")
     endif()
 endif()

@@ -34,7 +34,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpClientConnectionTest extends CrtTestFixture {
+public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     private class HttpConnectionTestResponse {
         boolean actuallyConnected = false;

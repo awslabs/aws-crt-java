@@ -50,33 +50,17 @@ public class CrtTestFixture {
         context = null;
     }
 
-    private TlsContext createTlsContextOptions(byte[] trustStore) {
+    protected TlsContext createTlsContextOptions(byte[] trustStore) {
         try (TlsContextOptions tlsOpts = configureTlsContextOptions(TlsContextOptions.createDefaultClient(),
                 trustStore)) {
             return new TlsContext(tlsOpts);
         }        
     }
 
-    private TlsContextOptions configureTlsContextOptions(TlsContextOptions tlsOpts, byte[] trustStore) {
+    protected TlsContextOptions configureTlsContextOptions(TlsContextOptions tlsOpts, byte[] trustStore) {
         if (trustStore != null) {
             tlsOpts.withCertificateAuthority(new String(trustStore));
         }
         return tlsOpts;
-    }
-
-    public TlsContext createHttpClientTlsContext() {
-        return createTlsContextOptions(context.trustStore);
-    }
-
-    public TlsContext createHttpClientTlsContext(TlsContextOptions tlsOpts) {
-        return new TlsContext(configureTlsContextOptions(tlsOpts, context.trustStore));
-    }
-
-    public TlsContext createIotClientTlsContext() {
-        return createTlsContextOptions(context.iotCARoot);
-    }
-
-    public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
-        return new TlsContext(configureTlsContextOptions(tlsOpts, context.iotCARoot));
     }
 }

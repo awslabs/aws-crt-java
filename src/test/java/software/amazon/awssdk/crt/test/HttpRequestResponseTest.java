@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class HttpRequestResponseTest extends CrtTestFixture {
+public class HttpRequestResponseTest extends HttpClientTestFixture {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final String EMPTY_BODY = "";
     private final static String TEST_DOC_LINE = "This is a sample to prove that http downloads and uploads work. It doesn't really matter what's in here, we mainly just need to verify the downloads and uploads work.";

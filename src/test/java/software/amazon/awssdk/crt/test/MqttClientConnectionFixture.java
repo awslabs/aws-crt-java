@@ -124,6 +124,14 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         }
     }
 
+    public TlsContext createIotClientTlsContext() {
+        return createTlsContextOptions(getContext().iotCARoot);
+    }
+
+    public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
+        return new TlsContext(configureTlsContextOptions(tlsOpts, getContext().iotCARoot));
+    }
+
     MqttClientConnectionFixture() {
     }
 

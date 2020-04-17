@@ -31,7 +31,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpClientConnectionManagerTest extends CrtTestFixture  {
+public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;

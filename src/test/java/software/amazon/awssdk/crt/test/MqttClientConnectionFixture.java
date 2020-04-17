@@ -49,9 +49,6 @@ class MissingCredentialsException extends RuntimeException {
 
 public class MqttClientConnectionFixture extends CrtTestFixture {
 
-    //@Rule
-    //public TestRule timeout = new DisableOnDebug(new Timeout(60, TimeUnit.MINUTES));
-
     MqttClientConnection connection = null;
     private boolean disconnecting = false;
 

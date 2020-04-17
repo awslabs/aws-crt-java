@@ -43,13 +43,11 @@ public class HttpClientConnectionTest extends CrtTestFixture {
         CompletableFuture<Void> shutdownComplete = null;
     }
 
-    private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts, TlsContext tlsContext) {
+    private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts,
+            TlsContext tlsContext) {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
         HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
-        options.withClientBootstrap(bootstrap)
-            .withSocketOptions(sockOpts)
-            .withTlsContext(tlsContext)
-            .withUri(uri);
+        options.withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
 
         try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
             resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
@@ -65,18 +63,17 @@ public class HttpClientConnectionTest extends CrtTestFixture {
     }
 
     private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws Exception {
-        for (TlsCipherPreference pref: TlsCipherPreference.values()) {
+        for (TlsCipherPreference pref : TlsCipherPreference.values()) {
             if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
                 continue;
             }
 
             HttpConnectionTestResponse resp = null;
-            try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()
-                    .withCipherPreference(pref)) {
+            try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref)) {
                 if (getContext().trustStore != null) {
                     tlsOpts.withCertificateAuthority(new String(getContext().trustStore));
                 }
-                try (   EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                         HostResolver resolver = new HostResolver(eventLoopGroup);
                         ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                         SocketOptions socketOptions = new SocketOptions();

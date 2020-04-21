@@ -55,7 +55,7 @@ public final class CRT {
         }
     }
 
-    public static class UnknownPlatformException extends Exception {
+    public static class UnknownPlatformException extends RuntimeException {
         UnknownPlatformException(String message) {
             super(message);
         }
@@ -68,7 +68,20 @@ public final class CRT {
         return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
     }
 
+    private static boolean isAndroid() {
+        try {
+            Class.forName("android.os.Build");
+            return true;
+        } catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
     public static String getOSIdentifier() throws UnknownPlatformException {
+        if (isAndroid()) {
+            return "android";
+        }
+
         CrtPlatform platform = getPlatformImpl();
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
@@ -82,8 +95,6 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
-        } else if (name.contains("android")) {
-            return "android";
         }
 
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
@@ -192,8 +203,8 @@ public final class CRT {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
             // Search for test impl first, fall back to crt
-            "software.amazon.awssdk.crt.test.CrtPlatformImpl",
-            "software.amazon.awssdk.crt.CrtPlatformImpl",
+            String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+            String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()),
         };
         for (String platformImpl : platforms) {
             try {
@@ -201,7 +212,7 @@ public final class CRT {
                 CrtPlatform instance = (CrtPlatform) platformClass.newInstance();
                 return instance;
             } catch (ClassNotFoundException ex) {
-
+                // IGNORED
             } catch (IllegalAccessException | InstantiationException ex) {
                 throw new CrtRuntimeException(ex.toString());
             }

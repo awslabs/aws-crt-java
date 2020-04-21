@@ -14,8 +14,10 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.awssdk.crt;
+package software.amazon.awssdk.crt.android;
 
+import software.amazon.awssdk.crt.BuildConfig;
+import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 public class CrtPlatformImpl extends CrtPlatform {

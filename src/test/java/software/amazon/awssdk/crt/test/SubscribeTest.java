@@ -66,7 +66,5 @@ public class SubscribeTest extends MqttClientConnectionFixture {
         
         disconnect();
         close();
-
-        CrtResource.waitForNoResources();
     }
 };

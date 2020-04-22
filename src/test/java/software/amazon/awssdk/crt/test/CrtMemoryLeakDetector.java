@@ -131,8 +131,6 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
 
     private static void determineBaselineGrowth() {
 
-        System.out.println("SAMPLING JVM HEAP GROWTH");
-
         getJvmMemoryInUse(); // force a few GCs to get a good baseline
 
         List<Long> jvmSamples = new ArrayList<>();
@@ -168,14 +166,10 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
             }
         }
 
-        System.out.println("FINISHED SAMPLING");
-
         // Get the median deltas
         List<Long> jvmDeltas = getDeltas(jvmSamples);
         long medianJvmDelta = jvmDeltas.get(jvmDeltas.size() / 2);
         FIXED_EXECUTOR_GROWTH = (int) medianJvmDelta;
-        
-        System.out.println("FIXED_EXECUTOR_GROWTH=" + medianJvmDelta);
     }
 
     private static void runViaThreadPool(int numThreads) throws Exception {

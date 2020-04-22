@@ -111,7 +111,6 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     @Test
     public void testTlsContextOptionsAPI() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             for (TlsCipherPreference pref : TlsCipherPreference.values()) {
@@ -135,8 +134,6 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
             Assert.assertTrue(exceptionThrown);
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test

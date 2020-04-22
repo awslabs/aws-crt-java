@@ -168,8 +168,6 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         shutdownComplete.get();
 
-        CrtResource.waitForNoResources();
-
         return response;
     }
 
@@ -409,7 +407,5 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         if (shutdownComplete != null) {
             shutdownComplete.get();
         }
-
-        CrtResource.waitForNoResources();
     }
 }

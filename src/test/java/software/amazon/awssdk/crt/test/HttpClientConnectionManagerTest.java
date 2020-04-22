@@ -163,8 +163,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        CrtResource.waitForNoResources();
-
         URI uri = new URI(endpoint);
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, numThreads, NUM_CONNECTIONS)) {
@@ -199,23 +197,17 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testSerialRequests() throws Exception {
-        System.out.println("testSerialRequests START");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-        System.out.println("testSerialRequests END");
     }
 
     @Test
     public void testParallelRequests() throws Exception {
-        System.out.println("testParallelRequests START");
         testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
-        System.out.println("testParallelRequests END");
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
-        System.out.println("testMaxParallelRequests START");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-        System.out.println("testMaxParallelRequests END");
     }
 
     @Test
@@ -229,8 +221,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
 
         Assume.assumeTrue(proxyHost != null && proxyHost.length() > 0 && proxyPort > 0);
-
-        CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
 

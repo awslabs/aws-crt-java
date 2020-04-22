@@ -90,8 +90,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
             }
 
             resp.shutdownComplete.get();
-
-            CrtResource.waitForNoResources();
         }
     }
 

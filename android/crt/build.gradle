@@ -20,9 +20,9 @@ Properties getGitTag() {
         version['major'] = matcher.group(1)
         version['minor'] = matcher.group(2)
         version['patch'] = matcher.group(3)
-        if (matcher.groupCount() > 4) {
+        try {
             version['tag'] = matcher.group(5)
-        }
+        } catch (Exception ex) {}
     }
     return version
 }

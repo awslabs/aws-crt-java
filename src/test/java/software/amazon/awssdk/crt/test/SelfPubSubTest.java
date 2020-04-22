@@ -95,7 +95,6 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
     
     @Test
@@ -151,6 +150,5 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
 };

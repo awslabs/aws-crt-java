@@ -52,8 +52,6 @@ public class CredentialsProviderTest extends CrtTestFixture  {
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -72,8 +70,6 @@ public class CredentialsProviderTest extends CrtTestFixture  {
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
-
-        CrtResource.waitForNoResources();
     }
 
 
@@ -92,8 +88,6 @@ public class CredentialsProviderTest extends CrtTestFixture  {
         } catch (Exception e) {
             fail(e.getMessage());
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -114,8 +108,6 @@ public class CredentialsProviderTest extends CrtTestFixture  {
             }
         } catch (Exception e) {
             ;
-        } finally {
-            CrtResource.waitForNoResources();
         }
     }
 

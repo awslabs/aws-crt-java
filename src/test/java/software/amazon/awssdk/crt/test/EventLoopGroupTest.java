@@ -33,6 +33,5 @@ public class EventLoopGroupTest extends CrtTestFixture  {
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
-        CrtResource.waitForNoResources();
     }
 };

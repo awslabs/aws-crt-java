@@ -17,6 +17,7 @@ package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtPlatform;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.test.CrtTestContext;
@@ -47,7 +48,10 @@ public class CrtTestFixture {
         if (platform != null) {
             platform.testTearDown(context);
         }
+
         context = null;
+
+        CrtResource.waitForNoResources();
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

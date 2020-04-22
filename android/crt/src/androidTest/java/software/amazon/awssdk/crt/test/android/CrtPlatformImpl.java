@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.awssdk.crt.test;
+package software.amazon.awssdk.crt.test.android;
 
 import android.Manifest;
 import android.content.res.AssetManager;
@@ -25,12 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
-import software.amazon.awssdk.crt.CrtPlatform;
+import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 // Overrides just for testing
-public class CrtPlatformImpl extends software.amazon.awssdk.crt.CrtPlatformImpl {
+public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatformImpl {
     public void jvmInit() {
         // Ensure that android JUnitTestRunner test arguments get turned into system properties
         Bundle testArgs = InstrumentationRegistry.getArguments();

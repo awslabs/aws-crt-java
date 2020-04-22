@@ -40,7 +40,5 @@ public class ClientBootstrapTest extends CrtTestFixture {
         bootstrap.getShutdownCompleteFuture().get();
         hostResolver.close();
         elg.close();
-
-        CrtResource.waitForNoResources();
     }
 };

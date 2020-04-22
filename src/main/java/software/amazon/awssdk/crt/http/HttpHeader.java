@@ -16,7 +16,6 @@
 package software.amazon.awssdk.crt.http;
 
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class HttpHeader {
@@ -40,11 +39,19 @@ public class HttpHeader {
         return new String(name, UTF8);
     }
 
+    public byte[] getNameBytes() {
+        return name;
+    }
+
     public String getValue() {
         if (value == null) {
             return "";
         }
         return new String(value, UTF8);
+    }
+
+    public byte[] getValueBytes() {
+        return value;
     }
 
     @Override

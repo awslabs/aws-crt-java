@@ -273,7 +273,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     JNIEnv *env,
     jclass jni_class,
     jobject java_http_request,
-    jobjectArray java_http_request_headers,
+    jbyteArray marshalled_request,
     jobject java_signing_config,
     jobject java_future) {
 
@@ -307,13 +307,11 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         return;
     }
 
-    jstring java_method = (*env)->GetObjectField(env, java_http_request, http_request_properties.method_field_id);
-    jstring java_uri = (*env)->GetObjectField(env, java_http_request, http_request_properties.encoded_path_field_id);
     jobject java_http_request_body_stream =
         (*env)->GetObjectField(env, java_http_request, http_request_properties.body_stream_field_id);
 
-    callback_data->native_request = aws_http_request_new_from_java_http_request(
-        env, java_method, java_uri, java_http_request_headers, java_http_request_body_stream);
+    callback_data->native_request =
+        aws_http_request_new_from_java_http_request(env, marshalled_request, java_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
         s_cleanup_callback_data(callback_data);

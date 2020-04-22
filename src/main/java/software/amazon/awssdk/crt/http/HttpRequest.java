@@ -14,7 +14,8 @@
  */
 
 package software.amazon.awssdk.crt.http;
-
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,8 @@ import java.util.List;
  * Represents a single Client Request to be sent on a HTTP connection
  */
 public class HttpRequest {
+    private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
+
     private final String method;
     private String encodedPath;
     private List<HttpHeader> headers;
@@ -86,5 +89,30 @@ public class HttpRequest {
 
     public HttpRequestBodyStream getBodyStream() {
         return bodyStream;
+    }
+
+    public byte[] marshallForJni() {
+        int size = 0;
+        size += 4+ method.length();
+        size += 4 + encodedPath.length();
+
+        for(HttpHeader header : headers) {
+            size += 8 + header.getNameBytes().length + header.getValueBytes().length;
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        buffer.putInt(method.length());
+        buffer.put(method.getBytes(UTF8));
+        buffer.putInt(encodedPath.length());
+        buffer.put(encodedPath.getBytes(UTF8));
+
+        for(HttpHeader header : headers) {
+            buffer.putInt(header.getNameBytes().length);
+            buffer.put(header.getNameBytes());
+            buffer.putInt(header.getValueBytes().length);
+            buffer.put(header.getValueBytes());
+        }
+
+        return buffer.array();
     }
 }

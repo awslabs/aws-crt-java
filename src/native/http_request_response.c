@@ -258,14 +258,11 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
-    jstring jni_method,
-    jstring jni_uri,
-    jobjectArray jni_headers,
+    jbyteArray marshalled_request,
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler) {
 
     (void)jni_class;
-
     struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
 
     if (!native_conn) {
@@ -286,8 +283,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         return (jobject)NULL;
     }
 
-    callback_data->native_request = aws_http_request_new_from_java_http_request(
-        env, jni_method, jni_uri, jni_headers, jni_http_request_body_stream);
+    callback_data->native_request =
+        aws_http_request_new_from_java_http_request(env, marshalled_request, jni_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         /* Exception already thrown */
         http_stream_callback_destroy(env, callback_data);

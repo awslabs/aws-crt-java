@@ -18,6 +18,7 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#include <aws/common/byte_order.h>
 #include <aws/http/http.h>
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
@@ -234,73 +235,78 @@ int aws_apply_java_http_request_changes_to_native_request(
 
 struct aws_http_message *aws_http_request_new_from_java_http_request(
     JNIEnv *env,
-    jstring jni_method,
-    jstring jni_uri,
-    jobjectArray jni_headers,
+    jbyteArray marshalled_request,
     jobject jni_body_stream) {
-
+    jbyte *marshalled_request_data = NULL;
+    const char *exception_message = NULL;
     struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
     if (request == NULL) {
         aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
         return NULL;
     }
+    const size_t marshalled_request_length = (*env)->GetArrayLength(env, marshalled_request);
 
-    struct aws_byte_cursor method_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_method);
-    int result = aws_http_message_set_request_method(request, method_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
+    marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
+    struct aws_byte_cursor marshalled_cur =
+        aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
+    uint32_t field_len = 0;
+
+    if (!aws_byte_cursor_read_be32(&marshalled_cur, &field_len)) {
+        exception_message = "aws_http_request_new_from_java_http_request: Invalid marshalled request data.";
+        goto on_error;
+    }
+    struct aws_byte_cursor method = aws_byte_cursor_advance(&marshalled_cur, field_len);
+
+    int result = aws_http_message_set_request_method(request, method);
     if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
+        exception_message = "aws_http_request_new_from_java_http_request: Unable to set Method";
         goto on_error;
     }
 
-    struct aws_byte_cursor path_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
-    result = aws_http_message_set_request_path(request, path_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
+    if (!aws_byte_cursor_read_be32(&marshalled_cur, &field_len)) {
+        exception_message = "aws_http_request_new_from_java_http_request: Invalid marshalled request data.";
         goto on_error;
     }
 
-    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
-    for (jsize i = 0; i < num_headers; ++i) {
-        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
-        jbyteArray jname = (*env)->GetObjectField(env, jHeader, http_header_properties.name);
-        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, http_header_properties.value);
+    struct aws_byte_cursor path = aws_byte_cursor_advance(&marshalled_cur, field_len);
 
-        const size_t name_len = (*env)->GetArrayLength(env, jname);
-        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
+    result = aws_http_message_set_request_path(request, path);
+    if (result != AWS_OP_SUCCESS) {
+        exception_message = "aws_http_request_new_from_java_http_request: Unable to set Path";
+        goto on_error;
+    }
 
-        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
-        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
-
-        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
-        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
-
-        struct aws_http_header c_header = {
-            .name = name_cursor,
-            .value = value_cursor,
-        };
-
-        result = aws_http_message_add_header(request, c_header);
-
-        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
-        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
-
-        (*env)->DeleteLocalRef(env, jname);
-        (*env)->DeleteLocalRef(env, jvalue);
-        (*env)->DeleteLocalRef(env, jHeader);
-
-        if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
+    while (marshalled_cur.len) {
+        if (!aws_byte_cursor_read_be32(&marshalled_cur, &field_len)) {
+            exception_message = "aws_http_request_new_from_java_http_request: Invalid marshalled request data.";
             goto on_error;
         }
+
+        struct aws_byte_cursor header_name = aws_byte_cursor_advance(&marshalled_cur, field_len);
+
+        if (!aws_byte_cursor_read_be32(&marshalled_cur, &field_len)) {
+            exception_message = "aws_http_request_new_from_java_http_request: Invalid marshalled request data.";
+            goto on_error;
+        }
+
+        struct aws_byte_cursor header_value = aws_byte_cursor_advance(&marshalled_cur, field_len);
+
+        struct aws_http_header header = {
+            .name = header_name,
+            .value = header_value,
+        };
+
+        aws_http_message_add_header(request, header);
     }
+
+    (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
+    marshalled_request_data = NULL;
 
     if (jni_body_stream != NULL) {
         struct aws_input_stream *body_stream =
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
         if (body_stream == NULL) {
-            aws_jni_throw_runtime_exception(env, "aws_fill_out_request: Error building body stream");
+            exception_message = "aws_fill_out_request: Error building body stream";
             goto on_error;
         }
 
@@ -310,6 +316,14 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     return request;
 
 on_error:
+
+    if (marshalled_request_data) {
+        (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
+    }
+
+    if (exception_message) {
+        aws_jni_throw_runtime_exception(env, exception_message);
+    }
 
     /* Don't need to destroy input stream since it's the last thing created */
     aws_http_message_destroy(request);

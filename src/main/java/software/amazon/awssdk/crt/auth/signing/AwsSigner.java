@@ -27,7 +27,7 @@ public class AwsSigner {
 
         try {
             //JNI is much easier to deal with primitives, so go ahead and hoist the headers into an array.
-            awsSignerSignRequest(request, request.getHeadersAsArray(), config, future);
+            awsSignerSignRequest(request, request.marshallForJni(), config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
@@ -40,7 +40,7 @@ public class AwsSigner {
      ******************************************************************************/
     private static native void awsSignerSignRequest(
         HttpRequest request,
-        HttpHeader[] httpHeaders,
+        byte[] marshalledRequest,
         AwsSigningConfig config,
         CompletableFuture<HttpRequest> future) throws CrtRuntimeException;
 }

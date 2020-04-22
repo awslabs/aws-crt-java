@@ -31,9 +31,7 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
 
 struct aws_http_message *aws_http_request_new_from_java_http_request(
     JNIEnv *env,
-    jstring jni_method,
-    jstring jni_uri,
-    jobjectArray jni_headers,
+    jbyteArray marshalled_request,
     jobject jni_body_stream);
 
 /* if this fails a java exception has been set. */

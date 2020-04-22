@@ -68,6 +68,8 @@ struct http_stream_callback_data {
     jobject java_http_response_stream_handler;
     jobject java_http_stream;
     struct aws_http_stream *native_stream;
+    struct aws_byte_buf headers_buf;
+    int response_status;
 };
 
 static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
@@ -93,6 +95,7 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
         aws_http_message_destroy(callback->native_request);
     }
 
+    aws_byte_buf_clean_up(&callback->headers_buf);
     aws_mem_release(aws_jni_get_allocator(), callback);
 }
 
@@ -111,6 +114,8 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
 
+    aws_byte_buf_init(&callback->headers_buf, allocator, 1024);
+
     return callback;
 }
 
@@ -120,9 +125,9 @@ static int s_on_incoming_headers_fn(
     const struct aws_http_header *header_array,
     size_t num_headers,
     void *user_data) {
+    (void)block_type;
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
-
     int resp_status = -1;
     int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
     if (err_code != AWS_OP_SUCCESS) {
@@ -130,42 +135,14 @@ static int s_on_incoming_headers_fn(
         return AWS_OP_ERR;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    callback->response_status = resp_status;
 
-    /* All New Java Objects created through JNI have Thread-local references in the current Environment Frame, and
-     * won't be eligible for GC until either DeleteLocalRef or PopLocalFrame is called.
-     *
-     * Capacity is multiple of 4 since we will need at minimum 4 Java Objects for a single Header:
-     *   - byte[] name, byte[] val, HttpHeader, HttpHeader[]
-     */
-    jint frameCapacity = (jint)(num_headers * 4);
-    jint result = (*env)->EnsureLocalCapacity(env, frameCapacity);
-
-    if (result != 0) {
-        AWS_LOGF_ERROR(
-            AWS_LS_HTTP_STREAM, "id=%p: Failed to EnsureLocalCapacity. Possibly OutOfMemory.", (void *)stream);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    jobjectArray jHeaders = aws_java_headers_array_from_native(env, header_array, num_headers);
-    if (!jHeaders) {
-        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Failed to create HttpHeaders", (void *)stream);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    (*env)->CallVoidMethod(
-        env,
-        callback->java_http_response_stream_handler,
-        http_stream_response_handler_properties.onResponseHeaders,
-        callback->java_http_stream,
-        resp_status,
-        (jint)block_type,
-        jHeaders);
-
-    (*env)->DeleteLocalRef(env, jHeaders);
-
-    if ((*env)->ExceptionCheck(env)) {
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    for (size_t i = 0; i < num_headers; ++i) {
+        aws_byte_buf_reserve_relative(&callback->headers_buf, 8 + header_array[i].name.len + header_array[i].value.len);
+        aws_byte_buf_write_be32(&callback->headers_buf, (uint32_t)header_array[i].name.len);
+        aws_byte_buf_write_from_whole_cursor(&callback->headers_buf, header_array[i].name);
+        aws_byte_buf_write_be32(&callback->headers_buf, (uint32_t)header_array[i].value.len);
+        aws_byte_buf_write_from_whole_cursor(&callback->headers_buf, header_array[i].value);
     }
 
     return AWS_OP_SUCCESS;
@@ -181,6 +158,27 @@ static int s_on_incoming_header_block_done_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jint jni_block_type = block_type;
+
+    jobject jni_headers_buf =
+        aws_jni_direct_byte_buffer_from_raw_ptr(env, callback->headers_buf.buffer, callback->headers_buf.len);
+
+    (*env)->CallVoidMethod(
+        env,
+        callback->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onResponseHeaders,
+        callback->java_http_stream,
+        (jint)callback->response_status,
+        (jint)block_type,
+        jni_headers_buf);
+
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->DeleteLocalRef(env, jni_headers_buf);
+        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
+
+    aws_byte_buf_reset(&callback->headers_buf, false);
+    (*env)->DeleteLocalRef(env, jni_headers_buf);
+
     (*env)->CallVoidMethod(
         env,
         callback->java_http_response_stream_handler,

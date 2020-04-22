@@ -32,6 +32,11 @@ public class HttpHeader {
         this.value = value.getBytes(UTF8);
     }
 
+    public HttpHeader(byte[] name, byte[] value){
+        this.name = name;
+        this.value = value;
+    }
+
     public String getName() {
         if (name == null) {
             return "";

@@ -338,14 +338,11 @@ static void s_cache_http_stream(JNIEnv *env) {
 struct java_http_stream_response_handler_properties http_stream_response_handler_properties;
 
 static void s_cache_http_stream_response_handler(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamResponseHandler");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamResponseHandlerNativeAdapter");
     AWS_FATAL_ASSERT(cls);
 
     http_stream_response_handler_properties.onResponseHeaders = (*env)->GetMethodID(
-        env,
-        cls,
-        "onResponseHeaders",
-        "(Lsoftware/amazon/awssdk/crt/http/HttpStream;II[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
+        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;IILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeaders);
 
     http_stream_response_handler_properties.onResponseHeadersDone =

@@ -59,9 +59,9 @@ public class HttpClientConnection extends CrtResource {
         HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
             request.marshallForJni(),
             request.getBodyStream(),
-            streamHandler);
+            new HttpStreamResponseHandlerNativeAdapter(streamHandler));
         if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError(), "HttpStream   creation failed");
+            throw new CrtRuntimeException(awsLastError(), "HttpStream creation failed");
         }
 
         return stream;
@@ -91,5 +91,5 @@ public class HttpClientConnection extends CrtResource {
     private static native HttpStream httpClientConnectionMakeRequest(long connection,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
-                                                                     HttpStreamResponseHandler responseHandler) throws CrtRuntimeException;
+                                                                     HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
 }

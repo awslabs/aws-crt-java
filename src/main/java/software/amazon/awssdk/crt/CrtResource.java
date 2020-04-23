@@ -47,23 +47,26 @@ public abstract class CrtResource implements AutoCloseable {
             nativeHandle = handle;
             canonicalName = name;
             this.wrapper = wrapper;
-            /*try {
-                throw new RuntimeException();
-            } catch (RuntimeException ex) {
-                instantiation = ex;
-            }*/
+            if (debugNativeObjects) {
+                try {
+                    throw new RuntimeException();
+                } catch (RuntimeException ex) {
+                    instantiation = ex;
+                }
+            }
         }
 
         public String location() {
             String str = "";
-            /*
-            StackTraceElement[] stack = instantiation.getStackTrace();
-            // skip ctor and acquireNativeHandle()
-            for (int frameIdx = 2; frameIdx < stack.length; ++frameIdx) {
-                StackTraceElement frame = stack[frameIdx];
-                str += frame.toString() + "\n";
+            if (debugNativeObjects) {
+                StackTraceElement[] stack = instantiation.getStackTrace();
+
+                // skip ctor and acquireNativeHandle()
+                for (int frameIdx = 2; frameIdx < stack.length; ++frameIdx) {
+                    StackTraceElement frame = stack[frameIdx];
+                    str += frame.toString() + "\n";
+                }
             }
-            return str;*/
             return str;
         }
 

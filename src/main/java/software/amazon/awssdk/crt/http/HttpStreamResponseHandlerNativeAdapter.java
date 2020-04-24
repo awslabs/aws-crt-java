@@ -16,8 +16,6 @@
 package software.amazon.awssdk.crt.http;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 class HttpStreamResponseHandlerNativeAdapter {
     private HttpStreamResponseHandler responseHandler;
@@ -27,20 +25,8 @@ class HttpStreamResponseHandlerNativeAdapter {
     }
 
     void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, ByteBuffer headersBlob) {
-        List<HttpHeader> headers = new ArrayList<>(16);
-
-        while(headersBlob.hasRemaining()) {
-            int nameLen = headersBlob.getInt();
-            byte[] nameBuf = new byte[nameLen];
-            headersBlob.get(nameBuf);
-            int valLen = headersBlob.getInt();
-            byte[] valueBuf = new byte[valLen];
-            headersBlob.get(valueBuf);
-            headers.add(new HttpHeader(nameBuf, valueBuf));
-        }
-
-        HttpHeader[] headersArray = new HttpHeader[headers.size()];
-        responseHandler.onResponseHeaders(stream, responseStatusCode, blockType, headers.toArray(headersArray));
+        HttpHeader[] headersArray = HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
+        responseHandler.onResponseHeaders(stream, responseStatusCode, blockType, headersArray);
     }
 
     void onResponseHeadersDone(HttpStream stream, int blockType) {

@@ -15,8 +15,11 @@
 
 package software.amazon.awssdk.crt.http;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HttpHeader {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
@@ -62,5 +65,31 @@ public class HttpHeader {
     @Override
     public String toString() {
         return getName() + ":" + getValue();
+    }
+
+    /** Each header is marshalled as
+     * [4-bytes BE name length] [variable length name value] [4-bytes BE value length] [variable length value value]
+     */
+    public static List<HttpHeader> loadHeadersListFromMarshalledHeadersBlob(ByteBuffer headersBlob) {
+        List<HttpHeader> headers = new ArrayList<>(16);
+
+        while(headersBlob.hasRemaining()) {
+            int nameLen = headersBlob.getInt();
+
+            byte[] nameBuf = new byte[nameLen];
+            headersBlob.get(nameBuf);
+            int valLen = headersBlob.getInt();
+            byte[] valueBuf = new byte[valLen];
+            headersBlob.get(valueBuf);
+            headers.add(new HttpHeader(nameBuf, valueBuf));
+        }
+
+        return headers;
+    }
+
+    public static HttpHeader[] loadHeadersFromMarshalledHeadersBlob(ByteBuffer headersBlob) {
+        List<HttpHeader> headers = loadHeadersListFromMarshalledHeadersBlob(headersBlob);
+        HttpHeader[] headersArray = new HttpHeader[headers.size()];
+        return headers.toArray(headersArray);
     }
 }

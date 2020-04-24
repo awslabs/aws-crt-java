@@ -78,54 +78,13 @@ static jobject s_create_signed_java_http_request(
     JNIEnv *env,
     struct aws_http_message *native_request,
     jobject java_original_request) {
-    jstring jni_uri = NULL;
-    jobjectArray jni_headers = NULL;
-    jobject http_request = NULL;
-
-    jstring jni_method = (*env)->GetObjectField(env, java_original_request, http_request_properties.method_field_id);
     jobject jni_body_stream =
         (*env)->GetObjectField(env, java_original_request, http_request_properties.body_stream_field_id);
 
-    struct aws_byte_cursor path_cursor;
-    if (aws_http_message_get_request_path(native_request, &path_cursor)) {
-        goto done;
-    }
-
-    jni_uri = aws_jni_string_from_cursor(env, &path_cursor);
-    if (jni_uri == NULL) {
-        goto done;
-    }
-
-    jni_headers = aws_java_headers_array_from_http_headers(env, aws_http_message_get_headers(native_request));
-    if (jni_headers == NULL) {
-        goto done;
-    }
-
-    http_request = (*env)->NewObject(
-        env,
-        http_request_properties.http_request_class,
-        http_request_properties.constructor_method_id,
-        jni_method,
-        jni_uri,
-        jni_headers,
-        jni_body_stream);
-
-done:
-
-    if (jni_method != NULL) {
-        (*env)->DeleteLocalRef(env, jni_method);
-    }
+    jobject http_request = aws_java_http_request_from_native(env, native_request, jni_body_stream);
 
     if (jni_body_stream != NULL) {
         (*env)->DeleteLocalRef(env, jni_body_stream);
-    }
-
-    if (jni_uri != NULL) {
-        (*env)->DeleteLocalRef(env, jni_uri);
-    }
-
-    if (jni_headers != NULL) {
-        (*env)->DeleteLocalRef(env, jni_headers);
     }
 
     return http_request;
@@ -152,11 +111,9 @@ static void s_complete_signing_exceptionally(
     (*env)->CallBooleanMethod(
         env, callback_data->java_future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
 
+    (*env)->ExceptionCheck(env);
     (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
-
-    /* we're already bailing at this point, just put this here to make the JVM happy. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -164,7 +121,6 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
         s_complete_signing_exceptionally(
             env, callback_data, (error_code != AWS_ERROR_SUCCESS) ? error_code : AWS_ERROR_UNKNOWN);
@@ -178,6 +134,7 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     jobject java_signed_request =
         s_create_signed_java_http_request(env, callback_data->native_request, callback_data->java_original_request);
+
     if (java_signed_request == NULL) {
         s_complete_signing_exceptionally(env, callback_data, aws_last_error());
         goto done;

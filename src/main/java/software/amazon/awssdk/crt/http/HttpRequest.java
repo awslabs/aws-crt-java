@@ -14,6 +14,8 @@
  */
 
 package software.amazon.awssdk.crt.http;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -25,7 +27,7 @@ import java.util.List;
  */
 public class HttpRequest {
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
-
+    private final static int BUFFER_INT_SIZE = 4;
     private final String method;
     private String encodedPath;
     private List<HttpHeader> headers;
@@ -52,6 +54,46 @@ public class HttpRequest {
         this.method = method;
         this.encodedPath = encodedPath;
         this.headers = Arrays.asList(headers);
+        this.bodyStream = bodyStream;
+    }
+
+    /**
+     * Package private. Used by JNI to convert native http representation to a Java object, because accessing this
+     * struct from JNI is too slow.
+     *
+     *  Requests are marshalled as follows:
+     *
+     *  each string field is:
+     *  [4-bytes BE] [variable length bytes specified by the previous field]
+     *  Each request is then:
+     *  [method][path][header name-value pairs]
+     *
+     * @param marshalledRequest serialized http request to be parsed.
+     * @param bodyStream body stream for the http request.
+     */
+    HttpRequest(ByteBuffer marshalledRequest, HttpRequestBodyStream bodyStream) {
+        if (marshalledRequest.remaining() < BUFFER_INT_SIZE * 3) {
+            throw new CrtRuntimeException("Invalid marshalled request object.");
+        }
+
+        int methodLength = marshalledRequest.getInt();
+        byte[] methodBlob = new byte[methodLength];
+        marshalledRequest.get(methodBlob);
+        this.method = new String(methodBlob, UTF8);
+        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE * 2) {
+            throw new CrtRuntimeException("Invalid marshalled request object.");
+        }
+
+        int pathLength = marshalledRequest.getInt();
+        byte[] pathBlob = new byte[pathLength];
+        marshalledRequest.get(pathBlob);
+        this.encodedPath = new String(pathBlob, UTF8);
+
+        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE) {
+            throw new CrtRuntimeException("Invalid marshalled request object.");
+        }
+
+        this.headers = HttpHeader.loadHeadersListFromMarshalledHeadersBlob(marshalledRequest);
         this.bodyStream = bodyStream;
     }
 
@@ -85,12 +127,22 @@ public class HttpRequest {
 
     public void addHeaders(final HttpHeader[] headers) {
         Collections.addAll(this.headers, headers);
+
     }
 
     public HttpRequestBodyStream getBodyStream() {
         return bodyStream;
     }
 
+    /**
+     * Requests are marshalled as follows:
+     *
+     * each string field is:
+     * [4-bytes BE] [variable length bytes specified by the previous field]
+     *
+     * Each request is then:
+     * [method][path][header name-value pairs]
+     */
     public byte[] marshallForJni() {
         int size = 0;
         size += 4+ method.length();

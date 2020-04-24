@@ -113,8 +113,7 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
 
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
-
-    aws_byte_buf_init(&callback->headers_buf, allocator, 1024);
+    AWS_FATAL_ASSERT(!aws_byte_buf_init(&callback->headers_buf, allocator, 1024));
 
     return callback;
 }
@@ -137,12 +136,10 @@ static int s_on_incoming_headers_fn(
 
     callback->response_status = resp_status;
 
-    for (size_t i = 0; i < num_headers; ++i) {
-        aws_byte_buf_reserve_relative(&callback->headers_buf, 8 + header_array[i].name.len + header_array[i].value.len);
-        aws_byte_buf_write_be32(&callback->headers_buf, (uint32_t)header_array[i].name.len);
-        aws_byte_buf_write_from_whole_cursor(&callback->headers_buf, header_array[i].name);
-        aws_byte_buf_write_be32(&callback->headers_buf, (uint32_t)header_array[i].value.len);
-        aws_byte_buf_write_from_whole_cursor(&callback->headers_buf, header_array[i].value);
+    if (aws_marshall_http_headers_to_dynamic_buffer(&callback->headers_buf, header_array, num_headers)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_HTTP_STREAM, "id=%p: Failed to allocate buffer space for incoming headers", (void *)stream);
+        return AWS_OP_ERR;
     }
 
     return AWS_OP_SUCCESS;
@@ -176,6 +173,7 @@ static int s_on_incoming_header_block_done_fn(
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
+    /* instead of cleaning it up here, reset it in case another block is encountered */
     aws_byte_buf_reset(&callback->headers_buf, false);
     (*env)->DeleteLocalRef(env, jni_headers_buf);
 

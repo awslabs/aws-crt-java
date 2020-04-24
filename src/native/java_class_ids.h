@@ -51,8 +51,6 @@ extern struct java_predicate_properties predicate_properties;
 struct java_http_request_properties {
     jclass http_request_class;
     jmethodID constructor_method_id;
-    jfieldID method_field_id;
-    jfieldID encoded_path_field_id;
     jfieldID body_stream_field_id;
 };
 extern struct java_http_request_properties http_request_properties;
@@ -143,15 +141,6 @@ struct java_http_client_connection_manager_properties {
     jmethodID onShutdownComplete;
 };
 extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
-
-/* HttpHeader */
-struct java_http_header_properties {
-    jclass header_class;
-    jmethodID constructor;
-    jfieldID name;
-    jfieldID value;
-};
-extern struct java_http_header_properties http_header_properties;
 
 /* HttpStream */
 struct java_http_stream_properties {

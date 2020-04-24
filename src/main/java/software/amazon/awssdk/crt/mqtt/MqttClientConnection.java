@@ -325,7 +325,7 @@ public class MqttClientConnection extends CrtResource {
     private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
         CompletableFuture<HttpRequest> future = new CompletableFuture<>();
         future.whenComplete((x, throwable) -> {
-            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x.getEncodedPath(), x.getHeadersAsArray(), throwable, nativeUserData);
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x.marshallForJni(), throwable, nativeUserData);
         });
 
         WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);
@@ -371,7 +371,7 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionUseWebsockets(long connection) throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, String path, HttpHeader[] headers, Throwable throwable,
+    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, byte[] marshalledRequest, Throwable throwable,
             long nativeUserData) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,

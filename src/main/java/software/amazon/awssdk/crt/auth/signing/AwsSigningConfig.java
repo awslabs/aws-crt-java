@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.HashMap;
 import java.util.Map;
 
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.CrtResource;
 
@@ -27,8 +28,7 @@ import software.amazon.awssdk.crt.CrtResource;
 public class AwsSigningConfig extends CrtResource {
 
     public enum AwsSigningAlgorithm {
-        SIGV4_HEADER(0),
-        SIGV4_QUERY_PARAM(1);
+        SIGV4(0);
 
         AwsSigningAlgorithm(int nativeValue) {
             this.nativeValue = nativeValue;
@@ -47,8 +47,7 @@ public class AwsSigningConfig extends CrtResource {
 
         private static Map<Integer, AwsSigningAlgorithm> buildEnumMapping() {
             Map<Integer, AwsSigningAlgorithm> enumMapping = new HashMap<Integer, AwsSigningAlgorithm>();
-            enumMapping.put(SIGV4_HEADER.getNativeValue(), SIGV4_HEADER);
-            enumMapping.put(SIGV4_QUERY_PARAM.getNativeValue(), SIGV4_QUERY_PARAM);
+            enumMapping.put(SIGV4.getNativeValue(), SIGV4);
 
             return enumMapping;
         }
@@ -56,6 +55,38 @@ public class AwsSigningConfig extends CrtResource {
         private int nativeValue;
 
         private static Map<Integer, AwsSigningAlgorithm> enumMapping = buildEnumMapping();
+    }
+
+    public enum AwsRequestSigningTransform {
+        HEADER(0),
+        QUERY_PARAM(1);
+
+        AwsRequestSigningTransform(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public int getNativeValue() { return nativeValue; }
+
+        public static AwsRequestSigningTransform getEnumValueFromInteger(int value) {
+            AwsRequestSigningTransform enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal request signing transform value in signing configuration");
+        }
+
+        private static Map<Integer, AwsRequestSigningTransform> buildEnumMapping() {
+            Map<Integer, AwsRequestSigningTransform> enumMapping = new HashMap<Integer, AwsRequestSigningTransform>();
+            enumMapping.put(HEADER.getNativeValue(), HEADER);
+            enumMapping.put(QUERY_PARAM.getNativeValue(), QUERY_PARAM);
+
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsRequestSigningTransform> enumMapping = buildEnumMapping();
     }
 
     public enum AwsBodySigningConfigType {
@@ -92,30 +123,36 @@ public class AwsSigningConfig extends CrtResource {
         private static Map<Integer, AwsBodySigningConfigType> enumMapping = buildEnumMapping();
     }
 
-    private int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
+    private int algorithm = AwsSigningAlgorithm.SIGV4.getNativeValue();
+    private int transform = AwsRequestSigningTransform.HEADER.getNativeValue();
     private String region;
     private String service;
     private long time = System.currentTimeMillis();
     private CredentialsProvider credentialsProvider;
+    private Credentials credentials;
     private Predicate<String> shouldSignParameter;
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
     private int signBody = AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF.getNativeValue();
+    private long expirationInSeconds = 0;
 
     public AwsSigningConfig() {}
 
     public AwsSigningConfig clone() {
         try (AwsSigningConfig clone = new AwsSigningConfig()) {
 
-            clone.setSigningAlgorithm(getSigningAlgorithm());
+            clone.setAlgorithm(getAlgorithm());
+            clone.setTransform(getTransform());
             clone.setRegion(getRegion());
             clone.setService(getService());
             clone.setTime(getTime());
             clone.setCredentialsProvider(getCredentialsProvider());
+            clone.setCredentials(getCredentials());
             clone.setShouldSignParameter(getShouldSignParameter());
             clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
             clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
             clone.setSignBody(getSignBody());
+            clone.setExpirationInSeconds(getExpirationInSeconds());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();
@@ -137,9 +174,14 @@ public class AwsSigningConfig extends CrtResource {
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 
-    public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
-    public AwsSigningAlgorithm getSigningAlgorithm() {
-        return AwsSigningAlgorithm.getEnumValueFromInteger(signingAlgorithm);
+    public void setAlgorithm(AwsSigningAlgorithm algorithm) { this.algorithm = algorithm.getNativeValue(); }
+    public AwsSigningAlgorithm getAlgorithm() {
+        return AwsSigningAlgorithm.getEnumValueFromInteger(algorithm);
+    }
+
+    public void setTransform(AwsRequestSigningTransform transform) { this.transform = transform.getNativeValue(); }
+    public AwsRequestSigningTransform getTransform() {
+        return AwsRequestSigningTransform.getEnumValueFromInteger(transform);
     }
 
     public void setRegion(String region) { this.region = region; }
@@ -158,6 +200,9 @@ public class AwsSigningConfig extends CrtResource {
 
     public CredentialsProvider getCredentialsProvider() { return credentialsProvider; }
 
+    public void setCredentials(Credentials credentials) { this.credentials = credentials; }
+    public Credentials getCredentials() { return credentials; }
+
     public void setShouldSignParameter(Predicate<String> shouldSignParameter) { this.shouldSignParameter = shouldSignParameter; }
     public Predicate<String> getShouldSignParameter() { return shouldSignParameter; }
 
@@ -169,6 +214,9 @@ public class AwsSigningConfig extends CrtResource {
 
     public void setSignBody(AwsBodySigningConfigType signBody) { this.signBody = signBody.getNativeValue(); }
     public AwsBodySigningConfigType getSignBody() { return AwsBodySigningConfigType.getEnumValueFromInteger(signBody); }
+
+    public void setExpirationInSeconds(long expirationInSeconds) { this.expirationInSeconds = expirationInSeconds; }
+    public long getExpirationInSeconds() { return expirationInSeconds; }
 }
 
 

@@ -14,6 +14,8 @@
  */
 
 #include "crt.h"
+
+#include "credentials.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
@@ -47,6 +49,7 @@ struct s_aws_sign_request_callback_data {
     struct aws_signable *original_message_signable;
     struct aws_string *region;
     struct aws_string *service;
+    struct aws_credentials *credentials;
 };
 
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
@@ -66,6 +69,10 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
 
     if (callback_data->original_message_signable) {
         aws_signable_destroy(callback_data->original_message_signable);
+    }
+
+    if (callback_data->credentials) {
+        aws_credentials_release(callback_data->credentials);
     }
 
     aws_string_destroy(callback_data->region);
@@ -185,6 +192,8 @@ static int s_build_signing_config(
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.algorithm_field_id);
+    config->transform = (enum aws_signing_algorithm)(*env)->GetIntField(
+        env, java_config, aws_signing_config_properties.transform_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
@@ -215,8 +224,19 @@ static int s_build_signing_config(
 
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
-    config->credentials_provider =
-        (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+    if (provider != NULL) {
+        config->credentials_provider =
+            (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+    }
+
+    jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
+    if (credentials != NULL) {
+        callback_data->credentials = aws_credentials_new_from_java_credentials(env, credentials);
+        config->credentials = callback_data->credentials;
+    }
+
+    config->expiration_in_seconds =
+        (uint64_t)(*env)->GetLongField(env, java_config, aws_signing_config_properties.expiration_in_seconds_field_id);
 
     if ((*env)->ExceptionCheck(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
@@ -259,9 +279,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     AWS_ZERO_STRUCT(signing_config);
 
     if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
-        aws_jni_throw_runtime_exception(env, "Failed to allocated sign request callback data");
-        s_cleanup_callback_data(callback_data);
-        return;
+        aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
+        goto on_error;
     }
 
     jobject java_http_request_body_stream =
@@ -271,15 +290,13 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         aws_http_request_new_from_java_http_request(env, marshalled_request, java_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
-        s_cleanup_callback_data(callback_data);
-        return;
+        goto on_error;
     }
 
     callback_data->original_message_signable = aws_signable_new_http_request(allocator, callback_data->native_request);
     if (callback_data->original_message_signable == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create signable from http request");
-        s_cleanup_callback_data(callback_data);
-        return;
+        goto on_error;
     }
 
     /* Sign the native request */
@@ -290,8 +307,14 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             s_aws_signing_complete,
             callback_data)) {
         aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for HttpRequest");
-        s_cleanup_callback_data(callback_data);
+        goto on_error;
     }
+
+    return;
+
+on_error:
+
+    s_cleanup_callback_data(callback_data);
 }
 
 #if UINTPTR_MAX == 0xffffffff

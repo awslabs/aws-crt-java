@@ -72,7 +72,7 @@ public class HttpRequest {
      * @param bodyStream body stream for the http request.
      */
     HttpRequest(ByteBuffer marshalledRequest, HttpRequestBodyStream bodyStream) {
-        if (marshalledRequest.remaining() < BUFFER_INT_SIZE * 3) {
+        if (marshalledRequest.remaining() < BUFFER_INT_SIZE * 2) {
             throw new CrtRuntimeException("Invalid marshalled request object.");
         }
 
@@ -80,7 +80,7 @@ public class HttpRequest {
         byte[] methodBlob = new byte[methodLength];
         marshalledRequest.get(methodBlob);
         this.method = new String(methodBlob, UTF8);
-        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE * 2) {
+        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE) {
             throw new CrtRuntimeException("Invalid marshalled request object.");
         }
 
@@ -88,10 +88,6 @@ public class HttpRequest {
         byte[] pathBlob = new byte[pathLength];
         marshalledRequest.get(pathBlob);
         this.encodedPath = new String(pathBlob, UTF8);
-
-        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE) {
-            throw new CrtRuntimeException("Invalid marshalled request object.");
-        }
 
         this.headers = HttpHeader.loadHeadersListFromMarshalledHeadersBlob(marshalledRequest);
         this.bodyStream = bodyStream;
@@ -145,11 +141,14 @@ public class HttpRequest {
      */
     public byte[] marshallForJni() {
         int size = 0;
-        size += 4+ method.length();
-        size += 4 + encodedPath.length();
+        size += BUFFER_INT_SIZE + method.length();
+        size += BUFFER_INT_SIZE + encodedPath.length();
+        size += (BUFFER_INT_SIZE * 2) * headers.size();
 
         for(HttpHeader header : headers) {
-            size += 8 + header.getNameBytes().length + header.getValueBytes().length;
+            if (header.getNameBytes().length > 0) {
+                size += header.getNameBytes().length + header.getValueBytes().length;
+            }
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
@@ -159,10 +158,12 @@ public class HttpRequest {
         buffer.put(encodedPath.getBytes(UTF8));
 
         for(HttpHeader header : headers) {
-            buffer.putInt(header.getNameBytes().length);
-            buffer.put(header.getNameBytes());
-            buffer.putInt(header.getValueBytes().length);
-            buffer.put(header.getValueBytes());
+            if (header.getNameBytes().length > 0) {
+                buffer.putInt(header.getNameBytes().length);
+                buffer.put(header.getNameBytes());
+                buffer.putInt(header.getValueBytes().length);
+                buffer.put(header.getValueBytes());
+            }
         }
 
         return buffer.array();

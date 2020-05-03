@@ -151,13 +151,13 @@ struct java_http_stream_properties {
 extern struct java_http_stream_properties http_stream_properties;
 
 /* HttpStreamResponseHandler */
-struct java_http_stream_response_handler_properties {
+struct java_http_stream_response_handler_native_adapter_properties {
     jmethodID onResponseHeaders;
     jmethodID onResponseHeadersDone;
     jmethodID onResponseBody;
     jmethodID onResponseComplete;
 };
-extern struct java_http_stream_response_handler_properties http_stream_response_handler_properties;
+extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
 /* CompletableFuture */
 struct java_completable_future_properties {

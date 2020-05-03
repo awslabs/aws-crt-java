@@ -76,12 +76,17 @@ public class HttpHeader {
         while(headersBlob.hasRemaining()) {
             int nameLen = headersBlob.getInt();
 
-            byte[] nameBuf = new byte[nameLen];
-            headersBlob.get(nameBuf);
-            int valLen = headersBlob.getInt();
-            byte[] valueBuf = new byte[valLen];
-            headersBlob.get(valueBuf);
-            headers.add(new HttpHeader(nameBuf, valueBuf));
+            // we want to protect against 0 length header names, 0 length values are fine.
+            // the marshalling layer will make sure that even if a length is 0, the 0 will
+            // still be stored in the byte array.
+            if (nameLen > 0) {
+                byte[] nameBuf = new byte[nameLen];
+                headersBlob.get(nameBuf);
+                int valLen = headersBlob.getInt();
+                byte[] valueBuf = new byte[valLen];
+                headersBlob.get(valueBuf);
+                headers.add(new HttpHeader(nameBuf, valueBuf));
+            }
         }
 
         return headers;

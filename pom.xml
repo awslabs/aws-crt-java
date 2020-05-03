@@ -319,9 +319,9 @@
                         <id>create-build-dir</id>
                         <phase>initialize</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${cmake.binaries}"/>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
@@ -358,7 +358,7 @@
                         <rootca>${crt.test.rootca}</rootca>
                     </systemPropertyVariables>
                     <shutdown>kill</shutdown>
-                    <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                    <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni -Xlint:deprecation</argLine>
                 </configuration>
             </plugin>
         </plugins>

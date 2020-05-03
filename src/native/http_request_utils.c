@@ -210,7 +210,7 @@ static inline int s_unmarshall_http_request(struct aws_http_message *message, st
     uint32_t field_len = 0;
 
     if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
@@ -221,7 +221,7 @@ static inline int s_unmarshall_http_request(struct aws_http_message *message, st
     }
 
     if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
@@ -233,13 +233,13 @@ static inline int s_unmarshall_http_request(struct aws_http_message *message, st
 
     while (request_blob->len) {
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
         struct aws_byte_cursor header_name = aws_byte_cursor_advance(request_blob, field_len);
 
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
         struct aws_byte_cursor header_value = aws_byte_cursor_advance(request_blob, field_len);

@@ -309,9 +309,9 @@ static void s_cache_http_stream(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_properties.close);
 }
 
-struct java_http_stream_response_handler_properties http_stream_response_handler_properties;
+struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
-static void s_cache_http_stream_response_handler(JNIEnv *env) {
+static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamResponseHandlerNativeAdapter");
     AWS_FATAL_ASSERT(cls);
 
@@ -376,7 +376,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_stream(env);
-    s_cache_http_stream_response_handler(env);
+    s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
 }

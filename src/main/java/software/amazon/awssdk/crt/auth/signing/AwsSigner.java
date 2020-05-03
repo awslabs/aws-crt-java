@@ -26,7 +26,6 @@ public class AwsSigner {
         CompletableFuture<HttpRequest> future = new CompletableFuture<HttpRequest>();
 
         try {
-            //JNI is much easier to deal with primitives, so go ahead and hoist the headers into an array.
             awsSignerSignRequest(request, request.marshallForJni(), config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);

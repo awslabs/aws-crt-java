@@ -75,7 +75,10 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
 #ifdef ANDROID
     (*jvm)->AttachCurrentThread(jvm, &env, NULL);
 #else
-    (*jvm)->AttachCurrentThread(jvm, (void **)&env, NULL);
+    /* awkward temp to get around gcc 4.1 strict aliasing incorrect warnings */
+    void *temp_env = NULL;
+    (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
+    env = temp_env;
 #endif
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));

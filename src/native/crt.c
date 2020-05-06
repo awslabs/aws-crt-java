@@ -186,7 +186,11 @@ void s_detach_jvm_from_thread(void *user_data) {
 }
 
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
+#ifdef ANDROID
     JNIEnv *env = NULL;
+#else
+    void *env = NULL;
+#endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "aws_jni_get_thread_env returned detached, attaching");
 #ifdef ANDROID

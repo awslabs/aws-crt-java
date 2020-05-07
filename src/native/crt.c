@@ -35,7 +35,7 @@
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
-static struct aws_allocator *s_init_allocator() {
+static struct aws_allocator *s_init_allocator(void) {
     if (g_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
         allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
@@ -43,6 +43,7 @@ static struct aws_allocator *s_init_allocator() {
     }
     return aws_default_allocator();
 }
+
 static struct aws_allocator *s_allocator = NULL;
 struct aws_allocator *aws_jni_get_allocator() {
     if (AWS_UNLIKELY(s_allocator == NULL)) {

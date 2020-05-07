@@ -82,6 +82,9 @@ public class HttpClientConnection extends CrtResource {
         }
     }
 
+    public void shutdown() {
+        httpClientConnectionShutdown(getNativeHandle());
+    }
 
     /*******************************************************************************
      * Native methods
@@ -90,4 +93,6 @@ public class HttpClientConnection extends CrtResource {
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
+
+    private static native void httpClientConnectionShutdown(long connection) throws CrtRuntimeException;
 }

@@ -193,7 +193,7 @@ static inline int s_marshal_http_header_to_buffer(
     return AWS_OP_SUCCESS;
 }
 
-int aws_marshall_http_headers_to_dynamic_buffer(
+int aws_marshal_http_headers_to_dynamic_buffer(
     struct aws_byte_buf *buf,
     const struct aws_http_header *header_array,
     size_t num_headers) {
@@ -206,7 +206,7 @@ int aws_marshall_http_headers_to_dynamic_buffer(
     return AWS_OP_SUCCESS;
 }
 
-static inline int s_unmarshall_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
+static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
 
     if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
@@ -274,7 +274,7 @@ int aws_apply_java_http_request_changes_to_native_request(
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
 
-    result = s_unmarshall_http_request(message, &marshalled_cur);
+    result = s_unmarshal_http_request(message, &marshalled_cur);
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
     if (result) {
@@ -300,7 +300,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jbyte *marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
-    int result = s_unmarshall_http_request(request, &marshalled_cur);
+    int result = s_unmarshal_http_request(request, &marshalled_cur);
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
     if (result) {

@@ -139,7 +139,7 @@ public class HttpRequest {
      * Each request is then:
      * [method][path][header name-value pairs]
      */
-    public byte[] marshallForJni() {
+    public byte[] marshalForJni() {
         int size = 0;
         size += BUFFER_INT_SIZE + method.length();
         size += BUFFER_INT_SIZE + encodedPath.length();

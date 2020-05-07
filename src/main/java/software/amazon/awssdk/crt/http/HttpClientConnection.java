@@ -15,8 +15,6 @@
 
 package software.amazon.awssdk.crt.http;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -57,7 +55,7 @@ public class HttpClientConnection extends CrtResource {
         }
 
         HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-            request.marshallForJni(),
+            request.marshalForJni(),
             request.getBodyStream(),
             new HttpStreamResponseHandlerNativeAdapter(streamHandler));
         if (stream == null || stream.isNull()) {

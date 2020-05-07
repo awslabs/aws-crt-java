@@ -36,7 +36,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jbyteArray marshalled_request,
     jobject jni_body_stream);
 
-int aws_marshall_http_headers_to_dynamic_buffer(
+int aws_marshal_http_headers_to_dynamic_buffer(
     struct aws_byte_buf *buf,
     const struct aws_http_header *header_array,
     size_t num_headers);

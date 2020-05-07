@@ -26,7 +26,7 @@ public class AwsSigner {
         CompletableFuture<HttpRequest> future = new CompletableFuture<HttpRequest>();
 
         try {
-            awsSignerSignRequest(request, request.marshallForJni(), config, future);
+            awsSignerSignRequest(request, request.marshalForJni(), config, future);
         } catch (Exception e) {
             future.completeExceptionally(e);
         }

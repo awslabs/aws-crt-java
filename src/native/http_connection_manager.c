@@ -132,7 +132,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     int use_tls = (jni_tls_ctx != 0);
 
-    struct aws_tls_connection_options tls_conn_options = {0};
+    struct aws_tls_connection_options tls_conn_options;
+    AWS_ZERO_STRUCT(tls_conn_options);
 
     if (use_tls) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
@@ -148,7 +149,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    struct aws_http_connection_manager_options manager_options = {0};
+    struct aws_http_connection_manager_options manager_options;
+    AWS_ZERO_STRUCT(manager_options);
+
     manager_options.bootstrap = client_bootstrap;
     manager_options.initial_window_size = (size_t)jni_window_size;
     manager_options.socket_options = socket_options;
@@ -187,7 +190,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         proxy_authorization_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
     }
 
-    struct aws_tls_connection_options proxy_tls_conn_options = {0};
+    struct aws_tls_connection_options proxy_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_tls_conn_options);
+
     if (jni_proxy_host != NULL) {
         proxy_options.host = proxy_host;
         proxy_options.port = (uint16_t)jni_proxy_port;

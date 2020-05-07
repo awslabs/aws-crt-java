@@ -19,6 +19,6 @@
 /*******************************************************************************
  * aws_jni_cleanup_logging - cleans up the native logger; invoked on atexit
  ******************************************************************************/
-void aws_jni_cleanup_logging();
+void aws_jni_cleanup_logging(void);
 
 #endif /* AWS_JNI_LOGGING_H */

@@ -18,6 +18,7 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#include <aws/common/byte_order.h>
 #include <aws/http/http.h>
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
@@ -177,10 +178,86 @@ on_error:
     return NULL;
 }
 
+static inline int s_marshal_http_header_to_buffer(
+    struct aws_byte_buf *buf,
+    const struct aws_byte_cursor *name,
+    const struct aws_byte_cursor *value) {
+    if (aws_byte_buf_reserve_relative(buf, sizeof(int) + sizeof(int) + name->len + value->len)) {
+        return AWS_OP_ERR;
+    }
+
+    aws_byte_buf_write_be32(buf, (uint32_t)name->len);
+    aws_byte_buf_write_from_whole_cursor(buf, *name);
+    aws_byte_buf_write_be32(buf, (uint32_t)value->len);
+    aws_byte_buf_write_from_whole_cursor(buf, *value);
+    return AWS_OP_SUCCESS;
+}
+
+int aws_marshal_http_headers_to_dynamic_buffer(
+    struct aws_byte_buf *buf,
+    const struct aws_http_header *header_array,
+    size_t num_headers) {
+    for (size_t i = 0; i < num_headers; ++i) {
+        if (s_marshal_http_header_to_buffer(buf, &header_array[i].name, &header_array[i].value)) {
+            return AWS_OP_ERR;
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
+    uint32_t field_len = 0;
+
+    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
+
+    int result = aws_http_message_set_request_method(message, method);
+    if (result != AWS_OP_SUCCESS) {
+        return AWS_OP_ERR;
+    }
+
+    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
+
+    result = aws_http_message_set_request_path(message, path);
+    if (result != AWS_OP_SUCCESS) {
+        return AWS_OP_ERR;
+    }
+
+    while (request_blob->len) {
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor header_name = aws_byte_cursor_advance(request_blob, field_len);
+
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor header_value = aws_byte_cursor_advance(request_blob, field_len);
+
+        struct aws_http_header header = {
+            .name = header_name,
+            .value = header_value,
+        };
+
+        aws_http_message_add_header(message, header);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 int aws_apply_java_http_request_changes_to_native_request(
     JNIEnv *env,
-    jstring jni_uri,
-    jobjectArray jni_headers,
+    jbyteArray marshalled_request,
     jobject jni_body_stream,
     struct aws_http_message *message) {
 
@@ -191,42 +268,18 @@ int aws_apply_java_http_request_changes_to_native_request(
     aws_http_headers_clear(headers);
     int result = AWS_OP_SUCCESS;
 
-    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
-    for (jsize i = 0; i < num_headers; ++i) {
-        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
-        jbyteArray jname = (*env)->GetObjectField(env, jHeader, http_header_properties.name);
-        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, http_header_properties.value);
+    const size_t marshalled_request_length = (*env)->GetArrayLength(env, marshalled_request);
 
-        const size_t name_len = (*env)->GetArrayLength(env, jname);
-        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
+    uint8_t *marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
+    struct aws_byte_cursor marshalled_cur =
+        aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
 
-        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
-        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
+    result = s_unmarshal_http_request(message, &marshalled_cur);
+    (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
-        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
-        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
-
-        result = aws_http_headers_add(headers, name_cursor, value_cursor);
-
-        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
-        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
-
-        (*env)->DeleteLocalRef(env, jname);
-        (*env)->DeleteLocalRef(env, jvalue);
-        (*env)->DeleteLocalRef(env, jHeader);
-
-        if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: Header[%d] error", i);
-            return result;
-        }
-    }
-
-    struct aws_byte_cursor path_and_query_cur = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
-    result = aws_http_message_set_request_path(message, path_and_query_cur);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_and_query_cur);
-
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpRequest.applyChangesToNativeRequest: set uri failed");
+    if (result) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpRequest.applyChangesToNativeRequest: %s\n", aws_error_debug_str(aws_last_error()));
     }
 
     return result;
@@ -234,73 +287,32 @@ int aws_apply_java_http_request_changes_to_native_request(
 
 struct aws_http_message *aws_http_request_new_from_java_http_request(
     JNIEnv *env,
-    jstring jni_method,
-    jstring jni_uri,
-    jobjectArray jni_headers,
+    jbyteArray marshalled_request,
     jobject jni_body_stream) {
-
+    const char *exception_message = NULL;
     struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
     if (request == NULL) {
         aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
         return NULL;
     }
+    const size_t marshalled_request_length = (*env)->GetArrayLength(env, marshalled_request);
 
-    struct aws_byte_cursor method_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_method);
-    int result = aws_http_message_set_request_method(request, method_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_method, method_cursor);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Method");
+    jbyte *marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
+    struct aws_byte_cursor marshalled_cur =
+        aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
+    int result = s_unmarshal_http_request(request, &marshalled_cur);
+    (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
+
+    if (result) {
+        exception_message = "aws_http_request_new_from_java_http_request: Invalid marshalled request data.";
         goto on_error;
-    }
-
-    struct aws_byte_cursor path_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_uri);
-    result = aws_http_message_set_request_path(request, path_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, jni_uri, path_cursor);
-    if (result != AWS_OP_SUCCESS) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to set Path");
-        goto on_error;
-    }
-
-    jsize num_headers = (*env)->GetArrayLength(env, jni_headers);
-    for (jsize i = 0; i < num_headers; ++i) {
-        jobject jHeader = (*env)->GetObjectArrayElement(env, jni_headers, i);
-        jbyteArray jname = (*env)->GetObjectField(env, jHeader, http_header_properties.name);
-        jbyteArray jvalue = (*env)->GetObjectField(env, jHeader, http_header_properties.value);
-
-        const size_t name_len = (*env)->GetArrayLength(env, jname);
-        const size_t value_len = (*env)->GetArrayLength(env, jvalue);
-
-        jbyte *name = (*env)->GetPrimitiveArrayCritical(env, jname, NULL);
-        struct aws_byte_cursor name_cursor = aws_byte_cursor_from_array(name, name_len);
-
-        jbyte *value = (*env)->GetPrimitiveArrayCritical(env, jvalue, NULL);
-        struct aws_byte_cursor value_cursor = aws_byte_cursor_from_array(value, value_len);
-
-        struct aws_http_header c_header = {
-            .name = name_cursor,
-            .value = value_cursor,
-        };
-
-        result = aws_http_message_add_header(request, c_header);
-
-        (*env)->ReleasePrimitiveArrayCritical(env, jname, name, 0);
-        (*env)->ReleasePrimitiveArrayCritical(env, jvalue, value, 0);
-
-        (*env)->DeleteLocalRef(env, jname);
-        (*env)->DeleteLocalRef(env, jvalue);
-        (*env)->DeleteLocalRef(env, jHeader);
-
-        if (result != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Header[%d] error", i);
-            goto on_error;
-        }
     }
 
     if (jni_body_stream != NULL) {
         struct aws_input_stream *body_stream =
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
         if (body_stream == NULL) {
-            aws_jni_throw_runtime_exception(env, "aws_fill_out_request: Error building body stream");
+            exception_message = "aws_fill_out_request: Error building body stream";
             goto on_error;
         }
 
@@ -310,6 +322,9 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     return request;
 
 on_error:
+    if (exception_message) {
+        aws_jni_throw_runtime_exception(env, exception_message);
+    }
 
     /* Don't need to destroy input stream since it's the last thing created */
     aws_http_message_destroy(request);
@@ -317,95 +332,59 @@ on_error:
     return NULL;
 }
 
-jobjectArray aws_java_headers_array_from_native(
-    JNIEnv *env,
-    const struct aws_http_header *header_array,
-    size_t num_headers) {
-
-    jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)num_headers, http_header_properties.header_class, NULL);
-
-    for (size_t i = 0; i < num_headers; i++) {
-        jobject jHeader =
-            (*env)->NewObject(env, http_header_properties.header_class, http_header_properties.constructor);
-
-        jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &(header_array[i].name));
-        jbyteArray actual_value = aws_jni_byte_array_from_cursor(env, &(header_array[i].value));
-
-        // Overwrite with actual values
-        (*env)->SetObjectField(env, jHeader, http_header_properties.name, actual_name);
-        (*env)->SetObjectField(env, jHeader, http_header_properties.value, actual_value);
-        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
-
-        (*env)->DeleteLocalRef(env, actual_name);
-        (*env)->DeleteLocalRef(env, actual_value);
-        (*env)->DeleteLocalRef(env, jHeader);
-    }
-
-    return jArray;
-}
-
-jobjectArray aws_java_headers_array_from_http_headers(JNIEnv *env, const struct aws_http_headers *headers) {
-
-    size_t header_count = aws_http_headers_count(headers);
-    jobjectArray jArray = (*env)->NewObjectArray(env, (jsize)header_count, http_header_properties.header_class, NULL);
-
-    for (size_t i = 0; i < header_count; i++) {
-        struct aws_http_header header;
-        AWS_ZERO_STRUCT(header);
-        AWS_FATAL_ASSERT(aws_http_headers_get_index(headers, i, &header) == AWS_OP_SUCCESS);
-
-        jobject jHeader =
-            (*env)->NewObject(env, http_header_properties.header_class, http_header_properties.constructor);
-
-        jbyteArray actual_name = aws_jni_byte_array_from_cursor(env, &header.name);
-        jbyteArray actual_value = aws_jni_byte_array_from_cursor(env, &header.value);
-
-        // Overwrite with actual values
-        (*env)->SetObjectField(env, jHeader, http_header_properties.name, actual_name);
-        (*env)->SetObjectField(env, jHeader, http_header_properties.value, actual_value);
-        (*env)->SetObjectArrayElement(env, jArray, (jsize)i, jHeader);
-
-        (*env)->DeleteLocalRef(env, actual_name);
-        (*env)->DeleteLocalRef(env, actual_value);
-        (*env)->DeleteLocalRef(env, jHeader);
-    }
-
-    return jArray;
-}
-
-jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message) {
-
-    jobject j_request = NULL;
-    jstring j_method_str = NULL;
-    jstring j_path_and_query = NULL;
-    jobjectArray j_headers_array = NULL;
-
+static inline int s_marshall_http_request(const struct aws_http_message *message, struct aws_byte_buf *request_buf) {
     struct aws_byte_cursor method;
     AWS_ZERO_STRUCT(method);
 
-    aws_http_message_get_request_method(message, &method);
-    j_method_str = aws_jni_string_from_cursor(env, &method);
+    AWS_FATAL_ASSERT(!aws_http_message_get_request_method(message, &method));
 
-    if (!j_method_str) {
-        goto done;
+    struct aws_byte_cursor path;
+    AWS_ZERO_STRUCT(path);
+
+    AWS_FATAL_ASSERT(!aws_http_message_get_request_path(message, &path));
+
+    if (aws_byte_buf_reserve_relative(request_buf, sizeof(int) + sizeof(int) + method.len + path.len)) {
+        return AWS_OP_ERR;
     }
 
-    struct aws_byte_cursor path_and_query;
-    AWS_ZERO_STRUCT(path_and_query);
-
-    aws_http_message_get_request_path(message, &path_and_query);
-    j_path_and_query = aws_jni_string_from_cursor(env, &path_and_query);
-
-    if (!j_path_and_query) {
-        goto done;
-    }
+    aws_byte_buf_write_be32(request_buf, (uint32_t)method.len);
+    aws_byte_buf_write_from_whole_cursor(request_buf, method);
+    aws_byte_buf_write_be32(request_buf, (uint32_t)path.len);
+    aws_byte_buf_write_from_whole_cursor(request_buf, path);
 
     const struct aws_http_headers *headers = aws_http_message_get_const_headers(message);
-    j_headers_array = aws_java_headers_array_from_http_headers(env, headers);
+    AWS_FATAL_ASSERT(headers);
+    size_t header_count = aws_http_message_get_header_count(message);
+    for (size_t i = 0; i < header_count; ++i) {
+        struct aws_http_header header;
+        AWS_ZERO_STRUCT(header);
 
-    if (!j_headers_array) {
+        AWS_FATAL_ASSERT(!aws_http_headers_get_index(headers, i, &header));
+        if (s_marshal_http_header_to_buffer(request_buf, &header.name, &header.value)) {
+            return AWS_OP_ERR;
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message, jobject request_body_stream) {
+    jobject jni_request_blob = NULL;
+    jobject j_request = NULL;
+    struct aws_byte_buf marshaling_buf;
+
+    if (aws_byte_buf_init(&marshaling_buf, aws_jni_get_allocator(), 1024)) {
+        aws_jni_throw_runtime_exception(env, "aws_java_http_request_from_native: allocation failed");
+        return NULL;
+    }
+
+    if (s_marshall_http_request(message, &marshaling_buf)) {
+        aws_jni_throw_runtime_exception(
+            env, "aws_java_http_request_from_native: %s.", aws_error_debug_str(aws_last_error()));
         goto done;
     }
+
+    jni_request_blob = aws_jni_direct_byte_buffer_from_raw_ptr(env, marshaling_buf.buffer, marshaling_buf.len);
 
     /* Currently our only use case for this does not involve a body stream. We should come back and handle this
        when it's not time sensitive to do so. */
@@ -413,23 +392,19 @@ jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *
         env,
         http_request_properties.http_request_class,
         http_request_properties.constructor_method_id,
-        j_method_str,
-        j_path_and_query,
-        j_headers_array,
-        NULL);
+        jni_request_blob,
+        request_body_stream);
+
+    if ((*env)->ExceptionCheck(env)) {
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        goto done;
+    }
 
 done:
-    if (j_method_str) {
-        (*env)->DeleteLocalRef(env, j_method_str);
+    if (jni_request_blob) {
+        (*env)->DeleteLocalRef(env, jni_request_blob);
     }
 
-    if (j_path_and_query) {
-        (*env)->DeleteLocalRef(env, j_path_and_query);
-    }
-
-    if (j_headers_array) {
-        (*env)->DeleteLocalRef(env, j_headers_array);
-    }
-
+    aws_byte_buf_clean_up(&marshaling_buf);
     return j_request;
 }

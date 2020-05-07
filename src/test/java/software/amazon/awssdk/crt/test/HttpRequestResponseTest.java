@@ -226,6 +226,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         Assert.assertNotEquals(-1, response.blockType);
 
         boolean hasContentLengthHeader = false;
+
         for (HttpHeader h: response.headers) {
             if (h.getName().equals("Content-Length")) {
                 hasContentLengthHeader = true;

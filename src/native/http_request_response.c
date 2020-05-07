@@ -427,6 +427,22 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     aws_http_stream_update_window(stream, window_update);
 }
 
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionShutdown(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
+
+    (void)jni_class;
+    struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
+        return;
+    }
+
+    aws_http_connection_close(native_conn);
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

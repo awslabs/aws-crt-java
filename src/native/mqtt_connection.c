@@ -1024,7 +1024,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         proxy_options.auth_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
     }
 
-    struct aws_tls_connection_options proxy_tls_conn_options = {0};
+    struct aws_tls_connection_options proxy_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_tls_conn_options);
 
     if (jni_proxy_tls_context != 0) {
         struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;

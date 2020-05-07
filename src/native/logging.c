@@ -104,7 +104,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToFile(
     (*env)->ReleaseStringUTFChars(env, jni_filename, filename);
 }
 
-void aws_jni_cleanup_logging() {
+void aws_jni_cleanup_logging(void) {
     if (aws_logger_get() == &s_logger) {
         aws_logger_set(NULL);
     }

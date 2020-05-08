@@ -67,3 +67,23 @@ Full list of test arguments:
 - proxyhost: Hostname of proxy
 - proxyport: Port of proxy
 - NETWORK_TESTS_DISABLED: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+
+## Debugging
+Tests can be debugged via the built-in tooling in VSCode and Intellij. If you need to debug the native code, it's a bit trickier.
+
+To debug with VSCode or CLion or any other IDE:
+1. Find your mvn launch script(e.g. ```realpath $(which mvn)```) and pull the command line at the bottom from it. This changes between versions
+   of maven, so it is difficult to give consistent directions.
+
+   As an example, for Maven 3.6.0 on Linux:
+   ```/path/to/java -classpath /usr/share/java/plexus-classworlds-2.5.2.jar -Dclassworlds.conf=/usr/share/maven/bin/m2.conf -Dmaven.home=/usr/share/maven -Dlibrary.jansi.path=/usr/share/maven/lib/jansi-native -Dmaven.multiModuleProjectDirectory=. org.codehaus.plexus.classworlds.launcher.Launcher test -DforkCount=0 -Ddebug.native -Dtest=HttpClientConnectionManager#testMaxParallelConnections```
+
+   The important parts are:
+    * -DforkCount=0 - prevents the mvn process from forking to run tests, so your debugger will be attached to the right process. You can ignore this if
+      you configure your debugger to attach to child processes
+    * -Ddebug.native - Makes cmake compile the JNI bindings and core libraries in debug. By default, we compile in release with symbols, which will help
+      for call stacks, but less so for live debugging
+2. Set the executable to launch to be your java binary (e.g. /usr/bin/java)
+3. Set the parameters to be the ones used by the mvn script, as per above
+4. Set the working directory to the aws-crt-java directory
+5. On windows, you will need to manually load the PDB via the Modules window in Visual Studio, as it is not embedded in the JAR.

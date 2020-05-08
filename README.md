@@ -68,6 +68,32 @@ Full list of test arguments:
 - proxyport: Port of proxy
 - NETWORK_TESTS_DISABLED: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
 
+These can be set persistently via Maven settings (usually in ~/.m2/settings.xml):
+```xml
+<settings>
+    ...
+  <profiles>
+    <profile>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+        <properties>
+            <crt.test.endpoint>XXXXXXXXXX-ats.iot.us-east-1.amazonaws.com</crt.test.endpoint>
+            <crt.test.certificate>/path/to/XXXXXXXX-certificate.pem.crt</crt.test.certificate>
+            <crt.test.privatekey>/path/to/XXXXXXXX-private.pem.key</crt.test.privatekey>
+            <crt.test.rootca>/path/to/AmazonRootCA1.pem</crt.test.rootca>
+            ... etc ...
+        </properties>
+    </profile>
+  </profiles>
+</settings>% 
+```
+
+## IDEs
+* CMake is configured to export a compilation database at target/cmake-build/compile_commands.json
+* CLion: Build once with maven, then import the project as a [Compilation Database Project](https://www.jetbrains.com/help/clion/compilation-database.html)
+* VSCode: will detect that this is both a java project and if you have the CMake extension, you can point that at CMakeLists.txt and the compilation database
+
 ## Debugging
 Tests can be debugged via the built-in tooling in VSCode and Intellij. If you need to debug the native code, it's a bit trickier.
 

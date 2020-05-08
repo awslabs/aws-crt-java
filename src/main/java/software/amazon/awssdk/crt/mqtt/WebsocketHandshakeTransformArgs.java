@@ -69,6 +69,7 @@ public final class WebsocketHandshakeTransformArgs {
     /**
      * Mark the transform operation as successfully completed.
      * The websocket connection will proceed, using the http request.
+     * @param signedRequest completed request
      */
     public void complete(HttpRequest signedRequest) {
         future.complete(signedRequest);

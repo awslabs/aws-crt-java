@@ -237,6 +237,7 @@ public final class CRT {
 
     /**
      * Returns the last error on the current thread.
+     * @return Last error code recorded in this thread
      */
     public static native int awsLastError();
 
@@ -257,7 +258,7 @@ public final class CRT {
     public static native String awsErrorName(int errorCode);
 
     /**
-     * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing > 0, this will
+     * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing is 1 or 2, this will
      *         be a non-zero value. Otherwise, no tracing will be done, and the value will always be 0
      */
     public static long nativeMemory() {

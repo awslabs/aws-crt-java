@@ -122,6 +122,7 @@ public class Log {
     /**
      * Logs a message at the specified log level.
      * @param level (for filtering purposes) level attached to the log invocation
+     * @param subject (for filtering purposes) log subject
      * @param message log string to write
      */
     public static void log(LogLevel level, LogSubject subject, String message) {

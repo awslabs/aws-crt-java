@@ -14,6 +14,7 @@
  */
 package software.amazon.awssdk.crt.http;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
@@ -70,7 +71,7 @@ public class HttpProxyOptions {
     }
 
     /**
-     * Gets the proxy host to connect through
+     * @return the proxy host to connect through
      */
     public String getHost() { return host; }
 
@@ -83,7 +84,7 @@ public class HttpProxyOptions {
     }
 
     /**
-     * Gets the proxy port to connect through
+     * @return the proxy port to connect through
      */
     public int getPort() { return port; }
 
@@ -96,33 +97,33 @@ public class HttpProxyOptions {
     }
 
     /**
-     * Gets the proxy authorization type
+     * @return the proxy authorization type
      */
     public HttpProxyAuthorizationType getAuthorizationType() { return authorizationType; }
 
     /**
      * Sets the username to use for authorization; only applicable to basic authentication
-     * @param host username to use with basic authentication
+     * @param username username to use with basic authentication
      */
     public void setAuthorizationUsername(String username) {
         this.authUsername = username;
     }
 
     /**
-     * Gets the username to use for authorization
+     * @return the username to use for authorization
      */
     public String getAuthorizationUsername() { return authUsername; }
 
     /**
      * Sets the password to use for authorization; only applicable to basic authentication
-     * @param host password to use with basic authentication
+     * @param password password to use with basic authentication
      */
     public void setAuthorizationPassword(String password) {
         this.authPassword = password;
     }
 
     /**
-     * Gets the password to use for authorization
+     * @return the password to use for authorization
      */
     public String getAuthorizationPassword() { return authPassword; }
 
@@ -135,7 +136,7 @@ public class HttpProxyOptions {
     }
 
     /**
-     * Gets the tls context for the proxy connection
+     * @return the tls context for the proxy connection
      */
     public TlsContext getTlsContext() { return tlsContext; }
 

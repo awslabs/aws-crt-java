@@ -43,6 +43,8 @@ public class HttpClientConnectionManagerOptions {
 
     /**
      * Sets the client bootstrap instance to use to create the pool's connections
+     * @param clientBootstrap ClientBootstrap to use
+     * @return this
      */
     public HttpClientConnectionManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
         this.clientBootstrap = clientBootstrap;
@@ -51,11 +53,14 @@ public class HttpClientConnectionManagerOptions {
 
     /**
      * Gets the client bootstrap instance to use to create the pool's connections
+     * @return ClientBootstrap used by this connection manager
      */
     public ClientBootstrap getClientBootstrap() { return clientBootstrap; }
 
     /**
      * Sets the socket options to use for connections in the connection pool
+     * @param socketOptions The socket options to use for all connections in the manager
+     * @return this
      */
     public HttpClientConnectionManagerOptions withSocketOptions(SocketOptions socketOptions) {
         this.socketOptions = socketOptions;
@@ -63,12 +68,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the socket options to use for connections in the connection pool
+     * @return the socket options to use for connections in the connection pool
      */
     public SocketOptions getSocketOptions() { return socketOptions; }
 
     /**
      * Sets the tls context to use for connections in the connection pool
+     * @param tlsContext The TlsContext to use
+     * @return this
      */
     public HttpClientConnectionManagerOptions withTlsContext(TlsContext tlsContext) {
         this.tlsContext = tlsContext;
@@ -76,12 +83,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the tls context to use for connections in the connection pool
+     * @return the tls context used by connections in the connection pool
      */
     public TlsContext getTlsContext() { return tlsContext; }
 
     /**
      * Sets the IO channel window size to use for connections in the connection pool
+     * @param windowSize The initial window size to use for each connection
+     * @return this
      */
     public HttpClientConnectionManagerOptions withWindowSize(int windowSize) {
         this.windowSize = windowSize;
@@ -89,12 +98,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the IO channel window size to use for connections in the connection pool
+     * @return the IO channel window size to use for connections in the connection pool
      */
     public int getWindowSize() { return windowSize; }
 
     /**
      * Sets the IO buffer size to use for connections in the connection pool
+     * @param bufferSize Size of I/O buffer per connection
+     * @return this
      */
     public HttpClientConnectionManagerOptions withBufferSize(int bufferSize) {
         this.bufferSize = bufferSize;
@@ -102,13 +113,15 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the IO buffer size to use for connections in the connection pool
+     * @return the IO buffer size to use for connections in the connection pool
      */
     public int getBufferSize() { return bufferSize; }
 
 
     /**
      * Sets the URI to use for connections in the connection pool
+     * @param uri The endpoint URI to connect to
+     * @return this
      */
     public HttpClientConnectionManagerOptions withUri(URI uri) {
         this.uri = uri;
@@ -116,12 +129,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the URI to use for connections in the connection pool
+     * @return the URI to use for connections in the connection pool
      */
     public URI getUri() { return uri; }
 
     /**
      * Sets the port to connect to for connections in the connection pool
+     * @param port The port to connect to
+     * @return this
      */
     public HttpClientConnectionManagerOptions withPort(int port) {
         this.port = port;
@@ -129,12 +144,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the port to connect to for connections in the connection pool
+     * @return the port to connect to for connections in the connection pool
      */
     public int getPort() { return port; }
 
     /**
      * Sets the maximum number of connections allowed in the connection pool
+     * @param maxConnections maximum number of connections to pool
+     * @return this
      */
     public HttpClientConnectionManagerOptions withMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
@@ -142,12 +159,14 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the maximum number of connections allowed in the connection pool
+     * @return the maximum number of connections allowed in the connection pool
      */
     public int getMaxConnections() { return maxConnections; }
 
     /**
      * Sets the proxy options for connections in the connection pool
+     * @param proxyOptions HttpProxyOptions for this connection manager, or null to disable proxying
+     * @return this
      */
     public HttpClientConnectionManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
         this.proxyOptions = proxyOptions;
@@ -155,7 +174,7 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * Gets the proxy options for connections in the connection pool
+     * @return the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
 
@@ -166,6 +185,7 @@ public class HttpClientConnectionManagerOptions {
      * usage is bounded (e.g. reactive streams).
      * If this is enabled, you must call HttpStream.UpdateWindow() for every
      * byte read from the OnIncomingBody callback.
+     * @return true if manual window management is used, false otherwise
      */
     public boolean isManualWindowManagement() { return manualWindowManagement; }
 
@@ -176,6 +196,8 @@ public class HttpClientConnectionManagerOptions {
      * usage is bounded (e.g. reactive streams).
      * If this is enabled, you must call HttpStream.UpdateWindow() for every
      * byte read from the OnIncomingBody callback.
+     * @param manualWindowManagement true to enable manual window management, false to use automatic window management
+     * @return this
      */
     public HttpClientConnectionManagerOptions withManualWindowManagement(boolean manualWindowManagement) {
         this.manualWindowManagement = manualWindowManagement;

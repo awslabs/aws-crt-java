@@ -105,9 +105,9 @@ To debug with VSCode or CLion or any other IDE:
    ```/path/to/java -classpath /usr/share/java/plexus-classworlds-2.5.2.jar -Dclassworlds.conf=/usr/share/maven/bin/m2.conf -Dmaven.home=/usr/share/maven -Dlibrary.jansi.path=/usr/share/maven/lib/jansi-native -Dmaven.multiModuleProjectDirectory=. org.codehaus.plexus.classworlds.launcher.Launcher test -DforkCount=0 -Ddebug.native -Dtest=HttpClientConnectionManager#testMaxParallelConnections```
 
    The important parts are:
-    * ```-DforkCount=0``` - prevents the mvn process from forking to run tests, so your debugger will be attached to the right process. You can ignore this if
+    * -DforkCount=0 - prevents the mvn process from forking to run tests, so your debugger will be attached to the right process. You can ignore this if
       you configure your debugger to attach to child processes
-    * ```-Ddebug.native``` - Makes cmake compile the JNI bindings and core libraries in debug. By default, we compile in release with symbols, which will help
+    * -Ddebug.native - Makes cmake compile the JNI bindings and core libraries in debug. By default, we compile in release with symbols, which will help
       for call stacks, but less so for live debugging
 2. Set the executable to launch to be your java binary (e.g. /usr/bin/java)
 3. Set the parameters to be the ones used by the mvn script, as per above

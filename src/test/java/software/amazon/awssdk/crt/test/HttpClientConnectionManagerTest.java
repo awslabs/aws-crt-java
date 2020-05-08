@@ -29,7 +29,6 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
@@ -209,7 +208,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testMaxParallelRequests() throws Exception {
-        Log.initLoggingToFile(LogLevel.Trace, "test.log");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 

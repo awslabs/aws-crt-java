@@ -245,16 +245,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 
     g_memory_tracing = jni_memtrace;
 
-    fprintf(stderr, "AWSCRT: Checking for backtrace support");
     void *stack[1];
-    if (g_memory_tracing > 1 && 0 == aws_backtrace(stack, 1)) {
-        g_memory_tracing = 1;
+    if (0 == aws_backtrace(stack, 1)) {
+        g_memory_tracing = (g_memory_tracing > 1) ? 1 : g_memory_tracing;
     }
-    fprintf(stderr, "AWSCRT: backtrace support: %d", g_memory_tracing);
 
-    fprintf(stderr, "AWSCRT: Initializing allocator");
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    fprintf(stderr, "AWSCRT: allocator initialized");
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);

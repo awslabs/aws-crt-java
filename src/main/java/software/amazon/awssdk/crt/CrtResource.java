@@ -215,6 +215,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     /**
      * returns the native handle associated with this CRTResource.
+     * @return native address
      */
     public long getNativeHandle() {
         return nativeHandle;
@@ -242,6 +243,7 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Checks if this resource's native handle is NULL.  For always-null resources this is always true.  For all other
      * resources it means it has already been cleaned up or was not properly constructed.
+     * @return true if no native resource is bound, false otherwise
      */
     public boolean isNull() {
         return (nativeHandle == NULL);

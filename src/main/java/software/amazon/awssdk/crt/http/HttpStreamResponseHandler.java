@@ -30,6 +30,7 @@ public interface HttpStreamResponseHandler {
      *
      * @param stream The HttpStream object
      * @param responseStatusCode The HTTP Response Status Code
+     * @param blockType The HTTP header block type
      * @param nextHeaders The headers received in the latest IO event.
      */
     void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders);
@@ -49,7 +50,7 @@ public interface HttpStreamResponseHandler {
      * Called when new Response Body bytes have been received. Note that this function may be called multiple times over
      * the lifetime of an HttpClientConnection as bytes are received.
      *
-     * Users must read all data from bodyBytesIn before returning. If "bodyBytesIn.remaining() > 0" after this method
+     * Users must read all data from bodyBytesIn before returning. If "bodyBytesIn.remaining() &gt; 0" after this method
      * returns, then Native will assume there was a processing failure and abort the connection.
      *
      * Do NOT keep a reference to this ByteBuffer past the lifetime of this function call. The CommonRuntime reserves
@@ -63,6 +64,7 @@ public interface HttpStreamResponseHandler {
      * For more info, see:
      *  - https://en.wikipedia.org/wiki/Sliding_window_protocol
      *
+     * @param stream The HTTP Stream the body was delivered to
      * @param bodyBytesIn The HTTP Body Bytes received in the last IO Event.
      * @return The number of bytes to move the sliding window by. Repeatedly returning zero will eventually cause the
      *          sliding window to fill up and data to stop flowing until the user slides the window back open.
@@ -74,8 +76,8 @@ public interface HttpStreamResponseHandler {
 
     /**
      * Called from Native when the Response has completed.
-     * @param stream
-     * @param errorCode
+     * @param stream completed stream
+     * @param errorCode resultant errorCode for the response
      */
     void onResponseComplete(HttpStream stream, int errorCode);
 

@@ -165,7 +165,7 @@ public class HttpClientConnectionManager extends CrtResource {
 
     /**
      * Releases this HttpClientConnection back into the Connection Pool, and allows another Request to acquire this connection.
-     * @param conn
+     * @param conn Connection to release
      */
     public void releaseConnection(HttpClientConnection conn) {
         conn.close();
@@ -226,6 +226,9 @@ public class HttpClientConnectionManager extends CrtResource {
      * Getter methods
      ******************************************************************************/
 
+    /**
+     * @return maximum number of connections this connection manager will pool
+     */
     public int getMaxConnections() {
         return maxConnections;
     }

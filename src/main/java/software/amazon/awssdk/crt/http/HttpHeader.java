@@ -69,6 +69,8 @@ public class HttpHeader {
 
     /** Each header is marshalled as
      * [4-bytes BE name length] [variable length name value] [4-bytes BE value length] [variable length value value]
+     * @param headersBlob Blob of encoded headers
+     * @return array of decoded headers
      */
     public static List<HttpHeader> loadHeadersListFromMarshalledHeadersBlob(ByteBuffer headersBlob) {
         List<HttpHeader> headers = new ArrayList<>(16);
@@ -92,6 +94,11 @@ public class HttpHeader {
         return headers;
     }
 
+    /**
+     * @param headersBlob encoded headers blob
+     * @return array of headers
+     * @see #loadHeadersListFromMarshalledHeadersBlob
+     */
     public static HttpHeader[] loadHeadersFromMarshalledHeadersBlob(ByteBuffer headersBlob) {
         List<HttpHeader> headers = loadHeadersListFromMarshalledHeadersBlob(headersBlob);
         HttpHeader[] headersArray = new HttpHeader[headers.size()];

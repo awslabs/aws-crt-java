@@ -138,6 +138,7 @@ public class HttpRequest {
      *
      * Each request is then:
      * [method][path][header name-value pairs]
+     * @return encoded blob of headers
      */
     public byte[] marshalForJni() {
         int size = 0;

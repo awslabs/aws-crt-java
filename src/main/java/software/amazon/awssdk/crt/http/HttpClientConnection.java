@@ -45,7 +45,7 @@ public class HttpClientConnection extends CrtResource {
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException if stream creation fails
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */

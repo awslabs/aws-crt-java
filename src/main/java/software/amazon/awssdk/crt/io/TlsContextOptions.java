@@ -314,16 +314,32 @@ public final class TlsContextOptions extends CrtResource {
      * .with() methods
      ******************************************************************************/
 
+    /**
+     * Sets the ciphers that the TlsContext will be able to use
+     * @param cipherPref The preference set of ciphers to use
+     * @return this
+     */
     public TlsContextOptions withCipherPreference(TlsCipherPreference cipherPref) {
         setCipherPreference(cipherPref);
         return this;
     }
 
+    /**
+     * Sets the minimum TLS version that the TlsContext will allow. Defaults to
+     * OS defaults.
+     * @param version Minimum acceptable TLS version
+     * @return this
+     */
     public TlsContextOptions withMinimumTlsVersion(TlsVersions version) {
         minTlsVersion = version;
         return this;
     }
 
+    /**
+     * Sets the ALPN protocols list for any connections using this TlsContext
+     * @param alpnList Semi-colon delimited list of supported ALPN protocols
+     * @return this
+     */
     public TlsContextOptions withAlpnList(String alpnList) {
         String[] parts = alpnList.split(";");
         for (String part : parts) {
@@ -332,36 +348,76 @@ public final class TlsContextOptions extends CrtResource {
         return this;
     }
 
+    /**
+     * Enables mutual TLS (mTLS) on this TlsContext
+     * @param certificate mTLS certificate, in PEM format
+     * @param privateKey mTLS private key, in PEM format
+     * @return this
+     */
     public TlsContextOptions withMtls(String certificate, String privateKey) {
         this.initMtls(certificate, privateKey);
         return this;
     }
 
+    /**
+     * Enables mutual TLS (mTLS) on this TlsContext
+     * @param certificatePath path to mTLS certificate, in PEM format
+     * @param privateKeyPath path to mTLS private key, in PEM format
+     * @return this
+     */
     public TlsContextOptions withMtlsFromPath(String certificatePath, String privateKeyPath) {
         this.initMtlsFromPath(certificatePath, privateKeyPath);
         return this;
     }
 
+    /**
+     * Specifies the certificate authority to use. By default, the OS CA repository will be used.
+     * @param caRoot Certificate Authority, in PEM format
+     * @return this
+     */
     public TlsContextOptions withCertificateAuthority(String caRoot) {
         this.overrideDefaultTrustStore(caRoot);
         return this;
     }
 
+    /**
+     * Specifies the certificate authority to use.
+     * @param caDirPath Path to certificate directory, e.g. /etc/ssl/certs
+     * @param caFilePath Path to ceritificate authority, in PEM format
+     * @return this
+     */
     public TlsContextOptions withCertificateAuthorityFromPath(String caDirPath, String caFilePath) {
         this.overrideDefaultTrustStoreFromPath(caDirPath, caFilePath);
         return this;
     }
 
+    /**
+     * Apple platforms only, specifies mTLS using PKCS#12
+     * @param pkcs12Path Path to PKCS#12 certificate, in PEM format
+     * @param pkcs12Password PKCS#12 password
+     * @return this
+     */
     public TlsContextOptions withMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         this.initMtlsPkcs12(pkcs12Path, pkcs12Password);
         return this;
     }
 
+    /**
+     * Sets whether or not TLS will validate the certificate from the peer. On clients,
+     * this is enabled by default. On servers, this is disabled by default.
+     * @param verify true to verify peers, false to ignore certs
+     * @return this
+     */
     public TlsContextOptions withVerifyPeer(boolean verify) {
         this.verifyPeer = verify;
         return this;
     }
 
+    /**
+     * Enables TLS peer verification of certificates
+     * @see TlsContextOptions#withVerifyPeer(boolean)
+     * @return this
+     */
     public TlsContextOptions withVerifyPeer() {
         return this.withVerifyPeer(true);
     }

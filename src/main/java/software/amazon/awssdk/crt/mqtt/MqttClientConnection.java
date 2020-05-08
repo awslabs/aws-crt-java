@@ -62,10 +62,7 @@ public class MqttClientConnection extends CrtResource {
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
      * 
-     * @param mqttClient Mqtt client to use.  Must be non-null.
-     * @param clientId Mqtt client id to use for this connection.  Must be non-null.
-     * @param endpoint Endpoint to connect to.  Must be non-null.
-     * @param port Port to connect on.
+     * @param config Configuration to use
      * @throws MqttException If mqttClient is null
      */
     public MqttClientConnection(MqttConnectionConfig config) throws MqttException {

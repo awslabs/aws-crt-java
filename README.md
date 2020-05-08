@@ -46,6 +46,9 @@ Requirements:
 NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
 CMake can find Visual Studio.
 
+## Documentation
+[Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
+
 ## Installing
 From the aws-crt-java directory:
 ```mvn install```

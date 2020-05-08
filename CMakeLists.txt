@@ -75,6 +75,7 @@ if (BUILD_DEPS)
     add_subdirectory(aws-common-runtime/aws-c-mqtt)
 else()
     include(AwsFindPackage)
+    include(AwsCFlags)
     set(IN_SOURCE_BUILD OFF)
 endif()
 

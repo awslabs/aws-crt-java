@@ -21,6 +21,7 @@
 
 #include <aws/auth/credentials.h>
 #include <aws/common/string.h>
+#include <aws/io/tls_channel_handler.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -143,6 +144,59 @@ JNIEXPORT jlong JNICALL
     } else {
         callback_data->provider = provider;
     }
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_X509CredentialsProvider_x509CredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jlong bootstrap_handle,
+        jlong tls_context_handle,
+        jbyteArray thing_name,
+        jbyteArray role_alias,
+        jbyteArray endpoint) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_shutdown_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_shutdown_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_tls_connection_options tls_connection_options;
+    AWS_ZERO_STRUCT(tls_connection_options);
+    aws_tls_connection_options_init_from_ctx(&tls_connection_options, (struct aws_tls_ctx *)tls_context_handle);
+
+    struct aws_credentials_provider_x509_options options;
+    AWS_ZERO_STRUCT(options);
+    options.bootstrap = (struct aws_client_bootstrap *)bootstrap_handle;
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+    options.tls_connection_options = &tls_connection_options;
+    options.thing_name = aws_jni_byte_cursor_from_jbyteArray_acquire(env, thing_name);
+    options.role_alias = aws_jni_byte_cursor_from_jbyteArray_acquire(env, role_alias);
+    options.endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, endpoint);
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_x509(allocator, &options);
+    if (provider == NULL) {
+        aws_mem_release(allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
+    } else {
+        callback_data->provider = provider;
+    }
+
+    aws_jni_byte_cursor_from_jbyteArray_release(env, thing_name, options.thing_name);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, role_alias, options.role_alias);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, endpoint, options.endpoint);
+
+    aws_tls_connection_options_clean_up(&tls_connection_options);
 
     return (jlong)provider;
 }

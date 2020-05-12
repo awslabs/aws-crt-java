@@ -21,7 +21,8 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
- * A class that wraps the a credentials provider that returns a fixed set of credentials
+ * A class that wraps a credentials provider that sources session credentials from IoT's x509 credentials
+ * service.
  */
 public class X509CredentialsProvider extends CredentialsProvider {
 
@@ -42,8 +43,9 @@ public class X509CredentialsProvider extends CredentialsProvider {
         public X509CredentialsProviderBuilder() {}
 
         /**
-         * Client bootstrap (host resolver and event loop group) to use when making the connections
+         * Sets the client bootstrap (host resolver and event loop group) to use when making the connections
          * required by this provider.
+         * @param clientBootstrap client bootstrap to use
          */
         public X509CredentialsProviderBuilder withClientBootstrap(ClientBootstrap clientBootstrap) {
             this.clientBootstrap = clientBootstrap;
@@ -54,7 +56,9 @@ public class X509CredentialsProvider extends CredentialsProvider {
         ClientBootstrap getClientBootstrap() { return clientBootstrap; }
 
         /**
-         * Tls context initialized with an x509 certificate and private key
+         * Sets the tls context initialized with a x509 certificate and private key suitable for
+         * queries against the account's iot credential provider endpoint
+         * @param tlsContext the tls context to use when establishing the http connection to iot
          */
         public X509CredentialsProviderBuilder withTlsContext(TlsContext tlsContext) {
             this.tlsContext = tlsContext;
@@ -64,6 +68,10 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         TlsContext getTlsContext() { return tlsContext; }
 
+        /**
+         * Sets the iot thing name to fetch credentials by.
+         * @param thingName name of the thing to use
+         */
         public X509CredentialsProviderBuilder withThingName(String thingName) {
             this.thingName = thingName;
 
@@ -72,6 +80,10 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         String getThingName() { return thingName; }
 
+        /**
+         * Sets the role alias to fetch credentials through
+         * @param roleAlias name of the role alias to use
+         */
         public X509CredentialsProviderBuilder withRoleAlias(String roleAlias) {
             this.roleAlias = roleAlias;
 
@@ -80,6 +92,11 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         String getRoleAlias() { return roleAlias; }
 
+        /**
+         * Sets the endpoint to fetch credentials from.  This is a per-account value that can be determined
+         * via the cli: 'aws iot describe-endpoint --endpoint-type iot:CredentialProvider'
+         * @param endpoint credentials provider endpoint
+         */
         public X509CredentialsProviderBuilder withEndpoint(String endpoint) {
             this.endpoint = endpoint;
 

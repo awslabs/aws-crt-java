@@ -1,3 +1,6 @@
+#ifndef AWS_JNI_LOGGING_H
+#define AWS_JNI_LOGGING_H
+
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,9 +15,6 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-#ifndef AWS_JNI_LOGGING_H
-#define AWS_JNI_LOGGING_H
 
 /*******************************************************************************
  * aws_jni_cleanup_logging - cleans up the native logger; invoked on atexit

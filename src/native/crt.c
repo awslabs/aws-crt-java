@@ -245,9 +245,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 
     g_memory_tracing = jni_memtrace;
 
+    /* check to see if we have support for backtraces only if we need to */
     void *stack[1];
-    if (0 == aws_backtrace(stack, 1)) {
-        g_memory_tracing = (g_memory_tracing > 1) ? 1 : g_memory_tracing;
+    if (g_memory_tracing > 1 && 0 == aws_backtrace(stack, 1)) {
+        g_memory_tracing = 1;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();

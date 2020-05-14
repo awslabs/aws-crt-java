@@ -17,6 +17,7 @@ package software.amazon.awssdk.crt.auth.credentials;
 import java.lang.IllegalArgumentException;
 import java.nio.charset.Charset;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -39,6 +40,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         private TlsContext tlsContext;
         private ClientBootstrap clientBootstrap;
+        private HttpProxyOptions proxyOptions;
 
         public X509CredentialsProviderBuilder() {}
 
@@ -105,6 +107,20 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         String getEndpoint() { return endpoint; }
 
+        /**
+         * Sets the proxy configuration to use when making the http request that fetches session
+         * credentials from the IoT x509 credentials provider service
+         * @param proxyOptions proxy configuration for the credentials fetching http request
+         */
+        public X509CredentialsProviderBuilder withProxyOptions(HttpProxyOptions proxyOptions) {
+            this.proxyOptions = proxyOptions;
+
+            return this;
+        }
+
+        HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+
         public X509CredentialsProvider build() {
             return new X509CredentialsProvider(this);
         }
@@ -126,7 +142,39 @@ public class X509CredentialsProvider extends CredentialsProvider {
             throw new IllegalArgumentException("X509CredentialsProvider - clientBootstrap and tlsContext must be non null");
         }
 
-        long nativeHandle = x509CredentialsProviderNew(this, clientBootstrap.getNativeHandle(), tlsContext.getNativeHandle(), thingName.getBytes(UTF8), roleAlias.getBytes(UTF8), endpoint.getBytes(UTF8));
+        long proxyTlsContextHandle = 0;
+        String proxyHost = null;
+        int proxyPort = 0;
+        int proxyAuthorizationType = 0;
+        String proxyAuthorizationUsername = null;
+        String proxyAuthorizationPassword = null;
+        HttpProxyOptions proxyOptions = builder.getProxyOptions();
+        if (proxyOptions != null) {
+            TlsContext proxyTlsContext = proxyOptions.getTlsContext();
+            if (proxyTlsContext != null) {
+                proxyTlsContextHandle = proxyTlsContext.getNativeHandle();
+            }
+
+            proxyHost = proxyOptions.getHost();
+            proxyPort = proxyOptions.getPort();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
+            proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+        }
+
+        long nativeHandle = x509CredentialsProviderNew(
+                this,
+                clientBootstrap.getNativeHandle(),
+                tlsContext.getNativeHandle(),
+                thingName.getBytes(UTF8),
+                roleAlias.getBytes(UTF8),
+                endpoint.getBytes(UTF8),
+                proxyHost,
+                proxyPort,
+                proxyTlsContextHandle,
+                proxyAuthorizationType,
+                proxyAuthorizationUsername,
+                proxyAuthorizationPassword);
 
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);
@@ -137,5 +185,16 @@ public class X509CredentialsProvider extends CredentialsProvider {
      * Native methods
      ******************************************************************************/
 
-    private static native long x509CredentialsProviderNew(X509CredentialsProvider thisObj, long bootstrapHandle, long tlsContextHandle, byte[] thingName, byte[] roleAlias, byte[] endpoint);
+    private static native long x509CredentialsProviderNew(X509CredentialsProvider thisObj,
+                                                          long bootstrapHandle,
+                                                          long tlsContextHandle,
+                                                          byte[] thingName,
+                                                          byte[] roleAlias,
+                                                          byte[] endpoint,
+                                                          String proxyHost,
+                                                          int proxyPort,
+                                                          long proxyTlsContext,
+                                                          int proxyAuthorizationType,
+                                                          String proxyAuthorizationUsername,
+                                                          String proxyAuthorizationPassword);
 }

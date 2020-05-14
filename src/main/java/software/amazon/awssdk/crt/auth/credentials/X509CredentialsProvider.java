@@ -169,12 +169,12 @@ public class X509CredentialsProvider extends CredentialsProvider {
                 thingName.getBytes(UTF8),
                 roleAlias.getBytes(UTF8),
                 endpoint.getBytes(UTF8),
-                proxyHost,
+                proxyHost != null ? proxyHost.getBytes(UTF8) : null,
                 proxyPort,
                 proxyTlsContextHandle,
                 proxyAuthorizationType,
-                proxyAuthorizationUsername,
-                proxyAuthorizationPassword);
+                proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
+                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null);
 
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);
@@ -191,10 +191,10 @@ public class X509CredentialsProvider extends CredentialsProvider {
                                                           byte[] thingName,
                                                           byte[] roleAlias,
                                                           byte[] endpoint,
-                                                          String proxyHost,
+                                                          byte[] proxyHost,
                                                           int proxyPort,
                                                           long proxyTlsContext,
                                                           int proxyAuthorizationType,
-                                                          String proxyAuthorizationUsername,
-                                                          String proxyAuthorizationPassword);
+                                                          byte[] proxyAuthorizationUsername,
+                                                          byte[] proxyAuthorizationPassword);
 }

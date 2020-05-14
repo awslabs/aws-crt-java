@@ -160,12 +160,12 @@ JNIEXPORT jlong JNICALL
         jbyteArray thing_name,
         jbyteArray role_alias,
         jbyteArray endpoint,
-        jstring jni_proxy_host,
+        jbyteArray jni_proxy_host,
         jint jni_proxy_port,
         jlong jni_proxy_tls_context,
         jint jni_proxy_authorization_type,
-        jstring jni_proxy_authorization_username,
-        jstring jni_proxy_authorization_password) {
+        jbyteArray jni_proxy_authorization_username,
+        jbyteArray jni_proxy_authorization_password) {
 
     (void)jni_class;
     (void)env;

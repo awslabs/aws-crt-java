@@ -15,6 +15,7 @@
 package software.amazon.awssdk.crt.http;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,6 +35,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
+    private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
 
     private final int windowSize;
     private final URI uri;
@@ -112,15 +114,15 @@ public class HttpClientConnectionManager extends CrtResource {
                                             socketOptions.getNativeHandle(),
                                             useTls ? tlsContext.getNativeHandle() : 0,
                                             windowSize,
-                                            uri.getHost(),
+                                            uri.getHost().getBytes(UTF8),
                                             port,
                                             maxConnections,
-                                            proxyHost,
+                                            proxyHost != null ? proxyHost.getBytes(UTF8) : null,
                                             proxyPort,
                                             proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                                             proxyAuthorizationType,
-                                            proxyAuthorizationUsername,
-                                            proxyAuthorizationPassword,
+                                            proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
+                                            proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
                                             options.isManualWindowManagement()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
@@ -250,15 +252,15 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long socketOptions,
                                                         long tlsContext,
                                                         int windowSize,
-                                                        String endpoint,
+                                                        byte[] endpoint,
                                                         int port,
                                                         int maxConns,
-                                                        String proxyHost,
+                                                        byte[] proxyHost,
                                                         int proxyPort,
                                                         long proxyTlsContext,
                                                         int proxyAuthorizationType,
-                                                        String proxyAuthorizationUsername,
-                                                        String proxyAuthorizationPassword,
+                                                        byte[] proxyAuthorizationUsername,
+                                                        byte[] proxyAuthorizationPassword,
                                                         boolean isManualWindowManagement) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;

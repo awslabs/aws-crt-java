@@ -14,6 +14,7 @@
  */
 
 #include "crt.h"
+#include "http_connection_manager.h"
 #include "java_class_ids.h"
 
 #include <jni.h>
@@ -21,6 +22,7 @@
 
 #include <aws/auth/credentials.h>
 #include <aws/common/string.h>
+#include <aws/http/connection.h>
 #include <aws/io/tls_channel_handler.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -157,7 +159,13 @@ JNIEXPORT jlong JNICALL
         jlong tls_context_handle,
         jbyteArray thing_name,
         jbyteArray role_alias,
-        jbyteArray endpoint) {
+        jbyteArray endpoint,
+        jbyteArray jni_proxy_host,
+        jint jni_proxy_port,
+        jlong jni_proxy_tls_context,
+        jint jni_proxy_authorization_type,
+        jbyteArray jni_proxy_authorization_username,
+        jbyteArray jni_proxy_authorization_password) {
 
     (void)jni_class;
     (void)env;
@@ -184,6 +192,26 @@ JNIEXPORT jlong JNICALL
     options.role_alias = aws_jni_byte_cursor_from_jbyteArray_acquire(env, role_alias);
     options.endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, endpoint);
 
+    struct aws_tls_connection_options proxy_tls_connection_options;
+    AWS_ZERO_STRUCT(proxy_tls_connection_options);
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    aws_http_proxy_options_jni_init(
+        env,
+        &proxy_options,
+        &proxy_tls_connection_options,
+        jni_proxy_host,
+        (uint16_t)jni_proxy_port,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_authorization_type,
+        (struct aws_tls_ctx *)jni_proxy_tls_context);
+
+    if (jni_proxy_host != NULL) {
+        options.proxy_options = &proxy_options;
+    }
+
     struct aws_credentials_provider *provider = aws_credentials_provider_new_x509(allocator, &options);
     if (provider == NULL) {
         aws_mem_release(allocator, callback_data);
@@ -195,6 +223,9 @@ JNIEXPORT jlong JNICALL
     aws_jni_byte_cursor_from_jbyteArray_release(env, thing_name, options.thing_name);
     aws_jni_byte_cursor_from_jbyteArray_release(env, role_alias, options.role_alias);
     aws_jni_byte_cursor_from_jbyteArray_release(env, endpoint, options.endpoint);
+
+    aws_http_proxy_options_jni_clean_up(
+        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
     aws_tls_connection_options_clean_up(&tls_connection_options);
 

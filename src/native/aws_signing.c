@@ -192,7 +192,7 @@ static int s_build_signing_config(
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.algorithm_field_id);
-    config->transform = (enum aws_signing_algorithm)(*env)->GetIntField(
+    config->transform = (enum aws_signing_request_transform)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.transform_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);

@@ -139,7 +139,7 @@ public class SigningTest extends CrtTestFixture {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
@@ -147,7 +147,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setShouldSignParameter(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -170,14 +170,14 @@ public class SigningTest extends CrtTestFixture {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.QUERY_PARAM);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
                 config.setExpirationInSeconds(60);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
@@ -206,14 +206,14 @@ public class SigningTest extends CrtTestFixture {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -239,14 +239,14 @@ public class SigningTest extends CrtTestFixture {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 result.get();

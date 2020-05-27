@@ -43,9 +43,9 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "algorithm", "I");
     AWS_FATAL_ASSERT(aws_signing_config_properties.algorithm_field_id);
 
-    aws_signing_config_properties.transform_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "transform", "I");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.transform_field_id);
+    aws_signing_config_properties.signature_type_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signatureType", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signature_type_field_id);
 
     aws_signing_config_properties.region_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "region", "Ljava/lang/String;");
@@ -81,9 +81,13 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
 
-    aws_signing_config_properties.sign_body_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "I");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.sign_body_field_id);
+    aws_signing_config_properties.signed_body_value_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_value_field_id);
+
+    aws_signing_config_properties.signed_body_header_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyHeader", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_header_field_id);
 
     aws_signing_config_properties.expiration_in_seconds_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "expirationInSeconds", "J");

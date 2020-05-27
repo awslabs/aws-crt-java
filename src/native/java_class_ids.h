@@ -29,7 +29,7 @@ extern struct java_http_request_body_stream_properties http_request_body_stream_
 struct java_aws_signing_config_properties {
     jclass aws_signing_config_class;
     jfieldID algorithm_field_id;
-    jfieldID transform_field_id;
+    jfieldID signature_type_field_id;
     jfieldID region_field_id;
     jfieldID service_field_id;
     jfieldID time_field_id;
@@ -38,7 +38,8 @@ struct java_aws_signing_config_properties {
     jfieldID should_sign_parameter_field_id;
     jfieldID use_double_uri_encode_field_id;
     jfieldID should_normalize_uri_path_field_id;
-    jfieldID sign_body_field_id;
+    jfieldID signed_body_value_field_id;
+    jfieldID signed_body_header_field_id;
     jfieldID expiration_in_seconds_field_id;
 };
 extern struct java_aws_signing_config_properties aws_signing_config_properties;

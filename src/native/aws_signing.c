@@ -25,6 +25,7 @@
 #include <aws/auth/credentials.h>
 #include <aws/auth/signable.h>
 #include <aws/auth/signing.h>
+#include <aws/auth/signing_result.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 
@@ -192,8 +193,8 @@ static int s_build_signing_config(
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.algorithm_field_id);
-    config->transform = (enum aws_signing_request_transform)(*env)->GetIntField(
-        env, java_config, aws_signing_config_properties.transform_field_id);
+    config->signature_type = (enum aws_signature_type)(*env)->GetIntField(
+        env, java_config, aws_signing_config_properties.signature_type_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
@@ -220,7 +221,10 @@ static int s_build_signing_config(
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
     config->should_normalize_uri_path =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
-    config->body_signing_type = (*env)->GetIntField(env, java_config, aws_signing_config_properties.sign_body_field_id);
+    config->signed_body_type =
+        (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    config->signed_body_header =
+        (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_header_field_id);
 
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);

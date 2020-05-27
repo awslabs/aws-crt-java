@@ -122,6 +122,7 @@ public class Log {
     /**
      * Logs a message at the specified log level.
      * @param level (for filtering purposes) level attached to the log invocation
+     * @param subject (for filtering purposes) log subject
      * @param message log string to write
      */
     public static void log(LogLevel level, LogSubject subject, String message) {
@@ -136,8 +137,15 @@ public class Log {
         String destinationString = System.getProperty(LOG_DESTINATION_PROPERTY_NAME);
         String filenameString = System.getProperty(LOG_FILE_NAME_PROPERTY_NAME);
         String levelString = System.getProperty(LOG_LEVEL_PROPERTY_NAME);
-        if (destinationString == null) {
+
+        // If nothing was specified, disable logging
+        if (destinationString == null && levelString == null) {
             return;
+        }
+
+        // If no destination wasn't specified, default to stderr
+        if (destinationString == null) {
+            destinationString = "Stderr";
         }
 
         LogDestination destination = LogDestination.valueOf(destinationString);

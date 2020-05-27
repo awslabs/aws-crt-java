@@ -17,17 +17,15 @@ package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Arrays;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -40,11 +38,19 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
-public class SigningTest {
+public class SigningTest extends CrtTestFixture {
 
-    public static String METHOD = "POST";
+    private static String METHOD = "POST";
     private static byte[] TEST_ACCESS_KEY_ID = "AKIDEXAMPLE".getBytes();
     private static byte[] TEST_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes();
+
+    private static SimpleDateFormat DATE_FORMAT = dateFormat();
+
+    private static SimpleDateFormat dateFormat() {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format;
+    }
 
     public SigningTest() {}
 
@@ -144,15 +150,15 @@ public class SigningTest {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.now());
+                config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setShouldSignParameter(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -162,8 +168,6 @@ public class SigningTest {
                 assertTrue(hasHeader(signedRequest, "Authorization"));
             }
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -177,14 +181,14 @@ public class SigningTest {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.QUERY_PARAM);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+                config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
                 config.setExpirationInSeconds(60);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
@@ -200,8 +204,6 @@ public class SigningTest {
                 assertTrue(path.contains("X-Amz-Expires=60"));
             }
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -215,14 +217,14 @@ public class SigningTest {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+                config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -234,8 +236,6 @@ public class SigningTest {
                 assertTrue(hasHeaderWithValue(signedRequest, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=28038455d6de14eafc1f9222cf5aa6f1a96197d7deb8263271d420d138af7f11"));
             }
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -245,14 +245,14 @@ public class SigningTest {
 
         try (AwsSigningConfig config = new AwsSigningConfig()) {
             config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-            config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+            config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
             config.setRegion("us-east-1");
             config.setService("service");
-            config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+            config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
             config.setCredentials(credentials);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+            config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
             HttpRequest signedRequest = result.get();
@@ -275,15 +275,15 @@ public class SigningTest {
         try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials, EccKeyPair.AwsEccCurve.AWS_ECDSA_P256);
              AwsSigningConfig config = new AwsSigningConfig()) {
             config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-            config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.QUERY_PARAM);
+            config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
             config.setRegion("us-east-1");
             config.setService("service");
-            config.setTime(Instant.parse("2015-08-30T12:36:00Z"));
+            config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
             config.setCredentials(credentials);
             config.setEccKeyPair(keyPair);
             config.setUseDoubleUriEncode(true);
             config.setShouldNormalizeUriPath(true);
-            config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+            config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
             config.setExpirationInSeconds(60);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
@@ -315,14 +315,14 @@ public class SigningTest {
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                config.setTransform(AwsSigningConfig.AwsRequestSigningTransform.HEADER);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
-                config.setTime(Instant.now());
+                config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 result.get();
@@ -334,8 +334,6 @@ public class SigningTest {
             CrtRuntimeException crt = (CrtRuntimeException) cause;
             assertTrue(crt.errorName.equals("AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER"));
             throw crt;
-        } finally {
-            CrtResource.waitForNoResources();
         }
     }
 };

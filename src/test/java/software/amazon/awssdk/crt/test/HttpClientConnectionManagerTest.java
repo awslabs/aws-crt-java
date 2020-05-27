@@ -29,8 +29,9 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
-public class HttpClientConnectionManagerTest {
+public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
@@ -51,10 +52,10 @@ public class HttpClientConnectionManagerTest {
 
     private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-            HostResolver resolver = new HostResolver(eventLoopGroup);
-            ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-            SocketOptions sockOpts = new SocketOptions();
-            TlsContext tlsContext =  new TlsContext()) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContext tlsContext = createHttpClientTlsContext()) {
 
             HttpProxyOptions proxyOptions = null;
             if (proxyHost != null) {
@@ -65,11 +66,11 @@ public class HttpClientConnectionManagerTest {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
-                .withSocketOptions(sockOpts)
-                .withTlsContext(tlsContext)
-                .withUri(uri)
-                .withMaxConnections(numConnections)
-                .withProxyOptions(proxyOptions);
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(numConnections)
+                    .withProxyOptions(proxyOptions);
 
             return HttpClientConnectionManager.create(options);
         }
@@ -162,8 +163,6 @@ public class HttpClientConnectionManagerTest {
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        CrtResource.waitForNoResources();
-
         URI uri = new URI(endpoint);
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, numThreads, NUM_CONNECTIONS)) {
@@ -183,34 +182,33 @@ public class HttpClientConnectionManagerTest {
             return null;
         };
 
-        
-        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-        // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
-        // we're running, 4K worth of growth in the JVM only is acceptable.
-        fixedGrowth = Math.max(fixedGrowth, 4096);
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no observable correlation
+        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we don't bother.
+        // If we have a leak, we should have it on all platforms, and we'll catch it elsewhere.
+        if (CRT.getOSIdentifier() != "android") {
+            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
+            // we're running, 8K worth of growth (an additional 4K for an increased healthy margin)
+            // in the JVM only is acceptable.
+            fixedGrowth = Math.max(fixedGrowth, 8192);
+            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        }
     }
 
     @Test
     public void testSerialRequests() throws Exception {
-        System.out.println("testSerialRequests START");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-        System.out.println("testSerialRequests END");
     }
 
     @Test
     public void testParallelRequests() throws Exception {
-        System.out.println("testParallelRequests START");
         testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
-        System.out.println("testParallelRequests END");
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
-        System.out.println("testMaxParallelRequests START");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-        System.out.println("testMaxParallelRequests END");
     }
 
     @Test
@@ -224,8 +222,6 @@ public class HttpClientConnectionManagerTest {
         }
 
         Assume.assumeTrue(proxyHost != null && proxyHost.length() > 0 && proxyPort > 0);
-
-        CrtResource.waitForNoResources();
 
         URI uri = new URI(endpoint);
 

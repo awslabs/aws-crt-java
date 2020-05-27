@@ -25,6 +25,7 @@
 #include <aws/auth/credentials.h>
 #include <aws/auth/signable.h>
 #include <aws/auth/signing.h>
+#include <aws/auth/signing_result.h>
 #include <aws/cal/ecc.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
@@ -86,54 +87,13 @@ static jobject s_create_signed_java_http_request(
     JNIEnv *env,
     struct aws_http_message *native_request,
     jobject java_original_request) {
-    jstring jni_uri = NULL;
-    jobjectArray jni_headers = NULL;
-    jobject http_request = NULL;
-
-    jstring jni_method = (*env)->GetObjectField(env, java_original_request, http_request_properties.method_field_id);
     jobject jni_body_stream =
         (*env)->GetObjectField(env, java_original_request, http_request_properties.body_stream_field_id);
 
-    struct aws_byte_cursor path_cursor;
-    if (aws_http_message_get_request_path(native_request, &path_cursor)) {
-        goto done;
-    }
-
-    jni_uri = aws_jni_string_from_cursor(env, &path_cursor);
-    if (jni_uri == NULL) {
-        goto done;
-    }
-
-    jni_headers = aws_java_headers_array_from_http_headers(env, aws_http_message_get_headers(native_request));
-    if (jni_headers == NULL) {
-        goto done;
-    }
-
-    http_request = (*env)->NewObject(
-        env,
-        http_request_properties.http_request_class,
-        http_request_properties.constructor_method_id,
-        jni_method,
-        jni_uri,
-        jni_headers,
-        jni_body_stream);
-
-done:
-
-    if (jni_method != NULL) {
-        (*env)->DeleteLocalRef(env, jni_method);
-    }
+    jobject http_request = aws_java_http_request_from_native(env, native_request, jni_body_stream);
 
     if (jni_body_stream != NULL) {
         (*env)->DeleteLocalRef(env, jni_body_stream);
-    }
-
-    if (jni_uri != NULL) {
-        (*env)->DeleteLocalRef(env, jni_uri);
-    }
-
-    if (jni_headers != NULL) {
-        (*env)->DeleteLocalRef(env, jni_headers);
     }
 
     return http_request;
@@ -160,11 +120,9 @@ static void s_complete_signing_exceptionally(
     (*env)->CallBooleanMethod(
         env, callback_data->java_future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
 
+    (*env)->ExceptionCheck(env);
     (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
-
-    /* we're already bailing at this point, just put this here to make the JVM happy. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
 static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -172,7 +130,6 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
         s_complete_signing_exceptionally(
             env, callback_data, (error_code != AWS_ERROR_SUCCESS) ? error_code : AWS_ERROR_UNKNOWN);
@@ -186,6 +143,7 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     jobject java_signed_request =
         s_create_signed_java_http_request(env, callback_data->native_request, callback_data->java_original_request);
+
     if (java_signed_request == NULL) {
         s_complete_signing_exceptionally(env, callback_data, aws_last_error());
         goto done;
@@ -236,12 +194,12 @@ static int s_build_signing_config(
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.algorithm_field_id);
-    config->transform = (enum aws_signing_algorithm)(*env)->GetIntField(
-        env, java_config, aws_signing_config_properties.transform_field_id);
+    config->signature_type = (enum aws_signature_type)(*env)->GetIntField(
+        env, java_config, aws_signing_config_properties.signature_type_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
     callback_data->region = aws_jni_new_string_from_jstring(env, region);
-    config->region_config = aws_byte_cursor_from_string(callback_data->region);
+    config->region = aws_byte_cursor_from_string(callback_data->region);
 
     jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
     callback_data->service = aws_jni_new_string_from_jstring(env, service);
@@ -264,7 +222,10 @@ static int s_build_signing_config(
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
     config->should_normalize_uri_path =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
-    config->body_signing_type = (*env)->GetIntField(env, java_config, aws_signing_config_properties.sign_body_field_id);
+    config->signed_body_value =
+        (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    config->signed_body_header =
+        (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_header_field_id);
 
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
@@ -301,7 +262,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     JNIEnv *env,
     jclass jni_class,
     jobject java_http_request,
-    jobjectArray java_http_request_headers,
+    jbyteArray marshalled_request,
     jobject java_signing_config,
     jobject java_future) {
 
@@ -334,13 +295,11 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         goto on_error;
     }
 
-    jstring java_method = (*env)->GetObjectField(env, java_http_request, http_request_properties.method_field_id);
-    jstring java_uri = (*env)->GetObjectField(env, java_http_request, http_request_properties.encoded_path_field_id);
     jobject java_http_request_body_stream =
         (*env)->GetObjectField(env, java_http_request, http_request_properties.body_stream_field_id);
 
-    callback_data->native_request = aws_http_request_new_from_java_http_request(
-        env, java_method, java_uri, java_http_request_headers, java_http_request_body_stream);
+    callback_data->native_request =
+        aws_http_request_new_from_java_http_request(env, marshalled_request, java_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         aws_jni_throw_runtime_exception(env, "Failed to create native http request from Java HttpRequest");
         goto on_error;

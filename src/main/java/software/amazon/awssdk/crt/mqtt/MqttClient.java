@@ -44,7 +44,7 @@ public class MqttClient extends CrtResource {
     /**
      * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
      * @param clientBootstrap The ClientBootstrap to use
-     * @param tlsContext the tls context to use
+     * @param context the tls context to use
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext context) throws CrtRuntimeException {
@@ -55,7 +55,7 @@ public class MqttClient extends CrtResource {
     }
 
     /**
-     * Gets the tls context used by all connections associated with this client.
+     * @return the tls context used by all connections associated with this client.
      */
     public TlsContext getTlsContext() { return tlsContext; }
 

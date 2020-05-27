@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
 
-public class ClientBootstrapTest {
+public class ClientBootstrapTest extends CrtTestFixture {
     public ClientBootstrapTest() {}
     
     @Test
@@ -40,7 +40,5 @@ public class ClientBootstrapTest {
         bootstrap.getShutdownCompleteFuture().get();
         hostResolver.close();
         elg.close();
-
-        CrtResource.waitForNoResources();
     }
 };

@@ -43,9 +43,9 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "algorithm", "I");
     AWS_FATAL_ASSERT(aws_signing_config_properties.algorithm_field_id);
 
-    aws_signing_config_properties.transform_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "transform", "I");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.transform_field_id);
+    aws_signing_config_properties.signature_type_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signatureType", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signature_type_field_id);
 
     aws_signing_config_properties.region_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "region", "Ljava/lang/String;");
@@ -85,9 +85,13 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
 
-    aws_signing_config_properties.sign_body_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "I");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.sign_body_field_id);
+    aws_signing_config_properties.signed_body_value_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_value_field_id);
+
+    aws_signing_config_properties.signed_body_header_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyHeader", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_header_field_id);
 
     aws_signing_config_properties.expiration_in_seconds_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "expirationInSeconds", "J");
@@ -116,17 +120,8 @@ static void s_cache_http_request(JNIEnv *env) {
         env,
         http_request_class,
         "<init>",
-        "(Ljava/lang/String;Ljava/lang/String;[Lsoftware/amazon/awssdk/crt/http/HttpHeader;Lsoftware/amazon/awssdk/crt/"
-        "http/HttpRequestBodyStream;)V");
+        "(Ljava/nio/ByteBuffer;Lsoftware/amazon/awssdk/crt/http/HttpRequestBodyStream;)V");
     AWS_FATAL_ASSERT(http_request_properties.constructor_method_id);
-
-    http_request_properties.method_field_id =
-        (*env)->GetFieldID(env, http_request_class, "method", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(http_request_properties.method_field_id);
-
-    http_request_properties.encoded_path_field_id =
-        (*env)->GetFieldID(env, http_request_class, "encodedPath", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(http_request_properties.encoded_path_field_id);
 
     http_request_properties.body_stream_field_id = (*env)->GetFieldID(
         env, http_request_class, "bodyStream", "Lsoftware/amazon/awssdk/crt/http/HttpRequestBodyStream;");
@@ -320,23 +315,6 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
 }
 
-struct java_http_header_properties http_header_properties;
-
-static void s_cache_http_header(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
-    AWS_FATAL_ASSERT(cls);
-    http_header_properties.header_class = (*env)->NewGlobalRef(env, cls);
-
-    http_header_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "()V");
-    AWS_FATAL_ASSERT(http_header_properties.constructor);
-
-    http_header_properties.name = (*env)->GetFieldID(env, cls, "name", "[B");
-    AWS_FATAL_ASSERT(http_header_properties.name);
-
-    http_header_properties.value = (*env)->GetFieldID(env, cls, "value", "[B");
-    AWS_FATAL_ASSERT(http_header_properties.value);
-}
-
 struct java_http_stream_properties http_stream_properties;
 
 static void s_cache_http_stream(JNIEnv *env) {
@@ -351,17 +329,14 @@ static void s_cache_http_stream(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_properties.close);
 }
 
-struct java_http_stream_response_handler_properties http_stream_response_handler_properties;
+struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
-static void s_cache_http_stream_response_handler(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamResponseHandler");
+static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamResponseHandlerNativeAdapter");
     AWS_FATAL_ASSERT(cls);
 
     http_stream_response_handler_properties.onResponseHeaders = (*env)->GetMethodID(
-        env,
-        cls,
-        "onResponseHeaders",
-        "(Lsoftware/amazon/awssdk/crt/http/HttpStream;II[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
+        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;IILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeaders);
 
     http_stream_response_handler_properties.onResponseHeadersDone =
@@ -431,9 +406,8 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
-    s_cache_http_header(env);
     s_cache_http_stream(env);
-    s_cache_http_stream_response_handler(env);
+    s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
     s_cache_ecc_key_pair(env);

@@ -35,7 +35,7 @@
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
-static struct aws_allocator *s_init_allocator() {
+static struct aws_allocator *s_init_allocator(void) {
     if (g_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
         allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
@@ -43,6 +43,7 @@ static struct aws_allocator *s_init_allocator() {
     }
     return aws_default_allocator();
 }
+
 static struct aws_allocator *s_allocator = NULL;
 struct aws_allocator *aws_jni_get_allocator() {
     if (AWS_UNLIKELY(s_allocator == NULL)) {
@@ -68,7 +69,7 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
         aws_error_name(error),
         error,
         aws_error_str(error));
-    jclass runtime_exception = (*env)->FindClass(env, "software/amazon/awssdk/crt/CrtRuntimeException");
+    jclass runtime_exception = crt_runtime_exception_properties.crt_runtime_exception_class;
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
@@ -186,10 +187,18 @@ void s_detach_jvm_from_thread(void *user_data) {
 }
 
 JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
+#ifdef ANDROID
     JNIEnv *env = NULL;
+#else
+    void *env = NULL;
+#endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "aws_jni_get_thread_env returned detached, attaching");
+#ifdef ANDROID
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+#else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+#endif
         (void)result;
         AWS_FATAL_ASSERT(result == JNI_OK);
         /* This should only happen in event loop threads, the JVM main thread attachment is
@@ -236,9 +245,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 
     g_memory_tracing = jni_memtrace;
 
+    /* check to see if we have support for backtraces only if we need to */
     void *stack[1];
-    if (0 == aws_backtrace(stack, 1)) {
-        g_memory_tracing = (g_memory_tracing > 1) ? 1 : g_memory_tracing;
+    if (g_memory_tracing > 1 && 0 == aws_backtrace(stack, 1)) {
+        g_memory_tracing = 1;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();

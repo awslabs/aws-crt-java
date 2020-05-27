@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 
-public class EventLoopGroupTest {
+public class EventLoopGroupTest extends CrtTestFixture  {
     public EventLoopGroupTest() {}
     
     @Test
@@ -33,6 +33,5 @@ public class EventLoopGroupTest {
         } catch (CrtRuntimeException ex) {
             fail(ex.getMessage());
         }
-        CrtResource.waitForNoResources();
     }
 };

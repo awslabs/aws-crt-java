@@ -15,11 +15,10 @@
 package software.amazon.awssdk.crt;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.*;
 import java.util.*;
-
-import software.amazon.awssdk.crt.Log;
-
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
  * platform out of aws-crt-java.jar. One instance of this class has to be created
@@ -28,8 +27,12 @@ import software.amazon.awssdk.crt.Log;
 public final class CRT {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
+    private static final CrtPlatform s_platform;
 
     static {
+        // Scan for and invoke any platform specific initialization
+        s_platform = findPlatformImpl();
+        jvmInit();
         try {
             // If the lib is already present/loaded or is in java.library.path, just use it
             System.loadLibrary(CRT_LIB_NAME);
@@ -37,9 +40,22 @@ public final class CRT {
             // otherwise, load from the jar this class is in
             loadLibraryFromJar();
         }
+
+        // Initialize the CRT
+        int memoryTracingLevel = 0;
+        try {
+            memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
+        } catch (Exception ex) {}
+        awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
+
+        try {
+            Log.initLoggingFromSystemProperties();
+        } catch (IllegalArgumentException e) {
+            ;
+        }
     }
 
-    public static class UnknownPlatformException extends Exception {
+    public static class UnknownPlatformException extends RuntimeException {
         UnknownPlatformException(String message) {
             super(message);
         }
@@ -52,8 +68,22 @@ public final class CRT {
         return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
     }
 
-    private static String getOSIdentifier() throws UnknownPlatformException {
-        String name = normalize(System.getProperty("os.name"));
+    private static boolean isAndroid() {
+        try {
+            Class.forName("android.os.Build");
+            return true;
+        } catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
+    public static String getOSIdentifier() throws UnknownPlatformException {
+        if (isAndroid()) {
+            return "android";
+        }
+
+        CrtPlatform platform = getPlatformImpl();
+        String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
         if (name.contains("windows")) {
             return "windows";
@@ -65,29 +95,30 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
-        } else if (name.contains("android")) {
-            return "android";
         }
 
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
-    private static String getArchIdentifier() throws UnknownPlatformException {
-        String arch = normalize(System.getProperty("os.arch"));
-        if (arch.matches("^(x8664|amd64|ia32e|em64t|x64)$")) {
+    public static String getArchIdentifier() throws UnknownPlatformException {
+        CrtPlatform platform = getPlatformImpl();
+        String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
+
+        if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
-            return "x86_32";
+            return (getOSIdentifier() == "android") ? "x86": "x86_32";
         } else if (arch.startsWith("armeabi")) {
+            if (getOSIdentifier() == "android") {
+                return "armeabi-v7a";
+            }
             if (arch.contains("v7")) {
                 return "armv7";
             } else {
                 return "armv6";
             }
         } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
-            return "armv8";
-        } else if (arch.startsWith("aarch64")) {
-           return "armv8";
+            return (getOSIdentifier() == "android") ? "arm64-v8a": "armv8";
         } else if (arch.equals("arm")) {
            return "armv6";
         }
@@ -152,18 +183,6 @@ public final class CRT {
 
             // load the shared lib from the temp path
             System.load(libTempPath.toString());
-
-            int memoryTracingLevel = 0;
-            try {
-                memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
-            } catch (Exception ex) {}
-            awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
-
-            try {
-                Log.initLoggingFromSystemProperties();
-            } catch (IllegalArgumentException e) {
-                ;
-            }
         }
         catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
@@ -179,11 +198,46 @@ public final class CRT {
         }
     }
 
+
+    private static CrtPlatform findPlatformImpl() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        String[] platforms = new String[] {
+            // Search for test impl first, fall back to crt
+            String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+            String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()),
+        };
+        for (String platformImpl : platforms) {
+            try {
+                Class<?> platformClass = classLoader.loadClass(platformImpl);
+                CrtPlatform instance = (CrtPlatform) platformClass.newInstance();
+                return instance;
+            } catch (ClassNotFoundException ex) {
+                // IGNORED
+            } catch (IllegalAccessException | InstantiationException ex) {
+                throw new CrtRuntimeException(ex.toString());
+            }
+        }
+        return null;
+    }
+
+
+    public static CrtPlatform getPlatformImpl() {
+        return s_platform;
+    }
+
+    private static void jvmInit() {
+        CrtPlatform platform = getPlatformImpl();
+        if (platform != null) {
+            platform.jvmInit();
+        }
+    }
+
     // Called internally when bootstrapping the CRT, allows native code to do any static initialization it needs
     private static native void awsCrtInit(int memoryTracingLevel, boolean debugWait) throws CrtRuntimeException;
 
     /**
      * Returns the last error on the current thread.
+     * @return Last error code recorded in this thread
      */
     public static native int awsLastError();
 
@@ -204,7 +258,7 @@ public final class CRT {
     public static native String awsErrorName(int errorCode);
 
     /**
-     * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing > 0, this will
+     * @return The number of bytes allocated in native resources. If aws.crt.memory.tracing is 1 or 2, this will
      *         be a non-zero value. Otherwise, no tracing will be done, and the value will always be 0
      */
     public static long nativeMemory() {

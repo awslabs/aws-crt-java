@@ -61,6 +61,5 @@ public class IotServiceTest extends MqttClientConnectionFixture {
         
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
 };

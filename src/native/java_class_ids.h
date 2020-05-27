@@ -29,7 +29,7 @@ extern struct java_http_request_body_stream_properties http_request_body_stream_
 struct java_aws_signing_config_properties {
     jclass aws_signing_config_class;
     jfieldID algorithm_field_id;
-    jfieldID transform_field_id;
+    jfieldID signature_type_field_id;
     jfieldID region_field_id;
     jfieldID service_field_id;
     jfieldID time_field_id;
@@ -39,7 +39,8 @@ struct java_aws_signing_config_properties {
     jfieldID should_sign_parameter_field_id;
     jfieldID use_double_uri_encode_field_id;
     jfieldID should_normalize_uri_path_field_id;
-    jfieldID sign_body_field_id;
+    jfieldID signed_body_value_field_id;
+    jfieldID signed_body_header_field_id;
     jfieldID expiration_in_seconds_field_id;
 };
 extern struct java_aws_signing_config_properties aws_signing_config_properties;
@@ -55,8 +56,6 @@ extern struct java_predicate_properties predicate_properties;
 struct java_http_request_properties {
     jclass http_request_class;
     jmethodID constructor_method_id;
-    jfieldID method_field_id;
-    jfieldID encoded_path_field_id;
     jfieldID body_stream_field_id;
 };
 extern struct java_http_request_properties http_request_properties;
@@ -148,15 +147,6 @@ struct java_http_client_connection_manager_properties {
 };
 extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
-/* HttpHeader */
-struct java_http_header_properties {
-    jclass header_class;
-    jmethodID constructor;
-    jfieldID name;
-    jfieldID value;
-};
-extern struct java_http_header_properties http_header_properties;
-
 /* HttpStream */
 struct java_http_stream_properties {
     jclass stream_class;
@@ -166,13 +156,13 @@ struct java_http_stream_properties {
 extern struct java_http_stream_properties http_stream_properties;
 
 /* HttpStreamResponseHandler */
-struct java_http_stream_response_handler_properties {
+struct java_http_stream_response_handler_native_adapter_properties {
     jmethodID onResponseHeaders;
     jmethodID onResponseHeadersDone;
     jmethodID onResponseBody;
     jmethodID onResponseComplete;
 };
-extern struct java_http_stream_response_handler_properties http_stream_response_handler_properties;
+extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
 /* CompletableFuture */
 struct java_completable_future_properties {

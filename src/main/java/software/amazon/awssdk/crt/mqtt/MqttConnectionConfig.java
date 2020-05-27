@@ -68,7 +68,7 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Configures the connection-related callbacks for a connection
      *
-     * @param callbacks connection event callbacks to use
+     * @param connectionCallbacks connection event callbacks to use
      */
     public void setConnectionCallbacks(MqttClientConnectionEvents connectionCallbacks) {
         this.connectionCallbacks = connectionCallbacks;
@@ -221,7 +221,7 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Configures the mqtt client to use for a connection
      *
-     * @param client the mqtt client to use
+     * @param mqttClient the mqtt client to use
      */
     public void setMqttClient(MqttClient mqttClient) {
         swapReferenceTo(this.mqttClient, mqttClient);

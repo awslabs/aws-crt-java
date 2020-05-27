@@ -56,6 +56,5 @@ public class PublishTest extends MqttClientConnectionFixture {
 
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
 };

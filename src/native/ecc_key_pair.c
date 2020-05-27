@@ -36,6 +36,7 @@
 JNIEXPORT
 void JNICALL
     Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairRelease(JNIEnv *env, jclass jni_ekp, jlong ekp_addr) {
+    (void)env;
     (void)jni_ekp;
     struct aws_ecc_key_pair *key_pair = (struct aws_ecc_key_pair *)ekp_addr;
 

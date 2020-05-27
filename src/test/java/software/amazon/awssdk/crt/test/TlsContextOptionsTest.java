@@ -16,7 +16,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.utils.PemUtils;
 
-public class TlsContextOptionsTest {
+public class TlsContextOptionsTest extends CrtTestFixture {
 
     static final String BAD_CERT = "--- THIS IS NOT A CERT ---";
     static final String ROOT_CA1 = "-----BEGIN CERTIFICATE-----\n"
@@ -111,7 +111,6 @@ public class TlsContextOptionsTest {
     @Test
     public void testTlsContextOptionsAPI() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        CrtResource.waitForNoResources();
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             for (TlsCipherPreference pref : TlsCipherPreference.values()) {
@@ -135,8 +134,6 @@ public class TlsContextOptionsTest {
 
             Assert.assertTrue(exceptionThrown);
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test

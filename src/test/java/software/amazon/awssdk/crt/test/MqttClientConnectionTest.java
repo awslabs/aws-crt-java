@@ -30,6 +30,5 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         connect();
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
 };

@@ -52,6 +52,5 @@ public class WillTest extends MqttClientConnectionFixture {
         connect();
         disconnect();
         close();
-        CrtResource.waitForNoResources();
     }
 };

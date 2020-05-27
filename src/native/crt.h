@@ -20,7 +20,7 @@
 #include <aws/common/common.h>
 #include <jni.h>
 
-struct aws_allocator *aws_jni_get_allocator();
+struct aws_allocator *aws_jni_get_allocator(void);
 
 /*******************************************************************************
  * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the

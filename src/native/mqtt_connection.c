@@ -910,7 +910,7 @@ static void s_ws_handshake_transform(
     ws_handshake->complete_fn = complete_fn;
     ws_handshake->http_request = request;
 
-    jobject java_http_request = aws_java_http_request_from_native(env, request);
+    jobject java_http_request = aws_java_http_request_from_native(env, request, NULL);
     if (!java_http_request) {
         aws_raise_error(AWS_ERROR_UNKNOWN); /* TODO: given java exception, choose appropriate aws error code */
         goto error;
@@ -961,8 +961,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
-    jstring jni_request_path,
-    jobjectArray jni_request_headers,
+    jbyteArray jni_marshalled_request,
     jobject jni_throwable,
     jlong jni_user_data) {
     (void)jni_class;
@@ -977,7 +976,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     if (aws_apply_java_http_request_changes_to_native_request(
-            env, jni_request_path, jni_request_headers, NULL, ws_handshake->http_request)) {
+            env, jni_marshalled_request, NULL, ws_handshake->http_request)) {
         error_code = aws_last_error();
         goto done;
     }
@@ -1025,7 +1024,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         proxy_options.auth_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
     }
 
-    struct aws_tls_connection_options proxy_tls_conn_options = {0};
+    struct aws_tls_connection_options proxy_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_tls_conn_options);
 
     if (jni_proxy_tls_context != 0) {
         struct aws_tls_ctx *proxy_tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context;

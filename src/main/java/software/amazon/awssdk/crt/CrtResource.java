@@ -47,20 +47,25 @@ public abstract class CrtResource implements AutoCloseable {
             nativeHandle = handle;
             canonicalName = name;
             this.wrapper = wrapper;
-            try {
-                throw new RuntimeException();
-            } catch (RuntimeException ex) {
-                instantiation = ex;
+            if (debugNativeObjects) {
+                try {
+                    throw new RuntimeException();
+                } catch (RuntimeException ex) {
+                    instantiation = ex;
+                }
             }
         }
 
         public String location() {
             String str = "";
-            StackTraceElement[] stack = instantiation.getStackTrace();
-            // skip ctor and acquireNativeHandle()
-            for (int frameIdx = 2; frameIdx < stack.length; ++frameIdx) {
-                StackTraceElement frame = stack[frameIdx];
-                str += frame.toString() + "\n";
+            if (debugNativeObjects) {
+                StackTraceElement[] stack = instantiation.getStackTrace();
+
+                // skip ctor and acquireNativeHandle()
+                for (int frameIdx = 2; frameIdx < stack.length; ++frameIdx) {
+                    StackTraceElement frame = stack[frameIdx];
+                    str += frame.toString() + "\n";
+                }
             }
             return str;
         }
@@ -210,6 +215,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     /**
      * returns the native handle associated with this CRTResource.
+     * @return native address
      */
     public long getNativeHandle() {
         return nativeHandle;
@@ -237,6 +243,7 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Checks if this resource's native handle is NULL.  For always-null resources this is always true.  For all other
      * resources it means it has already been cleaned up or was not properly constructed.
+     * @return true if no native resource is bound, false otherwise
      */
     public boolean isNull() {
         return (nativeHandle == NULL);

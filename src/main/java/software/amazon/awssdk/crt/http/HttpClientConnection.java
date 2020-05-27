@@ -45,7 +45,7 @@ public class HttpClientConnection extends CrtResource {
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
-     * @throws CrtRuntimeException
+     * @throws CrtRuntimeException if stream creation fails
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
@@ -55,13 +55,11 @@ public class HttpClientConnection extends CrtResource {
         }
 
         HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-            request.getMethod(),
-            request.getEncodedPath(),
-            request.getHeadersAsArray(),
+            request.marshalForJni(),
             request.getBodyStream(),
-            streamHandler);
+            new HttpStreamResponseHandlerNativeAdapter(streamHandler));
         if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError(), "HttpStream   creation failed");
+            throw new CrtRuntimeException(awsLastError(), "HttpStream creation failed");
         }
 
         return stream;
@@ -84,14 +82,17 @@ public class HttpClientConnection extends CrtResource {
         }
     }
 
+    public void shutdown() {
+        httpClientConnectionShutdown(getNativeHandle());
+    }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
     private static native HttpStream httpClientConnectionMakeRequest(long connection,
-                                                                     String method,
-                                                                     String uri,
-                                                                     HttpHeader[] headers,
+                                                                     byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
-                                                                     HttpStreamResponseHandler responseHandler) throws CrtRuntimeException;
+                                                                     HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
+
+    private static native void httpClientConnectionShutdown(long connection) throws CrtRuntimeException;
 }

@@ -31,7 +31,6 @@ public interface HttpRequestBodyStream {
      * Do NOT keep a reference to this ByteBuffer past the lifetime of this function call. The CommonRuntime reserves
      * the right to use DirectByteBuffers pointing to memory that only lives as long as the function call.
      *
-     * @param stream The HttpStream for this Request/Response Pair
      * @param bodyBytesOut The Buffer to write the Request Body Bytes to.
      * @return True if Request body is complete, false otherwise.
      */

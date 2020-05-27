@@ -42,6 +42,21 @@ list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 # Local CMake scripts
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/lib")
+
+if (ANDROID)
+    set(ANDROID_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
+    set(LibCrypto_INCLUDE_DIR "${ANDROID_DEPS_DIR}/libcrypto/include" CACHE INTERNAL "")
+    set(LibCrypto_STATIC_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.a" CACHE INTERNAL "")
+    set(LibCrypto_SHARED_LIBRARY "${ANDROID_DEPS_DIR}/libcrypto/lib/libcrypto.so" CACHE INTERNAL "")
+
+    if (NOT EXISTS ${LibCrypto_INCLUDE_DIR}/openssl/crypto.h OR
+        NOT EXISTS ${LibCrypto_STATIC_LIBRARY})
+        message(FATAL_ERROR "Could not find libcrypto at ${CMAKE_BINARY_DIR}/deps/libcrypto")
+    endif()
+    set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/../../../lib")
+endif()
+
 if (BUILD_DEPS)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/aws-common-runtime/aws-c-common/cmake")
     include(AwsFindPackage)
@@ -60,6 +75,7 @@ if (BUILD_DEPS)
     add_subdirectory(aws-common-runtime/aws-c-mqtt)
 else()
     include(AwsFindPackage)
+    include(AwsCFlags)
     set(IN_SOURCE_BUILD OFF)
 endif()
 
@@ -116,7 +132,7 @@ file(GLOB CRT_JAVA_SRC
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
 message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
-set(TARGET_LIB_DIR "lib/${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
@@ -134,6 +150,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TARG
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TARGET_LIB_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TARGET_LIB_DIR})
 
+aws_set_common_properties(${PROJECT_NAME})
+
 set(CMAKE_C_FLAGS_DEBUGOPT "")
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 
@@ -144,11 +162,15 @@ else ()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
-# find JNI and add the include path
-set(JAVA_AWT_LIBRARY NotNeeded)
-set(JAVA_AWT_INCLUDE_PATH NotNeeded)
-find_package(JNI REQUIRED)
-include_directories(${JNI_INCLUDE_DIRS} "src/native")
+# find JNI and add the include path (except on android where gradle injects it)
+if (NOT ANDROID)
+    set(JAVA_AWT_LIBRARY NotNeeded)
+    set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+    find_package(JNI REQUIRED)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${JNI_INCLUDE_DIRS})
+endif()
+
+target_include_directories(${PROJECT_NAME} PRIVATE "src/native")
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")

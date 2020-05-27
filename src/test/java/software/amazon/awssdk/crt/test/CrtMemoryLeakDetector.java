@@ -18,7 +18,7 @@ import software.amazon.awssdk.crt.Log;
  * Checks that the CRT doesn't have any major memory leaks. Probably won't
  * detect very small leaks but will likely find obvious large ones.
  */
-public class CrtMemoryLeakDetector {
+public class CrtMemoryLeakDetector extends CrtTestFixture  {
     static {
         new CRT(); // force the CRT to load before doing anything
     };
@@ -131,8 +131,6 @@ public class CrtMemoryLeakDetector {
 
     private static void determineBaselineGrowth() {
 
-        System.out.println("SAMPLING JVM HEAP GROWTH");
-
         getJvmMemoryInUse(); // force a few GCs to get a good baseline
 
         List<Long> jvmSamples = new ArrayList<>();
@@ -168,14 +166,10 @@ public class CrtMemoryLeakDetector {
             }
         }
 
-        System.out.println("FINISHED SAMPLING");
-
         // Get the median deltas
         List<Long> jvmDeltas = getDeltas(jvmSamples);
         long medianJvmDelta = jvmDeltas.get(jvmDeltas.size() / 2);
         FIXED_EXECUTOR_GROWTH = (int) medianJvmDelta;
-        
-        System.out.println("FIXED_EXECUTOR_GROWTH=" + medianJvmDelta);
     }
 
     private static void runViaThreadPool(int numThreads) throws Exception {

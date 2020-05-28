@@ -173,7 +173,7 @@ public class AwsSigningConfig extends CrtResource {
     private Predicate<String> shouldSignParameter;
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
-    private int signedBodyValue = AwsSignedBodyValueType.EMPTY.getNativeValue();
+    private int signedBodyValue = AwsSignedBodyValueType.PAYLOAD.getNativeValue();
     private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
     private long expirationInSeconds = 0;
 

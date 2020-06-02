@@ -229,8 +229,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     struct aws_http_connection_monitoring_options monitoring_options;
     AWS_ZERO_STRUCT(monitoring_options);
-    if (jni_monitoring_throughput_threshold_in_bytes_per_second >= 0 && jni_monitoring_failure_interval_in_seconds >= 2) {
-        monitoring_options.minimum_throughput_bytes_per_second = jni_monitoring_throughput_threshold_in_bytes_per_second;
+    if (jni_monitoring_throughput_threshold_in_bytes_per_second >= 0 &&
+        jni_monitoring_failure_interval_in_seconds >= 2) {
+        monitoring_options.minimum_throughput_bytes_per_second =
+            jni_monitoring_throughput_threshold_in_bytes_per_second;
         monitoring_options.allowable_throughput_failure_interval_seconds = jni_monitoring_failure_interval_in_seconds;
 
         manager_options.monitoring_options = &monitoring_options;

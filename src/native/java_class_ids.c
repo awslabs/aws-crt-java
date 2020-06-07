@@ -69,9 +69,9 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         env, aws_signing_config_class, "credentials", "Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.credentials_field_id);
 
-    aws_signing_config_properties.should_sign_parameter_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignParameter", "Ljava/util/function/Predicate;");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.should_sign_parameter_field_id);
+    aws_signing_config_properties.should_sign_header_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignHeader", "Ljava/util/function/Predicate;");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.should_sign_header_field_id);
 
     aws_signing_config_properties.use_double_uri_encode_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "useDoubleUriEncode", "Z");
@@ -80,6 +80,10 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
     aws_signing_config_properties.should_normalize_uri_path_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
+
+    aws_signing_config_properties.omit_session_token_query_param_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "omitSessionTokenQueryParam", "Z");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_query_param_field_id);
 
     aws_signing_config_properties.signed_body_value_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");

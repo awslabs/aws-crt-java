@@ -144,7 +144,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
-                config.setShouldSignParameter(filterParam);
+                config.setShouldSignHeader(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
                 config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);

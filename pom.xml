@@ -60,6 +60,7 @@
             <properties>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.buildtype></cmake.buildtype>
+                <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
             </properties>
         </profile>

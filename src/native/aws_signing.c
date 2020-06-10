@@ -46,7 +46,7 @@ struct s_aws_sign_request_callback_data {
     JavaVM *jvm;
     jobject java_future;
     jobject java_original_request;
-    jobject java_sign_param_predicate;
+    jobject java_sign_header_predicate;
     struct aws_http_message *native_request;
     struct aws_signable *original_message_signable;
     struct aws_string *region;
@@ -61,8 +61,8 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     (*env)->DeleteGlobalRef(env, callback_data->java_future);
     (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
 
-    if (callback_data->java_sign_param_predicate) {
-        (*env)->DeleteGlobalRef(env, callback_data->java_sign_param_predicate);
+    if (callback_data->java_sign_header_predicate) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_sign_header_predicate);
     }
 
     if (callback_data->native_request) {
@@ -163,19 +163,17 @@ done:
     s_cleanup_callback_data(callback_data);
 }
 
-static bool s_should_sign_param(const struct aws_byte_cursor *name, void *user_data) {
-    (void)name;
-
+static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
     struct s_aws_sign_request_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jstring parameter_name = aws_jni_string_from_cursor(env, name);
+    jstring header_name = aws_jni_string_from_cursor(env, name);
 
     bool result = (*env)->CallBooleanMethod(
-        env, callback_data->java_sign_param_predicate, predicate_properties.test_method_id, (jobject)parameter_name);
+        env, callback_data->java_sign_header_predicate, predicate_properties.test_method_id, (jobject)header_name);
 
-    (*env)->DeleteLocalRef(env, parameter_name);
+    (*env)->DeleteLocalRef(env, header_name);
 
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
@@ -208,20 +206,23 @@ static int s_build_signing_config(
     int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, aws_signing_config_properties.time_field_id);
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);
 
-    jobject sign_param_predicate =
-        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.should_sign_parameter_field_id);
-    if (sign_param_predicate != NULL) {
-        callback_data->java_sign_param_predicate = (*env)->NewGlobalRef(env, sign_param_predicate);
-        AWS_FATAL_ASSERT(callback_data->java_sign_param_predicate != NULL);
+    jobject sign_header_predicate =
+        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.should_sign_header_field_id);
+    if (sign_header_predicate != NULL) {
+        callback_data->java_sign_header_predicate = (*env)->NewGlobalRef(env, sign_header_predicate);
+        AWS_FATAL_ASSERT(callback_data->java_sign_header_predicate != NULL);
 
-        config->should_sign_param = s_should_sign_param;
-        config->should_sign_param_ud = callback_data;
+        config->should_sign_header = s_should_sign_header;
+        config->should_sign_header_ud = callback_data;
     }
 
-    config->use_double_uri_encode =
+    config->flags.use_double_uri_encode =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
-    config->should_normalize_uri_path =
+    config->flags.should_normalize_uri_path =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
+    config->flags.omit_session_token =
+        (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
+
     config->signed_body_value =
         (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
     config->signed_body_header =
@@ -238,13 +239,6 @@ static int s_build_signing_config(
     if (credentials != NULL) {
         callback_data->credentials = aws_credentials_new_from_java_credentials(env, credentials);
         config->credentials = callback_data->credentials;
-    }
-
-    jobject ecc_key_pair =
-        (*env)->GetObjectField(env, java_config, aws_signing_config_properties.ecc_key_pair_field_id);
-    if (ecc_key_pair != NULL) {
-        config->ecc_signing_key =
-            (void *)(*env)->CallLongMethod(env, ecc_key_pair, crt_resource_properties.get_native_handle_method_id);
     }
 
     config->expiration_in_seconds =

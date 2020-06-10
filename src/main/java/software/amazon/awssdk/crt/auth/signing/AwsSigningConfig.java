@@ -173,11 +173,11 @@ public class AwsSigningConfig extends CrtResource {
     private long time = System.currentTimeMillis();
     private CredentialsProvider credentialsProvider;
     private Credentials credentials;
-    private EccKeyPair eccKeyPair;
-    private Predicate<String> shouldSignParameter;
+    private Predicate<String> shouldSignHeader;
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
-    private int signedBodyValue = AwsSignedBodyValueType.EMPTY.getNativeValue();
+    private boolean omitSessionToken = false;
+    private int signedBodyValue = AwsSignedBodyValueType.PAYLOAD.getNativeValue();
     private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
     private long expirationInSeconds = 0;
 
@@ -193,10 +193,10 @@ public class AwsSigningConfig extends CrtResource {
             clone.setTime(getTime());
             clone.setCredentialsProvider(getCredentialsProvider());
             clone.setCredentials(getCredentials());
-            clone.setEccKeyPair(getEccKeyPair());
-            clone.setShouldSignParameter(getShouldSignParameter());
+            clone.setShouldSignHeader(getShouldSignHeader());
             clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
             clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
+            clone.setOmitSessionToken(getOmitSessionToken());
             clone.setSignedBodyValue(getSignedBodyValue());
             clone.setSignedBodyHeader(getSignedBodyHeader());
             clone.setExpirationInSeconds(getExpirationInSeconds());
@@ -250,20 +250,17 @@ public class AwsSigningConfig extends CrtResource {
     public void setCredentials(Credentials credentials) { this.credentials = credentials; }
     public Credentials getCredentials() { return credentials; }
 
-    public void setEccKeyPair(EccKeyPair keyPair) {
-        swapReferenceTo(this.eccKeyPair, keyPair);
-        this.eccKeyPair = keyPair;
-    }
-    public EccKeyPair getEccKeyPair() { return eccKeyPair; }
-
-    public void setShouldSignParameter(Predicate<String> shouldSignParameter) { this.shouldSignParameter = shouldSignParameter; }
-    public Predicate<String> getShouldSignParameter() { return shouldSignParameter; }
+    public void setShouldSignHeader(Predicate<String> shouldSignHeader) { this.shouldSignHeader = shouldSignHeader; }
+    public Predicate<String> getShouldSignHeader() { return shouldSignHeader; }
 
     public void setUseDoubleUriEncode(boolean useDoubleUriEncode) { this.useDoubleUriEncode = useDoubleUriEncode; }
     public boolean getUseDoubleUriEncode() { return useDoubleUriEncode; }
 
     public void setShouldNormalizeUriPath(boolean shouldNormalizeUriPath) { this.shouldNormalizeUriPath = shouldNormalizeUriPath; }
     public boolean getShouldNormalizeUriPath() { return shouldNormalizeUriPath; }
+
+    public void setOmitSessionToken(boolean omitSessionToken) { this.omitSessionToken = omitSessionToken; }
+    public boolean getOmitSessionToken() { return omitSessionToken; }
 
     public void setSignedBodyValue(AwsSignedBodyValueType signedBodyValue) { this.signedBodyValue = signedBodyValue.getNativeValue(); }
     public AwsSignedBodyValueType getSignedBodyValue() { return AwsSignedBodyValueType.getEnumValueFromInteger(signedBodyValue); }

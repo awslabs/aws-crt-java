@@ -155,7 +155,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
-                config.setShouldSignParameter(filterParam);
+                config.setShouldSignHeader(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
                 config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
@@ -262,42 +262,6 @@ public class SigningTest extends CrtTestFixture {
 
             // expected authorization prefix
             assertTrue(hasHeaderWithValuePrefix(signedRequest, "Authorization", "AWS4-ECDSA-P256-SHA256 Credential=AKIDEXAMPLE/20150830/service/aws4_request, SignedHeaders=host;x-amz-date;x-amz-region-set, Signature="));
-        }
-
-        CrtResource.waitForNoResources();
-    }
-
-    @Test
-    public void testSigv4aQuery() throws Exception {
-        HttpRequest request = createSigv4TestSuiteRequest();
-        Credentials credentials = new Credentials(TEST_ACCESS_KEY_ID, TEST_SECRET_ACCESS_KEY, null);
-
-        try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials, EccKeyPair.AwsEccCurve.AWS_ECDSA_P256);
-             AwsSigningConfig config = new AwsSigningConfig()) {
-            config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-            config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
-            config.setRegion("us-east-1");
-            config.setService("service");
-            config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
-            config.setCredentials(credentials);
-            config.setEccKeyPair(keyPair);
-            config.setUseDoubleUriEncode(true);
-            config.setShouldNormalizeUriPath(true);
-            config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
-            config.setExpirationInSeconds(60);
-
-            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
-            HttpRequest signedRequest = result.get();
-            assertNotNull(signedRequest);
-
-            String path = signedRequest.getEncodedPath();
-
-            assertTrue(path.contains("X-Amz-Signature="));
-            assertTrue(path.contains("X-Amz-SignedHeaders=host"));
-            assertTrue(path.contains("X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fservice%2Faws4_request"));
-            assertTrue(path.contains("X-Amz-Algorithm=AWS4-ECDSA-P256-SHA256"));
-            assertTrue(path.contains("X-Amz-Expires=60"));
-            assertTrue(path.contains("X-Amz-Region-Set=us-east-1"));
         }
 
         CrtResource.waitForNoResources();

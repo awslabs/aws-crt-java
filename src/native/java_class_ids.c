@@ -81,9 +81,9 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
 
-    aws_signing_config_properties.omit_session_token_query_param_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "omitSessionTokenQueryParam", "Z");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_query_param_field_id);
+    aws_signing_config_properties.omit_session_token_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "omitSessionToken", "Z");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_field_id);
 
     aws_signing_config_properties.signed_body_value_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");

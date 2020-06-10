@@ -219,8 +219,8 @@ static int s_build_signing_config(
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.use_double_uri_encode_field_id);
     config->flags.should_normalize_uri_path =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.should_normalize_uri_path_field_id);
-    config->flags.omit_session_token_query_param =
-        (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_query_param_field_id);
+    config->flags.omit_session_token =
+        (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
 
     config->signed_body_value =
         (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);

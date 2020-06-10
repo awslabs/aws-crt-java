@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.amazon.awssdk.crt</groupId>
@@ -34,6 +34,7 @@
     <properties>
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
+        <cmake.buildconfig>${cmake.buildtype}</cmake.buildconfig>
         <cmake.binaries>target/cmake-build</cmake.binaries>
         <cmake.libcrypto_include>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_include>
         <cmake.libcrypto_shared>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_shared>
@@ -59,6 +60,7 @@
             <properties>
                 <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.buildtype></cmake.buildtype>
+                <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
             </properties>
         </profile>
@@ -182,6 +184,8 @@
                                     <arguments>
                                         <argument>--build</argument>
                                         <argument>.</argument>
+                                        <argument>--config</argument>
+                                        <argument>${cmake.buildconfig}</argument>
                                         <argument>--target</argument>
                                         <argument>${cmake.target}</argument>
                                     </arguments>

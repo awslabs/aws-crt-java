@@ -37,6 +37,8 @@ public class HttpClientConnectionManagerOptions {
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
     private boolean manualWindowManagement = false;
+    private HttpMonitoringOptions monitoringOptions;
+    private long maxConnectionIdleInMilliseconds = 0;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -203,5 +205,36 @@ public class HttpClientConnectionManagerOptions {
         this.manualWindowManagement = manualWindowManagement;
         return this;
     }
+
+    /**
+     * Sets maximum amount of time, in milliseconds, that the connection can be idle in the manager before
+     * getting culled by the manager
+     * @param maxConnectionIdleInMilliseconds How long to allow connections to be idle before reaping them
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withMaxConnectionIdleInMilliseconds(long maxConnectionIdleInMilliseconds) {
+        this.maxConnectionIdleInMilliseconds = maxConnectionIdleInMilliseconds;
+        return this;
+    }
+
+    /**
+     * @return How long to allow connections to be idle before reaping them
+     */
+    public long getMaxConnectionIdleInMilliseconds() { return maxConnectionIdleInMilliseconds; }
+
+    /**
+     * Sets the monitoring options for connections in the connection pool
+     * @param monitoringOptions Monitoring options for this connection manager, or null to disable monitoring
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withMonitoringOptions(HttpMonitoringOptions monitoringOptions) {
+        this.monitoringOptions = monitoringOptions;
+        return this;
+    }
+
+    /**
+     * @return the monitoring options for connections in the connection pool
+     */
+    public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
 }
 

@@ -145,17 +145,13 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         for (CompletableFuture f : requestCompleteFutures) {
             f.join();
         }
-        
+
         final int requiredSuccesses = (int) Math.floor(numRequests * 0.95);
         final int allowedFailures = numRequests - requiredSuccesses;
 
         // Verify we got some Http Status Code for each Request
         Assert.assertTrue(reqIdToStatus.size() >= requiredSuccesses);
-
-        // Verify Status code is Http 200 for each Request
-        for (Integer status : reqIdToStatus.values()) {
-            Assert.assertEquals(EXPECTED_HTTP_STATUS, status.intValue());
-        }
+        // Verify that the failure counts aren't too high
         Assert.assertTrue(numErrorCode.get() <= allowedFailures);
         Assert.assertTrue(numConnectionFailures.get() <= allowedFailures);
     }

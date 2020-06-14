@@ -257,7 +257,8 @@ struct aws_credentials_provider_get_credentials_callback_data {
     jobject java_credentials_future;
 };
 
-static void s_on_get_credentials_callback(struct aws_credentials *credentials, void *user_data) {
+static void s_on_get_credentials_callback(struct aws_credentials *credentials, int error_code, void *user_data) {
+    (void)error_code;
     struct aws_credentials_provider_get_credentials_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
@@ -271,15 +272,14 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, v
         java_credentials = (*env)->NewObject(
             env, credentials_properties.credentials_class, credentials_properties.constructor_method_id);
         if (java_credentials != NULL) {
-            struct aws_byte_cursor access_key_id_cursor = aws_byte_cursor_from_string(credentials->access_key_id);
+            struct aws_byte_cursor access_key_id_cursor = aws_credentials_get_access_key_id(credentials);
             access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
 
-            struct aws_byte_cursor secret_access_key_cursor =
-                aws_byte_cursor_from_string(credentials->secret_access_key);
+            struct aws_byte_cursor secret_access_key_cursor = aws_credentials_get_secret_access_key(credentials);
             secret_access_key = aws_jni_byte_array_from_cursor(env, &secret_access_key_cursor);
 
-            if (credentials->session_token != NULL) {
-                struct aws_byte_cursor session_token_cursor = aws_byte_cursor_from_string(credentials->session_token);
+            struct aws_byte_cursor session_token_cursor = aws_credentials_get_session_token(credentials);
+            if (session_token_cursor.len > 0) {
                 session_token = aws_jni_byte_array_from_cursor(env, &session_token_cursor);
             }
 

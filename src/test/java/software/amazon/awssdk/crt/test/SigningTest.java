@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigner;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
@@ -38,8 +39,11 @@ import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 public class SigningTest extends CrtTestFixture {
 
-    public static String METHOD = "POST";
-    public static SimpleDateFormat DATE_FORMAT = dateFormat();
+    private static String METHOD = "POST";
+    private static byte[] TEST_ACCESS_KEY_ID = "AKIDEXAMPLE".getBytes();
+    private static byte[] TEST_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes();
+
+    private static SimpleDateFormat DATE_FORMAT = dateFormat();
 
     private static SimpleDateFormat dateFormat() {
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -122,12 +126,11 @@ public class SigningTest extends CrtTestFixture {
         return false;
     }
 
-
     @Test
     public void testSigningSuccess() throws Exception {
         try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
-            .withAccessKeyId("AKIDEXAMPLE".getBytes())
-            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .withAccessKeyId(TEST_ACCESS_KEY_ID)
+            .withSecretAccessKey(TEST_SECRET_ACCESS_KEY)
             .build();) {
 
             HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
@@ -135,15 +138,16 @@ public class SigningTest extends CrtTestFixture {
             Predicate<String> filterParam = param -> !param.equals("bad-param");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
-                config.setShouldSignParameter(filterParam);
+                config.setShouldSignHeader(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -158,21 +162,23 @@ public class SigningTest extends CrtTestFixture {
     @Test
     public void testQuerySigningSuccess() throws Exception {
         try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
-            .withAccessKeyId("AKIDEXAMPLE".getBytes())
-            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .withAccessKeyId(TEST_ACCESS_KEY_ID)
+            .withSecretAccessKey(TEST_SECRET_ACCESS_KEY)
             .build();) {
 
             HttpRequest request = createSigv4TestSuiteRequest();
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_QUERY_PARAM);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
+                config.setExpirationInSeconds(60);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -184,6 +190,7 @@ public class SigningTest extends CrtTestFixture {
                 assertTrue(path.contains("X-Amz-SignedHeaders=host"));
                 assertTrue(path.contains("X-Amz-Credential=AKIDEXAMPLE%2F20150830%2F"));
                 assertTrue(path.contains("X-Amz-Algorithm=AWS4-HMAC-SHA256"));
+                assertTrue(path.contains("X-Amz-Expires=60"));
             }
         }
     }
@@ -191,23 +198,22 @@ public class SigningTest extends CrtTestFixture {
     @Test
     public void testSigningBasicSigv4Test() throws Exception {
         try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
-            .withAccessKeyId("AKIDEXAMPLE".getBytes())
-            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .withAccessKeyId(TEST_ACCESS_KEY_ID)
+            .withSecretAccessKey(TEST_SECRET_ACCESS_KEY)
             .build();) {
 
             HttpRequest request = createSigv4TestSuiteRequest();
 
-            Predicate<String> filterParam = param -> !param.equals("bad-param");
-
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -224,22 +230,23 @@ public class SigningTest extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void testSigningFailureBadRequest() throws Exception {
         try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
-            .withAccessKeyId("AKIDEXAMPLE".getBytes())
-            .withSecretAccessKey("wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY".getBytes())
+            .withAccessKeyId(TEST_ACCESS_KEY_ID)
+            .withSecretAccessKey(TEST_SECRET_ACCESS_KEY)
             .build();) {
 
             // request is missing Host header
             HttpRequest request = createUnsignableRequest("POST", "/bad");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
-                config.setSigningAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_HEADER);
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
                 config.setRegion("us-east-1");
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignBody(AwsSigningConfig.AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 result.get();
@@ -253,6 +260,4 @@ public class SigningTest extends CrtTestFixture {
             throw crt;
         }
     }
-
-
 };

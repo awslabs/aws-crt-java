@@ -40,8 +40,12 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
     aws_signing_config_properties.aws_signing_config_class = (*env)->NewGlobalRef(env, aws_signing_config_class);
 
     aws_signing_config_properties.algorithm_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signingAlgorithm", "I");
+        (*env)->GetFieldID(env, aws_signing_config_class, "algorithm", "I");
     AWS_FATAL_ASSERT(aws_signing_config_properties.algorithm_field_id);
+
+    aws_signing_config_properties.signature_type_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signatureType", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signature_type_field_id);
 
     aws_signing_config_properties.region_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "region", "Ljava/lang/String;");
@@ -61,9 +65,13 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         "Lsoftware/amazon/awssdk/crt/auth/credentials/CredentialsProvider;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.credentials_provider_field_id);
 
-    aws_signing_config_properties.should_sign_parameter_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignParameter", "Ljava/util/function/Predicate;");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.should_sign_parameter_field_id);
+    aws_signing_config_properties.credentials_field_id = (*env)->GetFieldID(
+        env, aws_signing_config_class, "credentials", "Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.credentials_field_id);
+
+    aws_signing_config_properties.should_sign_header_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "shouldSignHeader", "Ljava/util/function/Predicate;");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.should_sign_header_field_id);
 
     aws_signing_config_properties.use_double_uri_encode_field_id =
         (*env)->GetFieldID(env, aws_signing_config_class, "useDoubleUriEncode", "Z");
@@ -73,9 +81,21 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
         (*env)->GetFieldID(env, aws_signing_config_class, "shouldNormalizeUriPath", "Z");
     AWS_FATAL_ASSERT(aws_signing_config_properties.should_normalize_uri_path_field_id);
 
-    aws_signing_config_properties.sign_body_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signBody", "I");
-    AWS_FATAL_ASSERT(aws_signing_config_properties.sign_body_field_id);
+    aws_signing_config_properties.omit_session_token_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "omitSessionToken", "Z");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_field_id);
+
+    aws_signing_config_properties.signed_body_value_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_value_field_id);
+
+    aws_signing_config_properties.signed_body_header_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyHeader", "I");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_header_field_id);
+
+    aws_signing_config_properties.expiration_in_seconds_field_id =
+        (*env)->GetFieldID(env, aws_signing_config_class, "expirationInSeconds", "J");
+    AWS_FATAL_ASSERT(aws_signing_config_properties.expiration_in_seconds_field_id);
 }
 
 struct java_predicate_properties predicate_properties;

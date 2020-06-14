@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.HashMap;
 import java.util.Map;
 
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.CrtResource;
 
@@ -27,8 +28,7 @@ import software.amazon.awssdk.crt.CrtResource;
 public class AwsSigningConfig extends CrtResource {
 
     public enum AwsSigningAlgorithm {
-        SIGV4_HEADER(0),
-        SIGV4_QUERY_PARAM(1);
+        SIGV4(0);
 
         AwsSigningAlgorithm(int nativeValue) {
             this.nativeValue = nativeValue;
@@ -47,8 +47,7 @@ public class AwsSigningConfig extends CrtResource {
 
         private static Map<Integer, AwsSigningAlgorithm> buildEnumMapping() {
             Map<Integer, AwsSigningAlgorithm> enumMapping = new HashMap<Integer, AwsSigningAlgorithm>();
-            enumMapping.put(SIGV4_HEADER.getNativeValue(), SIGV4_HEADER);
-            enumMapping.put(SIGV4_QUERY_PARAM.getNativeValue(), SIGV4_QUERY_PARAM);
+            enumMapping.put(SIGV4.getNativeValue(), SIGV4);
 
             return enumMapping;
         }
@@ -58,64 +57,146 @@ public class AwsSigningConfig extends CrtResource {
         private static Map<Integer, AwsSigningAlgorithm> enumMapping = buildEnumMapping();
     }
 
-    public enum AwsBodySigningConfigType {
-        AWS_BODY_SIGNING_OFF(0),
-        AWS_BODY_SIGNING_ON(1),
-        AWS_BODY_SIGNING_UNSIGNED_PAYLOAD(2);
+    public enum AwsSignatureType {
+        HTTP_REQUEST_VIA_HEADERS(0),
+        HTTP_REQUEST_VIA_QUERY_PARAMS(1),
+        HTTP_REQUEST_CHUNK(2),
+        HTTP_REQUEST_EVENT(3);
 
-        AwsBodySigningConfigType(int nativeValue) {
+        AwsSignatureType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
         public int getNativeValue() { return nativeValue; }
 
-        public static AwsBodySigningConfigType getEnumValueFromInteger(int value) {
-            AwsBodySigningConfigType enumValue = enumMapping.get(value);
+        public static AwsSignatureType getEnumValueFromInteger(int value) {
+            AwsSignatureType enumValue = enumMapping.get(value);
             if (enumValue != null) {
                 return enumValue;
             }
 
-            throw new RuntimeException("Illegal body signing config type value in signing configuration");
+            throw new RuntimeException("Illegal signature type value in signing configuration");
         }
 
-        private static Map<Integer, AwsBodySigningConfigType> buildEnumMapping() {
-            Map<Integer, AwsBodySigningConfigType> enumMapping = new HashMap<Integer, AwsBodySigningConfigType>();
-            enumMapping.put(AWS_BODY_SIGNING_OFF.getNativeValue(), AWS_BODY_SIGNING_OFF);
-            enumMapping.put(AWS_BODY_SIGNING_ON.getNativeValue(), AWS_BODY_SIGNING_ON);
-            enumMapping.put(AWS_BODY_SIGNING_UNSIGNED_PAYLOAD.getNativeValue(), AWS_BODY_SIGNING_UNSIGNED_PAYLOAD);
+        private static Map<Integer, AwsSignatureType> buildEnumMapping() {
+            Map<Integer, AwsSignatureType> enumMapping = new HashMap<Integer, AwsSignatureType>();
+            enumMapping.put(HTTP_REQUEST_VIA_HEADERS.getNativeValue(), HTTP_REQUEST_VIA_HEADERS);
+            enumMapping.put(HTTP_REQUEST_VIA_QUERY_PARAMS.getNativeValue(), HTTP_REQUEST_VIA_QUERY_PARAMS);
+            enumMapping.put(HTTP_REQUEST_CHUNK.getNativeValue(), HTTP_REQUEST_CHUNK);
+            enumMapping.put(HTTP_REQUEST_EVENT.getNativeValue(), HTTP_REQUEST_EVENT);
 
             return enumMapping;
         }
 
         private int nativeValue;
 
-        private static Map<Integer, AwsBodySigningConfigType> enumMapping = buildEnumMapping();
+        private static Map<Integer, AwsSignatureType> enumMapping = buildEnumMapping();
     }
 
-    private int signingAlgorithm = AwsSigningAlgorithm.SIGV4_HEADER.getNativeValue();
+    public enum AwsSignedBodyValueType {
+        EMPTY(0),
+        PAYLOAD(1),
+        UNSIGNED_PAYLOAD(2),
+        STREAMING_AWS4_HMAC_SHA256_PAYLOAD(3),
+        STREAMING_AWS4_HMAC_SHA256_EVENTS(4);
+
+        AwsSignedBodyValueType(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public int getNativeValue() { return nativeValue; }
+
+        public static AwsSignedBodyValueType getEnumValueFromInteger(int value) {
+            AwsSignedBodyValueType enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal signed body value type value in signing configuration");
+        }
+
+        private static Map<Integer, AwsSignedBodyValueType> buildEnumMapping() {
+            Map<Integer, AwsSignedBodyValueType> enumMapping = new HashMap<Integer, AwsSignedBodyValueType>();
+            enumMapping.put(EMPTY.getNativeValue(), EMPTY);
+            enumMapping.put(PAYLOAD.getNativeValue(), PAYLOAD);
+            enumMapping.put(UNSIGNED_PAYLOAD.getNativeValue(), UNSIGNED_PAYLOAD);
+            enumMapping.put(STREAMING_AWS4_HMAC_SHA256_PAYLOAD.getNativeValue(), STREAMING_AWS4_HMAC_SHA256_PAYLOAD);
+            enumMapping.put(STREAMING_AWS4_HMAC_SHA256_EVENTS.getNativeValue(), STREAMING_AWS4_HMAC_SHA256_EVENTS);
+
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsSignedBodyValueType> enumMapping = buildEnumMapping();
+    }
+
+    public enum AwsSignedBodyHeaderType {
+        NONE(0),
+        X_AMZ_CONTENT_SHA256(1);
+
+        AwsSignedBodyHeaderType(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public int getNativeValue() { return nativeValue; }
+
+        public static AwsSignedBodyHeaderType getEnumValueFromInteger(int value) {
+            AwsSignedBodyHeaderType enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal signed body header value in signing configuration");
+        }
+
+        private static Map<Integer, AwsSignedBodyHeaderType> buildEnumMapping() {
+            Map<Integer, AwsSignedBodyHeaderType> enumMapping = new HashMap<Integer, AwsSignedBodyHeaderType>();
+            enumMapping.put(NONE.getNativeValue(), NONE);
+            enumMapping.put(X_AMZ_CONTENT_SHA256.getNativeValue(), X_AMZ_CONTENT_SHA256);
+
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, AwsSignedBodyHeaderType> enumMapping = buildEnumMapping();
+    }
+
+    private int algorithm = AwsSigningAlgorithm.SIGV4.getNativeValue();
+    private int signatureType = AwsSignatureType.HTTP_REQUEST_VIA_HEADERS.getNativeValue();
     private String region;
     private String service;
     private long time = System.currentTimeMillis();
     private CredentialsProvider credentialsProvider;
-    private Predicate<String> shouldSignParameter;
+    private Credentials credentials;
+    private Predicate<String> shouldSignHeader;
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
-    private int signBody = AwsBodySigningConfigType.AWS_BODY_SIGNING_OFF.getNativeValue();
+    private boolean omitSessionToken = false;
+    private int signedBodyValue = AwsSignedBodyValueType.PAYLOAD.getNativeValue();
+    private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
+    private long expirationInSeconds = 0;
 
     public AwsSigningConfig() {}
 
     public AwsSigningConfig clone() {
         try (AwsSigningConfig clone = new AwsSigningConfig()) {
 
-            clone.setSigningAlgorithm(getSigningAlgorithm());
+            clone.setAlgorithm(getAlgorithm());
+            clone.setSignatureType(getSignatureType());
             clone.setRegion(getRegion());
             clone.setService(getService());
             clone.setTime(getTime());
             clone.setCredentialsProvider(getCredentialsProvider());
-            clone.setShouldSignParameter(getShouldSignParameter());
+            clone.setCredentials(getCredentials());
+            clone.setShouldSignHeader(getShouldSignHeader());
             clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
             clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
-            clone.setSignBody(getSignBody());
+            clone.setOmitSessionToken(getOmitSessionToken());
+            clone.setSignedBodyValue(getSignedBodyValue());
+            clone.setSignedBodyHeader(getSignedBodyHeader());
+            clone.setExpirationInSeconds(getExpirationInSeconds());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();
@@ -137,9 +218,14 @@ public class AwsSigningConfig extends CrtResource {
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
 
-    public void setSigningAlgorithm(AwsSigningAlgorithm algorithm) { this.signingAlgorithm = algorithm.getNativeValue(); }
-    public AwsSigningAlgorithm getSigningAlgorithm() {
-        return AwsSigningAlgorithm.getEnumValueFromInteger(signingAlgorithm);
+    public void setAlgorithm(AwsSigningAlgorithm algorithm) { this.algorithm = algorithm.getNativeValue(); }
+    public AwsSigningAlgorithm getAlgorithm() {
+        return AwsSigningAlgorithm.getEnumValueFromInteger(algorithm);
+    }
+
+    public void setSignatureType(AwsSignatureType signatureType) { this.signatureType = signatureType.getNativeValue(); }
+    public AwsSignatureType getSignatureType() {
+        return AwsSignatureType.getEnumValueFromInteger(signatureType);
     }
 
     public void setRegion(String region) { this.region = region; }
@@ -158,8 +244,11 @@ public class AwsSigningConfig extends CrtResource {
 
     public CredentialsProvider getCredentialsProvider() { return credentialsProvider; }
 
-    public void setShouldSignParameter(Predicate<String> shouldSignParameter) { this.shouldSignParameter = shouldSignParameter; }
-    public Predicate<String> getShouldSignParameter() { return shouldSignParameter; }
+    public void setCredentials(Credentials credentials) { this.credentials = credentials; }
+    public Credentials getCredentials() { return credentials; }
+
+    public void setShouldSignHeader(Predicate<String> shouldSignHeader) { this.shouldSignHeader = shouldSignHeader; }
+    public Predicate<String> getShouldSignHeader() { return shouldSignHeader; }
 
     public void setUseDoubleUriEncode(boolean useDoubleUriEncode) { this.useDoubleUriEncode = useDoubleUriEncode; }
     public boolean getUseDoubleUriEncode() { return useDoubleUriEncode; }
@@ -167,8 +256,17 @@ public class AwsSigningConfig extends CrtResource {
     public void setShouldNormalizeUriPath(boolean shouldNormalizeUriPath) { this.shouldNormalizeUriPath = shouldNormalizeUriPath; }
     public boolean getShouldNormalizeUriPath() { return shouldNormalizeUriPath; }
 
-    public void setSignBody(AwsBodySigningConfigType signBody) { this.signBody = signBody.getNativeValue(); }
-    public AwsBodySigningConfigType getSignBody() { return AwsBodySigningConfigType.getEnumValueFromInteger(signBody); }
+    public void setOmitSessionToken(boolean omitSessionToken) { this.omitSessionToken = omitSessionToken; }
+    public boolean getOmitSessionToken() { return omitSessionToken; }
+
+    public void setSignedBodyValue(AwsSignedBodyValueType signedBodyValue) { this.signedBodyValue = signedBodyValue.getNativeValue(); }
+    public AwsSignedBodyValueType getSignedBodyValue() { return AwsSignedBodyValueType.getEnumValueFromInteger(signedBodyValue); }
+
+    public void setSignedBodyHeader(AwsSignedBodyHeaderType signedBodyHeader) { this.signedBodyHeader = signedBodyHeader.getNativeValue(); }
+    public AwsSignedBodyHeaderType getSignedBodyHeader() { return AwsSignedBodyHeaderType.getEnumValueFromInteger(signedBodyHeader); }
+
+    public void setExpirationInSeconds(long expirationInSeconds) { this.expirationInSeconds = expirationInSeconds; }
+    public long getExpirationInSeconds() { return expirationInSeconds; }
 }
 
 

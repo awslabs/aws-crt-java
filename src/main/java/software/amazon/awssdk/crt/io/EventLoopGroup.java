@@ -15,6 +15,7 @@
 package software.amazon.awssdk.crt.io;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
@@ -35,6 +36,22 @@ public final class EventLoopGroup extends CrtResource {
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
         acquireNativeHandle(eventLoopGroupNew(numThreads));
+    }
+
+    private class FunctionWrapper {
+        Function<byte[], byte[]> function;
+
+        public FunctionWrapper(Function<byte[], byte[]> function) {
+            this.function = function;
+        }
+
+        public byte[] deliver(byte[] arg) {
+            return function.apply(arg);
+        }
+    }
+
+    public void scheduleTask(Function<byte[], byte[]> function) {
+        eventLoopGroupScheduleTask(getNativeHandle(), new FunctionWrapper(function));
     }
 
     /**
@@ -73,4 +90,5 @@ public final class EventLoopGroup extends CrtResource {
      ******************************************************************************/
     private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
     private static native void eventLoopGroupDestroy(EventLoopGroup thisObj, long elg);
+    private static native void eventLoopGroupScheduleTask(long elg, FunctionWrapper functionWrapper);
 };

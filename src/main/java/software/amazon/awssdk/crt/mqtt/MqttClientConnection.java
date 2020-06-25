@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
-public class MqttClientConnection extends CrtResource implements MqttClientConnectionI {
+public class MqttClientConnection extends CrtResource implements MqttPubSubInterface {
 
     private MqttConnectionConfig config;
 
@@ -229,13 +229,7 @@ public class MqttClientConnection extends CrtResource implements MqttClientConne
     }
 
     /**
-     * Subscribes to a topic without a handler (messages will only be delivered to
-     * the OnMessage handler)
-     *
-     * @param topic The topic to subscribe to
-     * @param qos   {@link QualityOfService} for this subscription
-     * @return Future result is the packet/message id associated with the subscribe
-     *         operation
+     * {@inheritDoc}
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos) {
         return subscribe(topic, qos, null);

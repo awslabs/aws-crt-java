@@ -8,7 +8,7 @@ package software.amazon.awssdk.crt.mqtt;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public interface MqttClientConnectionI {
+public interface MqttPubSubInterface {
     /**
      * Subscribes to a topic
      *
@@ -20,6 +20,17 @@ public interface MqttClientConnectionI {
      *         operation
      */
     CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler);
+
+    /**
+     * Subscribes to a topic without a handler (messages will only be delivered to
+     * the OnMessage handler)
+     *
+     * @param topic The topic to subscribe to
+     * @param qos   {@link QualityOfService} for this subscription
+     * @return Future result is the packet/message id associated with the subscribe
+     *         operation
+     */
+    CompletableFuture<Integer> subscribe(String topic, QualityOfService qos);
 
     /**
      * Publishes a message to a topic

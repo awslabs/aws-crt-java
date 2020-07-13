@@ -23,7 +23,8 @@ import java.util.function.Consumer;
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
-public class MqttClientConnection extends CrtResource implements MqttPubSubInterface {
+public class MqttClientConnection extends CrtResource implements MqttPublishInterface, MqttSubscribeHandlerInterface,
+        MqttSubscribeInterface {
 
     private MqttConnectionConfig config;
 

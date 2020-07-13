@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <aws/auth/credentials.h>
+#include <aws/common/clock.h>
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
 #include <aws/io/tls_channel_handler.h>
@@ -218,6 +219,51 @@ JNIEXPORT jlong JNICALL
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
     aws_tls_connection_options_clean_up(&tls_connection_options);
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_CachedCredentialsProvider_cachedCredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jint cached_duration_in_seconds,
+        jlong native_cached_provider) {
+
+    (void)jni_class;
+
+    if (native_cached_provider == 0) {
+        aws_jni_throw_runtime_exception(
+            env, "CachedCredentialsProviderials.cachedCredentialsProviderNew: cached provider is null");
+        return 0;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+
+    struct aws_credentials_provider_shutdown_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_shutdown_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_credentials_provider_cached_options options;
+    AWS_ZERO_STRUCT(options);
+    options.refresh_time_in_milliseconds =
+        aws_timestamp_convert(cached_duration_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MILLIS, NULL);
+    options.source = (struct aws_credentials_provider *)native_cached_provider;
+
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_cached(allocator, &options);
+    if (provider == NULL) {
+        aws_mem_release(allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
+    } else {
+        callback_data->provider = provider;
+    }
 
     return (jlong)provider;
 }

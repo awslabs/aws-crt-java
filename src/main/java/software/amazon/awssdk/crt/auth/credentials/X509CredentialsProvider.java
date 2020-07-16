@@ -6,7 +6,6 @@ package software.amazon.awssdk.crt.auth.credentials;
 
 import java.lang.IllegalArgumentException;
 import java.nio.charset.Charset;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;

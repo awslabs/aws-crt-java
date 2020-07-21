@@ -6,6 +6,10 @@ Java Bindings for the AWS Common Runtime
 
 This library is licensed under the Apache 2.0 License.
 
+## OSX-Only TLS Behavior
+
+Please note that on OSX, once a private key is used with a certificate, that certificate-key pair is imported into the OSX Keychain.  All subsequent uses of that certificate will use the stored private key and ignore anything passed in programatically.
+
 ## Building
 
 ### Linux/Unix

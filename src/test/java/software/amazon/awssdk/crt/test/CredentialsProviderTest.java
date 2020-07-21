@@ -14,6 +14,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -101,4 +102,28 @@ public class CredentialsProviderTest extends CrtTestFixture  {
         }
     }
 
+    @Test
+    public void testCacheStatic() {
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
+        builder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
+        builder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
+        builder.withSessionToken(SESSION_TOKEN.getBytes());
+
+        try (StaticCredentialsProvider provider = builder.build()) {
+
+            CachedCredentialsProvider.CachedCredentialsProviderBuilder cachedBuilder = new CachedCredentialsProvider.CachedCredentialsProviderBuilder();
+            cachedBuilder.withCachingDurationInSeconds(900);
+            cachedBuilder.withCachedProvider(provider);
+
+            try (CredentialsProvider cachedProvider = cachedBuilder.build()) {
+                CompletableFuture<Credentials> future = cachedProvider.getCredentials();
+                Credentials credentials = future.get();
+                assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+                assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+                assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
 };

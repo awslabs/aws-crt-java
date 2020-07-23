@@ -237,6 +237,11 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     }
 
     g_memory_tracing = jni_memtrace;
+
+    /*
+     * Increase the maximum channel message size in order to improve throughput on large payloads.
+     * Consider adding a system property override in the future.
+     */
     g_aws_channel_max_fragment_size = KB_256;
 
     /* check to see if we have support for backtraces only if we need to */

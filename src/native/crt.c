@@ -12,6 +12,7 @@
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
+#include <aws/io/channel.h>
 #include <aws/io/io.h>
 #include <aws/io/logging.h>
 #include <aws/io/tls_channel_handler.h>
@@ -217,6 +218,8 @@ static void s_jni_atexit(void) {
     }
 }
 
+#define KB_256 (256 * 1024)
+
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
@@ -234,6 +237,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     }
 
     g_memory_tracing = jni_memtrace;
+    g_aws_channel_max_fragment_size = KB_256;
 
     /* check to see if we have support for backtraces only if we need to */
     void *stack[1];

@@ -46,14 +46,6 @@ Requirements:
 NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
 CMake can find Visual Studio.
 
-## Mac-Only TLS Behavior
-
-Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
-
-```
-static: certificate has an existing certificate-key pair that was previously imported into the Keychain.  Using key from Keychain instead of the one provided.
-```
-
 ## Documentation
 [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
 
@@ -61,6 +53,14 @@ static: certificate has an existing certificate-key pair that was previously imp
 From the aws-crt-java directory:
 ```mvn install```
 From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-crt/)
+
+## Mac-Only TLS Behavior
+
+Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
+
+```
+static: certificate has an existing certificate-key pair that was previously imported into the Keychain.  Using key from Keychain instead of the one provided.
+```
 
 ## Testing
 Many tests require custom arguments. These tests will be quietly skipped if their arguments are not set.

@@ -114,7 +114,7 @@ void aws_http_proxy_options_jni_clean_up(
     }
 
     if (options->tls_options != NULL) {
-        aws_tls_connection_options_clean_up(options->tls_options);
+        aws_tls_connection_options_clean_up((struct aws_tls_connection_options *)options->tls_options);
     }
 }
 

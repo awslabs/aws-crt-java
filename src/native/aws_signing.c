@@ -185,9 +185,6 @@ static int s_build_signing_config(
     struct s_aws_sign_request_callback_data *callback_data,
     jobject java_config,
     struct aws_signing_config_aws *config) {
-    (void)callback_data;
-    (void)java_config;
-    (void)config;
 
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
@@ -321,6 +318,79 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
+}
+
+JNIEXPORT
+bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSigningUtilsVerifyEcdsaSignature(
+    JNIEnv *env,
+    jclass jni_class,
+    jobject java_http_request,
+    jbyteArray java_marshalled_request,
+    jstring java_expected_canonical_request,
+    jobject java_signing_config,
+    jstring java_signature) {
+
+    (void)jni_class;
+
+    struct aws_string *expected_canonical_request = NULL;
+    struct aws_string *signature = NULL;
+
+    bool success = false;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_sign_request_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
+    if (callback_data == NULL) {
+        goto done;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    /* Build a native aws_signing_config_aws object */
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+
+    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+        goto done;
+    }
+
+    jobject java_http_request_body_stream =
+        (*env)->GetObjectField(env, java_http_request, http_request_properties.body_stream_field_id);
+
+    callback_data->native_request =
+        aws_http_request_new_from_java_http_request(env, java_marshalled_request, java_http_request_body_stream);
+    if (callback_data->native_request == NULL) {
+        goto done;
+    }
+
+    callback_data->original_message_signable = aws_signable_new_http_request(allocator, callback_data->native_request);
+    if (callback_data->original_message_signable == NULL) {
+        goto done;
+    }
+
+    expected_canonical_request = aws_jni_new_string_from_jstring(env, java_expected_canonical_request);
+    signature = aws_jni_new_string_from_jstring(env, java_signature);
+
+    if (aws_verify_sigv4a_signing(
+            allocator,
+            callback_data->original_message_signable,
+            (struct aws_signing_config_base *)&signing_config,
+            aws_byte_cursor_from_string(expected_canonical_request),
+            aws_byte_cursor_from_string(signature))) {
+        aws_jni_throw_runtime_exception(env, aws_error_str(aws_last_error()));
+        goto done;
+    }
+
+    success = true;
+
+done:
+
+    s_cleanup_callback_data(callback_data);
+
+    aws_string_destroy(expected_canonical_request);
+    aws_string_destroy(signature);
+
+    return success;
 }
 
 #if UINTPTR_MAX == 0xffffffff

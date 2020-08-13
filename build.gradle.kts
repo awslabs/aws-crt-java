@@ -27,67 +27,14 @@ description = "software.amazon.awssdk.crt:aws-crt"
 
 var libcryptoPath : String? = null
 
-buildTypes {
-    create("debug") {
+// buildTypes {
+//     create("debug") {
 
-    }
-    create("release") {
+//     }
+//     create("release") {
 
-    }
-}
-
-// platforms {
-//     x64 {
-//         architecture.set("x64")
-//     }
-//     x86 {
-//         architecture.set("x86")
-//     }
-//     aarch64 {
-//         architecture.set("aarch64")
-//     }
-//     armv6 {
-//         architecture.set("armv6")
-//     }
-//     armv7 {
-//         architecture.set("armv7")
 //     }
 // }
-// components {
-//     create<SharedLibraryBinarySpec>("crt")
-// }
-
-// model {
-//     buildTypes {
-//         getByName("debug") {
-//             isDebuggable = true
-//         }
-//         getByName("release") {
-
-//         }
-//     }
-//     platforms {
-//         x64 {
-//             architecture.set("x64")
-//         }
-//         x86 {
-//             architecture.set("x86")
-//         }
-//         aarch64 {
-//             architecture.set("aarch64")
-//         }
-//         armv6 {
-//             architecture.set("armv6")
-//         }
-//         armv7 {
-//             architecture.set("armv7")
-//         }
-//     }
-//     components {
-//         create<SharedLibraryBinarySpec>("crt")
-//     }
-// }
-
 
 var buildType = "RelWithDebInfo"
 if (project.hasProperty("buildType")) {
@@ -164,8 +111,16 @@ val cmakeBuild = tasks.register("cmakeBuild") {
 sourceSets {
     main {
         java {
-            srcDirs("src/main")
-            srcDirs("generated-src/main/java")
+            setSrcDirs(listOf("src/main/java"))
+        }
+        // include shared libraries built by cmake/CI/CD in the lib folder
+        resources {
+            srcDir("${buildDir}/cmake-build/lib")
+        }
+    }
+    test {
+        java {
+            setSrcDirs(listOf("src/test/java"))
         }
     }
 }
@@ -182,9 +137,14 @@ tasks.compileJava {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
+    }
+    for (prop in listOf("certificate", "privatekey", "endpoint", "rootca")) {
+        if (project.hasProperty(prop)) {
+            systemProperty(prop, project.property(prop).toString())
+        }
     }
 }
 

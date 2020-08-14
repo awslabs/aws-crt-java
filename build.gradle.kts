@@ -84,6 +84,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
 
 val cmakeBuild = tasks.register("cmakeBuild") {
     dependsOn(cmakeConfigure)
+    inputs.file("CMakeLists.txt")
     inputs.file("${buildDir}/cmake-build/CMakeCache.txt")
     inputs.files(fileTree("src/native").matching {
         include(listOf("**/*.c", "**/*.h"))
@@ -146,6 +147,10 @@ tasks.test {
             systemProperty(prop, project.property(prop).toString())
         }
     }
+}
+
+tasks.compileTestJava {
+    dependsOn(tasks.compileJava)
 }
 
 publishing {

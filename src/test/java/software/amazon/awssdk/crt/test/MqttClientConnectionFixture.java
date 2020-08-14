@@ -67,21 +67,21 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         // For each parameter, check the context first, then check the file system/system properties
         try {
             if (ctx.iotCARoot == null) {
-                pathToCa = Paths.get(TEST_ROOTCA);
-                if (pathToCa != null && !pathToCa.toFile().exists()) {
+                pathToCa = TEST_ROOTCA != null ? Paths.get(TEST_ROOTCA) : null;
+                if (pathToCa == null || !pathToCa.toFile().exists()) {
                     throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
                 }
                 ctx.iotCARoot = Files.readAllBytes(pathToCa);
             }
             caRoot = new String(ctx.iotCARoot);
 
-            if (ctx.iotEndpoint == null) {
+            if (ctx.iotEndpoint == null && TEST_ENDPOINT != null) {
                 ctx.iotEndpoint = TEST_ENDPOINT;
             }
             iotEndpoint = ctx.iotEndpoint;
 
             if (ctx.iotClientCertificate == null) {
-                pathToCert = Paths.get(TEST_CERTIFICATE);
+                pathToCert = TEST_CERTIFICATE != null? Paths.get(TEST_CERTIFICATE) : null;
                 if (pathToCert == null || pathToCert.toString().equals("")) {
                     throw new MissingCredentialsException("Certificate not provided");
                 }
@@ -93,7 +93,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             certificatePem = new String(ctx.iotClientCertificate);
 
             if (ctx.iotClientPrivateKey == null) {
-                pathToKey = Paths.get(TEST_PRIVATEKEY);
+                pathToKey = TEST_PRIVATEKEY != null ? Paths.get(TEST_PRIVATEKEY) : null;
                 if (pathToKey == null || pathToKey.toString().equals("")) {
                     throw new MissingCredentialsException("Private key not provided");
                 }

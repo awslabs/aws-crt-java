@@ -227,6 +227,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
      * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
      * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
+     * @return true if this resource releases synchronously, false if this resource performs async shutdown
      */
     protected abstract boolean canReleaseReferencesImmediately();
 
@@ -321,7 +322,7 @@ public abstract class CrtResource implements AutoCloseable {
             fn.accept(str);
         });
     }
-    
+
     public static void collectNativeResource(Consumer<ResourceInstance> fn) {
         for (Map.Entry<Long, ResourceInstance> entry : NATIVE_RESOURCES.entrySet()) {
             fn.accept(entry.getValue());

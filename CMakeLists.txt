@@ -142,7 +142,7 @@ aws_use_package(aws-c-auth)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC)
-    target_link_options(${PROJECT_NAME} PRIVATE -z noexecstack)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-z noexecstack")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)

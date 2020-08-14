@@ -27,19 +27,10 @@ description = "software.amazon.awssdk.crt:aws-crt"
 
 var libcryptoPath : String? = null
 
-// buildTypes {
-//     create("debug") {
-
-//     }
-//     create("release") {
-
-//     }
-// }
-
 var buildType = "RelWithDebInfo"
 if (project.hasProperty("buildType")) {
     buildType = project.property("buildType").toString()
-    println("Using custom build type: ${buildType}")
+    logger.info("Using custom build type: ${buildType}")
 }
 
 val cmakeConfigure = tasks.register("cmakeConfigure") {
@@ -58,7 +49,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
         if (project.hasProperty("libcryptoPath")) {
             libcryptoPath = project.property("libcryptoPath").toString()
-            println("Using project libcrypto path: ${libcryptoPath}")
+            logger.info("Using project libcrypto path: ${libcryptoPath}")
         }
     }
 
@@ -74,7 +65,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
 
     doLast {
         val argsStr = cmakeArgs.joinToString(separator=" ")
-        println("cmake ${argsStr}")
+        logger.info("cmake ${argsStr}")
         exec {
             executable("cmake")
             args(cmakeArgs)
@@ -101,7 +92,7 @@ val cmakeBuild = tasks.register("cmakeBuild") {
 
     doLast {
         val argsStr = cmakeArgs.joinToString(separator=" ")
-        println("cmake ${argsStr}")
+        logger.info("cmake ${argsStr}")
         exec {
             executable("cmake")
             args(cmakeArgs)

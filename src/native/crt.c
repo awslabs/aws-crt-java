@@ -10,6 +10,7 @@
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/thread.h>
+#include <aws/event-stream/event_stream.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/io/channel.h>
@@ -254,9 +255,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);
+    aws_event_stream_library_init(allocator);
 
     cache_java_class_ids(env);
-
     atexit(s_jni_atexit);
 }
 

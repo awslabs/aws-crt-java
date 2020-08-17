@@ -154,11 +154,47 @@ struct java_http_stream_response_handler_native_adapter_properties {
 };
 extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
+/* EventStreamServerListener */
+struct java_event_stream_server_listener_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
+
+/* EventStreamServerListenerHandler */
+struct java_event_stream_server_listener_handler_properties {
+    jmethodID onNewConnection;
+    jmethodID onConnectionShutdown;
+    jmethodID newConnConstructor;
+    jclass connCls;
+};
+extern struct java_event_stream_server_listener_handler_properties event_stream_server_listener_handler_properties;
+
+struct java_event_stream_server_connection_handler_properties {
+    jmethodID onProtocolMessage;
+    jmethodID onIncomingStream;
+    jmethodID newContinuationConstructor;
+    jclass continuationCls;
+};
+extern struct java_event_stream_server_connection_handler_properties event_stream_server_connection_handler_properties;
+
+struct java_event_stream_server_continuation_handler_properties {
+    jmethodID onContinuationMessage;
+    jmethodID onContinuationClosed;
+};
+extern struct java_event_stream_server_continuation_handler_properties
+    event_stream_server_continuation_handler_properties;
+
+struct java_event_stream_server_message_flush_properties {
+    jmethodID callback;
+};
+extern struct java_event_stream_server_message_flush_properties event_stream_server_message_flush_properties;
+
 /* CompletableFuture */
 struct java_completable_future_properties {
     jmethodID complete_method_id;
     jmethodID complete_exceptionally_method_id;
 };
+
 extern struct java_completable_future_properties completable_future_properties;
 
 /* CrtRuntimeException */

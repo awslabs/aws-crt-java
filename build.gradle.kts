@@ -141,6 +141,8 @@ tasks.test {
             systemProperty(prop, project.property(prop).toString())
         }
     }
+    //uncomment the next line to attach the debugger to the JNI layer.
+    //systemProperty("aws.crt.debugwait", "1")
 }
 
 tasks.compileTestJava {

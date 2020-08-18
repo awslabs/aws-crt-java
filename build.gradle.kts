@@ -36,6 +36,20 @@ if (project.hasProperty("buildType")) {
     logger.info("Using custom build type: ${buildType}")
 }
 
+fun getHostArch(): String {
+    val arch = System.getProperty("os.arch")
+    when (arch) {
+        in listOf("x86_64", "amd64") -> return "x86_64"
+        in listOf("x86", "i386", "i586", "i686") -> return "x86"
+        else -> throw GradleException("Can't normalize host's CPU architecture: '${arch}'")
+    }
+}
+
+val targetOs = org.gradle.internal.os.OperatingSystem.current().toString().toLowerCase()
+val targetArch = getHostArch()
+
+println("Target: OS=${targetOs} ARCH=${targetArch}")
+
 val cmakeConfigure = tasks.register("cmakeConfigure") {
     var cmakeArgs = listOf(
         "-B${buildDir}/cmake-build",
@@ -47,7 +61,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         "-DBUILD_TESTING=OFF"
     )
 
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+    if (targetOs.startsWith("linux")) {
         libcryptoPath = "/opt/openssl"
         // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
         if (project.hasProperty("libcryptoPath")) {
@@ -103,6 +117,11 @@ val cmakeBuild = tasks.register("cmakeBuild") {
     }
 }
 
+val crtjni = tasks.register("aws-crt-jni") {
+    dependsOn(cmakeBuild)
+
+}
+
 sourceSets {
     main {
         java {
@@ -128,7 +147,7 @@ java {
 }
 
 tasks.compileJava {
-    dependsOn(cmakeBuild)
+    dependsOn(crtjni)
 }
 
 tasks.test {

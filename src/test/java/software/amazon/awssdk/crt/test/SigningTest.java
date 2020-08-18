@@ -137,7 +137,6 @@ public class SigningTest extends CrtTestFixture {
                 config.setShouldSignHeader(filterParam);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -167,7 +166,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
                 config.setExpirationInSeconds(60);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
@@ -203,7 +202,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
@@ -236,7 +235,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setCredentialsProvider(provider);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
-                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValueType.EMPTY);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
 
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 result.get();

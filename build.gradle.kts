@@ -1,16 +1,37 @@
 /*
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
- *
- * Helpful resources/examples:
- * http://gradle.monochromeroad.com/docs/userguide/nativeBinaries.html
- * https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Decompiler/build.gradle
  */
 
 plugins {
     `java-library`
     `maven-publish`
 }
+
+apply {
+    from("common.gradle.kts")
+}
+val getHostOs = extra["getHostOs"] as () -> String
+val getHostArch = extra["getHostArch"] as () -> String
+
+val platforms = listOf(
+    listOf("linux", "x86_32"),
+    listOf("linux", "x86_64"),
+    listOf("linux", "armv7"),
+    listOf("linux", "armv6"),
+    listOf("linux", "armv8"),
+    listOf("android", "x86"),
+    listOf("android", "x86_64"),
+    listOf("android", "armeabi-v7a"),
+    listOf("android", "arm64-v8a"),
+    listOf("windows", "x86"),
+    listOf("windows", "x86_64"),
+    listOf("osx", "x86_64"),
+    listOf("freebsd", "x86_64")
+)
+
+val targetOs = getHostOs()
+val targetArch = getHostArch()
 
 repositories {
     mavenLocal()
@@ -32,21 +53,19 @@ group = "software.amazon.awssdk.crt"
 version = "1.0.0-SNAPSHOT"
 description = "software.amazon.awssdk.crt:aws-crt"
 
-
-
 sourceSets {
     main {
         java {
             setSrcDirs(listOf("src/main/java"))
         }
-        // include shared libraries built by cmake/CI/CD in the lib folder
-        resources {
-            srcDir("${buildDir}/cmake-build/lib")
-        }
     }
     test {
         java {
             setSrcDirs(listOf("src/test/java"))
+        }
+        // include shared libraries for testing (since testing is done without JARs)
+        resources {
+            srcDir("${buildDir}/cmake-build/lib/")
         }
     }
 }
@@ -59,10 +78,11 @@ java {
 }
 
 tasks.compileJava {
-    dependsOn(":src:native:crtjar")
+    dependsOn(":src:native:crtjni")
 }
 
 tasks.test {
+    dependsOn(tasks.jar)
     useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
@@ -78,9 +98,17 @@ tasks.compileTestJava {
     dependsOn(tasks.compileJava)
 }
 
+tasks.jar {
+    archiveClassifier.set("${targetOs}-${targetArch}")
+    from(sourceSets.main.get().output)
+    from(fileTree("${buildDir}/cmake-build/lib/${targetOs}/${targetArch}")) {
+        into("lib/${targetOs}/${targetArch}")
+    }
+}
+
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("maven-${project.name}") {
             artifactId = project.name
             from(components["java"])
             pom {

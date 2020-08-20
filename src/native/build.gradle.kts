@@ -9,39 +9,37 @@
 
 plugins {
     `c`
-    `java`
 }
 
-val rootDir = "${projectDir}/../.."
-// Use the same buildDir as the root project to make packaging sane
-buildDir = rootProject.buildDir
+val rootDir = rootProject.projectDir
 
-var libcryptoPath : String? = null
-
-var buildType = "RelWithDebInfo"
-if (project.hasProperty("buildType")) {
-    buildType = project.property("buildType").toString()
-    logger.info("Using custom build type: ${buildType}")
+apply {
+    from("${rootProject.projectDir}/common.gradle.kts")
 }
 
-fun getHostOs(): String {
-    val os = org.gradle.internal.os.OperatingSystem.current().toString().toLowerCase()
-    return os.split(" ").first()
-}
-
-fun getHostArch(): String {
-    val arch = System.getProperty("os.arch")
-    when (arch) {
-        in listOf("x86_64", "amd64") -> return "x86_64"
-        in listOf("x86", "i386", "i586", "i686") -> return "x86"
-        else -> throw GradleException("Can't normalize host's CPU architecture: '${arch}'")
-    }
-}
+val getHostOs = extra["getHostOs"] as () -> String
+val getHostArch = extra["getHostArch"] as () -> String
 
 val targetOs = getHostOs()
 val targetArch = getHostArch()
 
 println("Target: OS=${targetOs} ARCH=${targetArch}")
+
+
+// Use the same buildDir as the root project to make packaging sane
+buildDir = rootProject.buildDir
+// Use the group/version from rootProject
+group = rootProject.group
+version = rootProject.version
+description = "${rootProject.group}:native:${targetOs}-${targetArch}"
+
+var libcryptoPath : String? = null
+
+var buildType = "Release"
+if (project.hasProperty("buildType")) {
+    buildType = project.property("buildType").toString()
+    logger.info("Using custom build type: ${buildType}")
+}
 
 val cmakeConfigure = tasks.register("cmakeConfigure") {
     var cmakeArgs = listOf(
@@ -70,6 +68,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         )
     }
 
+    inputs.property("buildType", buildType)
     inputs.file("${rootDir}/CMakeLists.txt")
     outputs.file("${buildDir}/cmake-build/CMakeCache.txt")
 
@@ -85,6 +84,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
 
 val cmakeBuild = tasks.register("cmakeBuild") {
     dependsOn(cmakeConfigure)
+    inputs.property("buildType", buildType)
     inputs.file("${rootDir}/CMakeLists.txt")
     inputs.file("${buildDir}/cmake-build/CMakeCache.txt")
     inputs.files(fileTree("${rootDir}/src/native").matching {
@@ -97,6 +97,7 @@ val cmakeBuild = tasks.register("cmakeBuild") {
 
     var cmakeArgs = listOf(
         "--build", "${buildDir}/cmake-build",
+        "--config", buildType,
         "--target", "all"
     )
 
@@ -114,15 +115,21 @@ val crtjni = tasks.register("crtjni") {
     dependsOn(cmakeBuild)
 }
 
-// no tests for this lib
-tasks.test {
-    enabled = false
-}
+// java {
+//     registerFeature("awsCrtJni") {
+//         capability("software.amazon.awssdk.crt", "aws-crt-jni", "1.0")
+//         capability("software.amazon.awssdk.crt", "aws-crt-jni:${targetOs}-${targetArch}", "1.0")
+//     }
+// }
 
-tasks.register<Jar>("crtjar") {
-    dependsOn(crtjni)
-    archiveBaseName.set("aws-crt-jni")
-    archiveClassifier.set("${targetOs}-${targetArch}")
-    from(fileTree("${buildDir}/cmake-build/lib/${targetOs}/${targetArch}"))
-    into("lib/${targetOs}/${targetArch}")
-}
+// no tests for this lib
+// tasks.test {
+//     enabled = false
+// }
+
+// tasks.jar {
+//     dependsOn(crtjni)
+//     archiveClassifier.set("${targetOs}-${targetArch}")
+//     from(fileTree("${buildDir}/cmake-build/lib/${targetOs}/${targetArch}"))
+//     into("lib/${targetOs}/${targetArch}")
+// }

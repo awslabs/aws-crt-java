@@ -296,7 +296,7 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteWeakGlobalRef(env, connection->java_mqtt_connection);
     }
 
-    aws_mqtt_client_connection_destroy(connection->client_connection);
+    aws_mqtt_client_connection_release(connection->client_connection);
 
     aws_tls_connection_options_clean_up(&connection->tls_options);
 
@@ -588,6 +588,9 @@ static void s_on_subscription_delivered(
     (*env)->DeleteLocalRef(env, jni_payload);
     (*env)->DeleteLocalRef(env, jni_topic);
 
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+    }
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 

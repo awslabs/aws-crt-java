@@ -78,26 +78,45 @@ jlong JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairNewFromCr
     return (jlong)key_pair;
 }
 
+#define SIGNATURE_SIZE_OVERESTIMATE 128
+
 JNIEXPORT
-jbyteArray JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairGetPrivateKeyS(
+jbyteArray JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairSignMessage(
     JNIEnv *env,
     jclass jni_class,
-    jlong ekp_addr) {
+    jlong ekp_addr,
+    jbyteArray message) {
 
-    (void)env;
     (void)jni_class;
 
     struct aws_ecc_key_pair *key_pair = (struct aws_ecc_key_pair *)ekp_addr;
 
-    struct aws_byte_cursor private_key_cursor;
-    AWS_ZERO_STRUCT(private_key_cursor);
+    struct aws_byte_buf signature_buffer;
+    AWS_ZERO_STRUCT(signature_buffer);
 
-    aws_ecc_key_pair_get_private_key(key_pair, &private_key_cursor);
-    if (private_key_cursor.len == 0) {
+    if (aws_byte_buf_init(&signature_buffer, aws_jni_get_allocator(), SIGNATURE_SIZE_OVERESTIMATE)) {
+        aws_jni_throw_runtime_exception(env, "EccKeyPair.eccKeyPairSignMessage: failed to initialize signature buffer");
         return NULL;
     }
 
-    return aws_jni_byte_array_from_cursor(env, &private_key_cursor);
+    struct aws_byte_cursor message_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, message);
+    if (message_cursor.ptr == NULL) {
+        aws_jni_throw_runtime_exception(env, "EccKeyPair.eccKeyPairSignMessage: failed to pin message bytes");
+        return NULL;
+    }
+
+    jbyteArray signature = NULL;
+    if (aws_ecc_key_pair_sign_message(key_pair, &message_cursor, &signature_buffer)) {
+        aws_jni_throw_runtime_exception(env, "EccKeyPair.eccKeyPairSignMessage: failed to sign message");
+    } else {
+        struct aws_byte_cursor signature_cursor = aws_byte_cursor_from_buf(&signature_buffer);
+        signature = aws_jni_byte_array_from_cursor(env, &signature_cursor);
+    }
+
+    aws_jni_byte_cursor_from_jbyteArray_release(env, message, message_cursor);
+    aws_byte_buf_clean_up(&signature_buffer);
+
+    return signature;
 }
 
 #if UINTPTR_MAX == 0xffffffff

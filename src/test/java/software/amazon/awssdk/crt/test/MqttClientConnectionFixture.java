@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR connectionS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 package software.amazon.awssdk.crt.test;
@@ -40,6 +30,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 class MissingCredentialsException extends RuntimeException {
     MissingCredentialsException(String message) {
@@ -77,21 +68,21 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         // For each parameter, check the context first, then check the file system/system properties
         try {
             if (ctx.iotCARoot == null) {
-                pathToCa = Paths.get(TEST_ROOTCA);
-                if (pathToCa != null && !pathToCa.toFile().exists()) {
+                pathToCa = TEST_ROOTCA != null ? Paths.get(TEST_ROOTCA) : null;
+                if (pathToCa == null || !pathToCa.toFile().exists()) {
                     throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
                 }
                 ctx.iotCARoot = Files.readAllBytes(pathToCa);
             }
             caRoot = new String(ctx.iotCARoot);
 
-            if (ctx.iotEndpoint == null) {
+            if (ctx.iotEndpoint == null && TEST_ENDPOINT != null) {
                 ctx.iotEndpoint = TEST_ENDPOINT;
             }
             iotEndpoint = ctx.iotEndpoint;
 
             if (ctx.iotClientCertificate == null) {
-                pathToCert = Paths.get(TEST_CERTIFICATE);
+                pathToCert = TEST_CERTIFICATE != null? Paths.get(TEST_CERTIFICATE) : null;
                 if (pathToCert == null || pathToCert.toString().equals("")) {
                     throw new MissingCredentialsException("Certificate not provided");
                 }
@@ -103,7 +94,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             certificatePem = new String(ctx.iotClientCertificate);
 
             if (ctx.iotClientPrivateKey == null) {
-                pathToKey = Paths.get(TEST_PRIVATEKEY);
+                pathToKey = TEST_PRIVATEKEY != null ? Paths.get(TEST_PRIVATEKEY) : null;
                 if (pathToKey == null || pathToKey.toString().equals("")) {
                     throw new MissingCredentialsException("Private key not provided");
                 }
@@ -139,7 +130,15 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connect(false, 0);
     }
 
+    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
+        return connect(false, 0, anyMessageHandler);
+    }
+
     boolean connect(boolean cleanSession, int keepAliveMs) {
+        return connect(cleanSession, keepAliveMs, null);
+    }
+
+    boolean connect(boolean cleanSession, int keepAliveMs, Consumer<MqttMessage> anyMessageHandler) {
         Assume.assumeTrue(findCredentials());
 
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -187,6 +186,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 modifyConnectionConfiguration(config);
 
                 connection = new MqttClientConnection(config);
+                if (anyMessageHandler != null) {
+                    connection.onMessage(anyMessageHandler);
+                }
 
                 CompletableFuture<Boolean> connected = connection.connect();
                 connected.get();

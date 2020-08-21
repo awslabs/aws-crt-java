@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 package software.amazon.awssdk.crt.http;
 
@@ -109,6 +99,14 @@ public class HttpClientConnectionManager extends CrtResource {
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }
 
+        HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
+        long monitoringThroughputThresholdInBytesPerSecond = 0;
+        int monitoringFailureIntervalInSeconds = 0;
+        if (monitoringOptions != null) {
+            monitoringThroughputThresholdInBytesPerSecond = monitoringOptions.getMinThroughputBytesPerSecond();
+            monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
+        }
+
         acquireNativeHandle(httpClientConnectionManagerNew(this,
                                             clientBootstrap.getNativeHandle(),
                                             socketOptions.getNativeHandle(),
@@ -123,7 +121,10 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                                             proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
-                                            options.isManualWindowManagement()));
+                                            options.isManualWindowManagement(),
+                                            options.getMaxConnectionIdleInMilliseconds(),
+                                            monitoringThroughputThresholdInBytesPerSecond,
+                                            monitoringFailureIntervalInSeconds));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -261,7 +262,10 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int proxyAuthorizationType,
                                                         byte[] proxyAuthorizationUsername,
                                                         byte[] proxyAuthorizationPassword,
-                                                        boolean isManualWindowManagement) throws CrtRuntimeException;
+                                                        boolean isManualWindowManagement,
+                                                        long maxConnectionIdleInMilliseconds,
+                                                        long monitoringThroughputThresholdInBytesPerSecond,
+                                                        int monitoringFailureIntervalInSeconds) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

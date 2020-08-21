@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/auth/auth.h>
@@ -22,6 +12,7 @@
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
+#include <aws/io/channel.h>
 #include <aws/io/io.h>
 #include <aws/io/logging.h>
 #include <aws/io/tls_channel_handler.h>
@@ -227,6 +218,8 @@ static void s_jni_atexit(void) {
     }
 }
 
+#define KB_256 (256 * 1024)
+
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
@@ -244,6 +237,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     }
 
     g_memory_tracing = jni_memtrace;
+
+    /*
+     * Increase the maximum channel message size in order to improve throughput on large payloads.
+     * Consider adding a system property override in the future.
+     */
+    g_aws_channel_max_fragment_size = KB_256;
 
     /* check to see if we have support for backtraces only if we need to */
     void *stack[1];

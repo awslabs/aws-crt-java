@@ -1,22 +1,11 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 package software.amazon.awssdk.crt.auth.credentials;
 
 import java.lang.IllegalArgumentException;
 import java.nio.charset.Charset;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -48,6 +37,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
          * Sets the client bootstrap (host resolver and event loop group) to use when making the connections
          * required by this provider.
          * @param clientBootstrap client bootstrap to use
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withClientBootstrap(ClientBootstrap clientBootstrap) {
             this.clientBootstrap = clientBootstrap;
@@ -61,6 +51,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
          * Sets the tls context initialized with a x509 certificate and private key suitable for
          * queries against the account's iot credential provider endpoint
          * @param tlsContext the tls context to use when establishing the http connection to iot
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withTlsContext(TlsContext tlsContext) {
             this.tlsContext = tlsContext;
@@ -73,6 +64,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
         /**
          * Sets the iot thing name to fetch credentials by.
          * @param thingName name of the thing to use
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withThingName(String thingName) {
             this.thingName = thingName;
@@ -85,6 +77,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
         /**
          * Sets the role alias to fetch credentials through
          * @param roleAlias name of the role alias to use
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withRoleAlias(String roleAlias) {
             this.roleAlias = roleAlias;
@@ -98,6 +91,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
          * Sets the endpoint to fetch credentials from.  This is a per-account value that can be determined
          * via the cli: 'aws iot describe-endpoint --endpoint-type iot:CredentialProvider'
          * @param endpoint credentials provider endpoint
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withEndpoint(String endpoint) {
             this.endpoint = endpoint;
@@ -111,6 +105,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
          * Sets the proxy configuration to use when making the http request that fetches session
          * credentials from the IoT x509 credentials provider service
          * @param proxyOptions proxy configuration for the credentials fetching http request
+         * @return The current builder
          */
         public X509CredentialsProviderBuilder withProxyOptions(HttpProxyOptions proxyOptions) {
             this.proxyOptions = proxyOptions;

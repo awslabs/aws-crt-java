@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include "java_class_ids.h"
@@ -86,7 +76,7 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
     AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_field_id);
 
     aws_signing_config_properties.signed_body_value_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_value_field_id);
 
     aws_signing_config_properties.signed_body_header_field_id =

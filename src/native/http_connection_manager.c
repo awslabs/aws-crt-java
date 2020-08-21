@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include "crt.h"
@@ -145,7 +135,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
-    jboolean jni_manual_window_management) {
+    jboolean jni_manual_window_management,
+    jlong jni_max_connection_idle_in_milliseconds,
+    jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
+    jint jni_monitoring_failure_interval_in_seconds) {
 
     (void)jni_class;
 
@@ -218,9 +211,21 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.monitoring_options = NULL;
     /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
     manager_options.enable_read_back_pressure = jni_manual_window_management;
+    manager_options.max_connection_idle_in_milliseconds = jni_max_connection_idle_in_milliseconds;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;
+    }
+
+    struct aws_http_connection_monitoring_options monitoring_options;
+    AWS_ZERO_STRUCT(monitoring_options);
+    if (jni_monitoring_throughput_threshold_in_bytes_per_second >= 0 &&
+        jni_monitoring_failure_interval_in_seconds >= 2) {
+        monitoring_options.minimum_throughput_bytes_per_second =
+            jni_monitoring_throughput_threshold_in_bytes_per_second;
+        monitoring_options.allowable_throughput_failure_interval_seconds = jni_monitoring_failure_interval_in_seconds;
+
+        manager_options.monitoring_options = &monitoring_options;
     }
 
     struct aws_http_proxy_options proxy_options;

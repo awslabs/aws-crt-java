@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 package software.amazon.awssdk.crt.auth.signing;
 
@@ -96,42 +86,11 @@ public class AwsSigningConfig extends CrtResource {
         private static Map<Integer, AwsSignatureType> enumMapping = buildEnumMapping();
     }
 
-    public enum AwsSignedBodyValueType {
-        EMPTY(0),
-        PAYLOAD(1),
-        UNSIGNED_PAYLOAD(2),
-        STREAMING_AWS4_HMAC_SHA256_PAYLOAD(3),
-        STREAMING_AWS4_HMAC_SHA256_EVENTS(4);
-
-        AwsSignedBodyValueType(int nativeValue) {
-            this.nativeValue = nativeValue;
-        }
-
-        public int getNativeValue() { return nativeValue; }
-
-        public static AwsSignedBodyValueType getEnumValueFromInteger(int value) {
-            AwsSignedBodyValueType enumValue = enumMapping.get(value);
-            if (enumValue != null) {
-                return enumValue;
-            }
-
-            throw new RuntimeException("Illegal signed body value type value in signing configuration");
-        }
-
-        private static Map<Integer, AwsSignedBodyValueType> buildEnumMapping() {
-            Map<Integer, AwsSignedBodyValueType> enumMapping = new HashMap<Integer, AwsSignedBodyValueType>();
-            enumMapping.put(EMPTY.getNativeValue(), EMPTY);
-            enumMapping.put(PAYLOAD.getNativeValue(), PAYLOAD);
-            enumMapping.put(UNSIGNED_PAYLOAD.getNativeValue(), UNSIGNED_PAYLOAD);
-            enumMapping.put(STREAMING_AWS4_HMAC_SHA256_PAYLOAD.getNativeValue(), STREAMING_AWS4_HMAC_SHA256_PAYLOAD);
-            enumMapping.put(STREAMING_AWS4_HMAC_SHA256_EVENTS.getNativeValue(), STREAMING_AWS4_HMAC_SHA256_EVENTS);
-
-            return enumMapping;
-        }
-
-        private int nativeValue;
-
-        private static Map<Integer, AwsSignedBodyValueType> enumMapping = buildEnumMapping();
+    public class AwsSignedBodyValue {
+        public static final String EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        public static final String UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
+        public static final String STREAMING_AWS4_HMAC_SHA256_PAYLOAD = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
+        public static final String STREAMING_AWS4_HMAC_SHA256_EVENTS = "STREAMING-AWS4-HMAC-SHA256-EVENTS";
     }
 
     public enum AwsSignedBodyHeaderType {
@@ -177,7 +136,7 @@ public class AwsSigningConfig extends CrtResource {
     private boolean useDoubleUriEncode = true;
     private boolean shouldNormalizeUriPath = true;
     private boolean omitSessionToken = false;
-    private int signedBodyValue = AwsSignedBodyValueType.PAYLOAD.getNativeValue();
+    private String signedBodyValue = null;
     private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
     private long expirationInSeconds = 0;
 
@@ -262,8 +221,14 @@ public class AwsSigningConfig extends CrtResource {
     public void setOmitSessionToken(boolean omitSessionToken) { this.omitSessionToken = omitSessionToken; }
     public boolean getOmitSessionToken() { return omitSessionToken; }
 
-    public void setSignedBodyValue(AwsSignedBodyValueType signedBodyValue) { this.signedBodyValue = signedBodyValue.getNativeValue(); }
-    public AwsSignedBodyValueType getSignedBodyValue() { return AwsSignedBodyValueType.getEnumValueFromInteger(signedBodyValue); }
+    public void setSignedBodyValue(String signedBodyValue) {
+        if (signedBodyValue != null && signedBodyValue.isEmpty()) {
+            throw new IllegalArgumentException("Signed Body Value must be null or non-empty string.");
+        }
+        this.signedBodyValue = signedBodyValue;
+    }
+
+    public String getSignedBodyValue() { return signedBodyValue; }
 
     public void setSignedBodyHeader(AwsSignedBodyHeaderType signedBodyHeader) { this.signedBodyHeader = signedBodyHeader.getNativeValue(); }
     public AwsSignedBodyHeaderType getSignedBodyHeader() { return AwsSignedBodyHeaderType.getEnumValueFromInteger(signedBodyHeader); }

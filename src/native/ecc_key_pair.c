@@ -78,6 +78,28 @@ jlong JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairNewFromCr
     return (jlong)key_pair;
 }
 
+JNIEXPORT
+jbyteArray JNICALL Java_software_amazon_awssdk_crt_cal_EccKeyPair_eccKeyPairGetPrivateKeyS(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong ekp_addr) {
+
+    (void)env;
+    (void)jni_class;
+
+    struct aws_ecc_key_pair *key_pair = (struct aws_ecc_key_pair *)ekp_addr;
+
+    struct aws_byte_cursor private_key_cursor;
+    AWS_ZERO_STRUCT(private_key_cursor);
+
+    aws_ecc_key_pair_get_private_key(key_pair, &private_key_cursor);
+    if (private_key_cursor.len == 0) {
+        return NULL;
+    }
+
+    return aws_jni_byte_array_from_cursor(env, &private_key_cursor);
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

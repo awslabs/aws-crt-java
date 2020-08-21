@@ -85,6 +85,8 @@ public final class EccKeyPair extends CrtResource {
         }
     }
 
+    public byte[] getPrivateKeyS() { return eccKeyPairGetPrivateKeyS(getNativeHandle()); }
+
     static public EccKeyPair newDeriveFromCredentials(Credentials credentials, AwsEccCurve curve) {
         long nativeHandle = eccKeyPairNewFromCredentials(credentials, curve.getNativeValue());
         if (nativeHandle != 0) {
@@ -98,6 +100,7 @@ public final class EccKeyPair extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long eccKeyPairNewFromCredentials(Credentials credentials, int curve);
-    private static native void eccKeyPairRelease(long elg);
+    private static native void eccKeyPairRelease(long ecc_key_pair);
 
+    private static native byte[] eccKeyPairGetPrivateKeyS(long ecc_key_pair);
 };

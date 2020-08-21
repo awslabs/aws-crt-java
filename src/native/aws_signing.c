@@ -40,6 +40,7 @@ struct s_aws_sign_request_callback_data {
     struct aws_signable *original_message_signable;
     struct aws_string *region;
     struct aws_string *service;
+    struct aws_string *signed_body_value;
     struct aws_credentials *credentials;
 };
 
@@ -68,6 +69,7 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
 
     aws_string_destroy(callback_data->region);
     aws_string_destroy(callback_data->service);
+    aws_string_destroy(callback_data->signed_body_value);
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -212,8 +214,15 @@ static int s_build_signing_config(
     config->flags.omit_session_token =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
 
-    config->signed_body_value =
-        (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    jstring signed_body_value =
+        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    if (signed_body_value == NULL) {
+        AWS_ZERO_STRUCT(config->signed_body_value);
+    } else {
+        callback_data->signed_body_value = aws_jni_new_string_from_jstring(env, signed_body_value);
+        config->signed_body_value = aws_byte_cursor_from_string(callback_data->signed_body_value);
+    }
+
     config->signed_body_header =
         (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_header_field_id);
 

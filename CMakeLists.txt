@@ -141,6 +141,9 @@ aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-auth)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
+if (NOT MSVC AND NOT APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-z noexecstack")
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # for non-msvc, library output will control the shared lib output

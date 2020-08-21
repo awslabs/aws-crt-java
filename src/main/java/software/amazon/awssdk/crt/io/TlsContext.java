@@ -51,9 +51,6 @@ public class TlsContext extends CrtResource {
         }
     }
 
-    /*******************************************************************************
-     * native methods
-     ******************************************************************************/
     protected static native long tlsContextNew(long options) throws CrtRuntimeException;
 
     private static native void tlsContextDestroy(long elg);

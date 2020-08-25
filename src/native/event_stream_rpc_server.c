@@ -70,7 +70,6 @@ static void s_server_connection_data_destroy(JNIEnv *env, struct connection_call
     if (callback_data->java_server_connection) {
         (*env)->DeleteGlobalRef(env, callback_data->java_server_connection);
     }
-
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
@@ -85,7 +84,6 @@ static void s_server_listener_shutdown_complete(
 
     jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
     if (java_server_listener) {
-
         (*env)->CallVoidMethod(env, java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
         (*env)->DeleteLocalRef(env, java_server_listener);
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
@@ -285,8 +283,9 @@ static int s_on_new_connection_fn(
     connection_callback_data->java_listener_handler =
         (*env)->NewWeakGlobalRef(env, callback_data->java_listener_handler);
 
+    jobject java_server_connection = NULL;
     if (!error_code) {
-        connection_callback_data->java_server_connection = (*env)->NewObject(
+        java_server_connection = (*env)->NewObject(
             env,
             event_stream_server_listener_handler_properties.connCls,
             event_stream_server_listener_handler_properties.newConnConstructor,
@@ -294,18 +293,22 @@ static int s_on_new_connection_fn(
         if ((*env)->ExceptionCheck(env)) {
             goto error;
         }
+
+        connection_callback_data->java_server_connection = (*env)->NewGlobalRef(env, java_server_connection);
     }
 
-    connection_callback_data->java_connection_handler = (*env)->CallObjectMethod(
+    jobject java_connection_handler = (*env)->CallObjectMethod(
         env,
         connection_callback_data->java_listener_handler,
         event_stream_server_listener_handler_properties.onNewConnection,
-        connection_callback_data->java_server_connection,
+        java_server_connection,
         error_code);
 
-    if (!connection_callback_data->java_connection_handler) {
+    if (!java_connection_handler) {
         goto error;
     }
+
+    connection_callback_data->java_connection_handler = (*env)->NewGlobalRef(env, java_connection_handler);
 
     /* we got an object back so this shouldn't be possible. */
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
@@ -342,6 +345,7 @@ static void s_on_connection_shutdown_fn(
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     jobject java_listener_handler = (*env)->NewLocalRef(env, callback_data->java_listener_handler);
     jobject java_server_connection = (*env)->NewLocalRef(env, callback_data->java_server_connection);
+
     AWS_FATAL_ASSERT(java_listener_handler);
     AWS_FATAL_ASSERT(java_server_connection);
 
@@ -355,10 +359,12 @@ static void s_on_connection_shutdown_fn(
 
     (*env)->DeleteLocalRef(env, java_server_connection);
     (*env)->DeleteLocalRef(env, java_listener_handler);
+
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     /* this is the should be connection specific callback data. */
     s_server_connection_data_destroy(env, callback_data);
+
 }
 
 JNIEXPORT

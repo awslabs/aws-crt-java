@@ -10,7 +10,6 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
 
     protected ServerConnectionHandler(final ServerConnection connection) {
         this.connection = connection;
-        connection.addRef();
     }
 
     protected abstract void onProtocolMessage(final List<Header> headers,

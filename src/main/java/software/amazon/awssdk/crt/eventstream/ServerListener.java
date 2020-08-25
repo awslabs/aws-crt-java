@@ -9,18 +9,15 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 public class ServerListener extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
-    private ServerListenerHandler handler = null;
 
     public ServerListener(final String hostName, short port, final SocketOptions socketOptions,
                           final ServerTlsContext tlsContext, final ServerBootstrap serverBootstrap,
-                          final Function<ServerListener, ServerListenerHandler> handlerFn) {
+                          final ServerListenerHandler handler) {
 
         long tlsContextPtr = tlsContext != null ? tlsContext.getNativeHandle(): 0;
-        this.handler = handlerFn.apply(this);
         acquireNativeHandle(serverListenerNew(this, hostName.getBytes(StandardCharsets.UTF_8), port,
                 socketOptions.getNativeHandle(), tlsContextPtr, serverBootstrap.getNativeHandle(),
                 handler));
@@ -36,12 +33,6 @@ public class ServerListener extends CrtResource {
         if (!isNull()) {
             release(getNativeHandle());
         }
-    }
-
-    @Override
-    public void close() {
-        handler.close();
-        super.close();
     }
 
     @Override

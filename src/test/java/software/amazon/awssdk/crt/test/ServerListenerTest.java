@@ -23,14 +23,12 @@ public class ServerListenerTest extends CrtTestFixture {
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ServerListener listener = new ServerListener("127.0.0.1", (short)86754, socketOptions, null, bootstrap, listenerInstance -> new ServerListenerHandler(listenerInstance) {
-            @Override
-            protected ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)86754, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
                 return null;
             }
 
-            @Override
-            protected void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
             }
         });
 

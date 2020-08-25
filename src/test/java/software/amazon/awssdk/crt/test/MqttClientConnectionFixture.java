@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 class MissingCredentialsException extends RuntimeException {
     MissingCredentialsException(String message) {
@@ -129,7 +130,15 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connect(false, 0);
     }
 
+    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
+        return connect(false, 0, anyMessageHandler);
+    }
+
     boolean connect(boolean cleanSession, int keepAliveMs) {
+        return connect(cleanSession, keepAliveMs, null);
+    }
+
+    boolean connect(boolean cleanSession, int keepAliveMs, Consumer<MqttMessage> anyMessageHandler) {
         Assume.assumeTrue(findCredentials());
 
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -177,6 +186,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 modifyConnectionConfiguration(config);
 
                 connection = new MqttClientConnection(config);
+                if (anyMessageHandler != null) {
+                    connection.onMessage(anyMessageHandler);
+                }
 
                 CompletableFuture<Boolean> connected = connection.connect();
                 connected.get();

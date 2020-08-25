@@ -4,9 +4,7 @@ import software.amazon.awssdk.crt.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Header {
     private String headerName;
@@ -18,6 +16,7 @@ public class Header {
 
     public static Header createHeader(final String name, boolean value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -25,6 +24,7 @@ public class Header {
 
     public static Header createHeader(final String name, byte value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -32,6 +32,7 @@ public class Header {
 
     public static Header createHeader(final String name, final String value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -39,6 +40,7 @@ public class Header {
 
     public static Header createHeader(final String name, short value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -46,6 +48,7 @@ public class Header {
 
     public static Header createHeader(final String name, int value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -53,6 +56,7 @@ public class Header {
 
     public static Header createHeader(final String name, long value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -60,6 +64,7 @@ public class Header {
 
     public static Header createHeader(final String name, final Date value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -67,6 +72,7 @@ public class Header {
 
     public static Header createHeader(final String name, final byte[] value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -74,6 +80,7 @@ public class Header {
 
     public static Header createHeader(final String name, final UUID value) {
         Header header = new Header();
+        checkHeaderNameLen(name);
         header.headerName = name;
         header.setValue(value);
         return header;
@@ -91,10 +98,10 @@ public class Header {
 
         switch (type) {
             case 0:
-                header.headerType = HeaderType.BooleanFalse;
+                header.headerType = HeaderType.BooleanTrue;
                 break;
             case 1:
-                header.headerType = HeaderType.BooleanTrue;
+                header.headerType = HeaderType.BooleanFalse;
                 break;
             case 2:
                 header.headerType = HeaderType.Byte;
@@ -117,22 +124,21 @@ public class Header {
                 buffer.get(header.headerValue);
                 break;
             case 6:
-                header.headerType = HeaderType.TimeStamp;
-                header.headerValue = new byte[8];
-                buffer.get(header.headerValue);
-                break;
-            case 7:
                 short bufLen = buffer.getShort();
                 byte[] bufValue = new byte[bufLen];
                 buffer.get(bufValue);
                 header.setValue(bufValue);
                 break;
-            case 8:
-                header.headerType = HeaderType.String;
+            case 7:
                 short strLen = buffer.getShort();
                 byte[] strValue = new byte[strLen];
                 buffer.get(strValue);
                 header.setValue(new String(strValue, StandardCharsets.UTF_8));
+                break;
+            case 8:
+                header.headerType = HeaderType.TimeStamp;
+                header.headerValue = new byte[8];
+                buffer.get(header.headerValue);
                 break;
             case 9:
                 header.headerType = HeaderType.UUID;
@@ -151,10 +157,6 @@ public class Header {
         buffer.put(headerName.getBytes(StandardCharsets.UTF_8));
         buffer.put((byte)headerType.getEnumIntValue());
 
-        if (headerType.isVariableLength()) {
-            buffer.putShort((short)headerValue.length);
-        }
-
         if (headerType != HeaderType.BooleanFalse && headerType != HeaderType.BooleanTrue) {
             buffer.put(headerValue);
         }
@@ -162,10 +164,6 @@ public class Header {
 
     public String getName() {
         return this.headerName;
-    }
-
-    public void setName(final String headerName) {
-        this.headerName = headerName;
     }
 
     public HeaderType getHeaderType() {
@@ -180,7 +178,7 @@ public class Header {
         return headerType == HeaderType.BooleanTrue;
     }
 
-    public void setValue(boolean value) {
+    private void setValue(boolean value) {
         if (value) {
             this.headerType = HeaderType.BooleanTrue;
         } else {
@@ -193,7 +191,7 @@ public class Header {
         return headerValue[0];
     }
 
-    public void setValue(byte value) {
+    private void setValue(byte value) {
         headerType = HeaderType.Byte;
         headerValue = new byte[] { value};
     }
@@ -204,7 +202,7 @@ public class Header {
         return valueBuffer.getShort();
     }
 
-    public void setValue(short value) {
+    private void setValue(short value) {
         headerType = HeaderType.Int16;
         ByteBuffer valueBuffer = ByteBuffer.allocate(2);
         valueBuffer.putShort(value);
@@ -217,7 +215,7 @@ public class Header {
         return valueBuffer.getInt();
     }
 
-    public void setValue(int value) {
+    private void setValue(int value) {
         headerType = HeaderType.Int32;
         ByteBuffer valueBuffer = ByteBuffer.allocate(4);
         valueBuffer.putInt(value);
@@ -230,8 +228,8 @@ public class Header {
         return valueBuffer.getLong();
     }
 
-    public void setValue(long value) {
-        headerType = HeaderType.Int32;
+    private void setValue(long value) {
+        headerType = HeaderType.Int64;
         ByteBuffer valueBuffer = ByteBuffer.allocate(8);
         valueBuffer.putLong(value);
         headerValue = valueBuffer.array();
@@ -243,7 +241,7 @@ public class Header {
         return new Date(valueBuffer.getLong());
     }
 
-    public void setValue(Date value) {
+    private void setValue(Date value) {
         headerType = HeaderType.TimeStamp;
         ByteBuffer valueBuffer = ByteBuffer.allocate(8);
         valueBuffer.putLong(value.getTime());
@@ -259,7 +257,7 @@ public class Header {
         return bufferVal;
     }
 
-    public void setValue(final byte[] value) {
+    private void setValue(final byte[] value) {
         if (value.length > Short.MAX_VALUE) {
             throw new CrtRuntimeException("The max length for a ByteBuf Header value is Short.MAX_VALUE");
         }
@@ -280,7 +278,7 @@ public class Header {
         return new String(bufferVal, StandardCharsets.UTF_8);
     }
 
-    public void setValue(final String value) {
+    private void setValue(final String value) {
         if (value.length() > Short.MAX_VALUE) {
             throw new CrtRuntimeException("The max length for a String Header value is Short.MAX_VALUE");
         }
@@ -311,8 +309,8 @@ public class Header {
         return new UUID(msb, lsb);
     }
 
-    public void setValue(final UUID value) {
-        headerType = HeaderType.String;
+    private void setValue(final UUID value) {
+        headerType = HeaderType.UUID;
         ByteBuffer valueBuffer = ByteBuffer.allocate(16);
         valueBuffer.putLong(value.getMostSignificantBits());
         valueBuffer.putLong(value.getLeastSignificantBits());
@@ -346,5 +344,28 @@ public class Header {
         if (this.headerType != headerType) {
             throw new CrtRuntimeException("Invalid Event-stream header type");
         }
+    }
+
+    private static void checkHeaderNameLen(final String headerName) {
+        if (headerName.length() > Byte.MAX_VALUE) {
+            throw new CrtRuntimeException("Header name must be less than 127 bytes.");
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Header header = (Header) o;
+        return headerName.equals(header.headerName) &&
+                headerType == header.headerType &&
+                Arrays.equals(headerValue, header.headerValue);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(headerName, headerType);
+        result = 31 * result + Arrays.hashCode(headerValue);
+        return result;
     }
 }

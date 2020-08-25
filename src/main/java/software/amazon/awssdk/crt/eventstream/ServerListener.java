@@ -9,16 +9,19 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public class ServerListener extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private ServerListenerHandler handler = null;
 
     public ServerListener(final String hostName, short port, final SocketOptions socketOptions,
                           final ServerTlsContext tlsContext, final ServerBootstrap serverBootstrap,
-                          final ServerListenerHandler handler) {
+                          final Function<ServerListener, ServerListenerHandler> handlerFn) {
 
         long tlsContextPtr = tlsContext != null ? tlsContext.getNativeHandle(): 0;
-        acquireNativeHandle(newServerListener(this, hostName.getBytes(StandardCharsets.UTF_8), port,
+        this.handler = handlerFn.apply(this);
+        acquireNativeHandle(serverListenerNew(this, hostName.getBytes(StandardCharsets.UTF_8), port,
                 socketOptions.getNativeHandle(), tlsContextPtr, serverBootstrap.getNativeHandle(),
                 handler));
 
@@ -36,6 +39,12 @@ public class ServerListener extends CrtResource {
     }
 
     @Override
+    public void close() {
+        handler.close();
+        super.close();
+    }
+
+    @Override
     protected boolean canReleaseReferencesImmediately() {
         return false;
     }
@@ -50,7 +59,7 @@ public class ServerListener extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
-    private static native long newServerListener(ServerListener serverListener, byte[] hostName,
+    private static native long serverListenerNew(ServerListener serverListener, byte[] hostName,
                                                  short port, long socketOptionsHandle,
                                                  long tlsContextHandle, long bootstrapHandle,
                                                  ServerListenerHandler handler);

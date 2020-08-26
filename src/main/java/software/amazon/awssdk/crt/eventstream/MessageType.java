@@ -1,22 +1,22 @@
 package software.amazon.awssdk.crt.eventstream;
 
 public enum MessageType {
-    ApplicationMessage(0),
-    ApplicationError(1),
-    Ping(2),
-    PingResponse(3),
-    Connect(4),
-    ConnectAck(5),
-    ProtocolError(6),
-    ServerError(7);
+    ApplicationMessage((byte)0),
+    ApplicationError((byte)1),
+    Ping((byte)2),
+    PingResponse((byte)3),
+    Connect((byte)4),
+    ConnectAck((byte)5),
+    ProtocolError((byte)6),
+    ServerError((byte)7);
 
-    private int enumValue;
+    private byte enumValue;
 
-    MessageType(int enumValue) {
+    MessageType(byte enumValue) {
         this.enumValue = enumValue;
     }
 
-    public int getEnumValue() {
+    public byte getEnumValue() {
         return this.enumValue;
     }
 

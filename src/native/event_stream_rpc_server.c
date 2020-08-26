@@ -225,6 +225,7 @@ static void s_connection_protocol_message_fn(
     void *user_data) {
     (void)connection;
 
+    fprintf(stderr, "callback invoked\n");
     struct connection_callback_data *callback_data = user_data;
     struct aws_array_list headers_list;
     aws_array_list_init_static(
@@ -364,7 +365,6 @@ static void s_on_connection_shutdown_fn(
 
     /* this is the should be connection specific callback data. */
     s_server_connection_data_destroy(env, callback_data);
-
 }
 
 JNIEXPORT

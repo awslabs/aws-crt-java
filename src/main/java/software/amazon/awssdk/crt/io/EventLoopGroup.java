@@ -58,6 +58,58 @@ public final class EventLoopGroup extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
+
+    /*
+     * Static interface for access to a default, lazily-created event loop group for users who don't
+     * want to deal with the associated resource management.  Client bootstraps will use this event loop
+     * group if they are passed a null value.
+     */
+
+    /**
+     * Sets the number of threads for the static default event loop group, should it ever be created.  Has no
+     * effect if the static default event loop group has already been created.
+     *
+     * @param numThreads number of threads for the static default event loop group
+     */
+    public static void setStaticDefaultNumThreads(int numThreads) {
+        synchronized (EventLoopGroup.class) {
+            staticDefaultNumThreads = numThreads;
+        }
+    }
+
+    /**
+     * Closes the static default event loop group, if it exists.  Primarily intended for tests that use the static
+     * default event loop group, before they call waitForNoResources().
+     */
+    public static void closeStaticDefault() {
+        synchronized (EventLoopGroup.class) {
+            if (staticDefaultEventLoopGroup != null) {
+                staticDefaultEventLoopGroup.close();
+            }
+            staticDefaultEventLoopGroup = null;
+        }
+    }
+
+    /**
+     * Gets the static default event loop group, creating it if necessary
+     * @return the static default event loop group
+     */
+    static EventLoopGroup getOrCreateStaticDefault() {
+        EventLoopGroup elg = null;
+        synchronized (EventLoopGroup.class) {
+            if (staticDefaultEventLoopGroup == null) {
+                staticDefaultEventLoopGroup = new EventLoopGroup(staticDefaultNumThreads);
+            }
+
+            elg = staticDefaultEventLoopGroup;
+        }
+
+        return elg;
+    }
+
+    private static int staticDefaultNumThreads = 1;
+    private static EventLoopGroup staticDefaultEventLoopGroup;
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/

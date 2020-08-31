@@ -147,15 +147,13 @@ static void s_stream_continuation_fn(
     (*env)->CallVoidMethod(
         env,
         callback_data->java_continuation_handler,
-        event_stream_server_connection_handler_properties.onProtocolMessage,
+        event_stream_server_continuation_handler_properties.onContinuationMessage,
         headers_byte_array,
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     (void)(*env)->ExceptionCheck(env);
-    (*env)->DeleteLocalRef(env, payload_byte_array);
-    (*env)->DeleteLocalRef(env, headers_byte_array);
 }
 
 static void s_stream_continuation_closed_fn(
@@ -191,7 +189,7 @@ static void s_on_incoming_stream_fn(
     continuation_callback_data->jvm = callback_data->jvm;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    continuation_callback_data->java_continuation = (*env)->NewObject(
+    jobject java_continuation = (*env)->NewObject(
         env,
         event_stream_server_connection_handler_properties.continuationCls,
         event_stream_server_connection_handler_properties.newContinuationConstructor,
@@ -199,7 +197,7 @@ static void s_on_incoming_stream_fn(
 
     (void)(*env)->ExceptionCheck(env);
 
-    if (!continuation_callback_data->java_continuation) {
+    if (!java_continuation) {
         // TODO: send a legit server error message.
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
         s_server_connection_data_destroy(env, callback_data);
@@ -208,17 +206,19 @@ static void s_on_incoming_stream_fn(
 
     jbyteArray operationNameArray = aws_jni_byte_array_from_cursor(env, &operation_name);
 
-    continuation_callback_data->java_continuation_handler = (*env)->CallObjectMethod(
+    jobject java_continuation_handler = (*env)->CallObjectMethod(
         env,
         callback_data->java_connection_handler,
         event_stream_server_connection_handler_properties.onIncomingStream,
-        continuation_callback_data->java_continuation,
+        java_continuation,
         operationNameArray);
-    (*env)->DeleteLocalRef(env, operationNameArray);
 
     continuation_options->user_data = continuation_callback_data;
     continuation_options->on_continuation = s_stream_continuation_fn;
     continuation_options->on_continuation_closed = s_stream_continuation_closed_fn;
+
+    continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
+    continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
 }
 
 static void s_connection_protocol_message_fn(
@@ -366,6 +366,7 @@ static void s_on_connection_shutdown_fn(
     (*env)->DeleteLocalRef(env, java_server_connection);
     (*env)->DeleteLocalRef(env, java_listener_handler);
 
+    (*env)->ExceptionDescribe(env);
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     /* this is the should be connection specific callback data. */
@@ -570,26 +571,38 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     struct message_flush_callback_args *callback_data = NULL;
     jbyte *payload_ptr = NULL;
     jbyte *headers_ptr = NULL;
+    struct aws_array_list *headers_list_alias = NULL;
+    struct aws_byte_buf *payload_alias = NULL;
     struct aws_array_list headers_list;
-    if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
-        return AWS_OP_ERR;
-    }
-
+    AWS_ZERO_STRUCT(headers_list);
+    struct aws_byte_buf payload_buf;
+    AWS_ZERO_STRUCT(payload_buf);
     int ret_val = AWS_OP_ERR;
 
-    const size_t headers_len = (*env)->GetArrayLength(env, headers);
-    headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
-    int headers_parse_error =
-        aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+    if (headers) {
+        if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
+            return AWS_OP_ERR;
+        }
 
-    if (headers_parse_error) {
-        goto clean_up;
+        const size_t headers_len = (*env)->GetArrayLength(env, headers);
+        headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
+        int headers_parse_error =
+            aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+
+        if (headers_parse_error) {
+            goto clean_up;
+        }
+
+        headers_list_alias = &headers_list;
     }
 
-    const size_t payload_len = (*env)->GetArrayLength(env, payload);
-    payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
+    if (payload) {
+        const size_t payload_len = (*env)->GetArrayLength(env, payload);
+        payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
 
-    struct aws_byte_buf payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+        payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+        payload_alias = &payload_buf;
+    }
 
     struct aws_event_stream_rpc_message_args message_args = {
         .message_flags = message_flags,

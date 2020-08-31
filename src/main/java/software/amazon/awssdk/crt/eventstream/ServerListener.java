@@ -6,12 +6,15 @@ import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.io.ServerBootstrap;
 import software.amazon.awssdk.crt.io.ServerTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
 public class ServerListener extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private TlsContext tlsContext = null;
+    private final ServerBootstrap serverBootstrap;
 
     public ServerListener(final String hostName, short port, final SocketOptions socketOptions,
                           final ServerTlsContext tlsContext, final ServerBootstrap serverBootstrap,
@@ -24,14 +27,20 @@ public class ServerListener extends CrtResource {
 
         if (tlsContext != null) {
             addReferenceTo(tlsContext);
+            this.tlsContext = tlsContext;
         }
         addReferenceTo(serverBootstrap);
+        this.serverBootstrap = serverBootstrap;
     }
 
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
             release(getNativeHandle());
+            removeReferenceTo(serverBootstrap);
+            if (tlsContext != null) {
+                removeReferenceTo(tlsContext);
+            }
         }
     }
 

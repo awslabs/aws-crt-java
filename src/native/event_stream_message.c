@@ -26,47 +26,68 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
         return (jlong)NULL;
     }
 
-    jsize headers_blob_len = (*env)->GetArrayLength(env, headers);
-    void *headers_blob = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
-    void *payload_blob = NULL;
+    struct aws_array_list *headers_list_alias = NULL;
+    struct aws_byte_buf *payload_alias = NULL;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
+    struct aws_byte_buf payload_buf;
+    AWS_ZERO_STRUCT(payload_buf);
+    void *headers_blob = NULL;
+    void *payload_blob = NULL;
 
-    if (!headers_blob) {
-        aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring headers array region failed!");
+    if (headers) {
+        jsize headers_blob_len = (*env)->GetArrayLength(env, headers);
+        headers_blob = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
+
+        if (!headers_blob) {
+            aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring headers array region failed!");
+            goto error;
+        }
+
+        if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
+            aws_jni_throw_runtime_exception(env, "Message.MessageNew: initializing headers failed!");
+            goto error;
+        }
+
+        int headers_parse_error =
+            aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_blob, headers_blob_len);
+
+        if (headers_parse_error) {
+            aws_jni_throw_runtime_exception(env, "Message.MessageNew: parsing headers failed!");
+            goto error;
+        }
+
+        headers_list_alias = &headers_list;
+    }
+
+    if (payload) {
+        jsize payload_blob_len = (*env)->GetArrayLength(env, payload);
+        payload_blob = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
+
+        if (!payload_blob) {
+            aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring payload array region failed!");
+            goto error;
+        }
+
+        payload_buf = aws_byte_buf_from_array(payload_blob, (size_t)payload_blob_len);
+        payload_alias = &payload_buf;
+    }
+
+    if (aws_event_stream_message_init(message, aws_jni_get_allocator(), headers_list_alias, payload_alias)) {
         goto error;
     }
 
-    if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
-        aws_jni_throw_runtime_exception(env, "Message.MessageNew: initializing headers failed!");
-        goto error;
+    if (headers_blob) {
+        (*env)->ReleasePrimitiveArrayCritical(env, headers, headers_blob, 0);
     }
 
-    int headers_parse_error =
-        aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_blob, headers_blob_len);
-
-    if (headers_parse_error) {
-        aws_jni_throw_runtime_exception(env, "Message.MessageNew: parsing headers failed!");
-        goto error;
+    if (payload_blob) {
+        (*env)->ReleasePrimitiveArrayCritical(env, payload, payload_blob, 0);
     }
 
-    jsize payload_blob_len = (*env)->GetArrayLength(env, payload);
-    payload_blob = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
-
-    if (!payload_blob) {
-        aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring payload array region failed!");
-        goto error;
+    if (headers_list.length) {
+        aws_array_list_clean_up(&headers_list);
     }
-
-    struct aws_byte_buf payload_buf = aws_byte_buf_from_array(payload_blob, (size_t)payload_blob_len);
-
-    if (aws_event_stream_message_init(message, aws_jni_get_allocator(), &headers_list, &payload_buf)) {
-        goto error;
-    }
-
-    (*env)->ReleasePrimitiveArrayCritical(env, headers, headers_blob, 0);
-    (*env)->ReleasePrimitiveArrayCritical(env, payload, payload_blob, 0);
-    aws_array_list_clean_up(&headers_list);
 
     return (jlong)message;
 

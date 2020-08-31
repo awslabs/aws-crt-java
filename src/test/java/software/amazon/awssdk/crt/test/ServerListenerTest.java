@@ -196,4 +196,116 @@ public class ServerListenerTest extends CrtTestFixture {
         bootstrap.close();
         elGroup.close();
     }
+
+    @Test
+    public void testContinuationMessageHandling() throws ExecutionException, InterruptedException, IOException {
+        SocketOptions socketOptions = new SocketOptions();
+        socketOptions.connectTimeoutMs = 3000;
+        socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+        socketOptions.type = SocketOptions.SocketType.STREAM;
+
+        EventLoopGroup elGroup = new EventLoopGroup(1);
+        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+        final boolean[] connectionReceived = {false};
+        final boolean[] connectionShutdown = {false};
+
+        final String[] receivedOperationName = new String[]{null};
+        final String[] receivedContinuationPayload = new String[]{null};
+
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            private ServerConnectionHandler connectionHandler = null;
+
+            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                connectionReceived[0] = true;
+
+                connectionHandler = new ServerConnectionHandler(serverConnection) {
+
+                    @Override
+                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                        int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
+                        MessageType acceptResponseType = MessageType.ConnectAck;
+
+                        connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
+                    }
+
+                    @Override
+                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                        receivedOperationName[0] = operationName;
+
+                        return new ServerConnectionContinuationHandler(continuation) {
+                            @Override
+                            protected void onContinuationClosed() {
+                            }
+
+                            @Override
+                            protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                                receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
+                                this.close();
+                                this.continuation.close();
+                            }
+                        };
+                    }
+                };
+
+                return connectionHandler;
+            }
+
+            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                connectionShutdown[0] = true;
+                connectionHandler.close();
+            }
+        });
+
+        Socket clientSocket = new Socket();
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8033);
+        clientSocket.connect(address, 3000);
+
+        Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());
+        Header messageFlags = Header.createHeader(":message-flags", 0);
+        Header streamId = Header.createHeader(":stream-id", 0);
+
+        List<Header> messageHeaders = new ArrayList<>(3);
+        messageHeaders.add(messageType);
+        messageHeaders.add(messageFlags);
+        messageHeaders.add(streamId);
+
+        Message connectMessage = new Message(messageHeaders, null);
+        ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
+        byte[] toSend = new byte[connectMessageBuf.remaining()];
+        connectMessageBuf.get(toSend);
+        connectMessage.close();
+        clientSocket.getOutputStream().write(toSend);
+
+        // this should be damn near instant, but give it a second just to be safe.
+        Thread.sleep(1000);
+
+        String operationName = "testOperation";
+        messageHeaders = new ArrayList<>(3);
+        messageHeaders.add(Header.createHeader(":message-type", (int)MessageType.ApplicationMessage.getEnumValue()));
+        messageHeaders.add(Header.createHeader(":message-flags", MessageFlags.TerminateStream.getByteValue()));
+        messageHeaders.add(Header.createHeader(":stream-id", 1));
+        messageHeaders.add(Header.createHeader("operation", operationName));
+        String payload = "{\"message\": \"message payload\"}";
+        Message continuationMessage = new Message(messageHeaders, payload.getBytes(StandardCharsets.UTF_8));
+        ByteBuffer continuationMessageBuf = continuationMessage.getMessageBuffer();
+        toSend = new byte[continuationMessageBuf.remaining()];
+        continuationMessageBuf.get(toSend);
+        continuationMessage.close();
+        clientSocket.getOutputStream().write(toSend);
+
+        // also, should fire within a millisecond, but just give it a second.
+        Thread.sleep(1000);
+        clientSocket.close();
+        // also, should fire within a millisecond, but just give it a second.
+        Thread.sleep(1000);
+        assertTrue(connectionReceived[0]);
+        //assertTrue(connectionShutdown[0]);
+        assertNotNull(receivedOperationName[0]);
+        assertEquals(operationName, receivedOperationName[0]);
+        assertEquals(payload, receivedContinuationPayload[0]);
+        listener.close();
+        listener.getShutdownCompleteFuture().get();
+        bootstrap.close();
+        elGroup.close();
+    }
 }

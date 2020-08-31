@@ -73,7 +73,7 @@ public final class EventLoopGroup extends CrtResource {
      */
     public static void setStaticDefaultNumThreads(int numThreads) {
         synchronized (EventLoopGroup.class) {
-            staticDefaultNumThreads = numThreads;
+            staticDefaultNumThreads = Math.max(1, numThreads);
         }
     }
 
@@ -107,7 +107,7 @@ public final class EventLoopGroup extends CrtResource {
         return elg;
     }
 
-    private static int staticDefaultNumThreads = 1;
+    private static int staticDefaultNumThreads = Math.max(1, Runtime.getRuntime().availableProcessors());
     private static EventLoopGroup staticDefaultEventLoopGroup;
 
     /*******************************************************************************

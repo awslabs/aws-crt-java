@@ -405,8 +405,8 @@ public abstract class CrtResource implements AutoCloseable {
             lock.unlock();
         }
 
-        waitForGlobalResourceDestruction();
+        waitForGlobalResourceDestruction(10);
     }
 
-    private static native void waitForGlobalResourceDestruction();
+    private static native void waitForGlobalResourceDestruction(int timeoutInSeconds);
 }

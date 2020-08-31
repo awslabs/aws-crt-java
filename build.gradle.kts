@@ -48,7 +48,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
     )
 
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        libcryptoPath = "/opt/openssl"
+        libcryptoPath = null;
         // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
         if (project.hasProperty("libcryptoPath")) {
             libcryptoPath = project.property("libcryptoPath").toString()

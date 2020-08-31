@@ -133,7 +133,6 @@ public class ServerListenerTest extends CrtTestFixture {
                         receivedPayload[0] = payload;
                         receivedMessageType[0] = messageType;
                         receivedMessageFlags[0] = messageFlags;
-
                     }
 
                     @Override
@@ -179,7 +178,15 @@ public class ServerListenerTest extends CrtTestFixture {
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertNotNull(receivedMessageHeaders[0]);
+        assertEquals(3, receivedMessageHeaders[0].size());
+        assertEquals(":message-type", receivedMessageHeaders[0].get(0).getName());
+        assertEquals((int)MessageType.Connect.getEnumValue(), receivedMessageHeaders[0].get(0).getValueAsInt());
+        assertEquals(":message-flags", receivedMessageHeaders[0].get(1).getName());
+        assertEquals(0, receivedMessageHeaders[0].get(1).getValueAsInt());
+        assertEquals(":stream-id", receivedMessageHeaders[0].get(2).getName());
+        assertEquals(0, receivedMessageHeaders[0].get(2).getValueAsInt());
         assertNotNull(receivedPayload[0]);
+        assertEquals(payload, new String(receivedPayload[0], StandardCharsets.UTF_8));
         assertEquals(MessageType.Connect, receivedMessageType[0]);
         assertEquals(0, receivedMessageFlags[0]);
 

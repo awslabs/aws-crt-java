@@ -126,11 +126,12 @@ static void s_stream_continuation_fn(
         message_args->headers,
         message_args->headers_count,
         sizeof(struct aws_event_stream_header_value_pair));
+    headers_list.length = message_args->headers_count;
 
     size_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
     struct aws_byte_buf headers_buf;
     aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len);
-    aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
+    headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
     aws_array_list_clean_up(&headers_list);
 
     struct aws_byte_cursor headers_cur = aws_byte_cursor_from_buf(&headers_buf);
@@ -138,6 +139,7 @@ static void s_stream_continuation_fn(
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     jbyteArray headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
+    aws_byte_buf_clean_up(&headers_buf);
 
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
@@ -225,7 +227,6 @@ static void s_connection_protocol_message_fn(
     void *user_data) {
     (void)connection;
 
-    fprintf(stderr, "callback invoked\n");
     struct connection_callback_data *callback_data = user_data;
     struct aws_array_list headers_list;
     aws_array_list_init_static(
@@ -233,11 +234,14 @@ static void s_connection_protocol_message_fn(
         message_args->headers,
         message_args->headers_count,
         sizeof(struct aws_event_stream_header_value_pair));
+    headers_list.length = message_args->headers_count;
 
-    size_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
+    uint32_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
+
     struct aws_byte_buf headers_buf;
     aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len);
-    aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
+    headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
+
     aws_array_list_clean_up(&headers_list);
 
     struct aws_byte_cursor headers_cur = aws_byte_cursor_from_buf(&headers_buf);
@@ -245,6 +249,7 @@ static void s_connection_protocol_message_fn(
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     jbyteArray headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
+    aws_byte_buf_clean_up(&headers_buf);
 
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);

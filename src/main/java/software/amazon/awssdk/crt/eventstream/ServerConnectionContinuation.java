@@ -36,7 +36,7 @@ public class ServerConnectionContinuation extends CrtResource {
 
     public void sendMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messageType, int messageFlags, MessageFlushCallback callback) {
-        byte[] headersBuf = Header.marshallHeadersForJNI(headers);
+        byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers): null;
 
         int result = sendContinuationMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 

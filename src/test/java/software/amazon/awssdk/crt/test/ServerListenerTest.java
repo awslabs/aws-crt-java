@@ -240,8 +240,16 @@ public class ServerListenerTest extends CrtTestFixture {
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
-                                this.close();
-                                this.continuation.close();
+
+                                String responsePayload = "{ \"message\": \"this is a response message\" }";
+                                continuation.sendMessage(null, responsePayload.getBytes(StandardCharsets.UTF_8),
+                                        MessageType.ApplicationMessage,
+                                        MessageFlags.TerminateStream.getByteValue())
+                                        .whenComplete((res, ex) ->  {
+                                            this.close();
+                                            this.continuation.close();
+                                            connection.closeConnection(0);
+                                        });
                             }
                         };
                     }
@@ -282,7 +290,7 @@ public class ServerListenerTest extends CrtTestFixture {
         String operationName = "testOperation";
         messageHeaders = new ArrayList<>(3);
         messageHeaders.add(Header.createHeader(":message-type", (int)MessageType.ApplicationMessage.getEnumValue()));
-        messageHeaders.add(Header.createHeader(":message-flags", MessageFlags.TerminateStream.getByteValue()));
+        messageHeaders.add(Header.createHeader(":message-flags", 0));
         messageHeaders.add(Header.createHeader(":stream-id", 1));
         messageHeaders.add(Header.createHeader("operation", operationName));
         String payload = "{\"message\": \"message payload\"}";
@@ -299,7 +307,7 @@ public class ServerListenerTest extends CrtTestFixture {
         // also, should fire within a millisecond, but just give it a second.
         Thread.sleep(1000);
         assertTrue(connectionReceived[0]);
-        //assertTrue(connectionShutdown[0]);
+        assertTrue(connectionShutdown[0]);
         assertNotNull(receivedOperationName[0]);
         assertEquals(operationName, receivedOperationName[0]);
         assertEquals(payload, receivedContinuationPayload[0]);

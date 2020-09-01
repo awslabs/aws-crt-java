@@ -701,25 +701,33 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     jbyte *payload_ptr = NULL;
     jbyte *headers_ptr = NULL;
     struct aws_array_list headers_list;
-    if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
-        return AWS_OP_ERR;
-    }
+    AWS_ZERO_STRUCT(headers_list);
+    struct aws_byte_buf payload_buf;
+    AWS_ZERO_STRUCT(payload_buf);
 
     int ret_val = AWS_OP_ERR;
 
-    const size_t headers_len = (*env)->GetArrayLength(env, headers);
-    headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
-    int headers_parse_error =
-        aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+    if (headers) {
+        if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
+            return AWS_OP_ERR;
+        }
 
-    if (headers_parse_error) {
-        goto clean_up;
+        const size_t headers_len = (*env)->GetArrayLength(env, headers);
+        headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
+        int headers_parse_error =
+            aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+
+        if (headers_parse_error) {
+            goto clean_up;
+        }
     }
 
-    const size_t payload_len = (*env)->GetArrayLength(env, payload);
-    payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
+    if (payload) {
+        const size_t payload_len = (*env)->GetArrayLength(env, payload);
+        payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
 
-    struct aws_byte_buf payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+        payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+    }
 
     struct aws_event_stream_rpc_message_args message_args = {
         .message_flags = message_flags,

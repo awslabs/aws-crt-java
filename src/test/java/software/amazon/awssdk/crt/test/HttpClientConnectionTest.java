@@ -105,4 +105,25 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         testConnectionWithAllCiphers(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
         testConnectionWithAllCiphers(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
     }
+
+    @Test
+    public void testStaticDefaults() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+        try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
+             SocketOptions socketOptions = new SocketOptions();
+             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);
+
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    ;
+                }
+            }
+        }
+    }
 }

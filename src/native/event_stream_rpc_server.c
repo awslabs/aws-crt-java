@@ -571,8 +571,6 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     struct message_flush_callback_args *callback_data = NULL;
     jbyte *payload_ptr = NULL;
     jbyte *headers_ptr = NULL;
-    struct aws_array_list *headers_list_alias = NULL;
-    struct aws_byte_buf *payload_alias = NULL;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
     struct aws_byte_buf payload_buf;
@@ -592,16 +590,12 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
         if (headers_parse_error) {
             goto clean_up;
         }
-
-        headers_list_alias = &headers_list;
     }
 
     if (payload) {
         const size_t payload_len = (*env)->GetArrayLength(env, payload);
         payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
-
         payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
-        payload_alias = &payload_buf;
     }
 
     struct aws_event_stream_rpc_message_args message_args = {

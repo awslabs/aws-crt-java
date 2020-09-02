@@ -16,7 +16,7 @@ plugins {
 repositories {
     mavenLocal()
     maven {
-        url = uri("http://repo.maven.apache.org/maven2")
+        url = uri("https://repo.maven.apache.org/maven2")
     }
 }
 

@@ -59,8 +59,11 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
 }
 
 JNIEXPORT
-jlong JNICALL
-    Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(JNIEnv *env, jclass jni_elg, jobject elg_jobject, jint num_threads) {
+jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(
+    JNIEnv *env,
+    jclass jni_elg,
+    jobject elg_jobject,
+    jint num_threads) {
     (void)jni_elg;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -80,13 +83,13 @@ jlong JNICALL
         .shutdown_callback_user_data = callback_data,
     };
 
-    struct aws_event_loop_group *elg = aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
+    struct aws_event_loop_group *elg =
+        aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed");
         goto on_error;
     }
-
 
     callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
 
@@ -98,7 +101,6 @@ on_error:
 
     return (jlong)NULL;
 }
-
 
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDestroy(

@@ -22,8 +22,8 @@ import java.util.function.*;
 import java.io.UnsupportedEncodingException;
 
 public class SelfPubSubTest extends MqttClientConnectionFixture {
-    //@Rule
-    //public Timeout testTimeout = Timeout.seconds(15);
+    @Rule
+    public Timeout testTimeout = Timeout.seconds(15);
     
     public SelfPubSubTest() {
     }

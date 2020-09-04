@@ -72,7 +72,19 @@ public enum TlsCipherPreference {
      *
      * This Cipher Preference may stop being supported at any time.
      */
-    TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02(4);
+    TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02(4),
+
+    /**
+     * This TlsCipherPreference contains Kyber Round 2, BIKE Round 2, SIKE Round 2, BIKE Round 1, and SIKE Round 1 Draft
+     * Hybrid TLS Ciphers at the top of the preference list.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
+     *
+     * This Cipher Preference may stop being supported at any time.
+     */
+    TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07(5);
 
     private int val;
 

@@ -88,7 +88,6 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         close();
     }
 
-    /*
     @Test
     public void testPubSubOnMessage() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -107,8 +106,6 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         connect(messageHandler);
 
         try {
-            connection.onMessage(messageHandler);
-
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);
             subscribed.thenApply(unused -> subsAcked++);
             int packetId = subscribed.get();
@@ -144,7 +141,4 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         disconnect();
         close();
     }
-
-     */
-
 };

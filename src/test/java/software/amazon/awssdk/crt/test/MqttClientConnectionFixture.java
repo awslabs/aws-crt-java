@@ -130,11 +130,15 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connect(false, 0, null);
     }
 
-    boolean connect(Consumer<MqttMessage> onAnyMessageHandler) {
-        return connect(false, 0, onAnyMessageHandler);
+    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
+        return connect(false, 0, anyMessageHandler);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveMs, Consumer<MqttMessage> onAnyMessageHandler) {
+    boolean connect(boolean cleanSession, int keepAliveMs) {
+        return connect(cleanSession, keepAliveMs, null);
+    }
+
+    boolean connect(boolean cleanSession, int keepAliveMs, Consumer<MqttMessage> anyMessageHandler) {
         Assume.assumeTrue(findCredentials());
 
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -182,8 +186,8 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 modifyConnectionConfiguration(config);
 
                 connection = new MqttClientConnection(config);
-                if (onAnyMessageHandler != null) {
-                    connection.onMessage(onAnyMessageHandler);
+                if (anyMessageHandler != null) {
+                    connection.onMessage(anyMessageHandler);
                 }
 
                 CompletableFuture<Boolean> connected = connection.connect();

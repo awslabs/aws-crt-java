@@ -25,6 +25,14 @@ public final class ClientBootstrap extends CrtResource {
      * or if the system is unable to allocate space for a native client bootstrap object
      */
     public ClientBootstrap(EventLoopGroup elg, HostResolver hr) throws CrtRuntimeException {
+        if (elg == null) {
+            elg = EventLoopGroup.getOrCreateStaticDefault();
+        }
+
+        if (hr == null) {
+            hr = HostResolver.getOrCreateStaticDefault();
+        }
+
         acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
 
         // Order is likely important here

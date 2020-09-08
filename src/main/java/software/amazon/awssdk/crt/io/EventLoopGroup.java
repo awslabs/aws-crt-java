@@ -24,7 +24,7 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNew(numThreads));
+        acquireNativeHandle(eventLoopGroupNew(this, numThreads));
     }
 
     /**
@@ -41,7 +41,7 @@ public final class EventLoopGroup extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            eventLoopGroupDestroy(this, getNativeHandle());
+            eventLoopGroupDestroy(getNativeHandle());
         }
     }
 
@@ -113,6 +113,6 @@ public final class EventLoopGroup extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
-    private static native void eventLoopGroupDestroy(EventLoopGroup thisObj, long elg);
+    private static native long eventLoopGroupNew(EventLoopGroup thisObj, int numThreads) throws CrtRuntimeException;
+    private static native void eventLoopGroupDestroy(long elg);
 };

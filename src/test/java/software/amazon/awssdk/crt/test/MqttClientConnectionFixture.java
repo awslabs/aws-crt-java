@@ -127,7 +127,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     }
 
     boolean connect() {
-        return connect(false, 0);
+        return connect(false, 0, null);
     }
 
     boolean connect(Consumer<MqttMessage> anyMessageHandler) {

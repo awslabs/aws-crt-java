@@ -35,18 +35,20 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
     void *headers_blob = NULL;
     void *payload_blob = NULL;
 
+    struct aws_event_stream_message *return_message = NULL;
+
     if (headers) {
         jsize headers_blob_len = (*env)->GetArrayLength(env, headers);
         headers_blob = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
 
         if (!headers_blob) {
             aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring headers array region failed!");
-            goto error;
+            goto clean_up;
         }
 
         if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
             aws_jni_throw_runtime_exception(env, "Message.MessageNew: initializing headers failed!");
-            goto error;
+            goto clean_up;
         }
 
         int headers_parse_error =
@@ -54,7 +56,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
 
         if (headers_parse_error) {
             aws_jni_throw_runtime_exception(env, "Message.MessageNew: parsing headers failed!");
-            goto error;
+            goto clean_up;
         }
 
         headers_list_alias = &headers_list;
@@ -66,7 +68,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
 
         if (!payload_blob) {
             aws_jni_throw_runtime_exception(env, "Message.MessageNew: acquiring payload array region failed!");
-            goto error;
+            goto clean_up;
         }
 
         payload_buf = aws_byte_buf_from_array(payload_blob, (size_t)payload_blob_len);
@@ -74,7 +76,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
     }
 
     if (aws_event_stream_message_init(message, aws_jni_get_allocator(), headers_list_alias, payload_alias)) {
-        goto error;
+        goto clean_up;
     }
 
     if (headers_blob) {
@@ -89,9 +91,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
         aws_array_list_clean_up(&headers_list);
     }
 
-    return (jlong)message;
+    return_message = message;
 
-error:
+clean_up:
     if (headers_blob) {
         (*env)->ReleasePrimitiveArrayCritical(env, headers, headers_blob, 0);
     }
@@ -104,7 +106,11 @@ error:
         aws_array_list_clean_up(&headers_list);
     }
 
-    return (jlong)NULL;
+    if (!return_message && message) {
+        aws_mem_release(aws_jni_get_allocator(), message);
+    }
+
+    return (jlong)return_message;
 }
 
 JNIEXPORT

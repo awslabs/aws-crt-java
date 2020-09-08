@@ -86,7 +86,7 @@ static void s_server_listener_shutdown_complete(
     if (java_server_listener) {
         (*env)->CallVoidMethod(env, java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
         (*env)->DeleteLocalRef(env, java_server_listener);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        (void)(*env)->ExceptionCheck(env);
     }
 
     s_shutdown_callback_data_destroy(env, callback_data);
@@ -119,7 +119,11 @@ static void s_stream_continuation_fn(
     const struct aws_event_stream_rpc_message_args *message_args,
     void *user_data) {
     (void)token;
+
     struct continuation_callback_data *callback_data = user_data;
+
+    /* this is not how we recommend you use the array_list api, but it is correct, and it prevents the need for extra
+     * allocations and copies. */
     struct aws_array_list headers_list;
     aws_array_list_init_static(
         &headers_list,
@@ -130,7 +134,12 @@ static void s_stream_continuation_fn(
 
     size_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
     struct aws_byte_buf headers_buf;
-    aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len);
+
+    if (aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len)) {
+        /* TODO: this error needs to be communicated back and the connection needs to be shutdown. */
+        return;
+    }
+
     headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
     aws_array_list_clean_up(&headers_list);
 
@@ -186,6 +195,12 @@ static void s_on_incoming_stream_fn(
     struct continuation_callback_data *continuation_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct continuation_callback_data));
 
+    if (!continuation_callback_data) {
+        aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
+        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
+        return;
+    }
+
     continuation_callback_data->jvm = callback_data->jvm;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
@@ -198,11 +213,13 @@ static void s_on_incoming_stream_fn(
     (void)(*env)->ExceptionCheck(env);
 
     if (!java_continuation) {
-        // TODO: send a legit server error message.
+        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
-        s_server_connection_data_destroy(env, callback_data);
+        s_server_continuation_data_destroy(env, continuation_callback_data);
         return;
     }
+
+    continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
 
     jbyteArray operationNameArray = aws_jni_byte_array_from_cursor(env, &operation_name);
 
@@ -213,11 +230,18 @@ static void s_on_incoming_stream_fn(
         java_continuation,
         operationNameArray);
 
+    (void)(*env)->ExceptionCheck(env);
+
+    if (!java_continuation_handler) {
+        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
+        aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
+        s_server_continuation_data_destroy(env, continuation_callback_data);
+        return;
+    }
+
     continuation_options->user_data = continuation_callback_data;
     continuation_options->on_continuation = s_stream_continuation_fn;
     continuation_options->on_continuation_closed = s_stream_continuation_closed_fn;
-
-    continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
     continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
 }
 
@@ -228,6 +252,9 @@ static void s_connection_protocol_message_fn(
     (void)connection;
 
     struct connection_callback_data *callback_data = user_data;
+
+    /* this is not how we recommend you use the array_list api, but it is correct, and it prevents the need for extra
+     * allocations and copies. */
     struct aws_array_list headers_list;
     aws_array_list_init_static(
         &headers_list,
@@ -239,7 +266,12 @@ static void s_connection_protocol_message_fn(
     uint32_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
 
     struct aws_byte_buf headers_buf;
-    aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len);
+
+    if (aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len)) {
+        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
+        return;
+    }
+
     headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
 
     aws_array_list_clean_up(&headers_list);
@@ -310,15 +342,14 @@ static int s_on_new_connection_fn(
         java_server_connection,
         error_code);
 
+    /* we check whether the function succeeded when we do the null check on java_connection_handler below */
+    (void)(*env)->ExceptionCheck(env);
+
     if (!java_connection_handler) {
         goto error;
     }
 
     connection_callback_data->java_connection_handler = (*env)->NewGlobalRef(env, java_connection_handler);
-
-    /* we got an object back so this shouldn't be possible. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
-
     connection_options->on_connection_protocol_message = s_connection_protocol_message_fn;
     connection_options->on_incoming_stream = s_on_incoming_stream_fn;
     connection_options->user_data = connection_callback_data;
@@ -366,8 +397,7 @@ static void s_on_connection_shutdown_fn(
     (*env)->DeleteLocalRef(env, java_server_connection);
     (*env)->DeleteLocalRef(env, java_listener_handler);
 
-    (*env)->ExceptionDescribe(env);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    (void)(*env)->ExceptionCheck(env);
 
     /* this is the should be connection specific callback data. */
     s_server_connection_data_destroy(env, callback_data);
@@ -402,6 +432,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     struct aws_tls_connection_options connection_options;
     AWS_ZERO_STRUCT(connection_options);
     struct aws_tls_connection_options *conn_options_ptr = NULL;
+    struct aws_string *host_name_str = NULL;
 
     if (tls_context) {
         aws_tls_connection_options_init_from_ctx(&connection_options, tls_context);
@@ -413,7 +444,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     struct shutdown_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct shutdown_callback_data));
     if (!callback_data) {
         aws_jni_throw_runtime_exception(env, "ServerListener.server_listener_new: Unable to allocate");
-        return (jlong)NULL;
+        goto error;
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
@@ -436,7 +467,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
 
     const size_t host_name_len = (*env)->GetArrayLength(env, jni_host_name);
     jbyte *host_name = (*env)->GetPrimitiveArrayCritical(env, jni_host_name, NULL);
-    struct aws_string *host_name_str = aws_string_new_from_array(allocator, (uint8_t *)host_name, host_name_len);
+    host_name_str = aws_string_new_from_array(allocator, (uint8_t *)host_name, host_name_len);
     (*env)->ReleasePrimitiveArrayCritical(env, jni_host_name, host_name, 0);
 
     if (!host_name_str) {
@@ -461,6 +492,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     struct aws_event_stream_rpc_server_listener *listener =
         aws_event_stream_rpc_server_new_listener(allocator, &listener_options);
     aws_string_destroy(host_name_str);
+    host_name_str = NULL;
+
     if (!listener) {
         aws_jni_throw_runtime_exception(
             env, "ServerBootstrap.server_bootstrap_new: Unable to allocate new aws_event_stream_rpc_server_listener");
@@ -470,6 +503,14 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     return (jlong)listener;
 
 error:
+    if (host_name_str) {
+        aws_string_destroy(host_name_str);
+    }
+
+    if (conn_options_ptr) {
+        aws_tls_connection_options_clean_up(conn_options_ptr);
+    }
+
     s_shutdown_callback_data_destroy(env, callback_data);
     return (jlong)NULL;
 }

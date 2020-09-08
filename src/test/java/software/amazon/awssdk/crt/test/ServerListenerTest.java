@@ -208,6 +208,7 @@ public class ServerListenerTest extends CrtTestFixture {
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
+        final boolean[] continuationClosed = {false};
 
         final String[] receivedOperationName = new String[]{null};
         final String[] receivedContinuationPayload = new String[]{null};
@@ -235,6 +236,7 @@ public class ServerListenerTest extends CrtTestFixture {
                         return new ServerConnectionContinuationHandler(continuation) {
                             @Override
                             protected void onContinuationClosed() {
+                                continuationClosed[0] = true;
                             }
 
                             @Override

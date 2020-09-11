@@ -97,7 +97,7 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: Extravert-ir/msvc-dev-cmd@v1
       with:
         toolset: 14.0
         arch: ${{ matrix.arch }}

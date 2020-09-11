@@ -360,7 +360,7 @@
                             <exportAntProperties>true</exportAntProperties>
                             <target>
                                 <property environment="env"/>
-                                <condition property="cmake.platform" value="-T${env.AWS_CMAKE_PLATFORM}" else="-DPLATFORM_DUMMY=1">
+                                <condition property="cmake.platform" value="-A${env.AWS_CMAKE_PLATFORM}" else="-DPLATFORM_DUMMY=1">
                                     <isset property="env.AWS_CMAKE_PLATFORM" />
                                 </condition>
                                 <echo message="Platform = ${cmake.platform}"/>

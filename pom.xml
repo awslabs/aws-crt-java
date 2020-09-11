@@ -168,7 +168,6 @@
                                         <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${cmake.generator}</argument>
-                                        <argument>${cmake.platform}</argument>
                                         <argument>${cmake.toolset}</argument>
                                     </arguments>
                                 </configuration>
@@ -347,23 +346,6 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>cmake-platform</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <exportAntProperties>true</exportAntProperties>
-                            <target>
-                                <property environment="env"/>
-                                <condition property="cmake.platform" value="-A${env.AWS_CMAKE_PLATFORM}" else="-DPLATFORM_DUMMY=1">
-                                    <isset property="env.AWS_CMAKE_PLATFORM" />
-                                </condition>
-                                <echo message="Platform = ${cmake.platform}"/>
                             </target>
                         </configuration>
                     </execution>

@@ -12,7 +12,7 @@
 	url = https://github.com/awslabs/aws-c-cal.git
 [submodule "aws-common-runtime/aws-c-auth"]
 	path = aws-common-runtime/aws-c-auth
-	url = https://github.com/awslabs/aws-c-auth.git
+	url = ssh://git-codecommit.us-west-2.amazonaws.com/v1/repos/aws-c-auth
 [submodule "aws-common-runtime/aws-c-http"]
 	path = aws-common-runtime/aws-c-http
 	url = https://github.com/awslabs/aws-c-http.git

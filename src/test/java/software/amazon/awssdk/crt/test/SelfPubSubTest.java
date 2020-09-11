@@ -37,6 +37,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
     @Test
     public void testPubSub() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
         connect();
 
         try {
@@ -86,10 +87,11 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         disconnect();
         close();
     }
-    
+
     @Test
     public void testPubSubOnMessage() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
         Consumer<MqttMessage> messageHandler = (message) -> {
             byte[] payload = message.getPayload();
             try {

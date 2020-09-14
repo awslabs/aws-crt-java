@@ -97,6 +97,27 @@ public class SigningTest extends CrtTestFixture {
         return new HttpRequest(method, path, requestHeaders, null);
     }
 
+    private HttpRequest createBadBodyStreamRequest(String method, String path) throws Exception {
+
+        HttpHeader[] requestHeaders = new HttpHeader[]{
+                new HttpHeader("Something", "else")
+        };
+
+        HttpRequestBodyStream badBodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                throw new RuntimeException("Doh");
+            }
+
+            @Override
+            public boolean resetPosition() {
+                return true;
+            }
+        };
+
+        return new HttpRequest(method, path, requestHeaders, badBodyStream);
+    }
+
     private boolean hasHeader(HttpRequest request, String name) {
         for (HttpHeader header : request.getHeaders()) {
             if (header.getName().equals(name)) {
@@ -288,6 +309,40 @@ public class SigningTest extends CrtTestFixture {
             assertTrue(cause.getClass() == CrtRuntimeException.class);
             CrtRuntimeException crt = (CrtRuntimeException) cause;
             assertTrue(crt.errorName.equals("AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER"));
+            throw crt;
+        }
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void testSigningFailureBodyStreamException() throws Exception {
+        try (StaticCredentialsProvider provider = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+                .withAccessKeyId(TEST_ACCESS_KEY_ID)
+                .withSecretAccessKey(TEST_SECRET_ACCESS_KEY)
+                .build();) {
+
+            // request is missing Host header
+            HttpRequest request = createBadBodyStreamRequest("POST", "/bad");
+
+            try (AwsSigningConfig config = new AwsSigningConfig()) {
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+                config.setRegion("us-east-1");
+                config.setService("service");
+                config.setTime(System.currentTimeMillis());
+                config.setCredentialsProvider(provider);
+                config.setUseDoubleUriEncode(true);
+                config.setShouldNormalizeUriPath(true);
+                config.setSignedBodyHeader(AwsSigningConfig.AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256);
+
+                CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+                result.get();
+            }
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            assertTrue(cause != null);
+            assertTrue(cause.getClass() == CrtRuntimeException.class);
+            CrtRuntimeException crt = (CrtRuntimeException) cause;
+            assertTrue(crt.errorName.equals("AWS_IO_STREAM_READ_FAILED"));
             throw crt;
         }
     }

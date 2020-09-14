@@ -21,6 +21,7 @@ struct aws_http_request_body_stream_impl {
     JavaVM *jvm;
     jobject http_request_body_stream;
     bool body_done;
+    bool is_valid;
 };
 
 static int s_aws_input_stream_seek(
@@ -28,6 +29,11 @@ static int s_aws_input_stream_seek(
     aws_off_t offset,
     enum aws_stream_seek_basis basis) {
     struct aws_http_request_body_stream_impl *impl = stream->impl;
+
+    if (!impl->is_valid) {
+        return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
+        ;
+    }
 
     int result = AWS_OP_SUCCESS;
     if (impl->http_request_body_stream != NULL) {
@@ -43,7 +49,8 @@ static int s_aws_input_stream_seek(
 
         if ((*env)->ExceptionCheck(env)) {
             (*env)->ExceptionClear(env);
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            impl->is_valid = false;
+            return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
         }
     }
 
@@ -56,6 +63,10 @@ static int s_aws_input_stream_seek(
 
 static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_byte_buf *dest) {
     struct aws_http_request_body_stream_impl *impl = stream->impl;
+
+    if (!impl->is_valid) {
+        return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
+    }
 
     if (impl->http_request_body_stream == NULL) {
         impl->body_done = true;
@@ -77,7 +88,8 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
 
     if ((*env)->ExceptionCheck(env)) {
         (*env)->ExceptionClear(env);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        impl->is_valid = false;
+        return aws_raise_error(AWS_IO_STREAM_READ_FAILED);
     }
 
     size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
@@ -92,7 +104,7 @@ static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct
     struct aws_http_request_body_stream_impl *impl = stream->impl;
 
     status->is_end_of_stream = impl->body_done;
-    status->is_valid = true;
+    status->is_valid = impl->is_valid;
 
     return AWS_OP_SUCCESS;
 }
@@ -152,6 +164,7 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
     jint jvmresult = (*env)->GetJavaVM(env, &impl->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
+    impl->is_valid = true;
     if (http_request_body_stream != NULL) {
         impl->http_request_body_stream = (*env)->NewGlobalRef(env, http_request_body_stream);
         if (impl->http_request_body_stream == NULL) {

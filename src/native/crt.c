@@ -320,3 +320,20 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
         "At shutdown, %u bytes remaining",
         (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
 }
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CRT_nativeCheckJniExceptionContract(
+    JNIEnv *env,
+    jclass jni_crt_class,
+    jboolean clear_exception) {
+
+    (*env)->CallStaticVoidMethod(env, jni_crt_class, crt_properties.test_jni_exception_method_id, true);
+
+    if (clear_exception) {
+        (*env)->ExceptionClear(env);
+    } else {
+        (*env)->ExceptionCheck(env);
+    }
+
+    (*env)->CallStaticVoidMethod(env, jni_crt_class, crt_properties.test_jni_exception_method_id, false);
+}

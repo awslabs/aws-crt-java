@@ -42,6 +42,7 @@ static int s_aws_input_stream_seek(
         }
 
         if ((*env)->ExceptionCheck(env)) {
+            (*env)->ExceptionClear(env);
             return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
     }
@@ -75,6 +76,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
     if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 

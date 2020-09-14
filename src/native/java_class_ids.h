@@ -175,6 +175,13 @@ struct java_ecc_key_pair_properties {
 };
 extern struct java_ecc_key_pair_properties ecc_key_pair_properties;
 
+/* CRT */
+struct java_crt_properties {
+    jclass crt_class;
+    jmethodID test_jni_exception_method_id;
+};
+extern struct java_crt_properties crt_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

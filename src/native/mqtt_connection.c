@@ -964,7 +964,14 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     int error_code = AWS_ERROR_SUCCESS;
 
     if (jni_throwable != NULL) {
-        error_code = AWS_ERROR_UNKNOWN; /* TODO: given java exception, choose appropriate aws error code */
+        if ((*env)->IsInstanceOf(env, jni_throwable, crt_runtime_exception_properties.crt_runtime_exception_class)) {
+            error_code = (*env)->GetIntField(env, jni_throwable, crt_runtime_exception_properties.error_code_field_id);
+        }
+
+        if (error_code == AWS_ERROR_SUCCESS) {
+            error_code = AWS_ERROR_UNKNOWN; /* is there anything more that could be done here? */
+        }
+
         goto done;
     }
 

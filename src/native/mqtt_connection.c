@@ -296,7 +296,7 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteWeakGlobalRef(env, connection->java_mqtt_connection);
     }
 
-    aws_mqtt_client_connection_destroy(connection->client_connection);
+    aws_mqtt_client_connection_release(connection->client_connection);
 
     aws_tls_connection_options_clean_up(&connection->tls_options);
 
@@ -588,6 +588,9 @@ static void s_on_subscription_delivered(
     (*env)->DeleteLocalRef(env, jni_payload);
     (*env)->DeleteLocalRef(env, jni_topic);
 
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+    }
     AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 }
 
@@ -961,7 +964,14 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     int error_code = AWS_ERROR_SUCCESS;
 
     if (jni_throwable != NULL) {
-        error_code = AWS_ERROR_UNKNOWN; /* TODO: given java exception, choose appropriate aws error code */
+        if ((*env)->IsInstanceOf(env, jni_throwable, crt_runtime_exception_properties.crt_runtime_exception_class)) {
+            error_code = (*env)->GetIntField(env, jni_throwable, crt_runtime_exception_properties.error_code_field_id);
+        }
+
+        if (error_code == AWS_ERROR_SUCCESS) {
+            error_code = AWS_ERROR_UNKNOWN; /* is there anything more that could be done here? */
+        }
+
         goto done;
     }
 

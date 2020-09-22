@@ -84,5 +84,7 @@ target/
 .project
 .settings/
 
+.gradle/
+
 # configuration pulled from Secrets Manager
 settings.xml

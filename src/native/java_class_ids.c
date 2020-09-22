@@ -76,7 +76,7 @@ static void s_cache_aws_signing_config(JNIEnv *env) {
     AWS_FATAL_ASSERT(aws_signing_config_properties.omit_session_token_field_id);
 
     aws_signing_config_properties.signed_body_value_field_id =
-        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "I");
+        (*env)->GetFieldID(env, aws_signing_config_class, "signedBodyValue", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(aws_signing_config_properties.signed_body_value_field_id);
 
     aws_signing_config_properties.signed_body_header_field_id =
@@ -367,6 +367,9 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     crt_runtime_exception_properties.constructor_method_id =
         (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;)V");
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.constructor_method_id);
+
+    crt_runtime_exception_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");
+    AWS_FATAL_ASSERT(crt_runtime_exception_properties.error_code_field_id);
 }
 
 void cache_java_class_ids(JNIEnv *env) {

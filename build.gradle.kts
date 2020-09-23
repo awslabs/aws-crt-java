@@ -1,17 +1,37 @@
 /*
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
- *
- * Helpful resources/examples:
- * http://gradle.monochromeroad.com/docs/userguide/nativeBinaries.html
- * https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Decompiler/build.gradle
  */
 
 plugins {
-    `c`
     `java-library`
     `maven-publish`
 }
+
+apply {
+    from("common.gradle.kts")
+}
+val getHostOs = extra["getHostOs"] as () -> String
+val getHostArch = extra["getHostArch"] as () -> String
+
+val platforms = listOf(
+    listOf("linux", "x86_32"),
+    listOf("linux", "x86_64"),
+    listOf("linux", "armv7"),
+    listOf("linux", "armv6"),
+    listOf("linux", "armv8"),
+    listOf("android", "x86"),
+    listOf("android", "x86_64"),
+    listOf("android", "armeabi-v7a"),
+    listOf("android", "arm64-v8a"),
+    listOf("windows", "x86"),
+    listOf("windows", "x86_64"),
+    listOf("osx", "x86_64"),
+    listOf("freebsd", "x86_64")
+)
+
+val targetOs = getHostOs()
+val targetArch = getHostArch()
 
 repositories {
     mavenLocal()
@@ -20,7 +40,12 @@ repositories {
     }
 }
 
+configurations {
+    create("jni")
+}
+
 dependencies {
+    "jni"(project(":src:native"))
     testImplementation("junit:junit:4.12")
 }
 
@@ -28,94 +53,19 @@ group = "software.amazon.awssdk.crt"
 version = "1.0.0-SNAPSHOT"
 description = "software.amazon.awssdk.crt:aws-crt"
 
-var libcryptoPath : String? = null
-
-var buildType = "RelWithDebInfo"
-if (project.hasProperty("buildType")) {
-    buildType = project.property("buildType").toString()
-    logger.info("Using custom build type: ${buildType}")
-}
-
-val cmakeConfigure = tasks.register("cmakeConfigure") {
-    var cmakeArgs = listOf(
-        "-B${buildDir}/cmake-build",
-        "-H${projectDir}",
-        "-DCMAKE_BUILD_TYPE=${buildType}",
-        "-DCMAKE_INSTALL_PREFIX=${buildDir}/cmake-build",
-        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-        "-DBUILD_DEPS=ON",
-        "-DBUILD_TESTING=OFF"
-    )
-
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        libcryptoPath = "/opt/openssl"
-        // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
-        if (project.hasProperty("libcryptoPath")) {
-            libcryptoPath = project.property("libcryptoPath").toString()
-            logger.info("Using project libcrypto path: ${libcryptoPath}")
-        }
-    }
-
-    if (libcryptoPath != null) {
-        cmakeArgs += listOf(
-            "-DLibCrypto_INCLUDE_DIR=${libcryptoPath}/include",
-            "-DLibCrypto_STATIC_LIBRARY=${libcryptoPath}/lib/libcrypto.a"
-        )
-    }
-
-    inputs.file("CMakeLists.txt")
-    outputs.file("${buildDir}/cmake-build/CMakeCache.txt")
-
-    doLast {
-        val argsStr = cmakeArgs.joinToString(separator=" ")
-        logger.info("cmake ${argsStr}")
-        exec {
-            executable("cmake")
-            args(cmakeArgs)
-        }
-    }
-}
-
-val cmakeBuild = tasks.register("cmakeBuild") {
-    dependsOn(cmakeConfigure)
-    inputs.file("CMakeLists.txt")
-    inputs.file("${buildDir}/cmake-build/CMakeCache.txt")
-    inputs.files(fileTree("src/native").matching {
-        include(listOf("**/*.c", "**/*.h"))
-    })
-    inputs.files(fileTree("aws-common-runtime").matching {
-        include(listOf("**/CMakeLists.txt", "**/*.c", "**/*.h"))
-    })
-    outputs.file("${buildDir}/cmake-build/lib/libaws-crt-jni.so")
-
-    var cmakeArgs = listOf(
-        "--build", "${buildDir}/cmake-build",
-        "--target", "all"
-    )
-
-    doLast {
-        val argsStr = cmakeArgs.joinToString(separator=" ")
-        logger.info("cmake ${argsStr}")
-        exec {
-            executable("cmake")
-            args(cmakeArgs)
-        }
-    }
-}
-
 sourceSets {
     main {
         java {
             setSrcDirs(listOf("src/main/java"))
         }
-        // include shared libraries built by cmake/CI/CD in the lib folder
-        resources {
-            srcDir("${buildDir}/cmake-build/lib")
-        }
     }
     test {
         java {
             setSrcDirs(listOf("src/test/java"))
+        }
+        // include shared libraries for testing (since testing is done without JARs)
+        resources {
+            srcDir("${buildDir}/cmake-build/lib/")
         }
     }
 }
@@ -128,10 +78,11 @@ java {
 }
 
 tasks.compileJava {
-    dependsOn(cmakeBuild)
+    dependsOn(":src:native:crtjni")
 }
 
 tasks.test {
+    dependsOn(tasks.jar)
     useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
@@ -147,9 +98,17 @@ tasks.compileTestJava {
     dependsOn(tasks.compileJava)
 }
 
+tasks.jar {
+    archiveClassifier.set("${targetOs}-${targetArch}")
+    from(sourceSets.main.get().output)
+    from(fileTree("${buildDir}/cmake-build/lib/${targetOs}/${targetArch}")) {
+        into("lib/${targetOs}/${targetArch}")
+    }
+}
+
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("maven-${project.name}") {
             artifactId = project.name
             from(components["java"])
             pom {

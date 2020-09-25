@@ -168,6 +168,7 @@
                                         <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${cmake.generator}</argument>
+                                        <argument>${cmake.toolset}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -332,6 +333,7 @@
                         </goals>
                     </execution>
                     <execution>
+                        <id>cmake-generator</id>
                         <phase>initialize</phase>
                         <goals>
                             <goal>run</goal>
@@ -344,6 +346,23 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cmake-toolset</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <property environment="env"/>
+                                <condition property="cmake.toolset" value="-T${env.AWS_CMAKE_TOOLSET}" else="-DTOOLSET_DUMMY=1">
+                                    <isset property="env.AWS_CMAKE_TOOLSET" />
+                                </condition>
+                                <echo message="Toolset = ${cmake.toolset}"/>
                             </target>
                         </configuration>
                     </execution>

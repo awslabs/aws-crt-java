@@ -36,6 +36,57 @@ public class HostResolver extends CrtResource {
         }
     }
 
+    /*
+     * Static interface for access to a default, lazily-created host resolver for users who don't
+     * want to deal with the associated resource management.  Client bootstraps will use this host resolver
+     * if they are passed a null value.
+     */
+
+    /**
+     * Sets the max number of cached host entries for the static default resolver, if it's ever created/used. Has no
+     * effect if the static default host resolver has already been created.
+     *
+     * @param maxEntries maximum number of host entries cached
+     */
+    public static void setStaticDefaultMaxEntries(int maxEntries) {
+        synchronized (HostResolver.class) {
+            staticDefaultMaxEntries = maxEntries;
+        }
+    }
+
+    /**
+     * Closes the static default host resolver, if it exists.  Primarily intended for tests that use the static
+     * default resolver, before they call waitForNoResources().
+     */
+    public static void closeStaticDefault() {
+        synchronized (HostResolver.class) {
+            if (staticDefaultResolver != null) {
+                staticDefaultResolver.close();
+            }
+            staticDefaultResolver = null;
+        }
+    }
+
+    /**
+     * Gets the static default host resolver, creating it if necessary
+     * @return the static default host resolver
+     */
+    static HostResolver getOrCreateStaticDefault() {
+        HostResolver resolver = null;
+        synchronized (HostResolver.class) {
+            if (staticDefaultResolver == null) {
+                staticDefaultResolver = new HostResolver(EventLoopGroup.getOrCreateStaticDefault(), staticDefaultMaxEntries);
+            }
+
+            resolver = staticDefaultResolver;
+        }
+
+        return resolver;
+    }
+
+    private static int staticDefaultMaxEntries = DEFAULT_MAX_ENTRIES;
+    private static HostResolver staticDefaultResolver;
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/

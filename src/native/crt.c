@@ -7,6 +7,7 @@
 #include <aws/common/allocator.h>
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/thread.h>
@@ -303,4 +304,20 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
     aws_string_destroy(string);
 
     return java_string;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDestruction(
+    JNIEnv *env,
+    jclass jni_crt_resource_class,
+    jint timeout_in_seconds) {
+    (void)env;
+    (void)jni_crt_resource_class;
+
+    aws_global_thread_creator_shutdown_wait_for(timeout_in_seconds);
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_GENERAL,
+        "At shutdown, %u bytes remaining",
+        (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
 }

@@ -41,12 +41,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
         return (jlong)NULL;
     }
 
-    struct aws_host_resolver *resolver = aws_mem_calloc(allocator, 1, sizeof(struct aws_host_resolver));
-    AWS_FATAL_ASSERT(resolver);
-
-    if (aws_host_resolver_init_default(resolver, allocator, (size_t)max_entries, el_group)) {
-        aws_jni_throw_runtime_exception(env, "aws_host_resolver_init_default failed");
-        aws_mem_release(allocator, resolver);
+    struct aws_host_resolver *resolver = aws_host_resolver_new_default(allocator, (size_t)max_entries, el_group, NULL);
+    if (resolver == NULL) {
+        aws_jni_throw_runtime_exception(env, "aws_host_resolver_new_default failed");
         return (jlong)NULL;
     }
 
@@ -60,16 +57,13 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostResol
 
     (void)jni_class;
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_host_resolver;
-
     if (!resolver) {
         aws_jni_throw_runtime_exception(env, "HostResolver.hostResolverRelease: Invalid aws_host_resolver");
         return;
     }
 
-    aws_host_resolver_clean_up(resolver);
-    aws_mem_release(allocator, resolver);
+    aws_host_resolver_release(resolver);
 
     return;
 }

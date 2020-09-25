@@ -24,7 +24,7 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNew(numThreads));
+        acquireNativeHandle(eventLoopGroupNew(this, numThreads));
     }
 
     /**
@@ -41,7 +41,7 @@ public final class EventLoopGroup extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
-            eventLoopGroupDestroy(this, getNativeHandle());
+            eventLoopGroupDestroy(getNativeHandle());
         }
     }
 
@@ -58,9 +58,61 @@ public final class EventLoopGroup extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
+
+    /*
+     * Static interface for access to a default, lazily-created event loop group for users who don't
+     * want to deal with the associated resource management.  Client bootstraps will use this event loop
+     * group if they are passed a null value.
+     */
+
+    /**
+     * Sets the number of threads for the static default event loop group, should it ever be created.  Has no
+     * effect if the static default event loop group has already been created.
+     *
+     * @param numThreads number of threads for the static default event loop group
+     */
+    public static void setStaticDefaultNumThreads(int numThreads) {
+        synchronized (EventLoopGroup.class) {
+            staticDefaultNumThreads = Math.max(1, numThreads);
+        }
+    }
+
+    /**
+     * Closes the static default event loop group, if it exists.  Primarily intended for tests that use the static
+     * default event loop group, before they call waitForNoResources().
+     */
+    public static void closeStaticDefault() {
+        synchronized (EventLoopGroup.class) {
+            if (staticDefaultEventLoopGroup != null) {
+                staticDefaultEventLoopGroup.close();
+            }
+            staticDefaultEventLoopGroup = null;
+        }
+    }
+
+    /**
+     * Gets the static default event loop group, creating it if necessary
+     * @return the static default event loop group
+     */
+    static EventLoopGroup getOrCreateStaticDefault() {
+        EventLoopGroup elg = null;
+        synchronized (EventLoopGroup.class) {
+            if (staticDefaultEventLoopGroup == null) {
+                staticDefaultEventLoopGroup = new EventLoopGroup(staticDefaultNumThreads);
+            }
+
+            elg = staticDefaultEventLoopGroup;
+        }
+
+        return elg;
+    }
+
+    private static int staticDefaultNumThreads = Math.max(1, Runtime.getRuntime().availableProcessors());
+    private static EventLoopGroup staticDefaultEventLoopGroup;
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
-    private static native void eventLoopGroupDestroy(EventLoopGroup thisObj, long elg);
+    private static native long eventLoopGroupNew(EventLoopGroup thisObj, int numThreads) throws CrtRuntimeException;
+    private static native void eventLoopGroupDestroy(long elg);
 };

@@ -11,6 +11,10 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
@@ -23,38 +27,13 @@
 #    endif
 #endif
 
-JNIEXPORT
-jlong JNICALL
-    Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(JNIEnv *env, jclass jni_elg, jint num_threads) {
-    (void)jni_elg;
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_event_loop_group *elg = aws_mem_calloc(allocator, 1, sizeof(struct aws_event_loop_group));
-    AWS_FATAL_ASSERT(elg);
-
-    int result = aws_event_loop_group_default_init(elg, allocator, (uint16_t)num_threads);
-    if (result != AWS_OP_SUCCESS) {
-        aws_event_loop_group_clean_up(elg);
-        aws_mem_release(allocator, elg);
-        aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_default_init failed");
-        return (jlong)NULL;
-    }
-
-    return (jlong)elg;
-}
-
 struct event_loop_group_cleanup_callback_data {
     JavaVM *jvm;
-    jlong elg_addr;
     jobject java_event_loop_group;
 };
 
 static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     struct event_loop_group_cleanup_callback_data *callback_data = user_data;
-
-    // Elg memory can be freed
-    struct aws_event_loop_group *elg = (struct aws_event_loop_group *)callback_data->elg_addr;
-    aws_mem_release(elg->allocator, elg);
 
     AWS_LOGF_DEBUG(AWS_LS_IO_EVENT_LOOP, "Event Loop Shutdown Complete");
 
@@ -84,29 +63,63 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDestroy(
+jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(
     JNIEnv *env,
     jclass jni_elg,
     jobject elg_jobject,
+    jint num_threads) {
+    (void)jni_elg;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+
+    struct event_loop_group_cleanup_callback_data *callback_data =
+        aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
+    if (callback_data == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: shutdown callback data allocation failed");
+        goto on_error;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_shutdown_callback_options shutdown_options = {
+        .shutdown_callback_fn = s_event_loop_group_cleanup_completion_callback,
+        .shutdown_callback_user_data = callback_data,
+    };
+
+    struct aws_event_loop_group *elg =
+        aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
+    if (elg == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed");
+        goto on_error;
+    }
+
+    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
+
+    return (jlong)elg;
+
+on_error:
+
+    aws_mem_release(allocator, callback_data);
+
+    return (jlong)NULL;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDestroy(
+    JNIEnv *env,
+    jclass jni_elg,
     jlong elg_addr) {
     (void)jni_elg;
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
     if (!elg) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.eventLoopGroupDestroy: instance should be non-null at clean_up time");
+            env, "EventLoopGroup.eventLoopGroupDestroy: instance should be non-null at release time");
         return;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct event_loop_group_cleanup_callback_data *callback_data =
-        aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
-    callback_data->elg_addr = elg_addr;
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
-
-    aws_event_loop_group_clean_up_async(elg, s_event_loop_group_cleanup_completion_callback, callback_data);
+    aws_event_loop_group_release(elg);
 }
 
 #if UINTPTR_MAX == 0xffffffff

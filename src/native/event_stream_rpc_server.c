@@ -182,7 +182,7 @@ static void s_stream_continuation_closed_fn(
     s_server_continuation_data_destroy(env, continuation_callback_data);
 }
 
-static void s_on_incoming_stream_fn(
+static int s_on_incoming_stream_fn(
     struct aws_event_stream_rpc_server_connection *connection,
     struct aws_event_stream_rpc_server_continuation_token *token,
     struct aws_byte_cursor operation_name,
@@ -197,8 +197,7 @@ static void s_on_incoming_stream_fn(
 
     if (!continuation_callback_data) {
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
-        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
-        return;
+        return AWS_OP_ERR;
     }
 
     continuation_callback_data->jvm = callback_data->jvm;
@@ -213,10 +212,9 @@ static void s_on_incoming_stream_fn(
     (void)(*env)->ExceptionCheck(env);
 
     if (!java_continuation) {
-        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
         s_server_continuation_data_destroy(env, continuation_callback_data);
-        return;
+        return AWS_OP_ERR;
     }
 
     continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
@@ -233,16 +231,16 @@ static void s_on_incoming_stream_fn(
     (void)(*env)->ExceptionCheck(env);
 
     if (!java_continuation_handler) {
-        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
         s_server_continuation_data_destroy(env, continuation_callback_data);
-        return;
+        return AWS_OP_ERR;
     }
 
     continuation_options->user_data = continuation_callback_data;
     continuation_options->on_continuation = s_stream_continuation_fn;
     continuation_options->on_continuation_closed = s_stream_continuation_closed_fn;
     continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
+    return AWS_OP_SUCCESS;
 }
 
 static void s_connection_protocol_message_fn(

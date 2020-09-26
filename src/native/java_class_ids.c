@@ -420,9 +420,40 @@ static void s_cache_event_stream_server_continuation_handler_properties(JNIEnv *
     AWS_FATAL_ASSERT(event_stream_server_continuation_handler_properties.onContinuationClosed);
 }
 
-struct java_event_stream_server_message_flush_properties event_stream_server_message_flush_properties;
+struct java_event_stream_client_connection_handler_properties event_stream_client_connection_handler_properties;
 
-static void s_cache_event_stream_server_message_flush_properties(JNIEnv *env) {
+static void s_cache_event_stream_client_connection_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ClientConnectionHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_client_connection_handler_properties.onSetup =
+        (*env)->GetMethodID(env, cls, "onConnectionSetupShim", "(JI)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onSetup);
+    event_stream_client_connection_handler_properties.onProtocolMessage =
+        (*env)->GetMethodID(env, cls, "onProtocolMessage", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onProtocolMessage);
+    event_stream_client_connection_handler_properties.onClosed =
+        (*env)->GetMethodID(env, cls, "onConnectionClosed", "(I)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onClosed);
+}
+
+struct java_event_stream_client_continuation_handler_properties event_stream_client_continuation_handler_properties;
+
+static void s_cache_event_stream_client_continuation_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ClientConnectionContinuationHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_client_continuation_handler_properties.onContinuationMessage =
+        (*env)->GetMethodID(env, cls, "onContinuationMessageShim", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationMessage);
+    event_stream_client_continuation_handler_properties.onContinuationClosed =
+        (*env)->GetMethodID(env, cls, "onContinuationClosed", "()V");
+    AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationClosed);
+}
+
+struct java_event_stream_message_flush_properties event_stream_server_message_flush_properties;
+
+static void s_cache_event_stream_message_flush_properties(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/MessageFlushCallback");
     AWS_FATAL_ASSERT(cls);
 
@@ -482,7 +513,9 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_stream_server_listener_handler_properties(env);
     s_cache_event_stream_server_connection_handler_properties(env);
     s_cache_event_stream_server_continuation_handler_properties(env);
-    s_cache_event_stream_server_message_flush_properties(env);
+    s_cache_event_stream_client_connection_handler_properties(env);
+    s_cache_event_stream_client_continuation_handler_properties(env);
+    s_cache_event_stream_message_flush_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
 }

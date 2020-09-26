@@ -184,10 +184,24 @@ struct java_event_stream_server_continuation_handler_properties {
 extern struct java_event_stream_server_continuation_handler_properties
     event_stream_server_continuation_handler_properties;
 
-struct java_event_stream_server_message_flush_properties {
+struct java_event_stream_client_connection_handler_properties {
+    jmethodID onSetup;
+    jmethodID onProtocolMessage;
+    jmethodID onClosed;
+};
+extern struct java_event_stream_client_connection_handler_properties event_stream_client_connection_handler_properties;
+
+struct java_event_stream_client_continuation_handler_properties {
+    jmethodID onContinuationMessage;
+    jmethodID onContinuationClosed;
+};
+extern struct java_event_stream_client_continuation_handler_properties
+    event_stream_client_continuation_handler_properties;
+
+struct java_event_stream_message_flush_properties {
     jmethodID callback;
 };
-extern struct java_event_stream_server_message_flush_properties event_stream_server_message_flush_properties;
+extern struct java_event_stream_message_flush_properties event_stream_server_message_flush_properties;
 
 /* CompletableFuture */
 struct java_completable_future_properties {

@@ -20,7 +20,7 @@ public class ClientConnectionContinuation extends CrtResource {
                          MessageFlushCallback callback) {
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        int result = activateContinuation(getNativeHandle(), operationName.getBytes(StandardCharsets.UTF_8),
+        int result = activateContinuation(getNativeHandle(), this, operationName.getBytes(StandardCharsets.UTF_8),
                 headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);
 
         if (result != 0) {
@@ -92,7 +92,7 @@ public class ClientConnectionContinuation extends CrtResource {
         return true;
     }
 
-    private static native int activateContinuation(long continuationPtr, byte[] operationName, byte[] serialized_headers, byte[] payload, int message_type, int message_flags, MessageFlushCallback callback);
+    private static native int activateContinuation(long continuationPtr, ClientConnectionContinuation continuation, byte[] operationName, byte[] serialized_headers, byte[] payload, int message_type, int message_flags, MessageFlushCallback callback);
     private static native int sendContinuationMessage(long continuationPtr, byte[] serialized_headers, byte[] payload, int message_type, int message_flags, MessageFlushCallback callback);
     private static native void releaseContinuation(long continuationPtr);
 }

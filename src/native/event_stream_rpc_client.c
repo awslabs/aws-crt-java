@@ -653,8 +653,6 @@ clean_up:
     return ret_val;
 }
 
-// private static native int sendContinuationMessage(long continuationPtr, byte[] serialized_headers, byte[] payload,
-// int message_type, int message_flags, MessageFlushCallback callback);
 JNIEXPORT
 jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinuation_sendContinuationMessage(
     JNIEnv *env,

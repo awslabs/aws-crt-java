@@ -67,17 +67,44 @@ public class ClientConnection extends CrtResource {
         return connectionContinuation;
     }
 
-    public static void connect(final String hostName, short port, final SocketOptions socketOptions,
+    public static CompletableFuture<Void> connect(final String hostName, short port, final SocketOptions socketOptions,
                                            final ClientTlsContext tlsContext, final ClientBootstrap bootstrap,
                                            final ClientConnectionHandler connectionHandler) {
         long tlsContextHandle = tlsContext != null ? tlsContext.getNativeHandle() : 0;
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        ClientConnectionHandler handlerShim = new ClientConnectionHandler() {
+            @Override
+            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                connectionHandler.onConnectionSetup(connection, errorCode);
+
+                if (errorCode == 0) {
+                    future.complete(null);
+                } else {
+                    future.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorName(errorCode)));
+                }
+            }
+
+            @Override
+            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                connectionHandler.onProtocolMessage(headers, payload, messageType, messageFlags);
+            }
+
+            @Override
+            protected void onConnectionClosed(int closeReason) {
+                connectionHandler.onConnectionClosed(closeReason);
+            }
+        };
+
         int resultCode = clientConnect(hostName.getBytes(StandardCharsets.UTF_8),
-                port, socketOptions.getNativeHandle(), tlsContextHandle, bootstrap.getNativeHandle(), connectionHandler);
+                port, socketOptions.getNativeHandle(), tlsContextHandle, bootstrap.getNativeHandle(), handlerShim);
 
         if (resultCode != 0) {
             int lastError = CRT.awsLastError();
             throw new CrtRuntimeException(lastError, CRT.awsErrorName(lastError));
         }
+
+        return future;
     }
 
     @Override

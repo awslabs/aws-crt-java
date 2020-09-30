@@ -60,13 +60,13 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         final boolean[] clientConnected = {false};
         final boolean[] clientConnectionClosed = {false};
-        ClientConnection clientConnection = null;
+        final ClientConnection[] clientConnectionArray = {null};
 
         CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;
-                clientConnection = connection;
+                clientConnectionArray[0] = connection;
             }
 
             @Override
@@ -81,14 +81,16 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         });
 
         connectFuture.get();
-        assertNotNull(clientConnection);
-        clientConnection.closeConnection(0);
+        assertNotNull(clientConnectionArray[0]);
+        clientConnectionArray[0].closeConnection(0);
         // this should be damn near instant, but give it a second just to be safe.
         Thread.sleep(1000);
+        assertTrue(clientConnectionArray[0].isClosed());
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertTrue(clientConnected[0]);
         assertTrue(clientConnectionClosed[0]);
+        clientConnectionArray[0].close();
         listener.close();
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();

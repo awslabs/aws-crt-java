@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public class ClientConnection extends CrtResource {
 
     ClientConnection(long clientConnection) {
+        acquireNativeHandle(clientConnection);
         acquireClientConnection(clientConnection);
     }
 
@@ -21,7 +22,7 @@ public class ClientConnection extends CrtResource {
         closeClientConnection(getNativeHandle(), shutdownErrorCode);
     }
 
-    public boolean isClose() {
+    public boolean isClosed() {
         return isClientConnectionClosed(getNativeHandle());
     }
 

@@ -251,7 +251,7 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_is
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_closeConnection(
+void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_closeClientConnection(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,

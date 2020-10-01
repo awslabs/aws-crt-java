@@ -608,7 +608,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     if (operation_name) {
         const size_t operation_len = (*env)->GetArrayLength(env, operation_name);
         operation_ptr = (*env)->GetPrimitiveArrayCritical(env, operation_name, NULL);
-        operation_cursor = aws_byte_cursor_from_array(payload_ptr, operation_len);
+        operation_cursor = aws_byte_cursor_from_array(operation_ptr, operation_len);
     }
 
     callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));

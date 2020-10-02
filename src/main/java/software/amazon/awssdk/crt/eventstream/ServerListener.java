@@ -51,9 +51,7 @@ public class ServerListener extends CrtResource {
 
     private void onShutdownComplete() {
         Log.log(Log.LogLevel.Trace, Log.LogSubject.EventStreamServerListener, "ServerListener.onShutdownComplete");
-
         releaseReferences();
-
         this.shutdownComplete.complete(null);
     }
 

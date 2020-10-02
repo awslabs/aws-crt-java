@@ -325,7 +325,7 @@ static int s_on_new_connection_fn(
             env,
             event_stream_server_listener_handler_properties.connCls,
             event_stream_server_listener_handler_properties.newConnConstructor,
-            connection);
+            (jlong)connection);
         if ((*env)->ExceptionCheck(env)) {
             goto error;
         }

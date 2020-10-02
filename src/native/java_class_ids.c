@@ -360,7 +360,7 @@ static void s_cache_event_stream_server_listener_handler_properties(JNIEnv *env)
     AWS_FATAL_ASSERT(cls);
 
     event_stream_server_listener_handler_properties.connCls =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnection");
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnection"));
     AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.connCls);
 
     event_stream_server_listener_handler_properties.newConnConstructor =
@@ -385,8 +385,8 @@ static void s_cache_event_stream_server_connection_handler_properties(JNIEnv *en
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionHandler");
     AWS_FATAL_ASSERT(cls);
 
-    event_stream_server_connection_handler_properties.continuationCls =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionContinuation");
+    event_stream_server_connection_handler_properties.continuationCls = (*env)->NewGlobalRef(
+        env, (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionContinuation"));
     AWS_FATAL_ASSERT(event_stream_server_connection_handler_properties.continuationCls);
 
     event_stream_server_connection_handler_properties.newContinuationConstructor =

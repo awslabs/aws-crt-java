@@ -18,8 +18,8 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 
 public class AwsSigningUtils {
 
-    public static boolean verifySigv4aEcdsaSignature(HttpRequest request, String expectedCanonicalRequest, AwsSigningConfig config, String signatureValue) {
-        return awsSigningUtilsVerifyEcdsaSignature(request, request.marshalForJni(), expectedCanonicalRequest, config, signatureValue);
+    public static boolean verifySigv4aEcdsaSignature(HttpRequest request, String expectedCanonicalRequest, AwsSigningConfig config, String signatureValue, String verifierPubX, String verifierPubY) {
+        return awsSigningUtilsVerifyEcdsaSignature(request, request.marshalForJni(), expectedCanonicalRequest, config, signatureValue, verifierPubX, verifierPubY);
     }
 
     /*******************************************************************************
@@ -30,5 +30,7 @@ public class AwsSigningUtils {
             byte[] marshalledRequest,
             String expectedCanonicalRequest,
             AwsSigningConfig config,
-            String signatureValue);
+            String signatureValue,
+            String verifierPubX,
+            String verifiedPubY);
 }

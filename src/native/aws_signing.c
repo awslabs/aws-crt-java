@@ -327,12 +327,16 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
     jbyteArray java_marshalled_request,
     jstring java_expected_canonical_request,
     jobject java_signing_config,
-    jstring java_signature) {
+    jstring java_signature,
+    jstring java_verifier_pub_x,
+    jstring java_verifier_pub_y) {
 
     (void)jni_class;
 
     struct aws_string *expected_canonical_request = NULL;
     struct aws_string *signature = NULL;
+    struct aws_string *pub_x = NULL;
+    struct aws_string *pub_y = NULL;
 
     bool success = false;
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -369,13 +373,17 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
 
     expected_canonical_request = aws_jni_new_string_from_jstring(env, java_expected_canonical_request);
     signature = aws_jni_new_string_from_jstring(env, java_signature);
+    pub_x = aws_jni_new_string_from_jstring(env, java_verifier_pub_x);
+    pub_y = aws_jni_new_string_from_jstring(env, java_verifier_pub_y);
 
     if (aws_verify_sigv4a_signing(
             allocator,
             callback_data->original_message_signable,
             (struct aws_signing_config_base *)&signing_config,
             aws_byte_cursor_from_string(expected_canonical_request),
-            aws_byte_cursor_from_string(signature))) {
+            aws_byte_cursor_from_string(signature),
+            aws_byte_cursor_from_string(pub_x),
+            aws_byte_cursor_from_string(pub_y))) {
         aws_jni_throw_runtime_exception(env, aws_error_str(aws_last_error()));
         goto done;
     }
@@ -388,6 +396,8 @@ done:
 
     aws_string_destroy(expected_canonical_request);
     aws_string_destroy(signature);
+    aws_string_destroy(pub_x);
+    aws_string_destroy(pub_y);
 
     return success;
 }

@@ -608,8 +608,6 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
 
     struct message_flush_callback_args *callback_data = NULL;
-    jbyte *payload_ptr = NULL;
-    jbyte *headers_ptr = NULL;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
     struct aws_byte_buf payload_buf;
@@ -621,20 +619,26 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
             return AWS_OP_ERR;
         }
 
-        const size_t headers_len = (*env)->GetArrayLength(env, headers);
-        headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
+        struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
         int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+            aws_event_stream_read_headers_from_buffer(&headers_list, headers_cur.ptr, headers_cur.len);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
 
         if (headers_parse_error) {
+            aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: headers parse failed.");
             goto clean_up;
         }
     }
 
     if (payload) {
-        const size_t payload_len = (*env)->GetArrayLength(env, payload);
-        payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
-        payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+        struct aws_byte_cursor payload_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, payload);
+        aws_byte_buf_init_copy_from_cursor(&payload_buf, aws_jni_get_allocator(), payload_cur);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, payload, payload_cur);
+
+        if (!payload_buf.buffer) {
+            aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: allocation failed.");
+            goto clean_up;
+        }
     }
 
     struct aws_event_stream_rpc_message_args message_args = {
@@ -669,12 +673,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
-    if (payload_ptr) {
-        (*env)->ReleasePrimitiveArrayCritical(env, payload, payload_ptr, 0);
-    }
-    if (headers_ptr) {
-        (*env)->ReleasePrimitiveArrayCritical(env, headers, headers_ptr, 0);
-    }
+    aws_byte_buf_clean_up(&payload_buf);
     aws_event_stream_headers_list_cleanup(&headers_list);
 
     return ret_val;
@@ -731,8 +730,6 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
 
     struct message_flush_callback_args *callback_data = NULL;
-    jbyte *payload_ptr = NULL;
-    jbyte *headers_ptr = NULL;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
     struct aws_byte_buf payload_buf;
@@ -745,21 +742,26 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
             return AWS_OP_ERR;
         }
 
-        const size_t headers_len = (*env)->GetArrayLength(env, headers);
-        headers_ptr = (*env)->GetPrimitiveArrayCritical(env, headers, NULL);
+        struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
         int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, (uint8_t *)headers_ptr, headers_len);
+            aws_event_stream_read_headers_from_buffer(&headers_list, headers_cur.ptr, headers_cur.len);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
 
         if (headers_parse_error) {
+            aws_jni_throw_runtime_exception(env, "ServerConnection.sendContinuationMessage: headers parse failed.");
             goto clean_up;
         }
     }
 
     if (payload) {
-        const size_t payload_len = (*env)->GetArrayLength(env, payload);
-        payload_ptr = (*env)->GetPrimitiveArrayCritical(env, payload, NULL);
+        struct aws_byte_cursor payload_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, payload);
+        aws_byte_buf_init_copy_from_cursor(&payload_buf, aws_jni_get_allocator(), payload_cur);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, payload, payload_cur);
 
-        payload_buf = aws_byte_buf_from_array(payload_ptr, payload_len);
+        if (!payload_buf.buffer) {
+            aws_jni_throw_runtime_exception(env, "ServerConnection.sendContinuationMessage: allocation failed.");
+            goto clean_up;
+        }
     }
 
     struct aws_event_stream_rpc_message_args message_args = {
@@ -796,12 +798,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
-    if (payload_ptr) {
-        (*env)->ReleasePrimitiveArrayCritical(env, payload, payload_ptr, 0);
-    }
-    if (headers_ptr) {
-        (*env)->ReleasePrimitiveArrayCritical(env, headers, headers_ptr, 0);
-    }
+    aws_byte_buf_clean_up(&payload_buf);
     aws_event_stream_headers_list_cleanup(&headers_list);
 
     return ret_val;

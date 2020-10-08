@@ -85,8 +85,8 @@ static void s_server_listener_shutdown_complete(
     jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
     if (java_server_listener) {
         (*env)->CallVoidMethod(env, java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
-        (*env)->DeleteLocalRef(env, java_server_listener);
         (void)(*env)->ExceptionCheck(env);
+        (*env)->DeleteLocalRef(env, java_server_listener);
     }
 
     s_shutdown_callback_data_destroy(env, callback_data);
@@ -391,11 +391,10 @@ static void s_on_connection_shutdown_fn(
         event_stream_server_listener_handler_properties.onConnectionShutdown,
         java_server_connection,
         error_code);
+    (void)(*env)->ExceptionCheck(env);
 
     (*env)->DeleteLocalRef(env, java_server_connection);
     (*env)->DeleteLocalRef(env, java_listener_handler);
-
-    (void)(*env)->ExceptionCheck(env);
 
     /* this is the should be connection specific callback data. */
     s_server_connection_data_destroy(env, callback_data);
@@ -589,6 +588,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
+    (void)(*env)->ExceptionCheck(env);
     (*env)->DeleteGlobalRef(env, callback_data->callback);
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -730,6 +730,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
 
     struct message_flush_callback_args *callback_data = NULL;
+    bool headers_init = false;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
     struct aws_byte_buf payload_buf;
@@ -741,6 +742,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
         if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
             return AWS_OP_ERR;
         }
+
+        headers_init = true;
 
         struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
         int headers_parse_error =
@@ -799,7 +802,10 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
 
 clean_up:
     aws_byte_buf_clean_up(&payload_buf);
-    aws_event_stream_headers_list_cleanup(&headers_list);
+
+    if (headers_init) {
+        aws_event_stream_headers_list_cleanup(&headers_list);
+    }
 
     return ret_val;
 }

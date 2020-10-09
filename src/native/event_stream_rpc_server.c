@@ -608,6 +608,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
 
     struct message_flush_callback_args *callback_data = NULL;
+    bool headers_init = false;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
     struct aws_byte_buf payload_buf;
@@ -618,6 +619,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
         if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
             return AWS_OP_ERR;
         }
+
+        headers_init = true;
 
         struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
         int headers_parse_error =
@@ -674,7 +677,10 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
 
 clean_up:
     aws_byte_buf_clean_up(&payload_buf);
-    aws_event_stream_headers_list_cleanup(&headers_list);
+
+    if (headers_init) {
+        aws_event_stream_headers_list_cleanup(&headers_list);
+    }
 
     return ret_val;
 }

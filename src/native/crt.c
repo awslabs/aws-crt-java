@@ -66,6 +66,14 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
+bool aws_jni_check_and_clear_exception(JNIEnv *env) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
+}
+
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;

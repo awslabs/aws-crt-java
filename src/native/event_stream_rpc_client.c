@@ -59,7 +59,7 @@ static int s_on_connection_setup(
         (jlong)connection,
         error_code);
 
-    int ret_code = (*env)->ExceptionCheck(env) ? AWS_OP_ERR : AWS_OP_SUCCESS;
+    int ret_code = aws_jni_check_and_clear_exception(env) ? AWS_OP_ERR : AWS_OP_SUCCESS;
 
     if (error_code || ret_code) {
         s_destroy_connection_callback_data(callback_data);
@@ -82,7 +82,7 @@ static void s_on_connection_shutdown(
         callback_data->java_connection_handler,
         event_stream_client_connection_handler_properties.onClosed,
         error_code);
-    (*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     s_destroy_connection_callback_data(callback_data);
 }
@@ -133,7 +133,7 @@ static void s_connection_protocol_message(
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 }
 
 JNIEXPORT
@@ -301,7 +301,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     (*env)->DeleteGlobalRef(env, callback_data->callback);
     aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -471,7 +471,7 @@ static void s_stream_continuation(
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 }
 
 static void s_stream_continuation_closed(
@@ -487,7 +487,7 @@ static void s_stream_continuation_closed(
         continuation_callback_data->java_continuation,
         event_stream_client_continuation_handler_properties.onContinuationClosed);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     s_client_continuation_data_destroy(env, continuation_callback_data);
 }
 

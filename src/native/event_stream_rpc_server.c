@@ -85,7 +85,7 @@ static void s_server_listener_shutdown_complete(
     jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
     if (java_server_listener) {
         (*env)->CallVoidMethod(env, java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
-        (void)(*env)->ExceptionCheck(env);
+        aws_jni_check_and_clear_exception(env);
         (*env)->DeleteLocalRef(env, java_server_listener);
     }
 
@@ -162,7 +162,7 @@ static void s_stream_continuation_fn(
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 }
 
 static void s_stream_continuation_closed_fn(
@@ -178,7 +178,7 @@ static void s_stream_continuation_closed_fn(
         continuation_callback_data->java_continuation,
         event_stream_server_continuation_handler_properties.onContinuationClosed);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     s_server_continuation_data_destroy(env, continuation_callback_data);
 }
 
@@ -209,7 +209,7 @@ static int s_on_incoming_stream_fn(
         event_stream_server_connection_handler_properties.newContinuationConstructor,
         (jlong)token);
 
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation) {
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
@@ -228,7 +228,7 @@ static int s_on_incoming_stream_fn(
         java_continuation,
         operationNameArray);
 
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation_handler) {
         aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
@@ -293,7 +293,7 @@ static void s_connection_protocol_message_fn(
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     (*env)->DeleteLocalRef(env, payload_byte_array);
     (*env)->DeleteLocalRef(env, headers_byte_array);
 }
@@ -326,7 +326,7 @@ static int s_on_new_connection_fn(
             event_stream_server_listener_handler_properties.connCls,
             event_stream_server_listener_handler_properties.newConnConstructor,
             (jlong)connection);
-        if ((*env)->ExceptionCheck(env)) {
+        if (aws_jni_check_and_clear_exception(env)) {
             goto error;
         }
 
@@ -341,7 +341,7 @@ static int s_on_new_connection_fn(
         error_code);
 
     /* we check whether the function succeeded when we do the null check on java_connection_handler below */
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     if (!java_connection_handler) {
         goto error;
@@ -391,7 +391,7 @@ static void s_on_connection_shutdown_fn(
         event_stream_server_listener_handler_properties.onConnectionShutdown,
         java_server_connection,
         error_code);
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
 
     (*env)->DeleteLocalRef(env, java_server_connection);
     (*env)->DeleteLocalRef(env, java_listener_handler);
@@ -588,7 +588,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
-    (void)(*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     (*env)->DeleteGlobalRef(env, callback_data->callback);
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }

@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.eventstream.*;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.ServerBootstrap;
@@ -41,6 +42,47 @@ public class ServerListenerTest extends CrtTestFixture {
 
         listener.close();
         listener.getShutdownCompleteFuture().get();
+        bootstrap.close();
+        elGroup.close();
+    }
+
+    @Test
+    public void testBindErrorPropagates() throws ExecutionException, InterruptedException {
+        SocketOptions socketOptions = new SocketOptions();
+        socketOptions.connectTimeoutMs = 3000;
+        socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+        socketOptions.type = SocketOptions.SocketType.STREAM;
+
+        EventLoopGroup elGroup = new EventLoopGroup(1);
+        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+        ServerListener listener1 = new ServerListener("127.0.0.1", (short)8032, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                return null;
+            }
+
+            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+            }
+        });
+
+        assertNotNull(listener1);
+        boolean exceptionThrown = false;
+        try {
+        ServerListener listener2 = new ServerListener("127.0.0.1", (short)8032, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                return null;
+            }
+
+            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+            }
+        });
+        } catch (CrtRuntimeException ex) {
+            assertTrue(ex.getMessage().contains("AWS_IO_SOCKET_ADDRESS_IN_USE(1054), Socket address already in use."));
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        listener1.close();
+        listener1.getShutdownCompleteFuture().get();
         bootstrap.close();
         elGroup.close();
     }

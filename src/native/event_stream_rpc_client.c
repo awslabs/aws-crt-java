@@ -327,6 +327,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_sendPr
     bool headers_init = false;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
+    struct aws_byte_buf headers_buf;
+    AWS_ZERO_STRUCT(headers_buf);
     struct aws_byte_buf payload_buf;
     AWS_ZERO_STRUCT(payload_buf);
     int ret_val = AWS_OP_ERR;
@@ -339,8 +341,9 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_sendPr
         headers_init = true;
 
         struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
+        aws_byte_buf_init_copy_from_cursor(&headers_buf, aws_jni_get_allocator(), headers_cur);
         int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, headers_cur.ptr, headers_cur.len);
+            aws_event_stream_read_headers_from_buffer(&headers_list, headers_buf.buffer, headers_buf.len);
         aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
 
         if (headers_parse_error) {
@@ -393,6 +396,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_sendPr
 
 clean_up:
     aws_byte_buf_clean_up(&payload_buf);
+    aws_byte_buf_clean_up(&headers_buf);
 
     if (headers_init) {
         aws_event_stream_headers_list_cleanup(&headers_list);
@@ -479,12 +483,11 @@ static void s_stream_continuation_closed(
     void *user_data) {
     (void)token;
     struct continuation_callback_data *continuation_callback_data = user_data;
-
     JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
 
     (*env)->CallVoidMethod(
         env,
-        continuation_callback_data->java_continuation,
+        continuation_callback_data->java_continuation_handler,
         event_stream_client_continuation_handler_properties.onContinuationClosed);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
@@ -691,6 +694,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     bool headers_init = false;
     struct aws_array_list headers_list;
     AWS_ZERO_STRUCT(headers_list);
+    struct aws_byte_buf headers_buf;
+    AWS_ZERO_STRUCT(headers_buf);
     struct aws_byte_buf payload_buf;
     AWS_ZERO_STRUCT(payload_buf);
 
@@ -704,8 +709,11 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
         headers_init = true;
 
         struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
+        /* copy because JNI is stupid and the buffer that the headers parser runs from needs the memory to stick around
+         * until the final message creation happens. */
+        aws_byte_buf_init_copy_from_cursor(&headers_buf, aws_jni_get_allocator(), headers_cur);
         int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, headers_cur.ptr, headers_cur.len);
+            aws_event_stream_read_headers_from_buffer(&headers_list, headers_buf.buffer, headers_buf.len);
         aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
 
         if (headers_parse_error) {
@@ -759,11 +767,12 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
+    aws_byte_buf_clean_up(&payload_buf);
+
+    aws_byte_buf_clean_up(&headers_buf);
     if (headers_init) {
         aws_event_stream_headers_list_cleanup(&headers_list);
     }
-
-    aws_byte_buf_clean_up(&payload_buf);
 
     if (callback_data && ret_val) {
         (*env)->DeleteGlobalRef(env, callback_data->callback);

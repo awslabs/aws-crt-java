@@ -9,7 +9,6 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
 
     protected ServerConnectionContinuationHandler(final ServerConnectionContinuation continuation) {
         this.continuation = continuation;
-        this.continuation.addRef();
     }
 
     protected abstract void onContinuationClosed();
@@ -32,7 +31,9 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
 
     @Override
     public void close() {
-        continuation.decRef();
-        continuation = null;
+        if (continuation != null) {
+            continuation.decRef();
+            continuation = null;
+        }
     }
 }

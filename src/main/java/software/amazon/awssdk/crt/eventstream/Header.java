@@ -318,8 +318,9 @@ public class Header {
     }
 
     public int getTotalByteLength() {
+        // name len (1 byte) + header name + type (1 byte)
         int length = 1 + headerName.length() + 1;
-        length += headerType.getWireBytesOverhead();
+        // optional variable length specifier
         length += headerValue != null ? headerValue.length : 0;
         return length;
     }

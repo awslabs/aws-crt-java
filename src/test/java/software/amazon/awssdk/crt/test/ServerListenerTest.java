@@ -279,6 +279,7 @@ public class ServerListenerTest extends CrtTestFixture {
                             @Override
                             protected void onContinuationClosed() {
                                 continuationClosed[0] = true;
+                                this.close();
                             }
 
                             @Override
@@ -290,8 +291,6 @@ public class ServerListenerTest extends CrtTestFixture {
                                         MessageType.ApplicationMessage,
                                         MessageFlags.TerminateStream.getByteValue())
                                         .whenComplete((res, ex) ->  {
-                                            this.close();
-                                            this.continuation.close();
                                             connection.closeConnection(0);
                                         });
                             }

@@ -153,7 +153,6 @@ static void s_stream_continuation_fn(
 
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
-
     (*env)->CallVoidMethod(
         env,
         callback_data->java_continuation_handler,

@@ -37,6 +37,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
     @Test
     public void testPubSub() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
         connect();
 
         try {
@@ -86,26 +87,25 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         disconnect();
         close();
     }
-    
+
     @Test
     public void testPubSubOnMessage() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        connect();
+
+        Consumer<MqttMessage> messageHandler = (message) -> {
+            byte[] payload = message.getPayload();
+            try {
+                assertEquals(TEST_TOPIC, message.getTopic());
+                String contents = new String(payload, "UTF-8");
+                assertEquals("Message is intact", TEST_PAYLOAD, contents);
+            } catch (UnsupportedEncodingException ex) {
+                fail("Unable to decode payload: " + ex.getMessage());
+            }
+        };
+
+        connect(messageHandler);
 
         try {
-            Consumer<MqttMessage> messageHandler = (message) -> {
-                byte[] payload = message.getPayload();
-                try {
-                    assertEquals(TEST_TOPIC, message.getTopic());
-                    String contents = new String(payload, "UTF-8");
-                    assertEquals("Message is intact", TEST_PAYLOAD, contents);
-                } catch (UnsupportedEncodingException ex) {
-                    fail("Unable to decode payload: " + ex.getMessage());
-                }
-            };
-
-            connection.onMessage(messageHandler);
-
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);
             subscribed.thenApply(unused -> subsAcked++);
             int packetId = subscribed.get();

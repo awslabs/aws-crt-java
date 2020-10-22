@@ -290,7 +290,7 @@ public class MqttClientConnection extends CrtResource implements MqttPublishInte
     private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
         CompletableFuture<HttpRequest> future = new CompletableFuture<>();
         future.whenComplete((x, throwable) -> {
-            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x.marshalForJni(), throwable, nativeUserData);
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x != null ? x.marshalForJni() : null, throwable, nativeUserData);
         });
 
         WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);

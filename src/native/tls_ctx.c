@@ -51,7 +51,7 @@ void JNICALL
         return;
     }
 
-    aws_tls_ctx_destroy(tls_ctx);
+    aws_tls_ctx_release(tls_ctx);
 }
 
 #if UINTPTR_MAX == 0xffffffff

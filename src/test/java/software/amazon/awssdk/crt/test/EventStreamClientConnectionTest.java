@@ -623,7 +623,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertNotNull(continuation);
 
         final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
-        Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");Lake Cushman, Hoodsport, Washington, United States of America
+        Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
         Header clientIntHeader = Header.createHeader("clientIntHeaderName", 35);
         List<Header> clientHeaders = new ArrayList<>();
         clientHeaders.add(clientStrHeader);

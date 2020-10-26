@@ -83,7 +83,7 @@ val cmakeBuild = tasks.register("cmakeBuild") {
     inputs.files(fileTree("src/native").matching {
         include(listOf("**/*.c", "**/*.h"))
     })
-    inputs.files(fileTree("aws-common-runtime").matching {
+    inputs.files(fileTree("crt").matching {
         include(listOf("**/CMakeLists.txt", "**/*.c", "**/*.h"))
     })
     outputs.file("${buildDir}/cmake-build/lib/libaws-crt-jni.so")

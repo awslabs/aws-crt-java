@@ -78,6 +78,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             @Override
             protected void onConnectionClosed(int closeReason) {
                 clientConnectionClosed[0] = true;
+                this.close();
             }
         });
 
@@ -86,17 +87,16 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientConnectionArray[0].closeConnection(0);
         // this should be damn near instant, but give it a second just to be safe.
         Thread.sleep(1000);
-        assertTrue(clientConnectionArray[0].isClosed());
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertTrue(clientConnected[0]);
         assertTrue(clientConnectionClosed[0]);
-        clientConnectionArray[0].close();
         listener.close();
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         clientBootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -178,6 +178,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             @Override
             protected void onConnectionClosed(int closeReason) {
                 clientConnectionClosed[0] = true;
+                this.close();
             }
         });
 
@@ -192,21 +193,19 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
         assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
         assertArrayEquals(responseMessage, clientReceivedPayload[0]);
-
         clientConnectionArray[0].closeConnection(0);
         Thread.sleep(1000);
 
-        assertTrue(clientConnectionArray[0].isClosed());
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertTrue(clientConnected[0]);
         assertTrue(clientConnectionClosed[0]);
-        clientConnectionArray[0].close();
         listener.close();
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         clientBootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -294,6 +293,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             @Override
             protected void onConnectionClosed(int closeReason) {
                 clientConnectionClosed[0] = true;
+                this.close();
             }
         });
 
@@ -326,17 +326,16 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientConnectionArray[0].closeConnection(0);
         Thread.sleep(1000);
 
-        assertTrue(clientConnectionArray[0].isClosed());
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertTrue(clientConnected[0]);
         assertTrue(clientConnectionClosed[0]);
-        clientConnectionArray[0].close();
         listener.close();
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         clientBootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -435,6 +434,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             @Override
             protected void onConnectionClosed(int closeReason) {
                 clientConnectionClosed[0] = true;
+                this.close();
             }
         });
 
@@ -473,8 +473,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertTrue(continuationClosed[0]);
         assertTrue(clientContinuationClosed[0]);
 
-        clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].close();
         // also, should fire within a millisecond, but just give it a second.
         Thread.sleep(1000);
 
@@ -488,6 +486,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -594,6 +593,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             @Override
             protected void onConnectionClosed(int closeReason) {
                 clientConnectionClosed[0] = true;
+                this.close();
             }
         });
 
@@ -646,8 +646,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertTrue(continuationClosed[0]);
         assertTrue(clientContinuationClosed[0]);
 
-        clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].close();
         // also, should fire within a millisecond, but just give it a second.
         Thread.sleep(1000);
 
@@ -661,5 +659,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 }

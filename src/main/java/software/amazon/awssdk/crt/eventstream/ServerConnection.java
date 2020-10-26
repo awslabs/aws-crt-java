@@ -16,15 +16,24 @@ public class ServerConnection extends CrtResource {
     }
 
     public boolean isConnectionClosed() {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         return isClosed(getNativeHandle());
     }
 
     public void closeConnection(int shutdownError) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         closeConnection(getNativeHandle(), shutdownError);
     }
 
     public CompletableFuture<Void> sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                                        final MessageType messsageType, int messageFlags) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
         sendProtocolMessage(headers, payload, messsageType, messageFlags, new MessageFlushCallback() {
@@ -43,6 +52,9 @@ public class ServerConnection extends CrtResource {
 
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messsageType, int messageFlags, MessageFlushCallback callback) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);

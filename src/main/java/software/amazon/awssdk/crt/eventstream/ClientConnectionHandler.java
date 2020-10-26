@@ -14,8 +14,8 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
 
     void onConnectionSetupShim(long connectionPtr, int errorCode) {
         if (connectionPtr != 0) {
+            // don't add ref, this is a private constructor and the only reference lives in the handler.
             clientConnection = new ClientConnection(connectionPtr);
-            clientConnection.addRef();
         }
 
         onConnectionSetup(clientConnection, errorCode);
@@ -44,7 +44,9 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
     @Override
     public void close() {
         if (clientConnection != null) {
-            clientConnection.closeConnection(0);
+            if (!clientConnection.isClosed()) {
+                clientConnection.closeConnection(0);
+            }
             clientConnection.decRef();
             clientConnection = null;
         }

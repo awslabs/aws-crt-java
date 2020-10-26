@@ -18,6 +18,10 @@ public class ClientConnectionContinuation extends CrtResource {
                          final List<Header> headers, final byte[] payload,
                          final MessageType messsageType, int messageFlags,
                          MessageFlushCallback callback) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = activateContinuation(getNativeHandle(), this, operationName.getBytes(StandardCharsets.UTF_8),
@@ -32,6 +36,7 @@ public class ClientConnectionContinuation extends CrtResource {
     public CompletableFuture<Void> activate(final String operationName,
                                       final List<Header> headers, final byte[] payload,
                                       final MessageType messsageType, int messageFlags) {
+
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
         activate(operationName, headers, payload, messsageType, messageFlags, new MessageFlushCallback() {
@@ -51,6 +56,10 @@ public class ClientConnectionContinuation extends CrtResource {
     public void sendMessage(final List<Header> headers, final byte[] payload,
                          final MessageType messsageType, int messageFlags,
                          MessageFlushCallback callback) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = sendContinuationMessage(getNativeHandle(),
@@ -64,6 +73,10 @@ public class ClientConnectionContinuation extends CrtResource {
 
     public CompletableFuture<Void> sendMessage(final List<Header> headers, final byte[] payload,
                                             final MessageType messsageType, int messageFlags) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
         sendMessage(headers, payload, messsageType, messageFlags, new MessageFlushCallback() {

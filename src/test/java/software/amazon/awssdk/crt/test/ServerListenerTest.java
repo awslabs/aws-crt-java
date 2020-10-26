@@ -44,6 +44,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -142,6 +143,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -237,6 +239,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 
     @Test
@@ -358,5 +361,6 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
         elGroup.close();
+        socketOptions.close();
     }
 }

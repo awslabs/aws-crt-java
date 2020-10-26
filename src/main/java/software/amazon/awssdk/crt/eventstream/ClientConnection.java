@@ -11,23 +11,55 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Wrapper around an event stream rpc client initiated connection.
+ */
 public class ClientConnection extends CrtResource {
 
+    /**
+     * Only for internal usage. This is invoked from JNI to create a new java wrapper for the connection.
+     */
     ClientConnection(long clientConnection) {
         acquireNativeHandle(clientConnection);
         acquireClientConnection(clientConnection);
     }
 
+    /**
+     * Closes the connection if it hasn't been closed already.
+     * @param shutdownErrorCode aws-c-* error code to shutdown with. Specify 0 for success.
+     */
     public void closeConnection(int shutdownErrorCode) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         closeClientConnection(getNativeHandle(), shutdownErrorCode);
     }
 
+    /**
+     * Returns true if the connection is closed, false otherwise.
+     */
     public boolean isClosed() {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
         return isClientConnectionClosed(getNativeHandle());
     }
 
+    /**
+     * Sends a protocol message on the connection. Returns a completable future for synchronizing on the message
+     * flushing to the underlying transport.
+     * @param headers List of event-stream headers. Can be null.
+     * @param payload Payload to send for the message. Can be null.
+     * @param messsageType Message type for the rpc message.
+     * @param messageFlags Union of message flags from MessageFlags.getByteValue()
+     * @return completable future for synchronizing on the message flushing to the underlying transport.
+     */
     public CompletableFuture<Void> sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                                        final MessageType messsageType, int messageFlags) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
         sendProtocolMessage(headers, payload, messsageType, messageFlags, errorCode -> {
@@ -41,8 +73,22 @@ public class ClientConnection extends CrtResource {
         return messageFlush;
     }
 
+    /**
+     * Sends a protocol message on the connection. Callback will be invoked upon the message flushing to the underlying
+     * transport
+     *
+     * @param headers List of event-stream headers. Can be null.
+     * @param payload Payload to send for the message. Can be null.
+     * @param messsageType Message type for the rpc message.
+     * @param messageFlags Union of message flags from MessageFlags.getByteValue()
+     * @param callback will be invoked upon the message flushing to the underlying transport
+     */
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messsageType, int messageFlags, MessageFlushCallback callback) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);
@@ -53,7 +99,16 @@ public class ClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Create a new stream. Activate() must be called on the stream for it to actually initiate the new stream.
+     * @param continuationHandler handler to process continuation messages and state changes.
+     * @return The new continuation object.
+     */
     public ClientConnectionContinuation newStream(final ClientConnectionContinuationHandler continuationHandler) {
+        if (isNull()) {
+            throw new IllegalStateException("close() has already been called on this object.");
+        }
+
         long continuationHandle = newClientStream(getNativeHandle(), continuationHandler);
 
         if (continuationHandle == 0) {
@@ -63,11 +118,22 @@ public class ClientConnection extends CrtResource {
 
         ClientConnectionContinuation connectionContinuation = new ClientConnectionContinuation(continuationHandle);
         continuationHandler.continuation = connectionContinuation;
-        continuationHandler.continuation.addRef();
 
         return connectionContinuation;
     }
 
+    /**
+     * Initiates a new outgoing event-stream-rpc connection. The future will be completed once the connection either
+     * succeeds or fails.
+     * @param hostName hostname to connect to, this can be an IPv4 address, IPv6 address, a local socket address, or a
+     *                 dns name.
+     * @param port port to connect to hostName with. For local socket address, this value is ignored.
+     * @param socketOptions socketOptions to use.
+     * @param tlsContext (optional) tls context to use for using SSL/TLS in the connection.
+     * @param bootstrap clientBootstrap object to run the connection on.
+     * @param connectionHandler handler to process connection messages and state changes.
+     * @return The future will be completed once the connection either succeeds or fails.
+     */
     public static CompletableFuture<Void> connect(final String hostName, short port, final SocketOptions socketOptions,
                                            final ClientTlsContext tlsContext, final ClientBootstrap bootstrap,
                                            final ClientConnectionHandler connectionHandler) {
@@ -77,6 +143,7 @@ public class ClientConnection extends CrtResource {
         ClientConnectionHandler handlerShim = new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                connectionHandler.clientConnection = connection;
                 connectionHandler.onConnectionSetup(connection, errorCode);
 
                 if (errorCode == 0) {

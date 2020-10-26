@@ -11,6 +11,7 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include "crt.h"
+#include "event_stream_message.h"
 #include "java_class_ids.h"
 
 #if _MSC_VER
@@ -123,33 +124,10 @@ static void s_stream_continuation_fn(
 
     struct continuation_callback_data *callback_data = user_data;
 
-    /* this is not how we recommend you use the array_list api, but it is correct, and it prevents the need for extra
-     * allocations and copies. */
-    struct aws_array_list headers_list;
-    aws_array_list_init_static(
-        &headers_list,
-        message_args->headers,
-        message_args->headers_count,
-        sizeof(struct aws_event_stream_header_value_pair));
-    headers_list.length = message_args->headers_count;
-
-    size_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
-    struct aws_byte_buf headers_buf;
-
-    if (aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len)) {
-        /* TODO: this error needs to be communicated back and the connection needs to be shutdown. */
-        return;
-    }
-
-    headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
-    aws_array_list_clean_up(&headers_list);
-
-    struct aws_byte_cursor headers_cur = aws_byte_cursor_from_buf(&headers_buf);
-
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jbyteArray headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
-    aws_byte_buf_clean_up(&headers_buf);
+    jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
+        aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
 
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
@@ -157,7 +135,7 @@ static void s_stream_continuation_fn(
         env,
         callback_data->java_continuation_handler,
         event_stream_server_continuation_handler_properties.onContinuationMessage,
-        headers_byte_array,
+        headers_array,
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
@@ -250,36 +228,10 @@ static void s_connection_protocol_message_fn(
     (void)connection;
 
     struct connection_callback_data *callback_data = user_data;
-
-    /* this is not how we recommend you use the array_list api, but it is correct, and it prevents the need for extra
-     * allocations and copies. */
-    struct aws_array_list headers_list;
-    aws_array_list_init_static(
-        &headers_list,
-        message_args->headers,
-        message_args->headers_count,
-        sizeof(struct aws_event_stream_header_value_pair));
-    headers_list.length = message_args->headers_count;
-
-    uint32_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
-
-    struct aws_byte_buf headers_buf;
-
-    if (aws_byte_buf_init(&headers_buf, aws_jni_get_allocator(), headers_buf_len)) {
-        /* TODO: This callback needs to return an error code so that the underlying lib can shutdown gracefully. */
-        return;
-    }
-
-    headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
-
-    aws_array_list_clean_up(&headers_list);
-
-    struct aws_byte_cursor headers_cur = aws_byte_cursor_from_buf(&headers_buf);
-
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jbyteArray headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
-    aws_byte_buf_clean_up(&headers_buf);
+    jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
+        aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
 
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
@@ -288,14 +240,12 @@ static void s_connection_protocol_message_fn(
         env,
         callback_data->java_connection_handler,
         event_stream_server_connection_handler_properties.onProtocolMessage,
-        headers_byte_array,
+        headers_array,
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
-    (*env)->DeleteLocalRef(env, payload_byte_array);
-    (*env)->DeleteLocalRef(env, headers_byte_array);
 }
 
 static int s_on_new_connection_fn(
@@ -607,55 +557,14 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
 
-    struct message_flush_callback_args *callback_data = NULL;
-    bool headers_init = false;
-    struct aws_array_list headers_list;
-    AWS_ZERO_STRUCT(headers_list);
-    struct aws_byte_buf headers_buf;
-    AWS_ZERO_STRUCT(headers_buf);
-    struct aws_byte_buf payload_buf;
-    AWS_ZERO_STRUCT(payload_buf);
     int ret_val = AWS_OP_ERR;
+    struct message_flush_callback_args *callback_data = NULL;
 
-    if (headers) {
-        if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
-            return AWS_OP_ERR;
-        }
-
-        headers_init = true;
-
-        struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
-        /* copy because JNI is stupid and the buffer that the headers parser runs from needs the memory to stick around
-         * until the final message creation happens. */
-        aws_byte_buf_init_copy_from_cursor(&headers_buf, aws_jni_get_allocator(), headers_cur);
-        int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, headers_buf.buffer, headers_buf.len);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
-
-        if (headers_parse_error) {
-            aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: headers parse failed.");
-            goto clean_up;
-        }
+    struct aws_event_stream_rpc_marshalled_message marshalled_message;
+    if (aws_event_stream_rpc_marshall_message_args_init(
+            &marshalled_message, aws_jni_get_allocator(), env, headers, payload, NULL, message_flags, message_type)) {
+        goto clean_up;
     }
-
-    if (payload) {
-        struct aws_byte_cursor payload_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, payload);
-        aws_byte_buf_init_copy_from_cursor(&payload_buf, aws_jni_get_allocator(), payload_cur);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, payload, payload_cur);
-
-        if (!payload_buf.buffer) {
-            aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: allocation failed.");
-            goto clean_up;
-        }
-    }
-
-    struct aws_event_stream_rpc_message_args message_args = {
-        .message_flags = message_flags,
-        .message_type = message_type,
-        .headers = headers_list.data,
-        .headers_count = headers_list.length,
-        .payload = &payload_buf,
-    };
 
     callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));
 
@@ -673,7 +582,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     callback_data->callback = (*env)->NewGlobalRef(env, callback);
 
     if (aws_event_stream_rpc_server_connection_send_protocol_message(
-            connection, &message_args, s_message_flush_fn, callback_data)) {
+            connection, &marshalled_message.message_args, s_message_flush_fn, callback_data)) {
         aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: send message failed");
         goto clean_up;
     }
@@ -681,12 +590,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
-    aws_byte_buf_clean_up(&payload_buf);
-    aws_byte_buf_clean_up(&headers_buf);
-
-    if (headers_init) {
-        aws_event_stream_headers_list_cleanup(&headers_list);
-    }
+    aws_event_stream_rpc_marshall_message_args_clean_up(&marshalled_message);
 
     return ret_val;
 }
@@ -742,55 +646,14 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
 
     struct message_flush_callback_args *callback_data = NULL;
-    bool headers_init = false;
-    struct aws_array_list headers_list;
-    AWS_ZERO_STRUCT(headers_list);
-    struct aws_byte_buf headers_buf;
-    AWS_ZERO_STRUCT(headers_buf);
-    struct aws_byte_buf payload_buf;
-    AWS_ZERO_STRUCT(payload_buf);
 
     int ret_val = AWS_OP_ERR;
 
-    if (headers) {
-        if (aws_event_stream_headers_list_init(&headers_list, aws_jni_get_allocator())) {
-            return AWS_OP_ERR;
-        }
-
-        headers_init = true;
-
-        struct aws_byte_cursor headers_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, headers);
-        /* copy because JNI is stupid and the buffer that the headers parser runs from needs the memory to stick around
-         * until the final message creation happens. */
-        aws_byte_buf_init_copy_from_cursor(&headers_buf, aws_jni_get_allocator(), headers_cur);
-        int headers_parse_error =
-            aws_event_stream_read_headers_from_buffer(&headers_list, headers_buf.buffer, headers_buf.len);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, headers, headers_cur);
-
-        if (headers_parse_error) {
-            aws_jni_throw_runtime_exception(env, "ServerConnection.sendContinuationMessage: headers parse failed.");
-            goto clean_up;
-        }
+    struct aws_event_stream_rpc_marshalled_message marshalled_message;
+    if (aws_event_stream_rpc_marshall_message_args_init(
+            &marshalled_message, aws_jni_get_allocator(), env, headers, payload, NULL, message_flags, message_type)) {
+        goto clean_up;
     }
-
-    if (payload) {
-        struct aws_byte_cursor payload_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, payload);
-        aws_byte_buf_init_copy_from_cursor(&payload_buf, aws_jni_get_allocator(), payload_cur);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, payload, payload_cur);
-
-        if (!payload_buf.buffer) {
-            aws_jni_throw_runtime_exception(env, "ServerConnection.sendContinuationMessage: allocation failed.");
-            goto clean_up;
-        }
-    }
-
-    struct aws_event_stream_rpc_message_args message_args = {
-        .message_flags = message_flags,
-        .message_type = message_type,
-        .headers = headers_list.data,
-        .headers_count = headers_list.length,
-        .payload = &payload_buf,
-    };
 
     callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));
 
@@ -809,7 +672,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     callback_data->callback = (*env)->NewGlobalRef(env, callback);
 
     if (aws_event_stream_rpc_server_continuation_send_message(
-            continuation, &message_args, s_message_flush_fn, callback_data)) {
+            continuation, &marshalled_message.message_args, s_message_flush_fn, callback_data)) {
         aws_jni_throw_runtime_exception(
             env, "ServerConnectionContinuation.sendContinuationMessage: send message failed");
         goto clean_up;
@@ -818,12 +681,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
-    aws_byte_buf_clean_up(&payload_buf);
-
-    aws_byte_buf_clean_up(&headers_buf);
-    if (headers_init) {
-        aws_event_stream_headers_list_cleanup(&headers_list);
-    }
+    aws_event_stream_rpc_marshall_message_args_clean_up(&marshalled_message);
 
     return ret_val;
 }

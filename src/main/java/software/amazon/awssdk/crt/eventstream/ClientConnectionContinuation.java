@@ -8,12 +8,27 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Java wrapper for event-stream-rpc client continuation.
+ */
 public class ClientConnectionContinuation extends CrtResource {
 
+    /**
+     * Package private invoked from JNI. Do not call directly.
+     */
     ClientConnectionContinuation(long ptr) {
         acquireNativeHandle(ptr);
     }
 
+    /**
+     * Initiates a new client stream. Sends new message for the new stream.
+     * @param operationName name for the operation to be invoked by the peer endpoint.
+     * @param headers headers for the event-stream message, may be null or empty.
+     * @param payload payload for the event-stream message, may be null or empty.
+     * @param messsageType messageType for the message. Must be ApplicationMessage or ApplicationError
+     * @param messageFlags union of flags for MessageFlags.getByteValue()
+     * @param callback callback to be invoked upon the message being flushed to the underlying transport.
+     */
     public void activate(final String operationName,
                          final List<Header> headers, final byte[] payload,
                          final MessageType messsageType, int messageFlags,

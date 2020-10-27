@@ -213,6 +213,7 @@ public class ServerListenerTest extends CrtTestFixture {
         byte[] toSend = new byte[connectMessageBuf.remaining()];
         connectMessageBuf.get(toSend);
         clientSocket.getOutputStream().write(toSend);
+        connectMessage.close();
 
         // this should be damn near instant, but give it a second just to be safe.
         Thread.sleep(1000);
@@ -324,11 +325,12 @@ public class ServerListenerTest extends CrtTestFixture {
         messageHeaders.add(streamId);
 
         Message connectMessage = new Message(messageHeaders, null);
+        connectMessage.close();
         ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
         byte[] toSend = new byte[connectMessageBuf.remaining()];
         connectMessageBuf.get(toSend);
-        connectMessage.close();
         clientSocket.getOutputStream().write(toSend);
+        connectMessage.close();
 
         // this should be damn near instant, but give it a second just to be safe.
         Thread.sleep(1000);
@@ -346,6 +348,7 @@ public class ServerListenerTest extends CrtTestFixture {
         continuationMessageBuf.get(toSend);
         continuationMessage.close();
         clientSocket.getOutputStream().write(toSend);
+        continuationMessage.close();
 
         // also, should fire within a millisecond, but just give it a second.
         Thread.sleep(1000);

@@ -325,7 +325,6 @@ public class ServerListenerTest extends CrtTestFixture {
         messageHeaders.add(streamId);
 
         Message connectMessage = new Message(messageHeaders, null);
-        connectMessage.close();
         ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
         byte[] toSend = new byte[connectMessageBuf.remaining()];
         connectMessageBuf.get(toSend);
@@ -346,7 +345,6 @@ public class ServerListenerTest extends CrtTestFixture {
         ByteBuffer continuationMessageBuf = continuationMessage.getMessageBuffer();
         toSend = new byte[continuationMessageBuf.remaining()];
         continuationMessageBuf.get(toSend);
-        continuationMessage.close();
         clientSocket.getOutputStream().write(toSend);
         continuationMessage.close();
 

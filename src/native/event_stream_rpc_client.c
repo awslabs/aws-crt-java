@@ -39,7 +39,7 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     if (callback_data->java_connection_handler) {
-        (*env)->DeleteWeakGlobalRef(env, callback_data->java_connection_handler);
+        (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
     }
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -162,7 +162,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_client
         goto error;
     }
 
-    callback_data->java_connection_handler = (*env)->NewWeakGlobalRef(env, jni_client_connection_handler);
+    callback_data->java_connection_handler = (*env)->NewGlobalRef(env, jni_client_connection_handler);
 
     if (!callback_data->java_connection_handler) {
         aws_jni_throw_runtime_exception(env, "ClientConnection.clientConnect: Unable to create global weak ref");

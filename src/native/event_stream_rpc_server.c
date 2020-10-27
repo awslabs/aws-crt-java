@@ -66,7 +66,7 @@ static void s_server_connection_data_destroy(JNIEnv *env, struct connection_call
     }
 
     if (callback_data->java_listener_handler) {
-        (*env)->DeleteWeakGlobalRef(env, callback_data->java_listener_handler);
+        (*env)->DeleteGlobalRef(env, callback_data->java_listener_handler);
     }
 
     if (callback_data->java_server_connection) {
@@ -266,8 +266,7 @@ static int s_on_new_connection_fn(
     }
 
     connection_callback_data->jvm = callback_data->jvm;
-    connection_callback_data->java_listener_handler =
-        (*env)->NewWeakGlobalRef(env, callback_data->java_listener_handler);
+    connection_callback_data->java_listener_handler = (*env)->NewGlobalRef(env, callback_data->java_listener_handler);
 
     jobject java_server_connection = NULL;
     if (!error_code) {
@@ -311,7 +310,7 @@ error:
         }
 
         if (connection_callback_data->java_listener_handler) {
-            (*env)->DeleteWeakGlobalRef(env, connection_callback_data->java_listener_handler);
+            (*env)->DeleteGlobalRef(env, connection_callback_data->java_listener_handler);
         }
         aws_mem_release(aws_jni_get_allocator(), connection_callback_data);
     }

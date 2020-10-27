@@ -231,6 +231,7 @@ static int s_build_signing_config(
     if (provider != NULL) {
         config->credentials_provider =
             (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+        aws_jni_check_and_clear_exception(env);
     }
 
     jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
@@ -242,7 +243,7 @@ static int s_build_signing_config(
     config->expiration_in_seconds =
         (uint64_t)(*env)->GetLongField(env, java_config, aws_signing_config_properties.expiration_in_seconds_field_id);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 

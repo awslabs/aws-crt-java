@@ -4,15 +4,18 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public class ServerBootstrap extends CrtResource {
+    private EventLoopGroup eventLoopGroup = null;
 
     public ServerBootstrap(final EventLoopGroup elg) {
-        acquireNativeHandle(serverBootstrapNew(this, elg.getNativeHandle()));
-        addReferenceTo(elg);
+        eventLoopGroup = elg;
+        acquireNativeHandle(serverBootstrapNew(this, eventLoopGroup.getNativeHandle()));
+        addReferenceTo(eventLoopGroup);
     }
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
             serverBootstrapDestroy(getNativeHandle());
+            removeReferenceTo(eventLoopGroup);
         }
     }
 

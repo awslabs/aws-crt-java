@@ -14,7 +14,7 @@
 #include "event_stream_message.h"
 #include "java_class_ids.h"
 
-#if _MSC_VER
+#if defined(_MSC_VER)
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 

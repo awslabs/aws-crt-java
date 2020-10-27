@@ -120,7 +120,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -162,7 +162,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final int[] clientReceivedMessageFlags = {-1};
 
 
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;
@@ -234,7 +234,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         Header serverStrHeader = Header.createHeader("serverStrHeaderName", "serverStrHeaderValue");
         Header serverIntHeader = Header.createHeader("serverIntHeaderName", 25);
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8035, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -279,7 +279,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final int[] clientReceivedMessageFlags = {-1};
 
 
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8035, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;
@@ -364,7 +364,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8036, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -426,7 +426,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final boolean[] clientContinuationClosed = {false};
 
 
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8036, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;
@@ -521,7 +521,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -587,7 +587,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final boolean[] clientContinuationClosed = {false};
 
 
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8037, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;

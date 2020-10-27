@@ -31,7 +31,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8032, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8038, socketOptions, null, bootstrap, new ServerListenerHandler() {
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
                 return null;
             }
@@ -57,7 +57,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ServerListener listener1 = new ServerListener("127.0.0.1", (short)8032, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener1 = new ServerListener("127.0.0.1", (short)8039, socketOptions, null, bootstrap, new ServerListenerHandler() {
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
                 return null;
             }
@@ -69,7 +69,7 @@ public class ServerListenerTest extends CrtTestFixture {
         assertNotNull(listener1);
         boolean exceptionThrown = false;
         try {
-        ServerListener listener2 = new ServerListener("127.0.0.1", (short)8032, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener2 = new ServerListener("127.0.0.1", (short)8039, socketOptions, null, bootstrap, new ServerListenerHandler() {
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
                 return null;
             }
@@ -103,7 +103,7 @@ public class ServerListenerTest extends CrtTestFixture {
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8040, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -131,7 +131,7 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8033);
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8040);
         clientSocket.connect(address, 3000);
 
         // this should be damn near instant, but give it a second just to be safe.
@@ -167,7 +167,7 @@ public class ServerListenerTest extends CrtTestFixture {
         final MessageType[] receivedMessageType = {null};
         final int[] receivedMessageFlags = {-1};
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8041, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -199,7 +199,7 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8033);
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8041);
         clientSocket.connect(address, 3000);
 
         Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());
@@ -264,7 +264,7 @@ public class ServerListenerTest extends CrtTestFixture {
         final String[] receivedOperationName = new String[]{null};
         final String[] receivedContinuationPayload = new String[]{null};
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8042, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -317,7 +317,7 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8033);
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
         clientSocket.connect(address, 3000);
 
         Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());

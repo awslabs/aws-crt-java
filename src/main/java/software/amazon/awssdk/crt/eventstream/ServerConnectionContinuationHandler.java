@@ -3,9 +3,11 @@ package software.amazon.awssdk.crt.eventstream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ServerConnectionContinuationHandler implements AutoCloseable {
     protected ServerConnectionContinuation continuation;
+    private CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
     protected ServerConnectionContinuationHandler(final ServerConnectionContinuation continuation) {
         this.continuation = continuation;
@@ -27,6 +29,15 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
         }
 
         onContinuationMessage(headers, payload, MessageType.fromEnumValue(messageType), messageFlags);
+    }
+
+    void onContinuationClosedShim() {
+        onContinuationClosed();
+        completableFuture.complete(null);
+    }
+
+    public CompletableFuture<Void> getContinuationClosedFuture() {
+        return completableFuture;
     }
 
     @Override

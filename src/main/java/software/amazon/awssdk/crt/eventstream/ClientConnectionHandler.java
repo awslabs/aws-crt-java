@@ -3,9 +3,11 @@ package software.amazon.awssdk.crt.eventstream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ClientConnectionHandler implements AutoCloseable {
     protected ClientConnection clientConnection;
+    private CompletableFuture<Integer> closeFuture = new CompletableFuture<>();
 
     public ClientConnectionHandler() {
     }
@@ -38,6 +40,14 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
         onProtocolMessage(headers, payload, MessageType.fromEnumValue(messageType), messageFlags);
     }
 
+    private void onConnectionClosedShim(int closeReason) {
+        onConnectionClosed(closeReason);
+        closeFuture.complete(closeReason);
+    }
+
+    public CompletableFuture<Integer> getConnectionClosedFuture() {
+        return closeFuture;
+    }
 
     protected abstract void onConnectionClosed(int closeReason);
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ServerConnection extends CrtResource {
+    CompletableFuture<Integer> closedFuture = new CompletableFuture<>();
 
     ServerConnection(long connectionPtr) {
         // tell c-land we're acquiring
@@ -17,7 +18,7 @@ public class ServerConnection extends CrtResource {
 
     public boolean isConnectionClosed() {
         if (isNull()) {
-            throw new IllegalStateException("close() has already been called on this object.");
+            return true;
         }
         return isClosed(getNativeHandle());
     }
@@ -63,6 +64,10 @@ public class ServerConnection extends CrtResource {
             int errorCode = CRT.awsLastError();
             throw new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode));
         }
+    }
+
+    public CompletableFuture<Integer> getClosedFuture() {
+        return closedFuture;
     }
 
     @Override

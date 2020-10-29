@@ -10,6 +10,12 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
 
     protected ServerConnectionHandler(final ServerConnection connection) {
         this.connection = connection;
+        // it wasn't really doable to have JNI invoke the function from the ServerConnectionHandler, The ServerListener
+        // completes this future, when it's completed, as a convenience go ahead and invoke our own callback which
+        // by default cleans up the resources.
+        this.connection.getClosedFuture().whenComplete((shutdownReason, ex) -> {
+            onConnectionClosed(shutdownReason);
+        });
     }
 
     protected abstract void onProtocolMessage(final List<Header> headers,
@@ -36,9 +42,15 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
         return onIncomingStream(continuation, operationNameStr);
     }
 
+    protected void onConnectionClosed(int shutdownReason) {
+        this.close();
+    }
+
     @Override
     public void close() {
-        connection.closeConnection(0);
+        if (!connection.isConnectionClosed()) {
+            connection.closeConnection(0);
+        }
         connection.decRef();
         connection = null;
     }

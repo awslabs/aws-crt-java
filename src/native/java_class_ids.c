@@ -375,7 +375,7 @@ static void s_cache_event_stream_server_listener_handler_properties(JNIEnv *env)
         "ServerConnectionHandler;");
     AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.onNewConnection);
     event_stream_server_listener_handler_properties.onConnectionShutdown = (*env)->GetMethodID(
-        env, cls, "onConnectionShutdown", "(Lsoftware/amazon/awssdk/crt/eventstream/ServerConnection;I)V");
+        env, cls, "onConnectionShutdownShim", "(Lsoftware/amazon/awssdk/crt/eventstream/ServerConnection;I)V");
     AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.onConnectionShutdown);
 }
 
@@ -416,7 +416,7 @@ static void s_cache_event_stream_server_continuation_handler_properties(JNIEnv *
         (*env)->GetMethodID(env, cls, "onContinuationMessageShim", "([B[BII)V");
     AWS_FATAL_ASSERT(event_stream_server_continuation_handler_properties.onContinuationMessage);
     event_stream_server_continuation_handler_properties.onContinuationClosed =
-        (*env)->GetMethodID(env, cls, "onContinuationClosed", "()V");
+        (*env)->GetMethodID(env, cls, "onContinuationClosedShim", "()V");
     AWS_FATAL_ASSERT(event_stream_server_continuation_handler_properties.onContinuationClosed);
 }
 
@@ -433,7 +433,7 @@ static void s_cache_event_stream_client_connection_handler_properties(JNIEnv *en
         (*env)->GetMethodID(env, cls, "onProtocolMessage", "([B[BII)V");
     AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onProtocolMessage);
     event_stream_client_connection_handler_properties.onClosed =
-        (*env)->GetMethodID(env, cls, "onConnectionClosed", "(I)V");
+        (*env)->GetMethodID(env, cls, "onConnectionClosedShim", "(I)V");
     AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onClosed);
 }
 
@@ -447,7 +447,7 @@ static void s_cache_event_stream_client_continuation_handler_properties(JNIEnv *
         (*env)->GetMethodID(env, cls, "onContinuationMessageShim", "([B[BII)V");
     AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationMessage);
     event_stream_client_continuation_handler_properties.onContinuationClosed =
-        (*env)->GetMethodID(env, cls, "onContinuationClosed", "()V");
+        (*env)->GetMethodID(env, cls, "onContinuationClosedShim", "()V");
     AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationClosed);
 }
 

@@ -16,6 +16,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
 
@@ -102,14 +105,19 @@ public class ServerListenerTest extends CrtTestFixture {
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
+        final ServerConnection[] serverConnections = {null};
+
+        final Lock lock = new ReentrantLock();
+        final Condition testSynchronizationCVar = lock.newCondition();
 
         ServerListener listener = new ServerListener("127.0.0.1", (short)8040, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                lock.lock();
                 connectionReceived[0] = true;
+                serverConnections[0] = serverConnection;
 
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                ServerConnectionHandler connectionHandler = new ServerConnectionHandler(serverConnection) {
 
                     @Override
                     protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
@@ -121,24 +129,27 @@ public class ServerListenerTest extends CrtTestFixture {
                     }
                 };
 
+                testSynchronizationCVar.signal();
+                lock.unlock();
                 return connectionHandler;
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
                 connectionShutdown[0] = true;
-                connectionHandler.close();
             }
         });
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8040);
+        lock.lock();
         clientSocket.connect(address, 3000);
-
-        // this should be damn near instant, but give it a second just to be safe.
-        Thread.sleep(1000);
+        testSynchronizationCVar.await();
+        lock.unlock();
+        assertNotNull(serverConnections[0]);
         clientSocket.close();
-        // also, should fire within a millisecond, but just give it a second.
-        Thread.sleep(1000);
+
+        serverConnections[0].getClosedFuture().get();
+
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
 
@@ -167,20 +178,28 @@ public class ServerListenerTest extends CrtTestFixture {
         final MessageType[] receivedMessageType = {null};
         final int[] receivedMessageFlags = {-1};
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8041, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        final ServerConnection[] serverConnections = {null};
+
+        final Lock lock = new ReentrantLock();
+        final Condition testSynchronizationCVar = lock.newCondition();
+
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                lock.lock();
                 connectionReceived[0] = true;
-
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                serverConnections[0] = serverConnection;
+                ServerConnectionHandler connectionHandler = new ServerConnectionHandler(serverConnection) {
 
                     @Override
                     protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                        lock.lock();
                         receivedMessageHeaders[0] = headers;
                         receivedPayload[0] = payload;
                         receivedMessageType[0] = messageType;
                         receivedMessageFlags[0] = messageFlags;
+                        testSynchronizationCVar.signal();
+                        lock.unlock();
                     }
 
                     @Override
@@ -189,18 +208,24 @@ public class ServerListenerTest extends CrtTestFixture {
                     }
                 };
 
+                testSynchronizationCVar.signal();
+                lock.unlock();
                 return connectionHandler;
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
                 connectionShutdown[0] = true;
-                connectionHandler.close();
             }
         });
 
         Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8041);
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8037);
+        lock.lock();
         clientSocket.connect(address, 3000);
+        testSynchronizationCVar.await();
+        lock.unlock();
+        assertTrue(connectionReceived[0]);
+        assertNotNull(serverConnections[0]);
 
         Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());
         Header messageFlags = Header.createHeader(":message-flags", 0);
@@ -216,16 +241,13 @@ public class ServerListenerTest extends CrtTestFixture {
         ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
         byte[] toSend = new byte[connectMessageBuf.remaining()];
         connectMessageBuf.get(toSend);
+
+        lock.lock();
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
+        testSynchronizationCVar.await();
+        lock.unlock();
 
-        // this should be damn near instant, but give it a second just to be safe.
-        Thread.sleep(1000);
-        clientSocket.close();
-        // also, should fire within a millisecond, but just give it a second.
-        Thread.sleep(1000);
-        assertTrue(connectionReceived[0]);
-        assertTrue(connectionShutdown[0]);
         assertNotNull(receivedMessageHeaders[0]);
         assertEquals(3, receivedMessageHeaders[0].size());
         assertEquals(":message-type", receivedMessageHeaders[0].get(0).getName());
@@ -240,6 +262,11 @@ public class ServerListenerTest extends CrtTestFixture {
         assertEquals(0, receivedMessageFlags[0]);
 
         assertEquals(payload, new String(receivedPayload[0], StandardCharsets.UTF_8));
+
+        clientSocket.close();
+        serverConnections[0].getClosedFuture().get();
+        assertTrue(connectionShutdown[0]);
+
         listener.close();
         listener.getShutdownCompleteFuture().get();
         bootstrap.close();
@@ -264,13 +291,20 @@ public class ServerListenerTest extends CrtTestFixture {
         final String[] receivedOperationName = new String[]{null};
         final String[] receivedContinuationPayload = new String[]{null};
 
+        final ServerConnection[] serverConnections = {null};
+
+        final Lock lock = new ReentrantLock();
+        final Condition testSynchronizationCVar = lock.newCondition();
+
+
         ServerListener listener = new ServerListener("127.0.0.1", (short)8042, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                lock.lock();
+                serverConnections[0] = serverConnection;
                 connectionReceived[0] = true;
 
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                ServerConnectionHandler connectionHandler = new ServerConnectionHandler(serverConnection) {
 
                     @Override
                     protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
@@ -278,6 +312,10 @@ public class ServerListenerTest extends CrtTestFixture {
                         MessageType acceptResponseType = MessageType.ConnectAck;
 
                         connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
+
+                        lock.lock();
+                        testSynchronizationCVar.signal();
+                        lock.unlock();
                     }
 
                     @Override
@@ -287,13 +325,20 @@ public class ServerListenerTest extends CrtTestFixture {
                         return new ServerConnectionContinuationHandler(continuation) {
                             @Override
                             protected void onContinuationClosed() {
+                                lock.lock();
                                 continuationClosed[0] = true;
+                                testSynchronizationCVar.signal();
+                                lock.unlock();
+
                                 this.close();
                             }
 
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                                lock.lock();
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
+                                testSynchronizationCVar.signal();
+                                lock.unlock();
 
                                 String responsePayload = "{ \"message\": \"this is a response message\" }";
                                 continuation.sendMessage(null, responsePayload.getBytes(StandardCharsets.UTF_8),
@@ -307,18 +352,25 @@ public class ServerListenerTest extends CrtTestFixture {
                     }
                 };
 
+                testSynchronizationCVar.signal();
+                lock.unlock();
                 return connectionHandler;
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
                 connectionShutdown[0] = true;
-                connectionHandler.close();
             }
         });
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
+        lock.lock();
         clientSocket.connect(address, 3000);
+        testSynchronizationCVar.await();
+        lock.unlock();
+
+        assertNotNull(serverConnections[0]);
+        assertTrue(connectionReceived[0]);
 
         Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());
         Header messageFlags = Header.createHeader(":message-flags", 0);
@@ -336,8 +388,9 @@ public class ServerListenerTest extends CrtTestFixture {
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
 
-        // this should be damn near instant, but give it a second just to be safe.
-        Thread.sleep(1000);
+        lock.lock();
+        testSynchronizationCVar.await();
+        lock.unlock();
 
         String operationName = "testOperation";
         messageHeaders = new ArrayList<>(3);
@@ -353,12 +406,13 @@ public class ServerListenerTest extends CrtTestFixture {
         clientSocket.getOutputStream().write(toSend);
         continuationMessage.close();
 
-        // also, should fire within a millisecond, but just give it a second.
-        Thread.sleep(1000);
+        lock.lock();
+        testSynchronizationCVar.await();
+        lock.unlock();
+
         clientSocket.close();
-        // also, should fire within a millisecond, but just give it a second.
-        Thread.sleep(1000);
-        assertTrue(connectionReceived[0]);
+        serverConnections[0].getClosedFuture().get();
+
         assertTrue(connectionShutdown[0]);
         assertNotNull(receivedOperationName[0]);
         assertEquals(operationName, receivedOperationName[0]);

@@ -5,13 +5,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Handler for EventStream ClientConnections. It's marked AutoClosable.
+ * By default onConnectionClosed, calls the close() function on this object.
+ */
 public abstract class ClientConnectionHandler implements AutoCloseable {
     protected ClientConnection clientConnection;
-    private CompletableFuture<Integer> closeFuture = new CompletableFuture<>();
 
     public ClientConnectionHandler() {
     }
 
+    /**
+     * Invoked upon completion of the Connection attempt
+     * @param connection if the setup was successful, connection is non-null. On error, errorCode
+     *                   will be non-zero
+     * @param errorCode Error representing any error that occurred during connect.
+     */
     protected abstract void onConnectionSetup(final ClientConnection connection, int errorCode);
 
     void onConnectionSetupShim(long connectionPtr, int errorCode) {
@@ -23,6 +32,13 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
         onConnectionSetup(clientConnection, errorCode);
     }
 
+    /**
+     * Invoked when a message is received on a connection.
+     * @param headers List of EventStream headers for the message received.
+     * @param payload Payload for the message received
+     * @param messageType message type for the message
+     * @param messageFlags message flags for the message
+     */
     protected abstract void onProtocolMessage(final List<Header> headers,
                                               final byte[] payload, final MessageType messageType, int messageFlags);
 
@@ -42,14 +58,23 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
 
     private void onConnectionClosedShim(int closeReason) {
         onConnectionClosed(closeReason);
-        closeFuture.complete(closeReason);
     }
 
+    /**
+     * Returns a future for syncing on Connection closed.
+     */
     public CompletableFuture<Integer> getConnectionClosedFuture() {
-        return closeFuture;
+        return clientConnection.getClosedFuture();
     }
 
-    protected abstract void onConnectionClosed(int closeReason);
+    /**
+     * Invoked upon the connection closed event. By default it calls close()
+     * on this object.
+     * @param closeReason The reason the connection was closed. 0 means a clean shutdown.
+     */
+    protected void onConnectionClosed(int closeReason) {
+        this.close();
+    }
 
     @Override
     public void close() {

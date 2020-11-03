@@ -5,16 +5,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Handler interface for responding to continuation events. It's auto closable.
+ * By default, onContinuationClosed() releases the underlying resource.
+ */
 public abstract class ServerConnectionContinuationHandler implements AutoCloseable {
     protected ServerConnectionContinuation continuation;
     private CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
+    /**
+     * Constructor invoked by your subclass.
+     */
     protected ServerConnectionContinuationHandler(final ServerConnectionContinuation continuation) {
         this.continuation = continuation;
     }
 
+    /**
+     * Implement to handle the onContinuationClosed event.
+     */
     protected abstract void onContinuationClosed();
 
+    /**
+     * Invoked when a message is received on a continuation.
+     * @param headers List of EventStream headers for the message received.
+     * @param payload Payload for the message received
+     * @param messageType message type for the message
+     * @param messageFlags message flags for the message
+     */
     protected abstract void onContinuationMessage(final List<Header> headers,
                                              final byte[] payload, final MessageType messageType, int messageFlags);
 
@@ -36,6 +53,9 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
         completableFuture.complete(null);
     }
 
+    /**
+     * Returns a future that will be completed upon the continuation being closed.
+     */
     public CompletableFuture<Void> getContinuationClosedFuture() {
         return completableFuture;
     }

@@ -141,8 +141,8 @@ public class ServerListenerTest extends CrtTestFixture {
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8040);
-        lock.lock();
         clientSocket.connect(address, 3000);
+        lock.lock();
         testSynchronizationCVar.await();
         lock.unlock();
         assertNotNull(serverConnections[0]);
@@ -242,9 +242,9 @@ public class ServerListenerTest extends CrtTestFixture {
         byte[] toSend = new byte[connectMessageBuf.remaining()];
         connectMessageBuf.get(toSend);
 
-        lock.lock();
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
+        lock.lock();
         testSynchronizationCVar.await();
         lock.unlock();
 
@@ -364,8 +364,8 @@ public class ServerListenerTest extends CrtTestFixture {
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
-        lock.lock();
         clientSocket.connect(address, 3000);
+        lock.lock();
         testSynchronizationCVar.await();
         lock.unlock();
 

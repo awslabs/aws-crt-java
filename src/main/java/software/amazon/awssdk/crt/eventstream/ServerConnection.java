@@ -7,15 +7,25 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Wrapper around event-stream-rpc-server-connection. Note this class is AutoClosable.
+ * By default the ServerConnectionHandler::onClosed callback calls close().
+ */
 public class ServerConnection extends CrtResource {
     CompletableFuture<Integer> closedFuture = new CompletableFuture<>();
 
+    /**
+     * Invoked from JNI.
+     */
     ServerConnection(long connectionPtr) {
         // tell c-land we're acquiring
         acquire(connectionPtr);
         acquireNativeHandle(connectionPtr);
     }
 
+    /**
+     * Returns true if the connection is closed. False otherwise.
+     */
     public boolean isConnectionClosed() {
         if (isNull()) {
             return true;
@@ -23,6 +33,11 @@ public class ServerConnection extends CrtResource {
         return isClosed(getNativeHandle());
     }
 
+    /**
+     * Closes the connection with shutdownError
+     * @param shutdownError error code to shutdown the connection with. If
+     *                      shutting down cleanly, use 0.
+     */
     public void closeConnection(int shutdownError) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
@@ -30,6 +45,15 @@ public class ServerConnection extends CrtResource {
         closeConnection(getNativeHandle(), shutdownError);
     }
 
+    /**
+     * Sends a protocol message on the connection. Returns a completable future for synchronizing on the message
+     * flushing to the underlying transport.
+     * @param headers List of event-stream headers. Can be null.
+     * @param payload Payload to send for the message. Can be null.
+     * @param messsageType Message type for the rpc message.
+     * @param messageFlags Union of message flags from MessageFlags.getByteValue()
+     * @return completable future for synchronizing on the message flushing to the underlying transport.
+     */
     public CompletableFuture<Void> sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                                        final MessageType messsageType, int messageFlags) {
         if (isNull()) {
@@ -51,6 +75,15 @@ public class ServerConnection extends CrtResource {
         return messageFlush;
     }
 
+    /**
+     * Sends a protocol message on the connection. Returns a completable future for synchronizing on the message
+     * flushing to the underlying transport.
+     * @param headers List of event-stream headers. Can be null.
+     * @param payload Payload to send for the message. Can be null.
+     * @param messsageType Message type for the rpc message.
+     * @param messageFlags Union of message flags from MessageFlags.getByteValue()
+     * @param callback invoked upon the message flushing to the underlying transport.
+     */
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messsageType, int messageFlags, MessageFlushCallback callback) {
         if (isNull()) {
@@ -66,6 +99,9 @@ public class ServerConnection extends CrtResource {
         }
     }
 
+    /**
+     * Returns a future which completes upon the connection closing
+     */
     public CompletableFuture<Integer> getClosedFuture() {
         return closedFuture;
     }

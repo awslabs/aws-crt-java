@@ -7,18 +7,38 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Wrapper around aws-event-stream-rpc-server continuation. This class is marked AutoClosable.
+ * Note that by default ServerConnectionContinuationHandler will invoke close() in
+ * ServerConnectionContinuationHandler::onContinuationClosed().
+ */
 public class ServerConnectionContinuation extends CrtResource {
 
+    /**
+     * Invoked from JNI
+     */
     ServerConnectionContinuation(long continuationPtr) {
         // tell c land we're acquiring
         acquire(continuationPtr);
         acquireNativeHandle(continuationPtr);
     }
 
+    /**
+     * Returns true if the continuation has been closed. False otherwise.
+     */
     public boolean isClosed() {
         return isClosed(getNativeHandle());
     }
 
+    /**
+     * Sends message on the continuation
+     * @param headers list of additional event stream headers to include on the message.
+     * @param payload payload for the message
+     * @param messsageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageFlags message flags for the message, use TerminateStream to cause this message
+     *                     to close the continuation after sending.
+     * @return Future for syncing when the message is flushed to the transport or fails.
+     */
     public CompletableFuture<Void> sendMessage(final List<Header> headers, final byte[] payload,
                                                        final MessageType messsageType, int messageFlags) {
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
@@ -34,6 +54,16 @@ public class ServerConnectionContinuation extends CrtResource {
         return messageFlush;
     }
 
+    /**
+     * Sends message on the continuation
+     * @param headers list of additional event stream headers to include on the message.
+     * @param payload payload for the message
+     * @param messageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageFlags message flags for the message, use TerminateStream to cause this message
+     *                     to close the continuation after sending.
+     * @param callback completion callback to be invoked when the message is synced to the underlying
+     *                 transport.
+     */
     public void sendMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messageType, int messageFlags, MessageFlushCallback callback) {
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers): null;

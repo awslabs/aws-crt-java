@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
  * Wrapper around an event stream rpc client initiated connection.
  */
 public class ClientConnection extends CrtResource {
+    CompletableFuture<Integer> closeFuture = new CompletableFuture<>();
 
     /**
      * Only for internal usage. This is invoked from JNI to create a new java wrapper for the connection.
@@ -160,6 +161,7 @@ public class ClientConnection extends CrtResource {
 
             @Override
             protected void onConnectionClosed(int closeReason) {
+                connectionHandler.clientConnection.closeFuture.complete(closeReason);
                 connectionHandler.onConnectionClosed(closeReason);
             }
         };
@@ -173,6 +175,13 @@ public class ClientConnection extends CrtResource {
         }
 
         return future;
+    }
+
+    /**
+     * Returns a future for syncing on Connection closed.
+     */
+    public CompletableFuture<Integer> getClosedFuture() {
+        return closeFuture;
     }
 
     @Override

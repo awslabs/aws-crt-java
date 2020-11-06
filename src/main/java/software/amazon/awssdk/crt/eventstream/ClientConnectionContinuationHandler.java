@@ -58,7 +58,7 @@ public abstract class ClientConnectionContinuationHandler implements AutoCloseab
     }
 
     /**
-     * Returns a future that will be completed upon the continuation being closed.
+     * @return a future that will be completed upon the continuation being closed.
      */
     public CompletableFuture<Void> getContinuationClosedFuture() {
         return closedFuture;

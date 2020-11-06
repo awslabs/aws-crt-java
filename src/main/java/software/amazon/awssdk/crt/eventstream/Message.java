@@ -12,6 +12,8 @@ import java.util.List;
 public class Message extends CrtResource {
     /**
      * Creates a message using headers and payload.
+     * @param headers list of headers to include in the message's header block. Can be null.
+     * @param payload payload body to include in the message's payload block. Can be null.
      */
     public Message(List<Header> headers, byte[] payload) {
         acquireNativeHandle(messageNew(Header.marshallHeadersForJNI(headers), payload));

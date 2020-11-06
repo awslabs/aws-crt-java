@@ -72,7 +72,7 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
     }
 
     /**
-     * Returns a future for syncing on Connection closed.
+     * @return a future for syncing on Connection closed.
      */
     public CompletableFuture<Integer> getConnectionClosedFuture() {
         return clientConnection.getClosedFuture();

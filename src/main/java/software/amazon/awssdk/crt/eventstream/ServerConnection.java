@@ -24,7 +24,7 @@ public class ServerConnection extends CrtResource {
     }
 
     /**
-     * Returns true if the connection is closed. False otherwise.
+     * @return true if the connection is closed. False otherwise.
      */
     public boolean isConnectionClosed() {
         if (isNull()) {
@@ -100,7 +100,7 @@ public class ServerConnection extends CrtResource {
     }
 
     /**
-     * Returns a future which completes upon the connection closing
+     * @return a future which completes upon the connection closing
      */
     public CompletableFuture<Integer> getClosedFuture() {
         return closedFuture;

@@ -74,7 +74,7 @@ public class ServerListener extends CrtResource {
     }
 
     /**
-     * Returns future to synchronize shutdown completion of this object.
+     * @return future to synchronize shutdown completion of this object.
      */
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 

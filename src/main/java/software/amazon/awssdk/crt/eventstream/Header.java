@@ -21,6 +21,9 @@ public class Header {
 
     /**
      * Create a header with name of boolean value
+     * @param name name for the header.
+     * @param value value for the header.
+     * @return new Header instance
      */
     public static Header createHeader(final String name, boolean value) {
         Header header = new Header();
@@ -32,6 +35,9 @@ public class Header {
 
     /**
      * Create a header with name of byte or int8 value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, byte value) {
         Header header = new Header();
@@ -43,6 +49,9 @@ public class Header {
 
     /**
      * Create a header with name of String value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, final String value) {
         Header header = new Header();
@@ -54,6 +63,9 @@ public class Header {
 
     /**
      * Create a header with name of short or int16 value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, short value) {
         Header header = new Header();
@@ -65,6 +77,9 @@ public class Header {
 
     /**
      * Create a header with name of int or int32 value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, int value) {
         Header header = new Header();
@@ -76,6 +91,9 @@ public class Header {
 
     /**
      * Create a header with name of long or int64 value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, long value) {
         Header header = new Header();
@@ -87,6 +105,9 @@ public class Header {
 
     /**
      * Create a header with name of Date (assumed to be UTC) value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, final Date value) {
         Header header = new Header();
@@ -98,6 +119,9 @@ public class Header {
 
     /**
      * Create a header with name of byte[] value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, final byte[] value) {
         Header header = new Header();
@@ -109,6 +133,9 @@ public class Header {
 
     /**
      * Create a header with name of UUID value
+     * @param name name for the header
+     * @param value value for the header
+     * @return new Header instance
      */
     public static Header createHeader(final String name, final UUID value) {
         Header header = new Header();
@@ -120,6 +147,7 @@ public class Header {
 
     /**
      * Marshals buffer into a Header instance
+     * @param buffer buffer to read the header data from
      * @return New instance of Header
      */
     public static Header fromByteBuffer(final ByteBuffer buffer) {
@@ -191,6 +219,7 @@ public class Header {
     /**
      * Writes the value of this header into a buffer, using the wire representation of
      * the header.
+     * @param buffer buffer to write this header into
      */
     public void writeToByteBuffer(ByteBuffer buffer) {
         buffer.put((byte)headerName.length());
@@ -204,6 +233,7 @@ public class Header {
 
     /**
      * Gets the name of the header as a (UTF-8) string
+     * @return utf-8 encoded string for the header name
      */
     public String getName() {
         return this.headerName;
@@ -211,6 +241,7 @@ public class Header {
 
     /**
      * Gets the header type of the value.
+     * @return HeaderType for this header
      */
     public HeaderType getHeaderType() {
         return this.headerType;
@@ -410,7 +441,7 @@ public class Header {
     }
 
     /**
-     * returns the total binary wire representation length of this header.
+     * @return the total binary wire representation length of this header.
      */
     public int getTotalByteLength() {
         // name len (1 byte) + header name + type (1 byte)
@@ -423,6 +454,7 @@ public class Header {
     /**
      * Marshals a list of headers into a usable headers block for an event-stream message.
      * Used for sending headers across the JNI boundary more efficiently
+     * @param headers list of headers to write to the headers block
      * @return a byte[] that matches the event-stream header-block format.
      */
     public static byte[] marshallHeadersForJNI(List<Header> headers) {

@@ -24,7 +24,7 @@ public class ServerConnectionContinuation extends CrtResource {
     }
 
     /**
-     * Returns true if the continuation has been closed. False otherwise.
+     * @return true if the continuation has been closed. False otherwise.
      */
     public boolean isClosed() {
         return isClosed(getNativeHandle());

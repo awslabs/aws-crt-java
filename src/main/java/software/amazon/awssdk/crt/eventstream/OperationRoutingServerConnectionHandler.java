@@ -59,6 +59,8 @@ public class OperationRoutingServerConnectionHandler extends ServerConnectionHan
      * To customize how the connect request is handled, override this function.
      * You're responsible for sending the response. By default, it accepts all incoming
      * connections.
+     * @param headers list of headers received in the message
+     * @param payload payload received in the message
      */
     protected void onConnectRequest(List<Header> headers, byte[] payload) {
         int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
@@ -68,12 +70,15 @@ public class OperationRoutingServerConnectionHandler extends ServerConnectionHan
     }
 
     /**
-     * When a new stream continuation is received, it routes to the configured operation name ->
+     * When a new stream continuation is received, it routes to the configured operation name to
      * handler mapping. If no such mapping exists, an Unsupported Operation message of type ApplicationError
      * is sent to the peer.
      *
      * You can't override this function, because well, if you do, you might as well not use this
      * class in the first place.
+     *
+     * @param continuation continuation representing the new incoming stream
+     * @param operationName operation name for the new incoming stream
      */
     @Override
     protected final ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {

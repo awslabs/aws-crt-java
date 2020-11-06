@@ -15,6 +15,7 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
 
     /**
      * Constructor invoked by your subclass.
+     * @param continuation continuation to back the handler.
      */
     protected ServerConnectionContinuationHandler(final ServerConnectionContinuation continuation) {
         this.continuation = continuation;
@@ -58,7 +59,7 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
     }
 
     /**
-     * Returns a future that will be completed upon the continuation being closed.
+     * @return a future that will be completed upon the continuation being closed.
      */
     public CompletableFuture<Void> getContinuationClosedFuture() {
         return completableFuture;

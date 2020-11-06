@@ -23,6 +23,10 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
      */
     protected abstract void onConnectionSetup(final ClientConnection connection, int errorCode);
 
+    /**
+     * Invoked from JNI. Constructs usable ClientConnection object and invokes:
+     * onConnectionSetup()
+     */
     void onConnectionSetupShim(long connectionPtr, int errorCode) {
         if (connectionPtr != 0) {
             // don't add ref, this is a private constructor and the only reference lives in the handler.
@@ -43,6 +47,10 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
                                               final byte[] payload, final MessageType messageType, int messageFlags);
 
 
+    /**
+     * Invoked from JNI. Marshalls the native data into usable java objects and invokes
+     * onProtocolMessage()
+     */
     private void onProtocolMessage(final byte[] headersPayload, final byte[] payload,
                                    int messageType, int messageFlags) {
         List<Header> headers = new ArrayList<>();
@@ -56,6 +64,9 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
         onProtocolMessage(headers, payload, MessageType.fromEnumValue(messageType), messageFlags);
     }
 
+    /**
+     * Invoked from JNI. Invokes onConnectionClosed()
+     */
     private void onConnectionClosedShim(int closeReason) {
         onConnectionClosed(closeReason);
     }

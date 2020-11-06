@@ -21,9 +21,13 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
     }
 
     /**
-     * Implement to handle the onContinuationClosed event.
+     * Implement to handle the onContinuationClosed event. By default, releases the underlying
+     * resource by calling close(). If you override this function, be sure to either call close()
+     * yourself or invoke super.onContinuationClosed().
      */
-    protected abstract void onContinuationClosed();
+    protected void onContinuationClosed() {
+        this.close();
+    }
 
     /**
      * Invoked when a message is received on a continuation.

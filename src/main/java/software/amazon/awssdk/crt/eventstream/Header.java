@@ -6,6 +6,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * Event-stream header. This object can be represented in many types, so before using
+ * the getValueAs*() functions, check the value of getHeaderType() and then decide
+ * which getValueAs*() function to call based on the returned type.
+ */
 public class Header {
     private String headerName;
     private HeaderType headerType;
@@ -14,6 +19,9 @@ public class Header {
     private Header() {
     }
 
+    /**
+     * Create a header with name of boolean value
+     */
     public static Header createHeader(final String name, boolean value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -22,6 +30,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of byte or int8 value
+     */
     public static Header createHeader(final String name, byte value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -30,6 +41,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of String value
+     */
     public static Header createHeader(final String name, final String value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -38,6 +52,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of short or int16 value
+     */
     public static Header createHeader(final String name, short value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -46,6 +63,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of int or int32 value
+     */
     public static Header createHeader(final String name, int value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -54,6 +74,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of long or int64 value
+     */
     public static Header createHeader(final String name, long value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -62,6 +85,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of Date (assumed to be UTC) value
+     */
     public static Header createHeader(final String name, final Date value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -70,6 +96,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of byte[] value
+     */
     public static Header createHeader(final String name, final byte[] value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -78,6 +107,9 @@ public class Header {
         return header;
     }
 
+    /**
+     * Create a header with name of UUID value
+     */
     public static Header createHeader(final String name, final UUID value) {
         Header header = new Header();
         checkHeaderNameLen(name);
@@ -86,6 +118,10 @@ public class Header {
         return header;
     }
 
+    /**
+     * Marshals buffer into a Header instance
+     * @return New instance of Header
+     */
     public static Header fromByteBuffer(final ByteBuffer buffer) {
         Header header = new Header();
 
@@ -152,6 +188,10 @@ public class Header {
         return header;
     }
 
+    /**
+     * Writes the value of this header into a buffer, using the wire representation of
+     * the header.
+     */
     public void writeToByteBuffer(ByteBuffer buffer) {
         buffer.put((byte)headerName.length());
         buffer.put(headerName.getBytes(StandardCharsets.UTF_8));
@@ -162,14 +202,25 @@ public class Header {
         }
     }
 
+    /**
+     * Gets the name of the header as a (UTF-8) string
+     */
     public String getName() {
         return this.headerName;
     }
 
+    /**
+     * Gets the header type of the value.
+     */
     public HeaderType getHeaderType() {
         return this.headerType;
     }
 
+    /**
+     * Gets the value as a boolean. This assumes you've already checked getHeaderType()
+     * returns BooleanTrue or BooleanFalse
+     * @return the value as a boolean
+     */
     public boolean getValueAsBoolean() {
         if (!(headerType == HeaderType.BooleanTrue || headerType == HeaderType.BooleanFalse)) {
             throw new CrtRuntimeException("Invalid Event-stream header type");
@@ -186,6 +237,11 @@ public class Header {
         }
     }
 
+    /**
+     * Gets the value as a byte or int8. This assumes you've already checked getHeaderType()
+     * returns Byte
+     * @return the value as a byte
+     */
     public byte getValueAsByte() {
         checkType(HeaderType.Byte);
         return headerValue[0];
@@ -196,6 +252,11 @@ public class Header {
         headerValue = new byte[] { value};
     }
 
+    /**
+     * Gets the value as a short or int16. This assumes you've already checked getHeaderType()
+     * returns Int16
+     * @return the value as a short
+     */
     public short getValueAsShort() {
         checkType(HeaderType.Int16);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -209,6 +270,11 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as an int or int32. This assumes you've already checked getHeaderType()
+     * returns Int32
+     * @return the value as a int
+     */
     public int getValueAsInt() {
         checkType(HeaderType.Int32);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -222,6 +288,11 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as a long or int64. This assumes you've already checked getHeaderType()
+     * returns Int64
+     * @return the value as a long
+     */
     public long getValueAsLong() {
         checkType(HeaderType.Int64);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -235,6 +306,11 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as a Date. This assumes you've already checked getHeaderType()
+     * returns TimeStamp
+     * @return the value as a Date
+     */
     public Date getValueAsTimestamp() {
         checkType(HeaderType.TimeStamp);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -248,6 +324,11 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as a byte[]. This assumes you've already checked getHeaderType()
+     * returns ByteBuf
+     * @return the value as a byte[]
+     */
     public byte[] getValueAsBytes() {
         checkType(HeaderType.ByteBuf);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -269,6 +350,12 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as a utf-8 encoded string.
+     * This assumes you've already checked getHeaderType()
+     * returns String
+     * @return the value as a utf-8 encoded string
+     */
     public String getValueAsString() {
         checkType(HeaderType.String);
         ByteBuffer valueBuffer = ByteBuffer.wrap(headerValue);
@@ -290,6 +377,11 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * Gets the value as a UUID. This assumes you've already checked getHeaderType()
+     * returns UUID
+     * @return the value as a UUID
+     */
     public UUID getValueAsUUID() {
         checkType(HeaderType.UUID);
 
@@ -317,6 +409,9 @@ public class Header {
         headerValue = valueBuffer.array();
     }
 
+    /**
+     * returns the total binary wire representation length of this header.
+     */
     public int getTotalByteLength() {
         // name len (1 byte) + header name + type (1 byte)
         int length = 1 + headerName.length() + 1;
@@ -325,6 +420,11 @@ public class Header {
         return length;
     }
 
+    /**
+     * Marshals a list of headers into a usable headers block for an event-stream message.
+     * Used for sending headers across the JNI boundary more efficiently
+     * @return a byte[] that matches the event-stream header-block format.
+     */
     public static byte[] marshallHeadersForJNI(List<Header> headers) {
         int totalWireLength = 0;
         for(Header header: headers) {

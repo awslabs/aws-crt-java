@@ -24,6 +24,10 @@ public abstract class ClientConnectionContinuationHandler implements AutoCloseab
     protected abstract void onContinuationMessage(final List<Header> headers,
                           final byte[] payload, final MessageType messageType, int messageFlags);
 
+    /**
+     * Invoked from JNI. Converts the native data into usable java objects and invokes
+     * onContinuationMessage().
+     */
     private void onContinuationMessageShim(final byte[] headersPayload, final byte[] payload,
                                    int messageType, int messageFlags) {
         List<Header> headers = new ArrayList<>();
@@ -45,6 +49,9 @@ public abstract class ClientConnectionContinuationHandler implements AutoCloseab
         this.close();
     }
 
+    /**
+     * Invoked from JNI. Calls onContinuationClosed().
+     */
     void onContinuationClosedShim() {
         onContinuationClosed();
         closedFuture.complete(null);

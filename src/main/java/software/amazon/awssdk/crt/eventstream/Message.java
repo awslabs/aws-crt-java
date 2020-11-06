@@ -5,11 +5,23 @@ import software.amazon.awssdk.crt.CrtResource;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+/**
+ * Wrapper around an instance of aws-event-stream-message. It's auto closable, so be sure
+ * to call close when finished with the object.
+ */
 public class Message extends CrtResource {
+    /**
+     * Creates a message using headers and payload.
+     */
     public Message(List<Header> headers, byte[] payload) {
         acquireNativeHandle(messageNew(Header.marshallHeadersForJNI(headers), payload));
     }
 
+    /**
+     * Get the binary format of this message (i.e. for sending across the wire manually)
+     * @return ByteBuffer wrapping the underlying message data. This buffer is only valid
+     * as long as the message itself is valid.
+     */
     public ByteBuffer getMessageBuffer() {
         return messageBuffer(getNativeHandle());
     }

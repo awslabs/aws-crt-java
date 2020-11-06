@@ -32,6 +32,10 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
     protected abstract void onProtocolMessage(final List<Header> headers,
                            final byte[] payload, final MessageType messageType, int messageFlags);
 
+    /**
+     * Invoked from JNI. Marshalls the native data into java objects and calls
+     * onProtocolMessage()
+     */
     private void onProtocolMessage(final byte[] headersPayload, final byte[] payload,
                                int messageType, int messageFlags) {
         List<Header> headers = new ArrayList<>();

@@ -1,5 +1,7 @@
 package software.amazon.awssdk.crt.eventstream;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
+
 public enum HeaderType {
     BooleanTrue(0, 0,false),
     BooleanFalse(1, 0,false),
@@ -32,5 +34,15 @@ public enum HeaderType {
 
     public boolean isVariableLength() {
         return isVariableLength;
+    }
+
+    public static HeaderType getValueFromInt(int intValue) {
+        for (HeaderType type : HeaderType.values()) {
+            if (type.intValue == intValue) {
+                return type;
+            }
+        }
+
+        throw new CrtRuntimeException("Invalid event-stream header int value.");
     }
 }

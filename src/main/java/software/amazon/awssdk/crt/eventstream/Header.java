@@ -159,53 +159,46 @@ public class Header {
         header.headerName = new String(nameBuffer, StandardCharsets.UTF_8);
 
         int type = buffer.get();
+        HeaderType headerType = HeaderType.getValueFromInt(type);
+        header.headerType = headerType;
 
-        switch (type) {
-            case 0:
-                header.headerType = HeaderType.BooleanTrue;
+        switch (headerType) {
+            case BooleanFalse:
+            case BooleanTrue:
                 break;
-            case 1:
-                header.headerType = HeaderType.BooleanFalse;
-                break;
-            case 2:
-                header.headerType = HeaderType.Byte;
+            case Byte:
                 header.headerValue = new byte[1];
                 buffer.get(header.headerValue);
                 break;
-            case 3:
-                header.headerType = HeaderType.Int16;
+            case Int16:
                 header.headerValue = new byte[2];
                 buffer.get(header.headerValue);
                 break;
-            case 4:
-                header.headerType = HeaderType.Int32;
+            case Int32:
                 header.headerValue = new byte[4];
                 buffer.get(header.headerValue);
                 break;
-            case 5:
-                header.headerType = HeaderType.Int64;
+            case Int64:
                 header.headerValue = new byte[8];
                 buffer.get(header.headerValue);
                 break;
-            case 6:
+            case ByteBuf:
                 short bufLen = buffer.getShort();
                 byte[] bufValue = new byte[bufLen];
                 buffer.get(bufValue);
                 header.setValue(bufValue);
                 break;
-            case 7:
+            case String:
                 short strLen = buffer.getShort();
                 byte[] strValue = new byte[strLen];
                 buffer.get(strValue);
                 header.setValue(new String(strValue, StandardCharsets.UTF_8));
                 break;
-            case 8:
-                header.headerType = HeaderType.TimeStamp;
+            case TimeStamp:
                 header.headerValue = new byte[8];
                 buffer.get(header.headerValue);
                 break;
-            case 9:
-                header.headerType = HeaderType.UUID;
+            case UUID:
                 header.headerValue = new byte[16];
                 buffer.get(header.headerValue);
                 break;

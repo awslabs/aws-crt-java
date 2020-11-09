@@ -319,7 +319,9 @@ public class ServerListenerTest extends CrtTestFixture {
 
                     @Override
                     protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                        lock.lock();
                         receivedOperationName[0] = operationName;
+                        lock.unlock();
 
                         return new ServerConnectionContinuationHandler(continuation) {
                             @Override

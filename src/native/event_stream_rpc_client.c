@@ -165,7 +165,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_client
     callback_data->java_connection_handler = (*env)->NewGlobalRef(env, jni_client_connection_handler);
 
     if (!callback_data->java_connection_handler) {
-        aws_jni_throw_runtime_exception(env, "ClientConnection.clientConnect: Unable to create global weak ref");
+        aws_jni_throw_runtime_exception(env, "ClientConnection.clientConnect: Unable to create global ref");
         goto error;
     }
 

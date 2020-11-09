@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,7 +28,7 @@ public class ServerListenerTest extends CrtTestFixture {
     public ServerListenerTest() {}
 
     @Test
-    public void testSetupAndTearDown() throws ExecutionException, InterruptedException {
+    public void testSetupAndTearDown() throws ExecutionException, InterruptedException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -44,15 +46,15 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         listener.close();
-        listener.getShutdownCompleteFuture().get();
+        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
     @Test
-    public void testBindErrorPropagates() throws ExecutionException, InterruptedException {
+    public void testBindErrorPropagates() throws ExecutionException, InterruptedException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -87,15 +89,15 @@ public class ServerListenerTest extends CrtTestFixture {
         assertTrue(exceptionThrown);
 
         listener1.close();
-        listener1.getShutdownCompleteFuture().get();
+        listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
     @Test
-    public void testConnectionHandling() throws ExecutionException, InterruptedException, IOException {
+    public void testConnectionHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -141,28 +143,28 @@ public class ServerListenerTest extends CrtTestFixture {
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8040);
-        clientSocket.connect(address, 3000);
         lock.lock();
-        testSynchronizationCVar.await();
+        clientSocket.connect(address, 3000);
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
         assertNotNull(serverConnections[0]);
         clientSocket.close();
 
-        serverConnections[0].getClosedFuture().get();
+        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
 
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
 
         listener.close();
-        listener.getShutdownCompleteFuture().get();
+        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
     @Test
-    public void testConnectionProtocolMessageHandling() throws ExecutionException, InterruptedException, IOException {
+    public void testConnectionProtocolMessageHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -222,7 +224,7 @@ public class ServerListenerTest extends CrtTestFixture {
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8037);
         lock.lock();
         clientSocket.connect(address, 3000);
-        testSynchronizationCVar.await();
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
         assertTrue(connectionReceived[0]);
         assertNotNull(serverConnections[0]);
@@ -245,7 +247,7 @@ public class ServerListenerTest extends CrtTestFixture {
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
         lock.lock();
-        testSynchronizationCVar.await();
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 
         assertNotNull(receivedMessageHeaders[0]);
@@ -264,19 +266,19 @@ public class ServerListenerTest extends CrtTestFixture {
         assertEquals(payload, new String(receivedPayload[0], StandardCharsets.UTF_8));
 
         clientSocket.close();
-        serverConnections[0].getClosedFuture().get();
+        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
         assertTrue(connectionShutdown[0]);
 
         listener.close();
-        listener.getShutdownCompleteFuture().get();
+        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
     @Test
-    public void testContinuationMessageHandling() throws ExecutionException, InterruptedException, IOException {
+    public void testContinuationMessageHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -295,7 +297,6 @@ public class ServerListenerTest extends CrtTestFixture {
 
         final Lock lock = new ReentrantLock();
         final Condition testSynchronizationCVar = lock.newCondition();
-
 
         ServerListener listener = new ServerListener("127.0.0.1", (short)8042, socketOptions, null, bootstrap, new ServerListenerHandler() {
 
@@ -364,9 +365,9 @@ public class ServerListenerTest extends CrtTestFixture {
 
         Socket clientSocket = new Socket();
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
-        clientSocket.connect(address, 3000);
         lock.lock();
-        testSynchronizationCVar.await();
+        clientSocket.connect(address, 3000);
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 
         assertNotNull(serverConnections[0]);
@@ -389,7 +390,7 @@ public class ServerListenerTest extends CrtTestFixture {
         connectMessage.close();
 
         lock.lock();
-        testSynchronizationCVar.await();
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 
         String operationName = "testOperation";
@@ -407,21 +408,23 @@ public class ServerListenerTest extends CrtTestFixture {
         continuationMessage.close();
 
         lock.lock();
-        testSynchronizationCVar.await();
+        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 
         clientSocket.close();
-        serverConnections[0].getClosedFuture().get();
+
+        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
 
         assertTrue(connectionShutdown[0]);
         assertNotNull(receivedOperationName[0]);
         assertEquals(operationName, receivedOperationName[0]);
         assertEquals(payload, receivedContinuationPayload[0]);
         listener.close();
-        listener.getShutdownCompleteFuture().get();
+        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+
         socketOptions.close();
     }
 }

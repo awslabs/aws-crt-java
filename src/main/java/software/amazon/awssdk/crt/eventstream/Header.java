@@ -473,7 +473,7 @@ public class Header {
     }
 
     private static void checkHeaderNameLen(final String headerName) {
-        if (headerName.length() > Byte.MAX_VALUE) {
+        if (headerName.length() >= Byte.MAX_VALUE) {
             throw new CrtRuntimeException("Header name must be less than 127 bytes.");
         }
     }

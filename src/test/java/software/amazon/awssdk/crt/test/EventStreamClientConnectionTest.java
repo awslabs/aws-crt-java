@@ -470,7 +470,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                 clientReceivedMessageType[0] = messageType;
                 clientReceivedMessageFlags[0] = messageFlags;
                 clientReceivedPayload[0] = payload;
-                semaphore.signal();
                 semaphoreLock.unlock();
             }
 
@@ -635,7 +634,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                 clientReceivedMessageType[0] = messageType;
                 clientReceivedMessageFlags[0] = messageFlags;
                 clientReceivedPayload[0] = payload;
-                semaphore.signal();
                 semaphoreLock.unlock();
             }
 

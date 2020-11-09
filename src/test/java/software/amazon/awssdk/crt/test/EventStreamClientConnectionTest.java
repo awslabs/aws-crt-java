@@ -41,7 +41,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         Lock semaphoreLock = new ReentrantLock();
         Condition semaphore = semaphoreLock.newCondition();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8011, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -74,7 +74,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final boolean[] clientConnected = {false};
         final ClientConnection[] clientConnectionArray = {null};
 
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8011, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
             protected void onConnectionSetup(ClientConnection connection, int errorCode) {
                 clientConnected[0] = true;

@@ -185,7 +185,7 @@ public class ServerListenerTest extends CrtTestFixture {
         final Lock lock = new ReentrantLock();
         final Condition testSynchronizationCVar = lock.newCondition();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
+        ServerListener listener = new ServerListener("127.0.0.1", (short)8043, socketOptions, null, bootstrap, new ServerListenerHandler() {
 
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
                 lock.lock();
@@ -221,7 +221,7 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8037);
+        SocketAddress address = new InetSocketAddress("127.0.0.1", 8043);
         lock.lock();
         clientSocket.connect(address, 3000);
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
@@ -320,7 +320,6 @@ public class ServerListenerTest extends CrtTestFixture {
                     @Override
                     protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
                         lock.lock();
-                        System.err.println("operation name: " + operationName);
                         receivedOperationName[0] = operationName;
                         lock.unlock();
 

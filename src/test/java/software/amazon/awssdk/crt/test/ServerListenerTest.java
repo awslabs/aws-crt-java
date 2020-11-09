@@ -225,7 +225,6 @@ public class ServerListenerTest extends CrtTestFixture {
         lock.lock();
         clientSocket.connect(address, 3000);
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
-        lock.unlock();
         assertTrue(connectionReceived[0]);
         assertNotNull(serverConnections[0]);
 
@@ -246,7 +245,6 @@ public class ServerListenerTest extends CrtTestFixture {
 
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
-        lock.lock();
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 
@@ -368,7 +366,6 @@ public class ServerListenerTest extends CrtTestFixture {
         lock.lock();
         clientSocket.connect(address, 3000);
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
-        lock.unlock();
 
         assertNotNull(serverConnections[0]);
         assertTrue(connectionReceived[0]);
@@ -389,9 +386,7 @@ public class ServerListenerTest extends CrtTestFixture {
         clientSocket.getOutputStream().write(toSend);
         connectMessage.close();
 
-        lock.lock();
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
-        lock.unlock();
 
         String operationName = "testOperation";
         messageHeaders = new ArrayList<>(3);
@@ -407,7 +402,6 @@ public class ServerListenerTest extends CrtTestFixture {
         clientSocket.getOutputStream().write(toSend);
         continuationMessage.close();
 
-        lock.lock();
         testSynchronizationCVar.await(1, TimeUnit.SECONDS);
         lock.unlock();
 

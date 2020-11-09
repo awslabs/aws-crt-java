@@ -41,6 +41,11 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-x64:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --spec=downstream
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: jvm-streams
+        path: target/surfire-reports/*stream
 
   clang-compat:
     runs-on: ubuntu-latest
@@ -55,6 +60,11 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --spec=downstream --compiler=clang-${{ matrix.version }}
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: jvm-streams
+        path: target/surfire-reports/*stream
 
   gcc-compat:
     runs-on: ubuntu-latest
@@ -69,6 +79,11 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --spec=downstream --compiler=gcc-${{ matrix.version }}
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: jvm-streams
+        path: target/surfire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
@@ -82,6 +97,11 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --target=linux-${{ matrix.arch }} --spec=downstream
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: jvm-streams
+        path: target/surfire-reports/*stream
 
   windows:
     runs-on: windows-latest

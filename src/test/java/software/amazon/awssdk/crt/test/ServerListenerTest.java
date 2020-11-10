@@ -338,8 +338,6 @@ public class ServerListenerTest extends CrtTestFixture {
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
                                 lock.lock();
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
-                                testSynchronizationCVar.signal();
-                                lock.unlock();
 
                                 String responsePayload = "{ \"message\": \"this is a response message\" }";
                                 continuation.sendMessage(null, responsePayload.getBytes(StandardCharsets.UTF_8),
@@ -348,6 +346,8 @@ public class ServerListenerTest extends CrtTestFixture {
                                         .whenComplete((res, ex) ->  {
                                             connection.closeConnection(0);
                                         });
+
+                                lock.unlock();
                             }
                         };
                     }

@@ -168,7 +168,6 @@ static int s_on_incoming_stream_fn(
     void *user_data) {
     (void)connection;
 
-    fprintf(stderr, "operation name " PRInSTR " \n", AWS_BYTE_CURSOR_PRI(operation_name));
     struct connection_callback_data *callback_data = user_data;
 
     struct continuation_callback_data *continuation_callback_data =
@@ -187,7 +186,6 @@ static int s_on_incoming_stream_fn(
         event_stream_server_connection_handler_properties.continuationCls,
         event_stream_server_connection_handler_properties.newContinuationConstructor,
         (jlong)token);
-    (*env)->ExceptionDescribe(env);
 
     aws_jni_check_and_clear_exception(env);
 
@@ -208,7 +206,6 @@ static int s_on_incoming_stream_fn(
         java_continuation,
         operationNameArray);
 
-    (*env)->ExceptionDescribe(env);
     aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation_handler) {

@@ -1,7 +1,6 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.eventstream.*;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -321,8 +320,6 @@ public class ServerListenerTest extends CrtTestFixture {
 
                     @Override
                     protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        System.err.println("new stream called");
-
                         lock.lock();
                         receivedOperationName[0] = operationName;
                         lock.unlock();
@@ -330,7 +327,6 @@ public class ServerListenerTest extends CrtTestFixture {
                         return new ServerConnectionContinuationHandler(continuation) {
                             @Override
                             protected void onContinuationClosed() {
-                                System.err.println("continuation close called");
                                 lock.lock();
                                 continuationClosed[0] = true;
                                 testSynchronizationCVar.signal();
@@ -341,7 +337,6 @@ public class ServerListenerTest extends CrtTestFixture {
 
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                                System.err.println("message called");
                                 lock.lock();
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
                                 lock.unlock();
@@ -366,7 +361,6 @@ public class ServerListenerTest extends CrtTestFixture {
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                System.err.println("shutdown with error " + CRT.awsErrorString(errorCode));
                 connectionShutdown[0] = true;
             }
         });

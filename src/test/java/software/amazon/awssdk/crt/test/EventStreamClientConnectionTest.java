@@ -199,7 +199,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         semaphore.await(1, TimeUnit.SECONDS);
         assertNotNull(serverConnectionArray[0]);
 
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0).get(1, TimeUnit.SECONDS);
+        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
+
         semaphore.await(1, TimeUnit.SECONDS);
         semaphoreLock.unlock();
         assertEquals(MessageType.Connect, receivedMessageType[0]);
@@ -322,8 +323,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         List<Header> clientHeaders = new ArrayList<>();
         clientHeaders.add(clientStrHeader);
         clientHeaders.add(clientIntHeader);
-        clientConnectionArray[0].sendProtocolMessage(clientHeaders, connectPayload, MessageType.Connect, 0).get(1, TimeUnit.SECONDS);
-        // this should be damn near instant, but give it a second just to be safe.
+
+        clientConnectionArray[0].sendProtocolMessage(clientHeaders, connectPayload, MessageType.Connect, 0);
+
         semaphore.await(1, TimeUnit.SECONDS);
         semaphoreLock.unlock();
         assertEquals(MessageType.Connect, receivedMessageType[0]);
@@ -458,7 +460,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         semaphoreLock.lock();
         semaphore.await(1, TimeUnit.SECONDS);
         assertNotNull(serverConnections[0]);
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0).get(1, TimeUnit.SECONDS);
+        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
         semaphore.await(1, TimeUnit.SECONDS);
         String operationName = "testOperation";
 
@@ -485,7 +487,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertNotNull(continuation);
 
         final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
-        continuation.activate(operationName, null, operationPayload, MessageType.ApplicationMessage, 0).get(1, TimeUnit.SECONDS);
+        continuation.activate(operationName, null, operationPayload, MessageType.ApplicationMessage, 0);
         semaphore.await(1, TimeUnit.SECONDS);
 
         assertArrayEquals(responsePayload, clientReceivedPayload[0]);
@@ -622,7 +624,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         semaphoreLock.lock();
         semaphore.await(1, TimeUnit.SECONDS);
         assertNotNull(serverConnections[0]);
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0).get(1, TimeUnit.SECONDS);
+        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
         semaphore.await(1, TimeUnit.SECONDS);
         String operationName = "testOperation";
 

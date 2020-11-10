@@ -370,8 +370,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
 
         final boolean[] connectionShutdown = {false};
-        final boolean[] continuationClosed = {false};
-
         final String[] receivedOperationName = new String[]{null};
         final String[] receivedContinuationPayload = new String[]{null};
 
@@ -400,12 +398,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                         receivedOperationName[0] = operationName;
 
                         return new ServerConnectionContinuationHandler(continuation) {
-                            @Override
-                            protected void onContinuationClosed() {
-                                continuationClosed[0] = true;
-                                close();
-                            }
-
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
@@ -493,7 +485,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertArrayEquals(responsePayload, clientReceivedPayload[0]);
         assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
         assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
-        assertTrue(continuationClosed[0]);
         assertTrue(clientContinuationClosed[0]);
 
         clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
@@ -526,7 +517,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
 
         final boolean[] connectionShutdown = {false};
-        final boolean[] continuationClosed = {false};
 
         final String[] receivedOperationName = new String[]{null};
         final String[] receivedContinuationPayload = new String[]{null};
@@ -560,12 +550,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                         receivedOperationName[0] = operationName;
 
                         return new ServerConnectionContinuationHandler(continuation) {
-                            @Override
-                            protected void onContinuationClosed() {
-                                continuationClosed[0] = true;
-                                close();
-                            }
-
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
@@ -671,7 +655,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         assertEquals(serverStrHeader.getValueAsString(), clientReceivedMessageHeaders[0].get(0).getValueAsString());
         assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
         assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
-        assertTrue(continuationClosed[0]);
         assertTrue(clientContinuationClosed[0]);
 
         clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);

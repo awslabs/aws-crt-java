@@ -231,6 +231,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         return response;
     }
 
+    /*
     @Test
     public void testHttpDelete() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -285,6 +286,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         CrtResource.waitForNoResources();
     }
+    
+     */
 
     @Test
     public void testHttpDownload() throws Exception {

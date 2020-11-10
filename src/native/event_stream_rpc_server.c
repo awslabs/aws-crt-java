@@ -218,6 +218,8 @@ static int s_on_incoming_stream_fn(
     continuation_options->on_continuation = s_stream_continuation_fn;
     continuation_options->on_continuation_closed = s_stream_continuation_closed_fn;
     continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
+    (*env)->DeleteLocalRef(env, java_continuation_handler);
+    (*env)->DeleteLocalRef(env, java_continuation);
     return AWS_OP_SUCCESS;
 }
 

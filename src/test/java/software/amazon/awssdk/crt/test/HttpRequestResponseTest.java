@@ -238,6 +238,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, 405);
         testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -247,6 +249,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, 200);
         testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, 405);
         testRequest("GET", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -256,6 +260,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, 200);
         testRequest("POST", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -265,6 +271,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, 405);
         testRequest("PUT", "https://httpbin.org", "/put", EMPTY_BODY, 200);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -274,6 +282,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, 300);
         testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
         testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, 500);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -285,6 +295,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         body.flip(); //Flip from Write mode to Read mode
 
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
+
+        CrtResource.waitForNoResources();
     }
 
     /**
@@ -346,6 +358,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         Assert.assertNotNull("Response Body did not contain \"data\" JSON key:\n" + body, echoedBody);
         Assert.assertEquals(bodyToSend, echoedBody);
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -398,5 +412,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         if (shutdownComplete != null) {
             shutdownComplete.get();
         }
+
+        CrtResource.waitForNoResources();
     }
 }

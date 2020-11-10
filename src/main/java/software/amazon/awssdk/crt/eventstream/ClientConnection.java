@@ -37,13 +37,13 @@ public class ClientConnection extends CrtResource {
     }
 
     /**
-     * @return true if the connection is closed, false otherwise.
+     * @return true if the connection is open, false otherwise.
      */
-    public boolean isClosed() {
+    public boolean isOpen() {
         if (isNull()) {
-            throw new IllegalStateException("close() has already been called on this object.");
+            return false;
         }
-        return isClientConnectionClosed(getNativeHandle());
+        return isClientConnectionOpen(getNativeHandle());
     }
 
     /**
@@ -197,7 +197,7 @@ public class ClientConnection extends CrtResource {
     }
 
     private static native int clientConnect(byte[] hostName, short port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);
-    private static native boolean isClientConnectionClosed(long connection);
+    private static native boolean isClientConnectionOpen(long connection);
     private static native void closeClientConnection(long connection, int errorCode);
     private static native void acquireClientConnection(long connection);
     private static native void releaseClientConnection(long connection);

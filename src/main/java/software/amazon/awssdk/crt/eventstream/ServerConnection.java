@@ -24,13 +24,13 @@ public class ServerConnection extends CrtResource {
     }
 
     /**
-     * @return true if the connection is closed. False otherwise.
+     * @return true if the connection is open. False otherwise.
      */
-    public boolean isConnectionClosed() {
+    public boolean isConnectionOpen() {
         if (isNull()) {
-            return true;
+            return false;
         }
-        return isClosed(getNativeHandle());
+        return isOpen(getNativeHandle());
     }
 
     /**
@@ -121,6 +121,6 @@ public class ServerConnection extends CrtResource {
     private static native void acquire(long connectionPtr);
     private static native void release(long connectionPtr);
     private static native void closeConnection(long connectionPtr, int shutdownError);
-    private static native boolean isClosed(long connectionPtr);
+    private static native boolean isOpen(long connectionPtr);
     private static native int sendProtocolMessage(long connectionPtr, byte[] serialized_headers, byte[] payload, int message_type, int message_flags, MessageFlushCallback callback);
 }

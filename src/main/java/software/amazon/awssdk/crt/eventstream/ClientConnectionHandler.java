@@ -90,7 +90,7 @@ public abstract class ClientConnectionHandler implements AutoCloseable {
     @Override
     public void close() {
         if (clientConnection != null) {
-            if (!clientConnection.isClosed()) {
+            if (clientConnection.isOpen()) {
                 clientConnection.closeConnection(0);
             }
             clientConnection.decRef();

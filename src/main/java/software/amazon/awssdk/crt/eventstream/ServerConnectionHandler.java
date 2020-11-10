@@ -73,7 +73,7 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
 
     @Override
     public void close() {
-        if (!connection.isConnectionClosed()) {
+        if (connection.isConnectionOpen()) {
             connection.closeConnection(0);
         }
         connection.decRef();

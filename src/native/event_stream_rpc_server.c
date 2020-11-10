@@ -515,7 +515,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_closeC
 }
 
 JNIEXPORT
-jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_isClosed(
+jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_isOpen(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_server_connection) {
@@ -523,7 +523,7 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_is
     (void)jni_class;
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
-    return aws_event_stream_rpc_server_connection_is_closed(connection);
+    return aws_event_stream_rpc_server_connection_is_open(connection);
 }
 
 struct message_flush_callback_args {

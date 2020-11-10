@@ -45,7 +45,7 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
-static int s_on_connection_setup(
+static void s_on_connection_setup(
     struct aws_event_stream_rpc_client_connection *connection,
     int error_code,
     void *user_data) {
@@ -60,13 +60,13 @@ static int s_on_connection_setup(
         (jlong)connection,
         error_code);
 
-    int ret_code = aws_jni_check_and_clear_exception(env) ? AWS_OP_ERR : AWS_OP_SUCCESS;
-
-    if (error_code || ret_code) {
-        s_destroy_connection_callback_data(callback_data);
+    if (aws_jni_check_and_clear_exception(env) && !error_code) {
+        aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_UNKNOWN);
     }
 
-    return ret_code;
+    if (error_code) {
+        s_destroy_connection_callback_data(callback_data);
+    }
 }
 
 static void s_on_connection_shutdown(
@@ -215,7 +215,7 @@ error:
 }
 
 JNIEXPORT
-jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_isClientConnectionClosed(
+jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_isClientConnectionOpen(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
@@ -224,7 +224,7 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_is
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
-    return aws_event_stream_rpc_client_connection_is_closed(connection);
+    return aws_event_stream_rpc_client_connection_is_open(connection);
 }
 
 JNIEXPORT

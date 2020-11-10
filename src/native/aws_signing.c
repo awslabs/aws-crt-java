@@ -18,6 +18,7 @@
 #include <aws/auth/signing_result.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
+#include <aws/io/stream.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -35,12 +36,15 @@ struct s_aws_sign_request_callback_data {
     JavaVM *jvm;
     jobject java_future;
     jobject java_original_request;
+    jobject java_original_chunk_body;
     jobject java_sign_header_predicate;
+    struct aws_input_stream *chunk_body_stream;
     struct aws_http_message *native_request;
     struct aws_signable *original_message_signable;
     struct aws_string *region;
     struct aws_string *service;
     struct aws_string *signed_body_value;
+    struct aws_string *previous_chunk_signature;
     struct aws_credentials *credentials;
 };
 
@@ -49,7 +53,14 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     (*env)->DeleteGlobalRef(env, callback_data->java_future);
-    (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
+
+    if (callback_data->java_original_request != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
+    }
+
+    if (callback_data->java_original_chunk_body != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_original_chunk_body);
+    }
 
     if (callback_data->java_sign_header_predicate) {
         (*env)->DeleteGlobalRef(env, callback_data->java_sign_header_predicate);
@@ -67,9 +78,14 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
         aws_credentials_release(callback_data->credentials);
     }
 
+    if (callback_data->chunk_body_stream != NULL) {
+        aws_input_stream_destroy(callback_data->chunk_body_stream);
+    }
+
     aws_string_destroy(callback_data->region);
     aws_string_destroy(callback_data->service);
     aws_string_destroy(callback_data->signed_body_value);
+    aws_string_destroy(callback_data->previous_chunk_signature);
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -144,6 +160,37 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
         env, callback_data->java_future, completable_future_properties.complete_method_id, java_signed_request);
 
     (*env)->DeleteLocalRef(env, java_signed_request);
+
+    /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
+       we cross the barrier. */
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
+done:
+
+    s_cleanup_callback_data(callback_data);
+}
+
+static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+
+    struct s_aws_sign_request_callback_data *callback_data = userdata;
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
+        s_complete_signing_exceptionally(
+            env, callback_data, (error_code != AWS_ERROR_SUCCESS) ? error_code : AWS_ERROR_UNKNOWN);
+        goto done;
+    }
+
+    struct aws_string *signature = NULL;
+    aws_signing_result_get_property(result, g_aws_signature_property_name, &signature);
+
+    struct aws_byte_cursor signature_cursor = aws_byte_cursor_from_string(signature);
+    jstring java_chunk_signature = aws_jni_string_from_cursor(env, &signature_cursor);
+
+    (*env)->CallBooleanMethod(
+        env, callback_data->java_future, completable_future_properties.complete_method_id, java_chunk_signature);
+
+    (*env)->DeleteLocalRef(env, java_chunk_signature);
 
     /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
        we cross the barrier. */
@@ -319,6 +366,86 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
+
+    (*env)->ExceptionClear(env);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSignChunk(
+    JNIEnv *env,
+    jclass jni_class,
+    jobject java_chunk_body_stream,
+    jstring previous_signature,
+    jobject java_signing_config,
+    jobject java_future) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_sign_request_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
+    if (callback_data == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to allocate chunk signing callback data");
+        return;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    callback_data->java_future = (*env)->NewGlobalRef(env, java_future);
+    AWS_FATAL_ASSERT(callback_data->java_future != NULL);
+
+    if (java_chunk_body_stream != NULL) {
+        callback_data->java_original_chunk_body = (*env)->NewGlobalRef(env, java_chunk_body_stream);
+        AWS_FATAL_ASSERT(callback_data->java_original_chunk_body != NULL);
+
+        callback_data->chunk_body_stream = aws_input_stream_new_from_java_http_request_body_stream(
+            aws_jni_get_allocator(), env, java_chunk_body_stream);
+        if (callback_data->chunk_body_stream == NULL) {
+            aws_jni_throw_runtime_exception(env, "Error building chunk body stream");
+            goto on_error;
+        }
+    }
+
+    /* Build a native aws_signing_config_aws object */
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+
+    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+        aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
+        goto on_error;
+    }
+
+    callback_data->previous_chunk_signature = aws_jni_new_string_from_jstring(env, previous_signature);
+    struct aws_byte_cursor previous_signature_cursor =
+        aws_byte_cursor_from_string(callback_data->previous_chunk_signature);
+
+    callback_data->original_message_signable =
+        aws_signable_new_chunk(allocator, callback_data->chunk_body_stream, previous_signature_cursor);
+    if (callback_data->original_message_signable == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to create signable from chunk data");
+        goto on_error;
+    }
+
+    /* Sign the native request */
+    if (aws_sign_request_aws(
+            allocator,
+            callback_data->original_message_signable,
+            (struct aws_signing_config_base *)&signing_config,
+            s_aws_chunk_signing_complete,
+            callback_data)) {
+        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for Chunk");
+        goto on_error;
+    }
+
+    return;
+
+on_error:
+
+    s_cleanup_callback_data(callback_data);
+
+    (*env)->ExceptionClear(env);
 }
 
 #if UINTPTR_MAX == 0xffffffff

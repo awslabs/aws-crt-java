@@ -311,11 +311,12 @@ public class ServerListenerTest extends CrtTestFixture {
                         int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
                         MessageType acceptResponseType = MessageType.ConnectAck;
 
-                        connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
-
-                        lock.lock();
-                        testSynchronizationCVar.signal();
-                        lock.unlock();
+                        connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag).whenComplete((res,err) -> {
+                                    lock.lock();
+                                    testSynchronizationCVar.signal();
+                                    lock.unlock();
+                                }
+                        );
                     }
 
                     @Override

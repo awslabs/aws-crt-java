@@ -25,9 +25,9 @@ jobs:
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
+      uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
@@ -41,9 +41,9 @@ jobs:
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
+      uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
@@ -65,9 +65,9 @@ jobs:
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
+      uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
@@ -89,9 +89,9 @@ jobs:
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
+      uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin

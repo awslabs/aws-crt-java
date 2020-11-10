@@ -319,6 +319,8 @@ public class ServerListenerTest extends CrtTestFixture {
 
                     @Override
                     protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                        System.err.println("new stream called");
+
                         lock.lock();
                         receivedOperationName[0] = operationName;
                         lock.unlock();
@@ -326,6 +328,7 @@ public class ServerListenerTest extends CrtTestFixture {
                         return new ServerConnectionContinuationHandler(continuation) {
                             @Override
                             protected void onContinuationClosed() {
+                                System.err.println("continuation close called");
                                 lock.lock();
                                 continuationClosed[0] = true;
                                 testSynchronizationCVar.signal();
@@ -336,8 +339,10 @@ public class ServerListenerTest extends CrtTestFixture {
 
                             @Override
                             protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                                System.err.println("message called");
                                 lock.lock();
                                 receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
+                                lock.unlock();
 
                                 String responsePayload = "{ \"message\": \"this is a response message\" }";
                                 continuation.sendMessage(null, responsePayload.getBytes(StandardCharsets.UTF_8),
@@ -347,7 +352,7 @@ public class ServerListenerTest extends CrtTestFixture {
                                             connection.closeConnection(0);
                                         });
 
-                                lock.unlock();
+
                             }
                         };
                     }
@@ -408,7 +413,6 @@ public class ServerListenerTest extends CrtTestFixture {
         lock.unlock();
 
         clientSocket.close();
-
         serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
 
         assertTrue(connectionShutdown[0]);

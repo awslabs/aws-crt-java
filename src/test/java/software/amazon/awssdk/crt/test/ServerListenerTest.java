@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.eventstream.*;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -364,6 +365,7 @@ public class ServerListenerTest extends CrtTestFixture {
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                System.err.println("shutdown with error " + CRT.awsErrorString(errorCode));
                 connectionShutdown[0] = true;
             }
         });

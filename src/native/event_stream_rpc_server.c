@@ -139,6 +139,8 @@ static void s_stream_continuation_fn(
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
+    (*env)->DeleteLocalRef(env, headers_array);
+    (*env)->DeleteLocalRef(env, payload_byte_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 }
@@ -197,15 +199,15 @@ static int s_on_incoming_stream_fn(
 
     continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
 
-    jbyteArray operationNameArray = aws_jni_byte_array_from_cursor(env, &operation_name);
+    jbyteArray operation_name_array = aws_jni_byte_array_from_cursor(env, &operation_name);
 
     jobject java_continuation_handler = (*env)->CallObjectMethod(
         env,
         callback_data->java_connection_handler,
         event_stream_server_connection_handler_properties.onIncomingStream,
         java_continuation,
-        operationNameArray);
-
+        operation_name_array);
+    (*env)->DeleteLocalRef(env, operation_name_array);
     aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation_handler) {
@@ -246,6 +248,8 @@ static void s_connection_protocol_message_fn(
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
+    (*env)->DeleteLocalRef(env, headers_array);
+    (*env)->DeleteLocalRef(env, payload_byte_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 }

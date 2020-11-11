@@ -16,7 +16,7 @@ plugins {
 repositories {
     mavenLocal()
     maven {
-        url = uri("http://repo.maven.apache.org/maven2")
+        url = uri("https://repo.maven.apache.org/maven2")
     }
 }
 
@@ -48,7 +48,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
     )
 
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        libcryptoPath = "/opt/openssl"
+        libcryptoPath = null;
         // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
         if (project.hasProperty("libcryptoPath")) {
             libcryptoPath = project.property("libcryptoPath").toString()
@@ -141,6 +141,8 @@ tasks.test {
             systemProperty(prop, project.property(prop).toString())
         }
     }
+    //uncomment the next line to attach the debugger to the JNI layer.
+    //systemProperty("aws.crt.debugwait", "1")
 }
 
 tasks.compileTestJava {

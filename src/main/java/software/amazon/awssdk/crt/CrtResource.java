@@ -379,28 +379,26 @@ public abstract class CrtResource implements AutoCloseable {
      * a period of waiting.
      */
     public static void waitForNoResources() {
-        if (!debugNativeObjects) {
-            return;
-        }
+        if (debugNativeObjects) {
+            lock.lock();
 
-        lock.lock();
+            try {
+                long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS * 1000;
+                while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
+                    emptyResources.await(1, TimeUnit.SECONDS);
+                }
 
-        try {
-            long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS*1000;
-            while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
-                emptyResources.await(1, TimeUnit.SECONDS);
+                if (resourceCount != 0) {
+                    Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
+                    logNativeResources();
+                    throw new InterruptedException();
+                }
+            } catch (InterruptedException e) {
+                /* Cause tests to fail without having to go add checked exceptions to every instance */
+                throw new RuntimeException("Timeout waiting for resource count to drop to zero");
+            } finally {
+                lock.unlock();
             }
-
-            if (resourceCount != 0) {
-                Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
-                logNativeResources();
-                throw new InterruptedException();
-            }
-        } catch (InterruptedException e) {
-            /* Cause tests to fail without having to go add checked exceptions to every instance */
-            throw new RuntimeException("Timeout waiting for resource count to drop to zero");
-        } finally {
-            lock.unlock();
         }
 
         waitForGlobalResourceDestruction(10);

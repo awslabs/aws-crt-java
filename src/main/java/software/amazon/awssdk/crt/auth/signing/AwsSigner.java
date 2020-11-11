@@ -7,8 +7,8 @@ package software.amazon.awssdk.crt.auth.signing;
 import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 
 public class AwsSigner {
 
@@ -24,6 +24,18 @@ public class AwsSigner {
         return future;
     }
 
+    static public CompletableFuture<String> signChunk(HttpRequestBodyStream chunkBody, String previousSignature, AwsSigningConfig config) {
+        CompletableFuture<String> future = new CompletableFuture<String>();
+
+        try {
+            awsSignerSignChunk(chunkBody, previousSignature, config, future);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+
+        return future;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -32,4 +44,10 @@ public class AwsSigner {
         byte[] marshalledRequest,
         AwsSigningConfig config,
         CompletableFuture<HttpRequest> future) throws CrtRuntimeException;
+
+    private static native void awsSignerSignChunk(
+        HttpRequestBodyStream chunk,
+        String previousSignature,
+        AwsSigningConfig config,
+        CompletableFuture<String> future) throws CrtRuntimeException;
 }

@@ -165,6 +165,7 @@ extern struct java_completable_future_properties completable_future_properties;
 struct java_crt_runtime_exception_properties {
     jclass crt_runtime_exception_class;
     jmethodID constructor_method_id;
+    jfieldID error_code_field_id;
 };
 extern struct java_crt_runtime_exception_properties crt_runtime_exception_properties;
 

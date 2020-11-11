@@ -336,6 +336,8 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         callback_data->java_credentials_future,
         java_credentials);
 
+    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+
     if (java_credentials != NULL) {
         (*env)->DeleteLocalRef(env, access_key_id);
         (*env)->DeleteLocalRef(env, secret_access_key);

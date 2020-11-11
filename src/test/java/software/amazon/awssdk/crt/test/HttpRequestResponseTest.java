@@ -158,6 +158,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         shutdownComplete.get();
 
+        CrtResource.waitForNoResources();
+
         return response;
     }
 
@@ -231,6 +233,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         return response;
     }
 
+
     @Test
     public void testHttpDelete() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -239,6 +242,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, 405);
         testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, 405);
     }
+
 
     @Test
     public void testHttpGet() throws Exception {
@@ -275,6 +279,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
         testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, 500);
     }
+
+
 
     @Test
     public void testHttpDownload() throws Exception {
@@ -398,5 +404,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         if (shutdownComplete != null) {
             shutdownComplete.get();
         }
+
+        CrtResource.waitForNoResources();
     }
+
 }

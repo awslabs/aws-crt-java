@@ -52,6 +52,17 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         return resp;
     }
 
+    private HttpConnectionTestResponse testConnection(URI uri) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContext tlsCtx = createHttpClientTlsContext()) {
+
+            return testConnection(uri, bootstrap, socketOptions, tlsCtx);
+        }
+    }
+
     private void testConnectionWithAllCiphers(URI uri, boolean expectConnected, String exceptionMsg) throws Exception {
         for (TlsCipherPreference pref : TlsCipherPreference.values()) {
             if (!TlsContextOptions.isCipherPreferenceSupported(pref)) {
@@ -86,6 +97,11 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
     @Test
     public void testHttpConnection() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        // Basics
+        testConnection(new URI("http://example.com"));
+        testConnection(new URI("https://example.com"));
+
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
@@ -112,9 +128,9 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
-             SocketOptions socketOptions = new SocketOptions();
-             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
-             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);

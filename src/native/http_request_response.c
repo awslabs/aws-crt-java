@@ -9,6 +9,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
+#include <aws/common/atomics.h>
 #include <aws/common/mutex.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
@@ -60,6 +61,11 @@ struct http_stream_callback_data {
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
+
+    /*
+     * Unactivated streams must have their callback data destroyed at release time
+     */
+    struct aws_atomic_var activated;
 };
 
 static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
@@ -104,6 +110,8 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
     AWS_FATAL_ASSERT(!aws_byte_buf_init(&callback->headers_buf, allocator, 1024));
+
+    aws_atomic_init_int(&callback->activated, 0);
 
     return callback;
 }
@@ -340,7 +348,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     /* global ref this because now the callbacks will be firing, and they will release their reference when the
      * stream callback sequence completes. */
     cb_data->java_http_stream = (*env)->NewGlobalRef(env, j_http_stream);
+    aws_atomic_store_int(&cb_data->activated, 1);
     if (aws_http_stream_activate(stream)) {
+        aws_atomic_store_int(&cb_data->activated, 0);
         (*env)->DeleteGlobalRef(env, cb_data->java_http_stream);
         aws_jni_throw_runtime_exception(
             env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
@@ -363,6 +373,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     }
     AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Releasing Stream. stream: %p", (void *)stream);
     aws_http_stream_release(stream);
+
+    size_t not_activated = 0;
+    if (aws_atomic_compare_exchange_int(&cb_data->activated, &not_activated, 1)) {
+        http_stream_callback_destroy(env, cb_data);
+    }
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamGetResponseStatusCode(

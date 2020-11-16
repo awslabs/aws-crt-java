@@ -103,7 +103,7 @@ jobs:
       if: failure()
       with:
         name: jvm-streams
-        path: target/surfire-reports/*stream
+        path: target/surefire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
@@ -121,7 +121,7 @@ jobs:
       if: failure()
       with:
         name: jvm-streams
-        path: target/surfire-reports/*stream
+        path: target/surefire-reports/*stream
 
   windows:
     runs-on: windows-latest

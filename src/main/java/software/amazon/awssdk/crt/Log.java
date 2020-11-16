@@ -95,6 +95,9 @@ public class Log {
         AuthCredentialsProvider(0x1802),
         AuthSigning(0x1803),
 
+        // aws-c-event-stream
+        EventStreamServerListener(0x1000),
+
         // aws-crt-java, we're authoritative
         JavaCrtGeneral(0x2400),
         JavaCrtResource(0x2401)

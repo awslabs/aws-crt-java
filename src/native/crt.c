@@ -11,6 +11,7 @@
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/thread.h>
+#include <aws/event-stream/event_stream.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/io/channel.h>
@@ -63,6 +64,14 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
         aws_error_str(error));
     jclass runtime_exception = crt_runtime_exception_properties.crt_runtime_exception_class;
     (*env)->ThrowNew(env, runtime_exception, exception);
+}
+
+bool aws_jni_check_and_clear_exception(JNIEnv *env) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
 }
 
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
@@ -255,9 +264,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);
+    aws_event_stream_library_init(allocator);
 
     cache_java_class_ids(env);
-
     atexit(s_jni_atexit);
 }
 

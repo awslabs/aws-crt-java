@@ -162,7 +162,6 @@
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
-                                        <argument>-DS2N_NO_PQ_ASM=ON</argument>
                                         <argument>${cmake.libcrypto_include}</argument>
                                         <argument>${cmake.libcrypto_shared}</argument>
                                         <argument>${cmake.libcrypto_static}</argument>

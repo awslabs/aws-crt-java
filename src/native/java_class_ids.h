@@ -183,6 +183,15 @@ struct java_crt_properties {
 };
 extern struct java_crt_properties crt_properties;
 
+/* AwsSigningResult */
+struct java_aws_signing_result_properties {
+    jclass aws_signing_result_class;
+    jmethodID constructor;
+    jfieldID signed_request_field_id;
+    jfieldID signature_field_id;
+};
+extern struct java_aws_signing_result_properties aws_signing_result_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

@@ -16,10 +16,17 @@ package software.amazon.awssdk.crt.auth.signing;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
 
+/**
+ * Utility functions for verifying sigv4a signatures
+ */
 public class AwsSigningUtils {
 
-    public static boolean verifySigv4aEcdsaSignature(HttpRequest request, String expectedCanonicalRequest, AwsSigningConfig config, String signatureValue, String verifierPubX, String verifierPubY) {
-        return awsSigningUtilsVerifyEcdsaSignature(request, request.marshalForJni(), expectedCanonicalRequest, config, signatureValue, verifierPubX, verifierPubY);
+    public static boolean verifySigv4aEcdsaSignature(HttpRequest request, String expectedCanonicalRequest, AwsSigningConfig config, byte[] hexEncodedSignature, String verifierPubX, String verifierPubY) {
+        return awsSigningUtilsVerifyEcdsaSignature(request, request.marshalForJni(), expectedCanonicalRequest, config, hexEncodedSignature, verifierPubX, verifierPubY);
+    }
+
+    public static boolean verifyRawSha256EcdsaSignature(byte[] stringToSign, byte[] hexEncodedSignature, String verifierPubX, String verifierPubY) {
+        return awsSigningUtilsVerifyRawSha256EcdsaSignature(stringToSign, hexEncodedSignature, verifierPubX, verifierPubY);
     }
 
     /*******************************************************************************
@@ -30,7 +37,13 @@ public class AwsSigningUtils {
             byte[] marshalledRequest,
             String expectedCanonicalRequest,
             AwsSigningConfig config,
-            String signatureValue,
+            byte[] hexEncodedSignature,
+            String verifierPubX,
+            String verifiedPubY);
+
+    private static native boolean awsSigningUtilsVerifyRawSha256EcdsaSignature(
+            byte[] stringToSign,
+            byte[] hexEncodedSignature,
             String verifierPubX,
             String verifiedPubY);
 }

@@ -45,7 +45,7 @@ public class S3ClientTest extends CrtTestFixture {
 
         CompletableFuture<Void> shutdownComplete = null;
 
-        String endpoint = "aws-crt-canary-bucket-rc.s3.us-west-2.amazonaws.com";
+        String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
                 .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
@@ -81,7 +81,7 @@ public class S3ClientTest extends CrtTestFixture {
 
         CompletableFuture<Void> shutdownComplete = null;
 
-        String endpoint = "aws-crt-canary-bucket-rc.s3.us-west-2.amazonaws.com";
+        String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
                 .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
@@ -107,7 +107,7 @@ public class S3ClientTest extends CrtTestFixture {
         };
 
         HttpHeader[] headers = { new HttpHeader("Host", endpoint) };
-        HttpRequest httpRequest = new HttpRequest("GET", "/test_object.txt", headers, null);
+        HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)

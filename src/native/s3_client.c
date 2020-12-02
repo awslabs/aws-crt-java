@@ -77,12 +77,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     struct aws_s3_client_config client_config = {.region = region,
-                                                 .endpoint = endpoint,
                                                  .client_bootstrap = client_bootstrap,
                                                  .credentials_provider = credentials_provider,
                                                  .part_size = part_size,
                                                  .throughput_target_gbps = throughput_target_gbps,
-                                                 .throughput_per_vip = throughput_per_vip,
+                                                 .throughput_per_vip_gbps = throughput_per_vip,
                                                  .num_connections_per_vip = num_connections_per_vip,
                                                  .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
                                                  .shutdown_callback_user_data = callback_data};
@@ -129,19 +128,18 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     aws_mem_release(aws_jni_get_allocator(), user_data);
 }
 
-static int s_on_s3_meta_request_body_callback(
+static void s_on_s3_meta_request_body_callback(
     struct aws_s3_meta_request *meta_request,
     const struct aws_byte_cursor *body,
     uint64_t range_start,
-    uint64_t range_end,
     void *user_data) {
-    
+
     (void)meta_request;
     (void)body;
     (void)range_start;
-    (void)range_end;
     (void)user_data;
 
+    uint64_t range_end = range_start + body->len;
     jsize data_len = range_end - range_start + 1;
 
     struct s3_client_make_meta_request_callback_data *callback_data =
@@ -162,6 +160,7 @@ static int s_on_s3_meta_request_body_callback(
             jni_payload,
             range_start,
             range_end);
+        (void)body_response_result;
 
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }
@@ -170,15 +169,12 @@ static int s_on_s3_meta_request_body_callback(
 
     if ((*env)->ExceptionCheck(env)) {
         AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Received Exception from onResponseBody", (void *)meta_request);
-        return 0; /* aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE); */
     }
-
-    return 0;
 }
 
 static void s_on_s3_meta_request_finish_callback(
     struct aws_s3_meta_request *meta_request,
-    int error_code,
+    const struct aws_s3_meta_request_result *meta_request_result,
     void *user_data) {
 
     (void)meta_request;
@@ -192,7 +188,7 @@ static void s_on_s3_meta_request_finish_callback(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
             s3_meta_request_response_handler_native_adapter_properties.onFinished,
-            error_code);
+            meta_request_result->error_code);
 
         AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
     }

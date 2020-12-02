@@ -7,7 +7,7 @@
         "mvn -B compile"
     ],
     "test_steps": [
-        "mvn -B test -DredirectTestOutputToFile=true -DreuseForks=false"
+        "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0"
     ],
     "imports": [
         "JDK8"
@@ -37,7 +37,7 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path}"
             ],
             "architectures": {
                 "armv6": {

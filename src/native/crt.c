@@ -324,8 +324,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
 
     aws_global_thread_creator_shutdown_wait_for(timeout_in_seconds);
 
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_GENERAL,
-        "At shutdown, %u bytes remaining",
-        (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+    if (g_memory_tracing) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_GENERAL,
+            "At shutdown, %u bytes remaining",
+            (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+    }
 }

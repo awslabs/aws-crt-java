@@ -142,7 +142,7 @@ static void s_on_s3_meta_request_body_callback(
     (void)user_data;
 
     uint64_t range_end = range_start + body->len;
-    jsize data_len = (jsize)range_end - range_start + 1;
+    jsize data_len = (jsize)aws_sub_size_saturating(range_end, range_start + 1);
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;

@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 
 import org.junit.Assume;
@@ -63,6 +64,8 @@ public class S3ClientTest extends CrtTestFixture {
 
         hostResolver.close();
         elg.close();
+
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -131,5 +134,7 @@ public class S3ClientTest extends CrtTestFixture {
 
         hostResolver.close();
         elg.close();
+
+        CrtResource.waitForNoResources();
     }
 }

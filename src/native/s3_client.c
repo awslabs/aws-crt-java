@@ -120,7 +120,9 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     if (callback->java_s3_client != NULL) {
         (*env)->CallVoidMethod(env, callback->java_s3_client, s3_client_properties.onShutdownComplete);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Ignored Exception from S3Client.onShutdownCompete callback", (void *)callback->java_s3_client);
+        }
     }
 
     // We're done with this callback data, free it.
@@ -162,14 +164,12 @@ static void s_on_s3_meta_request_body_callback(
             range_end);
         (void)body_response_result;
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Ignored Exception from onResponseBody callback", (void *)meta_request);
+        }
     }
 
     (*env)->DeleteLocalRef(env, jni_payload);
-
-    if ((*env)->ExceptionCheck(env)) {
-        AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Received Exception from onResponseBody", (void *)meta_request);
-    }
 }
 
 static void s_on_s3_meta_request_finish_callback(
@@ -190,7 +190,9 @@ static void s_on_s3_meta_request_finish_callback(
             s3_meta_request_response_handler_native_adapter_properties.onFinished,
             meta_request_result->error_code);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Ignored Exception from onFinished callback", (void *)meta_request);
+        }
     }
 }
 
@@ -262,7 +264,9 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     if (callback_data->java_s3_meta_request != NULL) {
         (*env)->CallVoidMethod(env, callback_data->java_s3_meta_request, s3_meta_request_properties.onShutdownComplete);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_S3_META_REQUEST, "id=%p: Ignored Exception from S3MetaRequest.onShutdownCompete callback", (void *)callback_data->java_s3_meta_request);
+        }
     }
 
     // We're done with this callback data, free it.

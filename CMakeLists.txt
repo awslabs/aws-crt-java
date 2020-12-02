@@ -75,6 +75,7 @@ if (BUILD_DEPS)
     add_subdirectory(crt/aws-c-mqtt)
     add_subdirectory(crt/aws-checksums)
     add_subdirectory(crt/aws-c-event-stream)
+    add_subdirectory(aws-common-runtime/aws-c-s3)
 else()
     include(AwsFindPackage)
     include(AwsCFlags)
@@ -141,7 +142,11 @@ add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
 aws_use_package(aws-c-http)
 aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-auth)
+<<<<<<< HEAD
 aws_use_package(aws-c-event-stream)
+=======
+aws_use_package(aws-c-s3)
+>>>>>>> WIP Java language bindings
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC AND NOT APPLE)

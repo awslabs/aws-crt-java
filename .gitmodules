@@ -28,3 +28,6 @@
 [submodule "crt/aws-checksums"]
 	path = crt/aws-checksums
 	url = https://github.com/awslabs/aws-checksums.git
+[submodule "crt/aws-c-s3"]
+	path = crt/aws-c-s3
+	url = git@github.com:awslabs/aws-c-s3.git

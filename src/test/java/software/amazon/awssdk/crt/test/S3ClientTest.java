@@ -72,7 +72,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3Get() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        Log.initLoggingToStdout(Log.LogLevel.Debug);
+        //Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         EventLoopGroup elg = new EventLoopGroup(1);
         HostResolver hostResolver = new HostResolver(elg);

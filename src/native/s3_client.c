@@ -256,6 +256,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 
+    aws_http_message_release(request_message);
+
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");

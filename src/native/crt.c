@@ -330,5 +330,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
             AWS_LS_COMMON_GENERAL,
             "At shutdown, %u bytes remaining",
             (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+        if (g_memory_tracing > 1) {
+            aws_mem_tracer_dump(aws_jni_get_allocator());
+        }
     }
 }

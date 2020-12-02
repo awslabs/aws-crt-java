@@ -142,11 +142,8 @@ add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
 aws_use_package(aws-c-http)
 aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-auth)
-<<<<<<< HEAD
 aws_use_package(aws-c-event-stream)
-=======
 aws_use_package(aws-c-s3)
->>>>>>> WIP Java language bindings
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC AND NOT APPLE)

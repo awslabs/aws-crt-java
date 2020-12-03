@@ -52,8 +52,6 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             }
         }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -104,7 +102,5 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             }
         }
-
-        CrtResource.waitForNoResources();
     }
 }

@@ -36,34 +36,22 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        EventLoopGroup elg = new EventLoopGroup(1);
-        HostResolver hostResolver = new HostResolver(elg);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver);
-        assertNotNull(clientBootstrap);
+        try(EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hostResolver = new HostResolver(elg);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
+            assertNotNull(clientBootstrap);
 
-        DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
-                .withClientBootstrap(clientBootstrap).build();
+            try (DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
+                .withClientBootstrap(clientBootstrap).build()) {
 
-        CompletableFuture<Void> shutdownComplete = null;
+                String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
+                S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
+                        .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
+                try (S3Client client = new S3Client(clientOptions)) {
 
-        String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
-
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
-                .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
-
-        S3Client client = new S3Client(clientOptions);
-
-        client.close();
-        client.getShutdownCompleteFuture().get();
-
-        credentialsProvider.close();
-        credentialsProvider.getShutdownCompleteFuture().get();
-
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get();
-
-        hostResolver.close();
-        elg.close();
+                }
+            }
+        }
 
         CrtResource.waitForNoResources();
     }
@@ -72,66 +60,50 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3Get() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        EventLoopGroup elg = new EventLoopGroup(1);
-        HostResolver hostResolver = new HostResolver(elg);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver);
-        assertNotNull(clientBootstrap);
+        try (EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hostResolver = new HostResolver(elg);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
+            assertNotNull(clientBootstrap);
 
-        DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
-                .withClientBootstrap(clientBootstrap).build();
+            try (DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
+                    .withClientBootstrap(clientBootstrap).build()) {
 
-        CompletableFuture<Void> shutdownComplete = null;
+                String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
+                S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
+                        .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
 
-        String endpoint = "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com";
+                try (S3Client client = new S3Client(clientOptions)) {
+                    CompletableFuture<Void> onFinishedFuture = new CompletableFuture<Void>();
+                    S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion("us-west-2").withEndpoint(endpoint)
-                .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
+                        @Override
+                        public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                            Log.log(Log.LogLevel.Info, Log.LogSubject.S3Client,
+                                    "Body Response: " + bodyBytesIn.toString());
+                            return 0;
+                        }
 
-        S3Client client = new S3Client(clientOptions);
+                        @Override
+                        public void onFinished(int errorCode) {
+                            Log.log(Log.LogLevel.Info, Log.LogSubject.S3Client,
+                                    "Meta request finished with error code " + errorCode);
+                            onFinishedFuture.complete(null);
+                        }
+                    };
 
-        CompletableFuture<Void> onFinishedFuture = new CompletableFuture<Void>();
+                    HttpHeader[] headers = { new HttpHeader("Host", endpoint) };
+                    HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
-        S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                    S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                            .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                            .withResponseHandler(responseHandler);
 
-            @Override
-            public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                Log.log(Log.LogLevel.Info, Log.LogSubject.S3Client, "Body Response: " + bodyBytesIn.toString());
-                return 0;
+                    S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions);
+
+                    onFinishedFuture.get();
+                }
             }
-
-            @Override
-            public void onFinished(int errorCode) {
-                Log.log(Log.LogLevel.Info, Log.LogSubject.S3Client,
-                        "Meta request finished with error code " + errorCode);
-                onFinishedFuture.complete(null);
-            }
-        };
-
-        HttpHeader[] headers = { new HttpHeader("Host", endpoint) };
-        HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
-
-        S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
-                .withResponseHandler(responseHandler);
-
-        S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions);
-
-        onFinishedFuture.get();
-
-        metaRequest.close();
-        metaRequest.getShutdownCompleteFuture().get();
-
-        client.close();
-        client.getShutdownCompleteFuture().get();
-
-        credentialsProvider.close();
-        credentialsProvider.getShutdownCompleteFuture().get();
-
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get();
-
-        hostResolver.close();
-        elg.close();
+        }
 
         CrtResource.waitForNoResources();
     }

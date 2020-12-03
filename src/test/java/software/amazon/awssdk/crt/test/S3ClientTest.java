@@ -98,9 +98,9 @@ public class S3ClientTest extends CrtTestFixture {
                             .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                             .withResponseHandler(responseHandler);
 
-                    S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions);
-
-                    onFinishedFuture.get();
+                    try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                        onFinishedFuture.get();
+                    }
                 }
             }
         }

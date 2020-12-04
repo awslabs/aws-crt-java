@@ -9,8 +9,9 @@ import java.util.Map;
 public class S3MetaRequestOptions {
 
     public enum MetaRequestType {
-        GET_OBJECT(0),
-        PUT_OBJECT(1);
+        DEFAULT(0),
+        GET_OBJECT(1),
+        PUT_OBJECT(2);
 
         MetaRequestType(int nativeValue) {
             this.nativeValue = nativeValue;
@@ -24,11 +25,12 @@ public class S3MetaRequestOptions {
                 return enumValue;
             }
 
-            throw new RuntimeException("Illegal signing algorithm value in signing configuration");
+            throw new RuntimeException("Invalid S3 Meta Request type");
         }
 
         private static Map<Integer, MetaRequestType> buildEnumMapping() {
             Map<Integer, MetaRequestType> enumMapping = new HashMap<Integer, MetaRequestType>();
+            enumMapping.put(DEFAULT.getNativeValue(), DEFAULT);
             enumMapping.put(GET_OBJECT.getNativeValue(), GET_OBJECT);
             enumMapping.put(PUT_OBJECT.getNativeValue(), PUT_OBJECT);
             return enumMapping;

@@ -12,6 +12,7 @@
 struct java_http_request_body_stream_properties {
     jmethodID send_outgoing_body;
     jmethodID reset_position;
+    jmethodID get_length;
 };
 extern struct java_http_request_body_stream_properties http_request_body_stream_properties;
 

@@ -212,6 +212,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_s3_meta_request_jobject,
     jint meta_request_type,
     jbyteArray jni_marshalled_message_data,
+    jobject jni_http_request_body_stream,
     jobject java_response_handler_jobject) {
     (void)jni_class;
 
@@ -228,12 +229,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     callback_data->java_s3_meta_request = (*env)->NewGlobalRef(env, java_s3_meta_request_jobject);
-    AWS_FATAL_ASSERT(callback_data->java_s3_meta_request != NULL);
-
     callback_data->java_s3_meta_request_response_handler_native_adapter =
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
-
-    AWS_FATAL_ASSERT(callback_data->java_s3_meta_request_response_handler_native_adapter != NULL);
 
     struct aws_http_message *request_message = aws_http_message_new_request(allocator);
 
@@ -242,7 +239,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     }
 
     if (aws_apply_java_http_request_changes_to_native_request(
-            env, jni_marshalled_message_data, NULL, request_message)) {
+            env, jni_marshalled_message_data, jni_http_request_body_stream, request_message)) {
         /* TODO */
     }
 

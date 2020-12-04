@@ -96,8 +96,19 @@ static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct
 }
 
 static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_t *length) {
-    (void)stream;
-    (void)length;
+    AWS_FATAL_ASSERT(length && "NULL length out param passed to JNI aws_input_stream_get_length");
+    struct aws_http_request_body_stream_impl *impl = stream->impl;
+
+    if (impl->http_request_body_stream != NULL) {
+        JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        *length =
+            (*env)->CallLongMethod(env, impl->http_request_body_stream, http_request_body_stream_properties.get_length);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        }
+        return AWS_OP_SUCCESS;
+    }
 
     return AWS_OP_ERR;
 }
@@ -266,6 +277,13 @@ int aws_apply_java_http_request_changes_to_native_request(
 
     result = s_unmarshal_http_request(message, &marshalled_cur);
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
+
+    if (jni_body_stream) {
+        struct aws_input_stream *body_stream =
+            aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
+
+        aws_http_message_set_body_stream(message, body_stream);
+    }
 
     if (result) {
         aws_jni_throw_runtime_exception(

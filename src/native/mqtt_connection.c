@@ -588,9 +588,6 @@ static void s_on_subscription_delivered(
     (*env)->DeleteLocalRef(env, jni_payload);
     (*env)->DeleteLocalRef(env, jni_topic);
 
-    if (aws_jni_check_and_clear_exception(env)) {
-        (*env)->ExceptionDescribe(env);
-    }
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 }
 

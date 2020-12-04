@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.utils;
 
 import java.nio.ByteBuffer;
+import java.nio.Buffer;
 
 /**
  * Utility Class with Helper functions for working with ByteBuffers
@@ -27,7 +28,9 @@ public class ByteBufferUtils {
 
         // Modify the shallow copy's read limit so that it matches the write space remaining in the output Buffer so
         // we don't throw an OutOfBounds exception
-        shallowCopy.limit(shallowCopy.position() + amtToTransfer);
+        // The weird cast is to avoid certain JDK8 JREs that don't think ByteBuffer
+        // inherits from Buffer
+        ((Buffer) shallowCopy).limit(shallowCopy.position() + amtToTransfer);
 
         // Transfer the data
         out.put(shallowCopy);

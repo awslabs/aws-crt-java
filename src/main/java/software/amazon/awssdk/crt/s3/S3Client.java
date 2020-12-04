@@ -9,10 +9,7 @@ import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.s3.S3MetaRequest;
-import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.Log;
 
 public class S3Client extends CrtResource {
@@ -39,23 +36,28 @@ public class S3Client extends CrtResource {
 
     public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
-        if(options.getHttpRequest() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+
+        if (options.getHttpRequest() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
+                    "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
             return null;
         }
 
-        if(options.getResponseHandler() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
+        if (options.getResponseHandler() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
+                    "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
+
             return null;
         }
 
         S3MetaRequest metaRequest = new S3MetaRequest();
-        S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(options.getResponseHandler());
+        S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
+                options.getResponseHandler());
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
 
-        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, options.getMetaRequestType().getNativeValue(),
-                httpRequestBytes, responseHandlerNativeAdapter);
+        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
+                options.getMetaRequestType().getNativeValue(), httpRequestBytes, options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -97,5 +99,5 @@ public class S3Client extends CrtResource {
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, int metaRequestType,
-            byte[] httpRequestBytes, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
+            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
 }

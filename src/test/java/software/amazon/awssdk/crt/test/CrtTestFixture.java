@@ -8,14 +8,18 @@ package software.amazon.awssdk.crt.test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.test.CrtTestContext;
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
 
 import org.junit.Before;
 import org.junit.After;
+
+import java.util.Optional;
 
 public class CrtTestFixture {
 
@@ -53,7 +57,7 @@ public class CrtTestFixture {
         try (TlsContextOptions tlsOpts = configureTlsContextOptions(TlsContextOptions.createDefaultClient(),
                 trustStore)) {
             return new TlsContext(tlsOpts);
-        }        
+        }
     }
 
     protected TlsContextOptions configureTlsContextOptions(TlsContextOptions tlsOpts, byte[] trustStore) {
@@ -61,5 +65,18 @@ public class CrtTestFixture {
             tlsOpts.withCertificateAuthority(new String(trustStore));
         }
         return tlsOpts;
+    }
+
+    private Optional<Credentials> credentials = null;
+
+    protected boolean hasAwsCredentials() {
+        if (credentials == null) {
+            try {
+                credentials = Optional.of((new DefaultChainCredentialsProviderBuilder().build()).getCredentials().get());
+            } catch (Exception ex) {
+                credentials = Optional.empty();
+            }
+        }
+        return credentials.isPresent();
     }
 }

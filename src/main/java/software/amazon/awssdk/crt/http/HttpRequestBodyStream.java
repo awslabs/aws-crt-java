@@ -39,4 +39,13 @@ public interface HttpRequestBodyStream {
      */
     default boolean resetPosition() { return false; }
 
+    /**
+     * Called from native when the processing needs to know the length of the stream.
+     * If the stream does not know/support length, 0 should be returned.
+     *
+     * Signing requires a rewindable stream, but basic http does not.
+     *
+     * @return Stream length, or 0 if unknown stream or length is unsupported
+     */
+    default long getLength() { return 0; }
 }

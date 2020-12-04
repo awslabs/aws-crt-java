@@ -19,6 +19,7 @@
 #include <aws/io/logging.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
+#include <aws/s3/s3.h>
 
 #include <stdio.h>
 
@@ -212,6 +213,8 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 static void s_jni_atexit(void) {
+    aws_s3_library_clean_up();
+    aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
@@ -266,6 +269,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);
     aws_event_stream_library_init(allocator);
+    aws_s3_library_init(allocator);
 
     cache_java_class_ids(env);
     atexit(s_jni_atexit);

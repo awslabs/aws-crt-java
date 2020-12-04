@@ -102,7 +102,8 @@ public class Log {
 
         // aws-crt-java, we're authoritative
         JavaCrtGeneral(0x2400),
-        JavaCrtResource(0x2401)
+        JavaCrtResource(0x2401),
+        JavaCrtS3(0x2402)
         ;
 
         LogSubject(int value) {

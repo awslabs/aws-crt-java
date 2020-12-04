@@ -19,6 +19,9 @@ static void s_cache_http_request_body_stream(JNIEnv *env) {
 
     http_request_body_stream_properties.reset_position = (*env)->GetMethodID(env, cls, "resetPosition", "()Z");
     AWS_FATAL_ASSERT(http_request_body_stream_properties.reset_position);
+
+    http_request_body_stream_properties.get_length = (*env)->GetMethodID(env, cls, "getLength", "()J");
+    AWS_FATAL_ASSERT(http_request_body_stream_properties.get_length);
 }
 
 struct java_aws_signing_config_properties aws_signing_config_properties;

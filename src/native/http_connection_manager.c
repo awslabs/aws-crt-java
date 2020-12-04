@@ -50,7 +50,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
         (*env)->CallVoidMethod(
             env, java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
         (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
@@ -311,7 +311,7 @@ static void s_on_http_conn_acquisition_callback(
 
         (*env)->DeleteLocalRef(env, java_http_conn_manager);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
     // We're done with this callback data, free it.

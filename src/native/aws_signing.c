@@ -127,7 +127,7 @@ static void s_complete_signing_exceptionally(
     (*env)->CallBooleanMethod(
         env, callback_data->java_future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
 
-    (*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
 }
@@ -158,13 +158,13 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
 
     (*env)->CallBooleanMethod(
         env, callback_data->java_future, completable_future_properties.complete_method_id, java_signed_request);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     (*env)->DeleteLocalRef(env, java_signed_request);
 
     /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
        we cross the barrier. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
 done:
 
@@ -195,7 +195,7 @@ static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int 
 
     /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
        we cross the barrier. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
 done:
 
@@ -211,7 +211,7 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
 
     bool result = (*env)->CallBooleanMethod(
         env, callback_data->java_sign_header_predicate, predicate_properties.test_method_id, (jobject)header_name);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     (*env)->DeleteLocalRef(env, header_name);
 

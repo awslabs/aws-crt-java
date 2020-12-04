@@ -53,7 +53,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
         // Tell the Java ClientBootstrap that cleanup is done.  This lets it release its references.
         (*env)->CallVoidMethod(env, java_client_bootstrap, client_bootstrap_properties.onShutdownComplete);
         (*env)->DeleteLocalRef(env, java_client_bootstrap);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
     s_shutdown_callback_data_destroy(env, callback_data);

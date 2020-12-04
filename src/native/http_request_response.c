@@ -166,7 +166,7 @@ static int s_on_incoming_header_block_done_fn(
         (jint)block_type,
         jni_headers_buf);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         (*env)->DeleteLocalRef(env, jni_headers_buf);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
@@ -182,7 +182,7 @@ static int s_on_incoming_header_block_done_fn(
         callback->java_http_stream,
         jni_block_type);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
@@ -207,7 +207,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     (*env)->DeleteLocalRef(env, jni_payload);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onResponseBody", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
@@ -240,7 +240,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         callback->java_http_stream,
         jErrorCode);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         /* Close the Connection if the Java Callback throws an Exception */
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }

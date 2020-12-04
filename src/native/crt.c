@@ -69,6 +69,7 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
 bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     bool exception_pending = (*env)->ExceptionCheck(env);
     if (exception_pending) {
+        (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
     }
     return exception_pending;
@@ -81,7 +82,7 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
 
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
-    return (*env)->ExceptionCheck(env);
+    return aws_jni_check_and_clear_exception(env);
 }
 
 /**
@@ -102,7 +103,7 @@ jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cur
  */
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
     jint position = (*env)->CallIntMethod(env, java_byte_buffer, byte_buffer_properties.get_position);
-    return ((*env)->ExceptionCheck(env)) ? -1 : (int)position;
+    return (aws_jni_check_and_clear_exception(env)) ? -1 : (int)position;
 }
 
 /**
@@ -110,7 +111,7 @@ int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
  */
 void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
     jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_position, position);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     (*env)->DeleteLocalRef(env, val);
 }
 
@@ -119,7 +120,7 @@ void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint positi
  */
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
     jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_limit, limit);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     (*env)->DeleteLocalRef(env, val);
 }
 

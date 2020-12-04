@@ -41,7 +41,7 @@ static int s_aws_input_stream_seek(
             result = AWS_OP_ERR;
         }
 
-        if ((*env)->ExceptionCheck(env)) {
+        if (aws_jni_check_and_clear_exception(env)) {
             return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
     }
@@ -74,7 +74,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     impl->body_done = (*env)->CallBooleanMethod(
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
@@ -385,7 +385,7 @@ jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *
         jni_request_blob,
         request_body_stream);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         goto done;
     }

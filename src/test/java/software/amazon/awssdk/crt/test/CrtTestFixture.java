@@ -9,12 +9,14 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
+import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 
 import org.junit.Before;
 import org.junit.After;
@@ -72,7 +74,15 @@ public class CrtTestFixture {
     protected boolean hasAwsCredentials() {
         if (credentials == null) {
             try {
-                credentials = Optional.of((new DefaultChainCredentialsProviderBuilder().build()).getCredentials().get());
+                try (EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hostResolver = new HostResolver(elg);
+                    ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
+
+                    try (DefaultChainCredentialsProvider provider = ((new DefaultChainCredentialsProviderBuilder()).withClientBootstrap(clientBootstrap)).build()) {
+                        credentials = Optional
+                            .of(provider.getCredentials().get());
+                    }
+                }
             } catch (Exception ex) {
                 credentials = Optional.empty();
             }

@@ -48,4 +48,9 @@ public class CrtRuntimeException extends RuntimeException {
         this.errorCode = errorCode;
         this.errorName = CRT.awsErrorName(errorCode);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s(%d)", super.toString(), errorName, errorCode);
+    }
 };

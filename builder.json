@@ -16,6 +16,9 @@
     "build_env": {
         "JAVA_HOME": "{java_home}"
     },
+    "test_env": {
+        "JAVA_HOME": "{java_home}"
+    },
     "hosts": {
         "ubuntu": {
             "packages": [
@@ -37,7 +40,8 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path}",
+                "{source_dir}/gradlew build -PlibcryptoPath={source_dir}/{libcrypto_path}"
             ],
             "architectures": {
                 "armv6": {

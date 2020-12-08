@@ -82,6 +82,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         connectFuture.get(1, TimeUnit.SECONDS);
         assertNotNull(clientConnectionArray[0]);
+        serverConnectionAccepted.get(1, TimeUnit.SECONDS);
         assertNotNull(serverConnections[0]);
         clientConnectionArray[0].closeConnection(0);
         clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);

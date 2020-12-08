@@ -41,7 +41,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
         return (jlong)NULL;
     }
 
-    struct aws_host_resolver *resolver = aws_host_resolver_new_default(allocator, (size_t)max_entries, el_group, NULL);
+    struct aws_host_resolver_default_options resolver_options = {
+        .max_entries = max_entries,
+        .el_group = el_group,
+    };
+
+    struct aws_host_resolver *resolver = aws_host_resolver_new_default(allocator, &resolver_options);
     if (resolver == NULL) {
         aws_jni_throw_runtime_exception(env, "aws_host_resolver_new_default failed");
         return (jlong)NULL;

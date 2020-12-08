@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,9 +34,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
         final ServerConnection[] serverConnections = {null};
-
-        Lock semaphoreLock = new ReentrantLock();
-        Condition semaphore = semaphoreLock.newCondition();
+        final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
 
         ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
@@ -60,9 +55,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     }
                 };
 
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
+                serverConnectionAccepted.complete(serverConnection);
                 return connectionHandler;
             }
 
@@ -89,9 +82,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         connectFuture.get(1, TimeUnit.SECONDS);
         assertNotNull(clientConnectionArray[0]);
-        semaphoreLock.lock();
-        semaphore.await(1, TimeUnit.SECONDS);
-        semaphoreLock.unlock();
         assertNotNull(serverConnections[0]);
         clientConnectionArray[0].closeConnection(0);
         clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
@@ -127,9 +117,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final boolean[] serverConnShutdown = {false};
 
         final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
-
-        Lock semaphoreLock = new ReentrantLock();
-        Condition semaphore = semaphoreLock.newCondition();
+        final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
+        final CompletableFuture<ServerConnection> serverMessageSent = new CompletableFuture<>();
 
         ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
             private ServerConnectionHandler connectionHandler = null;
@@ -141,13 +130,14 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
                     @Override
                     protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                        semaphoreLock.lock();
                         receivedMessageHeaders[0] = headers;
                         receivedPayload[0] = payload;
                         receivedMessageType[0] = messageType;
                         receivedMessageFlags[0] = messageFlags;
-                        semaphoreLock.unlock();
-                        serverConnection.sendProtocolMessage(null, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue());
+                        serverConnection.sendProtocolMessage(null, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue())
+                            .whenComplete((res, ex) -> {
+                                serverMessageSent.complete(serverConnection);
+                            });
                     }
 
                     @Override
@@ -155,10 +145,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                         return null;
                     }
                 };
-
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
+                serverConnectionAccepted.complete(serverConnection);
                 return connectionHandler;
             }
 
@@ -173,6 +160,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final byte[][] clientReceivedPayload = {null};
         final MessageType[] clientReceivedMessageType = {null};
         final int[] clientReceivedMessageFlags = {-1};
+        final CompletableFuture<Void> clientMessageReceived = new CompletableFuture<>();
 
         CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
             @Override
@@ -182,27 +170,23 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
             @Override
             protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
                 clientReceivedMessageHeaders[0] = headers;
                 clientReceivedPayload[0] = payload;
                 clientReceivedMessageType[0] = messageType;
                 clientReceivedMessageFlags[0] = messageFlags;
-                semaphoreLock.unlock();
-                semaphore.signal();
+                clientMessageReceived.complete(null);
             }
         });
 
         final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
         connectFuture.get(1, TimeUnit.SECONDS);
         assertNotNull(clientConnectionArray[0]);
-        semaphoreLock.lock();
-        semaphore.await(1, TimeUnit.SECONDS);
+        serverConnectionAccepted.get(1, TimeUnit.SECONDS);
         assertNotNull(serverConnectionArray[0]);
 
         clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
 
-        semaphore.await(1, TimeUnit.SECONDS);
-        semaphoreLock.unlock();
+        clientMessageReceived.get(1, TimeUnit.SECONDS);
         assertEquals(MessageType.Connect, receivedMessageType[0]);
         assertArrayEquals(connectPayload, receivedPayload[0]);
         assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);

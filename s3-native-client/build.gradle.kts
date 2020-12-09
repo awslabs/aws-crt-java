@@ -8,8 +8,14 @@ repositories {
     mavenCentral()
 }
 
-tasks.compileJava {
+val copyTask = tasks.register<Copy>("copyGeneratedSource") {
+    from(fileTree("${buildDir}/smithyprojections/${project.name}/source/crt/model"))
+    into(file("${projectDir}/src/main/java"))
     dependsOn("smithyBuildJar")
+}
+
+tasks.compileJava {
+    dependsOn("copyGeneratedSource")
 }
 
 dependencies {

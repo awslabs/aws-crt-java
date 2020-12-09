@@ -51,6 +51,7 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         exec {
             executable("cmake")
             args(cmakeArgs)
+            environment(mapOf<String, String>("JAVA_HOME" to System.getProperty("java.home")))
         }
     }
 }

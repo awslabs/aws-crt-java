@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutBucketRequestPaymentRequest {
   private String bucket;
 
@@ -15,24 +12,6 @@ public class PutBucketRequestPaymentRequest {
   private RequestPaymentConfiguration requestPaymentConfiguration;
 
   private String expectedBucketOwner;
-
-  public PutBucketRequestPaymentRequest() {
-    this.bucket = null;
-    this.contentMD5 = null;
-    this.requestPaymentConfiguration = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutBucketRequestPaymentRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutBucketRequestPaymentRequest);
-  }
 
   public String getBucket() {
     return bucket;

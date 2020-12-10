@@ -2,15 +2,12 @@ package com.amazonaws.s3;
 
 import java.lang.Boolean;
 import java.lang.Integer;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class ListPartsOutput {
   private Instant abortDate;
 
@@ -39,34 +36,6 @@ public class ListPartsOutput {
   private StorageClass storageClass;
 
   private RequestCharged requestCharged;
-
-  public ListPartsOutput() {
-    this.abortDate = null;
-    this.abortRuleId = null;
-    this.bucket = null;
-    this.key = null;
-    this.uploadId = null;
-    this.partNumberMarker = null;
-    this.nextPartNumberMarker = null;
-    this.maxParts = null;
-    this.isTruncated = null;
-    this.parts = null;
-    this.initiator = null;
-    this.owner = null;
-    this.storageClass = null;
-    this.requestCharged = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(ListPartsOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof ListPartsOutput);
-  }
 
   public Instant getAbortDate() {
     return abortDate;
@@ -176,11 +145,11 @@ public class ListPartsOutput {
     this.owner = owner;
   }
 
-  public String getStorageClass() {
+  public StorageClass getStorageClass() {
     return storageClass;
   }
 
-  public void setStorageClass(final String storageClass) {
+  public void setStorageClass(final StorageClass storageClass) {
     this.storageClass = storageClass;
   }
 
@@ -188,7 +157,7 @@ public class ListPartsOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public String getRequestCharged() {
+  public RequestCharged getRequestCharged() {
     return requestCharged;
   }
 
@@ -196,7 +165,7 @@ public class ListPartsOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public void setRequestCharged(final String requestCharged) {
+  public void setRequestCharged(final RequestCharged requestCharged) {
     this.requestCharged = requestCharged;
   }
 }

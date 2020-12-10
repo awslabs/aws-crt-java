@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutObjectAclRequest {
   private ObjectCannedACL aCL;
 
@@ -34,38 +31,11 @@ public class PutObjectAclRequest {
 
   private String expectedBucketOwner;
 
-  public PutObjectAclRequest() {
-    this.aCL = null;
-    this.accessControlPolicy = null;
-    this.bucket = null;
-    this.contentMD5 = null;
-    this.grantFullControl = null;
-    this.grantRead = null;
-    this.grantReadACP = null;
-    this.grantWrite = null;
-    this.grantWriteACP = null;
-    this.key = null;
-    this.requestPayer = null;
-    this.versionId = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutObjectAclRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutObjectAclRequest);
-  }
-
-  public String getACL() {
+  public ObjectCannedACL getACL() {
     return aCL;
   }
 
-  public void setACL(final String aCL) {
+  public void setACL(final ObjectCannedACL aCL) {
     this.aCL = aCL;
   }
 
@@ -153,7 +123,7 @@ public class PutObjectAclRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public String getRequestPayer() {
+  public RequestPayer getRequestPayer() {
     return requestPayer;
   }
 
@@ -163,7 +133,7 @@ public class PutObjectAclRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public void setRequestPayer(final String requestPayer) {
+  public void setRequestPayer(final RequestPayer requestPayer) {
     this.requestPayer = requestPayer;
   }
 

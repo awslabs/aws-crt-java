@@ -1,28 +1,10 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetPublicAccessBlockOutput {
   private PublicAccessBlockConfiguration publicAccessBlockConfiguration;
-
-  public GetPublicAccessBlockOutput() {
-    this.publicAccessBlockConfiguration = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetPublicAccessBlockOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetPublicAccessBlockOutput);
-  }
 
   /**
    * <p>The PublicAccessBlock configuration that you want to apply to this Amazon S3 bucket. You can

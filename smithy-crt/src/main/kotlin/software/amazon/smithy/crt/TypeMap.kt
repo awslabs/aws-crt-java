@@ -5,8 +5,6 @@ import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import software.amazon.smithy.build.PluginContext
-import software.amazon.smithy.crt.java.JavaFileGenerator
-import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes.*
 import software.amazon.smithy.model.traits.EnumTrait
 import software.amazon.smithy.utils.StringUtils
@@ -30,13 +28,9 @@ class TypeMap(val pluginContext: PluginContext) {
         fun toTypeName(shape: Shape) : TypeName {
             return instance().toTypeName(shape)
         }
-
-        fun toMemberFieldTypeName(shape: Shape) : TypeName {
-            return instance().toMemberFieldTypeName(shape)
-        }
     }
 
-    open class TypeNameVisitor(private val typeMap: TypeMap) : ShapeVisitor<TypeName> {
+    class TypeNameVisitor(private val typeMap: TypeMap) : ShapeVisitor<TypeName> {
         private fun javaNamespace(shape: Shape): String {
             return shape.id.namespace
         }
@@ -239,15 +233,8 @@ class TypeMap(val pluginContext: PluginContext) {
 
     }
 
-    class MemberTypeVisitor(private val typeMap: TypeMap) : TypeNameVisitor(typeMap) {
-        override fun stringShape(shape: StringShape): TypeName {
-            return ClassName.get(java.lang.String::class.javaObjectType)
-        }
-    }
-
     private val typeNameVisitor = TypeNameVisitor(this)
     private val classNameVisitor = ClassNameVisitor(typeNameVisitor)
-    private val memberTypeVisitor = MemberTypeVisitor(this)
 
     init {
         staticInstance = this
@@ -259,9 +246,5 @@ class TypeMap(val pluginContext: PluginContext) {
 
     fun toTypeName(shape: Shape): TypeName {
         return shape.accept(typeNameVisitor)
-    }
-
-    fun toMemberFieldTypeName(shape: Shape): TypeName {
-        return shape.accept(memberTypeVisitor)
     }
 }

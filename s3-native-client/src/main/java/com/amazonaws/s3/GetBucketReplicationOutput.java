@@ -1,28 +1,10 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetBucketReplicationOutput {
   private ReplicationConfiguration replicationConfiguration;
-
-  public GetBucketReplicationOutput() {
-    this.replicationConfiguration = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetBucketReplicationOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetBucketReplicationOutput);
-  }
 
   /**
    * <p>A container for replication rules. You can add up to 1,000 rules. The maximum size of a

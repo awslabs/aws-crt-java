@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutBucketAnalyticsConfigurationRequest {
   private String bucket;
 
@@ -15,24 +12,6 @@ public class PutBucketAnalyticsConfigurationRequest {
   private AnalyticsConfiguration analyticsConfiguration;
 
   private String expectedBucketOwner;
-
-  public PutBucketAnalyticsConfigurationRequest() {
-    this.bucket = null;
-    this.id = null;
-    this.analyticsConfiguration = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutBucketAnalyticsConfigurationRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutBucketAnalyticsConfigurationRequest);
-  }
 
   public String getBucket() {
     return bucket;

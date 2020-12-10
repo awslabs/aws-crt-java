@@ -1,15 +1,12 @@
 package com.amazonaws.s3;
 
 import java.lang.Boolean;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class CopyObjectRequest {
   private ObjectCannedACL aCL;
 
@@ -91,65 +88,11 @@ public class CopyObjectRequest {
 
   private String expectedSourceBucketOwner;
 
-  public CopyObjectRequest() {
-    this.aCL = null;
-    this.bucket = null;
-    this.cacheControl = null;
-    this.contentDisposition = null;
-    this.contentEncoding = null;
-    this.contentLanguage = null;
-    this.contentType = null;
-    this.copySource = null;
-    this.copySourceIfMatch = null;
-    this.copySourceIfModifiedSince = null;
-    this.copySourceIfNoneMatch = null;
-    this.copySourceIfUnmodifiedSince = null;
-    this.expires = null;
-    this.grantFullControl = null;
-    this.grantRead = null;
-    this.grantReadACP = null;
-    this.grantWriteACP = null;
-    this.key = null;
-    this.metadata = null;
-    this.metadataDirective = null;
-    this.taggingDirective = null;
-    this.serverSideEncryption = null;
-    this.storageClass = null;
-    this.websiteRedirectLocation = null;
-    this.sSECustomerAlgorithm = null;
-    this.sSECustomerKey = null;
-    this.sSECustomerKeyMD5 = null;
-    this.sSEKMSKeyId = null;
-    this.sSEKMSEncryptionContext = null;
-    this.bucketKeyEnabled = null;
-    this.copySourceSSECustomerAlgorithm = null;
-    this.copySourceSSECustomerKey = null;
-    this.copySourceSSECustomerKeyMD5 = null;
-    this.requestPayer = null;
-    this.tagging = null;
-    this.objectLockMode = null;
-    this.objectLockRetainUntilDate = null;
-    this.objectLockLegalHoldStatus = null;
-    this.expectedBucketOwner = null;
-    this.expectedSourceBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(CopyObjectRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof CopyObjectRequest);
-  }
-
-  public String getACL() {
+  public ObjectCannedACL getACL() {
     return aCL;
   }
 
-  public void setACL(final String aCL) {
+  public void setACL(final ObjectCannedACL aCL) {
     this.aCL = aCL;
   }
 
@@ -297,35 +240,35 @@ public class CopyObjectRequest {
     this.metadata = metadata;
   }
 
-  public String getMetadataDirective() {
+  public MetadataDirective getMetadataDirective() {
     return metadataDirective;
   }
 
-  public void setMetadataDirective(final String metadataDirective) {
+  public void setMetadataDirective(final MetadataDirective metadataDirective) {
     this.metadataDirective = metadataDirective;
   }
 
-  public String getTaggingDirective() {
+  public TaggingDirective getTaggingDirective() {
     return taggingDirective;
   }
 
-  public void setTaggingDirective(final String taggingDirective) {
+  public void setTaggingDirective(final TaggingDirective taggingDirective) {
     this.taggingDirective = taggingDirective;
   }
 
-  public String getServerSideEncryption() {
+  public ServerSideEncryption getServerSideEncryption() {
     return serverSideEncryption;
   }
 
-  public void setServerSideEncryption(final String serverSideEncryption) {
+  public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
     this.serverSideEncryption = serverSideEncryption;
   }
 
-  public String getStorageClass() {
+  public StorageClass getStorageClass() {
     return storageClass;
   }
 
-  public void setStorageClass(final String storageClass) {
+  public void setStorageClass(final StorageClass storageClass) {
     this.storageClass = storageClass;
   }
 
@@ -415,7 +358,7 @@ public class CopyObjectRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public String getRequestPayer() {
+  public RequestPayer getRequestPayer() {
     return requestPayer;
   }
 
@@ -425,7 +368,7 @@ public class CopyObjectRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public void setRequestPayer(final String requestPayer) {
+  public void setRequestPayer(final RequestPayer requestPayer) {
     this.requestPayer = requestPayer;
   }
 
@@ -437,11 +380,11 @@ public class CopyObjectRequest {
     this.tagging = tagging;
   }
 
-  public String getObjectLockMode() {
+  public ObjectLockMode getObjectLockMode() {
     return objectLockMode;
   }
 
-  public void setObjectLockMode(final String objectLockMode) {
+  public void setObjectLockMode(final ObjectLockMode objectLockMode) {
     this.objectLockMode = objectLockMode;
   }
 
@@ -453,11 +396,12 @@ public class CopyObjectRequest {
     this.objectLockRetainUntilDate = objectLockRetainUntilDate;
   }
 
-  public String getObjectLockLegalHoldStatus() {
+  public ObjectLockLegalHoldStatus getObjectLockLegalHoldStatus() {
     return objectLockLegalHoldStatus;
   }
 
-  public void setObjectLockLegalHoldStatus(final String objectLockLegalHoldStatus) {
+  public void setObjectLockLegalHoldStatus(
+      final ObjectLockLegalHoldStatus objectLockLegalHoldStatus) {
     this.objectLockLegalHoldStatus = objectLockLegalHoldStatus;
   }
 

@@ -1,35 +1,15 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutBucketLifecycleConfigurationRequest {
   private String bucket;
 
   private BucketLifecycleConfiguration lifecycleConfiguration;
 
   private String expectedBucketOwner;
-
-  public PutBucketLifecycleConfigurationRequest() {
-    this.bucket = null;
-    this.lifecycleConfiguration = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutBucketLifecycleConfigurationRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutBucketLifecycleConfigurationRequest);
-  }
 
   public String getBucket() {
     return bucket;

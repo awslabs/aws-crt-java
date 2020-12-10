@@ -3,15 +3,12 @@ package com.amazonaws.s3;
 import java.lang.Boolean;
 import java.lang.Integer;
 import java.lang.Long;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class HeadObjectOutput {
   private Boolean deleteMarker;
 
@@ -73,50 +70,6 @@ public class HeadObjectOutput {
 
   private ObjectLockLegalHoldStatus objectLockLegalHoldStatus;
 
-  public HeadObjectOutput() {
-    this.deleteMarker = null;
-    this.acceptRanges = null;
-    this.expiration = null;
-    this.restore = null;
-    this.archiveStatus = null;
-    this.lastModified = null;
-    this.contentLength = null;
-    this.eTag = null;
-    this.missingMeta = null;
-    this.versionId = null;
-    this.cacheControl = null;
-    this.contentDisposition = null;
-    this.contentEncoding = null;
-    this.contentLanguage = null;
-    this.contentType = null;
-    this.expires = null;
-    this.websiteRedirectLocation = null;
-    this.serverSideEncryption = null;
-    this.metadata = null;
-    this.sSECustomerAlgorithm = null;
-    this.sSECustomerKeyMD5 = null;
-    this.sSEKMSKeyId = null;
-    this.bucketKeyEnabled = null;
-    this.storageClass = null;
-    this.requestCharged = null;
-    this.replicationStatus = null;
-    this.partsCount = null;
-    this.objectLockMode = null;
-    this.objectLockRetainUntilDate = null;
-    this.objectLockLegalHoldStatus = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(HeadObjectOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof HeadObjectOutput);
-  }
-
   public Boolean isDeleteMarker() {
     return deleteMarker;
   }
@@ -149,11 +102,11 @@ public class HeadObjectOutput {
     this.restore = restore;
   }
 
-  public String getArchiveStatus() {
+  public ArchiveStatus getArchiveStatus() {
     return archiveStatus;
   }
 
-  public void setArchiveStatus(final String archiveStatus) {
+  public void setArchiveStatus(final ArchiveStatus archiveStatus) {
     this.archiveStatus = archiveStatus;
   }
 
@@ -253,11 +206,11 @@ public class HeadObjectOutput {
     this.websiteRedirectLocation = websiteRedirectLocation;
   }
 
-  public String getServerSideEncryption() {
+  public ServerSideEncryption getServerSideEncryption() {
     return serverSideEncryption;
   }
 
-  public void setServerSideEncryption(final String serverSideEncryption) {
+  public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
     this.serverSideEncryption = serverSideEncryption;
   }
 
@@ -301,11 +254,11 @@ public class HeadObjectOutput {
     this.bucketKeyEnabled = bucketKeyEnabled;
   }
 
-  public String getStorageClass() {
+  public StorageClass getStorageClass() {
     return storageClass;
   }
 
-  public void setStorageClass(final String storageClass) {
+  public void setStorageClass(final StorageClass storageClass) {
     this.storageClass = storageClass;
   }
 
@@ -313,7 +266,7 @@ public class HeadObjectOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public String getRequestCharged() {
+  public RequestCharged getRequestCharged() {
     return requestCharged;
   }
 
@@ -321,15 +274,15 @@ public class HeadObjectOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public void setRequestCharged(final String requestCharged) {
+  public void setRequestCharged(final RequestCharged requestCharged) {
     this.requestCharged = requestCharged;
   }
 
-  public String getReplicationStatus() {
+  public ReplicationStatus getReplicationStatus() {
     return replicationStatus;
   }
 
-  public void setReplicationStatus(final String replicationStatus) {
+  public void setReplicationStatus(final ReplicationStatus replicationStatus) {
     this.replicationStatus = replicationStatus;
   }
 
@@ -341,11 +294,11 @@ public class HeadObjectOutput {
     this.partsCount = partsCount;
   }
 
-  public String getObjectLockMode() {
+  public ObjectLockMode getObjectLockMode() {
     return objectLockMode;
   }
 
-  public void setObjectLockMode(final String objectLockMode) {
+  public void setObjectLockMode(final ObjectLockMode objectLockMode) {
     this.objectLockMode = objectLockMode;
   }
 
@@ -357,11 +310,12 @@ public class HeadObjectOutput {
     this.objectLockRetainUntilDate = objectLockRetainUntilDate;
   }
 
-  public String getObjectLockLegalHoldStatus() {
+  public ObjectLockLegalHoldStatus getObjectLockLegalHoldStatus() {
     return objectLockLegalHoldStatus;
   }
 
-  public void setObjectLockLegalHoldStatus(final String objectLockLegalHoldStatus) {
+  public void setObjectLockLegalHoldStatus(
+      final ObjectLockLegalHoldStatus objectLockLegalHoldStatus) {
     this.objectLockLegalHoldStatus = objectLockLegalHoldStatus;
   }
 }

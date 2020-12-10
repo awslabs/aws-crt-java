@@ -1,35 +1,15 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutBucketNotificationConfigurationRequest {
   private String bucket;
 
   private NotificationConfiguration notificationConfiguration;
 
   private String expectedBucketOwner;
-
-  public PutBucketNotificationConfigurationRequest() {
-    this.bucket = null;
-    this.notificationConfiguration = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutBucketNotificationConfigurationRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutBucketNotificationConfigurationRequest);
-  }
 
   public String getBucket() {
     return bucket;

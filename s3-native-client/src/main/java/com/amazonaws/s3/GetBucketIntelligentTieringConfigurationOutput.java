@@ -1,28 +1,10 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetBucketIntelligentTieringConfigurationOutput {
   private IntelligentTieringConfiguration intelligentTieringConfiguration;
-
-  public GetBucketIntelligentTieringConfigurationOutput() {
-    this.intelligentTieringConfiguration = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetBucketIntelligentTieringConfigurationOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetBucketIntelligentTieringConfigurationOutput);
-  }
 
   /**
    * <p>Specifies the S3 Intelligent-Tiering configuration for an Amazon S3 bucket.</p>

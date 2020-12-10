@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetBucketWebsiteOutput {
   private RedirectAllRequestsTo redirectAllRequestsTo;
 
@@ -15,24 +12,6 @@ public class GetBucketWebsiteOutput {
   private ErrorDocument errorDocument;
 
   private List<RoutingRule> routingRules;
-
-  public GetBucketWebsiteOutput() {
-    this.redirectAllRequestsTo = null;
-    this.indexDocument = null;
-    this.errorDocument = null;
-    this.routingRules = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetBucketWebsiteOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetBucketWebsiteOutput);
-  }
 
   /**
    * <p>Specifies the redirect behavior of all requests to a website endpoint of an Amazon S3

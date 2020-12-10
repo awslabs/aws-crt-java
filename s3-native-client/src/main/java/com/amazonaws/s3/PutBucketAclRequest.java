@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutBucketAclRequest {
   private BucketCannedACL aCL;
 
@@ -28,35 +25,11 @@ public class PutBucketAclRequest {
 
   private String expectedBucketOwner;
 
-  public PutBucketAclRequest() {
-    this.aCL = null;
-    this.accessControlPolicy = null;
-    this.bucket = null;
-    this.contentMD5 = null;
-    this.grantFullControl = null;
-    this.grantRead = null;
-    this.grantReadACP = null;
-    this.grantWrite = null;
-    this.grantWriteACP = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutBucketAclRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutBucketAclRequest);
-  }
-
-  public String getACL() {
+  public BucketCannedACL getACL() {
     return aCL;
   }
 
-  public void setACL(final String aCL) {
+  public void setACL(final BucketCannedACL aCL) {
     this.aCL = aCL;
   }
 

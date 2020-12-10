@@ -1,13 +1,10 @@
 package com.amazonaws.s3;
 
 import java.lang.Integer;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class ListMultipartUploadsRequest {
   private String bucket;
 
@@ -24,28 +21,6 @@ public class ListMultipartUploadsRequest {
   private String uploadIdMarker;
 
   private String expectedBucketOwner;
-
-  public ListMultipartUploadsRequest() {
-    this.bucket = null;
-    this.delimiter = null;
-    this.encodingType = null;
-    this.keyMarker = null;
-    this.maxUploads = null;
-    this.prefix = null;
-    this.uploadIdMarker = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(ListMultipartUploadsRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof ListMultipartUploadsRequest);
-  }
 
   public String getBucket() {
     return bucket;
@@ -70,7 +45,7 @@ public class ListMultipartUploadsRequest {
    *          characters that are not supported in XML 1.0, you can add this parameter to request that
    *          Amazon S3 encode the keys in the response.</p>
    */
-  public String getEncodingType() {
+  public EncodingType getEncodingType() {
     return encodingType;
   }
 
@@ -81,7 +56,7 @@ public class ListMultipartUploadsRequest {
    *          characters that are not supported in XML 1.0, you can add this parameter to request that
    *          Amazon S3 encode the keys in the response.</p>
    */
-  public void setEncodingType(final String encodingType) {
+  public void setEncodingType(final EncodingType encodingType) {
     this.encodingType = encodingType;
   }
 

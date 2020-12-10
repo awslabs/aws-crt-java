@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class PutObjectLockConfigurationRequest {
   private String bucket;
 
@@ -19,26 +16,6 @@ public class PutObjectLockConfigurationRequest {
   private String contentMD5;
 
   private String expectedBucketOwner;
-
-  public PutObjectLockConfigurationRequest() {
-    this.bucket = null;
-    this.objectLockConfiguration = null;
-    this.requestPayer = null;
-    this.token = null;
-    this.contentMD5 = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(PutObjectLockConfigurationRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof PutObjectLockConfigurationRequest);
-  }
 
   public String getBucket() {
     return bucket;
@@ -68,7 +45,7 @@ public class PutObjectLockConfigurationRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public String getRequestPayer() {
+  public RequestPayer getRequestPayer() {
     return requestPayer;
   }
 
@@ -78,7 +55,7 @@ public class PutObjectLockConfigurationRequest {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public void setRequestPayer(final String requestPayer) {
+  public void setRequestPayer(final RequestPayer requestPayer) {
     this.requestPayer = requestPayer;
   }
 

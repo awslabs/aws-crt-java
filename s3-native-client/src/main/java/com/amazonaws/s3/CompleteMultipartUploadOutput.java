@@ -1,13 +1,10 @@
 package com.amazonaws.s3;
 
 import java.lang.Boolean;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class CompleteMultipartUploadOutput {
   private String location;
 
@@ -28,30 +25,6 @@ public class CompleteMultipartUploadOutput {
   private Boolean bucketKeyEnabled;
 
   private RequestCharged requestCharged;
-
-  public CompleteMultipartUploadOutput() {
-    this.location = null;
-    this.bucket = null;
-    this.key = null;
-    this.expiration = null;
-    this.eTag = null;
-    this.serverSideEncryption = null;
-    this.versionId = null;
-    this.sSEKMSKeyId = null;
-    this.bucketKeyEnabled = null;
-    this.requestCharged = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(CompleteMultipartUploadOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof CompleteMultipartUploadOutput);
-  }
 
   public String getLocation() {
     return location;
@@ -93,11 +66,11 @@ public class CompleteMultipartUploadOutput {
     this.eTag = eTag;
   }
 
-  public String getServerSideEncryption() {
+  public ServerSideEncryption getServerSideEncryption() {
     return serverSideEncryption;
   }
 
-  public void setServerSideEncryption(final String serverSideEncryption) {
+  public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
     this.serverSideEncryption = serverSideEncryption;
   }
 
@@ -129,7 +102,7 @@ public class CompleteMultipartUploadOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public String getRequestCharged() {
+  public RequestCharged getRequestCharged() {
     return requestCharged;
   }
 
@@ -137,7 +110,7 @@ public class CompleteMultipartUploadOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public void setRequestCharged(final String requestCharged) {
+  public void setRequestCharged(final RequestCharged requestCharged) {
     this.requestCharged = requestCharged;
   }
 }

@@ -1,36 +1,15 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
-import java.lang.String;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetObjectAclOutput {
   private Owner owner;
 
   private List<Grant> grants;
 
   private RequestCharged requestCharged;
-
-  public GetObjectAclOutput() {
-    this.owner = null;
-    this.grants = null;
-    this.requestCharged = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetObjectAclOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetObjectAclOutput);
-  }
 
   /**
    * <p>Container for the owner's display name and ID.</p>
@@ -58,7 +37,7 @@ public class GetObjectAclOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public String getRequestCharged() {
+  public RequestCharged getRequestCharged() {
     return requestCharged;
   }
 
@@ -66,7 +45,7 @@ public class GetObjectAclOutput {
    * <p>If present, indicates that the requester was successfully charged for the
    *          request.</p>
    */
-  public void setRequestCharged(final String requestCharged) {
+  public void setRequestCharged(final RequestCharged requestCharged) {
     this.requestCharged = requestCharged;
   }
 }

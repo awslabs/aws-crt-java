@@ -1,12 +1,9 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class SelectObjectContentRequest {
   private String bucket;
 
@@ -31,32 +28,6 @@ public class SelectObjectContentRequest {
   private ScanRange scanRange;
 
   private String expectedBucketOwner;
-
-  public SelectObjectContentRequest() {
-    this.bucket = null;
-    this.key = null;
-    this.sSECustomerAlgorithm = null;
-    this.sSECustomerKey = null;
-    this.sSECustomerKeyMD5 = null;
-    this.expression = null;
-    this.expressionType = null;
-    this.requestProgress = null;
-    this.inputSerialization = null;
-    this.outputSerialization = null;
-    this.scanRange = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(SelectObjectContentRequest.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof SelectObjectContentRequest);
-  }
 
   public String getBucket() {
     return bucket;
@@ -106,11 +77,11 @@ public class SelectObjectContentRequest {
     this.expression = expression;
   }
 
-  public String getExpressionType() {
+  public ExpressionType getExpressionType() {
     return expressionType;
   }
 
-  public void setExpressionType(final String expressionType) {
+  public void setExpressionType(final ExpressionType expressionType) {
     this.expressionType = expressionType;
   }
 

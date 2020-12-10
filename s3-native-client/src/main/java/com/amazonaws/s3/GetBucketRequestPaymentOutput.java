@@ -1,35 +1,16 @@
 package com.amazonaws.s3;
 
-import java.lang.Object;
-import java.lang.Override;
-import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class GetBucketRequestPaymentOutput {
   private Payer payer;
 
-  public GetBucketRequestPaymentOutput() {
-    this.payer = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(GetBucketRequestPaymentOutput.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof GetBucketRequestPaymentOutput);
-  }
-
-  public String getPayer() {
+  public Payer getPayer() {
     return payer;
   }
 
-  public void setPayer(final String payer) {
+  public void setPayer(final Payer payer) {
     this.payer = payer;
   }
 }

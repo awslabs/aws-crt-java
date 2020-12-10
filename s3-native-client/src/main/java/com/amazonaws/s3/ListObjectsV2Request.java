@@ -2,13 +2,10 @@ package com.amazonaws.s3;
 
 import java.lang.Boolean;
 import java.lang.Integer;
-import java.lang.Object;
-import java.lang.Override;
 import java.lang.String;
-import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.StructureGenerator")
 public class ListObjectsV2Request {
   private String bucket;
 
@@ -29,30 +26,6 @@ public class ListObjectsV2Request {
   private RequestPayer requestPayer;
 
   private String expectedBucketOwner;
-
-  public ListObjectsV2Request() {
-    this.bucket = null;
-    this.delimiter = null;
-    this.encodingType = null;
-    this.maxKeys = null;
-    this.prefix = null;
-    this.continuationToken = null;
-    this.fetchOwner = null;
-    this.startAfter = null;
-    this.requestPayer = null;
-    this.expectedBucketOwner = null;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(ListObjectsV2Request.class);
-  }
-
-  @Override
-  public boolean equals(Object rhs) {
-    if (rhs == null) return false;
-    return (rhs instanceof ListObjectsV2Request);
-  }
 
   public String getBucket() {
     return bucket;
@@ -77,7 +50,7 @@ public class ListObjectsV2Request {
    *          characters that are not supported in XML 1.0, you can add this parameter to request that
    *          Amazon S3 encode the keys in the response.</p>
    */
-  public String getEncodingType() {
+  public EncodingType getEncodingType() {
     return encodingType;
   }
 
@@ -88,7 +61,7 @@ public class ListObjectsV2Request {
    *          characters that are not supported in XML 1.0, you can add this parameter to request that
    *          Amazon S3 encode the keys in the response.</p>
    */
-  public void setEncodingType(final String encodingType) {
+  public void setEncodingType(final EncodingType encodingType) {
     this.encodingType = encodingType;
   }
 
@@ -138,7 +111,7 @@ public class ListObjectsV2Request {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public String getRequestPayer() {
+  public RequestPayer getRequestPayer() {
     return requestPayer;
   }
 
@@ -148,7 +121,7 @@ public class ListObjectsV2Request {
    *          objects from requester pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
    *             Requestor Pays Buckets</a> in the <i>Amazon S3 Developer Guide</i>.</p>
    */
-  public void setRequestPayer(final String requestPayer) {
+  public void setRequestPayer(final RequestPayer requestPayer) {
     this.requestPayer = requestPayer;
   }
 

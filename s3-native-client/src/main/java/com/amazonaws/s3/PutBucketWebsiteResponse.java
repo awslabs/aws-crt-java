@@ -3,9 +3,9 @@ package com.amazonaws.s3;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import javax.annotation.processing.Generated;
+import software.amazon.awssdk.crt.annotations.Generated;
 
-@Generated("aws.crt.java.generator")
+@Generated("software.amazon.smithy.crt.EmptyStructureGenerator")
 public class PutBucketWebsiteResponse {
   public PutBucketWebsiteResponse() {
   }

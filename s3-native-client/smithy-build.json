@@ -2,8 +2,9 @@
     "version": "1.0",
     "plugins": {
         "crt": {
-            "javaBasePackage": "software.amazon.awssdk",
-            "modelRelativePackage": "model"
+            "mappings": {
+                "Error": "S3Error"
+            }
         }
     }
 }

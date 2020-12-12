@@ -1,3 +1,6 @@
+
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
+
 description = "Generates the S3 Native Client from S3 Smithy model"
 
 repositories {
@@ -15,8 +18,12 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
+tasks.named<KotlinJvmCompile>("compileKotlin") {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.named<KotlinJvmCompile>("compileTestKotlin") {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 dependencies {

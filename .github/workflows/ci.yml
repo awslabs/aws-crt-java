@@ -35,6 +35,13 @@ jobs:
         docker pull $DOCKER_IMAGE
         docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
           --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: logs
+        path: |
+          hs_err_pid*
+          target/surefire-reports/*stream
 
   al2:
     runs-on: ubuntu-latest
@@ -54,8 +61,10 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: jvm-streams
-        path: target/surfire-reports/*stream
+        name: logs
+        path: |
+          hs_err_pid*
+          target/surefire-reports/*stream
 
   clang-compat:
     runs-on: ubuntu-latest
@@ -78,8 +87,10 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: jvm-streams
-        path: target/surfire-reports/*stream
+        name: logs
+        path: |
+          hs_err_pid*
+          target/surefire-reports/*stream
 
   gcc-compat:
     runs-on: ubuntu-latest
@@ -102,8 +113,10 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: jvm-streams
-        path: target/surefire-reports/*stream
+        name: logs
+        path: |
+          hs_err_pid*
+          target/surefire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
@@ -117,11 +130,6 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: jvm-streams
-        path: target/surefire-reports/*stream
 
   windows:
     runs-on: windows-latest

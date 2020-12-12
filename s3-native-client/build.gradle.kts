@@ -9,7 +9,7 @@ repositories {
 }
 
 val copyTask = tasks.register<Copy>("copyGeneratedSource") {
-    from(fileTree("${buildDir}/smithyprojections/${project.name}/source/crt/model"))
+    from(fileTree("${buildDir}/smithyprojections/${project.name}/source/crt"))
     into(file("${projectDir}/src/main/java"))
     dependsOn("smithyBuildJar")
 }

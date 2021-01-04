@@ -6,35 +6,35 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum InventoryOptionalField {
-    SIZE("Size"),
+enum InventoryOptionalField {
+    SIZE("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    LAST_MODIFIED_DATE("LastModifiedDate"),
+    LAST_MODIFIED_DATE("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    STORAGE_CLASS("StorageClass"),
+    STORAGE_CLASS("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    E_TAG("ETag"),
+    E_TAG("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    IS_MULTIPART_UPLOADED("IsMultipartUploaded"),
+    IS_MULTIPART_UPLOADED("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    REPLICATION_STATUS("ReplicationStatus"),
+    REPLICATION_STATUS("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    ENCRYPTION_STATUS("EncryptionStatus"),
+    ENCRYPTION_STATUS("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    OBJECT_LOCK_RETAIN_UNTIL_DATE("ObjectLockRetainUntilDate"),
+    OBJECT_LOCK_RETAIN_UNTIL_DATE("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    OBJECT_LOCK_MODE("ObjectLockMode"),
+    OBJECT_LOCK_MODE("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    OBJECT_LOCK_LEGAL_HOLD_STATUS("ObjectLockLegalHoldStatus"),
+    OBJECT_LOCK_LEGAL_HOLD_STATUS("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    INTELLIGENT_TIERING_ACCESS_TIER("IntelligentTieringAccessTier"),
+    INTELLIGENT_TIERING_ACCESS_TIER("software.amazon.smithy.crt.codegen.Field@56bce08"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private InventoryOptionalField(String value) {
         this.value = value;
@@ -49,5 +49,13 @@ public enum InventoryOptionalField {
 
     public static Set<InventoryOptionalField> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

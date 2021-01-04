@@ -6,26 +6,32 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class IndexDocument {
-    private String suffix;
+    /**
+     * <p>A suffix that is appended to a request that is for a directory on the website endpoint
+     *          (for example,if the suffix is index.html and you make a request to samplebucket/images/ the
+     *          data that is returned will be for the object with the key name images/index.html) The
+     *          suffix must not be empty and must not include a slash character.</p>
+     */
+    String suffix;
 
-    private IndexDocument() {
-        this.suffix = null;
+    IndexDocument() {
+        this.suffix = "";
     }
 
-    private IndexDocument(Builder builder) {
+    protected IndexDocument(BuilderImpl builder) {
         this.suffix = builder.suffix;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,29 +53,52 @@ public class IndexDocument {
         this.suffix = suffix;
     }
 
-    static final class Builder {
-        private String suffix;
+    public interface Builder {
+        Builder suffix(String suffix);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(IndexDocument model) {
-            suffix(model.suffix);
-        }
-
-        public IndexDocument build() {
-            return new com.amazonaws.s3.model.IndexDocument(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>A suffix that is appended to a request that is for a directory on the website endpoint
          *          (for example,if the suffix is index.html and you make a request to samplebucket/images/ the
          *          data that is returned will be for the object with the key name images/index.html) The
          *          suffix must not be empty and must not include a slash character.</p>
          */
+        String suffix;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(IndexDocument model) {
+            suffix(model.suffix);
+        }
+
+        public IndexDocument build() {
+            return new IndexDocument(this);
+        }
+
         public final Builder suffix(String suffix) {
             this.suffix = suffix;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String suffix() {
+            return suffix;
+        }
+
+        public void setSuffix(final String suffix) {
+            this.suffix = suffix;
         }
     }
 }

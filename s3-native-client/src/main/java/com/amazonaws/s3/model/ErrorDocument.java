@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ErrorDocument {
-    private String key;
+    /**
+     * <p>The object key name to use when a 4XX class error occurs.</p>
+     */
+    String key;
 
-    private ErrorDocument() {
-        this.key = null;
+    ErrorDocument() {
+        this.key = "";
     }
 
-    private ErrorDocument(Builder builder) {
+    protected ErrorDocument(BuilderImpl builder) {
         this.key = builder.key;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class ErrorDocument {
         this.key = key;
     }
 
-    static final class Builder {
-        private String key;
+    public interface Builder {
+        Builder key(String key);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The object key name to use when a 4XX class error occurs.</p>
+         */
+        String key;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ErrorDocument model) {
+        private BuilderImpl(ErrorDocument model) {
             key(model.key);
         }
 
         public ErrorDocument build() {
-            return new com.amazonaws.s3.model.ErrorDocument(this);
+            return new ErrorDocument(this);
         }
 
-        /**
-         * <p>The object key name to use when a 4XX class error occurs.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
         }
     }
 }

@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.time.Instant;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ObjectLockRetention {
-    private ObjectLockRetentionMode mode;
+    /**
+     * <p>Indicates the Retention mode for the specified object.</p>
+     */
+    ObjectLockRetentionMode mode;
 
-    private Instant retainUntilDate;
+    /**
+     * <p>The date on which this Object Lock Retention will expire.</p>
+     */
+    Instant retainUntilDate;
 
-    private ObjectLockRetention() {
+    ObjectLockRetention() {
         this.mode = null;
         this.retainUntilDate = null;
     }
 
-    private ObjectLockRetention(Builder builder) {
+    protected ObjectLockRetention(BuilderImpl builder) {
         this.mode = builder.mode;
         this.retainUntilDate = builder.retainUntilDate;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class ObjectLockRetention {
         return mode;
     }
 
-    public void setMode(final ObjectLockRetentionMode mode) {
-        this.mode = mode;
-    }
-
     public Instant retainUntilDate() {
         return retainUntilDate;
+    }
+
+    public void setMode(final ObjectLockRetentionMode mode) {
+        this.mode = mode;
     }
 
     public void setRetainUntilDate(final Instant retainUntilDate) {
         this.retainUntilDate = retainUntilDate;
     }
 
-    static final class Builder {
-        private ObjectLockRetentionMode mode;
+    public interface Builder {
+        Builder mode(ObjectLockRetentionMode mode);
 
-        private Instant retainUntilDate;
+        Builder retainUntilDate(Instant retainUntilDate);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Indicates the Retention mode for the specified object.</p>
+         */
+        ObjectLockRetentionMode mode;
+
+        /**
+         * <p>The date on which this Object Lock Retention will expire.</p>
+         */
+        Instant retainUntilDate;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ObjectLockRetention model) {
+        private BuilderImpl(ObjectLockRetention model) {
             mode(model.mode);
             retainUntilDate(model.retainUntilDate);
         }
 
         public ObjectLockRetention build() {
-            return new com.amazonaws.s3.model.ObjectLockRetention(this);
+            return new ObjectLockRetention(this);
         }
 
-        /**
-         * <p>Indicates the Retention mode for the specified object.</p>
-         */
         public final Builder mode(ObjectLockRetentionMode mode) {
             this.mode = mode;
             return this;
         }
 
-        /**
-         * <p>The date on which this Object Lock Retention will expire.</p>
-         */
         public final Builder retainUntilDate(Instant retainUntilDate) {
             this.retainUntilDate = retainUntilDate;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockRetentionMode mode() {
+            return mode;
+        }
+
+        public Instant retainUntilDate() {
+            return retainUntilDate;
+        }
+
+        public void setMode(final ObjectLockRetentionMode mode) {
+            this.mode = mode;
+        }
+
+        public void setRetainUntilDate(final Instant retainUntilDate) {
+            this.retainUntilDate = retainUntilDate;
         }
     }
 }

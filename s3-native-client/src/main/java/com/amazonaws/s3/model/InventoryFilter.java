@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class InventoryFilter {
-    private String prefix;
+    /**
+     * <p>The prefix that an object must have to be included in the inventory results.</p>
+     */
+    String prefix;
 
-    private InventoryFilter() {
-        this.prefix = null;
+    InventoryFilter() {
+        this.prefix = "";
     }
 
-    private InventoryFilter(Builder builder) {
+    protected InventoryFilter(BuilderImpl builder) {
         this.prefix = builder.prefix;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class InventoryFilter {
         this.prefix = prefix;
     }
 
-    static final class Builder {
-        private String prefix;
+    public interface Builder {
+        Builder prefix(String prefix);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The prefix that an object must have to be included in the inventory results.</p>
+         */
+        String prefix;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(InventoryFilter model) {
+        private BuilderImpl(InventoryFilter model) {
             prefix(model.prefix);
         }
 
         public InventoryFilter build() {
-            return new com.amazonaws.s3.model.InventoryFilter(this);
+            return new InventoryFilter(this);
         }
 
-        /**
-         * <p>The prefix that an object must have to be included in the inventory results.</p>
-         */
         public final Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
         }
     }
 }

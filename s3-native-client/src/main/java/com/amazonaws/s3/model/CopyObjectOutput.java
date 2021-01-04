@@ -7,47 +7,84 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CopyObjectOutput {
-    private CopyObjectResult copyObjectResult;
+    /**
+     * <p>Container for all response elements.</p>
+     */
+    CopyObjectResult copyObjectResult;
 
-    private String expiration;
+    /**
+     * <p>If the object expiration is configured, the response includes this header.</p>
+     */
+    String expiration;
 
-    private String copySourceVersionId;
+    /**
+     * <p>Version of the copied object in the destination bucket.</p>
+     */
+    String copySourceVersionId;
 
-    private String versionId;
+    /**
+     * <p>Version ID of the newly created copy.</p>
+     */
+    String versionId;
 
-    private ServerSideEncryption serverSideEncryption;
+    /**
+     * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
+     *          AES256, aws:kms).</p>
+     */
+    ServerSideEncryption serverSideEncryption;
 
-    private String sSECustomerAlgorithm;
+    /**
+     * <p>If server-side encryption with a customer-provided encryption key was requested, the
+     *          response will include this header confirming the encryption algorithm used.</p>
+     */
+    String sSECustomerAlgorithm;
 
-    private String sSECustomerKeyMD5;
+    /**
+     * <p>If server-side encryption with a customer-provided encryption key was requested, the
+     *          response will include this header to provide round-trip message integrity verification of
+     *          the customer-provided encryption key.</p>
+     */
+    String sSECustomerKeyMD5;
 
-    private String sSEKMSKeyId;
+    /**
+     * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
+     *          customer managed customer master key (CMK) that was used for the object.</p>
+     */
+    String sSEKMSKeyId;
 
-    private String sSEKMSEncryptionContext;
+    /**
+     * <p>If present, specifies the AWS KMS Encryption Context to use for object encryption. The
+     *          value of this header is a base64-encoded UTF-8 string holding JSON with the encryption
+     *          context key-value pairs.</p>
+     */
+    String sSEKMSEncryptionContext;
 
-    private Boolean bucketKeyEnabled;
+    /**
+     * <p>Indicates whether the copied object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
+     */
+    Boolean bucketKeyEnabled;
 
-    private RequestCharged requestCharged;
+    RequestCharged requestCharged;
 
-    private CopyObjectOutput() {
+    CopyObjectOutput() {
         this.copyObjectResult = null;
-        this.expiration = null;
-        this.copySourceVersionId = null;
-        this.versionId = null;
+        this.expiration = "";
+        this.copySourceVersionId = "";
+        this.versionId = "";
         this.serverSideEncryption = null;
-        this.sSECustomerAlgorithm = null;
-        this.sSECustomerKeyMD5 = null;
-        this.sSEKMSKeyId = null;
-        this.sSEKMSEncryptionContext = null;
+        this.sSECustomerAlgorithm = "";
+        this.sSECustomerKeyMD5 = "";
+        this.sSEKMSKeyId = "";
+        this.sSEKMSEncryptionContext = "";
         this.bucketKeyEnabled = null;
         this.requestCharged = null;
     }
 
-    private CopyObjectOutput(Builder builder) {
+    protected CopyObjectOutput(BuilderImpl builder) {
         this.copyObjectResult = builder.copyObjectResult;
         this.expiration = builder.expiration;
         this.copySourceVersionId = builder.copySourceVersionId;
@@ -61,12 +98,12 @@ public class CopyObjectOutput {
         this.requestCharged = builder.requestCharged;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -84,117 +121,178 @@ public class CopyObjectOutput {
         return copyObjectResult;
     }
 
-    public void setCopyObjectResult(final CopyObjectResult copyObjectResult) {
-        this.copyObjectResult = copyObjectResult;
-    }
-
     public String expiration() {
         return expiration;
-    }
-
-    public void setExpiration(final String expiration) {
-        this.expiration = expiration;
     }
 
     public String copySourceVersionId() {
         return copySourceVersionId;
     }
 
-    public void setCopySourceVersionId(final String copySourceVersionId) {
-        this.copySourceVersionId = copySourceVersionId;
-    }
-
     public String versionId() {
         return versionId;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
     }
 
     public ServerSideEncryption serverSideEncryption() {
         return serverSideEncryption;
     }
 
-    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-        this.serverSideEncryption = serverSideEncryption;
-    }
-
     public String sSECustomerAlgorithm() {
         return sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
     }
 
     public String sSECustomerKeyMD5() {
         return sSECustomerKeyMD5;
     }
 
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
     public String sSEKMSKeyId() {
         return sSEKMSKeyId;
-    }
-
-    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-        this.sSEKMSKeyId = sSEKMSKeyId;
     }
 
     public String sSEKMSEncryptionContext() {
         return sSEKMSEncryptionContext;
     }
 
-    public void setSSEKMSEncryptionContext(final String sSEKMSEncryptionContext) {
-        this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
-    }
-
     public Boolean bucketKeyEnabled() {
         return bucketKeyEnabled;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
     }
 
     public RequestCharged requestCharged() {
         return requestCharged;
     }
 
+    public void setCopyObjectResult(final CopyObjectResult copyObjectResult) {
+        this.copyObjectResult = copyObjectResult;
+    }
+
+    public void setExpiration(final String expiration) {
+        this.expiration = expiration;
+    }
+
+    public void setCopySourceVersionId(final String copySourceVersionId) {
+        this.copySourceVersionId = copySourceVersionId;
+    }
+
+    public void setVersionId(final String versionId) {
+        this.versionId = versionId;
+    }
+
+    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
+        this.serverSideEncryption = serverSideEncryption;
+    }
+
+    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+    }
+
+    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+    }
+
+    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
+        this.sSEKMSKeyId = sSEKMSKeyId;
+    }
+
+    public void setSSEKMSEncryptionContext(final String sSEKMSEncryptionContext) {
+        this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
+    }
+
+    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
+        this.bucketKeyEnabled = bucketKeyEnabled;
+    }
+
     public void setRequestCharged(final RequestCharged requestCharged) {
         this.requestCharged = requestCharged;
     }
 
-    static final class Builder {
-        private CopyObjectResult copyObjectResult;
+    public interface Builder {
+        Builder copyObjectResult(CopyObjectResult copyObjectResult);
 
-        private String expiration;
+        Builder expiration(String expiration);
 
-        private String copySourceVersionId;
+        Builder copySourceVersionId(String copySourceVersionId);
 
-        private String versionId;
+        Builder versionId(String versionId);
 
-        private ServerSideEncryption serverSideEncryption;
+        Builder serverSideEncryption(ServerSideEncryption serverSideEncryption);
 
-        private String sSECustomerAlgorithm;
+        Builder sSECustomerAlgorithm(String sSECustomerAlgorithm);
 
-        private String sSECustomerKeyMD5;
+        Builder sSECustomerKeyMD5(String sSECustomerKeyMD5);
 
-        private String sSEKMSKeyId;
+        Builder sSEKMSKeyId(String sSEKMSKeyId);
 
-        private String sSEKMSEncryptionContext;
+        Builder sSEKMSEncryptionContext(String sSEKMSEncryptionContext);
 
-        private Boolean bucketKeyEnabled;
+        Builder bucketKeyEnabled(Boolean bucketKeyEnabled);
 
-        private RequestCharged requestCharged;
+        Builder requestCharged(RequestCharged requestCharged);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Container for all response elements.</p>
+         */
+        CopyObjectResult copyObjectResult;
+
+        /**
+         * <p>If the object expiration is configured, the response includes this header.</p>
+         */
+        String expiration;
+
+        /**
+         * <p>Version of the copied object in the destination bucket.</p>
+         */
+        String copySourceVersionId;
+
+        /**
+         * <p>Version ID of the newly created copy.</p>
+         */
+        String versionId;
+
+        /**
+         * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
+         *          AES256, aws:kms).</p>
+         */
+        ServerSideEncryption serverSideEncryption;
+
+        /**
+         * <p>If server-side encryption with a customer-provided encryption key was requested, the
+         *          response will include this header confirming the encryption algorithm used.</p>
+         */
+        String sSECustomerAlgorithm;
+
+        /**
+         * <p>If server-side encryption with a customer-provided encryption key was requested, the
+         *          response will include this header to provide round-trip message integrity verification of
+         *          the customer-provided encryption key.</p>
+         */
+        String sSECustomerKeyMD5;
+
+        /**
+         * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
+         *          customer managed customer master key (CMK) that was used for the object.</p>
+         */
+        String sSEKMSKeyId;
+
+        /**
+         * <p>If present, specifies the AWS KMS Encryption Context to use for object encryption. The
+         *          value of this header is a base64-encoded UTF-8 string holding JSON with the encryption
+         *          context key-value pairs.</p>
+         */
+        String sSEKMSEncryptionContext;
+
+        /**
+         * <p>Indicates whether the copied object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
+         */
+        Boolean bucketKeyEnabled;
+
+        RequestCharged requestCharged;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(CopyObjectOutput model) {
+        private BuilderImpl(CopyObjectOutput model) {
             copyObjectResult(model.copyObjectResult);
             expiration(model.expiration);
             copySourceVersionId(model.copySourceVersionId);
@@ -209,91 +307,54 @@ public class CopyObjectOutput {
         }
 
         public CopyObjectOutput build() {
-            return new com.amazonaws.s3.model.CopyObjectOutput(this);
+            return new CopyObjectOutput(this);
         }
 
-        /**
-         * <p>Container for all response elements.</p>
-         */
         public final Builder copyObjectResult(CopyObjectResult copyObjectResult) {
             this.copyObjectResult = copyObjectResult;
             return this;
         }
 
-        /**
-         * <p>If the object expiration is configured, the response includes this header.</p>
-         */
         public final Builder expiration(String expiration) {
             this.expiration = expiration;
             return this;
         }
 
-        /**
-         * <p>Version of the copied object in the destination bucket.</p>
-         */
         public final Builder copySourceVersionId(String copySourceVersionId) {
             this.copySourceVersionId = copySourceVersionId;
             return this;
         }
 
-        /**
-         * <p>Version ID of the newly created copy.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
         }
 
-        /**
-         * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
-         *          AES256, aws:kms).</p>
-         */
         public final Builder serverSideEncryption(ServerSideEncryption serverSideEncryption) {
             this.serverSideEncryption = serverSideEncryption;
             return this;
         }
 
-        /**
-         * <p>If server-side encryption with a customer-provided encryption key was requested, the
-         *          response will include this header confirming the encryption algorithm used.</p>
-         */
         public final Builder sSECustomerAlgorithm(String sSECustomerAlgorithm) {
             this.sSECustomerAlgorithm = sSECustomerAlgorithm;
             return this;
         }
 
-        /**
-         * <p>If server-side encryption with a customer-provided encryption key was requested, the
-         *          response will include this header to provide round-trip message integrity verification of
-         *          the customer-provided encryption key.</p>
-         */
         public final Builder sSECustomerKeyMD5(String sSECustomerKeyMD5) {
             this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
             return this;
         }
 
-        /**
-         * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
-         *          customer managed customer master key (CMK) that was used for the object.</p>
-         */
         public final Builder sSEKMSKeyId(String sSEKMSKeyId) {
             this.sSEKMSKeyId = sSEKMSKeyId;
             return this;
         }
 
-        /**
-         * <p>If present, specifies the AWS KMS Encryption Context to use for object encryption. The
-         *          value of this header is a base64-encoded UTF-8 string holding JSON with the encryption
-         *          context key-value pairs.</p>
-         */
         public final Builder sSEKMSEncryptionContext(String sSEKMSEncryptionContext) {
             this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
             return this;
         }
 
-        /**
-         * <p>Indicates whether the copied object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
-         */
         public final Builder bucketKeyEnabled(Boolean bucketKeyEnabled) {
             this.bucketKeyEnabled = bucketKeyEnabled;
             return this;
@@ -302,6 +363,105 @@ public class CopyObjectOutput {
         public final Builder requestCharged(RequestCharged requestCharged) {
             this.requestCharged = requestCharged;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public CopyObjectResult copyObjectResult() {
+            return copyObjectResult;
+        }
+
+        public String expiration() {
+            return expiration;
+        }
+
+        public String copySourceVersionId() {
+            return copySourceVersionId;
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public ServerSideEncryption serverSideEncryption() {
+            return serverSideEncryption;
+        }
+
+        public String sSECustomerAlgorithm() {
+            return sSECustomerAlgorithm;
+        }
+
+        public String sSECustomerKeyMD5() {
+            return sSECustomerKeyMD5;
+        }
+
+        public String sSEKMSKeyId() {
+            return sSEKMSKeyId;
+        }
+
+        public String sSEKMSEncryptionContext() {
+            return sSEKMSEncryptionContext;
+        }
+
+        public Boolean bucketKeyEnabled() {
+            return bucketKeyEnabled;
+        }
+
+        public RequestCharged requestCharged() {
+            return requestCharged;
+        }
+
+        public void setCopyObjectResult(final CopyObjectResult copyObjectResult) {
+            this.copyObjectResult = copyObjectResult;
+        }
+
+        public void setExpiration(final String expiration) {
+            this.expiration = expiration;
+        }
+
+        public void setCopySourceVersionId(final String copySourceVersionId) {
+            this.copySourceVersionId = copySourceVersionId;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
+        }
+
+        public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+        }
+
+        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+        }
+
+        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+        }
+
+        public void setSSEKMSKeyId(final String sSEKMSKeyId) {
+            this.sSEKMSKeyId = sSEKMSKeyId;
+        }
+
+        public void setSSEKMSEncryptionContext(final String sSEKMSEncryptionContext) {
+            this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
+        }
+
+        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
+            this.bucketKeyEnabled = bucketKeyEnabled;
+        }
+
+        public void setRequestCharged(final RequestCharged requestCharged) {
+            this.requestCharged = requestCharged;
         }
     }
 }

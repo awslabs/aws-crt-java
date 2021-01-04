@@ -6,38 +6,52 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketWebsiteOutput {
-    private RedirectAllRequestsTo redirectAllRequestsTo;
+    /**
+     * <p>Specifies the redirect behavior of all requests to a website endpoint of an Amazon S3
+     *          bucket.</p>
+     */
+    RedirectAllRequestsTo redirectAllRequestsTo;
 
-    private IndexDocument indexDocument;
+    /**
+     * <p>The name of the index document for the website (for example
+     *          <code>index.html</code>).</p>
+     */
+    IndexDocument indexDocument;
 
-    private ErrorDocument errorDocument;
+    /**
+     * <p>The object key name of the website error document to use for 4XX class errors.</p>
+     */
+    ErrorDocument errorDocument;
 
-    private List<RoutingRule> routingRules;
+    /**
+     * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
+     */
+    List<RoutingRule> routingRules;
 
-    private GetBucketWebsiteOutput() {
+    GetBucketWebsiteOutput() {
         this.redirectAllRequestsTo = null;
         this.indexDocument = null;
         this.errorDocument = null;
         this.routingRules = null;
     }
 
-    private GetBucketWebsiteOutput(Builder builder) {
+    protected GetBucketWebsiteOutput(BuilderImpl builder) {
         this.redirectAllRequestsTo = builder.redirectAllRequestsTo;
         this.indexDocument = builder.indexDocument;
         this.errorDocument = builder.errorDocument;
         this.routingRules = builder.routingRules;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,47 +69,71 @@ public class GetBucketWebsiteOutput {
         return redirectAllRequestsTo;
     }
 
-    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-        this.redirectAllRequestsTo = redirectAllRequestsTo;
-    }
-
     public IndexDocument indexDocument() {
         return indexDocument;
-    }
-
-    public void setIndexDocument(final IndexDocument indexDocument) {
-        this.indexDocument = indexDocument;
     }
 
     public ErrorDocument errorDocument() {
         return errorDocument;
     }
 
-    public void setErrorDocument(final ErrorDocument errorDocument) {
-        this.errorDocument = errorDocument;
-    }
-
     public List<RoutingRule> routingRules() {
         return routingRules;
+    }
+
+    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
+        this.redirectAllRequestsTo = redirectAllRequestsTo;
+    }
+
+    public void setIndexDocument(final IndexDocument indexDocument) {
+        this.indexDocument = indexDocument;
+    }
+
+    public void setErrorDocument(final ErrorDocument errorDocument) {
+        this.errorDocument = errorDocument;
     }
 
     public void setRoutingRules(final List<RoutingRule> routingRules) {
         this.routingRules = routingRules;
     }
 
-    static final class Builder {
-        private RedirectAllRequestsTo redirectAllRequestsTo;
+    public interface Builder {
+        Builder redirectAllRequestsTo(RedirectAllRequestsTo redirectAllRequestsTo);
 
-        private IndexDocument indexDocument;
+        Builder indexDocument(IndexDocument indexDocument);
 
-        private ErrorDocument errorDocument;
+        Builder errorDocument(ErrorDocument errorDocument);
 
-        private List<RoutingRule> routingRules;
+        Builder routingRules(List<RoutingRule> routingRules);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies the redirect behavior of all requests to a website endpoint of an Amazon S3
+         *          bucket.</p>
+         */
+        RedirectAllRequestsTo redirectAllRequestsTo;
+
+        /**
+         * <p>The name of the index document for the website (for example
+         *          <code>index.html</code>).</p>
+         */
+        IndexDocument indexDocument;
+
+        /**
+         * <p>The object key name of the website error document to use for 4XX class errors.</p>
+         */
+        ErrorDocument errorDocument;
+
+        /**
+         * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
+         */
+        List<RoutingRule> routingRules;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketWebsiteOutput model) {
+        private BuilderImpl(GetBucketWebsiteOutput model) {
             redirectAllRequestsTo(model.redirectAllRequestsTo);
             indexDocument(model.indexDocument);
             errorDocument(model.errorDocument);
@@ -103,41 +141,70 @@ public class GetBucketWebsiteOutput {
         }
 
         public GetBucketWebsiteOutput build() {
-            return new com.amazonaws.s3.model.GetBucketWebsiteOutput(this);
+            return new GetBucketWebsiteOutput(this);
         }
 
-        /**
-         * <p>Specifies the redirect behavior of all requests to a website endpoint of an Amazon S3
-         *          bucket.</p>
-         */
         public final Builder redirectAllRequestsTo(RedirectAllRequestsTo redirectAllRequestsTo) {
             this.redirectAllRequestsTo = redirectAllRequestsTo;
             return this;
         }
 
-        /**
-         * <p>The name of the index document for the website (for example
-         *          <code>index.html</code>).</p>
-         */
         public final Builder indexDocument(IndexDocument indexDocument) {
             this.indexDocument = indexDocument;
             return this;
         }
 
-        /**
-         * <p>The object key name of the website error document to use for 4XX class errors.</p>
-         */
         public final Builder errorDocument(ErrorDocument errorDocument) {
             this.errorDocument = errorDocument;
             return this;
         }
 
-        /**
-         * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
-         */
         public final Builder routingRules(List<RoutingRule> routingRules) {
             this.routingRules = routingRules;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public RedirectAllRequestsTo redirectAllRequestsTo() {
+            return redirectAllRequestsTo;
+        }
+
+        public IndexDocument indexDocument() {
+            return indexDocument;
+        }
+
+        public ErrorDocument errorDocument() {
+            return errorDocument;
+        }
+
+        public List<RoutingRule> routingRules() {
+            return routingRules;
+        }
+
+        public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
+            this.redirectAllRequestsTo = redirectAllRequestsTo;
+        }
+
+        public void setIndexDocument(final IndexDocument indexDocument) {
+            this.indexDocument = indexDocument;
+        }
+
+        public void setErrorDocument(final ErrorDocument errorDocument) {
+            this.errorDocument = errorDocument;
+        }
+
+        public void setRoutingRules(final List<RoutingRule> routingRules) {
+            this.routingRules = routingRules;
         }
     }
 }

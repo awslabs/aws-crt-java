@@ -6,38 +6,47 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectTorrentRequest {
-    private String bucket;
+    /**
+     * <p>The name of the bucket containing the object for which to get the torrent files.</p>
+     */
+    String bucket;
 
-    private String key;
+    /**
+     * <p>The object key for which to get the information.</p>
+     */
+    String key;
 
-    private RequestPayer requestPayer;
+    RequestPayer requestPayer;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private GetObjectTorrentRequest() {
-        this.bucket = null;
-        this.key = null;
+    GetObjectTorrentRequest() {
+        this.bucket = "";
+        this.key = "";
         this.requestPayer = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private GetObjectTorrentRequest(Builder builder) {
+    protected GetObjectTorrentRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.key = builder.key;
         this.requestPayer = builder.requestPayer;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,47 +64,66 @@ public class GetObjectTorrentRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String key() {
         return key;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
     }
 
     public RequestPayer requestPayer() {
         return requestPayer;
     }
 
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
+    public void setRequestPayer(final RequestPayer requestPayer) {
+        this.requestPayer = requestPayer;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String key;
+        Builder key(String key);
 
-        private RequestPayer requestPayer;
+        Builder requestPayer(RequestPayer requestPayer);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The name of the bucket containing the object for which to get the torrent files.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>The object key for which to get the information.</p>
+         */
+        String key;
+
+        RequestPayer requestPayer;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetObjectTorrentRequest model) {
+        private BuilderImpl(GetObjectTorrentRequest model) {
             bucket(model.bucket);
             key(model.key);
             requestPayer(model.requestPayer);
@@ -103,20 +131,14 @@ public class GetObjectTorrentRequest {
         }
 
         public GetObjectTorrentRequest build() {
-            return new com.amazonaws.s3.model.GetObjectTorrentRequest(this);
+            return new GetObjectTorrentRequest(this);
         }
 
-        /**
-         * <p>The name of the bucket containing the object for which to get the torrent files.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The object key for which to get the information.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
@@ -127,12 +149,52 @@ public class GetObjectTorrentRequest {
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public RequestPayer requestPayer() {
+            return requestPayer;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setRequestPayer(final RequestPayer requestPayer) {
+            this.requestPayer = requestPayer;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

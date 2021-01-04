@@ -7,30 +7,37 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class Delete {
-    private List<ObjectIdentifier> objects;
+    /**
+     * <p>The objects to delete.</p>
+     */
+    List<ObjectIdentifier> objects;
 
-    private Boolean quiet;
+    /**
+     * <p>Element to enable quiet mode for the request. When you add this element, you must set
+     *          its value to true.</p>
+     */
+    Boolean quiet;
 
-    private Delete() {
+    Delete() {
         this.objects = null;
         this.quiet = null;
     }
 
-    private Delete(Builder builder) {
+    protected Delete(BuilderImpl builder) {
         this.objects = builder.objects;
         this.quiet = builder.quiet;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -48,50 +55,83 @@ public class Delete {
         return objects;
     }
 
-    public void setObjects(final List<ObjectIdentifier> objects) {
-        this.objects = objects;
-    }
-
     public Boolean quiet() {
         return quiet;
+    }
+
+    public void setObjects(final List<ObjectIdentifier> objects) {
+        this.objects = objects;
     }
 
     public void setQuiet(final Boolean quiet) {
         this.quiet = quiet;
     }
 
-    static final class Builder {
-        private List<ObjectIdentifier> objects;
+    public interface Builder {
+        Builder objects(List<ObjectIdentifier> objects);
 
-        private Boolean quiet;
+        Builder quiet(Boolean quiet);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(Delete model) {
-            objects(model.objects);
-            quiet(model.quiet);
-        }
-
-        public Delete build() {
-            return new com.amazonaws.s3.model.Delete(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>The objects to delete.</p>
          */
-        public final Builder objects(List<ObjectIdentifier> objects) {
-            this.objects = objects;
-            return this;
-        }
+        List<ObjectIdentifier> objects;
 
         /**
          * <p>Element to enable quiet mode for the request. When you add this element, you must set
          *          its value to true.</p>
          */
+        Boolean quiet;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(Delete model) {
+            objects(model.objects);
+            quiet(model.quiet);
+        }
+
+        public Delete build() {
+            return new Delete(this);
+        }
+
+        public final Builder objects(List<ObjectIdentifier> objects) {
+            this.objects = objects;
+            return this;
+        }
+
         public final Builder quiet(Boolean quiet) {
             this.quiet = quiet;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<ObjectIdentifier> objects() {
+            return objects;
+        }
+
+        public Boolean quiet() {
+            return quiet;
+        }
+
+        public void setObjects(final List<ObjectIdentifier> objects) {
+            this.objects = objects;
+        }
+
+        public void setQuiet(final Boolean quiet) {
+            this.quiet = quiet;
         }
     }
 }

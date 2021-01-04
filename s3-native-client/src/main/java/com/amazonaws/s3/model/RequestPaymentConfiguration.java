@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class RequestPaymentConfiguration {
-    private Payer payer;
+    /**
+     * <p>Specifies who pays for the download and request fees.</p>
+     */
+    Payer payer;
 
-    private RequestPaymentConfiguration() {
+    RequestPaymentConfiguration() {
         this.payer = null;
     }
 
-    private RequestPaymentConfiguration(Builder builder) {
+    protected RequestPaymentConfiguration(BuilderImpl builder) {
         this.payer = builder.payer;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class RequestPaymentConfiguration {
         this.payer = payer;
     }
 
-    static final class Builder {
-        private Payer payer;
+    public interface Builder {
+        Builder payer(Payer payer);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies who pays for the download and request fees.</p>
+         */
+        Payer payer;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(RequestPaymentConfiguration model) {
+        private BuilderImpl(RequestPaymentConfiguration model) {
             payer(model.payer);
         }
 
         public RequestPaymentConfiguration build() {
-            return new com.amazonaws.s3.model.RequestPaymentConfiguration(this);
+            return new RequestPaymentConfiguration(this);
         }
 
-        /**
-         * <p>Specifies who pays for the download and request fees.</p>
-         */
         public final Builder payer(Payer payer) {
             this.payer = payer;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Payer payer() {
+            return payer;
+        }
+
+        public void setPayer(final Payer payer) {
+            this.payer = payer;
         }
     }
 }

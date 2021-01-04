@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AccessControlPolicy {
-    private List<Grant> grants;
+    /**
+     * <p>A list of grants.</p>
+     */
+    List<Grant> grants;
 
-    private Owner owner;
+    /**
+     * <p>Container for the bucket owner's display name and ID.</p>
+     */
+    Owner owner;
 
-    private AccessControlPolicy() {
+    AccessControlPolicy() {
         this.grants = null;
         this.owner = null;
     }
 
-    private AccessControlPolicy(Builder builder) {
+    protected AccessControlPolicy(BuilderImpl builder) {
         this.grants = builder.grants;
         this.owner = builder.owner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class AccessControlPolicy {
         return grants;
     }
 
-    public void setGrants(final List<Grant> grants) {
-        this.grants = grants;
-    }
-
     public Owner owner() {
         return owner;
+    }
+
+    public void setGrants(final List<Grant> grants) {
+        this.grants = grants;
     }
 
     public void setOwner(final Owner owner) {
         this.owner = owner;
     }
 
-    static final class Builder {
-        private List<Grant> grants;
+    public interface Builder {
+        Builder grants(List<Grant> grants);
 
-        private Owner owner;
+        Builder owner(Owner owner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>A list of grants.</p>
+         */
+        List<Grant> grants;
+
+        /**
+         * <p>Container for the bucket owner's display name and ID.</p>
+         */
+        Owner owner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(AccessControlPolicy model) {
+        private BuilderImpl(AccessControlPolicy model) {
             grants(model.grants);
             owner(model.owner);
         }
 
         public AccessControlPolicy build() {
-            return new com.amazonaws.s3.model.AccessControlPolicy(this);
+            return new AccessControlPolicy(this);
         }
 
-        /**
-         * <p>A list of grants.</p>
-         */
         public final Builder grants(List<Grant> grants) {
             this.grants = grants;
             return this;
         }
 
-        /**
-         * <p>Container for the bucket owner's display name and ID.</p>
-         */
         public final Builder owner(Owner owner) {
             this.owner = owner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<Grant> grants() {
+            return grants;
+        }
+
+        public Owner owner() {
+            return owner;
+        }
+
+        public void setGrants(final List<Grant> grants) {
+            this.grants = grants;
+        }
+
+        public void setOwner(final Owner owner) {
+            this.owner = owner;
         }
     }
 }

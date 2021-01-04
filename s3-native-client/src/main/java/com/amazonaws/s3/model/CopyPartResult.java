@@ -7,30 +7,36 @@ import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CopyPartResult {
-    private String eTag;
+    /**
+     * <p>Entity tag of the object.</p>
+     */
+    String eTag;
 
-    private Instant lastModified;
+    /**
+     * <p>Date and time at which the object was uploaded.</p>
+     */
+    Instant lastModified;
 
-    private CopyPartResult() {
-        this.eTag = null;
+    CopyPartResult() {
+        this.eTag = "";
         this.lastModified = null;
     }
 
-    private CopyPartResult(Builder builder) {
+    protected CopyPartResult(BuilderImpl builder) {
         this.eTag = builder.eTag;
         this.lastModified = builder.lastModified;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -48,49 +54,82 @@ public class CopyPartResult {
         return eTag;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
     public Instant lastModified() {
         return lastModified;
+    }
+
+    public void setETag(final String eTag) {
+        this.eTag = eTag;
     }
 
     public void setLastModified(final Instant lastModified) {
         this.lastModified = lastModified;
     }
 
-    static final class Builder {
-        private String eTag;
+    public interface Builder {
+        Builder eTag(String eTag);
 
-        private Instant lastModified;
+        Builder lastModified(Instant lastModified);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Entity tag of the object.</p>
+         */
+        String eTag;
+
+        /**
+         * <p>Date and time at which the object was uploaded.</p>
+         */
+        Instant lastModified;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(CopyPartResult model) {
+        private BuilderImpl(CopyPartResult model) {
             eTag(model.eTag);
             lastModified(model.lastModified);
         }
 
         public CopyPartResult build() {
-            return new com.amazonaws.s3.model.CopyPartResult(this);
+            return new CopyPartResult(this);
         }
 
-        /**
-         * <p>Entity tag of the object.</p>
-         */
         public final Builder eTag(String eTag) {
             this.eTag = eTag;
             return this;
         }
 
-        /**
-         * <p>Date and time at which the object was uploaded.</p>
-         */
         public final Builder lastModified(Instant lastModified) {
             this.lastModified = lastModified;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String eTag() {
+            return eTag;
+        }
+
+        public Instant lastModified() {
+            return lastModified;
+        }
+
+        public void setETag(final String eTag) {
+            this.eTag = eTag;
+        }
+
+        public void setLastModified(final Instant lastModified) {
+            this.lastModified = lastModified;
         }
     }
 }

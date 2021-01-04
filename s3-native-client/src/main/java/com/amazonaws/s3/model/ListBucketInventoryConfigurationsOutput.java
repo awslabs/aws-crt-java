@@ -8,38 +8,55 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListBucketInventoryConfigurationsOutput {
-    private String continuationToken;
+    /**
+     * <p>If sent in the request, the marker that is used as a starting point for this inventory
+     *          configuration list response.</p>
+     */
+    String continuationToken;
 
-    private List<InventoryConfiguration> inventoryConfigurationList;
+    /**
+     * <p>The list of inventory configurations for a bucket.</p>
+     */
+    List<InventoryConfiguration> inventoryConfigurationList;
 
-    private Boolean isTruncated;
+    /**
+     * <p>Tells whether the returned list of inventory configurations is complete. A value of true
+     *          indicates that the list is not complete and the NextContinuationToken is provided for a
+     *          subsequent request.</p>
+     */
+    Boolean isTruncated;
 
-    private String nextContinuationToken;
+    /**
+     * <p>The marker used to continue this inventory configuration listing. Use the
+     *             <code>NextContinuationToken</code> from this response to continue the listing in a
+     *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
+     */
+    String nextContinuationToken;
 
-    private ListBucketInventoryConfigurationsOutput() {
-        this.continuationToken = null;
+    ListBucketInventoryConfigurationsOutput() {
+        this.continuationToken = "";
         this.inventoryConfigurationList = null;
         this.isTruncated = null;
-        this.nextContinuationToken = null;
+        this.nextContinuationToken = "";
     }
 
-    private ListBucketInventoryConfigurationsOutput(Builder builder) {
+    protected ListBucketInventoryConfigurationsOutput(BuilderImpl builder) {
         this.continuationToken = builder.continuationToken;
         this.inventoryConfigurationList = builder.inventoryConfigurationList;
         this.isTruncated = builder.isTruncated;
         this.nextContinuationToken = builder.nextContinuationToken;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -57,12 +74,20 @@ public class ListBucketInventoryConfigurationsOutput {
         return continuationToken;
     }
 
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
     public List<InventoryConfiguration> inventoryConfigurationList() {
         return inventoryConfigurationList;
+    }
+
+    public Boolean isTruncated() {
+        return isTruncated;
+    }
+
+    public String nextContinuationToken() {
+        return nextContinuationToken;
+    }
+
+    public void setContinuationToken(final String continuationToken) {
+        this.continuationToken = continuationToken;
     }
 
     public void setInventoryConfigurationList(
@@ -70,35 +95,54 @@ public class ListBucketInventoryConfigurationsOutput {
         this.inventoryConfigurationList = inventoryConfigurationList;
     }
 
-    public Boolean isTruncated() {
-        return isTruncated;
-    }
-
     public void setIsTruncated(final Boolean isTruncated) {
         this.isTruncated = isTruncated;
-    }
-
-    public String nextContinuationToken() {
-        return nextContinuationToken;
     }
 
     public void setNextContinuationToken(final String nextContinuationToken) {
         this.nextContinuationToken = nextContinuationToken;
     }
 
-    static final class Builder {
-        private String continuationToken;
+    public interface Builder {
+        Builder continuationToken(String continuationToken);
 
-        private List<InventoryConfiguration> inventoryConfigurationList;
+        Builder inventoryConfigurationList(List<InventoryConfiguration> inventoryConfigurationList);
 
-        private Boolean isTruncated;
+        Builder isTruncated(Boolean isTruncated);
 
-        private String nextContinuationToken;
+        Builder nextContinuationToken(String nextContinuationToken);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>If sent in the request, the marker that is used as a starting point for this inventory
+         *          configuration list response.</p>
+         */
+        String continuationToken;
+
+        /**
+         * <p>The list of inventory configurations for a bucket.</p>
+         */
+        List<InventoryConfiguration> inventoryConfigurationList;
+
+        /**
+         * <p>Tells whether the returned list of inventory configurations is complete. A value of true
+         *          indicates that the list is not complete and the NextContinuationToken is provided for a
+         *          subsequent request.</p>
+         */
+        Boolean isTruncated;
+
+        /**
+         * <p>The marker used to continue this inventory configuration listing. Use the
+         *             <code>NextContinuationToken</code> from this response to continue the listing in a
+         *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
+         */
+        String nextContinuationToken;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ListBucketInventoryConfigurationsOutput model) {
+        private BuilderImpl(ListBucketInventoryConfigurationsOutput model) {
             continuationToken(model.continuationToken);
             inventoryConfigurationList(model.inventoryConfigurationList);
             isTruncated(model.isTruncated);
@@ -106,45 +150,72 @@ public class ListBucketInventoryConfigurationsOutput {
         }
 
         public ListBucketInventoryConfigurationsOutput build() {
-            return new com.amazonaws.s3.model.ListBucketInventoryConfigurationsOutput(this);
+            return new ListBucketInventoryConfigurationsOutput(this);
         }
 
-        /**
-         * <p>If sent in the request, the marker that is used as a starting point for this inventory
-         *          configuration list response.</p>
-         */
         public final Builder continuationToken(String continuationToken) {
             this.continuationToken = continuationToken;
             return this;
         }
 
-        /**
-         * <p>The list of inventory configurations for a bucket.</p>
-         */
         public final Builder inventoryConfigurationList(
                 List<InventoryConfiguration> inventoryConfigurationList) {
             this.inventoryConfigurationList = inventoryConfigurationList;
             return this;
         }
 
-        /**
-         * <p>Tells whether the returned list of inventory configurations is complete. A value of true
-         *          indicates that the list is not complete and the NextContinuationToken is provided for a
-         *          subsequent request.</p>
-         */
         public final Builder isTruncated(Boolean isTruncated) {
             this.isTruncated = isTruncated;
             return this;
         }
 
-        /**
-         * <p>The marker used to continue this inventory configuration listing. Use the
-         *             <code>NextContinuationToken</code> from this response to continue the listing in a
-         *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
-         */
         public final Builder nextContinuationToken(String nextContinuationToken) {
             this.nextContinuationToken = nextContinuationToken;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String continuationToken() {
+            return continuationToken;
+        }
+
+        public List<InventoryConfiguration> inventoryConfigurationList() {
+            return inventoryConfigurationList;
+        }
+
+        public Boolean isTruncated() {
+            return isTruncated;
+        }
+
+        public String nextContinuationToken() {
+            return nextContinuationToken;
+        }
+
+        public void setContinuationToken(final String continuationToken) {
+            this.continuationToken = continuationToken;
+        }
+
+        public void setInventoryConfigurationList(
+                final List<InventoryConfiguration> inventoryConfigurationList) {
+            this.inventoryConfigurationList = inventoryConfigurationList;
+        }
+
+        public void setIsTruncated(final Boolean isTruncated) {
+            this.isTruncated = isTruncated;
+        }
+
+        public void setNextContinuationToken(final String nextContinuationToken) {
+            this.nextContinuationToken = nextContinuationToken;
         }
     }
 }

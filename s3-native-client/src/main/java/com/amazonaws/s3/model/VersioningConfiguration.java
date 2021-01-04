@@ -5,30 +5,38 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class VersioningConfiguration {
-    private MFADelete mFADelete;
+    /**
+     * <p>Specifies whether MFA delete is enabled in the bucket versioning configuration. This
+     *          element is only returned if the bucket has been configured with MFA delete. If the bucket
+     *          has never been so configured, this element is not returned.</p>
+     */
+    MFADelete mFADelete;
 
-    private BucketVersioningStatus status;
+    /**
+     * <p>The versioning state of the bucket.</p>
+     */
+    BucketVersioningStatus status;
 
-    private VersioningConfiguration() {
+    VersioningConfiguration() {
         this.mFADelete = null;
         this.status = null;
     }
 
-    private VersioningConfiguration(Builder builder) {
+    protected VersioningConfiguration(BuilderImpl builder) {
         this.mFADelete = builder.mFADelete;
         this.status = builder.status;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,51 +54,84 @@ public class VersioningConfiguration {
         return mFADelete;
     }
 
-    public void setMFADelete(final MFADelete mFADelete) {
-        this.mFADelete = mFADelete;
-    }
-
     public BucketVersioningStatus status() {
         return status;
+    }
+
+    public void setMFADelete(final MFADelete mFADelete) {
+        this.mFADelete = mFADelete;
     }
 
     public void setStatus(final BucketVersioningStatus status) {
         this.status = status;
     }
 
-    static final class Builder {
-        private MFADelete mFADelete;
+    public interface Builder {
+        Builder mFADelete(MFADelete mFADelete);
 
-        private BucketVersioningStatus status;
+        Builder status(BucketVersioningStatus status);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(VersioningConfiguration model) {
-            mFADelete(model.mFADelete);
-            status(model.status);
-        }
-
-        public VersioningConfiguration build() {
-            return new com.amazonaws.s3.model.VersioningConfiguration(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Specifies whether MFA delete is enabled in the bucket versioning configuration. This
          *          element is only returned if the bucket has been configured with MFA delete. If the bucket
          *          has never been so configured, this element is not returned.</p>
          */
+        MFADelete mFADelete;
+
+        /**
+         * <p>The versioning state of the bucket.</p>
+         */
+        BucketVersioningStatus status;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(VersioningConfiguration model) {
+            mFADelete(model.mFADelete);
+            status(model.status);
+        }
+
+        public VersioningConfiguration build() {
+            return new VersioningConfiguration(this);
+        }
+
         public final Builder mFADelete(MFADelete mFADelete) {
             this.mFADelete = mFADelete;
             return this;
         }
 
-        /**
-         * <p>The versioning state of the bucket.</p>
-         */
         public final Builder status(BucketVersioningStatus status) {
             this.status = status;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public MFADelete mFADelete() {
+            return mFADelete;
+        }
+
+        public BucketVersioningStatus status() {
+            return status;
+        }
+
+        public void setMFADelete(final MFADelete mFADelete) {
+            this.mFADelete = mFADelete;
+        }
+
+        public void setStatus(final BucketVersioningStatus status) {
+            this.status = status;
         }
     }
 }

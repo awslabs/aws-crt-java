@@ -3,6 +3,7 @@ package software.amazon.smithy.crt.java;
 
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.build.SmithyBuildPlugin;
+import software.amazon.smithy.crt.codegen.SourceGenerator
 import java.util.logging.Level
 
 import java.util.logging.Logger;
@@ -22,17 +23,21 @@ class JavaCodegenPlugin : SmithyBuildPlugin {
         }
         LOG.warning("Running JavaCodegenPlugin...");
 
-        val generators = listOf<JavaFileGenerator>(
-            AnnotationsGenerator(pluginContext),
-            ServiceGenerator(pluginContext)
-        )
+        try {
 
-        generators.forEach {
-            it.accept { javaFile ->
-                val javaFilePath = javaFile.writeToPath(pluginContext.fileManifest.baseDir);
-                pluginContext.fileManifest.addFile(javaFilePath)
-                LOG.info("Generated ${javaFilePath.toAbsolutePath()}")
+            val generators = listOf(
+                AnnotationsGenerator(pluginContext),
+                ServiceGenerator(pluginContext)
+            )
+
+            generators.forEach {
+                it.accept(pluginContext.fileManifest.baseDir) { javaFile ->
+                    pluginContext.fileManifest.addFile(javaFile)
+                    LOG.info("Generated ${javaFile.toAbsolutePath()}")
+                }
             }
+        } catch (ex: Throwable) {
+            System.err.println(ex.message)
         }
     }
 }

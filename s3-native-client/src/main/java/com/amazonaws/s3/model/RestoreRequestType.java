@@ -6,15 +6,15 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum RestoreRequestType {
-    SELECT("SELECT"),
+enum RestoreRequestType {
+    SELECT("software.amazon.smithy.crt.codegen.Field@2114aee5"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private RestoreRequestType(String value) {
         this.value = value;
@@ -29,5 +29,13 @@ public enum RestoreRequestType {
 
     public static Set<RestoreRequestType> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

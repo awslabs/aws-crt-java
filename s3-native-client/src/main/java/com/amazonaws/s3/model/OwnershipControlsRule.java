@@ -5,26 +5,26 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class OwnershipControlsRule {
-    private ObjectOwnership objectOwnership;
+    ObjectOwnership objectOwnership;
 
-    private OwnershipControlsRule() {
+    OwnershipControlsRule() {
         this.objectOwnership = null;
     }
 
-    private OwnershipControlsRule(Builder builder) {
+    protected OwnershipControlsRule(BuilderImpl builder) {
         this.objectOwnership = builder.objectOwnership;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,23 +46,46 @@ public class OwnershipControlsRule {
         this.objectOwnership = objectOwnership;
     }
 
-    static final class Builder {
-        private ObjectOwnership objectOwnership;
+    public interface Builder {
+        Builder objectOwnership(ObjectOwnership objectOwnership);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        ObjectOwnership objectOwnership;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(OwnershipControlsRule model) {
+        private BuilderImpl(OwnershipControlsRule model) {
             objectOwnership(model.objectOwnership);
         }
 
         public OwnershipControlsRule build() {
-            return new com.amazonaws.s3.model.OwnershipControlsRule(this);
+            return new OwnershipControlsRule(this);
         }
 
         public final Builder objectOwnership(ObjectOwnership objectOwnership) {
             this.objectOwnership = objectOwnership;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectOwnership objectOwnership() {
+            return objectOwnership;
+        }
+
+        public void setObjectOwnership(final ObjectOwnership objectOwnership) {
+            this.objectOwnership = objectOwnership;
         }
     }
 }

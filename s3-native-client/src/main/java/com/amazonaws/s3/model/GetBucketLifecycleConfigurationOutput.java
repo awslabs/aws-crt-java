@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketLifecycleConfigurationOutput {
-    private List<LifecycleRule> rules;
+    /**
+     * <p>Container for a lifecycle rule.</p>
+     */
+    List<LifecycleRule> rules;
 
-    private GetBucketLifecycleConfigurationOutput() {
+    GetBucketLifecycleConfigurationOutput() {
         this.rules = null;
     }
 
-    private GetBucketLifecycleConfigurationOutput(Builder builder) {
+    protected GetBucketLifecycleConfigurationOutput(BuilderImpl builder) {
         this.rules = builder.rules;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class GetBucketLifecycleConfigurationOutput {
         this.rules = rules;
     }
 
-    static final class Builder {
-        private List<LifecycleRule> rules;
+    public interface Builder {
+        Builder rules(List<LifecycleRule> rules);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Container for a lifecycle rule.</p>
+         */
+        List<LifecycleRule> rules;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketLifecycleConfigurationOutput model) {
+        private BuilderImpl(GetBucketLifecycleConfigurationOutput model) {
             rules(model.rules);
         }
 
         public GetBucketLifecycleConfigurationOutput build() {
-            return new com.amazonaws.s3.model.GetBucketLifecycleConfigurationOutput(this);
+            return new GetBucketLifecycleConfigurationOutput(this);
         }
 
-        /**
-         * <p>Container for a lifecycle rule.</p>
-         */
         public final Builder rules(List<LifecycleRule> rules) {
             this.rules = rules;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<LifecycleRule> rules() {
+            return rules;
+        }
+
+        public void setRules(final List<LifecycleRule> rules) {
+            this.rules = rules;
         }
     }
 }

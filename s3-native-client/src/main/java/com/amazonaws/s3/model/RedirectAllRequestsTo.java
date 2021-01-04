@@ -6,30 +6,37 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class RedirectAllRequestsTo {
-    private String hostName;
+    /**
+     * <p>Name of the host where requests are redirected.</p>
+     */
+    String hostName;
 
-    private Protocol protocol;
+    /**
+     * <p>Protocol to use when redirecting requests. The default is the protocol that is used in
+     *          the original request.</p>
+     */
+    Protocol protocol;
 
-    private RedirectAllRequestsTo() {
-        this.hostName = null;
+    RedirectAllRequestsTo() {
+        this.hostName = "";
         this.protocol = null;
     }
 
-    private RedirectAllRequestsTo(Builder builder) {
+    protected RedirectAllRequestsTo(BuilderImpl builder) {
         this.hostName = builder.hostName;
         this.protocol = builder.protocol;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,50 +54,83 @@ public class RedirectAllRequestsTo {
         return hostName;
     }
 
-    public void setHostName(final String hostName) {
-        this.hostName = hostName;
-    }
-
     public Protocol protocol() {
         return protocol;
+    }
+
+    public void setHostName(final String hostName) {
+        this.hostName = hostName;
     }
 
     public void setProtocol(final Protocol protocol) {
         this.protocol = protocol;
     }
 
-    static final class Builder {
-        private String hostName;
+    public interface Builder {
+        Builder hostName(String hostName);
 
-        private Protocol protocol;
+        Builder protocol(Protocol protocol);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(RedirectAllRequestsTo model) {
-            hostName(model.hostName);
-            protocol(model.protocol);
-        }
-
-        public RedirectAllRequestsTo build() {
-            return new com.amazonaws.s3.model.RedirectAllRequestsTo(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Name of the host where requests are redirected.</p>
          */
-        public final Builder hostName(String hostName) {
-            this.hostName = hostName;
-            return this;
-        }
+        String hostName;
 
         /**
          * <p>Protocol to use when redirecting requests. The default is the protocol that is used in
          *          the original request.</p>
          */
+        Protocol protocol;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(RedirectAllRequestsTo model) {
+            hostName(model.hostName);
+            protocol(model.protocol);
+        }
+
+        public RedirectAllRequestsTo build() {
+            return new RedirectAllRequestsTo(this);
+        }
+
+        public final Builder hostName(String hostName) {
+            this.hostName = hostName;
+            return this;
+        }
+
         public final Builder protocol(Protocol protocol) {
             this.protocol = protocol;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String hostName() {
+            return hostName;
+        }
+
+        public Protocol protocol() {
+            return protocol;
+        }
+
+        public void setHostName(final String hostName) {
+            this.hostName = hostName;
+        }
+
+        public void setProtocol(final Protocol protocol) {
+            this.protocol = protocol;
         }
     }
 }

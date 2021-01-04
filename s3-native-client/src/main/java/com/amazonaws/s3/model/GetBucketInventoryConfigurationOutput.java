@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketInventoryConfigurationOutput {
-    private InventoryConfiguration inventoryConfiguration;
+    /**
+     * <p>Specifies the inventory configuration.</p>
+     */
+    InventoryConfiguration inventoryConfiguration;
 
-    private GetBucketInventoryConfigurationOutput() {
+    GetBucketInventoryConfigurationOutput() {
         this.inventoryConfiguration = null;
     }
 
-    private GetBucketInventoryConfigurationOutput(Builder builder) {
+    protected GetBucketInventoryConfigurationOutput(BuilderImpl builder) {
         this.inventoryConfiguration = builder.inventoryConfiguration;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class GetBucketInventoryConfigurationOutput {
         this.inventoryConfiguration = inventoryConfiguration;
     }
 
-    static final class Builder {
-        private InventoryConfiguration inventoryConfiguration;
+    public interface Builder {
+        Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies the inventory configuration.</p>
+         */
+        InventoryConfiguration inventoryConfiguration;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketInventoryConfigurationOutput model) {
+        private BuilderImpl(GetBucketInventoryConfigurationOutput model) {
             inventoryConfiguration(model.inventoryConfiguration);
         }
 
         public GetBucketInventoryConfigurationOutput build() {
-            return new com.amazonaws.s3.model.GetBucketInventoryConfigurationOutput(this);
+            return new GetBucketInventoryConfigurationOutput(this);
         }
 
-        /**
-         * <p>Specifies the inventory configuration.</p>
-         */
         public final Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration) {
             this.inventoryConfiguration = inventoryConfiguration;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public InventoryConfiguration inventoryConfiguration() {
+            return inventoryConfiguration;
+        }
+
+        public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
+            this.inventoryConfiguration = inventoryConfiguration;
         }
     }
 }

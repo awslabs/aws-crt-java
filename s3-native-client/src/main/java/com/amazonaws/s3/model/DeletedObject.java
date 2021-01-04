@@ -7,38 +7,54 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeletedObject {
-    private String key;
+    /**
+     * <p>The name of the deleted object.</p>
+     */
+    String key;
 
-    private String versionId;
+    /**
+     * <p>The version ID of the deleted object.</p>
+     */
+    String versionId;
 
-    private Boolean deleteMarker;
+    /**
+     * <p>Specifies whether the versioned object that was permanently deleted was (true) or was
+     *          not (false) a delete marker. In a simple DELETE, this header indicates whether (true) or
+     *          not (false) a delete marker was created.</p>
+     */
+    Boolean deleteMarker;
 
-    private String deleteMarkerVersionId;
+    /**
+     * <p>The version ID of the delete marker created as a result of the DELETE operation. If you
+     *          delete a specific object version, the value returned by this header is the version ID of
+     *          the object version deleted.</p>
+     */
+    String deleteMarkerVersionId;
 
-    private DeletedObject() {
-        this.key = null;
-        this.versionId = null;
+    DeletedObject() {
+        this.key = "";
+        this.versionId = "";
         this.deleteMarker = null;
-        this.deleteMarkerVersionId = null;
+        this.deleteMarkerVersionId = "";
     }
 
-    private DeletedObject(Builder builder) {
+    protected DeletedObject(BuilderImpl builder) {
         this.key = builder.key;
         this.versionId = builder.versionId;
         this.deleteMarker = builder.deleteMarker;
         this.deleteMarkerVersionId = builder.deleteMarkerVersionId;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -56,47 +72,73 @@ public class DeletedObject {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public String versionId() {
         return versionId;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
     }
 
     public Boolean deleteMarker() {
         return deleteMarker;
     }
 
-    public void setDeleteMarker(final Boolean deleteMarker) {
-        this.deleteMarker = deleteMarker;
-    }
-
     public String deleteMarkerVersionId() {
         return deleteMarkerVersionId;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
+    public void setVersionId(final String versionId) {
+        this.versionId = versionId;
+    }
+
+    public void setDeleteMarker(final Boolean deleteMarker) {
+        this.deleteMarker = deleteMarker;
     }
 
     public void setDeleteMarkerVersionId(final String deleteMarkerVersionId) {
         this.deleteMarkerVersionId = deleteMarkerVersionId;
     }
 
-    static final class Builder {
-        private String key;
+    public interface Builder {
+        Builder key(String key);
 
-        private String versionId;
+        Builder versionId(String versionId);
 
-        private Boolean deleteMarker;
+        Builder deleteMarker(Boolean deleteMarker);
 
-        private String deleteMarkerVersionId;
+        Builder deleteMarkerVersionId(String deleteMarkerVersionId);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The name of the deleted object.</p>
+         */
+        String key;
+
+        /**
+         * <p>The version ID of the deleted object.</p>
+         */
+        String versionId;
+
+        /**
+         * <p>Specifies whether the versioned object that was permanently deleted was (true) or was
+         *          not (false) a delete marker. In a simple DELETE, this header indicates whether (true) or
+         *          not (false) a delete marker was created.</p>
+         */
+        Boolean deleteMarker;
+
+        /**
+         * <p>The version ID of the delete marker created as a result of the DELETE operation. If you
+         *          delete a specific object version, the value returned by this header is the version ID of
+         *          the object version deleted.</p>
+         */
+        String deleteMarkerVersionId;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DeletedObject model) {
+        private BuilderImpl(DeletedObject model) {
             key(model.key);
             versionId(model.versionId);
             deleteMarker(model.deleteMarker);
@@ -104,43 +146,70 @@ public class DeletedObject {
         }
 
         public DeletedObject build() {
-            return new com.amazonaws.s3.model.DeletedObject(this);
+            return new DeletedObject(this);
         }
 
-        /**
-         * <p>The name of the deleted object.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
         }
 
-        /**
-         * <p>The version ID of the deleted object.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
         }
 
-        /**
-         * <p>Specifies whether the versioned object that was permanently deleted was (true) or was
-         *          not (false) a delete marker. In a simple DELETE, this header indicates whether (true) or
-         *          not (false) a delete marker was created.</p>
-         */
         public final Builder deleteMarker(Boolean deleteMarker) {
             this.deleteMarker = deleteMarker;
             return this;
         }
 
-        /**
-         * <p>The version ID of the delete marker created as a result of the DELETE operation. If you
-         *          delete a specific object version, the value returned by this header is the version ID of
-         *          the object version deleted.</p>
-         */
         public final Builder deleteMarkerVersionId(String deleteMarkerVersionId) {
             this.deleteMarkerVersionId = deleteMarkerVersionId;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public Boolean deleteMarker() {
+            return deleteMarker;
+        }
+
+        public String deleteMarkerVersionId() {
+            return deleteMarkerVersionId;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
+        }
+
+        public void setDeleteMarker(final Boolean deleteMarker) {
+            this.deleteMarker = deleteMarker;
+        }
+
+        public void setDeleteMarkerVersionId(final String deleteMarkerVersionId) {
+            this.deleteMarkerVersionId = deleteMarkerVersionId;
         }
     }
 }

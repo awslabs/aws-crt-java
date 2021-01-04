@@ -6,21 +6,21 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum BucketCannedACL {
-    PRIVATE("private"),
+enum BucketCannedACL {
+    PRIVATE("software.amazon.smithy.crt.codegen.Field@bf5ee02"),
 
-    PUBLIC_READ("public-read"),
+    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@bf5ee02"),
 
-    PUBLIC_READ_WRITE("public-read-write"),
+    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@bf5ee02"),
 
-    AUTHENTICATED_READ("authenticated-read"),
+    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@bf5ee02"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private BucketCannedACL(String value) {
         this.value = value;
@@ -35,5 +35,13 @@ public enum BucketCannedACL {
 
     public static Set<BucketCannedACL> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

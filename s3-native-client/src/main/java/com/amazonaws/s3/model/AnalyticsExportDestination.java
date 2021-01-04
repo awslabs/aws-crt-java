@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AnalyticsExportDestination {
-    private AnalyticsS3BucketDestination s3BucketDestination;
+    /**
+     * <p>A destination signifying output to an S3 bucket.</p>
+     */
+    AnalyticsS3BucketDestination s3BucketDestination;
 
-    private AnalyticsExportDestination() {
+    AnalyticsExportDestination() {
         this.s3BucketDestination = null;
     }
 
-    private AnalyticsExportDestination(Builder builder) {
+    protected AnalyticsExportDestination(BuilderImpl builder) {
         this.s3BucketDestination = builder.s3BucketDestination;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class AnalyticsExportDestination {
         this.s3BucketDestination = s3BucketDestination;
     }
 
-    static final class Builder {
-        private AnalyticsS3BucketDestination s3BucketDestination;
+    public interface Builder {
+        Builder s3BucketDestination(AnalyticsS3BucketDestination s3BucketDestination);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>A destination signifying output to an S3 bucket.</p>
+         */
+        AnalyticsS3BucketDestination s3BucketDestination;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(AnalyticsExportDestination model) {
+        private BuilderImpl(AnalyticsExportDestination model) {
             s3BucketDestination(model.s3BucketDestination);
         }
 
         public AnalyticsExportDestination build() {
-            return new com.amazonaws.s3.model.AnalyticsExportDestination(this);
+            return new AnalyticsExportDestination(this);
         }
 
-        /**
-         * <p>A destination signifying output to an S3 bucket.</p>
-         */
         public final Builder s3BucketDestination(AnalyticsS3BucketDestination s3BucketDestination) {
             this.s3BucketDestination = s3BucketDestination;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public AnalyticsS3BucketDestination s3BucketDestination() {
+            return s3BucketDestination;
+        }
+
+        public void setS3BucketDestination(final AnalyticsS3BucketDestination s3BucketDestination) {
+            this.s3BucketDestination = s3BucketDestination;
         }
     }
 }

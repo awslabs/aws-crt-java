@@ -8,35 +8,63 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class InventoryConfiguration {
-    private InventoryDestination destination;
+    /**
+     * <p>Contains information about where to publish the inventory results.</p>
+     */
+    InventoryDestination destination;
 
-    private Boolean isEnabled;
+    /**
+     * <p>Specifies whether the inventory is enabled or disabled. If set to <code>True</code>, an
+     *          inventory list is generated. If set to <code>False</code>, no inventory list is
+     *          generated.</p>
+     */
+    Boolean isEnabled;
 
-    private InventoryFilter filter;
+    /**
+     * <p>Specifies an inventory filter. The inventory only includes objects that meet the
+     *          filter's criteria.</p>
+     */
+    InventoryFilter filter;
 
-    private String id;
+    /**
+     * <p>The ID used to identify the inventory configuration.</p>
+     */
+    String id;
 
-    private InventoryIncludedObjectVersions includedObjectVersions;
+    /**
+     * <p>Object versions to include in the inventory list. If set to <code>All</code>, the list
+     *          includes all the object versions, which adds the version-related fields
+     *             <code>VersionId</code>, <code>IsLatest</code>, and <code>DeleteMarker</code> to the
+     *          list. If set to <code>Current</code>, the list does not contain these version-related
+     *          fields.</p>
+     */
+    InventoryIncludedObjectVersions includedObjectVersions;
 
-    private List<InventoryOptionalField> optionalFields;
+    /**
+     * <p>Contains the optional fields that are included in the inventory results.</p>
+     */
+    List<InventoryOptionalField> optionalFields;
 
-    private InventorySchedule schedule;
+    /**
+     * <p>Specifies the schedule for generating inventory results.</p>
+     */
+    InventorySchedule schedule;
 
-    private InventoryConfiguration() {
+    InventoryConfiguration() {
         this.destination = null;
         this.isEnabled = null;
         this.filter = null;
-        this.id = null;
+        this.id = "";
         this.includedObjectVersions = null;
         this.optionalFields = null;
         this.schedule = null;
     }
 
-    private InventoryConfiguration(Builder builder) {
+    protected InventoryConfiguration(BuilderImpl builder) {
         this.destination = builder.destination;
         this.isEnabled = builder.isEnabled;
         this.filter = builder.filter;
@@ -46,12 +74,12 @@ public class InventoryConfiguration {
         this.schedule = builder.schedule;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -69,36 +97,44 @@ public class InventoryConfiguration {
         return destination;
     }
 
-    public void setDestination(final InventoryDestination destination) {
-        this.destination = destination;
-    }
-
     public Boolean isEnabled() {
         return isEnabled;
-    }
-
-    public void setIsEnabled(final Boolean isEnabled) {
-        this.isEnabled = isEnabled;
     }
 
     public InventoryFilter filter() {
         return filter;
     }
 
-    public void setFilter(final InventoryFilter filter) {
-        this.filter = filter;
-    }
-
     public String id() {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public InventoryIncludedObjectVersions includedObjectVersions() {
         return includedObjectVersions;
+    }
+
+    public List<InventoryOptionalField> optionalFields() {
+        return optionalFields;
+    }
+
+    public InventorySchedule schedule() {
+        return schedule;
+    }
+
+    public void setDestination(final InventoryDestination destination) {
+        this.destination = destination;
+    }
+
+    public void setIsEnabled(final Boolean isEnabled) {
+        this.isEnabled = isEnabled;
+    }
+
+    public void setFilter(final InventoryFilter filter) {
+        this.filter = filter;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
     }
 
     public void setIncludedObjectVersions(
@@ -106,41 +142,77 @@ public class InventoryConfiguration {
         this.includedObjectVersions = includedObjectVersions;
     }
 
-    public List<InventoryOptionalField> optionalFields() {
-        return optionalFields;
-    }
-
     public void setOptionalFields(final List<InventoryOptionalField> optionalFields) {
         this.optionalFields = optionalFields;
-    }
-
-    public InventorySchedule schedule() {
-        return schedule;
     }
 
     public void setSchedule(final InventorySchedule schedule) {
         this.schedule = schedule;
     }
 
-    static final class Builder {
-        private InventoryDestination destination;
+    public interface Builder {
+        Builder destination(InventoryDestination destination);
 
-        private Boolean isEnabled;
+        Builder isEnabled(Boolean isEnabled);
 
-        private InventoryFilter filter;
+        Builder filter(InventoryFilter filter);
 
-        private String id;
+        Builder id(String id);
 
-        private InventoryIncludedObjectVersions includedObjectVersions;
+        Builder includedObjectVersions(InventoryIncludedObjectVersions includedObjectVersions);
 
-        private List<InventoryOptionalField> optionalFields;
+        Builder optionalFields(List<InventoryOptionalField> optionalFields);
 
-        private InventorySchedule schedule;
+        Builder schedule(InventorySchedule schedule);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Contains information about where to publish the inventory results.</p>
+         */
+        InventoryDestination destination;
+
+        /**
+         * <p>Specifies whether the inventory is enabled or disabled. If set to <code>True</code>, an
+         *          inventory list is generated. If set to <code>False</code>, no inventory list is
+         *          generated.</p>
+         */
+        Boolean isEnabled;
+
+        /**
+         * <p>Specifies an inventory filter. The inventory only includes objects that meet the
+         *          filter's criteria.</p>
+         */
+        InventoryFilter filter;
+
+        /**
+         * <p>The ID used to identify the inventory configuration.</p>
+         */
+        String id;
+
+        /**
+         * <p>Object versions to include in the inventory list. If set to <code>All</code>, the list
+         *          includes all the object versions, which adds the version-related fields
+         *             <code>VersionId</code>, <code>IsLatest</code>, and <code>DeleteMarker</code> to the
+         *          list. If set to <code>Current</code>, the list does not contain these version-related
+         *          fields.</p>
+         */
+        InventoryIncludedObjectVersions includedObjectVersions;
+
+        /**
+         * <p>Contains the optional fields that are included in the inventory results.</p>
+         */
+        List<InventoryOptionalField> optionalFields;
+
+        /**
+         * <p>Specifies the schedule for generating inventory results.</p>
+         */
+        InventorySchedule schedule;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(InventoryConfiguration model) {
+        private BuilderImpl(InventoryConfiguration model) {
             destination(model.destination);
             isEnabled(model.isEnabled);
             filter(model.filter);
@@ -151,71 +223,111 @@ public class InventoryConfiguration {
         }
 
         public InventoryConfiguration build() {
-            return new com.amazonaws.s3.model.InventoryConfiguration(this);
+            return new InventoryConfiguration(this);
         }
 
-        /**
-         * <p>Contains information about where to publish the inventory results.</p>
-         */
         public final Builder destination(InventoryDestination destination) {
             this.destination = destination;
             return this;
         }
 
-        /**
-         * <p>Specifies whether the inventory is enabled or disabled. If set to <code>True</code>, an
-         *          inventory list is generated. If set to <code>False</code>, no inventory list is
-         *          generated.</p>
-         */
         public final Builder isEnabled(Boolean isEnabled) {
             this.isEnabled = isEnabled;
             return this;
         }
 
-        /**
-         * <p>Specifies an inventory filter. The inventory only includes objects that meet the
-         *          filter's criteria.</p>
-         */
         public final Builder filter(InventoryFilter filter) {
             this.filter = filter;
             return this;
         }
 
-        /**
-         * <p>The ID used to identify the inventory configuration.</p>
-         */
         public final Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        /**
-         * <p>Object versions to include in the inventory list. If set to <code>All</code>, the list
-         *          includes all the object versions, which adds the version-related fields
-         *             <code>VersionId</code>, <code>IsLatest</code>, and <code>DeleteMarker</code> to the
-         *          list. If set to <code>Current</code>, the list does not contain these version-related
-         *          fields.</p>
-         */
         public final Builder includedObjectVersions(
                 InventoryIncludedObjectVersions includedObjectVersions) {
             this.includedObjectVersions = includedObjectVersions;
             return this;
         }
 
-        /**
-         * <p>Contains the optional fields that are included in the inventory results.</p>
-         */
         public final Builder optionalFields(List<InventoryOptionalField> optionalFields) {
             this.optionalFields = optionalFields;
             return this;
         }
 
-        /**
-         * <p>Specifies the schedule for generating inventory results.</p>
-         */
         public final Builder schedule(InventorySchedule schedule) {
             this.schedule = schedule;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public InventoryDestination destination() {
+            return destination;
+        }
+
+        public Boolean isEnabled() {
+            return isEnabled;
+        }
+
+        public InventoryFilter filter() {
+            return filter;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public InventoryIncludedObjectVersions includedObjectVersions() {
+            return includedObjectVersions;
+        }
+
+        public List<InventoryOptionalField> optionalFields() {
+            return optionalFields;
+        }
+
+        public InventorySchedule schedule() {
+            return schedule;
+        }
+
+        public void setDestination(final InventoryDestination destination) {
+            this.destination = destination;
+        }
+
+        public void setIsEnabled(final Boolean isEnabled) {
+            this.isEnabled = isEnabled;
+        }
+
+        public void setFilter(final InventoryFilter filter) {
+            this.filter = filter;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setIncludedObjectVersions(
+                final InventoryIncludedObjectVersions includedObjectVersions) {
+            this.includedObjectVersions = includedObjectVersions;
+        }
+
+        public void setOptionalFields(final List<InventoryOptionalField> optionalFields) {
+            this.optionalFields = optionalFields;
+        }
+
+        public void setSchedule(final InventorySchedule schedule) {
+            this.schedule = schedule;
         }
     }
 }

@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteObjectTaggingOutput {
-    private String versionId;
+    /**
+     * <p>The versionId of the object the tag-set was removed from.</p>
+     */
+    String versionId;
 
-    private DeleteObjectTaggingOutput() {
-        this.versionId = null;
+    DeleteObjectTaggingOutput() {
+        this.versionId = "";
     }
 
-    private DeleteObjectTaggingOutput(Builder builder) {
+    protected DeleteObjectTaggingOutput(BuilderImpl builder) {
         this.versionId = builder.versionId;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class DeleteObjectTaggingOutput {
         this.versionId = versionId;
     }
 
-    static final class Builder {
-        private String versionId;
+    public interface Builder {
+        Builder versionId(String versionId);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The versionId of the object the tag-set was removed from.</p>
+         */
+        String versionId;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DeleteObjectTaggingOutput model) {
+        private BuilderImpl(DeleteObjectTaggingOutput model) {
             versionId(model.versionId);
         }
 
         public DeleteObjectTaggingOutput build() {
-            return new com.amazonaws.s3.model.DeleteObjectTaggingOutput(this);
+            return new DeleteObjectTaggingOutput(this);
         }
 
-        /**
-         * <p>The versionId of the object the tag-set was removed from.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
         }
     }
 }

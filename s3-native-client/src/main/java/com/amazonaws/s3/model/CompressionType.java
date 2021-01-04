@@ -6,19 +6,19 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum CompressionType {
-    NONE("NONE"),
+enum CompressionType {
+    NONE("software.amazon.smithy.crt.codegen.Field@3a0e3ed0"),
 
-    GZIP("GZIP"),
+    GZIP("software.amazon.smithy.crt.codegen.Field@3a0e3ed0"),
 
-    BZIP2("BZIP2"),
+    BZIP2("software.amazon.smithy.crt.codegen.Field@3a0e3ed0"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private CompressionType(String value) {
         this.value = value;
@@ -33,5 +33,13 @@ public enum CompressionType {
 
     public static Set<CompressionType> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

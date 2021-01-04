@@ -7,30 +7,38 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class IntelligentTieringAndOperator {
-    private String prefix;
+    /**
+     * <p>An object key name prefix that identifies the subset of objects to which the
+     *          configuration applies.</p>
+     */
+    String prefix;
 
-    private List<Tag> tags;
+    /**
+     * <p>All of these tags must exist in the object's tag set in order for the configuration to
+     *          apply.</p>
+     */
+    List<Tag> tags;
 
-    private IntelligentTieringAndOperator() {
-        this.prefix = null;
+    IntelligentTieringAndOperator() {
+        this.prefix = "";
         this.tags = null;
     }
 
-    private IntelligentTieringAndOperator(Builder builder) {
+    protected IntelligentTieringAndOperator(BuilderImpl builder) {
         this.prefix = builder.prefix;
         this.tags = builder.tags;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -48,51 +56,84 @@ public class IntelligentTieringAndOperator {
         return prefix;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
     public List<Tag> tags() {
         return tags;
+    }
+
+    public void setPrefix(final String prefix) {
+        this.prefix = prefix;
     }
 
     public void setTags(final List<Tag> tags) {
         this.tags = tags;
     }
 
-    static final class Builder {
-        private String prefix;
+    public interface Builder {
+        Builder prefix(String prefix);
 
-        private List<Tag> tags;
+        Builder tags(List<Tag> tags);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(IntelligentTieringAndOperator model) {
-            prefix(model.prefix);
-            tags(model.tags);
-        }
-
-        public IntelligentTieringAndOperator build() {
-            return new com.amazonaws.s3.model.IntelligentTieringAndOperator(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>An object key name prefix that identifies the subset of objects to which the
          *          configuration applies.</p>
          */
-        public final Builder prefix(String prefix) {
-            this.prefix = prefix;
-            return this;
-        }
+        String prefix;
 
         /**
          * <p>All of these tags must exist in the object's tag set in order for the configuration to
          *          apply.</p>
          */
+        List<Tag> tags;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(IntelligentTieringAndOperator model) {
+            prefix(model.prefix);
+            tags(model.tags);
+        }
+
+        public IntelligentTieringAndOperator build() {
+            return new IntelligentTieringAndOperator(this);
+        }
+
+        public final Builder prefix(String prefix) {
+            this.prefix = prefix;
+            return this;
+        }
+
         public final Builder tags(List<Tag> tags) {
             this.tags = tags;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public List<Tag> tags() {
+            return tags;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        public void setTags(final List<Tag> tags) {
+            this.tags = tags;
         }
     }
 }

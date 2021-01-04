@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketPolicyStatusOutput {
-    private PolicyStatus policyStatus;
+    /**
+     * <p>The policy status for the specified bucket.</p>
+     */
+    PolicyStatus policyStatus;
 
-    private GetBucketPolicyStatusOutput() {
+    GetBucketPolicyStatusOutput() {
         this.policyStatus = null;
     }
 
-    private GetBucketPolicyStatusOutput(Builder builder) {
+    protected GetBucketPolicyStatusOutput(BuilderImpl builder) {
         this.policyStatus = builder.policyStatus;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class GetBucketPolicyStatusOutput {
         this.policyStatus = policyStatus;
     }
 
-    static final class Builder {
-        private PolicyStatus policyStatus;
+    public interface Builder {
+        Builder policyStatus(PolicyStatus policyStatus);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The policy status for the specified bucket.</p>
+         */
+        PolicyStatus policyStatus;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketPolicyStatusOutput model) {
+        private BuilderImpl(GetBucketPolicyStatusOutput model) {
             policyStatus(model.policyStatus);
         }
 
         public GetBucketPolicyStatusOutput build() {
-            return new com.amazonaws.s3.model.GetBucketPolicyStatusOutput(this);
+            return new GetBucketPolicyStatusOutput(this);
         }
 
-        /**
-         * <p>The policy status for the specified bucket.</p>
-         */
         public final Builder policyStatus(PolicyStatus policyStatus) {
             this.policyStatus = policyStatus;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public PolicyStatus policyStatus() {
+            return policyStatus;
+        }
+
+        public void setPolicyStatus(final PolicyStatus policyStatus) {
+            this.policyStatus = policyStatus;
         }
     }
 }

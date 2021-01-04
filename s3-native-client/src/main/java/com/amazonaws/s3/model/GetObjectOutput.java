@@ -11,98 +11,211 @@ import java.lang.String;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectOutput {
-    private byte[] body;
+    /**
+     * <p>Object data.</p>
+     */
+    byte[] body;
 
-    private Boolean deleteMarker;
+    /**
+     * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete Marker. If
+     *          false, this response header does not appear in the response.</p>
+     */
+    Boolean deleteMarker;
 
-    private String acceptRanges;
+    /**
+     * <p>Indicates that a range of bytes was specified.</p>
+     */
+    String acceptRanges;
 
-    private String expiration;
+    /**
+     * <p>If the object expiration is configured (see PUT Bucket lifecycle), the response includes
+     *          this header. It includes the expiry-date and rule-id key-value pairs providing object
+     *          expiration information. The value of the rule-id is URL encoded.</p>
+     */
+    String expiration;
 
-    private String restore;
+    /**
+     * <p>Provides information about object restoration operation and expiration time of the
+     *          restored object copy.</p>
+     */
+    String restore;
 
-    private Instant lastModified;
+    /**
+     * <p>Last modified date of the object</p>
+     */
+    Instant lastModified;
 
-    private Long contentLength;
+    /**
+     * <p>Size of the body in bytes.</p>
+     */
+    Long contentLength;
 
-    private String eTag;
+    /**
+     * <p>An ETag is an opaque identifier assigned by a web server to a specific version of a
+     *          resource found at a URL.</p>
+     */
+    String eTag;
 
-    private Integer missingMeta;
+    /**
+     * <p>This is set to the number of metadata entries not returned in <code>x-amz-meta</code>
+     *          headers. This can happen if you create metadata using an API like SOAP that supports more
+     *          flexible metadata than the REST API. For example, using SOAP, you can create metadata whose
+     *          values are not legal HTTP headers.</p>
+     */
+    Integer missingMeta;
 
-    private String versionId;
+    /**
+     * <p>Version of the object.</p>
+     */
+    String versionId;
 
-    private String cacheControl;
+    /**
+     * <p>Specifies caching behavior along the request/reply chain.</p>
+     */
+    String cacheControl;
 
-    private String contentDisposition;
+    /**
+     * <p>Specifies presentational information for the object.</p>
+     */
+    String contentDisposition;
 
-    private String contentEncoding;
+    /**
+     * <p>Specifies what content encodings have been applied to the object and thus what decoding
+     *          mechanisms must be applied to obtain the media-type referenced by the Content-Type header
+     *          field.</p>
+     */
+    String contentEncoding;
 
-    private String contentLanguage;
+    /**
+     * <p>The language the content is in.</p>
+     */
+    String contentLanguage;
 
-    private String contentRange;
+    /**
+     * <p>The portion of the object returned in the response.</p>
+     */
+    String contentRange;
 
-    private String contentType;
+    /**
+     * <p>A standard MIME type describing the format of the object data.</p>
+     */
+    String contentType;
 
-    private Instant expires;
+    /**
+     * <p>The date and time at which the object is no longer cacheable.</p>
+     */
+    Instant expires;
 
-    private String websiteRedirectLocation;
+    /**
+     * <p>If the bucket is configured as a website, redirects requests for this object to another
+     *          object in the same bucket or to an external URL. Amazon S3 stores the value of this header in
+     *          the object metadata.</p>
+     */
+    String websiteRedirectLocation;
 
-    private ServerSideEncryption serverSideEncryption;
+    /**
+     * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
+     *          AES256, aws:kms).</p>
+     */
+    ServerSideEncryption serverSideEncryption;
 
-    private Map<String, String> metadata;
+    /**
+     * <p>A map of metadata to store with the object in S3.</p>
+     */
+    Map<String, String> metadata;
 
-    private String sSECustomerAlgorithm;
+    /**
+     * <p>If server-side encryption with a customer-provided encryption key was requested, the
+     *          response will include this header confirming the encryption algorithm used.</p>
+     */
+    String sSECustomerAlgorithm;
 
-    private String sSECustomerKeyMD5;
+    /**
+     * <p>If server-side encryption with a customer-provided encryption key was requested, the
+     *          response will include this header to provide round-trip message integrity verification of
+     *          the customer-provided encryption key.</p>
+     */
+    String sSECustomerKeyMD5;
 
-    private String sSEKMSKeyId;
+    /**
+     * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
+     *          customer managed customer master key (CMK) that was used for the object.</p>
+     */
+    String sSEKMSKeyId;
 
-    private Boolean bucketKeyEnabled;
+    /**
+     * <p>Indicates whether the object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
+     */
+    Boolean bucketKeyEnabled;
 
-    private StorageClass storageClass;
+    /**
+     * <p>Provides storage class information of the object. Amazon S3 returns this header for all
+     *          objects except for S3 Standard storage class objects.</p>
+     */
+    StorageClass storageClass;
 
-    private RequestCharged requestCharged;
+    RequestCharged requestCharged;
 
-    private ReplicationStatus replicationStatus;
+    /**
+     * <p>Amazon S3 can return this if your request involves a bucket that is either a source or
+     *          destination in a replication rule.</p>
+     */
+    ReplicationStatus replicationStatus;
 
-    private Integer partsCount;
+    /**
+     * <p>The count of parts this object has.</p>
+     */
+    Integer partsCount;
 
-    private Integer tagCount;
+    /**
+     * <p>The number of tags, if any, on the object.</p>
+     */
+    Integer tagCount;
 
-    private ObjectLockMode objectLockMode;
+    /**
+     * <p>The Object Lock mode currently in place for this object.</p>
+     */
+    ObjectLockMode objectLockMode;
 
-    private Instant objectLockRetainUntilDate;
+    /**
+     * <p>The date and time when this object's Object Lock will expire.</p>
+     */
+    Instant objectLockRetainUntilDate;
 
-    private ObjectLockLegalHoldStatus objectLockLegalHoldStatus;
+    /**
+     * <p>Indicates whether this object has an active legal hold. This field is only returned if
+     *          you have permission to view an object's legal hold status. </p>
+     */
+    ObjectLockLegalHoldStatus objectLockLegalHoldStatus;
 
-    private GetObjectOutput() {
+    GetObjectOutput() {
         this.body = null;
         this.deleteMarker = null;
-        this.acceptRanges = null;
-        this.expiration = null;
-        this.restore = null;
+        this.acceptRanges = "";
+        this.expiration = "";
+        this.restore = "";
         this.lastModified = null;
         this.contentLength = null;
-        this.eTag = null;
+        this.eTag = "";
         this.missingMeta = null;
-        this.versionId = null;
-        this.cacheControl = null;
-        this.contentDisposition = null;
-        this.contentEncoding = null;
-        this.contentLanguage = null;
-        this.contentRange = null;
-        this.contentType = null;
+        this.versionId = "";
+        this.cacheControl = "";
+        this.contentDisposition = "";
+        this.contentEncoding = "";
+        this.contentLanguage = "";
+        this.contentRange = "";
+        this.contentType = "";
         this.expires = null;
-        this.websiteRedirectLocation = null;
+        this.websiteRedirectLocation = "";
         this.serverSideEncryption = null;
         this.metadata = null;
-        this.sSECustomerAlgorithm = null;
-        this.sSECustomerKeyMD5 = null;
-        this.sSEKMSKeyId = null;
+        this.sSECustomerAlgorithm = "";
+        this.sSECustomerKeyMD5 = "";
+        this.sSEKMSKeyId = "";
         this.bucketKeyEnabled = null;
         this.storageClass = null;
         this.requestCharged = null;
@@ -114,7 +227,7 @@ public class GetObjectOutput {
         this.objectLockLegalHoldStatus = null;
     }
 
-    private GetObjectOutput(Builder builder) {
+    protected GetObjectOutput(BuilderImpl builder) {
         this.body = builder.body;
         this.deleteMarker = builder.deleteMarker;
         this.acceptRanges = builder.acceptRanges;
@@ -149,12 +262,12 @@ public class GetObjectOutput {
         this.objectLockLegalHoldStatus = builder.objectLockLegalHoldStatus;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -172,252 +285,252 @@ public class GetObjectOutput {
         return body;
     }
 
-    public void setBody(final byte[] body) {
-        this.body = body;
-    }
-
     public Boolean deleteMarker() {
         return deleteMarker;
-    }
-
-    public void setDeleteMarker(final Boolean deleteMarker) {
-        this.deleteMarker = deleteMarker;
     }
 
     public String acceptRanges() {
         return acceptRanges;
     }
 
-    public void setAcceptRanges(final String acceptRanges) {
-        this.acceptRanges = acceptRanges;
-    }
-
     public String expiration() {
         return expiration;
-    }
-
-    public void setExpiration(final String expiration) {
-        this.expiration = expiration;
     }
 
     public String restore() {
         return restore;
     }
 
-    public void setRestore(final String restore) {
-        this.restore = restore;
-    }
-
     public Instant lastModified() {
         return lastModified;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
     }
 
     public Long contentLength() {
         return contentLength;
     }
 
-    public void setContentLength(final Long contentLength) {
-        this.contentLength = contentLength;
-    }
-
     public String eTag() {
         return eTag;
-    }
-
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
     }
 
     public Integer missingMeta() {
         return missingMeta;
     }
 
-    public void setMissingMeta(final Integer missingMeta) {
-        this.missingMeta = missingMeta;
-    }
-
     public String versionId() {
         return versionId;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
     }
 
     public String cacheControl() {
         return cacheControl;
     }
 
-    public void setCacheControl(final String cacheControl) {
-        this.cacheControl = cacheControl;
-    }
-
     public String contentDisposition() {
         return contentDisposition;
-    }
-
-    public void setContentDisposition(final String contentDisposition) {
-        this.contentDisposition = contentDisposition;
     }
 
     public String contentEncoding() {
         return contentEncoding;
     }
 
-    public void setContentEncoding(final String contentEncoding) {
-        this.contentEncoding = contentEncoding;
-    }
-
     public String contentLanguage() {
         return contentLanguage;
-    }
-
-    public void setContentLanguage(final String contentLanguage) {
-        this.contentLanguage = contentLanguage;
     }
 
     public String contentRange() {
         return contentRange;
     }
 
-    public void setContentRange(final String contentRange) {
-        this.contentRange = contentRange;
-    }
-
     public String contentType() {
         return contentType;
-    }
-
-    public void setContentType(final String contentType) {
-        this.contentType = contentType;
     }
 
     public Instant expires() {
         return expires;
     }
 
-    public void setExpires(final Instant expires) {
-        this.expires = expires;
-    }
-
     public String websiteRedirectLocation() {
         return websiteRedirectLocation;
-    }
-
-    public void setWebsiteRedirectLocation(final String websiteRedirectLocation) {
-        this.websiteRedirectLocation = websiteRedirectLocation;
     }
 
     public ServerSideEncryption serverSideEncryption() {
         return serverSideEncryption;
     }
 
-    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-        this.serverSideEncryption = serverSideEncryption;
-    }
-
     public Map<String, String> metadata() {
         return metadata;
-    }
-
-    public void setMetadata(final Map<String, String> metadata) {
-        this.metadata = metadata;
     }
 
     public String sSECustomerAlgorithm() {
         return sSECustomerAlgorithm;
     }
 
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
     public String sSECustomerKeyMD5() {
         return sSECustomerKeyMD5;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
     }
 
     public String sSEKMSKeyId() {
         return sSEKMSKeyId;
     }
 
-    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-        this.sSEKMSKeyId = sSEKMSKeyId;
-    }
-
     public Boolean bucketKeyEnabled() {
         return bucketKeyEnabled;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
     }
 
     public StorageClass storageClass() {
         return storageClass;
     }
 
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
     public RequestCharged requestCharged() {
         return requestCharged;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
     }
 
     public ReplicationStatus replicationStatus() {
         return replicationStatus;
     }
 
-    public void setReplicationStatus(final ReplicationStatus replicationStatus) {
-        this.replicationStatus = replicationStatus;
-    }
-
     public Integer partsCount() {
         return partsCount;
-    }
-
-    public void setPartsCount(final Integer partsCount) {
-        this.partsCount = partsCount;
     }
 
     public Integer tagCount() {
         return tagCount;
     }
 
-    public void setTagCount(final Integer tagCount) {
-        this.tagCount = tagCount;
-    }
-
     public ObjectLockMode objectLockMode() {
         return objectLockMode;
-    }
-
-    public void setObjectLockMode(final ObjectLockMode objectLockMode) {
-        this.objectLockMode = objectLockMode;
     }
 
     public Instant objectLockRetainUntilDate() {
         return objectLockRetainUntilDate;
     }
 
-    public void setObjectLockRetainUntilDate(final Instant objectLockRetainUntilDate) {
-        this.objectLockRetainUntilDate = objectLockRetainUntilDate;
-    }
-
     public ObjectLockLegalHoldStatus objectLockLegalHoldStatus() {
         return objectLockLegalHoldStatus;
+    }
+
+    public void setBody(final byte[] body) {
+        this.body = body;
+    }
+
+    public void setDeleteMarker(final Boolean deleteMarker) {
+        this.deleteMarker = deleteMarker;
+    }
+
+    public void setAcceptRanges(final String acceptRanges) {
+        this.acceptRanges = acceptRanges;
+    }
+
+    public void setExpiration(final String expiration) {
+        this.expiration = expiration;
+    }
+
+    public void setRestore(final String restore) {
+        this.restore = restore;
+    }
+
+    public void setLastModified(final Instant lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    public void setContentLength(final Long contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public void setETag(final String eTag) {
+        this.eTag = eTag;
+    }
+
+    public void setMissingMeta(final Integer missingMeta) {
+        this.missingMeta = missingMeta;
+    }
+
+    public void setVersionId(final String versionId) {
+        this.versionId = versionId;
+    }
+
+    public void setCacheControl(final String cacheControl) {
+        this.cacheControl = cacheControl;
+    }
+
+    public void setContentDisposition(final String contentDisposition) {
+        this.contentDisposition = contentDisposition;
+    }
+
+    public void setContentEncoding(final String contentEncoding) {
+        this.contentEncoding = contentEncoding;
+    }
+
+    public void setContentLanguage(final String contentLanguage) {
+        this.contentLanguage = contentLanguage;
+    }
+
+    public void setContentRange(final String contentRange) {
+        this.contentRange = contentRange;
+    }
+
+    public void setContentType(final String contentType) {
+        this.contentType = contentType;
+    }
+
+    public void setExpires(final Instant expires) {
+        this.expires = expires;
+    }
+
+    public void setWebsiteRedirectLocation(final String websiteRedirectLocation) {
+        this.websiteRedirectLocation = websiteRedirectLocation;
+    }
+
+    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
+        this.serverSideEncryption = serverSideEncryption;
+    }
+
+    public void setMetadata(final Map<String, String> metadata) {
+        this.metadata = metadata;
+    }
+
+    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+    }
+
+    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+    }
+
+    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
+        this.sSEKMSKeyId = sSEKMSKeyId;
+    }
+
+    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
+        this.bucketKeyEnabled = bucketKeyEnabled;
+    }
+
+    public void setStorageClass(final StorageClass storageClass) {
+        this.storageClass = storageClass;
+    }
+
+    public void setRequestCharged(final RequestCharged requestCharged) {
+        this.requestCharged = requestCharged;
+    }
+
+    public void setReplicationStatus(final ReplicationStatus replicationStatus) {
+        this.replicationStatus = replicationStatus;
+    }
+
+    public void setPartsCount(final Integer partsCount) {
+        this.partsCount = partsCount;
+    }
+
+    public void setTagCount(final Integer tagCount) {
+        this.tagCount = tagCount;
+    }
+
+    public void setObjectLockMode(final ObjectLockMode objectLockMode) {
+        this.objectLockMode = objectLockMode;
+    }
+
+    public void setObjectLockRetainUntilDate(final Instant objectLockRetainUntilDate) {
+        this.objectLockRetainUntilDate = objectLockRetainUntilDate;
     }
 
     public void setObjectLockLegalHoldStatus(
@@ -425,75 +538,254 @@ public class GetObjectOutput {
         this.objectLockLegalHoldStatus = objectLockLegalHoldStatus;
     }
 
-    static final class Builder {
-        private byte[] body;
+    public interface Builder {
+        Builder body(byte[] body);
 
-        private Boolean deleteMarker;
+        Builder deleteMarker(Boolean deleteMarker);
 
-        private String acceptRanges;
+        Builder acceptRanges(String acceptRanges);
 
-        private String expiration;
+        Builder expiration(String expiration);
 
-        private String restore;
+        Builder restore(String restore);
 
-        private Instant lastModified;
+        Builder lastModified(Instant lastModified);
 
-        private Long contentLength;
+        Builder contentLength(Long contentLength);
 
-        private String eTag;
+        Builder eTag(String eTag);
 
-        private Integer missingMeta;
+        Builder missingMeta(Integer missingMeta);
 
-        private String versionId;
+        Builder versionId(String versionId);
 
-        private String cacheControl;
+        Builder cacheControl(String cacheControl);
 
-        private String contentDisposition;
+        Builder contentDisposition(String contentDisposition);
 
-        private String contentEncoding;
+        Builder contentEncoding(String contentEncoding);
 
-        private String contentLanguage;
+        Builder contentLanguage(String contentLanguage);
 
-        private String contentRange;
+        Builder contentRange(String contentRange);
 
-        private String contentType;
+        Builder contentType(String contentType);
 
-        private Instant expires;
+        Builder expires(Instant expires);
 
-        private String websiteRedirectLocation;
+        Builder websiteRedirectLocation(String websiteRedirectLocation);
 
-        private ServerSideEncryption serverSideEncryption;
+        Builder serverSideEncryption(ServerSideEncryption serverSideEncryption);
 
-        private Map<String, String> metadata;
+        Builder metadata(Map<String, String> metadata);
 
-        private String sSECustomerAlgorithm;
+        Builder sSECustomerAlgorithm(String sSECustomerAlgorithm);
 
-        private String sSECustomerKeyMD5;
+        Builder sSECustomerKeyMD5(String sSECustomerKeyMD5);
 
-        private String sSEKMSKeyId;
+        Builder sSEKMSKeyId(String sSEKMSKeyId);
 
-        private Boolean bucketKeyEnabled;
+        Builder bucketKeyEnabled(Boolean bucketKeyEnabled);
 
-        private StorageClass storageClass;
+        Builder storageClass(StorageClass storageClass);
 
-        private RequestCharged requestCharged;
+        Builder requestCharged(RequestCharged requestCharged);
 
-        private ReplicationStatus replicationStatus;
+        Builder replicationStatus(ReplicationStatus replicationStatus);
 
-        private Integer partsCount;
+        Builder partsCount(Integer partsCount);
 
-        private Integer tagCount;
+        Builder tagCount(Integer tagCount);
 
-        private ObjectLockMode objectLockMode;
+        Builder objectLockMode(ObjectLockMode objectLockMode);
 
-        private Instant objectLockRetainUntilDate;
+        Builder objectLockRetainUntilDate(Instant objectLockRetainUntilDate);
 
-        private ObjectLockLegalHoldStatus objectLockLegalHoldStatus;
+        Builder objectLockLegalHoldStatus(ObjectLockLegalHoldStatus objectLockLegalHoldStatus);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Object data.</p>
+         */
+        byte[] body;
+
+        /**
+         * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete Marker. If
+         *          false, this response header does not appear in the response.</p>
+         */
+        Boolean deleteMarker;
+
+        /**
+         * <p>Indicates that a range of bytes was specified.</p>
+         */
+        String acceptRanges;
+
+        /**
+         * <p>If the object expiration is configured (see PUT Bucket lifecycle), the response includes
+         *          this header. It includes the expiry-date and rule-id key-value pairs providing object
+         *          expiration information. The value of the rule-id is URL encoded.</p>
+         */
+        String expiration;
+
+        /**
+         * <p>Provides information about object restoration operation and expiration time of the
+         *          restored object copy.</p>
+         */
+        String restore;
+
+        /**
+         * <p>Last modified date of the object</p>
+         */
+        Instant lastModified;
+
+        /**
+         * <p>Size of the body in bytes.</p>
+         */
+        Long contentLength;
+
+        /**
+         * <p>An ETag is an opaque identifier assigned by a web server to a specific version of a
+         *          resource found at a URL.</p>
+         */
+        String eTag;
+
+        /**
+         * <p>This is set to the number of metadata entries not returned in <code>x-amz-meta</code>
+         *          headers. This can happen if you create metadata using an API like SOAP that supports more
+         *          flexible metadata than the REST API. For example, using SOAP, you can create metadata whose
+         *          values are not legal HTTP headers.</p>
+         */
+        Integer missingMeta;
+
+        /**
+         * <p>Version of the object.</p>
+         */
+        String versionId;
+
+        /**
+         * <p>Specifies caching behavior along the request/reply chain.</p>
+         */
+        String cacheControl;
+
+        /**
+         * <p>Specifies presentational information for the object.</p>
+         */
+        String contentDisposition;
+
+        /**
+         * <p>Specifies what content encodings have been applied to the object and thus what decoding
+         *          mechanisms must be applied to obtain the media-type referenced by the Content-Type header
+         *          field.</p>
+         */
+        String contentEncoding;
+
+        /**
+         * <p>The language the content is in.</p>
+         */
+        String contentLanguage;
+
+        /**
+         * <p>The portion of the object returned in the response.</p>
+         */
+        String contentRange;
+
+        /**
+         * <p>A standard MIME type describing the format of the object data.</p>
+         */
+        String contentType;
+
+        /**
+         * <p>The date and time at which the object is no longer cacheable.</p>
+         */
+        Instant expires;
+
+        /**
+         * <p>If the bucket is configured as a website, redirects requests for this object to another
+         *          object in the same bucket or to an external URL. Amazon S3 stores the value of this header in
+         *          the object metadata.</p>
+         */
+        String websiteRedirectLocation;
+
+        /**
+         * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
+         *          AES256, aws:kms).</p>
+         */
+        ServerSideEncryption serverSideEncryption;
+
+        /**
+         * <p>A map of metadata to store with the object in S3.</p>
+         */
+        Map<String, String> metadata;
+
+        /**
+         * <p>If server-side encryption with a customer-provided encryption key was requested, the
+         *          response will include this header confirming the encryption algorithm used.</p>
+         */
+        String sSECustomerAlgorithm;
+
+        /**
+         * <p>If server-side encryption with a customer-provided encryption key was requested, the
+         *          response will include this header to provide round-trip message integrity verification of
+         *          the customer-provided encryption key.</p>
+         */
+        String sSECustomerKeyMD5;
+
+        /**
+         * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
+         *          customer managed customer master key (CMK) that was used for the object.</p>
+         */
+        String sSEKMSKeyId;
+
+        /**
+         * <p>Indicates whether the object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
+         */
+        Boolean bucketKeyEnabled;
+
+        /**
+         * <p>Provides storage class information of the object. Amazon S3 returns this header for all
+         *          objects except for S3 Standard storage class objects.</p>
+         */
+        StorageClass storageClass;
+
+        RequestCharged requestCharged;
+
+        /**
+         * <p>Amazon S3 can return this if your request involves a bucket that is either a source or
+         *          destination in a replication rule.</p>
+         */
+        ReplicationStatus replicationStatus;
+
+        /**
+         * <p>The count of parts this object has.</p>
+         */
+        Integer partsCount;
+
+        /**
+         * <p>The number of tags, if any, on the object.</p>
+         */
+        Integer tagCount;
+
+        /**
+         * <p>The Object Lock mode currently in place for this object.</p>
+         */
+        ObjectLockMode objectLockMode;
+
+        /**
+         * <p>The date and time when this object's Object Lock will expire.</p>
+         */
+        Instant objectLockRetainUntilDate;
+
+        /**
+         * <p>Indicates whether this object has an active legal hold. This field is only returned if
+         *          you have permission to view an object's legal hold status. </p>
+         */
+        ObjectLockLegalHoldStatus objectLockLegalHoldStatus;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetObjectOutput model) {
+        private BuilderImpl(GetObjectOutput model) {
             body(model.body);
             deleteMarker(model.deleteMarker);
             acceptRanges(model.acceptRanges);
@@ -529,222 +821,129 @@ public class GetObjectOutput {
         }
 
         public GetObjectOutput build() {
-            return new com.amazonaws.s3.model.GetObjectOutput(this);
+            return new GetObjectOutput(this);
         }
 
-        /**
-         * <p>Object data.</p>
-         */
         public final Builder body(byte[] body) {
             this.body = body;
             return this;
         }
 
-        /**
-         * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete Marker. If
-         *          false, this response header does not appear in the response.</p>
-         */
         public final Builder deleteMarker(Boolean deleteMarker) {
             this.deleteMarker = deleteMarker;
             return this;
         }
 
-        /**
-         * <p>Indicates that a range of bytes was specified.</p>
-         */
         public final Builder acceptRanges(String acceptRanges) {
             this.acceptRanges = acceptRanges;
             return this;
         }
 
-        /**
-         * <p>If the object expiration is configured (see PUT Bucket lifecycle), the response includes
-         *          this header. It includes the expiry-date and rule-id key-value pairs providing object
-         *          expiration information. The value of the rule-id is URL encoded.</p>
-         */
         public final Builder expiration(String expiration) {
             this.expiration = expiration;
             return this;
         }
 
-        /**
-         * <p>Provides information about object restoration operation and expiration time of the
-         *          restored object copy.</p>
-         */
         public final Builder restore(String restore) {
             this.restore = restore;
             return this;
         }
 
-        /**
-         * <p>Last modified date of the object</p>
-         */
         public final Builder lastModified(Instant lastModified) {
             this.lastModified = lastModified;
             return this;
         }
 
-        /**
-         * <p>Size of the body in bytes.</p>
-         */
         public final Builder contentLength(Long contentLength) {
             this.contentLength = contentLength;
             return this;
         }
 
-        /**
-         * <p>An ETag is an opaque identifier assigned by a web server to a specific version of a
-         *          resource found at a URL.</p>
-         */
         public final Builder eTag(String eTag) {
             this.eTag = eTag;
             return this;
         }
 
-        /**
-         * <p>This is set to the number of metadata entries not returned in <code>x-amz-meta</code>
-         *          headers. This can happen if you create metadata using an API like SOAP that supports more
-         *          flexible metadata than the REST API. For example, using SOAP, you can create metadata whose
-         *          values are not legal HTTP headers.</p>
-         */
         public final Builder missingMeta(Integer missingMeta) {
             this.missingMeta = missingMeta;
             return this;
         }
 
-        /**
-         * <p>Version of the object.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
         }
 
-        /**
-         * <p>Specifies caching behavior along the request/reply chain.</p>
-         */
         public final Builder cacheControl(String cacheControl) {
             this.cacheControl = cacheControl;
             return this;
         }
 
-        /**
-         * <p>Specifies presentational information for the object.</p>
-         */
         public final Builder contentDisposition(String contentDisposition) {
             this.contentDisposition = contentDisposition;
             return this;
         }
 
-        /**
-         * <p>Specifies what content encodings have been applied to the object and thus what decoding
-         *          mechanisms must be applied to obtain the media-type referenced by the Content-Type header
-         *          field.</p>
-         */
         public final Builder contentEncoding(String contentEncoding) {
             this.contentEncoding = contentEncoding;
             return this;
         }
 
-        /**
-         * <p>The language the content is in.</p>
-         */
         public final Builder contentLanguage(String contentLanguage) {
             this.contentLanguage = contentLanguage;
             return this;
         }
 
-        /**
-         * <p>The portion of the object returned in the response.</p>
-         */
         public final Builder contentRange(String contentRange) {
             this.contentRange = contentRange;
             return this;
         }
 
-        /**
-         * <p>A standard MIME type describing the format of the object data.</p>
-         */
         public final Builder contentType(String contentType) {
             this.contentType = contentType;
             return this;
         }
 
-        /**
-         * <p>The date and time at which the object is no longer cacheable.</p>
-         */
         public final Builder expires(Instant expires) {
             this.expires = expires;
             return this;
         }
 
-        /**
-         * <p>If the bucket is configured as a website, redirects requests for this object to another
-         *          object in the same bucket or to an external URL. Amazon S3 stores the value of this header in
-         *          the object metadata.</p>
-         */
         public final Builder websiteRedirectLocation(String websiteRedirectLocation) {
             this.websiteRedirectLocation = websiteRedirectLocation;
             return this;
         }
 
-        /**
-         * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
-         *          AES256, aws:kms).</p>
-         */
         public final Builder serverSideEncryption(ServerSideEncryption serverSideEncryption) {
             this.serverSideEncryption = serverSideEncryption;
             return this;
         }
 
-        /**
-         * <p>A map of metadata to store with the object in S3.</p>
-         */
         public final Builder metadata(Map<String, String> metadata) {
             this.metadata = metadata;
             return this;
         }
 
-        /**
-         * <p>If server-side encryption with a customer-provided encryption key was requested, the
-         *          response will include this header confirming the encryption algorithm used.</p>
-         */
         public final Builder sSECustomerAlgorithm(String sSECustomerAlgorithm) {
             this.sSECustomerAlgorithm = sSECustomerAlgorithm;
             return this;
         }
 
-        /**
-         * <p>If server-side encryption with a customer-provided encryption key was requested, the
-         *          response will include this header to provide round-trip message integrity verification of
-         *          the customer-provided encryption key.</p>
-         */
         public final Builder sSECustomerKeyMD5(String sSECustomerKeyMD5) {
             this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
             return this;
         }
 
-        /**
-         * <p>If present, specifies the ID of the AWS Key Management Service (AWS KMS) symmetric
-         *          customer managed customer master key (CMK) that was used for the object.</p>
-         */
         public final Builder sSEKMSKeyId(String sSEKMSKeyId) {
             this.sSEKMSKeyId = sSEKMSKeyId;
             return this;
         }
 
-        /**
-         * <p>Indicates whether the object uses an S3 Bucket Key for server-side encryption with AWS KMS (SSE-KMS).</p>
-         */
         public final Builder bucketKeyEnabled(Boolean bucketKeyEnabled) {
             this.bucketKeyEnabled = bucketKeyEnabled;
             return this;
         }
 
-        /**
-         * <p>Provides storage class information of the object. Amazon S3 returns this header for all
-         *          objects except for S3 Standard storage class objects.</p>
-         */
         public final Builder storageClass(StorageClass storageClass) {
             this.storageClass = storageClass;
             return this;
@@ -755,55 +954,303 @@ public class GetObjectOutput {
             return this;
         }
 
-        /**
-         * <p>Amazon S3 can return this if your request involves a bucket that is either a source or
-         *          destination in a replication rule.</p>
-         */
         public final Builder replicationStatus(ReplicationStatus replicationStatus) {
             this.replicationStatus = replicationStatus;
             return this;
         }
 
-        /**
-         * <p>The count of parts this object has.</p>
-         */
         public final Builder partsCount(Integer partsCount) {
             this.partsCount = partsCount;
             return this;
         }
 
-        /**
-         * <p>The number of tags, if any, on the object.</p>
-         */
         public final Builder tagCount(Integer tagCount) {
             this.tagCount = tagCount;
             return this;
         }
 
-        /**
-         * <p>The Object Lock mode currently in place for this object.</p>
-         */
         public final Builder objectLockMode(ObjectLockMode objectLockMode) {
             this.objectLockMode = objectLockMode;
             return this;
         }
 
-        /**
-         * <p>The date and time when this object's Object Lock will expire.</p>
-         */
         public final Builder objectLockRetainUntilDate(Instant objectLockRetainUntilDate) {
             this.objectLockRetainUntilDate = objectLockRetainUntilDate;
             return this;
         }
 
-        /**
-         * <p>Indicates whether this object has an active legal hold. This field is only returned if
-         *          you have permission to view an object's legal hold status. </p>
-         */
         public final Builder objectLockLegalHoldStatus(
                 ObjectLockLegalHoldStatus objectLockLegalHoldStatus) {
             this.objectLockLegalHoldStatus = objectLockLegalHoldStatus;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public byte[] body() {
+            return body;
+        }
+
+        public Boolean deleteMarker() {
+            return deleteMarker;
+        }
+
+        public String acceptRanges() {
+            return acceptRanges;
+        }
+
+        public String expiration() {
+            return expiration;
+        }
+
+        public String restore() {
+            return restore;
+        }
+
+        public Instant lastModified() {
+            return lastModified;
+        }
+
+        public Long contentLength() {
+            return contentLength;
+        }
+
+        public String eTag() {
+            return eTag;
+        }
+
+        public Integer missingMeta() {
+            return missingMeta;
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public String cacheControl() {
+            return cacheControl;
+        }
+
+        public String contentDisposition() {
+            return contentDisposition;
+        }
+
+        public String contentEncoding() {
+            return contentEncoding;
+        }
+
+        public String contentLanguage() {
+            return contentLanguage;
+        }
+
+        public String contentRange() {
+            return contentRange;
+        }
+
+        public String contentType() {
+            return contentType;
+        }
+
+        public Instant expires() {
+            return expires;
+        }
+
+        public String websiteRedirectLocation() {
+            return websiteRedirectLocation;
+        }
+
+        public ServerSideEncryption serverSideEncryption() {
+            return serverSideEncryption;
+        }
+
+        public Map<String, String> metadata() {
+            return metadata;
+        }
+
+        public String sSECustomerAlgorithm() {
+            return sSECustomerAlgorithm;
+        }
+
+        public String sSECustomerKeyMD5() {
+            return sSECustomerKeyMD5;
+        }
+
+        public String sSEKMSKeyId() {
+            return sSEKMSKeyId;
+        }
+
+        public Boolean bucketKeyEnabled() {
+            return bucketKeyEnabled;
+        }
+
+        public StorageClass storageClass() {
+            return storageClass;
+        }
+
+        public RequestCharged requestCharged() {
+            return requestCharged;
+        }
+
+        public ReplicationStatus replicationStatus() {
+            return replicationStatus;
+        }
+
+        public Integer partsCount() {
+            return partsCount;
+        }
+
+        public Integer tagCount() {
+            return tagCount;
+        }
+
+        public ObjectLockMode objectLockMode() {
+            return objectLockMode;
+        }
+
+        public Instant objectLockRetainUntilDate() {
+            return objectLockRetainUntilDate;
+        }
+
+        public ObjectLockLegalHoldStatus objectLockLegalHoldStatus() {
+            return objectLockLegalHoldStatus;
+        }
+
+        public void setBody(final byte[] body) {
+            this.body = body;
+        }
+
+        public void setDeleteMarker(final Boolean deleteMarker) {
+            this.deleteMarker = deleteMarker;
+        }
+
+        public void setAcceptRanges(final String acceptRanges) {
+            this.acceptRanges = acceptRanges;
+        }
+
+        public void setExpiration(final String expiration) {
+            this.expiration = expiration;
+        }
+
+        public void setRestore(final String restore) {
+            this.restore = restore;
+        }
+
+        public void setLastModified(final Instant lastModified) {
+            this.lastModified = lastModified;
+        }
+
+        public void setContentLength(final Long contentLength) {
+            this.contentLength = contentLength;
+        }
+
+        public void setETag(final String eTag) {
+            this.eTag = eTag;
+        }
+
+        public void setMissingMeta(final Integer missingMeta) {
+            this.missingMeta = missingMeta;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
+        }
+
+        public void setCacheControl(final String cacheControl) {
+            this.cacheControl = cacheControl;
+        }
+
+        public void setContentDisposition(final String contentDisposition) {
+            this.contentDisposition = contentDisposition;
+        }
+
+        public void setContentEncoding(final String contentEncoding) {
+            this.contentEncoding = contentEncoding;
+        }
+
+        public void setContentLanguage(final String contentLanguage) {
+            this.contentLanguage = contentLanguage;
+        }
+
+        public void setContentRange(final String contentRange) {
+            this.contentRange = contentRange;
+        }
+
+        public void setContentType(final String contentType) {
+            this.contentType = contentType;
+        }
+
+        public void setExpires(final Instant expires) {
+            this.expires = expires;
+        }
+
+        public void setWebsiteRedirectLocation(final String websiteRedirectLocation) {
+            this.websiteRedirectLocation = websiteRedirectLocation;
+        }
+
+        public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+        }
+
+        public void setMetadata(final Map<String, String> metadata) {
+            this.metadata = metadata;
+        }
+
+        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+        }
+
+        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+        }
+
+        public void setSSEKMSKeyId(final String sSEKMSKeyId) {
+            this.sSEKMSKeyId = sSEKMSKeyId;
+        }
+
+        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
+            this.bucketKeyEnabled = bucketKeyEnabled;
+        }
+
+        public void setStorageClass(final StorageClass storageClass) {
+            this.storageClass = storageClass;
+        }
+
+        public void setRequestCharged(final RequestCharged requestCharged) {
+            this.requestCharged = requestCharged;
+        }
+
+        public void setReplicationStatus(final ReplicationStatus replicationStatus) {
+            this.replicationStatus = replicationStatus;
+        }
+
+        public void setPartsCount(final Integer partsCount) {
+            this.partsCount = partsCount;
+        }
+
+        public void setTagCount(final Integer tagCount) {
+            this.tagCount = tagCount;
+        }
+
+        public void setObjectLockMode(final ObjectLockMode objectLockMode) {
+            this.objectLockMode = objectLockMode;
+        }
+
+        public void setObjectLockRetainUntilDate(final Instant objectLockRetainUntilDate) {
+            this.objectLockRetainUntilDate = objectLockRetainUntilDate;
+        }
+
+        public void setObjectLockLegalHoldStatus(
+                final ObjectLockLegalHoldStatus objectLockLegalHoldStatus) {
+            this.objectLockLegalHoldStatus = objectLockLegalHoldStatus;
         }
     }
 }

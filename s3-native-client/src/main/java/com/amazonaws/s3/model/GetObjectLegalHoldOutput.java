@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectLegalHoldOutput {
-    private ObjectLockLegalHold legalHold;
+    /**
+     * <p>The current Legal Hold status for the specified object.</p>
+     */
+    ObjectLockLegalHold legalHold;
 
-    private GetObjectLegalHoldOutput() {
+    GetObjectLegalHoldOutput() {
         this.legalHold = null;
     }
 
-    private GetObjectLegalHoldOutput(Builder builder) {
+    protected GetObjectLegalHoldOutput(BuilderImpl builder) {
         this.legalHold = builder.legalHold;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class GetObjectLegalHoldOutput {
         this.legalHold = legalHold;
     }
 
-    static final class Builder {
-        private ObjectLockLegalHold legalHold;
+    public interface Builder {
+        Builder legalHold(ObjectLockLegalHold legalHold);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The current Legal Hold status for the specified object.</p>
+         */
+        ObjectLockLegalHold legalHold;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetObjectLegalHoldOutput model) {
+        private BuilderImpl(GetObjectLegalHoldOutput model) {
             legalHold(model.legalHold);
         }
 
         public GetObjectLegalHoldOutput build() {
-            return new com.amazonaws.s3.model.GetObjectLegalHoldOutput(this);
+            return new GetObjectLegalHoldOutput(this);
         }
 
-        /**
-         * <p>The current Legal Hold status for the specified object.</p>
-         */
         public final Builder legalHold(ObjectLockLegalHold legalHold) {
             this.legalHold = legalHold;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockLegalHold legalHold() {
+            return legalHold;
+        }
+
+        public void setLegalHold(final ObjectLockLegalHold legalHold) {
+            this.legalHold = legalHold;
         }
     }
 }

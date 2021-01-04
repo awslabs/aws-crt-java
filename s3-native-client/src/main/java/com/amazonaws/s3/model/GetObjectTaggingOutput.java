@@ -7,30 +7,36 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectTaggingOutput {
-    private String versionId;
+    /**
+     * <p>The versionId of the object for which you got the tagging information.</p>
+     */
+    String versionId;
 
-    private List<Tag> tagSet;
+    /**
+     * <p>Contains the tag set.</p>
+     */
+    List<Tag> tagSet;
 
-    private GetObjectTaggingOutput() {
-        this.versionId = null;
+    GetObjectTaggingOutput() {
+        this.versionId = "";
         this.tagSet = null;
     }
 
-    private GetObjectTaggingOutput(Builder builder) {
+    protected GetObjectTaggingOutput(BuilderImpl builder) {
         this.versionId = builder.versionId;
         this.tagSet = builder.tagSet;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -48,49 +54,82 @@ public class GetObjectTaggingOutput {
         return versionId;
     }
 
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
     public List<Tag> tagSet() {
         return tagSet;
+    }
+
+    public void setVersionId(final String versionId) {
+        this.versionId = versionId;
     }
 
     public void setTagSet(final List<Tag> tagSet) {
         this.tagSet = tagSet;
     }
 
-    static final class Builder {
-        private String versionId;
+    public interface Builder {
+        Builder versionId(String versionId);
 
-        private List<Tag> tagSet;
+        Builder tagSet(List<Tag> tagSet);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The versionId of the object for which you got the tagging information.</p>
+         */
+        String versionId;
+
+        /**
+         * <p>Contains the tag set.</p>
+         */
+        List<Tag> tagSet;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetObjectTaggingOutput model) {
+        private BuilderImpl(GetObjectTaggingOutput model) {
             versionId(model.versionId);
             tagSet(model.tagSet);
         }
 
         public GetObjectTaggingOutput build() {
-            return new com.amazonaws.s3.model.GetObjectTaggingOutput(this);
+            return new GetObjectTaggingOutput(this);
         }
 
-        /**
-         * <p>The versionId of the object for which you got the tagging information.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
         }
 
-        /**
-         * <p>Contains the tag set.</p>
-         */
         public final Builder tagSet(List<Tag> tagSet) {
             this.tagSet = tagSet;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public List<Tag> tagSet() {
+            return tagSet;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
+        }
+
+        public void setTagSet(final List<Tag> tagSet) {
+            this.tagSet = tagSet;
         }
     }
 }

@@ -6,27 +6,27 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum ObjectCannedACL {
-    PRIVATE("private"),
+enum ObjectCannedACL {
+    PRIVATE("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    PUBLIC_READ("public-read"),
+    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    PUBLIC_READ_WRITE("public-read-write"),
+    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    AUTHENTICATED_READ("authenticated-read"),
+    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    AWS_EXEC_READ("aws-exec-read"),
+    AWS_EXEC_READ("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    BUCKET_OWNER_READ("bucket-owner-read"),
+    BUCKET_OWNER_READ("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    BUCKET_OWNER_FULL_CONTROL("bucket-owner-full-control"),
+    BUCKET_OWNER_FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@27a0ddc5"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private ObjectCannedACL(String value) {
         this.value = value;
@@ -41,5 +41,13 @@ public enum ObjectCannedACL {
 
     public static Set<ObjectCannedACL> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

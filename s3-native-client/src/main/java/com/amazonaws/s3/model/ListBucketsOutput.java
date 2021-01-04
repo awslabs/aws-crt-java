@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListBucketsOutput {
-    private List<Bucket> buckets;
+    /**
+     * <p>The list of buckets owned by the requestor.</p>
+     */
+    List<Bucket> buckets;
 
-    private Owner owner;
+    /**
+     * <p>The owner of the buckets listed.</p>
+     */
+    Owner owner;
 
-    private ListBucketsOutput() {
+    ListBucketsOutput() {
         this.buckets = null;
         this.owner = null;
     }
 
-    private ListBucketsOutput(Builder builder) {
+    protected ListBucketsOutput(BuilderImpl builder) {
         this.buckets = builder.buckets;
         this.owner = builder.owner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class ListBucketsOutput {
         return buckets;
     }
 
-    public void setBuckets(final List<Bucket> buckets) {
-        this.buckets = buckets;
-    }
-
     public Owner owner() {
         return owner;
+    }
+
+    public void setBuckets(final List<Bucket> buckets) {
+        this.buckets = buckets;
     }
 
     public void setOwner(final Owner owner) {
         this.owner = owner;
     }
 
-    static final class Builder {
-        private List<Bucket> buckets;
+    public interface Builder {
+        Builder buckets(List<Bucket> buckets);
 
-        private Owner owner;
+        Builder owner(Owner owner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The list of buckets owned by the requestor.</p>
+         */
+        List<Bucket> buckets;
+
+        /**
+         * <p>The owner of the buckets listed.</p>
+         */
+        Owner owner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ListBucketsOutput model) {
+        private BuilderImpl(ListBucketsOutput model) {
             buckets(model.buckets);
             owner(model.owner);
         }
 
         public ListBucketsOutput build() {
-            return new com.amazonaws.s3.model.ListBucketsOutput(this);
+            return new ListBucketsOutput(this);
         }
 
-        /**
-         * <p>The list of buckets owned by the requestor.</p>
-         */
         public final Builder buckets(List<Bucket> buckets) {
             this.buckets = buckets;
             return this;
         }
 
-        /**
-         * <p>The owner of the buckets listed.</p>
-         */
         public final Builder owner(Owner owner) {
             this.owner = owner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<Bucket> buckets() {
+            return buckets;
+        }
+
+        public Owner owner() {
+            return owner;
+        }
+
+        public void setBuckets(final List<Bucket> buckets) {
+            this.buckets = buckets;
+        }
+
+        public void setOwner(final Owner owner) {
+            this.owner = owner;
         }
     }
 }

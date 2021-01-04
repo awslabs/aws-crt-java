@@ -5,26 +5,26 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketReplicationOutput {
-    private ReplicationConfiguration replicationConfiguration;
+    ReplicationConfiguration replicationConfiguration;
 
-    private GetBucketReplicationOutput() {
+    GetBucketReplicationOutput() {
         this.replicationConfiguration = null;
     }
 
-    private GetBucketReplicationOutput(Builder builder) {
+    protected GetBucketReplicationOutput(BuilderImpl builder) {
         this.replicationConfiguration = builder.replicationConfiguration;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,24 +47,48 @@ public class GetBucketReplicationOutput {
         this.replicationConfiguration = replicationConfiguration;
     }
 
-    static final class Builder {
-        private ReplicationConfiguration replicationConfiguration;
+    public interface Builder {
+        Builder replicationConfiguration(ReplicationConfiguration replicationConfiguration);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        ReplicationConfiguration replicationConfiguration;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketReplicationOutput model) {
+        private BuilderImpl(GetBucketReplicationOutput model) {
             replicationConfiguration(model.replicationConfiguration);
         }
 
         public GetBucketReplicationOutput build() {
-            return new com.amazonaws.s3.model.GetBucketReplicationOutput(this);
+            return new GetBucketReplicationOutput(this);
         }
 
         public final Builder replicationConfiguration(
                 ReplicationConfiguration replicationConfiguration) {
             this.replicationConfiguration = replicationConfiguration;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ReplicationConfiguration replicationConfiguration() {
+            return replicationConfiguration;
+        }
+
+        public void setReplicationConfiguration(
+                final ReplicationConfiguration replicationConfiguration) {
+            this.replicationConfiguration = replicationConfiguration;
         }
     }
 }

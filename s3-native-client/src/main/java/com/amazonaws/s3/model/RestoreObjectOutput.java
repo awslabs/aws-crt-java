@@ -6,30 +6,34 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class RestoreObjectOutput {
-    private RequestCharged requestCharged;
+    RequestCharged requestCharged;
 
-    private String restoreOutputPath;
+    /**
+     * <p>Indicates the path in the provided S3 output location where Select results will be
+     *          restored to.</p>
+     */
+    String restoreOutputPath;
 
-    private RestoreObjectOutput() {
+    RestoreObjectOutput() {
         this.requestCharged = null;
-        this.restoreOutputPath = null;
+        this.restoreOutputPath = "";
     }
 
-    private RestoreObjectOutput(Builder builder) {
+    protected RestoreObjectOutput(BuilderImpl builder) {
         this.requestCharged = builder.requestCharged;
         this.restoreOutputPath = builder.restoreOutputPath;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,33 +51,43 @@ public class RestoreObjectOutput {
         return requestCharged;
     }
 
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public String restoreOutputPath() {
         return restoreOutputPath;
+    }
+
+    public void setRequestCharged(final RequestCharged requestCharged) {
+        this.requestCharged = requestCharged;
     }
 
     public void setRestoreOutputPath(final String restoreOutputPath) {
         this.restoreOutputPath = restoreOutputPath;
     }
 
-    static final class Builder {
-        private RequestCharged requestCharged;
+    public interface Builder {
+        Builder requestCharged(RequestCharged requestCharged);
 
-        private String restoreOutputPath;
+        Builder restoreOutputPath(String restoreOutputPath);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        RequestCharged requestCharged;
+
+        /**
+         * <p>Indicates the path in the provided S3 output location where Select results will be
+         *          restored to.</p>
+         */
+        String restoreOutputPath;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(RestoreObjectOutput model) {
+        private BuilderImpl(RestoreObjectOutput model) {
             requestCharged(model.requestCharged);
             restoreOutputPath(model.restoreOutputPath);
         }
 
         public RestoreObjectOutput build() {
-            return new com.amazonaws.s3.model.RestoreObjectOutput(this);
+            return new RestoreObjectOutput(this);
         }
 
         public final Builder requestCharged(RequestCharged requestCharged) {
@@ -81,13 +95,36 @@ public class RestoreObjectOutput {
             return this;
         }
 
-        /**
-         * <p>Indicates the path in the provided S3 output location where Select results will be
-         *          restored to.</p>
-         */
         public final Builder restoreOutputPath(String restoreOutputPath) {
             this.restoreOutputPath = restoreOutputPath;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public RequestCharged requestCharged() {
+            return requestCharged;
+        }
+
+        public String restoreOutputPath() {
+            return restoreOutputPath;
+        }
+
+        public void setRequestCharged(final RequestCharged requestCharged) {
+            this.requestCharged = requestCharged;
+        }
+
+        public void setRestoreOutputPath(final String restoreOutputPath) {
+            this.restoreOutputPath = restoreOutputPath;
         }
     }
 }

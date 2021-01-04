@@ -6,38 +6,50 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketInventoryConfigurationRequest {
-    private String bucket;
+    /**
+     * <p>The name of the bucket where the inventory configuration will be stored.</p>
+     */
+    String bucket;
 
-    private String id;
+    /**
+     * <p>The ID used to identify the inventory configuration.</p>
+     */
+    String id;
 
-    private InventoryConfiguration inventoryConfiguration;
+    /**
+     * <p>Specifies the inventory configuration.</p>
+     */
+    InventoryConfiguration inventoryConfiguration;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private PutBucketInventoryConfigurationRequest() {
-        this.bucket = null;
-        this.id = null;
+    PutBucketInventoryConfigurationRequest() {
+        this.bucket = "";
+        this.id = "";
         this.inventoryConfiguration = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private PutBucketInventoryConfigurationRequest(Builder builder) {
+    protected PutBucketInventoryConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.id = builder.id;
         this.inventoryConfiguration = builder.inventoryConfiguration;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,47 +67,69 @@ public class PutBucketInventoryConfigurationRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String id() {
         return id;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
     }
 
     public InventoryConfiguration inventoryConfiguration() {
         return inventoryConfiguration;
     }
 
-    public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
-        this.inventoryConfiguration = inventoryConfiguration;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
+        this.inventoryConfiguration = inventoryConfiguration;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String id;
+        Builder id(String id);
 
-        private InventoryConfiguration inventoryConfiguration;
+        Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The name of the bucket where the inventory configuration will be stored.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>The ID used to identify the inventory configuration.</p>
+         */
+        String id;
+
+        /**
+         * <p>Specifies the inventory configuration.</p>
+         */
+        InventoryConfiguration inventoryConfiguration;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutBucketInventoryConfigurationRequest model) {
+        private BuilderImpl(PutBucketInventoryConfigurationRequest model) {
             bucket(model.bucket);
             id(model.id);
             inventoryConfiguration(model.inventoryConfiguration);
@@ -103,39 +137,70 @@ public class PutBucketInventoryConfigurationRequest {
         }
 
         public PutBucketInventoryConfigurationRequest build() {
-            return new com.amazonaws.s3.model.PutBucketInventoryConfigurationRequest(this);
+            return new PutBucketInventoryConfigurationRequest(this);
         }
 
-        /**
-         * <p>The name of the bucket where the inventory configuration will be stored.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The ID used to identify the inventory configuration.</p>
-         */
         public final Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        /**
-         * <p>Specifies the inventory configuration.</p>
-         */
         public final Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration) {
             this.inventoryConfiguration = inventoryConfiguration;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public InventoryConfiguration inventoryConfiguration() {
+            return inventoryConfiguration;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
+            this.inventoryConfiguration = inventoryConfiguration;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

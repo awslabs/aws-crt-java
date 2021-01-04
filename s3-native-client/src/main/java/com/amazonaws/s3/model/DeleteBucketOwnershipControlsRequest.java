@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteBucketOwnershipControlsRequest {
-    private String bucket;
+    /**
+     * <p>The Amazon S3 bucket whose <code>OwnershipControls</code> you want to delete. </p>
+     */
+    String bucket;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private DeleteBucketOwnershipControlsRequest() {
-        this.bucket = null;
-        this.expectedBucketOwner = null;
+    DeleteBucketOwnershipControlsRequest() {
+        this.bucket = "";
+        this.expectedBucketOwner = "";
     }
 
-    private DeleteBucketOwnershipControlsRequest(Builder builder) {
+    protected DeleteBucketOwnershipControlsRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class DeleteBucketOwnershipControlsRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The Amazon S3 bucket whose <code>OwnershipControls</code> you want to delete. </p>
+         */
+        String bucket;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DeleteBucketOwnershipControlsRequest model) {
+        private BuilderImpl(DeleteBucketOwnershipControlsRequest model) {
             bucket(model.bucket);
             expectedBucketOwner(model.expectedBucketOwner);
         }
 
         public DeleteBucketOwnershipControlsRequest build() {
-            return new com.amazonaws.s3.model.DeleteBucketOwnershipControlsRequest(this);
+            return new DeleteBucketOwnershipControlsRequest(this);
         }
 
-        /**
-         * <p>The Amazon S3 bucket whose <code>OwnershipControls</code> you want to delete. </p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

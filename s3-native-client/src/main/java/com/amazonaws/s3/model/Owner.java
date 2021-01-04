@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class Owner {
-    private String displayName;
+    /**
+     * <p>Container for the display name of the owner.</p>
+     */
+    String displayName;
 
-    private String iD;
+    /**
+     * <p>Container for the ID of the owner.</p>
+     */
+    String iD;
 
-    private Owner() {
-        this.displayName = null;
-        this.iD = null;
+    Owner() {
+        this.displayName = "";
+        this.iD = "";
     }
 
-    private Owner(Builder builder) {
+    protected Owner(BuilderImpl builder) {
         this.displayName = builder.displayName;
         this.iD = builder.iD;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class Owner {
         return displayName;
     }
 
-    public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
-    }
-
     public String iD() {
         return iD;
+    }
+
+    public void setDisplayName(final String displayName) {
+        this.displayName = displayName;
     }
 
     public void setID(final String iD) {
         this.iD = iD;
     }
 
-    static final class Builder {
-        private String displayName;
+    public interface Builder {
+        Builder displayName(String displayName);
 
-        private String iD;
+        Builder iD(String iD);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Container for the display name of the owner.</p>
+         */
+        String displayName;
+
+        /**
+         * <p>Container for the ID of the owner.</p>
+         */
+        String iD;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(Owner model) {
+        private BuilderImpl(Owner model) {
             displayName(model.displayName);
             iD(model.iD);
         }
 
         public Owner build() {
-            return new com.amazonaws.s3.model.Owner(this);
+            return new Owner(this);
         }
 
-        /**
-         * <p>Container for the display name of the owner.</p>
-         */
         public final Builder displayName(String displayName) {
             this.displayName = displayName;
             return this;
         }
 
-        /**
-         * <p>Container for the ID of the owner.</p>
-         */
         public final Builder iD(String iD) {
             this.iD = iD;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+
+        public String iD() {
+            return iD;
+        }
+
+        public void setDisplayName(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        public void setID(final String iD) {
+            this.iD = iD;
         }
     }
 }

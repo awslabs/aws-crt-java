@@ -6,17 +6,17 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum FilterRuleName {
-    PREFIX("prefix"),
+enum FilterRuleName {
+    PREFIX("software.amazon.smithy.crt.codegen.Field@da79932"),
 
-    SUFFIX("suffix"),
+    SUFFIX("software.amazon.smithy.crt.codegen.Field@da79932"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private FilterRuleName(String value) {
         this.value = value;
@@ -31,5 +31,13 @@ public enum FilterRuleName {
 
     public static Set<FilterRuleName> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

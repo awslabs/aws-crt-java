@@ -5,26 +5,30 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class InventoryDestination {
-    private InventoryS3BucketDestination s3BucketDestination;
+    /**
+     * <p>Contains the bucket name, file format, bucket owner (optional), and prefix (optional)
+     *          where inventory results are published.</p>
+     */
+    InventoryS3BucketDestination s3BucketDestination;
 
-    private InventoryDestination() {
+    InventoryDestination() {
         this.s3BucketDestination = null;
     }
 
-    private InventoryDestination(Builder builder) {
+    protected InventoryDestination(BuilderImpl builder) {
         this.s3BucketDestination = builder.s3BucketDestination;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,27 +50,50 @@ public class InventoryDestination {
         this.s3BucketDestination = s3BucketDestination;
     }
 
-    static final class Builder {
-        private InventoryS3BucketDestination s3BucketDestination;
+    public interface Builder {
+        Builder s3BucketDestination(InventoryS3BucketDestination s3BucketDestination);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(InventoryDestination model) {
-            s3BucketDestination(model.s3BucketDestination);
-        }
-
-        public InventoryDestination build() {
-            return new com.amazonaws.s3.model.InventoryDestination(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Contains the bucket name, file format, bucket owner (optional), and prefix (optional)
          *          where inventory results are published.</p>
          */
+        InventoryS3BucketDestination s3BucketDestination;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(InventoryDestination model) {
+            s3BucketDestination(model.s3BucketDestination);
+        }
+
+        public InventoryDestination build() {
+            return new InventoryDestination(this);
+        }
+
         public final Builder s3BucketDestination(InventoryS3BucketDestination s3BucketDestination) {
             this.s3BucketDestination = s3BucketDestination;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public InventoryS3BucketDestination s3BucketDestination() {
+            return s3BucketDestination;
+        }
+
+        public void setS3BucketDestination(final InventoryS3BucketDestination s3BucketDestination) {
+            this.s3BucketDestination = s3BucketDestination;
         }
     }
 }

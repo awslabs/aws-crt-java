@@ -6,21 +6,21 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum ReplicationStatus {
-    COMPLETE("COMPLETE"),
+enum ReplicationStatus {
+    COMPLETE("software.amazon.smithy.crt.codegen.Field@58e55bd9"),
 
-    PENDING("PENDING"),
+    PENDING("software.amazon.smithy.crt.codegen.Field@58e55bd9"),
 
-    FAILED("FAILED"),
+    FAILED("software.amazon.smithy.crt.codegen.Field@58e55bd9"),
 
-    REPLICA("REPLICA"),
+    REPLICA("software.amazon.smithy.crt.codegen.Field@58e55bd9"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private ReplicationStatus(String value) {
         this.value = value;
@@ -35,5 +35,13 @@ public enum ReplicationStatus {
 
     public static Set<ReplicationStatus> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

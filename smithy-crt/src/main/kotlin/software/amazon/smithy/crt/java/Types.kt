@@ -33,6 +33,10 @@ class Types(val pluginContext: PluginContext) {
         fun toTypeName(shape: Shape) : TypeName {
             return instance().toTypeName(shape)
         }
+
+        fun serviceException() : ClassName {
+            return instance().serviceException()
+        }
     }
 
     class TypeNameVisitor(private val types: Types) : ShapeVisitor<TypeName> {
@@ -273,5 +277,11 @@ class Types(val pluginContext: PluginContext) {
 
     fun toTypeName(shape: Shape): TypeName {
         return shape.accept(typeNameVisitor)
+    }
+
+    fun serviceException() : ClassName {
+        val namespace = pluginContext.model.shapes(ServiceShape::class.javaObjectType).findFirst().get().id.namespace
+        val name = pluginContext.model.shapes(ServiceShape::class.javaObjectType).findFirst().get().id.name.replace("Amazon", "") + "Exception"
+        return ClassName.get(namespace, name)
     }
 }

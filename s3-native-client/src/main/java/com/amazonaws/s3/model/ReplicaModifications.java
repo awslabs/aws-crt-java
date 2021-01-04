@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ReplicaModifications {
-    private ReplicaModificationsStatus status;
+    /**
+     * <p>Specifies whether Amazon S3 replicates modifications on replicas.</p>
+     */
+    ReplicaModificationsStatus status;
 
-    private ReplicaModifications() {
+    ReplicaModifications() {
         this.status = null;
     }
 
-    private ReplicaModifications(Builder builder) {
+    protected ReplicaModifications(BuilderImpl builder) {
         this.status = builder.status;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class ReplicaModifications {
         this.status = status;
     }
 
-    static final class Builder {
-        private ReplicaModificationsStatus status;
+    public interface Builder {
+        Builder status(ReplicaModificationsStatus status);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies whether Amazon S3 replicates modifications on replicas.</p>
+         */
+        ReplicaModificationsStatus status;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ReplicaModifications model) {
+        private BuilderImpl(ReplicaModifications model) {
             status(model.status);
         }
 
         public ReplicaModifications build() {
-            return new com.amazonaws.s3.model.ReplicaModifications(this);
+            return new ReplicaModifications(this);
         }
 
-        /**
-         * <p>Specifies whether Amazon S3 replicates modifications on replicas.</p>
-         */
         public final Builder status(ReplicaModificationsStatus status) {
             this.status = status;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ReplicaModificationsStatus status() {
+            return status;
+        }
+
+        public void setStatus(final ReplicaModificationsStatus status) {
+            this.status = status;
         }
     }
 }

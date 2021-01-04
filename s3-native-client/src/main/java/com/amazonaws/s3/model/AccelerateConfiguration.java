@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AccelerateConfiguration {
-    private BucketAccelerateStatus status;
+    /**
+     * <p>Specifies the transfer acceleration status of the bucket.</p>
+     */
+    BucketAccelerateStatus status;
 
-    private AccelerateConfiguration() {
+    AccelerateConfiguration() {
         this.status = null;
     }
 
-    private AccelerateConfiguration(Builder builder) {
+    protected AccelerateConfiguration(BuilderImpl builder) {
         this.status = builder.status;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class AccelerateConfiguration {
         this.status = status;
     }
 
-    static final class Builder {
-        private BucketAccelerateStatus status;
+    public interface Builder {
+        Builder status(BucketAccelerateStatus status);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies the transfer acceleration status of the bucket.</p>
+         */
+        BucketAccelerateStatus status;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(AccelerateConfiguration model) {
+        private BuilderImpl(AccelerateConfiguration model) {
             status(model.status);
         }
 
         public AccelerateConfiguration build() {
-            return new com.amazonaws.s3.model.AccelerateConfiguration(this);
+            return new AccelerateConfiguration(this);
         }
 
-        /**
-         * <p>Specifies the transfer acceleration status of the bucket.</p>
-         */
         public final Builder status(BucketAccelerateStatus status) {
             this.status = status;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public BucketAccelerateStatus status() {
+            return status;
+        }
+
+        public void setStatus(final BucketAccelerateStatus status) {
+            this.status = status;
         }
     }
 }

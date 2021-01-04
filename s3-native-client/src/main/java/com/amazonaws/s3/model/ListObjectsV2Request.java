@@ -8,44 +8,83 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListObjectsV2Request {
-    private String bucket;
+    /**
+     * <p>Bucket name to list. </p>
+     *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    String bucket;
 
-    private String delimiter;
+    /**
+     * <p>A delimiter is a character you use to group keys.</p>
+     */
+    String delimiter;
 
-    private EncodingType encodingType;
+    /**
+     * <p>Encoding type used by Amazon S3 to encode object keys in the response.</p>
+     */
+    EncodingType encodingType;
 
-    private Integer maxKeys;
+    /**
+     * <p>Sets the maximum number of keys returned in the response. By default the API returns up
+     *          to 1,000 key names. The response might contain fewer keys but will never contain
+     *          more.</p>
+     */
+    Integer maxKeys;
 
-    private String prefix;
+    /**
+     * <p>Limits the response to keys that begin with the specified prefix.</p>
+     */
+    String prefix;
 
-    private String continuationToken;
+    /**
+     * <p>ContinuationToken indicates Amazon S3 that the list is being continued on this bucket with a
+     *          token. ContinuationToken is obfuscated and is not a real key.</p>
+     */
+    String continuationToken;
 
-    private Boolean fetchOwner;
+    /**
+     * <p>The owner field is not present in listV2 by default, if you want to return owner field
+     *          with each key in the result then set the fetch owner field to true.</p>
+     */
+    Boolean fetchOwner;
 
-    private String startAfter;
+    /**
+     * <p>StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this
+     *          specified key. StartAfter can be any key in the bucket.</p>
+     */
+    String startAfter;
 
-    private RequestPayer requestPayer;
+    /**
+     * <p>Confirms that the requester knows that she or he will be charged for the list objects
+     *          request in V2 style. Bucket owners need not specify this parameter in their
+     *          requests.</p>
+     */
+    RequestPayer requestPayer;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private ListObjectsV2Request() {
-        this.bucket = null;
-        this.delimiter = null;
+    ListObjectsV2Request() {
+        this.bucket = "";
+        this.delimiter = "";
         this.encodingType = null;
         this.maxKeys = null;
-        this.prefix = null;
-        this.continuationToken = null;
+        this.prefix = "";
+        this.continuationToken = "";
         this.fetchOwner = null;
-        this.startAfter = null;
+        this.startAfter = "";
         this.requestPayer = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private ListObjectsV2Request(Builder builder) {
+    protected ListObjectsV2Request(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.delimiter = builder.delimiter;
         this.encodingType = builder.encodingType;
@@ -58,12 +97,12 @@ public class ListObjectsV2Request {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -81,107 +120,168 @@ public class ListObjectsV2Request {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String delimiter() {
         return delimiter;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
     }
 
     public EncodingType encodingType() {
         return encodingType;
     }
 
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
     public Integer maxKeys() {
         return maxKeys;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
     }
 
     public String prefix() {
         return prefix;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
     public String continuationToken() {
         return continuationToken;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
     }
 
     public Boolean fetchOwner() {
         return fetchOwner;
     }
 
-    public void setFetchOwner(final Boolean fetchOwner) {
-        this.fetchOwner = fetchOwner;
-    }
-
     public String startAfter() {
         return startAfter;
-    }
-
-    public void setStartAfter(final String startAfter) {
-        this.startAfter = startAfter;
     }
 
     public RequestPayer requestPayer() {
         return requestPayer;
     }
 
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setDelimiter(final String delimiter) {
+        this.delimiter = delimiter;
+    }
+
+    public void setEncodingType(final EncodingType encodingType) {
+        this.encodingType = encodingType;
+    }
+
+    public void setMaxKeys(final Integer maxKeys) {
+        this.maxKeys = maxKeys;
+    }
+
+    public void setPrefix(final String prefix) {
+        this.prefix = prefix;
+    }
+
+    public void setContinuationToken(final String continuationToken) {
+        this.continuationToken = continuationToken;
+    }
+
+    public void setFetchOwner(final Boolean fetchOwner) {
+        this.fetchOwner = fetchOwner;
+    }
+
+    public void setStartAfter(final String startAfter) {
+        this.startAfter = startAfter;
+    }
+
+    public void setRequestPayer(final RequestPayer requestPayer) {
+        this.requestPayer = requestPayer;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String delimiter;
+        Builder delimiter(String delimiter);
 
-        private EncodingType encodingType;
+        Builder encodingType(EncodingType encodingType);
 
-        private Integer maxKeys;
+        Builder maxKeys(Integer maxKeys);
 
-        private String prefix;
+        Builder prefix(String prefix);
 
-        private String continuationToken;
+        Builder continuationToken(String continuationToken);
 
-        private Boolean fetchOwner;
+        Builder fetchOwner(Boolean fetchOwner);
 
-        private String startAfter;
+        Builder startAfter(String startAfter);
 
-        private RequestPayer requestPayer;
+        Builder requestPayer(RequestPayer requestPayer);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Bucket name to list. </p>
+         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>A delimiter is a character you use to group keys.</p>
+         */
+        String delimiter;
+
+        /**
+         * <p>Encoding type used by Amazon S3 to encode object keys in the response.</p>
+         */
+        EncodingType encodingType;
+
+        /**
+         * <p>Sets the maximum number of keys returned in the response. By default the API returns up
+         *          to 1,000 key names. The response might contain fewer keys but will never contain
+         *          more.</p>
+         */
+        Integer maxKeys;
+
+        /**
+         * <p>Limits the response to keys that begin with the specified prefix.</p>
+         */
+        String prefix;
+
+        /**
+         * <p>ContinuationToken indicates Amazon S3 that the list is being continued on this bucket with a
+         *          token. ContinuationToken is obfuscated and is not a real key.</p>
+         */
+        String continuationToken;
+
+        /**
+         * <p>The owner field is not present in listV2 by default, if you want to return owner field
+         *          with each key in the result then set the fetch owner field to true.</p>
+         */
+        Boolean fetchOwner;
+
+        /**
+         * <p>StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this
+         *          specified key. StartAfter can be any key in the bucket.</p>
+         */
+        String startAfter;
+
+        /**
+         * <p>Confirms that the requester knows that she or he will be charged for the list objects
+         *          request in V2 style. Bucket owners need not specify this parameter in their
+         *          requests.</p>
+         */
+        RequestPayer requestPayer;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ListObjectsV2Request model) {
+        private BuilderImpl(ListObjectsV2Request model) {
             bucket(model.bucket);
             delimiter(model.delimiter);
             encodingType(model.encodingType);
@@ -195,96 +295,148 @@ public class ListObjectsV2Request {
         }
 
         public ListObjectsV2Request build() {
-            return new com.amazonaws.s3.model.ListObjectsV2Request(this);
+            return new ListObjectsV2Request(this);
         }
 
-        /**
-         * <p>Bucket name to list. </p>
-         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>A delimiter is a character you use to group keys.</p>
-         */
         public final Builder delimiter(String delimiter) {
             this.delimiter = delimiter;
             return this;
         }
 
-        /**
-         * <p>Encoding type used by Amazon S3 to encode object keys in the response.</p>
-         */
         public final Builder encodingType(EncodingType encodingType) {
             this.encodingType = encodingType;
             return this;
         }
 
-        /**
-         * <p>Sets the maximum number of keys returned in the response. By default the API returns up
-         *          to 1,000 key names. The response might contain fewer keys but will never contain
-         *          more.</p>
-         */
         public final Builder maxKeys(Integer maxKeys) {
             this.maxKeys = maxKeys;
             return this;
         }
 
-        /**
-         * <p>Limits the response to keys that begin with the specified prefix.</p>
-         */
         public final Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
         }
 
-        /**
-         * <p>ContinuationToken indicates Amazon S3 that the list is being continued on this bucket with a
-         *          token. ContinuationToken is obfuscated and is not a real key.</p>
-         */
         public final Builder continuationToken(String continuationToken) {
             this.continuationToken = continuationToken;
             return this;
         }
 
-        /**
-         * <p>The owner field is not present in listV2 by default, if you want to return owner field
-         *          with each key in the result then set the fetch owner field to true.</p>
-         */
         public final Builder fetchOwner(Boolean fetchOwner) {
             this.fetchOwner = fetchOwner;
             return this;
         }
 
-        /**
-         * <p>StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this
-         *          specified key. StartAfter can be any key in the bucket.</p>
-         */
         public final Builder startAfter(String startAfter) {
             this.startAfter = startAfter;
             return this;
         }
 
-        /**
-         * <p>Confirms that the requester knows that she or he will be charged for the list objects
-         *          request in V2 style. Bucket owners need not specify this parameter in their
-         *          requests.</p>
-         */
         public final Builder requestPayer(RequestPayer requestPayer) {
             this.requestPayer = requestPayer;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String delimiter() {
+            return delimiter;
+        }
+
+        public EncodingType encodingType() {
+            return encodingType;
+        }
+
+        public Integer maxKeys() {
+            return maxKeys;
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public String continuationToken() {
+            return continuationToken;
+        }
+
+        public Boolean fetchOwner() {
+            return fetchOwner;
+        }
+
+        public String startAfter() {
+            return startAfter;
+        }
+
+        public RequestPayer requestPayer() {
+            return requestPayer;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setDelimiter(final String delimiter) {
+            this.delimiter = delimiter;
+        }
+
+        public void setEncodingType(final EncodingType encodingType) {
+            this.encodingType = encodingType;
+        }
+
+        public void setMaxKeys(final Integer maxKeys) {
+            this.maxKeys = maxKeys;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        public void setContinuationToken(final String continuationToken) {
+            this.continuationToken = continuationToken;
+        }
+
+        public void setFetchOwner(final Boolean fetchOwner) {
+            this.fetchOwner = fetchOwner;
+        }
+
+        public void setStartAfter(final String startAfter) {
+            this.startAfter = startAfter;
+        }
+
+        public void setRequestPayer(final RequestPayer requestPayer) {
+            this.requestPayer = requestPayer;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

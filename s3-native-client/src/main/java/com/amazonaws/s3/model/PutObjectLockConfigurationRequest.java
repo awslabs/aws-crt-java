@@ -6,32 +6,48 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectLockConfigurationRequest {
-    private String bucket;
+    /**
+     * <p>The bucket whose Object Lock configuration you want to create or replace.</p>
+     */
+    String bucket;
 
-    private ObjectLockConfiguration objectLockConfiguration;
+    /**
+     * <p>The Object Lock configuration that you want to apply to the specified bucket.</p>
+     */
+    ObjectLockConfiguration objectLockConfiguration;
 
-    private RequestPayer requestPayer;
+    RequestPayer requestPayer;
 
-    private String token;
+    /**
+     * <p>A token to allow Object Lock to be enabled for an existing bucket.</p>
+     */
+    String token;
 
-    private String contentMD5;
+    /**
+     * <p>The MD5 hash for the request body.</p>
+     *          <p>For requests made using the AWS Command Line Interface (CLI) or AWS SDKs, this field is calculated automatically.</p>
+     */
+    String contentMD5;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private PutObjectLockConfigurationRequest() {
-        this.bucket = null;
+    PutObjectLockConfigurationRequest() {
+        this.bucket = "";
         this.objectLockConfiguration = null;
         this.requestPayer = null;
-        this.token = null;
-        this.contentMD5 = null;
-        this.expectedBucketOwner = null;
+        this.token = "";
+        this.contentMD5 = "";
+        this.expectedBucketOwner = "";
     }
 
-    private PutObjectLockConfigurationRequest(Builder builder) {
+    protected PutObjectLockConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.objectLockConfiguration = builder.objectLockConfiguration;
         this.requestPayer = builder.requestPayer;
@@ -40,12 +56,12 @@ public class PutObjectLockConfigurationRequest {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -63,67 +79,97 @@ public class PutObjectLockConfigurationRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public ObjectLockConfiguration objectLockConfiguration() {
         return objectLockConfiguration;
-    }
-
-    public void setObjectLockConfiguration(final ObjectLockConfiguration objectLockConfiguration) {
-        this.objectLockConfiguration = objectLockConfiguration;
     }
 
     public RequestPayer requestPayer() {
         return requestPayer;
     }
 
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
     public String token() {
         return token;
-    }
-
-    public void setToken(final String token) {
-        this.token = token;
     }
 
     public String contentMD5() {
         return contentMD5;
     }
 
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setObjectLockConfiguration(final ObjectLockConfiguration objectLockConfiguration) {
+        this.objectLockConfiguration = objectLockConfiguration;
+    }
+
+    public void setRequestPayer(final RequestPayer requestPayer) {
+        this.requestPayer = requestPayer;
+    }
+
+    public void setToken(final String token) {
+        this.token = token;
+    }
+
+    public void setContentMD5(final String contentMD5) {
+        this.contentMD5 = contentMD5;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private ObjectLockConfiguration objectLockConfiguration;
+        Builder objectLockConfiguration(ObjectLockConfiguration objectLockConfiguration);
 
-        private RequestPayer requestPayer;
+        Builder requestPayer(RequestPayer requestPayer);
 
-        private String token;
+        Builder token(String token);
 
-        private String contentMD5;
+        Builder contentMD5(String contentMD5);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The bucket whose Object Lock configuration you want to create or replace.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>The Object Lock configuration that you want to apply to the specified bucket.</p>
+         */
+        ObjectLockConfiguration objectLockConfiguration;
+
+        RequestPayer requestPayer;
+
+        /**
+         * <p>A token to allow Object Lock to be enabled for an existing bucket.</p>
+         */
+        String token;
+
+        /**
+         * <p>The MD5 hash for the request body.</p>
+         *          <p>For requests made using the AWS Command Line Interface (CLI) or AWS SDKs, this field is calculated automatically.</p>
+         */
+        String contentMD5;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutObjectLockConfigurationRequest model) {
+        private BuilderImpl(PutObjectLockConfigurationRequest model) {
             bucket(model.bucket);
             objectLockConfiguration(model.objectLockConfiguration);
             requestPayer(model.requestPayer);
@@ -133,20 +179,14 @@ public class PutObjectLockConfigurationRequest {
         }
 
         public PutObjectLockConfigurationRequest build() {
-            return new com.amazonaws.s3.model.PutObjectLockConfigurationRequest(this);
+            return new PutObjectLockConfigurationRequest(this);
         }
 
-        /**
-         * <p>The bucket whose Object Lock configuration you want to create or replace.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The Object Lock configuration that you want to apply to the specified bucket.</p>
-         */
         public final Builder objectLockConfiguration(
                 ObjectLockConfiguration objectLockConfiguration) {
             this.objectLockConfiguration = objectLockConfiguration;
@@ -158,29 +198,79 @@ public class PutObjectLockConfigurationRequest {
             return this;
         }
 
-        /**
-         * <p>A token to allow Object Lock to be enabled for an existing bucket.</p>
-         */
         public final Builder token(String token) {
             this.token = token;
             return this;
         }
 
-        /**
-         * <p>The MD5 hash for the request body.</p>
-         *          <p>For requests made using the AWS Command Line Interface (CLI) or AWS SDKs, this field is calculated automatically.</p>
-         */
         public final Builder contentMD5(String contentMD5) {
             this.contentMD5 = contentMD5;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public ObjectLockConfiguration objectLockConfiguration() {
+            return objectLockConfiguration;
+        }
+
+        public RequestPayer requestPayer() {
+            return requestPayer;
+        }
+
+        public String token() {
+            return token;
+        }
+
+        public String contentMD5() {
+            return contentMD5;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setObjectLockConfiguration(
+                final ObjectLockConfiguration objectLockConfiguration) {
+            this.objectLockConfiguration = objectLockConfiguration;
+        }
+
+        public void setRequestPayer(final RequestPayer requestPayer) {
+            this.requestPayer = requestPayer;
+        }
+
+        public void setToken(final String token) {
+            this.token = token;
+        }
+
+        public void setContentMD5(final String contentMD5) {
+            this.contentMD5 = contentMD5;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

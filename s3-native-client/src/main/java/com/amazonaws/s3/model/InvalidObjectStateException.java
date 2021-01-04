@@ -2,34 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0.
 package com.amazonaws.s3.model;
 
+import com.amazonaws.s3.S3Exception;
 import java.lang.Object;
 import java.lang.Override;
-import java.lang.RuntimeException;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
-@Generated("software.amazon.smithy.crt.java.StructureGenerator")
-public class InvalidObjectStateException extends RuntimeException {
-    private StorageClass storageClass;
-
-    private IntelligentTieringAccessTier accessTier;
-
-    private InvalidObjectStateException() {
-        this.storageClass = null;
-        this.accessTier = null;
+@Generated("software.amazon.smithy.crt.java.ExceptionGenerator")
+public class InvalidObjectStateException extends S3Exception {
+    protected InvalidObjectStateException(BuilderImpl builder) {
+        super(builder);
     }
 
-    private InvalidObjectStateException(Builder builder) {
-        this.storageClass = builder.storageClass;
-        this.accessTier = builder.accessTier;
-    }
-
-    public Builder builder() {
-        return new Builder();
-    }
-
+    @Override
     public Builder toBuilder() {
-        return new Builder(this);
+        return new BuilderImpl(this);
+    }
+
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -43,47 +34,29 @@ public class InvalidObjectStateException extends RuntimeException {
         return (rhs instanceof InvalidObjectStateException);
     }
 
-    public StorageClass storageClass() {
-        return storageClass;
+    public interface Builder extends S3Exception.Builder {
     }
 
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public IntelligentTieringAccessTier accessTier() {
-        return accessTier;
-    }
-
-    public void setAccessTier(final IntelligentTieringAccessTier accessTier) {
-        this.accessTier = accessTier;
-    }
-
-    static final class Builder {
-        private StorageClass storageClass;
-
-        private IntelligentTieringAccessTier accessTier;
-
-        private Builder() {
+    protected static class BuilderImpl extends S3Exception.BuilderImpl implements Builder {
+        protected BuilderImpl() {
         }
 
-        private Builder(InvalidObjectStateException model) {
-            storageClass(model.storageClass);
-            accessTier(model.accessTier);
+        private BuilderImpl(InvalidObjectStateException model) {
         }
 
         public InvalidObjectStateException build() {
-            return new com.amazonaws.s3.model.InvalidObjectStateException(this);
+            return new InvalidObjectStateException(this);
         }
 
-        public final Builder storageClass(StorageClass storageClass) {
-            this.storageClass = storageClass;
-            return this;
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
         }
 
-        public final Builder accessTier(IntelligentTieringAccessTier accessTier) {
-            this.accessTier = accessTier;
-            return this;
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
         }
     }
 }

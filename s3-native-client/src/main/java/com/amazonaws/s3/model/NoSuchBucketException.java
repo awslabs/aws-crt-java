@@ -2,26 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0.
 package com.amazonaws.s3.model;
 
+import com.amazonaws.s3.S3Exception;
 import java.lang.Object;
 import java.lang.Override;
-import java.lang.RuntimeException;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
-@Generated("software.amazon.smithy.crt.java.StructureGenerator")
-public class NoSuchBucketException extends RuntimeException {
-    private NoSuchBucketException() {
+@Generated("software.amazon.smithy.crt.java.ExceptionGenerator")
+public class NoSuchBucketException extends S3Exception {
+    protected NoSuchBucketException(BuilderImpl builder) {
+        super(builder);
     }
 
-    private NoSuchBucketException(Builder builder) {
-    }
-
-    public Builder builder() {
-        return new Builder();
-    }
-
+    @Override
     public Builder toBuilder() {
-        return new Builder(this);
+        return new BuilderImpl(this);
+    }
+
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -35,15 +34,29 @@ public class NoSuchBucketException extends RuntimeException {
         return (rhs instanceof NoSuchBucketException);
     }
 
-    static final class Builder {
-        private Builder() {
+    public interface Builder extends S3Exception.Builder {
+    }
+
+    protected static class BuilderImpl extends S3Exception.BuilderImpl implements Builder {
+        protected BuilderImpl() {
         }
 
-        private Builder(NoSuchBucketException model) {
+        private BuilderImpl(NoSuchBucketException model) {
         }
 
         public NoSuchBucketException build() {
-            return new com.amazonaws.s3.model.NoSuchBucketException(this);
+            return new NoSuchBucketException(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
         }
     }
 }

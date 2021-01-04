@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketPolicyOutput {
-    private String policy;
+    /**
+     * <p>The bucket policy as a JSON document.</p>
+     */
+    String policy;
 
-    private GetBucketPolicyOutput() {
-        this.policy = null;
+    GetBucketPolicyOutput() {
+        this.policy = "";
     }
 
-    private GetBucketPolicyOutput(Builder builder) {
+    protected GetBucketPolicyOutput(BuilderImpl builder) {
         this.policy = builder.policy;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class GetBucketPolicyOutput {
         this.policy = policy;
     }
 
-    static final class Builder {
-        private String policy;
+    public interface Builder {
+        Builder policy(String policy);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The bucket policy as a JSON document.</p>
+         */
+        String policy;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketPolicyOutput model) {
+        private BuilderImpl(GetBucketPolicyOutput model) {
             policy(model.policy);
         }
 
         public GetBucketPolicyOutput build() {
-            return new com.amazonaws.s3.model.GetBucketPolicyOutput(this);
+            return new GetBucketPolicyOutput(this);
         }
 
-        /**
-         * <p>The bucket policy as a JSON document.</p>
-         */
         public final Builder policy(String policy) {
             this.policy = policy;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String policy() {
+            return policy;
+        }
+
+        public void setPolicy(final String policy) {
+            this.policy = policy;
         }
     }
 }

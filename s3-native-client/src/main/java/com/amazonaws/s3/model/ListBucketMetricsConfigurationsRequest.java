@@ -6,34 +6,46 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListBucketMetricsConfigurationsRequest {
-    private String bucket;
+    /**
+     * <p>The name of the bucket containing the metrics configurations to retrieve.</p>
+     */
+    String bucket;
 
-    private String continuationToken;
+    /**
+     * <p>The marker that is used to continue a metrics configuration listing that has been
+     *          truncated. Use the NextContinuationToken from a previously truncated list response to
+     *          continue the listing. The continuation token is an opaque value that Amazon S3
+     *          understands.</p>
+     */
+    String continuationToken;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private ListBucketMetricsConfigurationsRequest() {
-        this.bucket = null;
-        this.continuationToken = null;
-        this.expectedBucketOwner = null;
+    ListBucketMetricsConfigurationsRequest() {
+        this.bucket = "";
+        this.continuationToken = "";
+        this.expectedBucketOwner = "";
     }
 
-    private ListBucketMetricsConfigurationsRequest(Builder builder) {
+    protected ListBucketMetricsConfigurationsRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.continuationToken = builder.continuationToken;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,53 +63,39 @@ public class ListBucketMetricsConfigurationsRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String continuationToken() {
         return continuationToken;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
     }
 
     public String expectedBucketOwner() {
         return expectedBucketOwner;
     }
 
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setContinuationToken(final String continuationToken) {
+        this.continuationToken = continuationToken;
+    }
+
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String continuationToken;
+        Builder continuationToken(String continuationToken);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(ListBucketMetricsConfigurationsRequest model) {
-            bucket(model.bucket);
-            continuationToken(model.continuationToken);
-            expectedBucketOwner(model.expectedBucketOwner);
-        }
-
-        public ListBucketMetricsConfigurationsRequest build() {
-            return new com.amazonaws.s3.model.ListBucketMetricsConfigurationsRequest(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>The name of the bucket containing the metrics configurations to retrieve.</p>
          */
-        public final Builder bucket(String bucket) {
-            this.bucket = bucket;
-            return this;
-        }
+        String bucket;
 
         /**
          * <p>The marker that is used to continue a metrics configuration listing that has been
@@ -105,17 +103,74 @@ public class ListBucketMetricsConfigurationsRequest {
          *          continue the listing. The continuation token is an opaque value that Amazon S3
          *          understands.</p>
          */
+        String continuationToken;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(ListBucketMetricsConfigurationsRequest model) {
+            bucket(model.bucket);
+            continuationToken(model.continuationToken);
+            expectedBucketOwner(model.expectedBucketOwner);
+        }
+
+        public ListBucketMetricsConfigurationsRequest build() {
+            return new ListBucketMetricsConfigurationsRequest(this);
+        }
+
+        public final Builder bucket(String bucket) {
+            this.bucket = bucket;
+            return this;
+        }
+
         public final Builder continuationToken(String continuationToken) {
             this.continuationToken = continuationToken;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String continuationToken() {
+            return continuationToken;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setContinuationToken(final String continuationToken) {
+            this.continuationToken = continuationToken;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

@@ -8,50 +8,96 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class UploadPartRequest {
-    private byte[] body;
+    /**
+     * <p>Object data.</p>
+     */
+    byte[] body;
 
-    private String bucket;
+    /**
+     * <p>The name of the bucket to which the multipart upload was initiated.</p>
+     *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    String bucket;
 
-    private Long contentLength;
+    /**
+     * <p>Size of the body in bytes. This parameter is useful when the size of the body cannot be
+     *          determined automatically.</p>
+     */
+    Long contentLength;
 
-    private String contentMD5;
+    /**
+     * <p>The base64-encoded 128-bit MD5 digest of the part data. This parameter is auto-populated
+     *          when using the command from the CLI. This parameter is required if object lock parameters
+     *          are specified.</p>
+     */
+    String contentMD5;
 
-    private String key;
+    /**
+     * <p>Object key for which the multipart upload was initiated.</p>
+     */
+    String key;
 
-    private Integer partNumber;
+    /**
+     * <p>Part number of part being uploaded. This is a positive integer between 1 and
+     *          10,000.</p>
+     */
+    Integer partNumber;
 
-    private String uploadId;
+    /**
+     * <p>Upload ID identifying the multipart upload whose part is being uploaded.</p>
+     */
+    String uploadId;
 
-    private String sSECustomerAlgorithm;
+    /**
+     * <p>Specifies the algorithm to use to when encrypting the object (for example,
+     *          AES256).</p>
+     */
+    String sSECustomerAlgorithm;
 
-    private String sSECustomerKey;
+    /**
+     * <p>Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This
+     *          value is used to store the object and then it is discarded; Amazon S3 does not store the
+     *          encryption key. The key must be appropriate for use with the algorithm specified in the
+     *             <code>x-amz-server-side-encryption-customer-algorithm header</code>. This must be the
+     *          same encryption key specified in the initiate multipart upload request.</p>
+     */
+    String sSECustomerKey;
 
-    private String sSECustomerKeyMD5;
+    /**
+     * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses
+     *          this header for a message integrity check to ensure that the encryption key was transmitted
+     *          without error.</p>
+     */
+    String sSECustomerKeyMD5;
 
-    private RequestPayer requestPayer;
+    RequestPayer requestPayer;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private UploadPartRequest() {
+    UploadPartRequest() {
         this.body = null;
-        this.bucket = null;
+        this.bucket = "";
         this.contentLength = null;
-        this.contentMD5 = null;
-        this.key = null;
+        this.contentMD5 = "";
+        this.key = "";
         this.partNumber = null;
-        this.uploadId = null;
-        this.sSECustomerAlgorithm = null;
-        this.sSECustomerKey = null;
-        this.sSECustomerKeyMD5 = null;
+        this.uploadId = "";
+        this.sSECustomerAlgorithm = "";
+        this.sSECustomerKey = "";
+        this.sSECustomerKeyMD5 = "";
         this.requestPayer = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private UploadPartRequest(Builder builder) {
+    protected UploadPartRequest(BuilderImpl builder) {
         this.body = builder.body;
         this.bucket = builder.bucket;
         this.contentLength = builder.contentLength;
@@ -66,12 +112,12 @@ public class UploadPartRequest {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -89,127 +135,199 @@ public class UploadPartRequest {
         return body;
     }
 
-    public void setBody(final byte[] body) {
-        this.body = body;
-    }
-
     public String bucket() {
         return bucket;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
     }
 
     public Long contentLength() {
         return contentLength;
     }
 
-    public void setContentLength(final Long contentLength) {
-        this.contentLength = contentLength;
-    }
-
     public String contentMD5() {
         return contentMD5;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
     }
 
     public String key() {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public Integer partNumber() {
         return partNumber;
-    }
-
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
     }
 
     public String uploadId() {
         return uploadId;
     }
 
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
     public String sSECustomerAlgorithm() {
         return sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
     }
 
     public String sSECustomerKey() {
         return sSECustomerKey;
     }
 
-    public void setSSECustomerKey(final String sSECustomerKey) {
-        this.sSECustomerKey = sSECustomerKey;
-    }
-
     public String sSECustomerKeyMD5() {
         return sSECustomerKeyMD5;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
     }
 
     public RequestPayer requestPayer() {
         return requestPayer;
     }
 
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBody(final byte[] body) {
+        this.body = body;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setContentLength(final Long contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public void setContentMD5(final String contentMD5) {
+        this.contentMD5 = contentMD5;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
+    public void setPartNumber(final Integer partNumber) {
+        this.partNumber = partNumber;
+    }
+
+    public void setUploadId(final String uploadId) {
+        this.uploadId = uploadId;
+    }
+
+    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+    }
+
+    public void setSSECustomerKey(final String sSECustomerKey) {
+        this.sSECustomerKey = sSECustomerKey;
+    }
+
+    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+    }
+
+    public void setRequestPayer(final RequestPayer requestPayer) {
+        this.requestPayer = requestPayer;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private byte[] body;
+    public interface Builder {
+        Builder body(byte[] body);
 
-        private String bucket;
+        Builder bucket(String bucket);
 
-        private Long contentLength;
+        Builder contentLength(Long contentLength);
 
-        private String contentMD5;
+        Builder contentMD5(String contentMD5);
 
-        private String key;
+        Builder key(String key);
 
-        private Integer partNumber;
+        Builder partNumber(Integer partNumber);
 
-        private String uploadId;
+        Builder uploadId(String uploadId);
 
-        private String sSECustomerAlgorithm;
+        Builder sSECustomerAlgorithm(String sSECustomerAlgorithm);
 
-        private String sSECustomerKey;
+        Builder sSECustomerKey(String sSECustomerKey);
 
-        private String sSECustomerKeyMD5;
+        Builder sSECustomerKeyMD5(String sSECustomerKeyMD5);
 
-        private RequestPayer requestPayer;
+        Builder requestPayer(RequestPayer requestPayer);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Object data.</p>
+         */
+        byte[] body;
+
+        /**
+         * <p>The name of the bucket to which the multipart upload was initiated.</p>
+         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>Size of the body in bytes. This parameter is useful when the size of the body cannot be
+         *          determined automatically.</p>
+         */
+        Long contentLength;
+
+        /**
+         * <p>The base64-encoded 128-bit MD5 digest of the part data. This parameter is auto-populated
+         *          when using the command from the CLI. This parameter is required if object lock parameters
+         *          are specified.</p>
+         */
+        String contentMD5;
+
+        /**
+         * <p>Object key for which the multipart upload was initiated.</p>
+         */
+        String key;
+
+        /**
+         * <p>Part number of part being uploaded. This is a positive integer between 1 and
+         *          10,000.</p>
+         */
+        Integer partNumber;
+
+        /**
+         * <p>Upload ID identifying the multipart upload whose part is being uploaded.</p>
+         */
+        String uploadId;
+
+        /**
+         * <p>Specifies the algorithm to use to when encrypting the object (for example,
+         *          AES256).</p>
+         */
+        String sSECustomerAlgorithm;
+
+        /**
+         * <p>Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This
+         *          value is used to store the object and then it is discarded; Amazon S3 does not store the
+         *          encryption key. The key must be appropriate for use with the algorithm specified in the
+         *             <code>x-amz-server-side-encryption-customer-algorithm header</code>. This must be the
+         *          same encryption key specified in the initiate multipart upload request.</p>
+         */
+        String sSECustomerKey;
+
+        /**
+         * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses
+         *          this header for a message integrity check to ensure that the encryption key was transmitted
+         *          without error.</p>
+         */
+        String sSECustomerKeyMD5;
+
+        RequestPayer requestPayer;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(UploadPartRequest model) {
+        private BuilderImpl(UploadPartRequest model) {
             body(model.body);
             bucket(model.bucket);
             contentLength(model.contentLength);
@@ -225,97 +343,54 @@ public class UploadPartRequest {
         }
 
         public UploadPartRequest build() {
-            return new com.amazonaws.s3.model.UploadPartRequest(this);
+            return new UploadPartRequest(this);
         }
 
-        /**
-         * <p>Object data.</p>
-         */
         public final Builder body(byte[] body) {
             this.body = body;
             return this;
         }
 
-        /**
-         * <p>The name of the bucket to which the multipart upload was initiated.</p>
-         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>Size of the body in bytes. This parameter is useful when the size of the body cannot be
-         *          determined automatically.</p>
-         */
         public final Builder contentLength(Long contentLength) {
             this.contentLength = contentLength;
             return this;
         }
 
-        /**
-         * <p>The base64-encoded 128-bit MD5 digest of the part data. This parameter is auto-populated
-         *          when using the command from the CLI. This parameter is required if object lock parameters
-         *          are specified.</p>
-         */
         public final Builder contentMD5(String contentMD5) {
             this.contentMD5 = contentMD5;
             return this;
         }
 
-        /**
-         * <p>Object key for which the multipart upload was initiated.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
         }
 
-        /**
-         * <p>Part number of part being uploaded. This is a positive integer between 1 and
-         *          10,000.</p>
-         */
         public final Builder partNumber(Integer partNumber) {
             this.partNumber = partNumber;
             return this;
         }
 
-        /**
-         * <p>Upload ID identifying the multipart upload whose part is being uploaded.</p>
-         */
         public final Builder uploadId(String uploadId) {
             this.uploadId = uploadId;
             return this;
         }
 
-        /**
-         * <p>Specifies the algorithm to use to when encrypting the object (for example,
-         *          AES256).</p>
-         */
         public final Builder sSECustomerAlgorithm(String sSECustomerAlgorithm) {
             this.sSECustomerAlgorithm = sSECustomerAlgorithm;
             return this;
         }
 
-        /**
-         * <p>Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This
-         *          value is used to store the object and then it is discarded; Amazon S3 does not store the
-         *          encryption key. The key must be appropriate for use with the algorithm specified in the
-         *             <code>x-amz-server-side-encryption-customer-algorithm header</code>. This must be the
-         *          same encryption key specified in the initiate multipart upload request.</p>
-         */
         public final Builder sSECustomerKey(String sSECustomerKey) {
             this.sSECustomerKey = sSECustomerKey;
             return this;
         }
 
-        /**
-         * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses
-         *          this header for a message integrity check to ensure that the encryption key was transmitted
-         *          without error.</p>
-         */
         public final Builder sSECustomerKeyMD5(String sSECustomerKeyMD5) {
             this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
             return this;
@@ -326,12 +401,116 @@ public class UploadPartRequest {
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public byte[] body() {
+            return body;
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public Long contentLength() {
+            return contentLength;
+        }
+
+        public String contentMD5() {
+            return contentMD5;
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public Integer partNumber() {
+            return partNumber;
+        }
+
+        public String uploadId() {
+            return uploadId;
+        }
+
+        public String sSECustomerAlgorithm() {
+            return sSECustomerAlgorithm;
+        }
+
+        public String sSECustomerKey() {
+            return sSECustomerKey;
+        }
+
+        public String sSECustomerKeyMD5() {
+            return sSECustomerKeyMD5;
+        }
+
+        public RequestPayer requestPayer() {
+            return requestPayer;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBody(final byte[] body) {
+            this.body = body;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setContentLength(final Long contentLength) {
+            this.contentLength = contentLength;
+        }
+
+        public void setContentMD5(final String contentMD5) {
+            this.contentMD5 = contentMD5;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setPartNumber(final Integer partNumber) {
+            this.partNumber = partNumber;
+        }
+
+        public void setUploadId(final String uploadId) {
+            this.uploadId = uploadId;
+        }
+
+        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
+            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
+        }
+
+        public void setSSECustomerKey(final String sSECustomerKey) {
+            this.sSECustomerKey = sSECustomerKey;
+        }
+
+        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
+            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
+        }
+
+        public void setRequestPayer(final RequestPayer requestPayer) {
+            this.requestPayer = requestPayer;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

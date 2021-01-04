@@ -7,35 +7,58 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteObjectRequest {
-    private String bucket;
+    /**
+     * <p>The bucket name of the bucket containing the object. </p>
+     *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    String bucket;
 
-    private String key;
+    /**
+     * <p>Key name of the object to delete.</p>
+     */
+    String key;
 
-    private String mFA;
+    /**
+     * <p>The concatenation of the authentication device's serial number, a space, and the value
+     *          that is displayed on your authentication device. Required to permanently delete a versioned
+     *          object if versioning is configured with MFA delete enabled.</p>
+     */
+    String mFA;
 
-    private String versionId;
+    /**
+     * <p>VersionId used to reference a specific version of the object.</p>
+     */
+    String versionId;
 
-    private RequestPayer requestPayer;
+    RequestPayer requestPayer;
 
-    private Boolean bypassGovernanceRetention;
+    /**
+     * <p>Indicates whether S3 Object Lock should bypass Governance-mode restrictions to process
+     *          this operation.</p>
+     */
+    Boolean bypassGovernanceRetention;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private DeleteObjectRequest() {
-        this.bucket = null;
-        this.key = null;
-        this.mFA = null;
-        this.versionId = null;
+    DeleteObjectRequest() {
+        this.bucket = "";
+        this.key = "";
+        this.mFA = "";
+        this.versionId = "";
         this.requestPayer = null;
         this.bypassGovernanceRetention = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private DeleteObjectRequest(Builder builder) {
+    protected DeleteObjectRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.key = builder.key;
         this.mFA = builder.mFA;
@@ -45,12 +68,12 @@ public class DeleteObjectRequest {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -68,77 +91,116 @@ public class DeleteObjectRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String key() {
         return key;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
     }
 
     public String mFA() {
         return mFA;
     }
 
-    public void setMFA(final String mFA) {
-        this.mFA = mFA;
-    }
-
     public String versionId() {
         return versionId;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
     }
 
     public RequestPayer requestPayer() {
         return requestPayer;
     }
 
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
     public Boolean bypassGovernanceRetention() {
         return bypassGovernanceRetention;
-    }
-
-    public void setBypassGovernanceRetention(final Boolean bypassGovernanceRetention) {
-        this.bypassGovernanceRetention = bypassGovernanceRetention;
     }
 
     public String expectedBucketOwner() {
         return expectedBucketOwner;
     }
 
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
+    public void setMFA(final String mFA) {
+        this.mFA = mFA;
+    }
+
+    public void setVersionId(final String versionId) {
+        this.versionId = versionId;
+    }
+
+    public void setRequestPayer(final RequestPayer requestPayer) {
+        this.requestPayer = requestPayer;
+    }
+
+    public void setBypassGovernanceRetention(final Boolean bypassGovernanceRetention) {
+        this.bypassGovernanceRetention = bypassGovernanceRetention;
+    }
+
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String key;
+        Builder key(String key);
 
-        private String mFA;
+        Builder mFA(String mFA);
 
-        private String versionId;
+        Builder versionId(String versionId);
 
-        private RequestPayer requestPayer;
+        Builder requestPayer(RequestPayer requestPayer);
 
-        private Boolean bypassGovernanceRetention;
+        Builder bypassGovernanceRetention(Boolean bypassGovernanceRetention);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The bucket name of the bucket containing the object. </p>
+         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>Key name of the object to delete.</p>
+         */
+        String key;
+
+        /**
+         * <p>The concatenation of the authentication device's serial number, a space, and the value
+         *          that is displayed on your authentication device. Required to permanently delete a versioned
+         *          object if versioning is configured with MFA delete enabled.</p>
+         */
+        String mFA;
+
+        /**
+         * <p>VersionId used to reference a specific version of the object.</p>
+         */
+        String versionId;
+
+        RequestPayer requestPayer;
+
+        /**
+         * <p>Indicates whether S3 Object Lock should bypass Governance-mode restrictions to process
+         *          this operation.</p>
+         */
+        Boolean bypassGovernanceRetention;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DeleteObjectRequest model) {
+        private BuilderImpl(DeleteObjectRequest model) {
             bucket(model.bucket);
             key(model.key);
             mFA(model.mFA);
@@ -149,40 +211,24 @@ public class DeleteObjectRequest {
         }
 
         public DeleteObjectRequest build() {
-            return new com.amazonaws.s3.model.DeleteObjectRequest(this);
+            return new DeleteObjectRequest(this);
         }
 
-        /**
-         * <p>The bucket name of the bucket containing the object. </p>
-         *          <p>When using this API with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this operation with an access point through the AWS SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html">Using Access Points</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         *          <p>When using this API with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com. When using this operation using S3 on Outposts through the AWS SDKs, you provide the Outposts bucket ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/S3onOutposts.html">Using S3 on Outposts</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>Key name of the object to delete.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
         }
 
-        /**
-         * <p>The concatenation of the authentication device's serial number, a space, and the value
-         *          that is displayed on your authentication device. Required to permanently delete a versioned
-         *          object if versioning is configured with MFA delete enabled.</p>
-         */
         public final Builder mFA(String mFA) {
             this.mFA = mFA;
             return this;
         }
 
-        /**
-         * <p>VersionId used to reference a specific version of the object.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
@@ -193,21 +239,81 @@ public class DeleteObjectRequest {
             return this;
         }
 
-        /**
-         * <p>Indicates whether S3 Object Lock should bypass Governance-mode restrictions to process
-         *          this operation.</p>
-         */
         public final Builder bypassGovernanceRetention(Boolean bypassGovernanceRetention) {
             this.bypassGovernanceRetention = bypassGovernanceRetention;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public String mFA() {
+            return mFA;
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public RequestPayer requestPayer() {
+            return requestPayer;
+        }
+
+        public Boolean bypassGovernanceRetention() {
+            return bypassGovernanceRetention;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setMFA(final String mFA) {
+            this.mFA = mFA;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
+        }
+
+        public void setRequestPayer(final RequestPayer requestPayer) {
+            this.requestPayer = requestPayer;
+        }
+
+        public void setBypassGovernanceRetention(final Boolean bypassGovernanceRetention) {
+            this.bypassGovernanceRetention = bypassGovernanceRetention;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

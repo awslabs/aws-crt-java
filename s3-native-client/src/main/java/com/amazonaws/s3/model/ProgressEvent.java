@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ProgressEvent {
-    private Progress details;
+    /**
+     * <p>The Progress event details.</p>
+     */
+    Progress details;
 
-    private ProgressEvent() {
+    ProgressEvent() {
         this.details = null;
     }
 
-    private ProgressEvent(Builder builder) {
+    protected ProgressEvent(BuilderImpl builder) {
         this.details = builder.details;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class ProgressEvent {
         this.details = details;
     }
 
-    static final class Builder {
-        private Progress details;
+    public interface Builder {
+        Builder details(Progress details);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The Progress event details.</p>
+         */
+        Progress details;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ProgressEvent model) {
+        private BuilderImpl(ProgressEvent model) {
             details(model.details);
         }
 
         public ProgressEvent build() {
-            return new com.amazonaws.s3.model.ProgressEvent(this);
+            return new ProgressEvent(this);
         }
 
-        /**
-         * <p>The Progress event details.</p>
-         */
         public final Builder details(Progress details) {
             this.details = details;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Progress details() {
+            return details;
+        }
+
+        public void setDetails(final Progress details) {
+            this.details = details;
         }
     }
 }

@@ -8,38 +8,55 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListBucketIntelligentTieringConfigurationsOutput {
-    private Boolean isTruncated;
+    /**
+     * <p>Indicates whether the returned list of analytics configurations is complete. A value of
+     *          true indicates that the list is not complete and the NextContinuationToken will be provided
+     *          for a subsequent request.</p>
+     */
+    Boolean isTruncated;
 
-    private String continuationToken;
+    /**
+     * <p>The ContinuationToken that represents a placeholder from where this request should
+     *          begin.</p>
+     */
+    String continuationToken;
 
-    private String nextContinuationToken;
+    /**
+     * <p>The marker used to continue this inventory configuration listing. Use the
+     *             <code>NextContinuationToken</code> from this response to continue the listing in a
+     *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
+     */
+    String nextContinuationToken;
 
-    private List<IntelligentTieringConfiguration> intelligentTieringConfigurationList;
+    /**
+     * <p>The list of S3 Intelligent-Tiering configurations for a bucket.</p>
+     */
+    List<IntelligentTieringConfiguration> intelligentTieringConfigurationList;
 
-    private ListBucketIntelligentTieringConfigurationsOutput() {
+    ListBucketIntelligentTieringConfigurationsOutput() {
         this.isTruncated = null;
-        this.continuationToken = null;
-        this.nextContinuationToken = null;
+        this.continuationToken = "";
+        this.nextContinuationToken = "";
         this.intelligentTieringConfigurationList = null;
     }
 
-    private ListBucketIntelligentTieringConfigurationsOutput(Builder builder) {
+    protected ListBucketIntelligentTieringConfigurationsOutput(BuilderImpl builder) {
         this.isTruncated = builder.isTruncated;
         this.continuationToken = builder.continuationToken;
         this.nextContinuationToken = builder.nextContinuationToken;
         this.intelligentTieringConfigurationList = builder.intelligentTieringConfigurationList;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -57,28 +74,28 @@ public class ListBucketIntelligentTieringConfigurationsOutput {
         return isTruncated;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
     public String continuationToken() {
         return continuationToken;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
     }
 
     public String nextContinuationToken() {
         return nextContinuationToken;
     }
 
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
     public List<IntelligentTieringConfiguration> intelligentTieringConfigurationList() {
         return intelligentTieringConfigurationList;
+    }
+
+    public void setIsTruncated(final Boolean isTruncated) {
+        this.isTruncated = isTruncated;
+    }
+
+    public void setContinuationToken(final String continuationToken) {
+        this.continuationToken = continuationToken;
+    }
+
+    public void setNextContinuationToken(final String nextContinuationToken) {
+        this.nextContinuationToken = nextContinuationToken;
     }
 
     public void setIntelligentTieringConfigurationList(
@@ -86,19 +103,47 @@ public class ListBucketIntelligentTieringConfigurationsOutput {
         this.intelligentTieringConfigurationList = intelligentTieringConfigurationList;
     }
 
-    static final class Builder {
-        private Boolean isTruncated;
+    public interface Builder {
+        Builder isTruncated(Boolean isTruncated);
 
-        private String continuationToken;
+        Builder continuationToken(String continuationToken);
 
-        private String nextContinuationToken;
+        Builder nextContinuationToken(String nextContinuationToken);
 
-        private List<IntelligentTieringConfiguration> intelligentTieringConfigurationList;
+        Builder intelligentTieringConfigurationList(
+                List<IntelligentTieringConfiguration> intelligentTieringConfigurationList);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Indicates whether the returned list of analytics configurations is complete. A value of
+         *          true indicates that the list is not complete and the NextContinuationToken will be provided
+         *          for a subsequent request.</p>
+         */
+        Boolean isTruncated;
+
+        /**
+         * <p>The ContinuationToken that represents a placeholder from where this request should
+         *          begin.</p>
+         */
+        String continuationToken;
+
+        /**
+         * <p>The marker used to continue this inventory configuration listing. Use the
+         *             <code>NextContinuationToken</code> from this response to continue the listing in a
+         *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
+         */
+        String nextContinuationToken;
+
+        /**
+         * <p>The list of S3 Intelligent-Tiering configurations for a bucket.</p>
+         */
+        List<IntelligentTieringConfiguration> intelligentTieringConfigurationList;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ListBucketIntelligentTieringConfigurationsOutput model) {
+        private BuilderImpl(ListBucketIntelligentTieringConfigurationsOutput model) {
             isTruncated(model.isTruncated);
             continuationToken(model.continuationToken);
             nextContinuationToken(model.nextContinuationToken);
@@ -106,45 +151,72 @@ public class ListBucketIntelligentTieringConfigurationsOutput {
         }
 
         public ListBucketIntelligentTieringConfigurationsOutput build() {
-            return new com.amazonaws.s3.model.ListBucketIntelligentTieringConfigurationsOutput(this);
+            return new ListBucketIntelligentTieringConfigurationsOutput(this);
         }
 
-        /**
-         * <p>Indicates whether the returned list of analytics configurations is complete. A value of
-         *          true indicates that the list is not complete and the NextContinuationToken will be provided
-         *          for a subsequent request.</p>
-         */
         public final Builder isTruncated(Boolean isTruncated) {
             this.isTruncated = isTruncated;
             return this;
         }
 
-        /**
-         * <p>The ContinuationToken that represents a placeholder from where this request should
-         *          begin.</p>
-         */
         public final Builder continuationToken(String continuationToken) {
             this.continuationToken = continuationToken;
             return this;
         }
 
-        /**
-         * <p>The marker used to continue this inventory configuration listing. Use the
-         *             <code>NextContinuationToken</code> from this response to continue the listing in a
-         *          subsequent request. The continuation token is an opaque value that Amazon S3 understands.</p>
-         */
         public final Builder nextContinuationToken(String nextContinuationToken) {
             this.nextContinuationToken = nextContinuationToken;
             return this;
         }
 
-        /**
-         * <p>The list of S3 Intelligent-Tiering configurations for a bucket.</p>
-         */
         public final Builder intelligentTieringConfigurationList(
                 List<IntelligentTieringConfiguration> intelligentTieringConfigurationList) {
             this.intelligentTieringConfigurationList = intelligentTieringConfigurationList;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Boolean isTruncated() {
+            return isTruncated;
+        }
+
+        public String continuationToken() {
+            return continuationToken;
+        }
+
+        public String nextContinuationToken() {
+            return nextContinuationToken;
+        }
+
+        public List<IntelligentTieringConfiguration> intelligentTieringConfigurationList() {
+            return intelligentTieringConfigurationList;
+        }
+
+        public void setIsTruncated(final Boolean isTruncated) {
+            this.isTruncated = isTruncated;
+        }
+
+        public void setContinuationToken(final String continuationToken) {
+            this.continuationToken = continuationToken;
+        }
+
+        public void setNextContinuationToken(final String nextContinuationToken) {
+            this.nextContinuationToken = nextContinuationToken;
+        }
+
+        public void setIntelligentTieringConfigurationList(
+                final List<IntelligentTieringConfiguration> intelligentTieringConfigurationList) {
+            this.intelligentTieringConfigurationList = intelligentTieringConfigurationList;
         }
     }
 }

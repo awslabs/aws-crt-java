@@ -6,34 +6,43 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketLifecycleConfigurationRequest {
-    private String bucket;
+    /**
+     * <p>The name of the bucket for which to set the configuration.</p>
+     */
+    String bucket;
 
-    private BucketLifecycleConfiguration lifecycleConfiguration;
+    /**
+     * <p>Container for lifecycle rules. You can add as many as 1,000 rules.</p>
+     */
+    BucketLifecycleConfiguration lifecycleConfiguration;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private PutBucketLifecycleConfigurationRequest() {
-        this.bucket = null;
+    PutBucketLifecycleConfigurationRequest() {
+        this.bucket = "";
         this.lifecycleConfiguration = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private PutBucketLifecycleConfigurationRequest(Builder builder) {
+    protected PutBucketLifecycleConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.lifecycleConfiguration = builder.lifecycleConfiguration;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,12 +60,16 @@ public class PutBucketLifecycleConfigurationRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public BucketLifecycleConfiguration lifecycleConfiguration() {
         return lifecycleConfiguration;
+    }
+
+    public String expectedBucketOwner() {
+        return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
     }
 
     public void setLifecycleConfiguration(
@@ -64,57 +77,97 @@ public class PutBucketLifecycleConfigurationRequest {
         this.lifecycleConfiguration = lifecycleConfiguration;
     }
 
-    public String expectedBucketOwner() {
-        return expectedBucketOwner;
-    }
-
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private BucketLifecycleConfiguration lifecycleConfiguration;
+        Builder lifecycleConfiguration(BucketLifecycleConfiguration lifecycleConfiguration);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The name of the bucket for which to set the configuration.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>Container for lifecycle rules. You can add as many as 1,000 rules.</p>
+         */
+        BucketLifecycleConfiguration lifecycleConfiguration;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutBucketLifecycleConfigurationRequest model) {
+        private BuilderImpl(PutBucketLifecycleConfigurationRequest model) {
             bucket(model.bucket);
             lifecycleConfiguration(model.lifecycleConfiguration);
             expectedBucketOwner(model.expectedBucketOwner);
         }
 
         public PutBucketLifecycleConfigurationRequest build() {
-            return new com.amazonaws.s3.model.PutBucketLifecycleConfigurationRequest(this);
+            return new PutBucketLifecycleConfigurationRequest(this);
         }
 
-        /**
-         * <p>The name of the bucket for which to set the configuration.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>Container for lifecycle rules. You can add as many as 1,000 rules.</p>
-         */
         public final Builder lifecycleConfiguration(
                 BucketLifecycleConfiguration lifecycleConfiguration) {
             this.lifecycleConfiguration = lifecycleConfiguration;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public BucketLifecycleConfiguration lifecycleConfiguration() {
+            return lifecycleConfiguration;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setLifecycleConfiguration(
+                final BucketLifecycleConfiguration lifecycleConfiguration) {
+            this.lifecycleConfiguration = lifecycleConfiguration;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

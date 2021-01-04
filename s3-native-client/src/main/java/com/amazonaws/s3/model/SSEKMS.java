@@ -6,26 +6,30 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class SSEKMS {
-    private String keyId;
+    /**
+     * <p>Specifies the ID of the AWS Key Management Service (AWS KMS) symmetric customer managed
+     *          customer master key (CMK) to use for encrypting inventory reports.</p>
+     */
+    String keyId;
 
-    private SSEKMS() {
-        this.keyId = null;
+    SSEKMS() {
+        this.keyId = "";
     }
 
-    private SSEKMS(Builder builder) {
+    protected SSEKMS(BuilderImpl builder) {
         this.keyId = builder.keyId;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,27 +51,50 @@ public class SSEKMS {
         this.keyId = keyId;
     }
 
-    static final class Builder {
-        private String keyId;
+    public interface Builder {
+        Builder keyId(String keyId);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(SSEKMS model) {
-            keyId(model.keyId);
-        }
-
-        public SSEKMS build() {
-            return new com.amazonaws.s3.model.SSEKMS(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Specifies the ID of the AWS Key Management Service (AWS KMS) symmetric customer managed
          *          customer master key (CMK) to use for encrypting inventory reports.</p>
          */
+        String keyId;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(SSEKMS model) {
+            keyId(model.keyId);
+        }
+
+        public SSEKMS build() {
+            return new SSEKMS(this);
+        }
+
         public final Builder keyId(String keyId) {
             this.keyId = keyId;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String keyId() {
+            return keyId;
+        }
+
+        public void setKeyId(final String keyId) {
+            this.keyId = keyId;
         }
     }
 }

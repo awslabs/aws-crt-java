@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ObjectLockLegalHold {
-    private ObjectLockLegalHoldStatus status;
+    /**
+     * <p>Indicates whether the specified object has a Legal Hold in place.</p>
+     */
+    ObjectLockLegalHoldStatus status;
 
-    private ObjectLockLegalHold() {
+    ObjectLockLegalHold() {
         this.status = null;
     }
 
-    private ObjectLockLegalHold(Builder builder) {
+    protected ObjectLockLegalHold(BuilderImpl builder) {
         this.status = builder.status;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class ObjectLockLegalHold {
         this.status = status;
     }
 
-    static final class Builder {
-        private ObjectLockLegalHoldStatus status;
+    public interface Builder {
+        Builder status(ObjectLockLegalHoldStatus status);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Indicates whether the specified object has a Legal Hold in place.</p>
+         */
+        ObjectLockLegalHoldStatus status;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ObjectLockLegalHold model) {
+        private BuilderImpl(ObjectLockLegalHold model) {
             status(model.status);
         }
 
         public ObjectLockLegalHold build() {
-            return new com.amazonaws.s3.model.ObjectLockLegalHold(this);
+            return new ObjectLockLegalHold(this);
         }
 
-        /**
-         * <p>Indicates whether the specified object has a Legal Hold in place.</p>
-         */
         public final Builder status(ObjectLockLegalHoldStatus status) {
             this.status = status;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockLegalHoldStatus status() {
+            return status;
+        }
+
+        public void setStatus(final ObjectLockLegalHoldStatus status) {
+            this.status = status;
         }
     }
 }

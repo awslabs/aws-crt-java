@@ -6,29 +6,49 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketVersioningRequest {
-    private String bucket;
+    /**
+     * <p>The bucket name.</p>
+     */
+    String bucket;
 
-    private String contentMD5;
+    /**
+     * <p>>The base64-encoded 128-bit MD5 digest of the data. You must use this header as a
+     *          message integrity check to verify that the request body was not corrupted in transit. For
+     *          more information, see <a href="http://www.ietf.org/rfc/rfc1864.txt">RFC
+     *          1864</a>.</p>
+     *          <p>For requests made using the AWS Command Line Interface (CLI) or AWS SDKs, this field is calculated automatically.</p>
+     */
+    String contentMD5;
 
-    private String mFA;
+    /**
+     * <p>The concatenation of the authentication device's serial number, a space, and the value
+     *          that is displayed on your authentication device.</p>
+     */
+    String mFA;
 
-    private VersioningConfiguration versioningConfiguration;
+    /**
+     * <p>Container for setting the versioning state.</p>
+     */
+    VersioningConfiguration versioningConfiguration;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private PutBucketVersioningRequest() {
-        this.bucket = null;
-        this.contentMD5 = null;
-        this.mFA = null;
+    PutBucketVersioningRequest() {
+        this.bucket = "";
+        this.contentMD5 = "";
+        this.mFA = "";
         this.versioningConfiguration = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private PutBucketVersioningRequest(Builder builder) {
+    protected PutBucketVersioningRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.contentMD5 = builder.contentMD5;
         this.mFA = builder.mFA;
@@ -36,12 +56,12 @@ public class PutBucketVersioningRequest {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -59,75 +79,59 @@ public class PutBucketVersioningRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String contentMD5() {
         return contentMD5;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
     }
 
     public String mFA() {
         return mFA;
     }
 
-    public void setMFA(final String mFA) {
-        this.mFA = mFA;
-    }
-
     public VersioningConfiguration versioningConfiguration() {
         return versioningConfiguration;
-    }
-
-    public void setVersioningConfiguration(final VersioningConfiguration versioningConfiguration) {
-        this.versioningConfiguration = versioningConfiguration;
     }
 
     public String expectedBucketOwner() {
         return expectedBucketOwner;
     }
 
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setContentMD5(final String contentMD5) {
+        this.contentMD5 = contentMD5;
+    }
+
+    public void setMFA(final String mFA) {
+        this.mFA = mFA;
+    }
+
+    public void setVersioningConfiguration(final VersioningConfiguration versioningConfiguration) {
+        this.versioningConfiguration = versioningConfiguration;
+    }
+
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String contentMD5;
+        Builder contentMD5(String contentMD5);
 
-        private String mFA;
+        Builder mFA(String mFA);
 
-        private VersioningConfiguration versioningConfiguration;
+        Builder versioningConfiguration(VersioningConfiguration versioningConfiguration);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(PutBucketVersioningRequest model) {
-            bucket(model.bucket);
-            contentMD5(model.contentMD5);
-            mFA(model.mFA);
-            versioningConfiguration(model.versioningConfiguration);
-            expectedBucketOwner(model.expectedBucketOwner);
-        }
-
-        public PutBucketVersioningRequest build() {
-            return new com.amazonaws.s3.model.PutBucketVersioningRequest(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>The bucket name.</p>
          */
-        public final Builder bucket(String bucket) {
-            this.bucket = bucket;
-            return this;
-        }
+        String bucket;
 
         /**
          * <p>>The base64-encoded 128-bit MD5 digest of the data. You must use this header as a
@@ -136,35 +140,115 @@ public class PutBucketVersioningRequest {
          *          1864</a>.</p>
          *          <p>For requests made using the AWS Command Line Interface (CLI) or AWS SDKs, this field is calculated automatically.</p>
          */
-        public final Builder contentMD5(String contentMD5) {
-            this.contentMD5 = contentMD5;
-            return this;
-        }
+        String contentMD5;
 
         /**
          * <p>The concatenation of the authentication device's serial number, a space, and the value
          *          that is displayed on your authentication device.</p>
          */
+        String mFA;
+
+        /**
+         * <p>Container for setting the versioning state.</p>
+         */
+        VersioningConfiguration versioningConfiguration;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(PutBucketVersioningRequest model) {
+            bucket(model.bucket);
+            contentMD5(model.contentMD5);
+            mFA(model.mFA);
+            versioningConfiguration(model.versioningConfiguration);
+            expectedBucketOwner(model.expectedBucketOwner);
+        }
+
+        public PutBucketVersioningRequest build() {
+            return new PutBucketVersioningRequest(this);
+        }
+
+        public final Builder bucket(String bucket) {
+            this.bucket = bucket;
+            return this;
+        }
+
+        public final Builder contentMD5(String contentMD5) {
+            this.contentMD5 = contentMD5;
+            return this;
+        }
+
         public final Builder mFA(String mFA) {
             this.mFA = mFA;
             return this;
         }
 
-        /**
-         * <p>Container for setting the versioning state.</p>
-         */
         public final Builder versioningConfiguration(
                 VersioningConfiguration versioningConfiguration) {
             this.versioningConfiguration = versioningConfiguration;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String contentMD5() {
+            return contentMD5;
+        }
+
+        public String mFA() {
+            return mFA;
+        }
+
+        public VersioningConfiguration versioningConfiguration() {
+            return versioningConfiguration;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setContentMD5(final String contentMD5) {
+            this.contentMD5 = contentMD5;
+        }
+
+        public void setMFA(final String mFA) {
+            this.mFA = mFA;
+        }
+
+        public void setVersioningConfiguration(
+                final VersioningConfiguration versioningConfiguration) {
+            this.versioningConfiguration = versioningConfiguration;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

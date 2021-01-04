@@ -7,38 +7,71 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListObjectVersionsRequest {
-    private String bucket;
+    /**
+     * <p>The bucket name that contains the objects. </p>
+     */
+    String bucket;
 
-    private String delimiter;
+    /**
+     * <p>A delimiter is a character that you specify to group keys. All keys that contain the
+     *          same string between the <code>prefix</code> and the first occurrence of the delimiter are
+     *          grouped under a single result element in CommonPrefixes. These groups are counted as one
+     *          result against the max-keys limitation. These keys are not returned elsewhere in the
+     *          response.</p>
+     */
+    String delimiter;
 
-    private EncodingType encodingType;
+    EncodingType encodingType;
 
-    private String keyMarker;
+    /**
+     * <p>Specifies the key to start with when listing objects in a bucket.</p>
+     */
+    String keyMarker;
 
-    private Integer maxKeys;
+    /**
+     * <p>Sets the maximum number of keys returned in the response. By default the API returns up
+     *          to 1,000 key names. The response might contain fewer keys but will never contain more. If
+     *          additional keys satisfy the search criteria, but were not returned because max-keys was
+     *          exceeded, the response contains <isTruncated>true</isTruncated>. To return the
+     *          additional keys, see key-marker and version-id-marker.</p>
+     */
+    Integer maxKeys;
 
-    private String prefix;
+    /**
+     * <p>Use this parameter to select only those keys that begin with the specified prefix. You
+     *          can use prefixes to separate a bucket into different groupings of keys. (You can think of
+     *          using prefix to make groups in the same way you'd use a folder in a file system.) You can
+     *          use prefix with delimiter to roll up numerous objects into a single result under
+     *          CommonPrefixes. </p>
+     */
+    String prefix;
 
-    private String versionIdMarker;
+    /**
+     * <p>Specifies the object version you want to start listing from.</p>
+     */
+    String versionIdMarker;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private ListObjectVersionsRequest() {
-        this.bucket = null;
-        this.delimiter = null;
+    ListObjectVersionsRequest() {
+        this.bucket = "";
+        this.delimiter = "";
         this.encodingType = null;
-        this.keyMarker = null;
+        this.keyMarker = "";
         this.maxKeys = null;
-        this.prefix = null;
-        this.versionIdMarker = null;
-        this.expectedBucketOwner = null;
+        this.prefix = "";
+        this.versionIdMarker = "";
+        this.expectedBucketOwner = "";
     }
 
-    private ListObjectVersionsRequest(Builder builder) {
+    protected ListObjectVersionsRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.delimiter = builder.delimiter;
         this.encodingType = builder.encodingType;
@@ -49,12 +82,12 @@ public class ListObjectVersionsRequest {
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -72,87 +105,138 @@ public class ListObjectVersionsRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String delimiter() {
         return delimiter;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
     }
 
     public EncodingType encodingType() {
         return encodingType;
     }
 
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
     public String keyMarker() {
         return keyMarker;
-    }
-
-    public void setKeyMarker(final String keyMarker) {
-        this.keyMarker = keyMarker;
     }
 
     public Integer maxKeys() {
         return maxKeys;
     }
 
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
     public String prefix() {
         return prefix;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
     }
 
     public String versionIdMarker() {
         return versionIdMarker;
     }
 
-    public void setVersionIdMarker(final String versionIdMarker) {
-        this.versionIdMarker = versionIdMarker;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setDelimiter(final String delimiter) {
+        this.delimiter = delimiter;
+    }
+
+    public void setEncodingType(final EncodingType encodingType) {
+        this.encodingType = encodingType;
+    }
+
+    public void setKeyMarker(final String keyMarker) {
+        this.keyMarker = keyMarker;
+    }
+
+    public void setMaxKeys(final Integer maxKeys) {
+        this.maxKeys = maxKeys;
+    }
+
+    public void setPrefix(final String prefix) {
+        this.prefix = prefix;
+    }
+
+    public void setVersionIdMarker(final String versionIdMarker) {
+        this.versionIdMarker = versionIdMarker;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String delimiter;
+        Builder delimiter(String delimiter);
 
-        private EncodingType encodingType;
+        Builder encodingType(EncodingType encodingType);
 
-        private String keyMarker;
+        Builder keyMarker(String keyMarker);
 
-        private Integer maxKeys;
+        Builder maxKeys(Integer maxKeys);
 
-        private String prefix;
+        Builder prefix(String prefix);
 
-        private String versionIdMarker;
+        Builder versionIdMarker(String versionIdMarker);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The bucket name that contains the objects. </p>
+         */
+        String bucket;
+
+        /**
+         * <p>A delimiter is a character that you specify to group keys. All keys that contain the
+         *          same string between the <code>prefix</code> and the first occurrence of the delimiter are
+         *          grouped under a single result element in CommonPrefixes. These groups are counted as one
+         *          result against the max-keys limitation. These keys are not returned elsewhere in the
+         *          response.</p>
+         */
+        String delimiter;
+
+        EncodingType encodingType;
+
+        /**
+         * <p>Specifies the key to start with when listing objects in a bucket.</p>
+         */
+        String keyMarker;
+
+        /**
+         * <p>Sets the maximum number of keys returned in the response. By default the API returns up
+         *          to 1,000 key names. The response might contain fewer keys but will never contain more. If
+         *          additional keys satisfy the search criteria, but were not returned because max-keys was
+         *          exceeded, the response contains <isTruncated>true</isTruncated>. To return the
+         *          additional keys, see key-marker and version-id-marker.</p>
+         */
+        Integer maxKeys;
+
+        /**
+         * <p>Use this parameter to select only those keys that begin with the specified prefix. You
+         *          can use prefixes to separate a bucket into different groupings of keys. (You can think of
+         *          using prefix to make groups in the same way you'd use a folder in a file system.) You can
+         *          use prefix with delimiter to roll up numerous objects into a single result under
+         *          CommonPrefixes. </p>
+         */
+        String prefix;
+
+        /**
+         * <p>Specifies the object version you want to start listing from.</p>
+         */
+        String versionIdMarker;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ListObjectVersionsRequest model) {
+        private BuilderImpl(ListObjectVersionsRequest model) {
             bucket(model.bucket);
             delimiter(model.delimiter);
             encodingType(model.encodingType);
@@ -164,24 +248,14 @@ public class ListObjectVersionsRequest {
         }
 
         public ListObjectVersionsRequest build() {
-            return new com.amazonaws.s3.model.ListObjectVersionsRequest(this);
+            return new ListObjectVersionsRequest(this);
         }
 
-        /**
-         * <p>The bucket name that contains the objects. </p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>A delimiter is a character that you specify to group keys. All keys that contain the
-         *          same string between the <code>prefix</code> and the first occurrence of the delimiter are
-         *          grouped under a single result element in CommonPrefixes. These groups are counted as one
-         *          result against the max-keys limitation. These keys are not returned elsewhere in the
-         *          response.</p>
-         */
         public final Builder delimiter(String delimiter) {
             this.delimiter = delimiter;
             return this;
@@ -192,52 +266,104 @@ public class ListObjectVersionsRequest {
             return this;
         }
 
-        /**
-         * <p>Specifies the key to start with when listing objects in a bucket.</p>
-         */
         public final Builder keyMarker(String keyMarker) {
             this.keyMarker = keyMarker;
             return this;
         }
 
-        /**
-         * <p>Sets the maximum number of keys returned in the response. By default the API returns up
-         *          to 1,000 key names. The response might contain fewer keys but will never contain more. If
-         *          additional keys satisfy the search criteria, but were not returned because max-keys was
-         *          exceeded, the response contains <isTruncated>true</isTruncated>. To return the
-         *          additional keys, see key-marker and version-id-marker.</p>
-         */
         public final Builder maxKeys(Integer maxKeys) {
             this.maxKeys = maxKeys;
             return this;
         }
 
-        /**
-         * <p>Use this parameter to select only those keys that begin with the specified prefix. You
-         *          can use prefixes to separate a bucket into different groupings of keys. (You can think of
-         *          using prefix to make groups in the same way you'd use a folder in a file system.) You can
-         *          use prefix with delimiter to roll up numerous objects into a single result under
-         *          CommonPrefixes. </p>
-         */
         public final Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
         }
 
-        /**
-         * <p>Specifies the object version you want to start listing from.</p>
-         */
         public final Builder versionIdMarker(String versionIdMarker) {
             this.versionIdMarker = versionIdMarker;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String delimiter() {
+            return delimiter;
+        }
+
+        public EncodingType encodingType() {
+            return encodingType;
+        }
+
+        public String keyMarker() {
+            return keyMarker;
+        }
+
+        public Integer maxKeys() {
+            return maxKeys;
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public String versionIdMarker() {
+            return versionIdMarker;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setDelimiter(final String delimiter) {
+            this.delimiter = delimiter;
+        }
+
+        public void setEncodingType(final EncodingType encodingType) {
+            this.encodingType = encodingType;
+        }
+
+        public void setKeyMarker(final String keyMarker) {
+            this.keyMarker = keyMarker;
+        }
+
+        public void setMaxKeys(final Integer maxKeys) {
+            this.maxKeys = maxKeys;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        public void setVersionIdMarker(final String versionIdMarker) {
+            this.versionIdMarker = versionIdMarker;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

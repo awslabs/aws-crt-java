@@ -8,38 +8,51 @@ import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class Part {
-    private Integer partNumber;
+    /**
+     * <p>Part number identifying the part. This is a positive integer between 1 and
+     *          10,000.</p>
+     */
+    Integer partNumber;
 
-    private Instant lastModified;
+    /**
+     * <p>Date and time at which the part was uploaded.</p>
+     */
+    Instant lastModified;
 
-    private String eTag;
+    /**
+     * <p>Entity tag returned when the part was uploaded.</p>
+     */
+    String eTag;
 
-    private Integer size;
+    /**
+     * <p>Size in bytes of the uploaded part data.</p>
+     */
+    Integer size;
 
-    private Part() {
+    Part() {
         this.partNumber = null;
         this.lastModified = null;
-        this.eTag = null;
+        this.eTag = "";
         this.size = null;
     }
 
-    private Part(Builder builder) {
+    protected Part(BuilderImpl builder) {
         this.partNumber = builder.partNumber;
         this.lastModified = builder.lastModified;
         this.eTag = builder.eTag;
         this.size = builder.size;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -57,47 +70,70 @@ public class Part {
         return partNumber;
     }
 
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
-    }
-
     public Instant lastModified() {
         return lastModified;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
     }
 
     public String eTag() {
         return eTag;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
     public Integer size() {
         return size;
+    }
+
+    public void setPartNumber(final Integer partNumber) {
+        this.partNumber = partNumber;
+    }
+
+    public void setLastModified(final Instant lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    public void setETag(final String eTag) {
+        this.eTag = eTag;
     }
 
     public void setSize(final Integer size) {
         this.size = size;
     }
 
-    static final class Builder {
-        private Integer partNumber;
+    public interface Builder {
+        Builder partNumber(Integer partNumber);
 
-        private Instant lastModified;
+        Builder lastModified(Instant lastModified);
 
-        private String eTag;
+        Builder eTag(String eTag);
 
-        private Integer size;
+        Builder size(Integer size);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Part number identifying the part. This is a positive integer between 1 and
+         *          10,000.</p>
+         */
+        Integer partNumber;
+
+        /**
+         * <p>Date and time at which the part was uploaded.</p>
+         */
+        Instant lastModified;
+
+        /**
+         * <p>Entity tag returned when the part was uploaded.</p>
+         */
+        String eTag;
+
+        /**
+         * <p>Size in bytes of the uploaded part data.</p>
+         */
+        Integer size;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(Part model) {
+        private BuilderImpl(Part model) {
             partNumber(model.partNumber);
             lastModified(model.lastModified);
             eTag(model.eTag);
@@ -105,40 +141,70 @@ public class Part {
         }
 
         public Part build() {
-            return new com.amazonaws.s3.model.Part(this);
+            return new Part(this);
         }
 
-        /**
-         * <p>Part number identifying the part. This is a positive integer between 1 and
-         *          10,000.</p>
-         */
         public final Builder partNumber(Integer partNumber) {
             this.partNumber = partNumber;
             return this;
         }
 
-        /**
-         * <p>Date and time at which the part was uploaded.</p>
-         */
         public final Builder lastModified(Instant lastModified) {
             this.lastModified = lastModified;
             return this;
         }
 
-        /**
-         * <p>Entity tag returned when the part was uploaded.</p>
-         */
         public final Builder eTag(String eTag) {
             this.eTag = eTag;
             return this;
         }
 
-        /**
-         * <p>Size in bytes of the uploaded part data.</p>
-         */
         public final Builder size(Integer size) {
             this.size = size;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Integer partNumber() {
+            return partNumber;
+        }
+
+        public Instant lastModified() {
+            return lastModified;
+        }
+
+        public String eTag() {
+            return eTag;
+        }
+
+        public Integer size() {
+            return size;
+        }
+
+        public void setPartNumber(final Integer partNumber) {
+            this.partNumber = partNumber;
+        }
+
+        public void setLastModified(final Instant lastModified) {
+            this.lastModified = lastModified;
+        }
+
+        public void setETag(final String eTag) {
+            this.eTag = eTag;
+        }
+
+        public void setSize(final Integer size) {
+            this.size = size;
         }
     }
 }

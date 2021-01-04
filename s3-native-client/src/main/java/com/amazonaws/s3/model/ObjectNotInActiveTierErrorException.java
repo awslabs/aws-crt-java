@@ -2,26 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0.
 package com.amazonaws.s3.model;
 
+import com.amazonaws.s3.S3Exception;
 import java.lang.Object;
 import java.lang.Override;
-import java.lang.RuntimeException;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
-@Generated("software.amazon.smithy.crt.java.StructureGenerator")
-public class ObjectNotInActiveTierErrorException extends RuntimeException {
-    private ObjectNotInActiveTierErrorException() {
+@Generated("software.amazon.smithy.crt.java.ExceptionGenerator")
+public class ObjectNotInActiveTierErrorException extends S3Exception {
+    protected ObjectNotInActiveTierErrorException(BuilderImpl builder) {
+        super(builder);
     }
 
-    private ObjectNotInActiveTierErrorException(Builder builder) {
-    }
-
-    public Builder builder() {
-        return new Builder();
-    }
-
+    @Override
     public Builder toBuilder() {
-        return new Builder(this);
+        return new BuilderImpl(this);
+    }
+
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -35,15 +34,29 @@ public class ObjectNotInActiveTierErrorException extends RuntimeException {
         return (rhs instanceof ObjectNotInActiveTierErrorException);
     }
 
-    static final class Builder {
-        private Builder() {
+    public interface Builder extends S3Exception.Builder {
+    }
+
+    protected static class BuilderImpl extends S3Exception.BuilderImpl implements Builder {
+        protected BuilderImpl() {
         }
 
-        private Builder(ObjectNotInActiveTierErrorException model) {
+        private BuilderImpl(ObjectNotInActiveTierErrorException model) {
         }
 
         public ObjectNotInActiveTierErrorException build() {
-            return new com.amazonaws.s3.model.ObjectNotInActiveTierErrorException(this);
+            return new ObjectNotInActiveTierErrorException(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
         }
     }
 }

@@ -5,26 +5,26 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectLegalHoldOutput {
-    private RequestCharged requestCharged;
+    RequestCharged requestCharged;
 
-    private PutObjectLegalHoldOutput() {
+    PutObjectLegalHoldOutput() {
         this.requestCharged = null;
     }
 
-    private PutObjectLegalHoldOutput(Builder builder) {
+    protected PutObjectLegalHoldOutput(BuilderImpl builder) {
         this.requestCharged = builder.requestCharged;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,23 +46,46 @@ public class PutObjectLegalHoldOutput {
         this.requestCharged = requestCharged;
     }
 
-    static final class Builder {
-        private RequestCharged requestCharged;
+    public interface Builder {
+        Builder requestCharged(RequestCharged requestCharged);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        RequestCharged requestCharged;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutObjectLegalHoldOutput model) {
+        private BuilderImpl(PutObjectLegalHoldOutput model) {
             requestCharged(model.requestCharged);
         }
 
         public PutObjectLegalHoldOutput build() {
-            return new com.amazonaws.s3.model.PutObjectLegalHoldOutput(this);
+            return new PutObjectLegalHoldOutput(this);
         }
 
         public final Builder requestCharged(RequestCharged requestCharged) {
             this.requestCharged = requestCharged;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public RequestCharged requestCharged() {
+            return requestCharged;
+        }
+
+        public void setRequestCharged(final RequestCharged requestCharged) {
+            this.requestCharged = requestCharged;
         }
     }
 }

@@ -6,30 +6,39 @@ import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class NoncurrentVersionTransition {
-    private Integer noncurrentDays;
+    /**
+     * <p>Specifies the number of days an object is noncurrent before Amazon S3 can perform the
+     *          associated action. For information about the noncurrent days calculations, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/intro-lifecycle-rules.html#non-current-days-calculations">How
+     *             Amazon S3 Calculates How Long an Object Has Been Noncurrent</a> in the
+     *             <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    Integer noncurrentDays;
 
-    private TransitionStorageClass storageClass;
+    /**
+     * <p>The class of storage used to store the object.</p>
+     */
+    TransitionStorageClass storageClass;
 
-    private NoncurrentVersionTransition() {
+    NoncurrentVersionTransition() {
         this.noncurrentDays = null;
         this.storageClass = null;
     }
 
-    private NoncurrentVersionTransition(Builder builder) {
+    protected NoncurrentVersionTransition(BuilderImpl builder) {
         this.noncurrentDays = builder.noncurrentDays;
         this.storageClass = builder.storageClass;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,52 +56,85 @@ public class NoncurrentVersionTransition {
         return noncurrentDays;
     }
 
-    public void setNoncurrentDays(final Integer noncurrentDays) {
-        this.noncurrentDays = noncurrentDays;
-    }
-
     public TransitionStorageClass storageClass() {
         return storageClass;
+    }
+
+    public void setNoncurrentDays(final Integer noncurrentDays) {
+        this.noncurrentDays = noncurrentDays;
     }
 
     public void setStorageClass(final TransitionStorageClass storageClass) {
         this.storageClass = storageClass;
     }
 
-    static final class Builder {
-        private Integer noncurrentDays;
+    public interface Builder {
+        Builder noncurrentDays(Integer noncurrentDays);
 
-        private TransitionStorageClass storageClass;
+        Builder storageClass(TransitionStorageClass storageClass);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(NoncurrentVersionTransition model) {
-            noncurrentDays(model.noncurrentDays);
-            storageClass(model.storageClass);
-        }
-
-        public NoncurrentVersionTransition build() {
-            return new com.amazonaws.s3.model.NoncurrentVersionTransition(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Specifies the number of days an object is noncurrent before Amazon S3 can perform the
          *          associated action. For information about the noncurrent days calculations, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/intro-lifecycle-rules.html#non-current-days-calculations">How
          *             Amazon S3 Calculates How Long an Object Has Been Noncurrent</a> in the
          *             <i>Amazon Simple Storage Service Developer Guide</i>.</p>
          */
+        Integer noncurrentDays;
+
+        /**
+         * <p>The class of storage used to store the object.</p>
+         */
+        TransitionStorageClass storageClass;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(NoncurrentVersionTransition model) {
+            noncurrentDays(model.noncurrentDays);
+            storageClass(model.storageClass);
+        }
+
+        public NoncurrentVersionTransition build() {
+            return new NoncurrentVersionTransition(this);
+        }
+
         public final Builder noncurrentDays(Integer noncurrentDays) {
             this.noncurrentDays = noncurrentDays;
             return this;
         }
 
-        /**
-         * <p>The class of storage used to store the object.</p>
-         */
         public final Builder storageClass(TransitionStorageClass storageClass) {
             this.storageClass = storageClass;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Integer noncurrentDays() {
+            return noncurrentDays;
+        }
+
+        public TransitionStorageClass storageClass() {
+            return storageClass;
+        }
+
+        public void setNoncurrentDays(final Integer noncurrentDays) {
+            this.noncurrentDays = noncurrentDays;
+        }
+
+        public void setStorageClass(final TransitionStorageClass storageClass) {
+            this.storageClass = storageClass;
         }
     }
 }

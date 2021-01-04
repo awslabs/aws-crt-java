@@ -6,29 +6,59 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CSVOutput {
-    private QuoteFields quoteFields;
+    /**
+     * <p>Indicates whether to use quotation marks around output fields. </p>
+     *          <ul>
+     *             <li>
+     *                <p>
+     *                   <code>ALWAYS</code>: Always use quotation marks for output fields.</p>
+     *             </li>
+     *             <li>
+     *                <p>
+     *                   <code>ASNEEDED</code>: Use quotation marks for output fields when needed.</p>
+     *             </li>
+     *          </ul>
+     */
+    QuoteFields quoteFields;
 
-    private String quoteEscapeCharacter;
+    /**
+     * <p>The single character used for escaping the quote character inside an already escaped
+     *          value.</p>
+     */
+    String quoteEscapeCharacter;
 
-    private String recordDelimiter;
+    /**
+     * <p>A single character used to separate individual records in the output. Instead of the
+     *          default value, you can specify an arbitrary delimiter.</p>
+     */
+    String recordDelimiter;
 
-    private String fieldDelimiter;
+    /**
+     * <p>The value used to separate individual fields in a record. You can specify an arbitrary
+     *          delimiter.</p>
+     */
+    String fieldDelimiter;
 
-    private String quoteCharacter;
+    /**
+     * <p>A single character used for escaping when the field delimiter is part of the value. For
+     *          example, if the value is <code>a, b</code>, Amazon S3 wraps this field value in quotation marks,
+     *          as follows: <code>" a , b "</code>.</p>
+     */
+    String quoteCharacter;
 
-    private CSVOutput() {
+    CSVOutput() {
         this.quoteFields = null;
-        this.quoteEscapeCharacter = null;
-        this.recordDelimiter = null;
-        this.fieldDelimiter = null;
-        this.quoteCharacter = null;
+        this.quoteEscapeCharacter = "";
+        this.recordDelimiter = "";
+        this.fieldDelimiter = "";
+        this.quoteCharacter = "";
     }
 
-    private CSVOutput(Builder builder) {
+    protected CSVOutput(BuilderImpl builder) {
         this.quoteFields = builder.quoteFields;
         this.quoteEscapeCharacter = builder.quoteEscapeCharacter;
         this.recordDelimiter = builder.recordDelimiter;
@@ -36,12 +66,12 @@ public class CSVOutput {
         this.quoteCharacter = builder.quoteCharacter;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -59,68 +89,55 @@ public class CSVOutput {
         return quoteFields;
     }
 
-    public void setQuoteFields(final QuoteFields quoteFields) {
-        this.quoteFields = quoteFields;
-    }
-
     public String quoteEscapeCharacter() {
         return quoteEscapeCharacter;
-    }
-
-    public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
-        this.quoteEscapeCharacter = quoteEscapeCharacter;
     }
 
     public String recordDelimiter() {
         return recordDelimiter;
     }
 
-    public void setRecordDelimiter(final String recordDelimiter) {
-        this.recordDelimiter = recordDelimiter;
-    }
-
     public String fieldDelimiter() {
         return fieldDelimiter;
-    }
-
-    public void setFieldDelimiter(final String fieldDelimiter) {
-        this.fieldDelimiter = fieldDelimiter;
     }
 
     public String quoteCharacter() {
         return quoteCharacter;
     }
 
+    public void setQuoteFields(final QuoteFields quoteFields) {
+        this.quoteFields = quoteFields;
+    }
+
+    public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
+        this.quoteEscapeCharacter = quoteEscapeCharacter;
+    }
+
+    public void setRecordDelimiter(final String recordDelimiter) {
+        this.recordDelimiter = recordDelimiter;
+    }
+
+    public void setFieldDelimiter(final String fieldDelimiter) {
+        this.fieldDelimiter = fieldDelimiter;
+    }
+
     public void setQuoteCharacter(final String quoteCharacter) {
         this.quoteCharacter = quoteCharacter;
     }
 
-    static final class Builder {
-        private QuoteFields quoteFields;
+    public interface Builder {
+        Builder quoteFields(QuoteFields quoteFields);
 
-        private String quoteEscapeCharacter;
+        Builder quoteEscapeCharacter(String quoteEscapeCharacter);
 
-        private String recordDelimiter;
+        Builder recordDelimiter(String recordDelimiter);
 
-        private String fieldDelimiter;
+        Builder fieldDelimiter(String fieldDelimiter);
 
-        private String quoteCharacter;
+        Builder quoteCharacter(String quoteCharacter);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(CSVOutput model) {
-            quoteFields(model.quoteFields);
-            quoteEscapeCharacter(model.quoteEscapeCharacter);
-            recordDelimiter(model.recordDelimiter);
-            fieldDelimiter(model.fieldDelimiter);
-            quoteCharacter(model.quoteCharacter);
-        }
-
-        public CSVOutput build() {
-            return new com.amazonaws.s3.model.CSVOutput(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Indicates whether to use quotation marks around output fields. </p>
          *          <ul>
@@ -134,46 +151,122 @@ public class CSVOutput {
          *             </li>
          *          </ul>
          */
-        public final Builder quoteFields(QuoteFields quoteFields) {
-            this.quoteFields = quoteFields;
-            return this;
-        }
+        QuoteFields quoteFields;
 
         /**
          * <p>The single character used for escaping the quote character inside an already escaped
          *          value.</p>
          */
-        public final Builder quoteEscapeCharacter(String quoteEscapeCharacter) {
-            this.quoteEscapeCharacter = quoteEscapeCharacter;
-            return this;
-        }
+        String quoteEscapeCharacter;
 
         /**
          * <p>A single character used to separate individual records in the output. Instead of the
          *          default value, you can specify an arbitrary delimiter.</p>
          */
-        public final Builder recordDelimiter(String recordDelimiter) {
-            this.recordDelimiter = recordDelimiter;
-            return this;
-        }
+        String recordDelimiter;
 
         /**
          * <p>The value used to separate individual fields in a record. You can specify an arbitrary
          *          delimiter.</p>
          */
-        public final Builder fieldDelimiter(String fieldDelimiter) {
-            this.fieldDelimiter = fieldDelimiter;
-            return this;
-        }
+        String fieldDelimiter;
 
         /**
          * <p>A single character used for escaping when the field delimiter is part of the value. For
          *          example, if the value is <code>a, b</code>, Amazon S3 wraps this field value in quotation marks,
          *          as follows: <code>" a , b "</code>.</p>
          */
+        String quoteCharacter;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(CSVOutput model) {
+            quoteFields(model.quoteFields);
+            quoteEscapeCharacter(model.quoteEscapeCharacter);
+            recordDelimiter(model.recordDelimiter);
+            fieldDelimiter(model.fieldDelimiter);
+            quoteCharacter(model.quoteCharacter);
+        }
+
+        public CSVOutput build() {
+            return new CSVOutput(this);
+        }
+
+        public final Builder quoteFields(QuoteFields quoteFields) {
+            this.quoteFields = quoteFields;
+            return this;
+        }
+
+        public final Builder quoteEscapeCharacter(String quoteEscapeCharacter) {
+            this.quoteEscapeCharacter = quoteEscapeCharacter;
+            return this;
+        }
+
+        public final Builder recordDelimiter(String recordDelimiter) {
+            this.recordDelimiter = recordDelimiter;
+            return this;
+        }
+
+        public final Builder fieldDelimiter(String fieldDelimiter) {
+            this.fieldDelimiter = fieldDelimiter;
+            return this;
+        }
+
         public final Builder quoteCharacter(String quoteCharacter) {
             this.quoteCharacter = quoteCharacter;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public QuoteFields quoteFields() {
+            return quoteFields;
+        }
+
+        public String quoteEscapeCharacter() {
+            return quoteEscapeCharacter;
+        }
+
+        public String recordDelimiter() {
+            return recordDelimiter;
+        }
+
+        public String fieldDelimiter() {
+            return fieldDelimiter;
+        }
+
+        public String quoteCharacter() {
+            return quoteCharacter;
+        }
+
+        public void setQuoteFields(final QuoteFields quoteFields) {
+            this.quoteFields = quoteFields;
+        }
+
+        public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
+            this.quoteEscapeCharacter = quoteEscapeCharacter;
+        }
+
+        public void setRecordDelimiter(final String recordDelimiter) {
+            this.recordDelimiter = recordDelimiter;
+        }
+
+        public void setFieldDelimiter(final String fieldDelimiter) {
+            this.fieldDelimiter = fieldDelimiter;
+        }
+
+        public void setQuoteCharacter(final String quoteCharacter) {
+            this.quoteCharacter = quoteCharacter;
         }
     }
 }

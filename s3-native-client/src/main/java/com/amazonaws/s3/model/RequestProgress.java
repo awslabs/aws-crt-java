@@ -6,26 +6,30 @@ import java.lang.Boolean;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class RequestProgress {
-    private Boolean enabled;
+    /**
+     * <p>Specifies whether periodic QueryProgress frames should be sent. Valid values: TRUE,
+     *          FALSE. Default value: FALSE.</p>
+     */
+    Boolean enabled;
 
-    private RequestProgress() {
+    RequestProgress() {
         this.enabled = null;
     }
 
-    private RequestProgress(Builder builder) {
+    protected RequestProgress(BuilderImpl builder) {
         this.enabled = builder.enabled;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,27 +51,50 @@ public class RequestProgress {
         this.enabled = enabled;
     }
 
-    static final class Builder {
-        private Boolean enabled;
+    public interface Builder {
+        Builder enabled(Boolean enabled);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(RequestProgress model) {
-            enabled(model.enabled);
-        }
-
-        public RequestProgress build() {
-            return new com.amazonaws.s3.model.RequestProgress(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Specifies whether periodic QueryProgress frames should be sent. Valid values: TRUE,
          *          FALSE. Default value: FALSE.</p>
          */
+        Boolean enabled;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(RequestProgress model) {
+            enabled(model.enabled);
+        }
+
+        public RequestProgress build() {
+            return new RequestProgress(this);
+        }
+
         public final Builder enabled(Boolean enabled) {
             this.enabled = enabled;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Boolean enabled() {
+            return enabled;
+        }
+
+        public void setEnabled(final Boolean enabled) {
+            this.enabled = enabled;
         }
     }
 }

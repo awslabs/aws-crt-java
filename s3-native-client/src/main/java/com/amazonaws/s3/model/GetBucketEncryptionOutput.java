@@ -5,26 +5,26 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketEncryptionOutput {
-    private ServerSideEncryptionConfiguration serverSideEncryptionConfiguration;
+    ServerSideEncryptionConfiguration serverSideEncryptionConfiguration;
 
-    private GetBucketEncryptionOutput() {
+    GetBucketEncryptionOutput() {
         this.serverSideEncryptionConfiguration = null;
     }
 
-    private GetBucketEncryptionOutput(Builder builder) {
+    protected GetBucketEncryptionOutput(BuilderImpl builder) {
         this.serverSideEncryptionConfiguration = builder.serverSideEncryptionConfiguration;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,24 +47,49 @@ public class GetBucketEncryptionOutput {
         this.serverSideEncryptionConfiguration = serverSideEncryptionConfiguration;
     }
 
-    static final class Builder {
-        private ServerSideEncryptionConfiguration serverSideEncryptionConfiguration;
+    public interface Builder {
+        Builder serverSideEncryptionConfiguration(
+                ServerSideEncryptionConfiguration serverSideEncryptionConfiguration);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        ServerSideEncryptionConfiguration serverSideEncryptionConfiguration;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketEncryptionOutput model) {
+        private BuilderImpl(GetBucketEncryptionOutput model) {
             serverSideEncryptionConfiguration(model.serverSideEncryptionConfiguration);
         }
 
         public GetBucketEncryptionOutput build() {
-            return new com.amazonaws.s3.model.GetBucketEncryptionOutput(this);
+            return new GetBucketEncryptionOutput(this);
         }
 
         public final Builder serverSideEncryptionConfiguration(
                 ServerSideEncryptionConfiguration serverSideEncryptionConfiguration) {
             this.serverSideEncryptionConfiguration = serverSideEncryptionConfiguration;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ServerSideEncryptionConfiguration serverSideEncryptionConfiguration() {
+            return serverSideEncryptionConfiguration;
+        }
+
+        public void setServerSideEncryptionConfiguration(
+                final ServerSideEncryptionConfiguration serverSideEncryptionConfiguration) {
+            this.serverSideEncryptionConfiguration = serverSideEncryptionConfiguration;
         }
     }
 }

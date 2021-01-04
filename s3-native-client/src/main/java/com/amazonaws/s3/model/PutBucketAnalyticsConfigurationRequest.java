@@ -6,38 +6,50 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketAnalyticsConfigurationRequest {
-    private String bucket;
+    /**
+     * <p>The name of the bucket to which an analytics configuration is stored.</p>
+     */
+    String bucket;
 
-    private String id;
+    /**
+     * <p>The ID that identifies the analytics configuration.</p>
+     */
+    String id;
 
-    private AnalyticsConfiguration analyticsConfiguration;
+    /**
+     * <p>The configuration and any analyses for the analytics filter.</p>
+     */
+    AnalyticsConfiguration analyticsConfiguration;
 
-    private String expectedBucketOwner;
+    /**
+     * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+     */
+    String expectedBucketOwner;
 
-    private PutBucketAnalyticsConfigurationRequest() {
-        this.bucket = null;
-        this.id = null;
+    PutBucketAnalyticsConfigurationRequest() {
+        this.bucket = "";
+        this.id = "";
         this.analyticsConfiguration = null;
-        this.expectedBucketOwner = null;
+        this.expectedBucketOwner = "";
     }
 
-    private PutBucketAnalyticsConfigurationRequest(Builder builder) {
+    protected PutBucketAnalyticsConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.id = builder.id;
         this.analyticsConfiguration = builder.analyticsConfiguration;
         this.expectedBucketOwner = builder.expectedBucketOwner;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,47 +67,69 @@ public class PutBucketAnalyticsConfigurationRequest {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String id() {
         return id;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
     }
 
     public AnalyticsConfiguration analyticsConfiguration() {
         return analyticsConfiguration;
     }
 
-    public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
-        this.analyticsConfiguration = analyticsConfiguration;
-    }
-
     public String expectedBucketOwner() {
         return expectedBucketOwner;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
+        this.analyticsConfiguration = analyticsConfiguration;
     }
 
     public void setExpectedBucketOwner(final String expectedBucketOwner) {
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
-    static final class Builder {
-        private String bucket;
+    public interface Builder {
+        Builder bucket(String bucket);
 
-        private String id;
+        Builder id(String id);
 
-        private AnalyticsConfiguration analyticsConfiguration;
+        Builder analyticsConfiguration(AnalyticsConfiguration analyticsConfiguration);
 
-        private String expectedBucketOwner;
+        Builder expectedBucketOwner(String expectedBucketOwner);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The name of the bucket to which an analytics configuration is stored.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>The ID that identifies the analytics configuration.</p>
+         */
+        String id;
+
+        /**
+         * <p>The configuration and any analyses for the analytics filter.</p>
+         */
+        AnalyticsConfiguration analyticsConfiguration;
+
+        /**
+         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
+         */
+        String expectedBucketOwner;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutBucketAnalyticsConfigurationRequest model) {
+        private BuilderImpl(PutBucketAnalyticsConfigurationRequest model) {
             bucket(model.bucket);
             id(model.id);
             analyticsConfiguration(model.analyticsConfiguration);
@@ -103,39 +137,70 @@ public class PutBucketAnalyticsConfigurationRequest {
         }
 
         public PutBucketAnalyticsConfigurationRequest build() {
-            return new com.amazonaws.s3.model.PutBucketAnalyticsConfigurationRequest(this);
+            return new PutBucketAnalyticsConfigurationRequest(this);
         }
 
-        /**
-         * <p>The name of the bucket to which an analytics configuration is stored.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The ID that identifies the analytics configuration.</p>
-         */
         public final Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        /**
-         * <p>The configuration and any analyses for the analytics filter.</p>
-         */
         public final Builder analyticsConfiguration(AnalyticsConfiguration analyticsConfiguration) {
             this.analyticsConfiguration = analyticsConfiguration;
             return this;
         }
 
-        /**
-         * <p>The account id of the expected bucket owner. If the bucket is owned by a different account, the request will fail with an HTTP <code>403 (Access Denied)</code> error.</p>
-         */
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public AnalyticsConfiguration analyticsConfiguration() {
+            return analyticsConfiguration;
+        }
+
+        public String expectedBucketOwner() {
+            return expectedBucketOwner;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
+            this.analyticsConfiguration = analyticsConfiguration;
+        }
+
+        public void setExpectedBucketOwner(final String expectedBucketOwner) {
+            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

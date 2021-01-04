@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectTaggingOutput {
-    private String versionId;
+    /**
+     * <p>The versionId of the object the tag-set was added to.</p>
+     */
+    String versionId;
 
-    private PutObjectTaggingOutput() {
-        this.versionId = null;
+    PutObjectTaggingOutput() {
+        this.versionId = "";
     }
 
-    private PutObjectTaggingOutput(Builder builder) {
+    protected PutObjectTaggingOutput(BuilderImpl builder) {
         this.versionId = builder.versionId;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class PutObjectTaggingOutput {
         this.versionId = versionId;
     }
 
-    static final class Builder {
-        private String versionId;
+    public interface Builder {
+        Builder versionId(String versionId);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The versionId of the object the tag-set was added to.</p>
+         */
+        String versionId;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(PutObjectTaggingOutput model) {
+        private BuilderImpl(PutObjectTaggingOutput model) {
             versionId(model.versionId);
         }
 
         public PutObjectTaggingOutput build() {
-            return new com.amazonaws.s3.model.PutObjectTaggingOutput(this);
+            return new PutObjectTaggingOutput(this);
         }
 
-        /**
-         * <p>The versionId of the object the tag-set was added to.</p>
-         */
         public final Builder versionId(String versionId) {
             this.versionId = versionId;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String versionId() {
+            return versionId;
+        }
+
+        public void setVersionId(final String versionId) {
+            this.versionId = versionId;
         }
     }
 }

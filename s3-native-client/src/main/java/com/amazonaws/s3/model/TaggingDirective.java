@@ -6,17 +6,17 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum TaggingDirective {
-    COPY("COPY"),
+enum TaggingDirective {
+    COPY("software.amazon.smithy.crt.codegen.Field@395d2a60"),
 
-    REPLACE("REPLACE"),
+    REPLACE("software.amazon.smithy.crt.codegen.Field@395d2a60"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private TaggingDirective(String value) {
         this.value = value;
@@ -31,5 +31,13 @@ public enum TaggingDirective {
 
     public static Set<TaggingDirective> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

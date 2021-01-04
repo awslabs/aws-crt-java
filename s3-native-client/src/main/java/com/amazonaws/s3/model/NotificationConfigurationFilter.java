@@ -5,26 +5,26 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class NotificationConfigurationFilter {
-    private S3KeyFilter key;
+    S3KeyFilter key;
 
-    private NotificationConfigurationFilter() {
+    NotificationConfigurationFilter() {
         this.key = null;
     }
 
-    private NotificationConfigurationFilter(Builder builder) {
+    protected NotificationConfigurationFilter(BuilderImpl builder) {
         this.key = builder.key;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,23 +46,46 @@ public class NotificationConfigurationFilter {
         this.key = key;
     }
 
-    static final class Builder {
-        private S3KeyFilter key;
+    public interface Builder {
+        Builder key(S3KeyFilter key);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        S3KeyFilter key;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(NotificationConfigurationFilter model) {
+        private BuilderImpl(NotificationConfigurationFilter model) {
             key(model.key);
         }
 
         public NotificationConfigurationFilter build() {
-            return new com.amazonaws.s3.model.NotificationConfigurationFilter(this);
+            return new NotificationConfigurationFilter(this);
         }
 
         public final Builder key(S3KeyFilter key) {
             this.key = key;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public S3KeyFilter key() {
+            return key;
+        }
+
+        public void setKey(final S3KeyFilter key) {
+            this.key = key;
         }
     }
 }

@@ -7,38 +7,51 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class IntelligentTieringConfiguration {
-    private String id;
+    /**
+     * <p>The ID used to identify the S3 Intelligent-Tiering configuration.</p>
+     */
+    String id;
 
-    private IntelligentTieringFilter filter;
+    /**
+     * <p>Specifies a bucket filter. The configuration only includes objects that meet the
+     *          filter's criteria.</p>
+     */
+    IntelligentTieringFilter filter;
 
-    private IntelligentTieringStatus status;
+    /**
+     * <p>Specifies the status of the configuration.</p>
+     */
+    IntelligentTieringStatus status;
 
-    private List<Tiering> tierings;
+    /**
+     * <p>Specifies the S3 Intelligent-Tiering storage class tier of the configuration.</p>
+     */
+    List<Tiering> tierings;
 
-    private IntelligentTieringConfiguration() {
-        this.id = null;
+    IntelligentTieringConfiguration() {
+        this.id = "";
         this.filter = null;
         this.status = null;
         this.tierings = null;
     }
 
-    private IntelligentTieringConfiguration(Builder builder) {
+    protected IntelligentTieringConfiguration(BuilderImpl builder) {
         this.id = builder.id;
         this.filter = builder.filter;
         this.status = builder.status;
         this.tierings = builder.tierings;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -56,47 +69,70 @@ public class IntelligentTieringConfiguration {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public IntelligentTieringFilter filter() {
         return filter;
-    }
-
-    public void setFilter(final IntelligentTieringFilter filter) {
-        this.filter = filter;
     }
 
     public IntelligentTieringStatus status() {
         return status;
     }
 
-    public void setStatus(final IntelligentTieringStatus status) {
-        this.status = status;
-    }
-
     public List<Tiering> tierings() {
         return tierings;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setFilter(final IntelligentTieringFilter filter) {
+        this.filter = filter;
+    }
+
+    public void setStatus(final IntelligentTieringStatus status) {
+        this.status = status;
     }
 
     public void setTierings(final List<Tiering> tierings) {
         this.tierings = tierings;
     }
 
-    static final class Builder {
-        private String id;
+    public interface Builder {
+        Builder id(String id);
 
-        private IntelligentTieringFilter filter;
+        Builder filter(IntelligentTieringFilter filter);
 
-        private IntelligentTieringStatus status;
+        Builder status(IntelligentTieringStatus status);
 
-        private List<Tiering> tierings;
+        Builder tierings(List<Tiering> tierings);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The ID used to identify the S3 Intelligent-Tiering configuration.</p>
+         */
+        String id;
+
+        /**
+         * <p>Specifies a bucket filter. The configuration only includes objects that meet the
+         *          filter's criteria.</p>
+         */
+        IntelligentTieringFilter filter;
+
+        /**
+         * <p>Specifies the status of the configuration.</p>
+         */
+        IntelligentTieringStatus status;
+
+        /**
+         * <p>Specifies the S3 Intelligent-Tiering storage class tier of the configuration.</p>
+         */
+        List<Tiering> tierings;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(IntelligentTieringConfiguration model) {
+        private BuilderImpl(IntelligentTieringConfiguration model) {
             id(model.id);
             filter(model.filter);
             status(model.status);
@@ -104,40 +140,70 @@ public class IntelligentTieringConfiguration {
         }
 
         public IntelligentTieringConfiguration build() {
-            return new com.amazonaws.s3.model.IntelligentTieringConfiguration(this);
+            return new IntelligentTieringConfiguration(this);
         }
 
-        /**
-         * <p>The ID used to identify the S3 Intelligent-Tiering configuration.</p>
-         */
         public final Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        /**
-         * <p>Specifies a bucket filter. The configuration only includes objects that meet the
-         *          filter's criteria.</p>
-         */
         public final Builder filter(IntelligentTieringFilter filter) {
             this.filter = filter;
             return this;
         }
 
-        /**
-         * <p>Specifies the status of the configuration.</p>
-         */
         public final Builder status(IntelligentTieringStatus status) {
             this.status = status;
             return this;
         }
 
-        /**
-         * <p>Specifies the S3 Intelligent-Tiering storage class tier of the configuration.</p>
-         */
         public final Builder tierings(List<Tiering> tierings) {
             this.tierings = tierings;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public IntelligentTieringFilter filter() {
+            return filter;
+        }
+
+        public IntelligentTieringStatus status() {
+            return status;
+        }
+
+        public List<Tiering> tierings() {
+            return tierings;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setFilter(final IntelligentTieringFilter filter) {
+            this.filter = filter;
+        }
+
+        public void setStatus(final IntelligentTieringStatus status) {
+            this.status = status;
+        }
+
+        public void setTierings(final List<Tiering> tierings) {
+            this.tierings = tierings;
         }
     }
 }

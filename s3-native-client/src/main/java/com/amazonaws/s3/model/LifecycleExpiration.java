@@ -8,34 +8,47 @@ import java.lang.Object;
 import java.lang.Override;
 import java.time.Instant;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class LifecycleExpiration {
-    private Instant date;
+    /**
+     * <p>Indicates at what date the object is to be moved or deleted. Should be in GMT ISO 8601
+     *          Format.</p>
+     */
+    Instant date;
 
-    private Integer days;
+    /**
+     * <p>Indicates the lifetime, in days, of the objects that are subject to the rule. The value
+     *          must be a non-zero positive integer.</p>
+     */
+    Integer days;
 
-    private Boolean expiredObjectDeleteMarker;
+    /**
+     * <p>Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set
+     *          to true, the delete marker will be expired; if set to false the policy takes no action.
+     *          This cannot be specified with Days or Date in a Lifecycle Expiration Policy.</p>
+     */
+    Boolean expiredObjectDeleteMarker;
 
-    private LifecycleExpiration() {
+    LifecycleExpiration() {
         this.date = null;
         this.days = null;
         this.expiredObjectDeleteMarker = null;
     }
 
-    private LifecycleExpiration(Builder builder) {
+    protected LifecycleExpiration(BuilderImpl builder) {
         this.date = builder.date;
         this.days = builder.days;
         this.expiredObjectDeleteMarker = builder.expiredObjectDeleteMarker;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -53,72 +66,115 @@ public class LifecycleExpiration {
         return date;
     }
 
-    public void setDate(final Instant date) {
-        this.date = date;
-    }
-
     public Integer days() {
         return days;
-    }
-
-    public void setDays(final Integer days) {
-        this.days = days;
     }
 
     public Boolean expiredObjectDeleteMarker() {
         return expiredObjectDeleteMarker;
     }
 
+    public void setDate(final Instant date) {
+        this.date = date;
+    }
+
+    public void setDays(final Integer days) {
+        this.days = days;
+    }
+
     public void setExpiredObjectDeleteMarker(final Boolean expiredObjectDeleteMarker) {
         this.expiredObjectDeleteMarker = expiredObjectDeleteMarker;
     }
 
-    static final class Builder {
-        private Instant date;
+    public interface Builder {
+        Builder date(Instant date);
 
-        private Integer days;
+        Builder days(Integer days);
 
-        private Boolean expiredObjectDeleteMarker;
+        Builder expiredObjectDeleteMarker(Boolean expiredObjectDeleteMarker);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(LifecycleExpiration model) {
-            date(model.date);
-            days(model.days);
-            expiredObjectDeleteMarker(model.expiredObjectDeleteMarker);
-        }
-
-        public LifecycleExpiration build() {
-            return new com.amazonaws.s3.model.LifecycleExpiration(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Indicates at what date the object is to be moved or deleted. Should be in GMT ISO 8601
          *          Format.</p>
          */
-        public final Builder date(Instant date) {
-            this.date = date;
-            return this;
-        }
+        Instant date;
 
         /**
          * <p>Indicates the lifetime, in days, of the objects that are subject to the rule. The value
          *          must be a non-zero positive integer.</p>
          */
-        public final Builder days(Integer days) {
-            this.days = days;
-            return this;
-        }
+        Integer days;
 
         /**
          * <p>Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set
          *          to true, the delete marker will be expired; if set to false the policy takes no action.
          *          This cannot be specified with Days or Date in a Lifecycle Expiration Policy.</p>
          */
+        Boolean expiredObjectDeleteMarker;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(LifecycleExpiration model) {
+            date(model.date);
+            days(model.days);
+            expiredObjectDeleteMarker(model.expiredObjectDeleteMarker);
+        }
+
+        public LifecycleExpiration build() {
+            return new LifecycleExpiration(this);
+        }
+
+        public final Builder date(Instant date) {
+            this.date = date;
+            return this;
+        }
+
+        public final Builder days(Integer days) {
+            this.days = days;
+            return this;
+        }
+
         public final Builder expiredObjectDeleteMarker(Boolean expiredObjectDeleteMarker) {
             this.expiredObjectDeleteMarker = expiredObjectDeleteMarker;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Instant date() {
+            return date;
+        }
+
+        public Integer days() {
+            return days;
+        }
+
+        public Boolean expiredObjectDeleteMarker() {
+            return expiredObjectDeleteMarker;
+        }
+
+        public void setDate(final Instant date) {
+            this.date = date;
+        }
+
+        public void setDays(final Integer days) {
+            this.days = days;
+        }
+
+        public void setExpiredObjectDeleteMarker(final Boolean expiredObjectDeleteMarker) {
+            this.expiredObjectDeleteMarker = expiredObjectDeleteMarker;
         }
     }
 }

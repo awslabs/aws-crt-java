@@ -7,30 +7,37 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CompletedPart {
-    private String eTag;
+    /**
+     * <p>Entity tag returned when the part was uploaded.</p>
+     */
+    String eTag;
 
-    private Integer partNumber;
+    /**
+     * <p>Part number that identifies the part. This is a positive integer between 1 and
+     *          10,000.</p>
+     */
+    Integer partNumber;
 
-    private CompletedPart() {
-        this.eTag = null;
+    CompletedPart() {
+        this.eTag = "";
         this.partNumber = null;
     }
 
-    private CompletedPart(Builder builder) {
+    protected CompletedPart(BuilderImpl builder) {
         this.eTag = builder.eTag;
         this.partNumber = builder.partNumber;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -48,50 +55,83 @@ public class CompletedPart {
         return eTag;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
     public Integer partNumber() {
         return partNumber;
+    }
+
+    public void setETag(final String eTag) {
+        this.eTag = eTag;
     }
 
     public void setPartNumber(final Integer partNumber) {
         this.partNumber = partNumber;
     }
 
-    static final class Builder {
-        private String eTag;
+    public interface Builder {
+        Builder eTag(String eTag);
 
-        private Integer partNumber;
+        Builder partNumber(Integer partNumber);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(CompletedPart model) {
-            eTag(model.eTag);
-            partNumber(model.partNumber);
-        }
-
-        public CompletedPart build() {
-            return new com.amazonaws.s3.model.CompletedPart(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Entity tag returned when the part was uploaded.</p>
          */
-        public final Builder eTag(String eTag) {
-            this.eTag = eTag;
-            return this;
-        }
+        String eTag;
 
         /**
          * <p>Part number that identifies the part. This is a positive integer between 1 and
          *          10,000.</p>
          */
+        Integer partNumber;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(CompletedPart model) {
+            eTag(model.eTag);
+            partNumber(model.partNumber);
+        }
+
+        public CompletedPart build() {
+            return new CompletedPart(this);
+        }
+
+        public final Builder eTag(String eTag) {
+            this.eTag = eTag;
+            return this;
+        }
+
         public final Builder partNumber(Integer partNumber) {
             this.partNumber = partNumber;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String eTag() {
+            return eTag;
+        }
+
+        public Integer partNumber() {
+            return partNumber;
+        }
+
+        public void setETag(final String eTag) {
+            this.eTag = eTag;
+        }
+
+        public void setPartNumber(final Integer partNumber) {
+            this.partNumber = partNumber;
         }
     }
 }

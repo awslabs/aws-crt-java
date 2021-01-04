@@ -5,30 +5,36 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class InventoryEncryption {
-    private SSES3 sSES3;
+    /**
+     * <p>Specifies the use of SSE-S3 to encrypt delivered inventory reports.</p>
+     */
+    SSES3 sSES3;
 
-    private SSEKMS sSEKMS;
+    /**
+     * <p>Specifies the use of SSE-KMS to encrypt delivered inventory reports.</p>
+     */
+    SSEKMS sSEKMS;
 
-    private InventoryEncryption() {
+    InventoryEncryption() {
         this.sSES3 = null;
         this.sSEKMS = null;
     }
 
-    private InventoryEncryption(Builder builder) {
+    protected InventoryEncryption(BuilderImpl builder) {
         this.sSES3 = builder.sSES3;
         this.sSEKMS = builder.sSEKMS;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,49 +52,82 @@ public class InventoryEncryption {
         return sSES3;
     }
 
-    public void setSSES3(final SSES3 sSES3) {
-        this.sSES3 = sSES3;
-    }
-
     public SSEKMS sSEKMS() {
         return sSEKMS;
+    }
+
+    public void setSSES3(final SSES3 sSES3) {
+        this.sSES3 = sSES3;
     }
 
     public void setSSEKMS(final SSEKMS sSEKMS) {
         this.sSEKMS = sSEKMS;
     }
 
-    static final class Builder {
-        private SSES3 sSES3;
+    public interface Builder {
+        Builder sSES3(SSES3 sSES3);
 
-        private SSEKMS sSEKMS;
+        Builder sSEKMS(SSEKMS sSEKMS);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Specifies the use of SSE-S3 to encrypt delivered inventory reports.</p>
+         */
+        SSES3 sSES3;
+
+        /**
+         * <p>Specifies the use of SSE-KMS to encrypt delivered inventory reports.</p>
+         */
+        SSEKMS sSEKMS;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(InventoryEncryption model) {
+        private BuilderImpl(InventoryEncryption model) {
             sSES3(model.sSES3);
             sSEKMS(model.sSEKMS);
         }
 
         public InventoryEncryption build() {
-            return new com.amazonaws.s3.model.InventoryEncryption(this);
+            return new InventoryEncryption(this);
         }
 
-        /**
-         * <p>Specifies the use of SSE-S3 to encrypt delivered inventory reports.</p>
-         */
         public final Builder sSES3(SSES3 sSES3) {
             this.sSES3 = sSES3;
             return this;
         }
 
-        /**
-         * <p>Specifies the use of SSE-KMS to encrypt delivered inventory reports.</p>
-         */
         public final Builder sSEKMS(SSEKMS sSEKMS) {
             this.sSEKMS = sSEKMS;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public SSES3 sSES3() {
+            return sSES3;
+        }
+
+        public SSEKMS sSEKMS() {
+            return sSEKMS;
+        }
+
+        public void setSSES3(final SSES3 sSES3) {
+            this.sSES3 = sSES3;
+        }
+
+        public void setSSEKMS(final SSEKMS sSEKMS) {
+            this.sSEKMS = sSEKMS;
         }
     }
 }

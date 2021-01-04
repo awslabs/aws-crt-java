@@ -6,34 +6,43 @@ import java.lang.Long;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class Progress {
-    private Long bytesScanned;
+    /**
+     * <p>The current number of object bytes scanned.</p>
+     */
+    Long bytesScanned;
 
-    private Long bytesProcessed;
+    /**
+     * <p>The current number of uncompressed object bytes processed.</p>
+     */
+    Long bytesProcessed;
 
-    private Long bytesReturned;
+    /**
+     * <p>The current number of bytes of records payload data returned.</p>
+     */
+    Long bytesReturned;
 
-    private Progress() {
+    Progress() {
         this.bytesScanned = null;
         this.bytesProcessed = null;
         this.bytesReturned = null;
     }
 
-    private Progress(Builder builder) {
+    protected Progress(BuilderImpl builder) {
         this.bytesScanned = builder.bytesScanned;
         this.bytesProcessed = builder.bytesProcessed;
         this.bytesReturned = builder.bytesReturned;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,68 +60,111 @@ public class Progress {
         return bytesScanned;
     }
 
-    public void setBytesScanned(final Long bytesScanned) {
-        this.bytesScanned = bytesScanned;
-    }
-
     public Long bytesProcessed() {
         return bytesProcessed;
-    }
-
-    public void setBytesProcessed(final Long bytesProcessed) {
-        this.bytesProcessed = bytesProcessed;
     }
 
     public Long bytesReturned() {
         return bytesReturned;
     }
 
+    public void setBytesScanned(final Long bytesScanned) {
+        this.bytesScanned = bytesScanned;
+    }
+
+    public void setBytesProcessed(final Long bytesProcessed) {
+        this.bytesProcessed = bytesProcessed;
+    }
+
     public void setBytesReturned(final Long bytesReturned) {
         this.bytesReturned = bytesReturned;
     }
 
-    static final class Builder {
-        private Long bytesScanned;
+    public interface Builder {
+        Builder bytesScanned(Long bytesScanned);
 
-        private Long bytesProcessed;
+        Builder bytesProcessed(Long bytesProcessed);
 
-        private Long bytesReturned;
+        Builder bytesReturned(Long bytesReturned);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The current number of object bytes scanned.</p>
+         */
+        Long bytesScanned;
+
+        /**
+         * <p>The current number of uncompressed object bytes processed.</p>
+         */
+        Long bytesProcessed;
+
+        /**
+         * <p>The current number of bytes of records payload data returned.</p>
+         */
+        Long bytesReturned;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(Progress model) {
+        private BuilderImpl(Progress model) {
             bytesScanned(model.bytesScanned);
             bytesProcessed(model.bytesProcessed);
             bytesReturned(model.bytesReturned);
         }
 
         public Progress build() {
-            return new com.amazonaws.s3.model.Progress(this);
+            return new Progress(this);
         }
 
-        /**
-         * <p>The current number of object bytes scanned.</p>
-         */
         public final Builder bytesScanned(Long bytesScanned) {
             this.bytesScanned = bytesScanned;
             return this;
         }
 
-        /**
-         * <p>The current number of uncompressed object bytes processed.</p>
-         */
         public final Builder bytesProcessed(Long bytesProcessed) {
             this.bytesProcessed = bytesProcessed;
             return this;
         }
 
-        /**
-         * <p>The current number of bytes of records payload data returned.</p>
-         */
         public final Builder bytesReturned(Long bytesReturned) {
             this.bytesReturned = bytesReturned;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Long bytesScanned() {
+            return bytesScanned;
+        }
+
+        public Long bytesProcessed() {
+            return bytesProcessed;
+        }
+
+        public Long bytesReturned() {
+            return bytesReturned;
+        }
+
+        public void setBytesScanned(final Long bytesScanned) {
+            this.bytesScanned = bytesScanned;
+        }
+
+        public void setBytesProcessed(final Long bytesProcessed) {
+            this.bytesProcessed = bytesProcessed;
+        }
+
+        public void setBytesReturned(final Long bytesReturned) {
+            this.bytesReturned = bytesReturned;
         }
     }
 }

@@ -6,26 +6,29 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class BucketLifecycleConfiguration {
-    private List<LifecycleRule> rules;
+    /**
+     * <p>A lifecycle rule for individual objects in an Amazon S3 bucket.</p>
+     */
+    List<LifecycleRule> rules;
 
-    private BucketLifecycleConfiguration() {
+    BucketLifecycleConfiguration() {
         this.rules = null;
     }
 
-    private BucketLifecycleConfiguration(Builder builder) {
+    protected BucketLifecycleConfiguration(BuilderImpl builder) {
         this.rules = builder.rules;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,26 +50,49 @@ public class BucketLifecycleConfiguration {
         this.rules = rules;
     }
 
-    static final class Builder {
-        private List<LifecycleRule> rules;
+    public interface Builder {
+        Builder rules(List<LifecycleRule> rules);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>A lifecycle rule for individual objects in an Amazon S3 bucket.</p>
+         */
+        List<LifecycleRule> rules;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(BucketLifecycleConfiguration model) {
+        private BuilderImpl(BucketLifecycleConfiguration model) {
             rules(model.rules);
         }
 
         public BucketLifecycleConfiguration build() {
-            return new com.amazonaws.s3.model.BucketLifecycleConfiguration(this);
+            return new BucketLifecycleConfiguration(this);
         }
 
-        /**
-         * <p>A lifecycle rule for individual objects in an Amazon S3 bucket.</p>
-         */
         public final Builder rules(List<LifecycleRule> rules) {
             this.rules = rules;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<LifecycleRule> rules() {
+            return rules;
+        }
+
+        public void setRules(final List<LifecycleRule> rules) {
+            this.rules = rules;
         }
     }
 }

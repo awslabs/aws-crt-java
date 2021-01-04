@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketAnalyticsConfigurationOutput {
-    private AnalyticsConfiguration analyticsConfiguration;
+    /**
+     * <p>The configuration and any analyses for the analytics filter.</p>
+     */
+    AnalyticsConfiguration analyticsConfiguration;
 
-    private GetBucketAnalyticsConfigurationOutput() {
+    GetBucketAnalyticsConfigurationOutput() {
         this.analyticsConfiguration = null;
     }
 
-    private GetBucketAnalyticsConfigurationOutput(Builder builder) {
+    protected GetBucketAnalyticsConfigurationOutput(BuilderImpl builder) {
         this.analyticsConfiguration = builder.analyticsConfiguration;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class GetBucketAnalyticsConfigurationOutput {
         this.analyticsConfiguration = analyticsConfiguration;
     }
 
-    static final class Builder {
-        private AnalyticsConfiguration analyticsConfiguration;
+    public interface Builder {
+        Builder analyticsConfiguration(AnalyticsConfiguration analyticsConfiguration);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The configuration and any analyses for the analytics filter.</p>
+         */
+        AnalyticsConfiguration analyticsConfiguration;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetBucketAnalyticsConfigurationOutput model) {
+        private BuilderImpl(GetBucketAnalyticsConfigurationOutput model) {
             analyticsConfiguration(model.analyticsConfiguration);
         }
 
         public GetBucketAnalyticsConfigurationOutput build() {
-            return new com.amazonaws.s3.model.GetBucketAnalyticsConfigurationOutput(this);
+            return new GetBucketAnalyticsConfigurationOutput(this);
         }
 
-        /**
-         * <p>The configuration and any analyses for the analytics filter.</p>
-         */
         public final Builder analyticsConfiguration(AnalyticsConfiguration analyticsConfiguration) {
             this.analyticsConfiguration = analyticsConfiguration;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public AnalyticsConfiguration analyticsConfiguration() {
+            return analyticsConfiguration;
+        }
+
+        public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
+            this.analyticsConfiguration = analyticsConfiguration;
         }
     }
 }

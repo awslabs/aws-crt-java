@@ -7,38 +7,47 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class TopicConfiguration {
-    private String id;
+    String id;
 
-    private String topicArn;
+    /**
+     * <p>The Amazon Resource Name (ARN) of the Amazon SNS topic to which Amazon S3 publishes a message
+     *          when it detects events of the specified type.</p>
+     */
+    String topicArn;
 
-    private List<Event> events;
+    /**
+     * <p>The Amazon S3 bucket event about which to send notifications. For more information, see
+     *             <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
+     *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    List<Event> events;
 
-    private NotificationConfigurationFilter filter;
+    NotificationConfigurationFilter filter;
 
-    private TopicConfiguration() {
-        this.id = null;
-        this.topicArn = null;
+    TopicConfiguration() {
+        this.id = "";
+        this.topicArn = "";
         this.events = null;
         this.filter = null;
     }
 
-    private TopicConfiguration(Builder builder) {
+    protected TopicConfiguration(BuilderImpl builder) {
         this.id = builder.id;
         this.topicArn = builder.topicArn;
         this.events = builder.events;
         this.filter = builder.filter;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -56,47 +65,66 @@ public class TopicConfiguration {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public String topicArn() {
         return topicArn;
-    }
-
-    public void setTopicArn(final String topicArn) {
-        this.topicArn = topicArn;
     }
 
     public List<Event> events() {
         return events;
     }
 
-    public void setEvents(final List<Event> events) {
-        this.events = events;
-    }
-
     public NotificationConfigurationFilter filter() {
         return filter;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setTopicArn(final String topicArn) {
+        this.topicArn = topicArn;
+    }
+
+    public void setEvents(final List<Event> events) {
+        this.events = events;
     }
 
     public void setFilter(final NotificationConfigurationFilter filter) {
         this.filter = filter;
     }
 
-    static final class Builder {
-        private String id;
+    public interface Builder {
+        Builder id(String id);
 
-        private String topicArn;
+        Builder topicArn(String topicArn);
 
-        private List<Event> events;
+        Builder events(List<Event> events);
 
-        private NotificationConfigurationFilter filter;
+        Builder filter(NotificationConfigurationFilter filter);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        String id;
+
+        /**
+         * <p>The Amazon Resource Name (ARN) of the Amazon SNS topic to which Amazon S3 publishes a message
+         *          when it detects events of the specified type.</p>
+         */
+        String topicArn;
+
+        /**
+         * <p>The Amazon S3 bucket event about which to send notifications. For more information, see
+         *             <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
+         *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         */
+        List<Event> events;
+
+        NotificationConfigurationFilter filter;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(TopicConfiguration model) {
+        private BuilderImpl(TopicConfiguration model) {
             id(model.id);
             topicArn(model.topicArn);
             events(model.events);
@@ -104,7 +132,7 @@ public class TopicConfiguration {
         }
 
         public TopicConfiguration build() {
-            return new com.amazonaws.s3.model.TopicConfiguration(this);
+            return new TopicConfiguration(this);
         }
 
         public final Builder id(String id) {
@@ -112,20 +140,11 @@ public class TopicConfiguration {
             return this;
         }
 
-        /**
-         * <p>The Amazon Resource Name (ARN) of the Amazon SNS topic to which Amazon S3 publishes a message
-         *          when it detects events of the specified type.</p>
-         */
         public final Builder topicArn(String topicArn) {
             this.topicArn = topicArn;
             return this;
         }
 
-        /**
-         * <p>The Amazon S3 bucket event about which to send notifications. For more information, see
-         *             <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
-         *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         */
         public final Builder events(List<Event> events) {
             this.events = events;
             return this;
@@ -134,6 +153,49 @@ public class TopicConfiguration {
         public final Builder filter(NotificationConfigurationFilter filter) {
             this.filter = filter;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String topicArn() {
+            return topicArn;
+        }
+
+        public List<Event> events() {
+            return events;
+        }
+
+        public NotificationConfigurationFilter filter() {
+            return filter;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setTopicArn(final String topicArn) {
+            this.topicArn = topicArn;
+        }
+
+        public void setEvents(final List<Event> events) {
+            this.events = events;
+        }
+
+        public void setFilter(final NotificationConfigurationFilter filter) {
+            this.filter = filter;
         }
     }
 }

@@ -6,29 +6,29 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum StorageClass {
-    STANDARD("STANDARD"),
+enum StorageClass {
+    STANDARD("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    REDUCED_REDUNDANCY("REDUCED_REDUNDANCY"),
+    REDUCED_REDUNDANCY("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    STANDARD_IA("STANDARD_IA"),
+    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    ONEZONE_IA("ONEZONE_IA"),
+    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    INTELLIGENT_TIERING("INTELLIGENT_TIERING"),
+    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    GLACIER("GLACIER"),
+    GLACIER("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    DEEP_ARCHIVE("DEEP_ARCHIVE"),
+    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    OUTPOSTS("OUTPOSTS"),
+    OUTPOSTS("software.amazon.smithy.crt.codegen.Field@4a3fa793"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private StorageClass(String value) {
         this.value = value;
@@ -43,5 +43,13 @@ public enum StorageClass {
 
     public static Set<StorageClass> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

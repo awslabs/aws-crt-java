@@ -6,38 +6,50 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class SelectParameters {
-    private InputSerialization inputSerialization;
+    /**
+     * <p>Describes the serialization format of the object.</p>
+     */
+    InputSerialization inputSerialization;
 
-    private ExpressionType expressionType;
+    /**
+     * <p>The type of the provided expression (for example, SQL).</p>
+     */
+    ExpressionType expressionType;
 
-    private String expression;
+    /**
+     * <p>The expression that is used to query the object.</p>
+     */
+    String expression;
 
-    private OutputSerialization outputSerialization;
+    /**
+     * <p>Describes how the results of the Select job are serialized.</p>
+     */
+    OutputSerialization outputSerialization;
 
-    private SelectParameters() {
+    SelectParameters() {
         this.inputSerialization = null;
         this.expressionType = null;
-        this.expression = null;
+        this.expression = "";
         this.outputSerialization = null;
     }
 
-    private SelectParameters(Builder builder) {
+    protected SelectParameters(BuilderImpl builder) {
         this.inputSerialization = builder.inputSerialization;
         this.expressionType = builder.expressionType;
         this.expression = builder.expression;
         this.outputSerialization = builder.outputSerialization;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,47 +67,69 @@ public class SelectParameters {
         return inputSerialization;
     }
 
-    public void setInputSerialization(final InputSerialization inputSerialization) {
-        this.inputSerialization = inputSerialization;
-    }
-
     public ExpressionType expressionType() {
         return expressionType;
-    }
-
-    public void setExpressionType(final ExpressionType expressionType) {
-        this.expressionType = expressionType;
     }
 
     public String expression() {
         return expression;
     }
 
-    public void setExpression(final String expression) {
-        this.expression = expression;
-    }
-
     public OutputSerialization outputSerialization() {
         return outputSerialization;
+    }
+
+    public void setInputSerialization(final InputSerialization inputSerialization) {
+        this.inputSerialization = inputSerialization;
+    }
+
+    public void setExpressionType(final ExpressionType expressionType) {
+        this.expressionType = expressionType;
+    }
+
+    public void setExpression(final String expression) {
+        this.expression = expression;
     }
 
     public void setOutputSerialization(final OutputSerialization outputSerialization) {
         this.outputSerialization = outputSerialization;
     }
 
-    static final class Builder {
-        private InputSerialization inputSerialization;
+    public interface Builder {
+        Builder inputSerialization(InputSerialization inputSerialization);
 
-        private ExpressionType expressionType;
+        Builder expressionType(ExpressionType expressionType);
 
-        private String expression;
+        Builder expression(String expression);
 
-        private OutputSerialization outputSerialization;
+        Builder outputSerialization(OutputSerialization outputSerialization);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Describes the serialization format of the object.</p>
+         */
+        InputSerialization inputSerialization;
+
+        /**
+         * <p>The type of the provided expression (for example, SQL).</p>
+         */
+        ExpressionType expressionType;
+
+        /**
+         * <p>The expression that is used to query the object.</p>
+         */
+        String expression;
+
+        /**
+         * <p>Describes how the results of the Select job are serialized.</p>
+         */
+        OutputSerialization outputSerialization;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(SelectParameters model) {
+        private BuilderImpl(SelectParameters model) {
             inputSerialization(model.inputSerialization);
             expressionType(model.expressionType);
             expression(model.expression);
@@ -103,39 +137,70 @@ public class SelectParameters {
         }
 
         public SelectParameters build() {
-            return new com.amazonaws.s3.model.SelectParameters(this);
+            return new SelectParameters(this);
         }
 
-        /**
-         * <p>Describes the serialization format of the object.</p>
-         */
         public final Builder inputSerialization(InputSerialization inputSerialization) {
             this.inputSerialization = inputSerialization;
             return this;
         }
 
-        /**
-         * <p>The type of the provided expression (for example, SQL).</p>
-         */
         public final Builder expressionType(ExpressionType expressionType) {
             this.expressionType = expressionType;
             return this;
         }
 
-        /**
-         * <p>The expression that is used to query the object.</p>
-         */
         public final Builder expression(String expression) {
             this.expression = expression;
             return this;
         }
 
-        /**
-         * <p>Describes how the results of the Select job are serialized.</p>
-         */
         public final Builder outputSerialization(OutputSerialization outputSerialization) {
             this.outputSerialization = outputSerialization;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public InputSerialization inputSerialization() {
+            return inputSerialization;
+        }
+
+        public ExpressionType expressionType() {
+            return expressionType;
+        }
+
+        public String expression() {
+            return expression;
+        }
+
+        public OutputSerialization outputSerialization() {
+            return outputSerialization;
+        }
+
+        public void setInputSerialization(final InputSerialization inputSerialization) {
+            this.inputSerialization = inputSerialization;
+        }
+
+        public void setExpressionType(final ExpressionType expressionType) {
+            this.expressionType = expressionType;
+        }
+
+        public void setExpression(final String expression) {
+            this.expression = expression;
+        }
+
+        public void setOutputSerialization(final OutputSerialization outputSerialization) {
+            this.outputSerialization = outputSerialization;
         }
     }
 }

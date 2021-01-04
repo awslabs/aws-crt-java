@@ -6,19 +6,19 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum FileHeaderInfo {
-    USE("USE"),
+enum FileHeaderInfo {
+    USE("software.amazon.smithy.crt.codegen.Field@428b87f6"),
 
-    IGNORE("IGNORE"),
+    IGNORE("software.amazon.smithy.crt.codegen.Field@428b87f6"),
 
-    NONE("NONE"),
+    NONE("software.amazon.smithy.crt.codegen.Field@428b87f6"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private FileHeaderInfo(String value) {
         this.value = value;
@@ -33,5 +33,13 @@ public enum FileHeaderInfo {
 
     public static Set<FileHeaderInfo> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

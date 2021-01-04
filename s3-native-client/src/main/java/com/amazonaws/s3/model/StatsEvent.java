@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class StatsEvent {
-    private Stats details;
+    /**
+     * <p>The Stats event details.</p>
+     */
+    Stats details;
 
-    private StatsEvent() {
+    StatsEvent() {
         this.details = null;
     }
 
-    private StatsEvent(Builder builder) {
+    protected StatsEvent(BuilderImpl builder) {
         this.details = builder.details;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class StatsEvent {
         this.details = details;
     }
 
-    static final class Builder {
-        private Stats details;
+    public interface Builder {
+        Builder details(Stats details);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The Stats event details.</p>
+         */
+        Stats details;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(StatsEvent model) {
+        private BuilderImpl(StatsEvent model) {
             details(model.details);
         }
 
         public StatsEvent build() {
-            return new com.amazonaws.s3.model.StatsEvent(this);
+            return new StatsEvent(this);
         }
 
-        /**
-         * <p>The Stats event details.</p>
-         */
         public final Builder details(Stats details) {
             this.details = details;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public Stats details() {
+            return details;
+        }
+
+        public void setDetails(final Stats details) {
+            this.details = details;
         }
     }
 }

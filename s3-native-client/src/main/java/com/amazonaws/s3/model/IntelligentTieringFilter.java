@@ -6,34 +6,43 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class IntelligentTieringFilter {
-    private String prefix;
+    /**
+     * <p>An object key name prefix that identifies the subset of objects to which the rule
+     *          applies.</p>
+     */
+    String prefix;
 
-    private Tag tag;
+    Tag tag;
 
-    private IntelligentTieringAndOperator and;
+    /**
+     * <p>A conjunction (logical AND) of predicates, which is used in evaluating a metrics filter.
+     *          The operator must have at least two predicates, and an object must match all of the
+     *          predicates in order for the filter to apply.</p>
+     */
+    IntelligentTieringAndOperator and;
 
-    private IntelligentTieringFilter() {
-        this.prefix = null;
+    IntelligentTieringFilter() {
+        this.prefix = "";
         this.tag = null;
         this.and = null;
     }
 
-    private IntelligentTieringFilter(Builder builder) {
+    protected IntelligentTieringFilter(BuilderImpl builder) {
         this.prefix = builder.prefix;
         this.tag = builder.tag;
         this.and = builder.and;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,50 +60,63 @@ public class IntelligentTieringFilter {
         return prefix;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
     public Tag tag() {
         return tag;
-    }
-
-    public void setTag(final Tag tag) {
-        this.tag = tag;
     }
 
     public IntelligentTieringAndOperator and() {
         return and;
     }
 
+    public void setPrefix(final String prefix) {
+        this.prefix = prefix;
+    }
+
+    public void setTag(final Tag tag) {
+        this.tag = tag;
+    }
+
     public void setAnd(final IntelligentTieringAndOperator and) {
         this.and = and;
     }
 
-    static final class Builder {
-        private String prefix;
+    public interface Builder {
+        Builder prefix(String prefix);
 
-        private Tag tag;
+        Builder tag(Tag tag);
 
-        private IntelligentTieringAndOperator and;
+        Builder and(IntelligentTieringAndOperator and);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>An object key name prefix that identifies the subset of objects to which the rule
+         *          applies.</p>
+         */
+        String prefix;
+
+        Tag tag;
+
+        /**
+         * <p>A conjunction (logical AND) of predicates, which is used in evaluating a metrics filter.
+         *          The operator must have at least two predicates, and an object must match all of the
+         *          predicates in order for the filter to apply.</p>
+         */
+        IntelligentTieringAndOperator and;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(IntelligentTieringFilter model) {
+        private BuilderImpl(IntelligentTieringFilter model) {
             prefix(model.prefix);
             tag(model.tag);
             and(model.and);
         }
 
         public IntelligentTieringFilter build() {
-            return new com.amazonaws.s3.model.IntelligentTieringFilter(this);
+            return new IntelligentTieringFilter(this);
         }
 
-        /**
-         * <p>An object key name prefix that identifies the subset of objects to which the rule
-         *          applies.</p>
-         */
         public final Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
@@ -105,14 +127,44 @@ public class IntelligentTieringFilter {
             return this;
         }
 
-        /**
-         * <p>A conjunction (logical AND) of predicates, which is used in evaluating a metrics filter.
-         *          The operator must have at least two predicates, and an object must match all of the
-         *          predicates in order for the filter to apply.</p>
-         */
         public final Builder and(IntelligentTieringAndOperator and) {
             this.and = and;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public Tag tag() {
+            return tag;
+        }
+
+        public IntelligentTieringAndOperator and() {
+            return and;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        public void setTag(final Tag tag) {
+            this.tag = tag;
+        }
+
+        public void setAnd(final IntelligentTieringAndOperator and) {
+            this.and = and;
         }
     }
 }

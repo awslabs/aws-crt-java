@@ -6,34 +6,44 @@ import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DefaultRetention {
-    private ObjectLockRetentionMode mode;
+    /**
+     * <p>The default Object Lock retention mode you want to apply to new objects placed in the
+     *          specified bucket.</p>
+     */
+    ObjectLockRetentionMode mode;
 
-    private Integer days;
+    /**
+     * <p>The number of days that you want to specify for the default retention period.</p>
+     */
+    Integer days;
 
-    private Integer years;
+    /**
+     * <p>The number of years that you want to specify for the default retention period.</p>
+     */
+    Integer years;
 
-    private DefaultRetention() {
+    DefaultRetention() {
         this.mode = null;
         this.days = null;
         this.years = null;
     }
 
-    private DefaultRetention(Builder builder) {
+    protected DefaultRetention(BuilderImpl builder) {
         this.mode = builder.mode;
         this.days = builder.days;
         this.years = builder.years;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,69 +61,112 @@ public class DefaultRetention {
         return mode;
     }
 
-    public void setMode(final ObjectLockRetentionMode mode) {
-        this.mode = mode;
-    }
-
     public Integer days() {
         return days;
-    }
-
-    public void setDays(final Integer days) {
-        this.days = days;
     }
 
     public Integer years() {
         return years;
     }
 
+    public void setMode(final ObjectLockRetentionMode mode) {
+        this.mode = mode;
+    }
+
+    public void setDays(final Integer days) {
+        this.days = days;
+    }
+
     public void setYears(final Integer years) {
         this.years = years;
     }
 
-    static final class Builder {
-        private ObjectLockRetentionMode mode;
+    public interface Builder {
+        Builder mode(ObjectLockRetentionMode mode);
 
-        private Integer days;
+        Builder days(Integer days);
 
-        private Integer years;
+        Builder years(Integer years);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The default Object Lock retention mode you want to apply to new objects placed in the
+         *          specified bucket.</p>
+         */
+        ObjectLockRetentionMode mode;
+
+        /**
+         * <p>The number of days that you want to specify for the default retention period.</p>
+         */
+        Integer days;
+
+        /**
+         * <p>The number of years that you want to specify for the default retention period.</p>
+         */
+        Integer years;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DefaultRetention model) {
+        private BuilderImpl(DefaultRetention model) {
             mode(model.mode);
             days(model.days);
             years(model.years);
         }
 
         public DefaultRetention build() {
-            return new com.amazonaws.s3.model.DefaultRetention(this);
+            return new DefaultRetention(this);
         }
 
-        /**
-         * <p>The default Object Lock retention mode you want to apply to new objects placed in the
-         *          specified bucket.</p>
-         */
         public final Builder mode(ObjectLockRetentionMode mode) {
             this.mode = mode;
             return this;
         }
 
-        /**
-         * <p>The number of days that you want to specify for the default retention period.</p>
-         */
         public final Builder days(Integer days) {
             this.days = days;
             return this;
         }
 
-        /**
-         * <p>The number of years that you want to specify for the default retention period.</p>
-         */
         public final Builder years(Integer years) {
             this.years = years;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockRetentionMode mode() {
+            return mode;
+        }
+
+        public Integer days() {
+            return days;
+        }
+
+        public Integer years() {
+            return years;
+        }
+
+        public void setMode(final ObjectLockRetentionMode mode) {
+            this.mode = mode;
+        }
+
+        public void setDays(final Integer days) {
+            this.days = days;
+        }
+
+        public void setYears(final Integer years) {
+            this.years = years;
         }
     }
 }

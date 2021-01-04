@@ -6,34 +6,42 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteObjectsOutput {
-    private List<DeletedObject> deleted;
+    /**
+     * <p>Container element for a successful delete. It identifies the object that was
+     *          successfully deleted.</p>
+     */
+    List<DeletedObject> deleted;
 
-    private RequestCharged requestCharged;
+    RequestCharged requestCharged;
 
-    private List<Error> errors;
+    /**
+     * <p>Container for a failed delete operation that describes the object that Amazon S3 attempted to
+     *          delete and the error it encountered.</p>
+     */
+    List<Error> errors;
 
-    private DeleteObjectsOutput() {
+    DeleteObjectsOutput() {
         this.deleted = null;
         this.requestCharged = null;
         this.errors = null;
     }
 
-    private DeleteObjectsOutput(Builder builder) {
+    protected DeleteObjectsOutput(BuilderImpl builder) {
         this.deleted = builder.deleted;
         this.requestCharged = builder.requestCharged;
         this.errors = builder.errors;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,50 +59,62 @@ public class DeleteObjectsOutput {
         return deleted;
     }
 
-    public void setDeleted(final List<DeletedObject> deleted) {
-        this.deleted = deleted;
-    }
-
     public RequestCharged requestCharged() {
         return requestCharged;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
     }
 
     public List<Error> errors() {
         return errors;
     }
 
+    public void setDeleted(final List<DeletedObject> deleted) {
+        this.deleted = deleted;
+    }
+
+    public void setRequestCharged(final RequestCharged requestCharged) {
+        this.requestCharged = requestCharged;
+    }
+
     public void setErrors(final List<Error> errors) {
         this.errors = errors;
     }
 
-    static final class Builder {
-        private List<DeletedObject> deleted;
+    public interface Builder {
+        Builder deleted(List<DeletedObject> deleted);
 
-        private RequestCharged requestCharged;
+        Builder requestCharged(RequestCharged requestCharged);
 
-        private List<Error> errors;
+        Builder errors(List<Error> errors);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Container element for a successful delete. It identifies the object that was
+         *          successfully deleted.</p>
+         */
+        List<DeletedObject> deleted;
+
+        RequestCharged requestCharged;
+
+        /**
+         * <p>Container for a failed delete operation that describes the object that Amazon S3 attempted to
+         *          delete and the error it encountered.</p>
+         */
+        List<Error> errors;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(DeleteObjectsOutput model) {
+        private BuilderImpl(DeleteObjectsOutput model) {
             deleted(model.deleted);
             requestCharged(model.requestCharged);
             errors(model.errors);
         }
 
         public DeleteObjectsOutput build() {
-            return new com.amazonaws.s3.model.DeleteObjectsOutput(this);
+            return new DeleteObjectsOutput(this);
         }
 
-        /**
-         * <p>Container element for a successful delete. It identifies the object that was
-         *          successfully deleted.</p>
-         */
         public final Builder deleted(List<DeletedObject> deleted) {
             this.deleted = deleted;
             return this;
@@ -105,13 +125,44 @@ public class DeleteObjectsOutput {
             return this;
         }
 
-        /**
-         * <p>Container for a failed delete operation that describes the object that Amazon S3 attempted to
-         *          delete and the error it encountered.</p>
-         */
         public final Builder errors(List<Error> errors) {
             this.errors = errors;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<DeletedObject> deleted() {
+            return deleted;
+        }
+
+        public RequestCharged requestCharged() {
+            return requestCharged;
+        }
+
+        public List<Error> errors() {
+            return errors;
+        }
+
+        public void setDeleted(final List<DeletedObject> deleted) {
+            this.deleted = deleted;
+        }
+
+        public void setRequestCharged(final RequestCharged requestCharged) {
+            this.requestCharged = requestCharged;
+        }
+
+        public void setErrors(final List<Error> errors) {
+            this.errors = errors;
         }
     }
 }

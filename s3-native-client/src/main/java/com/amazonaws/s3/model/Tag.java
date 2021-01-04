@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class Tag {
-    private String key;
+    /**
+     * <p>Name of the object key.</p>
+     */
+    String key;
 
-    private String value;
+    /**
+     * <p>Value of the tag.</p>
+     */
+    String value;
 
-    private Tag() {
-        this.key = null;
-        this.value = null;
+    Tag() {
+        this.key = "";
+        this.value = "";
     }
 
-    private Tag(Builder builder) {
+    protected Tag(BuilderImpl builder) {
         this.key = builder.key;
         this.value = builder.value;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class Tag {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public String value() {
         return value;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
     }
 
     public void setValue(final String value) {
         this.value = value;
     }
 
-    static final class Builder {
-        private String key;
+    public interface Builder {
+        Builder key(String key);
 
-        private String value;
+        Builder value(String value);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Name of the object key.</p>
+         */
+        String key;
+
+        /**
+         * <p>Value of the tag.</p>
+         */
+        String value;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(Tag model) {
+        private BuilderImpl(Tag model) {
             key(model.key);
             value(model.value);
         }
 
         public Tag build() {
-            return new com.amazonaws.s3.model.Tag(this);
+            return new Tag(this);
         }
 
-        /**
-         * <p>Name of the object key.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
         }
 
-        /**
-         * <p>Value of the tag.</p>
-         */
         public final Builder value(String value) {
             this.value = value;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public String value() {
+            return value;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setValue(final String value) {
+            this.value = value;
         }
     }
 }

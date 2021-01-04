@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectLockConfigurationOutput {
-    private ObjectLockConfiguration objectLockConfiguration;
+    /**
+     * <p>The specified bucket's Object Lock configuration.</p>
+     */
+    ObjectLockConfiguration objectLockConfiguration;
 
-    private GetObjectLockConfigurationOutput() {
+    GetObjectLockConfigurationOutput() {
         this.objectLockConfiguration = null;
     }
 
-    private GetObjectLockConfigurationOutput(Builder builder) {
+    protected GetObjectLockConfigurationOutput(BuilderImpl builder) {
         this.objectLockConfiguration = builder.objectLockConfiguration;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,27 +49,51 @@ public class GetObjectLockConfigurationOutput {
         this.objectLockConfiguration = objectLockConfiguration;
     }
 
-    static final class Builder {
-        private ObjectLockConfiguration objectLockConfiguration;
+    public interface Builder {
+        Builder objectLockConfiguration(ObjectLockConfiguration objectLockConfiguration);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The specified bucket's Object Lock configuration.</p>
+         */
+        ObjectLockConfiguration objectLockConfiguration;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(GetObjectLockConfigurationOutput model) {
+        private BuilderImpl(GetObjectLockConfigurationOutput model) {
             objectLockConfiguration(model.objectLockConfiguration);
         }
 
         public GetObjectLockConfigurationOutput build() {
-            return new com.amazonaws.s3.model.GetObjectLockConfigurationOutput(this);
+            return new GetObjectLockConfigurationOutput(this);
         }
 
-        /**
-         * <p>The specified bucket's Object Lock configuration.</p>
-         */
         public final Builder objectLockConfiguration(
                 ObjectLockConfiguration objectLockConfiguration) {
             this.objectLockConfiguration = objectLockConfiguration;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockConfiguration objectLockConfiguration() {
+            return objectLockConfiguration;
+        }
+
+        public void setObjectLockConfiguration(
+                final ObjectLockConfiguration objectLockConfiguration) {
+            this.objectLockConfiguration = objectLockConfiguration;
         }
     }
 }

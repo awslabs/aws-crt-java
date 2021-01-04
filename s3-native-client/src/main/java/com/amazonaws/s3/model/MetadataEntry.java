@@ -6,30 +6,36 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class MetadataEntry {
-    private String name;
+    /**
+     * <p>Name of the Object.</p>
+     */
+    String name;
 
-    private String value;
+    /**
+     * <p>Value of the Object.</p>
+     */
+    String value;
 
-    private MetadataEntry() {
-        this.name = null;
-        this.value = null;
+    MetadataEntry() {
+        this.name = "";
+        this.value = "";
     }
 
-    private MetadataEntry(Builder builder) {
+    protected MetadataEntry(BuilderImpl builder) {
         this.name = builder.name;
         this.value = builder.value;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,49 +53,82 @@ public class MetadataEntry {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String value() {
         return value;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
     }
 
     public void setValue(final String value) {
         this.value = value;
     }
 
-    static final class Builder {
-        private String name;
+    public interface Builder {
+        Builder name(String name);
 
-        private String value;
+        Builder value(String value);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Name of the Object.</p>
+         */
+        String name;
+
+        /**
+         * <p>Value of the Object.</p>
+         */
+        String value;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(MetadataEntry model) {
+        private BuilderImpl(MetadataEntry model) {
             name(model.name);
             value(model.value);
         }
 
         public MetadataEntry build() {
-            return new com.amazonaws.s3.model.MetadataEntry(this);
+            return new MetadataEntry(this);
         }
 
-        /**
-         * <p>Name of the Object.</p>
-         */
         public final Builder name(String name) {
             this.name = name;
             return this;
         }
 
-        /**
-         * <p>Value of the Object.</p>
-         */
         public final Builder value(String value) {
             this.value = value;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public String value() {
+            return value;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        public void setValue(final String value) {
+            this.value = value;
         }
     }
 }

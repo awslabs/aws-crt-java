@@ -7,38 +7,47 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class LambdaFunctionConfiguration {
-    private String id;
+    String id;
 
-    private String lambdaFunctionArn;
+    /**
+     * <p>The Amazon Resource Name (ARN) of the AWS Lambda function that Amazon S3 invokes when the
+     *          specified event type occurs.</p>
+     */
+    String lambdaFunctionArn;
 
-    private List<Event> events;
+    /**
+     * <p>The Amazon S3 bucket event for which to invoke the AWS Lambda function. For more information,
+     *          see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
+     *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+     */
+    List<Event> events;
 
-    private NotificationConfigurationFilter filter;
+    NotificationConfigurationFilter filter;
 
-    private LambdaFunctionConfiguration() {
-        this.id = null;
-        this.lambdaFunctionArn = null;
+    LambdaFunctionConfiguration() {
+        this.id = "";
+        this.lambdaFunctionArn = "";
         this.events = null;
         this.filter = null;
     }
 
-    private LambdaFunctionConfiguration(Builder builder) {
+    protected LambdaFunctionConfiguration(BuilderImpl builder) {
         this.id = builder.id;
         this.lambdaFunctionArn = builder.lambdaFunctionArn;
         this.events = builder.events;
         this.filter = builder.filter;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -56,47 +65,66 @@ public class LambdaFunctionConfiguration {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public String lambdaFunctionArn() {
         return lambdaFunctionArn;
-    }
-
-    public void setLambdaFunctionArn(final String lambdaFunctionArn) {
-        this.lambdaFunctionArn = lambdaFunctionArn;
     }
 
     public List<Event> events() {
         return events;
     }
 
-    public void setEvents(final List<Event> events) {
-        this.events = events;
-    }
-
     public NotificationConfigurationFilter filter() {
         return filter;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setLambdaFunctionArn(final String lambdaFunctionArn) {
+        this.lambdaFunctionArn = lambdaFunctionArn;
+    }
+
+    public void setEvents(final List<Event> events) {
+        this.events = events;
     }
 
     public void setFilter(final NotificationConfigurationFilter filter) {
         this.filter = filter;
     }
 
-    static final class Builder {
-        private String id;
+    public interface Builder {
+        Builder id(String id);
 
-        private String lambdaFunctionArn;
+        Builder lambdaFunctionArn(String lambdaFunctionArn);
 
-        private List<Event> events;
+        Builder events(List<Event> events);
 
-        private NotificationConfigurationFilter filter;
+        Builder filter(NotificationConfigurationFilter filter);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        String id;
+
+        /**
+         * <p>The Amazon Resource Name (ARN) of the AWS Lambda function that Amazon S3 invokes when the
+         *          specified event type occurs.</p>
+         */
+        String lambdaFunctionArn;
+
+        /**
+         * <p>The Amazon S3 bucket event for which to invoke the AWS Lambda function. For more information,
+         *          see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
+         *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
+         */
+        List<Event> events;
+
+        NotificationConfigurationFilter filter;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(LambdaFunctionConfiguration model) {
+        private BuilderImpl(LambdaFunctionConfiguration model) {
             id(model.id);
             lambdaFunctionArn(model.lambdaFunctionArn);
             events(model.events);
@@ -104,7 +132,7 @@ public class LambdaFunctionConfiguration {
         }
 
         public LambdaFunctionConfiguration build() {
-            return new com.amazonaws.s3.model.LambdaFunctionConfiguration(this);
+            return new LambdaFunctionConfiguration(this);
         }
 
         public final Builder id(String id) {
@@ -112,20 +140,11 @@ public class LambdaFunctionConfiguration {
             return this;
         }
 
-        /**
-         * <p>The Amazon Resource Name (ARN) of the AWS Lambda function that Amazon S3 invokes when the
-         *          specified event type occurs.</p>
-         */
         public final Builder lambdaFunctionArn(String lambdaFunctionArn) {
             this.lambdaFunctionArn = lambdaFunctionArn;
             return this;
         }
 
-        /**
-         * <p>The Amazon S3 bucket event for which to invoke the AWS Lambda function. For more information,
-         *          see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Supported
-         *             Event Types</a> in the <i>Amazon Simple Storage Service Developer Guide</i>.</p>
-         */
         public final Builder events(List<Event> events) {
             this.events = events;
             return this;
@@ -134,6 +153,49 @@ public class LambdaFunctionConfiguration {
         public final Builder filter(NotificationConfigurationFilter filter) {
             this.filter = filter;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String lambdaFunctionArn() {
+            return lambdaFunctionArn;
+        }
+
+        public List<Event> events() {
+            return events;
+        }
+
+        public NotificationConfigurationFilter filter() {
+            return filter;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setLambdaFunctionArn(final String lambdaFunctionArn) {
+            this.lambdaFunctionArn = lambdaFunctionArn;
+        }
+
+        public void setEvents(final List<Event> events) {
+            this.events = events;
+        }
+
+        public void setFilter(final NotificationConfigurationFilter filter) {
+            this.filter = filter;
         }
     }
 }

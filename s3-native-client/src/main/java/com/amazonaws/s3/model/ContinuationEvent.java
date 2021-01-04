@@ -5,22 +5,22 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ContinuationEvent {
-    private ContinuationEvent() {
+    ContinuationEvent() {
     }
 
-    private ContinuationEvent(Builder builder) {
-    }
-
-    public Builder builder() {
-        return new Builder();
+    protected ContinuationEvent(BuilderImpl builder) {
     }
 
     public Builder toBuilder() {
-        return new Builder(this);
+        return new BuilderImpl(this);
+    }
+
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -34,15 +34,29 @@ public class ContinuationEvent {
         return (rhs instanceof ContinuationEvent);
     }
 
-    static final class Builder {
-        private Builder() {
+    public interface Builder {
+    }
+
+    protected static class BuilderImpl implements Builder {
+        protected BuilderImpl() {
         }
 
-        private Builder(ContinuationEvent model) {
+        private BuilderImpl(ContinuationEvent model) {
         }
 
         public ContinuationEvent build() {
-            return new com.amazonaws.s3.model.ContinuationEvent(this);
+            return new ContinuationEvent(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
         }
     }
 }

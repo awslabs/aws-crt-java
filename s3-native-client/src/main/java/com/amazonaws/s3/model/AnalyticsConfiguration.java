@@ -6,34 +6,46 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AnalyticsConfiguration {
-    private String id;
+    /**
+     * <p>The ID that identifies the analytics configuration.</p>
+     */
+    String id;
 
-    private AnalyticsFilter filter;
+    /**
+     * <p>The filter used to describe a set of objects for analyses. A filter must have exactly
+     *          one prefix, one tag, or one conjunction (AnalyticsAndOperator). If no filter is provided,
+     *          all objects will be considered in any analysis.</p>
+     */
+    AnalyticsFilter filter;
 
-    private StorageClassAnalysis storageClassAnalysis;
+    /**
+     * <p> Contains data related to access patterns to be collected and made available to analyze
+     *          the tradeoffs between different storage classes. </p>
+     */
+    StorageClassAnalysis storageClassAnalysis;
 
-    private AnalyticsConfiguration() {
-        this.id = null;
+    AnalyticsConfiguration() {
+        this.id = "";
         this.filter = null;
         this.storageClassAnalysis = null;
     }
 
-    private AnalyticsConfiguration(Builder builder) {
+    protected AnalyticsConfiguration(BuilderImpl builder) {
         this.id = builder.id;
         this.filter = builder.filter;
         this.storageClassAnalysis = builder.storageClassAnalysis;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -51,71 +63,114 @@ public class AnalyticsConfiguration {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public AnalyticsFilter filter() {
         return filter;
-    }
-
-    public void setFilter(final AnalyticsFilter filter) {
-        this.filter = filter;
     }
 
     public StorageClassAnalysis storageClassAnalysis() {
         return storageClassAnalysis;
     }
 
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public void setFilter(final AnalyticsFilter filter) {
+        this.filter = filter;
+    }
+
     public void setStorageClassAnalysis(final StorageClassAnalysis storageClassAnalysis) {
         this.storageClassAnalysis = storageClassAnalysis;
     }
 
-    static final class Builder {
-        private String id;
+    public interface Builder {
+        Builder id(String id);
 
-        private AnalyticsFilter filter;
+        Builder filter(AnalyticsFilter filter);
 
-        private StorageClassAnalysis storageClassAnalysis;
+        Builder storageClassAnalysis(StorageClassAnalysis storageClassAnalysis);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(AnalyticsConfiguration model) {
-            id(model.id);
-            filter(model.filter);
-            storageClassAnalysis(model.storageClassAnalysis);
-        }
-
-        public AnalyticsConfiguration build() {
-            return new com.amazonaws.s3.model.AnalyticsConfiguration(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>The ID that identifies the analytics configuration.</p>
          */
-        public final Builder id(String id) {
-            this.id = id;
-            return this;
-        }
+        String id;
 
         /**
          * <p>The filter used to describe a set of objects for analyses. A filter must have exactly
          *          one prefix, one tag, or one conjunction (AnalyticsAndOperator). If no filter is provided,
          *          all objects will be considered in any analysis.</p>
          */
-        public final Builder filter(AnalyticsFilter filter) {
-            this.filter = filter;
-            return this;
-        }
+        AnalyticsFilter filter;
 
         /**
          * <p> Contains data related to access patterns to be collected and made available to analyze
          *          the tradeoffs between different storage classes. </p>
          */
+        StorageClassAnalysis storageClassAnalysis;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(AnalyticsConfiguration model) {
+            id(model.id);
+            filter(model.filter);
+            storageClassAnalysis(model.storageClassAnalysis);
+        }
+
+        public AnalyticsConfiguration build() {
+            return new AnalyticsConfiguration(this);
+        }
+
+        public final Builder id(String id) {
+            this.id = id;
+            return this;
+        }
+
+        public final Builder filter(AnalyticsFilter filter) {
+            this.filter = filter;
+            return this;
+        }
+
         public final Builder storageClassAnalysis(StorageClassAnalysis storageClassAnalysis) {
             this.storageClassAnalysis = storageClassAnalysis;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public AnalyticsFilter filter() {
+            return filter;
+        }
+
+        public StorageClassAnalysis storageClassAnalysis() {
+            return storageClassAnalysis;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public void setFilter(final AnalyticsFilter filter) {
+            this.filter = filter;
+        }
+
+        public void setStorageClassAnalysis(final StorageClassAnalysis storageClassAnalysis) {
+            this.storageClassAnalysis = storageClassAnalysis;
         }
     }
 }

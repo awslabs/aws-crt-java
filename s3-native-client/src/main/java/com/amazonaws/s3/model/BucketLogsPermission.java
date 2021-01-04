@@ -6,19 +6,19 @@ import java.lang.String;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-public enum BucketLogsPermission {
-    FULL_CONTROL("FULL_CONTROL"),
+enum BucketLogsPermission {
+    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@752e9bc5"),
 
-    READ("READ"),
+    READ("software.amazon.smithy.crt.codegen.Field@752e9bc5"),
 
-    WRITE("WRITE"),
+    WRITE("software.amazon.smithy.crt.codegen.Field@752e9bc5"),
 
-    UNKNOWN_TO_SDK_VERSION("UNKNOWN_TO_SDK_VERSION");
+    UNKNOWN_TO_SDK_VERSION(null);
 
-    private final String value;
+    String value;
 
     private BucketLogsPermission(String value) {
         this.value = value;
@@ -33,5 +33,13 @@ public enum BucketLogsPermission {
 
     public static Set<BucketLogsPermission> knownValues() {
         return Stream.of(values()).filter(v -> v != UNKNOWN_TO_SDK_VERSION).collect(Collectors.toSet());
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 }

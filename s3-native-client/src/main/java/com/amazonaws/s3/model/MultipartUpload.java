@@ -7,32 +7,50 @@ import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class MultipartUpload {
-    private String uploadId;
+    /**
+     * <p>Upload ID that identifies the multipart upload.</p>
+     */
+    String uploadId;
 
-    private String key;
+    /**
+     * <p>Key of the object for which the multipart upload was initiated.</p>
+     */
+    String key;
 
-    private Instant initiated;
+    /**
+     * <p>Date and time at which the multipart upload was initiated.</p>
+     */
+    Instant initiated;
 
-    private StorageClass storageClass;
+    /**
+     * <p>The class of storage used to store the object.</p>
+     */
+    StorageClass storageClass;
 
-    private Owner owner;
+    /**
+     * <p>Specifies the owner of the object that is part of the multipart upload. </p>
+     */
+    Owner owner;
 
-    private Initiator initiator;
+    /**
+     * <p>Identifies who initiated the multipart upload.</p>
+     */
+    Initiator initiator;
 
-    private MultipartUpload() {
-        this.uploadId = null;
-        this.key = null;
+    MultipartUpload() {
+        this.uploadId = "";
+        this.key = "";
         this.initiated = null;
         this.storageClass = null;
         this.owner = null;
         this.initiator = null;
     }
 
-    private MultipartUpload(Builder builder) {
+    protected MultipartUpload(BuilderImpl builder) {
         this.uploadId = builder.uploadId;
         this.key = builder.key;
         this.initiated = builder.initiated;
@@ -41,12 +59,12 @@ public class MultipartUpload {
         this.initiator = builder.initiator;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -64,67 +82,99 @@ public class MultipartUpload {
         return uploadId;
     }
 
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
     public String key() {
         return key;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
     }
 
     public Instant initiated() {
         return initiated;
     }
 
-    public void setInitiated(final Instant initiated) {
-        this.initiated = initiated;
-    }
-
     public StorageClass storageClass() {
         return storageClass;
-    }
-
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
     }
 
     public Owner owner() {
         return owner;
     }
 
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
     public Initiator initiator() {
         return initiator;
+    }
+
+    public void setUploadId(final String uploadId) {
+        this.uploadId = uploadId;
+    }
+
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
+    public void setInitiated(final Instant initiated) {
+        this.initiated = initiated;
+    }
+
+    public void setStorageClass(final StorageClass storageClass) {
+        this.storageClass = storageClass;
+    }
+
+    public void setOwner(final Owner owner) {
+        this.owner = owner;
     }
 
     public void setInitiator(final Initiator initiator) {
         this.initiator = initiator;
     }
 
-    static final class Builder {
-        private String uploadId;
+    public interface Builder {
+        Builder uploadId(String uploadId);
 
-        private String key;
+        Builder key(String key);
 
-        private Instant initiated;
+        Builder initiated(Instant initiated);
 
-        private StorageClass storageClass;
+        Builder storageClass(StorageClass storageClass);
 
-        private Owner owner;
+        Builder owner(Owner owner);
 
-        private Initiator initiator;
+        Builder initiator(Initiator initiator);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Upload ID that identifies the multipart upload.</p>
+         */
+        String uploadId;
+
+        /**
+         * <p>Key of the object for which the multipart upload was initiated.</p>
+         */
+        String key;
+
+        /**
+         * <p>Date and time at which the multipart upload was initiated.</p>
+         */
+        Instant initiated;
+
+        /**
+         * <p>The class of storage used to store the object.</p>
+         */
+        StorageClass storageClass;
+
+        /**
+         * <p>Specifies the owner of the object that is part of the multipart upload. </p>
+         */
+        Owner owner;
+
+        /**
+         * <p>Identifies who initiated the multipart upload.</p>
+         */
+        Initiator initiator;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(MultipartUpload model) {
+        private BuilderImpl(MultipartUpload model) {
             uploadId(model.uploadId);
             key(model.key);
             initiated(model.initiated);
@@ -134,55 +184,96 @@ public class MultipartUpload {
         }
 
         public MultipartUpload build() {
-            return new com.amazonaws.s3.model.MultipartUpload(this);
+            return new MultipartUpload(this);
         }
 
-        /**
-         * <p>Upload ID that identifies the multipart upload.</p>
-         */
         public final Builder uploadId(String uploadId) {
             this.uploadId = uploadId;
             return this;
         }
 
-        /**
-         * <p>Key of the object for which the multipart upload was initiated.</p>
-         */
         public final Builder key(String key) {
             this.key = key;
             return this;
         }
 
-        /**
-         * <p>Date and time at which the multipart upload was initiated.</p>
-         */
         public final Builder initiated(Instant initiated) {
             this.initiated = initiated;
             return this;
         }
 
-        /**
-         * <p>The class of storage used to store the object.</p>
-         */
         public final Builder storageClass(StorageClass storageClass) {
             this.storageClass = storageClass;
             return this;
         }
 
-        /**
-         * <p>Specifies the owner of the object that is part of the multipart upload. </p>
-         */
         public final Builder owner(Owner owner) {
             this.owner = owner;
             return this;
         }
 
-        /**
-         * <p>Identifies who initiated the multipart upload.</p>
-         */
         public final Builder initiator(Initiator initiator) {
             this.initiator = initiator;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public String uploadId() {
+            return uploadId;
+        }
+
+        public String key() {
+            return key;
+        }
+
+        public Instant initiated() {
+            return initiated;
+        }
+
+        public StorageClass storageClass() {
+            return storageClass;
+        }
+
+        public Owner owner() {
+            return owner;
+        }
+
+        public Initiator initiator() {
+            return initiator;
+        }
+
+        public void setUploadId(final String uploadId) {
+            this.uploadId = uploadId;
+        }
+
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
+        public void setInitiated(final Instant initiated) {
+            this.initiated = initiated;
+        }
+
+        public void setStorageClass(final StorageClass storageClass) {
+            this.storageClass = storageClass;
+        }
+
+        public void setOwner(final Owner owner) {
+            this.owner = owner;
+        }
+
+        public void setInitiator(final Initiator initiator) {
+            this.initiator = initiator;
         }
     }
 }

@@ -6,38 +6,53 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class WebsiteConfiguration {
-    private ErrorDocument errorDocument;
+    /**
+     * <p>The name of the error document for the website.</p>
+     */
+    ErrorDocument errorDocument;
 
-    private IndexDocument indexDocument;
+    /**
+     * <p>The name of the index document for the website.</p>
+     */
+    IndexDocument indexDocument;
 
-    private RedirectAllRequestsTo redirectAllRequestsTo;
+    /**
+     * <p>The redirect behavior for every request to this bucket's website endpoint.</p>
+     *          <important>
+     *             <p>If you specify this property, you can't specify any other property.</p>
+     *          </important>
+     */
+    RedirectAllRequestsTo redirectAllRequestsTo;
 
-    private List<RoutingRule> routingRules;
+    /**
+     * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
+     */
+    List<RoutingRule> routingRules;
 
-    private WebsiteConfiguration() {
+    WebsiteConfiguration() {
         this.errorDocument = null;
         this.indexDocument = null;
         this.redirectAllRequestsTo = null;
         this.routingRules = null;
     }
 
-    private WebsiteConfiguration(Builder builder) {
+    protected WebsiteConfiguration(BuilderImpl builder) {
         this.errorDocument = builder.errorDocument;
         this.indexDocument = builder.indexDocument;
         this.redirectAllRequestsTo = builder.redirectAllRequestsTo;
         this.routingRules = builder.routingRules;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,72 +70,54 @@ public class WebsiteConfiguration {
         return errorDocument;
     }
 
-    public void setErrorDocument(final ErrorDocument errorDocument) {
-        this.errorDocument = errorDocument;
-    }
-
     public IndexDocument indexDocument() {
         return indexDocument;
-    }
-
-    public void setIndexDocument(final IndexDocument indexDocument) {
-        this.indexDocument = indexDocument;
     }
 
     public RedirectAllRequestsTo redirectAllRequestsTo() {
         return redirectAllRequestsTo;
     }
 
-    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-        this.redirectAllRequestsTo = redirectAllRequestsTo;
-    }
-
     public List<RoutingRule> routingRules() {
         return routingRules;
+    }
+
+    public void setErrorDocument(final ErrorDocument errorDocument) {
+        this.errorDocument = errorDocument;
+    }
+
+    public void setIndexDocument(final IndexDocument indexDocument) {
+        this.indexDocument = indexDocument;
+    }
+
+    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
+        this.redirectAllRequestsTo = redirectAllRequestsTo;
     }
 
     public void setRoutingRules(final List<RoutingRule> routingRules) {
         this.routingRules = routingRules;
     }
 
-    static final class Builder {
-        private ErrorDocument errorDocument;
+    public interface Builder {
+        Builder errorDocument(ErrorDocument errorDocument);
 
-        private IndexDocument indexDocument;
+        Builder indexDocument(IndexDocument indexDocument);
 
-        private RedirectAllRequestsTo redirectAllRequestsTo;
+        Builder redirectAllRequestsTo(RedirectAllRequestsTo redirectAllRequestsTo);
 
-        private List<RoutingRule> routingRules;
+        Builder routingRules(List<RoutingRule> routingRules);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(WebsiteConfiguration model) {
-            errorDocument(model.errorDocument);
-            indexDocument(model.indexDocument);
-            redirectAllRequestsTo(model.redirectAllRequestsTo);
-            routingRules(model.routingRules);
-        }
-
-        public WebsiteConfiguration build() {
-            return new com.amazonaws.s3.model.WebsiteConfiguration(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>The name of the error document for the website.</p>
          */
-        public final Builder errorDocument(ErrorDocument errorDocument) {
-            this.errorDocument = errorDocument;
-            return this;
-        }
+        ErrorDocument errorDocument;
 
         /**
          * <p>The name of the index document for the website.</p>
          */
-        public final Builder indexDocument(IndexDocument indexDocument) {
-            this.indexDocument = indexDocument;
-            return this;
-        }
+        IndexDocument indexDocument;
 
         /**
          * <p>The redirect behavior for every request to this bucket's website endpoint.</p>
@@ -128,17 +125,88 @@ public class WebsiteConfiguration {
          *             <p>If you specify this property, you can't specify any other property.</p>
          *          </important>
          */
+        RedirectAllRequestsTo redirectAllRequestsTo;
+
+        /**
+         * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
+         */
+        List<RoutingRule> routingRules;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(WebsiteConfiguration model) {
+            errorDocument(model.errorDocument);
+            indexDocument(model.indexDocument);
+            redirectAllRequestsTo(model.redirectAllRequestsTo);
+            routingRules(model.routingRules);
+        }
+
+        public WebsiteConfiguration build() {
+            return new WebsiteConfiguration(this);
+        }
+
+        public final Builder errorDocument(ErrorDocument errorDocument) {
+            this.errorDocument = errorDocument;
+            return this;
+        }
+
+        public final Builder indexDocument(IndexDocument indexDocument) {
+            this.indexDocument = indexDocument;
+            return this;
+        }
+
         public final Builder redirectAllRequestsTo(RedirectAllRequestsTo redirectAllRequestsTo) {
             this.redirectAllRequestsTo = redirectAllRequestsTo;
             return this;
         }
 
-        /**
-         * <p>Rules that define when a redirect is applied and the redirect behavior.</p>
-         */
         public final Builder routingRules(List<RoutingRule> routingRules) {
             this.routingRules = routingRules;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ErrorDocument errorDocument() {
+            return errorDocument;
+        }
+
+        public IndexDocument indexDocument() {
+            return indexDocument;
+        }
+
+        public RedirectAllRequestsTo redirectAllRequestsTo() {
+            return redirectAllRequestsTo;
+        }
+
+        public List<RoutingRule> routingRules() {
+            return routingRules;
+        }
+
+        public void setErrorDocument(final ErrorDocument errorDocument) {
+            this.errorDocument = errorDocument;
+        }
+
+        public void setIndexDocument(final IndexDocument indexDocument) {
+            this.indexDocument = indexDocument;
+        }
+
+        public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
+            this.redirectAllRequestsTo = redirectAllRequestsTo;
+        }
+
+        public void setRoutingRules(final List<RoutingRule> routingRules) {
+            this.routingRules = routingRules;
         }
     }
 }

@@ -6,13 +6,15 @@ import software.amazon.smithy.model.Model;
 
 import software.amazon.smithy.build.PluginContext
 import software.amazon.smithy.crt.*
+import software.amazon.smithy.crt.codegen.SourceGenerator
 import software.amazon.smithy.model.shapes.*
+import java.nio.file.Path
 
 import java.util.function.Consumer;
 import java.util.logging.Logger
 import java.util.stream.Collectors
 
-class ServiceGenerator(private val pluginContext: PluginContext) : JavaFileGenerator {
+class ServiceGenerator(private val pluginContext: PluginContext) : SourceGenerator {
     private val log = Logger.getLogger(ServiceGenerator::class.simpleName)
 
     private val model: Model = pluginContext.model
@@ -22,22 +24,22 @@ class ServiceGenerator(private val pluginContext: PluginContext) : JavaFileGener
         return model.getShape(id).get();
     }
 
-    private fun emptyStructure(className: ClassName) : JavaFileGenerator {
+    private fun emptyStructure(className: ClassName) : SourceGenerator {
         return EmptyStructureGenerator(pluginContext, className)
     }
 
-    private fun emptyRequestStructure(operation: OperationShape) : JavaFileGenerator {
+    private fun emptyRequestStructure(operation: OperationShape) : SourceGenerator {
         return emptyStructure(ClassName.get(operation.id.namespace + ".model", operation.id.name + "Request"))
     }
 
-    private fun emptyResponseStructure(operation: OperationShape) : JavaFileGenerator {
+    private fun emptyResponseStructure(operation: OperationShape) : SourceGenerator {
         return emptyStructure(ClassName.get(operation.id.namespace + ".model", operation.id.name + "Response"))
     }
-
-    override fun accept(javaFileConsumer: Consumer<JavaFile>) {
-
+    override fun accept(dir: Path, manifest: Consumer<Path>) {
         val foundShapes = mutableSetOf<Shape>()
-        val generators = mutableListOf<JavaFileGenerator>()
+        val generators = mutableListOf<SourceGenerator>(
+            ServiceExceptionGenerator(pluginContext)
+        )
         val operations = model.shapes(OperationShape::class.javaObjectType)
         operations.forEach { operation ->
             if (operation.input.isPresent) {
@@ -84,7 +86,7 @@ class ServiceGenerator(private val pluginContext: PluginContext) : JavaFileGener
         } while (lastCount < foundShapes.count())
 
         // Make a generator for each shape we found
-        val shapeGenerators : List<JavaFileGenerator> = foundShapes.mapNotNull { shape ->
+        val shapeGenerators = foundShapes.mapNotNull { shape ->
             log.info("Processing ${shape.id}")
             when {
                 Types.isException(shape) -> ExceptionGenerator(pluginContext, shape.asStructureShape().get())
@@ -98,7 +100,7 @@ class ServiceGenerator(private val pluginContext: PluginContext) : JavaFileGener
 
         // Run all of the generators
         generators.forEach { generator ->
-            generator.accept(javaFileConsumer)
+            generator.accept(dir, manifest)
         }
     }
 }

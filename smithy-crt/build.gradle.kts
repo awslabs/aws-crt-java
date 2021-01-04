@@ -10,12 +10,6 @@ repositories {
 
 plugins {
     kotlin("jvm") version "1.4.20"
-    `java-library`
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.named<KotlinJvmCompile>("compileKotlin") {

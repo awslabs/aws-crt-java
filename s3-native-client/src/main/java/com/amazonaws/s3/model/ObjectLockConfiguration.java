@@ -5,30 +5,36 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ObjectLockConfiguration {
-    private ObjectLockEnabled objectLockEnabled;
+    /**
+     * <p>Indicates whether this bucket has an Object Lock configuration enabled.</p>
+     */
+    ObjectLockEnabled objectLockEnabled;
 
-    private ObjectLockRule rule;
+    /**
+     * <p>The Object Lock rule in place for the specified object.</p>
+     */
+    ObjectLockRule rule;
 
-    private ObjectLockConfiguration() {
+    ObjectLockConfiguration() {
         this.objectLockEnabled = null;
         this.rule = null;
     }
 
-    private ObjectLockConfiguration(Builder builder) {
+    protected ObjectLockConfiguration(BuilderImpl builder) {
         this.objectLockEnabled = builder.objectLockEnabled;
         this.rule = builder.rule;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,49 +52,82 @@ public class ObjectLockConfiguration {
         return objectLockEnabled;
     }
 
-    public void setObjectLockEnabled(final ObjectLockEnabled objectLockEnabled) {
-        this.objectLockEnabled = objectLockEnabled;
-    }
-
     public ObjectLockRule rule() {
         return rule;
+    }
+
+    public void setObjectLockEnabled(final ObjectLockEnabled objectLockEnabled) {
+        this.objectLockEnabled = objectLockEnabled;
     }
 
     public void setRule(final ObjectLockRule rule) {
         this.rule = rule;
     }
 
-    static final class Builder {
-        private ObjectLockEnabled objectLockEnabled;
+    public interface Builder {
+        Builder objectLockEnabled(ObjectLockEnabled objectLockEnabled);
 
-        private ObjectLockRule rule;
+        Builder rule(ObjectLockRule rule);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>Indicates whether this bucket has an Object Lock configuration enabled.</p>
+         */
+        ObjectLockEnabled objectLockEnabled;
+
+        /**
+         * <p>The Object Lock rule in place for the specified object.</p>
+         */
+        ObjectLockRule rule;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(ObjectLockConfiguration model) {
+        private BuilderImpl(ObjectLockConfiguration model) {
             objectLockEnabled(model.objectLockEnabled);
             rule(model.rule);
         }
 
         public ObjectLockConfiguration build() {
-            return new com.amazonaws.s3.model.ObjectLockConfiguration(this);
+            return new ObjectLockConfiguration(this);
         }
 
-        /**
-         * <p>Indicates whether this bucket has an Object Lock configuration enabled.</p>
-         */
         public final Builder objectLockEnabled(ObjectLockEnabled objectLockEnabled) {
             this.objectLockEnabled = objectLockEnabled;
             return this;
         }
 
-        /**
-         * <p>The Object Lock rule in place for the specified object.</p>
-         */
         public final Builder rule(ObjectLockRule rule) {
             this.rule = rule;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ObjectLockEnabled objectLockEnabled() {
+            return objectLockEnabled;
+        }
+
+        public ObjectLockRule rule() {
+            return rule;
+        }
+
+        public void setObjectLockEnabled(final ObjectLockEnabled objectLockEnabled) {
+            this.objectLockEnabled = objectLockEnabled;
+        }
+
+        public void setRule(final ObjectLockRule rule) {
+            this.rule = rule;
         }
     }
 }

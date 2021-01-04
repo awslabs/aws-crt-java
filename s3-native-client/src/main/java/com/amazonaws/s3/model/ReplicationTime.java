@@ -5,30 +5,37 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ReplicationTime {
-    private ReplicationTimeStatus status;
+    /**
+     * <p> Specifies whether the replication time is enabled. </p>
+     */
+    ReplicationTimeStatus status;
 
-    private ReplicationTimeValue time;
+    /**
+     * <p> A container specifying the time by which replication should be complete for all objects
+     *          and operations on objects. </p>
+     */
+    ReplicationTimeValue time;
 
-    private ReplicationTime() {
+    ReplicationTime() {
         this.status = null;
         this.time = null;
     }
 
-    private ReplicationTime(Builder builder) {
+    protected ReplicationTime(BuilderImpl builder) {
         this.status = builder.status;
         this.time = builder.time;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,50 +53,83 @@ public class ReplicationTime {
         return status;
     }
 
-    public void setStatus(final ReplicationTimeStatus status) {
-        this.status = status;
-    }
-
     public ReplicationTimeValue time() {
         return time;
+    }
+
+    public void setStatus(final ReplicationTimeStatus status) {
+        this.status = status;
     }
 
     public void setTime(final ReplicationTimeValue time) {
         this.time = time;
     }
 
-    static final class Builder {
-        private ReplicationTimeStatus status;
+    public interface Builder {
+        Builder status(ReplicationTimeStatus status);
 
-        private ReplicationTimeValue time;
+        Builder time(ReplicationTimeValue time);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(ReplicationTime model) {
-            status(model.status);
-            time(model.time);
-        }
-
-        public ReplicationTime build() {
-            return new com.amazonaws.s3.model.ReplicationTime(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p> Specifies whether the replication time is enabled. </p>
          */
-        public final Builder status(ReplicationTimeStatus status) {
-            this.status = status;
-            return this;
-        }
+        ReplicationTimeStatus status;
 
         /**
          * <p> A container specifying the time by which replication should be complete for all objects
          *          and operations on objects. </p>
          */
+        ReplicationTimeValue time;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(ReplicationTime model) {
+            status(model.status);
+            time(model.time);
+        }
+
+        public ReplicationTime build() {
+            return new ReplicationTime(this);
+        }
+
+        public final Builder status(ReplicationTimeStatus status) {
+            this.status = status;
+            return this;
+        }
+
         public final Builder time(ReplicationTimeValue time) {
             this.time = time;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public ReplicationTimeStatus status() {
+            return status;
+        }
+
+        public ReplicationTimeValue time() {
+            return time;
+        }
+
+        public void setStatus(final ReplicationTimeStatus status) {
+            this.status = status;
+        }
+
+        public void setTime(final ReplicationTimeValue time) {
+            this.time = time;
         }
     }
 }

@@ -6,26 +6,26 @@ import java.lang.Object;
 import java.lang.Override;
 import java.util.List;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class S3KeyFilter {
-    private List<FilterRule> filterRules;
+    List<FilterRule> filterRules;
 
-    private S3KeyFilter() {
+    S3KeyFilter() {
         this.filterRules = null;
     }
 
-    private S3KeyFilter(Builder builder) {
+    protected S3KeyFilter(BuilderImpl builder) {
         this.filterRules = builder.filterRules;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -47,23 +47,46 @@ public class S3KeyFilter {
         this.filterRules = filterRules;
     }
 
-    static final class Builder {
-        private List<FilterRule> filterRules;
+    public interface Builder {
+        Builder filterRules(List<FilterRule> filterRules);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        List<FilterRule> filterRules;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(S3KeyFilter model) {
+        private BuilderImpl(S3KeyFilter model) {
             filterRules(model.filterRules);
         }
 
         public S3KeyFilter build() {
-            return new com.amazonaws.s3.model.S3KeyFilter(this);
+            return new S3KeyFilter(this);
         }
 
         public final Builder filterRules(List<FilterRule> filterRules) {
             this.filterRules = filterRules;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public List<FilterRule> filterRules() {
+            return filterRules;
+        }
+
+        public void setFilterRules(final List<FilterRule> filterRules) {
+            this.filterRules = filterRules;
         }
     }
 }

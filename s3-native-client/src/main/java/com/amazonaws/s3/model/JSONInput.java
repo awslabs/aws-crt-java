@@ -5,26 +5,29 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class JSONInput {
-    private JSONType type;
+    /**
+     * <p>The type of JSON. Valid values: Document, Lines.</p>
+     */
+    JSONType type;
 
-    private JSONInput() {
+    JSONInput() {
         this.type = null;
     }
 
-    private JSONInput(Builder builder) {
+    protected JSONInput(BuilderImpl builder) {
         this.type = builder.type;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -46,26 +49,49 @@ public class JSONInput {
         this.type = type;
     }
 
-    static final class Builder {
-        private JSONType type;
+    public interface Builder {
+        Builder type(JSONType type);
+    }
 
-        private Builder() {
+    protected static class BuilderImpl implements Builder {
+        /**
+         * <p>The type of JSON. Valid values: Document, Lines.</p>
+         */
+        JSONType type;
+
+        protected BuilderImpl() {
         }
 
-        private Builder(JSONInput model) {
+        private BuilderImpl(JSONInput model) {
             type(model.type);
         }
 
         public JSONInput build() {
-            return new com.amazonaws.s3.model.JSONInput(this);
+            return new JSONInput(this);
         }
 
-        /**
-         * <p>The type of JSON. Valid values: Document, Lines.</p>
-         */
         public final Builder type(JSONType type) {
             this.type = type;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public JSONType type() {
+            return type;
+        }
+
+        public void setType(final JSONType type) {
+            this.type = type;
         }
     }
 }

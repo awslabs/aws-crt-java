@@ -6,38 +6,55 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
-import software.amazon.awssdk.crt.annotations.Generated;
+import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AnalyticsS3BucketDestination {
-    private AnalyticsS3ExportFileFormat format;
+    /**
+     * <p>Specifies the file format used when exporting data to Amazon S3.</p>
+     */
+    AnalyticsS3ExportFileFormat format;
 
-    private String bucketAccountId;
+    /**
+     * <p>The account ID that owns the destination S3 bucket. If no account ID is provided, the
+     *          owner is not validated before exporting data.</p>
+     *          <note>
+     *             <p> Although this value is optional, we strongly recommend that you set it to help
+     *             prevent problems if the destination bucket ownership changes. </p>
+     *          </note>
+     */
+    String bucketAccountId;
 
-    private String bucket;
+    /**
+     * <p>The Amazon Resource Name (ARN) of the bucket to which data is exported.</p>
+     */
+    String bucket;
 
-    private String prefix;
+    /**
+     * <p>The prefix to use when exporting data. The prefix is prepended to all results.</p>
+     */
+    String prefix;
 
-    private AnalyticsS3BucketDestination() {
+    AnalyticsS3BucketDestination() {
         this.format = null;
-        this.bucketAccountId = null;
-        this.bucket = null;
-        this.prefix = null;
+        this.bucketAccountId = "";
+        this.bucket = "";
+        this.prefix = "";
     }
 
-    private AnalyticsS3BucketDestination(Builder builder) {
+    protected AnalyticsS3BucketDestination(BuilderImpl builder) {
         this.format = builder.format;
         this.bucketAccountId = builder.bucketAccountId;
         this.bucket = builder.bucket;
         this.prefix = builder.prefix;
     }
 
-    public Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
+    public static Builder builder() {
+        return new BuilderImpl();
     }
 
     @Override
@@ -55,64 +72,49 @@ public class AnalyticsS3BucketDestination {
         return format;
     }
 
-    public void setFormat(final AnalyticsS3ExportFileFormat format) {
-        this.format = format;
-    }
-
     public String bucketAccountId() {
         return bucketAccountId;
-    }
-
-    public void setBucketAccountId(final String bucketAccountId) {
-        this.bucketAccountId = bucketAccountId;
     }
 
     public String bucket() {
         return bucket;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
     public String prefix() {
         return prefix;
+    }
+
+    public void setFormat(final AnalyticsS3ExportFileFormat format) {
+        this.format = format;
+    }
+
+    public void setBucketAccountId(final String bucketAccountId) {
+        this.bucketAccountId = bucketAccountId;
+    }
+
+    public void setBucket(final String bucket) {
+        this.bucket = bucket;
     }
 
     public void setPrefix(final String prefix) {
         this.prefix = prefix;
     }
 
-    static final class Builder {
-        private AnalyticsS3ExportFileFormat format;
+    public interface Builder {
+        Builder format(AnalyticsS3ExportFileFormat format);
 
-        private String bucketAccountId;
+        Builder bucketAccountId(String bucketAccountId);
 
-        private String bucket;
+        Builder bucket(String bucket);
 
-        private String prefix;
+        Builder prefix(String prefix);
+    }
 
-        private Builder() {
-        }
-
-        private Builder(AnalyticsS3BucketDestination model) {
-            format(model.format);
-            bucketAccountId(model.bucketAccountId);
-            bucket(model.bucket);
-            prefix(model.prefix);
-        }
-
-        public AnalyticsS3BucketDestination build() {
-            return new com.amazonaws.s3.model.AnalyticsS3BucketDestination(this);
-        }
-
+    protected static class BuilderImpl implements Builder {
         /**
          * <p>Specifies the file format used when exporting data to Amazon S3.</p>
          */
-        public final Builder format(AnalyticsS3ExportFileFormat format) {
-            this.format = format;
-            return this;
-        }
+        AnalyticsS3ExportFileFormat format;
 
         /**
          * <p>The account ID that owns the destination S3 bucket. If no account ID is provided, the
@@ -122,25 +124,93 @@ public class AnalyticsS3BucketDestination {
          *             prevent problems if the destination bucket ownership changes. </p>
          *          </note>
          */
+        String bucketAccountId;
+
+        /**
+         * <p>The Amazon Resource Name (ARN) of the bucket to which data is exported.</p>
+         */
+        String bucket;
+
+        /**
+         * <p>The prefix to use when exporting data. The prefix is prepended to all results.</p>
+         */
+        String prefix;
+
+        protected BuilderImpl() {
+        }
+
+        private BuilderImpl(AnalyticsS3BucketDestination model) {
+            format(model.format);
+            bucketAccountId(model.bucketAccountId);
+            bucket(model.bucket);
+            prefix(model.prefix);
+        }
+
+        public AnalyticsS3BucketDestination build() {
+            return new AnalyticsS3BucketDestination(this);
+        }
+
+        public final Builder format(AnalyticsS3ExportFileFormat format) {
+            this.format = format;
+            return this;
+        }
+
         public final Builder bucketAccountId(String bucketAccountId) {
             this.bucketAccountId = bucketAccountId;
             return this;
         }
 
-        /**
-         * <p>The Amazon Resource Name (ARN) of the bucket to which data is exported.</p>
-         */
         public final Builder bucket(String bucket) {
             this.bucket = bucket;
             return this;
         }
 
-        /**
-         * <p>The prefix to use when exporting data. The prefix is prepended to all results.</p>
-         */
         public final Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(BuilderImpl.class);
+        }
+
+        @Override
+        public boolean equals(Object rhs) {
+            if (rhs == null) return false;
+            return (rhs instanceof BuilderImpl);
+        }
+
+        public AnalyticsS3ExportFileFormat format() {
+            return format;
+        }
+
+        public String bucketAccountId() {
+            return bucketAccountId;
+        }
+
+        public String bucket() {
+            return bucket;
+        }
+
+        public String prefix() {
+            return prefix;
+        }
+
+        public void setFormat(final AnalyticsS3ExportFileFormat format) {
+            this.format = format;
+        }
+
+        public void setBucketAccountId(final String bucketAccountId) {
+            this.bucketAccountId = bucketAccountId;
+        }
+
+        public void setBucket(final String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void setPrefix(final String prefix) {
+            this.prefix = prefix;
         }
     }
 }

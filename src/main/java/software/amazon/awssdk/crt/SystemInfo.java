@@ -6,20 +6,38 @@
 package software.amazon.awssdk.crt;
 
 public class SystemInfo {
+
+    /**
+     * @return active count of processors configured on this system.
+     */
     public static int getProcessorCount() {
         return processorCount();
     }
 
+    /**
+     * @return number of active Cpu groupings on this system. This currently refers to NUMA nodes.
+     */
     public static short getCpuGroupCount() {
         return cpuGroupCount();
     }
 
+    /**
+     * Get info on all active Cpus in a Cpu group.
+     * @param groupIdx group index to query.
+     * @return Array of CpuInfo objects configured for this group. This value is never null even if groupIdx was invalid.
+     */
     public static CpuInfo[] getCpuInfoForGroup(short groupIdx) {
         return cpuInfoForGroup(groupIdx);
     }
 
     public static class CpuInfo {
+        /**
+         * OS CpuId that can be used for pinning a thread to a specific Cpu
+         */
         public int cpuId;
+        /**
+         * If true, the Cpu is suspected of being virtual. If false, it's likely a hw core.
+         */
         public boolean isSuspectedHyperThread;
 
         public CpuInfo(int cpuId, boolean isSuspectedHyperThread) {

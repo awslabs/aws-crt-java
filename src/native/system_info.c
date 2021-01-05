@@ -38,7 +38,8 @@ jobjectArray JNICALL
 
     aws_get_cpu_ids_for_group(groupIdx, cpu_info, cpu_count);
 
-    jobjectArray cpu_info_array = (*env)->NewObjectArray(env, cpu_count, cpu_info_properties.cpu_info_class, NULL);
+    jobjectArray cpu_info_array =
+        (*env)->NewObjectArray(env, (jsize)cpu_count, cpu_info_properties.cpu_info_class, NULL);
 
     for (size_t i = 0; i < cpu_count; ++i) {
         jobject cpu_info_obj = (*env)->NewObject(
@@ -47,7 +48,7 @@ jobjectArray JNICALL
             cpu_info_properties.cpu_info_constructor,
             cpu_info[i].cpu_id,
             cpu_info[i].suspected_hyper_thread);
-        (*env)->SetObjectArrayElement(env, cpu_info_array, i, cpu_info_obj);
+        (*env)->SetObjectArrayElement(env, cpu_info_array, (jsize)i, cpu_info_obj);
         (*env)->DeleteLocalRef(env, cpu_info_obj);
     }
 

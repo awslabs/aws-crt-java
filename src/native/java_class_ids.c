@@ -461,6 +461,17 @@ static void s_cache_event_stream_message_flush_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(event_stream_server_message_flush_properties.callback);
 }
 
+struct java_cpu_info_properties cpu_info_properties;
+
+static void s_cache_cpu_info_properties(JNIEnv *env) {
+    cpu_info_properties.cpu_info_class =
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/SystemInfo$CpuInfo"));
+    AWS_FATAL_ASSERT(cpu_info_properties.cpu_info_class);
+
+    cpu_info_properties.cpu_info_constructor =
+        (*env)->GetMethodID(env, cpu_info_properties.cpu_info_class, "<init>", "(IZ)V");
+}
+
 struct java_completable_future_properties completable_future_properties;
 
 static void s_cache_completable_future(JNIEnv *env) {
@@ -516,6 +527,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_stream_client_connection_handler_properties(env);
     s_cache_event_stream_client_continuation_handler_properties(env);
     s_cache_event_stream_message_flush_properties(env);
+    s_cache_cpu_info_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
 }

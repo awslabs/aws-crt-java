@@ -19,12 +19,23 @@ public final class EventLoopGroup extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     /**
-     * Creates a new event loop group for the I/O subsystem to use to run blocking I/O requests
+     * Creates a new event loop group for the I/O subsystem to use to run non-blocking I/O requests
      * @param numThreads The number of threads that the event loop group may run tasks across. Usually 1.
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
         acquireNativeHandle(eventLoopGroupNew(this, numThreads));
+    }
+
+    /**
+     * Creates a new event loop group for the I/O subsystem to use to run non-blocking I/O requests. When using this
+     * constructor, the threads will be pinned to a particular cpuGroup (e.g. a particular NUMA node).
+     * @param cpuGroup the index of the cpu group to bind to (for example NUMA node 0 would be 0, NUMA node 1 would be 1 etc...)
+     * @param numThreads The number of threads that the event loop group may run tasks across. Usually 1.
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
+     */
+    public EventLoopGroup(int cpuGroup, int numThreads) throws CrtRuntimeException {
+        acquireNativeHandle(eventLoopGroupNewPinnedToCpuGroup(this, cpuGroup, numThreads));
     }
 
     /**
@@ -114,5 +125,7 @@ public final class EventLoopGroup extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long eventLoopGroupNew(EventLoopGroup thisObj, int numThreads) throws CrtRuntimeException;
+    private static native long eventLoopGroupNewPinnedToCpuGroup(EventLoopGroup thisObj, int cpuGroup, int numThreads) throws CrtRuntimeException;
+
     private static native void eventLoopGroupDestroy(long elg);
 };

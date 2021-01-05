@@ -21,13 +21,14 @@ public class SystemInfoTest extends CrtTestFixture {
         short cpuGroupCount = SystemInfo.getCpuGroupCount();
         assertNotEquals(0, cpuGroupCount);
 
+
         for (short i = 0; i < cpuGroupCount; ++i) {
             SystemInfo.CpuInfo[] cpus = SystemInfo.getCpuInfoForGroup(i);
             assertNotNull(cpus);
             assertNotEquals(0, cpus.length);
 
             for (SystemInfo.CpuInfo cpuInfo : cpus) {
-                System.out.println(String.format("Found CPU %d in group %d. Suspected hyper-thread? %s", i, cpuInfo.cpuId, cpuInfo.isSuspectedHyperThread ? "yes" : "no"));
+                System.out.println(String.format("Found Cpu %d in group %d. Suspected hyper-thread? %s", cpuInfo.cpuId, i, cpuInfo.isSuspectedHyperThread ? "yes" : "no"));
             }
         }
     }

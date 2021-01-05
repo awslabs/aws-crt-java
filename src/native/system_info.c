@@ -33,15 +33,22 @@ jobjectArray JNICALL
 
     size_t cpu_count = aws_get_cpu_count_for_group(groupIdx);
 
-    struct aws_cpu_info *cpu_info = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct aws_cpu_info));
+    struct aws_cpu_info *cpu_info = aws_mem_calloc(aws_default_allocator(), cpu_count, sizeof(struct aws_cpu_info));
     AWS_FATAL_ASSERT(cpu_info && "allocation failed in Java_software_amazon_awssdk_crt_SystemInfo_getCpuIdsForGroup");
+
+    aws_get_cpu_ids_for_group(groupIdx, cpu_info, cpu_count);
 
     jobjectArray cpu_info_array = (*env)->NewObjectArray(env, cpu_count, cpu_info_properties.cpu_info_class, NULL);
 
     for (size_t i = 0; i < cpu_count; ++i) {
-        jobject cpu_info_obj =
-            (*env)->NewObject(env, cpu_info_properties.cpu_info_class, cpu_info_properties.cpu_info_constructor);
-        (*env)->SetObjectArrayElement(env, cpu_info_array, 1, cpu_info_obj);
+        jobject cpu_info_obj = (*env)->NewObject(
+            env,
+            cpu_info_properties.cpu_info_class,
+            cpu_info_properties.cpu_info_constructor,
+            cpu_info[i].cpu_id,
+            cpu_info[i].suspected_hyper_thread);
+        (*env)->SetObjectArrayElement(env, cpu_info_array, i, cpu_info_obj);
+        (*env)->DeleteLocalRef(env, cpu_info_obj);
     }
 
     aws_mem_release(aws_default_allocator(), cpu_info);

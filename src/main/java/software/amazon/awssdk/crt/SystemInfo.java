@@ -34,13 +34,13 @@ public class SystemInfo {
         /**
          * OS CpuId that can be used for pinning a thread to a specific Cpu
          */
-        public int cpuId;
+        public final int cpuId;
         /**
          * If true, the Cpu is suspected of being virtual. If false, it's likely a hw core.
          */
-        public boolean isSuspectedHyperThread;
+        public final boolean isSuspectedHyperThread;
 
-        public CpuInfo(int cpuId, boolean isSuspectedHyperThread) {
+        private CpuInfo(int cpuId, boolean isSuspectedHyperThread) {
             this.cpuId = cpuId;
             this.isSuspectedHyperThread = isSuspectedHyperThread;
         }

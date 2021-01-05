@@ -203,6 +203,12 @@ struct java_event_stream_message_flush_properties {
 };
 extern struct java_event_stream_message_flush_properties event_stream_server_message_flush_properties;
 
+struct java_cpu_info_properties {
+    jclass cpu_info_class;
+    jmethodID cpu_info_constructor;
+};
+extern struct java_cpu_info_properties cpu_info_properties;
+
 /* CompletableFuture */
 struct java_completable_future_properties {
     jmethodID complete_method_id;

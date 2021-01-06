@@ -10,10 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.s3.S3MetaRequest;
-import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
 

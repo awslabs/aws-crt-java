@@ -539,6 +539,14 @@ open class Builder<T: BuilderClient<*>>(private val client: T) {
             )
         }
 
+
+        builderInterface.addMethod(
+                Method(
+                        "build",
+                        client.className
+                ).addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            )
+        
         builderImpl
             .addConstructor(Constructor(client.className, Field("model", client.className))
                 .addModifier(Modifier.PRIVATE)

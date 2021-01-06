@@ -349,7 +349,6 @@ public class S3ClientTest extends CrtTestFixture {
 
         // Ignore stats during warm up time, they skew results
         TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
-
         try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
             S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
                     .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);

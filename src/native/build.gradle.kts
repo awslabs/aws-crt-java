@@ -67,6 +67,7 @@ val cmakeBuild = tasks.register("cmakeBuild") {
         include(listOf("**/CMakeLists.txt", "**/*.c", "**/*.h"))
     })
     outputs.file("${buildDir}/cmake-build/lib/libaws-crt-jni.so")
+    outputs.upToDateWhen { false }  //shared lib doesn't seem to get placed in jar without this
 
     var cmakeArgs = listOf(
         "--build", "${buildDir}/cmake-build",

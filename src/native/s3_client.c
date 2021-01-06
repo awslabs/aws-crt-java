@@ -41,8 +41,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     JNIEnv *env,
     jclass jni_class,
     jobject s3_client_jobject,
-    jbyteArray jni_region,
     jbyteArray jni_endpoint,
+    jbyteArray jni_region,
     jlong jni_client_bootstrap,
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
@@ -66,7 +66,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
 
     struct s3_client_callback_data *callback_data = aws_mem_acquire(allocator, sizeof(struct s3_client_callback_data));
     AWS_FATAL_ASSERT(callback_data);
@@ -85,17 +84,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         struct aws_tls_ctx *tls_ctx = (void *)jni_tls_ctx;
         tls_options = &tls_options_storage;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
+        struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
         aws_tls_connection_options_set_server_name(tls_options, allocator, &endpoint);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
     }
 
     struct aws_s3_client_config client_config = {.region = region,
                                                  .client_bootstrap = client_bootstrap,
                                                  .tls_connection_options = tls_options,
-                                                 .signing_config = &signing_config,
+                                                 .signing_config = NULL,
                                                  .part_size = part_size,
                                                  .throughput_target_gbps = throughput_target_gbps,
                                                  .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
                                                  .shutdown_callback_user_data = callback_data};
+    client_config.signing_config = &signing_config;
 
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {
@@ -104,8 +106,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
 clean_up:
-    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, region);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     return (jlong)client;
 }
@@ -123,7 +124,6 @@ JNIEXPORT void JNICALL
 }
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
-
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
@@ -184,6 +184,19 @@ static void s_on_s3_meta_request_body_callback(
     }
 
     (*env)->DeleteLocalRef(env, jni_payload);
+}
+
+static void s_on_s3_meta_request_headers_callback(
+    struct aws_s3_meta_request *meta_request,
+    const struct aws_http_headers *headers,
+    int response_status,
+    void *user_data) {
+    (void)meta_request;
+    (void)headers;
+    (void)response_status;
+    (void)user_data;
+
+    // TODO: implement
 }
 
 static void s_on_s3_meta_request_finish_callback(
@@ -257,13 +270,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         /* TODO */
     }
 
-    struct aws_s3_meta_request_options meta_request_options = {.type = meta_request_type,
-                                                               .message = request_message,
-                                                               .user_data = callback_data,
-                                                               .body_callback = s_on_s3_meta_request_body_callback,
-                                                               .finish_callback = s_on_s3_meta_request_finish_callback,
-                                                               .shutdown_callback =
-                                                                   s_on_s3_meta_request_shutdown_complete_callback};
+    struct aws_s3_meta_request_options meta_request_options = {
+        .type = meta_request_type,
+        .message = request_message,
+        .user_data = callback_data,
+        .headers_callback = s_on_s3_meta_request_headers_callback,
+        .body_callback = s_on_s3_meta_request_body_callback,
+        .finish_callback = s_on_s3_meta_request_finish_callback,
+        .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback};
 
     struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 

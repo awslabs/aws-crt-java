@@ -210,7 +210,6 @@ struct java_cpu_info_properties {
 };
 extern struct java_cpu_info_properties cpu_info_properties;
 
-/* S3Client */
 struct java_s3_client_properties {
     jmethodID onShutdownComplete;
 };
@@ -229,7 +228,6 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
 };
 struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
->>>>>>> WIP Java language bindings
 
 /* CompletableFuture */
 struct java_completable_future_properties {

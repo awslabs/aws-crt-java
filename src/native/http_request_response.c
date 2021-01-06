@@ -195,8 +195,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
     size_t total_window_increment = 0;
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-    jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)data->len);
-    (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)data->len, (const signed char *)data->ptr);
+    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, data->ptr, data->len);
 
     jint window_increment = (*env)->CallIntMethod(
         env,

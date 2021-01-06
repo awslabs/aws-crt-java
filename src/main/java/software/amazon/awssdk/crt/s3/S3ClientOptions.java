@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 public class S3ClientOptions {
@@ -8,14 +9,13 @@ public class S3ClientOptions {
     private String region;
     private String endpoint;
     private ClientBootstrap clientBootstrap;
+    private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
     private long partSize;
     private double throughputTargetGbps;
-    private double throughputPerVIP;
-    private int numConnectionsPerVIP;
 
     public S3ClientOptions() {
-    
+
     }
 
     public S3ClientOptions withRegion(String region) {
@@ -72,21 +72,12 @@ public class S3ClientOptions {
         return throughputTargetGbps;
     }
 
-    public S3ClientOptions withThroughputPerVIP(double throughputPerVIP) {
-        this.throughputPerVIP = throughputPerVIP;
+    public S3ClientOptions withTlsContext(TlsContext tlsContext) {
+        this.tlsContext = tlsContext;
         return this;
     }
 
-    public double getThroughputPerVIP() {
-        return throughputPerVIP;
-    }
-
-    public S3ClientOptions withNumConnectionsPerVIP(int numConnectionsPerVIP) {
-        this.numConnectionsPerVIP = numConnectionsPerVIP;
-        return this;
-    }
-
-    public int getNumConnectionsPerVIP() {
-        return numConnectionsPerVIP;
+    public TlsContext getTlsContext() {
+        return tlsContext;
     }
 }

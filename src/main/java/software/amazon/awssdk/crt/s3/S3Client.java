@@ -10,6 +10,11 @@ import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.s3.S3MetaRequest;
+import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
 
 public class S3Client extends CrtResource {
@@ -19,10 +24,12 @@ public class S3Client extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
+        TlsContext tlsCtx = options.getTlsContext();
+
         acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8), options.getEndpoint().getBytes(UTF8),
-                options.getClientBootstrap().getNativeHandle(), options.getCredentialsProvider().getNativeHandle(),
-                options.getPartSize(), options.getThroughputTargetGbps(), options.getThroughputPerVIP(),
-                options.getNumConnectionsPerVIP()));
+                options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
+                options.getCredentialsProvider().getNativeHandle(),
+                options.getPartSize(), options.getThroughputTargetGbps()));
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
@@ -36,17 +43,13 @@ public class S3Client extends CrtResource {
 
     public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
-
-        if (options.getHttpRequest() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
-                    "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+        if(options.getHttpRequest() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
             return null;
         }
 
-        if (options.getResponseHandler() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
-                    "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
-
+        if(options.getResponseHandler() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
             return null;
         }
 
@@ -56,8 +59,10 @@ public class S3Client extends CrtResource {
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
 
+
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
-                options.getMetaRequestType().getNativeValue(), httpRequestBytes, options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
+                options.getMetaRequestType().getNativeValue(), httpRequestBytes,
+                options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -93,8 +98,8 @@ public class S3Client extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
-            long credentialsProvider, long partSize, double throughputTargetGbps, double throughputPerVIP,
-            int numConnectionsPerVIP) throws CrtRuntimeException;
+            long tlsContext,
+            long signingConfig, long partSize, double throughputTargetGbps) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 

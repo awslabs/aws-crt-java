@@ -144,6 +144,7 @@ aws_use_package(aws-c-mqtt)
 aws_use_package(aws-c-auth)
 aws_use_package(aws-c-event-stream)
 aws_use_package(aws-c-s3)
+aws_use_package(aws-c-s3)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC AND NOT APPLE)

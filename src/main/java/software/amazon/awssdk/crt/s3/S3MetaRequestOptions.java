@@ -1,7 +1,7 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
+import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,11 +9,12 @@ import java.util.Map;
 public class S3MetaRequestOptions {
 
     public enum MetaRequestType {
+
         DEFAULT(0),
         GET_OBJECT(1),
         PUT_OBJECT(2);
 
-        MetaRequestType(int nativeValue) {
+		MetaRequestType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 

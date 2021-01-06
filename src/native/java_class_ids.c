@@ -336,8 +336,8 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeadersDone);
 
-    http_stream_response_handler_properties.onResponseBody =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;[B)I");
+    http_stream_response_handler_properties.onResponseBody = (*env)->GetMethodID(
+        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseBody);
 
     http_stream_response_handler_properties.onResponseComplete =
@@ -473,6 +473,8 @@ static void s_cache_cpu_info_properties(JNIEnv *env) {
 
     cpu_info_properties.cpu_info_constructor =
         (*env)->GetMethodID(env, cpu_info_properties.cpu_info_class, "<init>", "(IZ)V");
+}
+
 struct java_s3_client_properties s3_client_properties;
 
 static void s_cache_s3_client_properties(JNIEnv *env) {
@@ -501,7 +503,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(cls);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseBody =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "([BJJ)I");
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =

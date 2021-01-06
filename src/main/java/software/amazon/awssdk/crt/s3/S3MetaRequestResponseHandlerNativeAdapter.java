@@ -1,14 +1,20 @@
 package software.amazon.awssdk.crt.s3;
 
+import java.nio.ByteBuffer;
+
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
+
 class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler) {
         this.responseHandler = responseHandler;
     }
-    
-    int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-        return this.responseHandler.onResponseBody(bodyBytesIn, objectRangeStart, objectRangeEnd);
+
+    int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+        byte[] payload = new byte[bodyBytesIn.limit()];
+        bodyBytesIn.get(payload);
+        return this.responseHandler.onResponseBody(payload, objectRangeStart, objectRangeEnd);
     }
 
     void onFinished(int errorCode) {

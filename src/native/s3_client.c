@@ -6,6 +6,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include <aws/http/request_response.h>
+#include <aws/io/tls_channel_handler.h>
 #include <aws/s3/s3_client.h>
 #include <jni.h>
 
@@ -14,6 +15,7 @@
 #    if defined(_MSC_VER)
 #        pragma warning(push)
 #        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#        pragma warning(disable : 4221)
 #    else
 #        pragma GCC diagnostic push
 #        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
@@ -42,11 +44,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jbyteArray jni_region,
     jbyteArray jni_endpoint,
     jlong jni_client_bootstrap,
+    jlong jni_tls_ctx,
     jlong jni_credentials_provider,
     jlong part_size,
-    jdouble throughput_target_gbps,
-    jdouble throughput_per_vip,
-    jint num_connections_per_vip) {
+    jdouble throughput_target_gbps) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -59,7 +60,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
-
     if (!credentials_provider) {
         aws_jni_throw_runtime_exception(env, "Invalid Credentials Provider");
         return (jlong)NULL;
@@ -76,13 +76,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
+    struct aws_signing_config_aws signing_config = {0};
+    aws_s3_init_default_signing_config(&signing_config, region, credentials_provider);
+
+    struct aws_tls_connection_options *tls_options = NULL;
+    struct aws_tls_connection_options tls_options_storage = {0};
+    if (jni_tls_ctx) {
+        struct aws_tls_ctx *tls_ctx = (void *)jni_tls_ctx;
+        tls_options = &tls_options_storage;
+        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
+        aws_tls_connection_options_set_server_name(tls_options, allocator, &endpoint);
+    }
+
     struct aws_s3_client_config client_config = {.region = region,
                                                  .client_bootstrap = client_bootstrap,
-                                                 .credentials_provider = credentials_provider,
+                                                 .tls_connection_options = tls_options,
+                                                 .signing_config = &signing_config,
                                                  .part_size = part_size,
                                                  .throughput_target_gbps = throughput_target_gbps,
-                                                 .throughput_per_vip_gbps = throughput_per_vip,
-                                                 .num_connections_per_vip = num_connections_per_vip,
                                                  .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
                                                  .shutdown_callback_user_data = callback_data};
 
@@ -145,16 +156,13 @@ static void s_on_s3_meta_request_body_callback(
     (void)user_data;
 
     uint64_t range_end = range_start + body->len;
-    jsize data_len = (jsize)body->len;
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jbyteArray jni_payload = (*env)->NewByteArray(env, data_len);
-    (*env)->SetByteArrayRegion(env, jni_payload, 0, data_len, (const signed char *)body->ptr);
-
+    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, body->ptr, body->len);
     jint body_response_result = 0;
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
@@ -232,8 +240,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     callback_data->java_s3_meta_request_response_handler_native_adapter =
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
 
-    struct aws_http_message *request_message = aws_http_message_new_request(allocator);
+    AWS_FATAL_ASSERT(callback_data->java_s3_meta_request != NULL);
 
+    callback_data->java_s3_meta_request_response_handler_native_adapter =
+        (*env)->NewGlobalRef(env, java_response_handler_jobject);
+
+    AWS_FATAL_ASSERT(callback_data->java_s3_meta_request_response_handler_native_adapter != NULL);
+
+    struct aws_http_message *request_message = aws_http_message_new_request(allocator);
     if (request_message == NULL) {
         /* TODO */
     }

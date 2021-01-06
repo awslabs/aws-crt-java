@@ -1,8 +1,11 @@
 package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
 import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequest;
@@ -15,24 +18,38 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
-
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.DoubleStream;
+import java.util.stream.LongStream;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.OptionalDouble;
 
 public class S3ClientTest extends CrtTestFixture {
 
@@ -42,18 +59,27 @@ public class S3ClientTest extends CrtTestFixture {
     public S3ClientTest() {
     }
 
-    private S3Client createS3Client(S3ClientOptions options, int numThreads) {
-        try (EventLoopGroup elg = new EventLoopGroup(numThreads);
+	private S3Client createS3Client(S3ClientOptions options, int numThreads) {
+    	return createS3Client(options, numThreads, 0);
+	}
+
+    private S3Client createS3Client(S3ClientOptions options, int numThreads, int cpuGroup) {
+        try (EventLoopGroup elg = new EventLoopGroup(cpuGroup, numThreads);
                 HostResolver hostResolver = new HostResolver(elg);
                 ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
             Assert.assertNotNull(clientBootstrap);
 
             try (DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
                     .withClientBootstrap(clientBootstrap).build()) {
-                options.withRegion(REGION).withClientBootstrap(clientBootstrap)
+                Assert.assertNotNull(credentialsProvider);
+                options.withClientBootstrap(clientBootstrap)
                         .withCredentialsProvider(credentialsProvider);
                 return new S3Client(options);
             }
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+            System.err.println(ex.getMessage());
+            return null;
         }
     }
 
@@ -65,7 +91,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT);
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
 
         }
@@ -76,7 +102,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT);
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -142,7 +168,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT);
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -203,59 +229,92 @@ public class S3ClientTest extends CrtTestFixture {
     static class TransferStats {
         static final double GBPS = 1000 * 1000 * 1000;
 
-        long bytesRead = 0;
-        long bytesSampled = 0;
-        long bytesPeak = 0;
-        double bytesAvg = 0;
+        AtomicLong bytesRead = new AtomicLong(0);
+        AtomicLong bytesSampled = new AtomicLong(0);
+        AtomicLong bytesPeak = new AtomicLong(0);
+        ConcurrentLinkedQueue<Long> bytesPerSecond = new ConcurrentLinkedQueue();
         Instant startTime = Instant.now();
-        Instant lastSampleTime = Instant.now();
-        int msToFirstByte = 0;
+        Duration sampleDelay = Duration.ZERO;
+        AtomicReference<Instant> lastSampleTime = new AtomicReference<Instant>(Instant.now());
+        AtomicInteger msToFirstByte = new AtomicInteger(0);
+
+        public TransferStats withSampleDelay(Duration delay) {
+            sampleDelay = delay;
+            return this;
+        }
 
         public void recordRead(long size) {
             Instant now = Instant.now();
             recordRead(size, now);
             if (this != global) {
-                synchronized (global) {
-                    global.recordRead(size, now);
-                }
+                global.recordRead(size, now);
             }
         }
 
         private void recordRead(long size, Instant now) {
-            bytesRead += size;
-            if (msToFirstByte == 0) {
-                msToFirstByte = (int) ChronoUnit.MILLIS.between(startTime, now);
+            bytesRead.addAndGet(size);
+            int latency = (int) ChronoUnit.MILLIS.between(startTime, now);
+            if (msToFirstByte.compareAndSet(0, latency)) {
                 if (this != global) {
-                    synchronized (global) {
-                        global.recordLatency(msToFirstByte);
-                    }
+                    global.recordLatency(latency);
                 }
             }
-            if (now.minusSeconds(1).isAfter(lastSampleTime)) {
-                long bytesThisSecond = bytesRead - bytesSampled;
-                bytesSampled += bytesThisSecond;
-                bytesAvg = (bytesAvg + bytesThisSecond) * 0.5;
-                if (bytesThisSecond > bytesPeak) {
-                    bytesPeak = bytesThisSecond;
-                }
-                lastSampleTime = now;
+            if (now.minusSeconds(1).isAfter(lastSampleTime.get())) {
+                long bytesThisSecond = bytesRead.get() - bytesSampled.get();
+                bytesSampled.getAndAdd(bytesThisSecond);
+                bytesPeak.getAndUpdate((peak) -> {
+                    return (bytesThisSecond > peak) ? bytesThisSecond : peak;
+                });
+
+                bytesPerSecond.add(bytesThisSecond);
+
+                lastSampleTime.set(now);
             }
         }
 
         private void recordLatency(long latencyMs) {
-            msToFirstByte = (int)Math.ceil((msToFirstByte + latencyMs) * 0.5);
+            msToFirstByte.getAndUpdate((ms) -> {
+                return (int) Math.ceil((ms + latencyMs) * 0.5);
+            });
+        }
+
+        public DoubleStream allSamples() {
+            return Arrays.stream(bytesPerSecond.toArray(new Long[1]))
+                    .mapToDouble(a -> a.doubleValue() * 8 / GBPS);
+        }
+
+        public DoubleStream samples() {
+            return samples(bytesPerSecond.size());
+        }
+
+        public DoubleStream samples(int limit) {
+            return allSamples().skip(sampleDelay.getSeconds()).limit(limit);
         }
 
         public double avgGbps() {
-            return (bytesAvg * 8) / GBPS;
+            double avg = samples().average().getAsDouble();
+            return avg;
+        }
+
+        public double p90Gbps() {
+            double[] sorted = samples().sorted().toArray();
+            int idx = (int) Math.ceil(sorted.length * 0.1);
+            return ((sorted[idx] + sorted[idx + 1]) / 2);
+        }
+
+        public double stddev() {
+            double sumOfSquares = samples().map((a) -> a * a).sum();
+            double avg = samples().average().getAsDouble();
+            long count = samples().count();
+            return (count > 0) ?  Math.sqrt((sumOfSquares / count) - (avg * avg)) : 0;
         }
 
         public double peakGbps() {
-            return (bytesPeak * 8) / GBPS;
+            return (bytesPeak.get() * 8) / GBPS;
         }
 
         public int latency() {
-            return msToFirstByte;
+            return msToFirstByte.get();
         }
 
         public static TransferStats global = new TransferStats();
@@ -267,7 +326,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        // Log.initLoggingToStdout(Log.LogLevel.Debug);
+        //Log.initLoggingToStdout(LogLevel.Trace);
 
         // Override defaults with values from system properties, via -D on mvn commandline
         final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "0"));
@@ -275,92 +334,128 @@ public class S3ClientTest extends CrtTestFixture {
         final String bucket = System.getProperty("aws.crt.s3.benchmark.bucket",
                 (region == "us-west-2") ? "aws-crt-canary-bucket" : String.format("aws-crt-canary-bucket-%s", region));
         final String endpoint = System.getProperty("aws.crt.s3.benchmark.endpoint",
-                String.format("%s.s3.amazonaws.com", bucket));
+                String.format("%s.s3.%s.amazonaws.com", bucket, region));
         final String objectName = System.getProperty("aws.crt.s3.benchmark.object",
                 "crt-canary-obj-single-part-9223372036854775807");
-        final boolean multiPart = Boolean.parseBoolean(System.getProperty("aws.crt.s3.benchmark.multipart", "false"));
         final boolean useTls = Boolean.parseBoolean(System.getProperty("aws.crt.s3.benchmark.tls", "false"));
-        final double expectedGbps = Double.parseDouble(System.getProperty("aws.crt.s3.benchmark.gbps", "5"));
-        final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "160"));
-        final int concurrentTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.concurrent", "8")); /* should be 1.6 * expectedGbps */
+        final double expectedGbps = Double.parseDouble(System.getProperty("aws.crt.s3.benchmark.gbps", "10"));
+        final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "16"));
+        final int concurrentTransfers = Integer.parseInt(
+                System.getProperty("aws.crt.s3.benchmark.concurrent", "16")); /* should be 1.6 * expectedGbps */
+        // avg of .3Gbps per connection, 32 connections per vip, 5 seconds per vip resolution
+        final int vipsNeeded = (int)Math.ceil(expectedGbps / 0.5 / 10);
+        final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup", new Integer((int)Math.ceil(vipsNeeded / 5)).toString()));
+        System.out.println(String.format("REGION=%s, WARMUP=%s", region, sampleDelay));
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
-                .withThroughputTargetGbps(expectedGbps);
+        // Ignore stats during warm up time, they skew results
+        TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
 
-        try (S3Client client = createS3Client(clientOptions, threadCount)) {
-            HttpHeader[] headers = { new HttpHeader("Host", endpoint) };
-            HttpRequest httpRequest = new HttpRequest("GET", String.format("/%s", objectName), headers, null);
+        try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+                    .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
 
-            List<CompletableFuture<Integer>> requestFutures = new LinkedList<>();
+            try (S3Client client = createS3Client(clientOptions, threadCount)) {
+                HttpHeader[] headers = { new HttpHeader("Host", endpoint) };
+                HttpRequest httpRequest = new HttpRequest("GET", String.format("/%s", objectName), headers, null);
 
-            // Each meta request will acquire a slot, and release it when it's done
-            Semaphore concurrentSlots = new Semaphore(concurrentTransfers);
+                List<CompletableFuture<TransferStats>> requestFutures = new LinkedList<>();
 
-            for (int transferIdx = 0; transferIdx < numTransfers; ++transferIdx) {
-                try {
-                    concurrentSlots.acquire();
-                } catch (InterruptedException ex) {
-                    Assert.fail(ex.toString());
-                }
+                // Each meta request will acquire a slot, and release it when it's done
+                Semaphore concurrentSlots = new Semaphore(concurrentTransfers);
 
-                final int myIdx = transferIdx;
-                CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
-                requestFutures.add(onFinishedFuture);
+                for (int transferIdx = 0; transferIdx < numTransfers; ++transferIdx) {
+                    try {
+                        concurrentSlots.acquire();
+                    } catch (InterruptedException ex) {
+                        Assert.fail(ex.toString());
+                    }
 
-                S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                    final int myIdx = transferIdx;
+                    CompletableFuture<TransferStats> onFinishedFuture = new CompletableFuture<>();
+                    requestFutures.add(onFinishedFuture);
 
-                    TransferStats stats = new TransferStats();
+                    S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
-                    @Override
-                    public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                        synchronized (stats) {
+                        TransferStats stats = new TransferStats();
+
+                        @Override
+                        public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                             stats.recordRead(bodyBytesIn.length);
-                        }
-                        return 0;
-                    }
-
-                    @Override
-                    public void onFinished(int errorCode) {
-                        // release the slot first
-                        concurrentSlots.release();
-
-                        if (errorCode != 0) {
-                            onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
-                            return;
+                            return 0;
                         }
 
-                        System.out.println(String.format("Transfer %d:  Avg: %.3f Gbps Peak: %.3f Gbps First Byte: %dms",
-                                myIdx + 1, stats.avgGbps(), stats.peakGbps(), stats.latency()));
+                        @Override
+                        public void onFinished(int errorCode) {
+                            // release the slot first
+                            concurrentSlots.release();
 
-                        onFinishedFuture.complete(Integer.valueOf(errorCode));
+                            if (errorCode != 0) {
+                                onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                                return;
+                            }
+
+                            synchronized (System.out) {
+                                System.out.println(
+                                        String.format("Transfer %d:  Avg: %.3f Gbps Peak: %.3f Gbps First Byte: %dms",
+                                                myIdx + 1, stats.avgGbps(), stats.peakGbps(), stats.latency()));
+                            }
+
+                            onFinishedFuture.complete(stats);
+                        }
+                    };
+
+                    S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                            .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                            .withResponseHandler(responseHandler);
+
+                    try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+
                     }
-                };
-
-                S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                        .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
-                        .withResponseHandler(responseHandler);
-
-                try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-
                 }
-            }
 
-            // Finish each future, and deduct failures from completedTransfers
-            int completedTransfers = numTransfers;
-            for (CompletableFuture request : requestFutures) {
+                // Finish each future, and deduct failures from completedTransfers
+                int completedTransfers = numTransfers;
+                double totalGbps = 0;
+                for (CompletableFuture<TransferStats> request : requestFutures) {
+                    try {
+                        request.join();
+                        totalGbps += request.get().avgGbps();
+                    } catch (CompletionException | InterruptedException | ExecutionException ex) {
+                        System.out.println(ex.toString());
+                        Throwable cause = ex.getCause();
+                        if (cause != ex && cause != null) {
+                            System.out.println(cause.toString());
+                        }
+                        cause = cause.getCause();
+                        if (cause != null && cause != ex) {
+                            System.out.println(cause.toString());
+                        }
+                        --completedTransfers;
+                    }
+                }
+
+                // Dump overall stats
+                TransferStats overall = TransferStats.global;
+                System.out.println(String.format("%d/%d successful transfers", completedTransfers, numTransfers));
+                System.out.println(String.format("Avg: %.3f Gbps", overall.avgGbps()));
+                System.out.println(String.format("Peak: %.3f Gbps", overall.peakGbps()));
+                System.out.println(String.format("P90: %.3f Gbps (stddev: %.3f)", overall.p90Gbps(), overall.stddev()));
+                System.out.println(String.format("Avg Latency: %dms", overall.latency()));
+                System.out.flush();
+
                 try {
-                    request.join();
-                } catch (CompletionException ex) {
-                    System.out.println(ex.toString());
-                    --completedTransfers;
+                    File csvFile = new File("samples.csv");
+                    try (PrintWriter writer = new PrintWriter(csvFile)) {
+                        writer.println("seconds,gbps");
+                        AtomicInteger idx = new AtomicInteger(0);
+                        overall.allSamples().mapToObj((gbps) -> {
+                            return String.format("%d,%.3f", idx.getAndIncrement(), gbps);
+                        }).forEach(writer::println);
+                    }
+                } catch (FileNotFoundException ex) {
+                    System.err.println(ex.getMessage());
                 }
             }
-
-            // Dump overall stats
-            TransferStats overall = TransferStats.global;
-            System.out
-                    .println(String.format("%d/%d successful transfers, Avg: %.3f Gbps Peak: %.3f Gbps Avg Latency: %dms",
-                            completedTransfers, numTransfers, overall.avgGbps(), overall.peakGbps(), overall.latency()));
         }
     }
 }

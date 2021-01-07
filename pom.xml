@@ -63,7 +63,7 @@
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
-                <gradle.executable>gradlew.bat</gradle.executable>
+                <gradle.executable>.\gradlew.bat</gradle.executable>
             </properties>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->

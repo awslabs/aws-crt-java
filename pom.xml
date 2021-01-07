@@ -63,7 +63,6 @@
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
-                <gradle.executable>.\gradlew.bat</gradle.executable>
             </properties>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
@@ -296,7 +295,7 @@
             </testResource>
         </testResources>
         <plugins>
-            <!-- execute code generator in Gradle build script -->
+            <!-- execute code generator in Gradle build script  -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

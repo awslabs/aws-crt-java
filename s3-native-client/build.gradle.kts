@@ -17,7 +17,8 @@ tasks.compileJava {
 sourceSets {
     main {
         java {
-            srcDirs("${buildDir}/smithyprojections/${project.name}/source/crt")
+            //srcDirs("${buildDir}/smithyprojections/${project.name}/source/crt")
+            srcDirs("src/generated/java")
         }
     }
 }

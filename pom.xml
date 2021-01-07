@@ -32,7 +32,6 @@
     </scm>
 
     <properties>
-        <gradle.executable>gradlew</gradle.executable>
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.buildconfig>${cmake.buildtype}</cmake.buildconfig>
@@ -298,25 +297,6 @@
             <!-- execute code generator in Gradle build script  -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>gradle</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <executable>${gradle.executable}</executable>
-                            <arguments>
-                                <argument>s3-native-client:smithyBuildJar</argument>
-                            </arguments>
-                        </configuration>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
@@ -328,7 +308,7 @@
                         <configuration>
                             <sources>
                                 <source>${project.basedir}/s3-native-client/src/main/java</source>
-                                <source>${project.basedir}/s3-native-client/build/smithyprojections/s3-native-client/source/crt</source>
+                                <source>${project.basedir}/s3-native-client/src/generated/java</source>
                             </sources>
                         </configuration>
                     </execution>

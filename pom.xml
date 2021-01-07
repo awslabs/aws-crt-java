@@ -32,6 +32,7 @@
     </scm>
 
     <properties>
+        <gradle.executable>gradlew</gradle.executable>
         <cmake.command>cmake</cmake.command>
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.buildconfig>${cmake.buildtype}</cmake.buildconfig>
@@ -62,6 +63,7 @@
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
+                <gradle.executable>gradlew.bat</gradle.executable>
             </properties>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
@@ -294,6 +296,45 @@
             </testResource>
         </testResources>
         <plugins>
+            <!-- execute code generator in Gradle build script -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>gradle</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <executable>${gradle.executable}</executable>
+                            <arguments>
+                                <argument>s3-native-client:smithyBuildJar</argument>
+                            </arguments>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/s3-native-client/src/main/java</source>
+                                <source>${project.basedir}/s3-native-client/build/smithyprojections/s3-native-client/source/crt</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

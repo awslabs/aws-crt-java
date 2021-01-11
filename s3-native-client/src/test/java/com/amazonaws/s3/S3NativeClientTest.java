@@ -13,10 +13,10 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import org.junit.Assume;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
-    private static final String BUCKET = "ogudavid-general";
-    private static final String REGION = "us-east-1";
-    private static final String GET_OBJECT_KEY = "awssdk.log";
-    private static final String PUT_OBJECT_KEY = "file.upload";
+    private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "ogudavid-general");
+    private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
+    private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "awssdk.log");
+    private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     
     @BeforeClass
     public static void haveAwsCredentials() {
@@ -32,7 +32,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
              final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
              final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider);
-            long length[] = { 0 };
+            final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder()
                     .bucket(BUCKET)
                     .key(GET_OBJECT_KEY)
@@ -70,16 +70,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     .bucket(BUCKET)
                     .key(PUT_OBJECT_KEY)
                     .contentLength(contentLength)
-                    .build(), new RequestDataSupplier() {
-                @Override
-                public boolean getRequestBytes(byte[] buffer) {
-                    for (int index = 0; index < buffer.length; ++index) {
-                        buffer[index] = 42;
-                    }
-                    lengthWritten[0] += buffer.length;
-                    return lengthWritten[0] == contentLength;
-                }
-            });
+                    .build(), buffer -> {
+                        for (int index = 0; index < buffer.length; ++index) {
+                            buffer[index] = 42;
+                        }
+                        lengthWritten[0] += buffer.length;
+                        return lengthWritten[0] == contentLength;
+                    });
 
         }
     }

@@ -21,9 +21,9 @@ public class AwsClientTestFixture {
      * Temporary implementation for local testing
      */
     protected static CredentialsProvider getTestCredentialsProvider() {
-        final String awsAccessKeyId = System.getProperty("aws_access_key_id");
-        final String awsSecretAccessKey = System.getProperty("aws_secret_access_key");
-        final String awsSessionToken = System.getProperty("aws_session_token");
+        final String awsAccessKeyId = System.getProperty("crt.aws_access_key_id");
+        final String awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
+        final String awsSessionToken = System.getProperty("crt.aws_session_token");
 
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = 
                 new StaticCredentialsProvider.StaticCredentialsProviderBuilder()

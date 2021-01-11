@@ -136,11 +136,7 @@ public class S3NativeClient implements  AutoCloseable {
 
             @Override
             public long getLength() {
-                try {
-                    return requestDataSupplier.getLength();
-                } catch (Exception e) {
-                    return 0;   //eat exception
-                }
+                return request.contentLength();
             }
         };
 

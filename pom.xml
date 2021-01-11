@@ -301,6 +301,7 @@
                 <version>3.2.0</version>
                 <executions>
                     <execution>
+                        <id>add-source</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>add-source</goal>
@@ -309,6 +310,18 @@
                             <sources>
                                 <source>${project.basedir}/s3-native-client/src/main/java</source>
                                 <source>${project.basedir}/s3-native-client/src/generated/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/s3-native-client/src/test/java</source>
                             </sources>
                         </configuration>
                     </execution>

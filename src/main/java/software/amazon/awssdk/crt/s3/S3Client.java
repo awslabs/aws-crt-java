@@ -22,7 +22,8 @@ public class S3Client extends CrtResource {
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
 
-        acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8), options.getEndpoint().getBytes(UTF8),
+        acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8), 
+                options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(),
                 options.getPartSize(), options.getThroughputTargetGbps()));

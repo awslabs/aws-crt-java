@@ -2,11 +2,11 @@ package com.amazonaws.s3;
 
 import java.util.function.Function;
 
-public interface RequestDataSupplier extends Function<byte[], Boolean> {
+public interface RequestDataSupplier extends Function<byte[], Boolean>, OperationHandler{
     default Boolean apply(byte[] buffer) {
         return getRequestBytes(buffer);
     }
-    
+
     /**
      * Gives the supplier implement an array that must be fully populated with sequences of bytes, representing
      * the data to be sent with the operation's request

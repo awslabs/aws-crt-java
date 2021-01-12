@@ -17,12 +17,8 @@ import software.amazon.awssdk.crt.s3.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class S3NativeClient implements  AutoCloseable {
-    private static final long PART_SIZE = 128_000_000; 
-    private static final double TARGET_THROUGHPUT_GBPS = 100.;
-    
     final EventLoopGroup elGroup;
     final ClientBootstrap clientBootstrap;
     final String signingRegion;
@@ -32,7 +28,9 @@ public class S3NativeClient implements  AutoCloseable {
     public S3NativeClient(final EventLoopGroup elGroup, 
                           final ClientBootstrap clientBootstrap,
                           final String signingRegion,
-                          final CredentialsProvider credentialsProvider) {
+                          final CredentialsProvider credentialsProvider,
+                          final long partSizeBytes,
+                          final double targetThroughputGbps) {
         this.elGroup = elGroup;
         this.clientBootstrap = clientBootstrap;
         this.signingRegion = signingRegion;
@@ -42,8 +40,8 @@ public class S3NativeClient implements  AutoCloseable {
                 .withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider)
                 .withRegion(signingRegion)
-                .withPartSize(PART_SIZE)
-                .withThroughputTargetGbps(TARGET_THROUGHPUT_GBPS);
+                .withPartSize(partSizeBytes)
+                .withThroughputTargetGbps(targetThroughputGbps);
         
         s3Client = new S3Client(clientOptions); //lazy init this on the first request
     }
@@ -54,7 +52,7 @@ public class S3NativeClient implements  AutoCloseable {
             @Override
             public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 dataHandler.onResponseData(bodyBytesIn);
-                return 0;   //unused
+                return 0;
             }
 
             @Override
@@ -140,7 +138,7 @@ public class S3NativeClient implements  AutoCloseable {
             }
         };
 
-        List<HttpHeader> headers = new LinkedList<>();
+        final List<HttpHeader> headers = new LinkedList<>();
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         headers.add(new HttpHeader("Content-Length", Long.toString(request.contentLength())));
         final StringBuilder keyString = new StringBuilder("/" + request.key());

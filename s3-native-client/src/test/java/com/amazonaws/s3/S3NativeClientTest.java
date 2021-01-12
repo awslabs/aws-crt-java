@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -31,26 +32,24 @@ public class S3NativeClientTest extends AwsClientTestFixture {
              final HostResolver resolver = new HostResolver(elGroup, 128);
              final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
              final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider);
+            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider,
+                    64_000_000l, 100.);
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder()
                     .bucket(BUCKET)
                     .key(GET_OBJECT_KEY)
                     .build(), new ResponseDataConsumer() {
+                
                 @Override
                 public void onResponseData(byte[] bodyBytesIn) {
                     length[0] += bodyBytesIn.length;
                 }
 
                 @Override
-                public void onFinished() {
-
-                }
+                public void onFinished() { }
 
                 @Override
-                public void onException(CrtRuntimeException e) {
-
-                }
+                public void onException(final CrtRuntimeException e) { }
             });
         }
     }
@@ -63,7 +62,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
              final HostResolver resolver = new HostResolver(elGroup, 128);
              final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
              final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider);
+            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider,
+                    64_000_000l, 100.);
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
             nativeClient.putObject(PutObjectRequest.builder()

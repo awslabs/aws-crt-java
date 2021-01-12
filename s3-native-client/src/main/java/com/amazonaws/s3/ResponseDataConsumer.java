@@ -1,13 +1,11 @@
 package com.amazonaws.s3;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
-
 import java.util.function.Consumer;
 
 /**
  * Produces events for response streaming data to be handled without holding everything in memory
  */
-public interface ResponseDataConsumer extends Consumer<byte[]> {
+public interface ResponseDataConsumer extends Consumer<byte[]>, OperationHandler {
     default void accept(byte[] bodyBytesIn) {
         onResponseData(bodyBytesIn);
     }
@@ -22,11 +20,4 @@ public interface ResponseDataConsumer extends Consumer<byte[]> {
      * Invoked when the transfer has completed normally
      */
     public void onFinished();
-
-    /**
-     * Invoked when there is an exception (IO or processing) recieving response bytes
-     * 
-     * Implies the transfer is terminated as well (onFinished will not also be called)
-     */
-    public void onException(CrtRuntimeException e);
 }

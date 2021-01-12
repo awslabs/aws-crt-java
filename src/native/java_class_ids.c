@@ -509,6 +509,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
         (*env)->GetMethodID(env, cls, "onFinished", "(I)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
+
+    s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
+        (*env)->GetMethodID(env, cls, "onResponseHeaders", "(I[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -539,6 +543,17 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
 
     crt_runtime_exception_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.error_code_field_id);
+}
+
+struct java_http_header_properties http_header_properties;
+
+static void s_cache_http_header(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
+    AWS_FATAL_ASSERT(cls);
+    http_header_properties.http_header_class = (*env)->NewGlobalRef(env, cls);
+
+    http_header_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "([B[B)V");
+    AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
 }
 
 void cache_java_class_ids(JNIEnv *env) {
@@ -572,4 +587,5 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
+    s_cache_http_header(env);
 }

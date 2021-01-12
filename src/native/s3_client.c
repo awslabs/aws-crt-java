@@ -186,17 +186,63 @@ static void s_on_s3_meta_request_body_callback(
     (*env)->DeleteLocalRef(env, jni_payload);
 }
 
+/* only used in S3 client for now, but has generic JNI/HTTP utility */
+static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struct aws_http_headers *headers) {
+    (void)headers;
+    jobjectArray ret;
+    const size_t header_count = aws_http_headers_count(headers);
+
+    ret =
+        (jobjectArray)(*env)->NewObjectArray(env, header_count, http_header_properties.http_header_class, (void *)NULL);
+
+    for (size_t index = 0; index < header_count; index += 1) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, index, &header);
+        jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
+        jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
+
+        jobject java_http_header = (*env)->NewObject(
+            env,
+            http_header_properties.http_header_class,
+            http_header_properties.constructor_method_id,
+            header_name,
+            header_value);
+
+        (*env)->SetObjectArrayElement(env, ret, index, java_http_header);
+    }
+
+    return (ret);
+}
+
 static void s_on_s3_meta_request_headers_callback(
     struct aws_s3_meta_request *meta_request,
     const struct aws_http_headers *headers,
     int response_status,
     void *user_data) {
     (void)meta_request;
-    (void)headers;
-    (void)response_status;
-    (void)user_data;
 
-    // TODO: implement
+    struct s3_client_make_meta_request_callback_data *callback_data =
+        (struct s3_client_make_meta_request_callback_data *)user_data;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
+        /* convert aws_http_headers -> java Header[] */
+        jbyteArray java_headers_array = s_aws_java_http_headers_from_native(env, headers);
+
+        (*env)->CallVoidMethod(
+            env,
+            callback_data->java_s3_meta_request_response_handler_native_adapter,
+            s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
+            response_status,
+            java_headers_array);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_META_REQUEST,
+                "id=%p: Ignored Exception from S3MetaRequest.onResponseHeaders callback",
+                (void *)meta_request);
+        }
+    }
 }
 
 static void s_on_s3_meta_request_finish_callback(

@@ -225,6 +225,7 @@ extern struct java_s3_meta_request_properties s3_meta_request_properties;
 struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseBody;
     jmethodID onFinished;
+    jmethodID onResponseHeaders;
 };
 struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
@@ -244,6 +245,13 @@ struct java_crt_runtime_exception_properties {
     jfieldID error_code_field_id;
 };
 extern struct java_crt_runtime_exception_properties crt_runtime_exception_properties;
+
+/* HttpHeader */
+struct java_http_header_properties {
+    jclass http_header_class;
+    jmethodID constructor_method_id; /* (byte[], byte[]) */
+};
+extern struct java_http_header_properties http_header_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

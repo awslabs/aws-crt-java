@@ -189,9 +189,8 @@ static void s_on_s3_meta_request_body_callback(
 /* only used in S3 client for now, but has generic JNI/HTTP utility */
 static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struct aws_http_headers *headers) {
     const size_t header_count = aws_http_headers_count(headers);
-    jobjectArray ret = (jobjectArray)(*env)->NewObjectArray(env, header_count,
-        http_header_properties.http_header_class,
-        (void *)NULL);
+    jobjectArray ret =
+        (jobjectArray)(*env)->NewObjectArray(env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
 
     for (size_t index = 0; index < header_count; index += 1) {
         struct aws_http_header header;
@@ -199,10 +198,12 @@ static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struc
         jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
         jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
 
-        jobject java_http_header = (*env)->NewObject(env,
+        jobject java_http_header = (*env)->NewObject(
+            env,
             http_header_properties.http_header_class,
             http_header_properties.constructor_method_id,
-               header_name, header_value);
+            header_name,
+            header_value);
 
         (*env)->SetObjectArrayElement(env, ret, index, java_http_header);
     }
@@ -228,15 +229,17 @@ static void s_on_s3_meta_request_headers_callback(
         printf("Headers length: %zu", header_length); */
 
         AWS_LOGF_TRACE(
-                AWS_LS_S3_META_REQUEST,
-                "id=%p: invoking S3MetaRequest.onResponseHeaders callback. Code: %d",
-                (void *)meta_request, response_status);
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: invoking S3MetaRequest.onResponseHeaders callback. Code: %d",
+            (void *)meta_request,
+            response_status);
 
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
             s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
-            response_status, java_headers_array);
+            response_status,
+            java_headers_array);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(

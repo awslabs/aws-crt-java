@@ -205,7 +205,7 @@ static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struc
             header_name,
             header_value);
 
-        (*env)->SetObjectArrayElement(env, ret, index, java_http_header);
+        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
     }
 
     return (ret);

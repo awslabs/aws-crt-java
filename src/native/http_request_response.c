@@ -253,7 +253,7 @@ jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_head
     const size_t header_count = aws_http_headers_count(headers);
 
     ret =
-        (jobjectArray)(*env)->NewObjectArray(env, header_count, http_header_properties.http_header_class, (void *)NULL);
+        (jobjectArray)(*env)->NewObjectArray(env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
 
     for (size_t index = 0; index < header_count; index += 1) {
         struct aws_http_header header;
@@ -268,7 +268,7 @@ jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_head
             header_name,
             header_value);
 
-        (*env)->SetObjectArrayElement(env, ret, index, java_http_header);
+        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
     }
 
     return (ret);

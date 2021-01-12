@@ -189,8 +189,8 @@ static void s_on_s3_meta_request_body_callback(
 /* only used in S3 client for now, but has generic JNI/HTTP utility */
 static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struct aws_http_headers *headers) {
     const size_t header_count = aws_http_headers_count(headers);
-    jobjectArray ret =
-        (jobjectArray)(*env)->NewObjectArray(env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
+    jobjectArray ret = (jobjectArray)(*env)->NewObjectArray(
+        env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
 
     for (size_t index = 0; index < header_count; index += 1) {
         struct aws_http_header header;

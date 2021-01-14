@@ -57,14 +57,6 @@ public class Owner {
         return iD;
     }
 
-    public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
-    }
-
-    public void setID(final String iD) {
-        this.iD = iD;
-    }
-
     public interface Builder {
         Builder displayName(String displayName);
 
@@ -123,14 +115,6 @@ public class Owner {
 
         public String iD() {
             return iD;
-        }
-
-        public void setDisplayName(final String displayName) {
-            this.displayName = displayName;
-        }
-
-        public void setID(final String iD) {
-            this.iD = iD;
         }
     }
 }

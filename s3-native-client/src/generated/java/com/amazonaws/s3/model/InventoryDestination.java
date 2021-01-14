@@ -46,10 +46,6 @@ public class InventoryDestination {
         return s3BucketDestination;
     }
 
-    public void setS3BucketDestination(final InventoryS3BucketDestination s3BucketDestination) {
-        this.s3BucketDestination = s3BucketDestination;
-    }
-
     public interface Builder {
         Builder s3BucketDestination(InventoryS3BucketDestination s3BucketDestination);
 
@@ -92,10 +88,6 @@ public class InventoryDestination {
 
         public InventoryS3BucketDestination s3BucketDestination() {
             return s3BucketDestination;
-        }
-
-        public void setS3BucketDestination(final InventoryS3BucketDestination s3BucketDestination) {
-            this.s3BucketDestination = s3BucketDestination;
         }
     }
 }

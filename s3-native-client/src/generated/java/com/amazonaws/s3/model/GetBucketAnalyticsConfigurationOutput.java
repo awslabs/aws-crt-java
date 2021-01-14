@@ -45,10 +45,6 @@ public class GetBucketAnalyticsConfigurationOutput {
         return analyticsConfiguration;
     }
 
-    public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
-        this.analyticsConfiguration = analyticsConfiguration;
-    }
-
     public interface Builder {
         Builder analyticsConfiguration(AnalyticsConfiguration analyticsConfiguration);
 
@@ -90,10 +86,6 @@ public class GetBucketAnalyticsConfigurationOutput {
 
         public AnalyticsConfiguration analyticsConfiguration() {
             return analyticsConfiguration;
-        }
-
-        public void setAnalyticsConfiguration(final AnalyticsConfiguration analyticsConfiguration) {
-            this.analyticsConfiguration = analyticsConfiguration;
         }
     }
 }

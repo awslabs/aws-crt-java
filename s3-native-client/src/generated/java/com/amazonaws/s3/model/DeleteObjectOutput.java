@@ -68,18 +68,6 @@ public class DeleteObjectOutput {
         return requestCharged;
     }
 
-    public void setDeleteMarker(final Boolean deleteMarker) {
-        this.deleteMarker = deleteMarker;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder deleteMarker(Boolean deleteMarker);
 
@@ -154,18 +142,6 @@ public class DeleteObjectOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setDeleteMarker(final Boolean deleteMarker) {
-            this.deleteMarker = deleteMarker;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

@@ -45,10 +45,6 @@ public class AnalyticsExportDestination {
         return s3BucketDestination;
     }
 
-    public void setS3BucketDestination(final AnalyticsS3BucketDestination s3BucketDestination) {
-        this.s3BucketDestination = s3BucketDestination;
-    }
-
     public interface Builder {
         Builder s3BucketDestination(AnalyticsS3BucketDestination s3BucketDestination);
 
@@ -90,10 +86,6 @@ public class AnalyticsExportDestination {
 
         public AnalyticsS3BucketDestination s3BucketDestination() {
             return s3BucketDestination;
-        }
-
-        public void setS3BucketDestination(final AnalyticsS3BucketDestination s3BucketDestination) {
-            this.s3BucketDestination = s3BucketDestination;
         }
     }
 }

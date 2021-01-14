@@ -45,10 +45,6 @@ public class RecordsEvent {
         return payload;
     }
 
-    public void setPayload(final byte[] payload) {
-        this.payload = payload;
-    }
-
     public interface Builder {
         Builder payload(byte[] payload);
 
@@ -90,10 +86,6 @@ public class RecordsEvent {
 
         public byte[] payload() {
             return payload;
-        }
-
-        public void setPayload(final byte[] payload) {
-            this.payload = payload;
         }
     }
 }

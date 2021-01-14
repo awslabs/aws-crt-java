@@ -42,11 +42,6 @@ public class GetBucketReplicationOutput {
         return replicationConfiguration;
     }
 
-    public void setReplicationConfiguration(
-            final ReplicationConfiguration replicationConfiguration) {
-        this.replicationConfiguration = replicationConfiguration;
-    }
-
     public interface Builder {
         Builder replicationConfiguration(ReplicationConfiguration replicationConfiguration);
 
@@ -86,11 +81,6 @@ public class GetBucketReplicationOutput {
 
         public ReplicationConfiguration replicationConfiguration() {
             return replicationConfiguration;
-        }
-
-        public void setReplicationConfiguration(
-                final ReplicationConfiguration replicationConfiguration) {
-            this.replicationConfiguration = replicationConfiguration;
         }
     }
 }

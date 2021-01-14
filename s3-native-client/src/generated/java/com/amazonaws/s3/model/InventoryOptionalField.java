@@ -9,28 +9,28 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum InventoryOptionalField {
-    SIZE("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+public enum InventoryOptionalField {
+    SIZE("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    LAST_MODIFIED_DATE("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    LAST_MODIFIED_DATE("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    STORAGE_CLASS("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    STORAGE_CLASS("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    E_TAG("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    E_TAG("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    IS_MULTIPART_UPLOADED("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    IS_MULTIPART_UPLOADED("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    REPLICATION_STATUS("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    REPLICATION_STATUS("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    ENCRYPTION_STATUS("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    ENCRYPTION_STATUS("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    OBJECT_LOCK_RETAIN_UNTIL_DATE("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    OBJECT_LOCK_RETAIN_UNTIL_DATE("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    OBJECT_LOCK_MODE("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    OBJECT_LOCK_MODE("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    OBJECT_LOCK_LEGAL_HOLD_STATUS("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    OBJECT_LOCK_LEGAL_HOLD_STATUS("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
-    INTELLIGENT_TIERING_ACCESS_TIER("software.amazon.smithy.crt.codegen.Field@60c62c7f"),
+    INTELLIGENT_TIERING_ACCESS_TIER("software.amazon.smithy.crt.codegen.Field@47d985c6"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

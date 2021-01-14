@@ -57,14 +57,6 @@ public class ObjectLockRetention {
         return retainUntilDate;
     }
 
-    public void setMode(final ObjectLockRetentionMode mode) {
-        this.mode = mode;
-    }
-
-    public void setRetainUntilDate(final Instant retainUntilDate) {
-        this.retainUntilDate = retainUntilDate;
-    }
-
     public interface Builder {
         Builder mode(ObjectLockRetentionMode mode);
 
@@ -123,14 +115,6 @@ public class ObjectLockRetention {
 
         public Instant retainUntilDate() {
             return retainUntilDate;
-        }
-
-        public void setMode(final ObjectLockRetentionMode mode) {
-            this.mode = mode;
-        }
-
-        public void setRetainUntilDate(final Instant retainUntilDate) {
-            this.retainUntilDate = retainUntilDate;
         }
     }
 }

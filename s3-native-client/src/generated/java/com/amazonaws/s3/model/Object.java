@@ -122,30 +122,6 @@ public class Object {
         return owner;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setSize(final Integer size) {
-        this.size = size;
-    }
-
-    public void setStorageClass(final ObjectStorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -292,30 +268,6 @@ public class Object {
 
         public Owner owner() {
             return owner;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setLastModified(final Instant lastModified) {
-            this.lastModified = lastModified;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setSize(final Integer size) {
-            this.size = size;
-        }
-
-        public void setStorageClass(final ObjectStorageClass storageClass) {
-            this.storageClass = storageClass;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
         }
     }
 }

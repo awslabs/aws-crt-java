@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ReplicationRuleStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@21f7a4c0"),
+public enum ReplicationRuleStatus {
+    ENABLED("software.amazon.smithy.crt.codegen.Field@1c3cdaac"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@21f7a4c0"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@1c3cdaac"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

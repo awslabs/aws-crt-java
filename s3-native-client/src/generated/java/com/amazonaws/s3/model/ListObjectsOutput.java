@@ -171,46 +171,6 @@ public class ListObjectsOutput {
         return encodingType;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setMarker(final String marker) {
-        this.marker = marker;
-    }
-
-    public void setNextMarker(final String nextMarker) {
-        this.nextMarker = nextMarker;
-    }
-
-    public void setContents(final List<Object> contents) {
-        this.contents = contents;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
-    public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-        this.commonPrefixes = commonPrefixes;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
     public interface Builder {
         Builder isTruncated(Boolean isTruncated);
 
@@ -429,46 +389,6 @@ public class ListObjectsOutput {
 
         public EncodingType encodingType() {
             return encodingType;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setMarker(final String marker) {
-            this.marker = marker;
-        }
-
-        public void setNextMarker(final String nextMarker) {
-            this.nextMarker = nextMarker;
-        }
-
-        public void setContents(final List<Object> contents) {
-            this.contents = contents;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setMaxKeys(final Integer maxKeys) {
-            this.maxKeys = maxKeys;
-        }
-
-        public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-            this.commonPrefixes = commonPrefixes;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
         }
     }
 }

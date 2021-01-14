@@ -49,10 +49,6 @@ public class NoncurrentVersionExpiration {
         return noncurrentDays;
     }
 
-    public void setNoncurrentDays(final Integer noncurrentDays) {
-        this.noncurrentDays = noncurrentDays;
-    }
-
     public interface Builder {
         Builder noncurrentDays(Integer noncurrentDays);
 
@@ -97,10 +93,6 @@ public class NoncurrentVersionExpiration {
 
         public Integer noncurrentDays() {
             return noncurrentDays;
-        }
-
-        public void setNoncurrentDays(final Integer noncurrentDays) {
-            this.noncurrentDays = noncurrentDays;
         }
     }
 }

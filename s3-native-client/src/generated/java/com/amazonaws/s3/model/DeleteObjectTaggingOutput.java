@@ -46,10 +46,6 @@ public class DeleteObjectTaggingOutput {
         return versionId;
     }
 
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
     public interface Builder {
         Builder versionId(String versionId);
 
@@ -91,10 +87,6 @@ public class DeleteObjectTaggingOutput {
 
         public String versionId() {
             return versionId;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
         }
     }
 }

@@ -62,14 +62,6 @@ public class Tiering {
         return accessTier;
     }
 
-    public void setDays(final Integer days) {
-        this.days = days;
-    }
-
-    public void setAccessTier(final IntelligentTieringAccessTier accessTier) {
-        this.accessTier = accessTier;
-    }
-
     public interface Builder {
         Builder days(Integer days);
 
@@ -133,14 +125,6 @@ public class Tiering {
 
         public IntelligentTieringAccessTier accessTier() {
             return accessTier;
-        }
-
-        public void setDays(final Integer days) {
-            this.days = days;
-        }
-
-        public void setAccessTier(final IntelligentTieringAccessTier accessTier) {
-            this.accessTier = accessTier;
         }
     }
 }

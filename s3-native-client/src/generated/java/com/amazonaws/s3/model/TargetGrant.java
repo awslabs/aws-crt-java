@@ -56,14 +56,6 @@ public class TargetGrant {
         return permission;
     }
 
-    public void setGrantee(final Grantee grantee) {
-        this.grantee = grantee;
-    }
-
-    public void setPermission(final BucketLogsPermission permission) {
-        this.permission = permission;
-    }
-
     public interface Builder {
         Builder grantee(Grantee grantee);
 
@@ -122,14 +114,6 @@ public class TargetGrant {
 
         public BucketLogsPermission permission() {
             return permission;
-        }
-
-        public void setGrantee(final Grantee grantee) {
-            this.grantee = grantee;
-        }
-
-        public void setPermission(final BucketLogsPermission permission) {
-            this.permission = permission;
         }
     }
 }

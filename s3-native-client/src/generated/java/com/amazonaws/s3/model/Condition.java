@@ -68,14 +68,6 @@ public class Condition {
         return keyPrefixEquals;
     }
 
-    public void setHttpErrorCodeReturnedEquals(final String httpErrorCodeReturnedEquals) {
-        this.httpErrorCodeReturnedEquals = httpErrorCodeReturnedEquals;
-    }
-
-    public void setKeyPrefixEquals(final String keyPrefixEquals) {
-        this.keyPrefixEquals = keyPrefixEquals;
-    }
-
     public interface Builder {
         Builder httpErrorCodeReturnedEquals(String httpErrorCodeReturnedEquals);
 
@@ -145,14 +137,6 @@ public class Condition {
 
         public String keyPrefixEquals() {
             return keyPrefixEquals;
-        }
-
-        public void setHttpErrorCodeReturnedEquals(final String httpErrorCodeReturnedEquals) {
-            this.httpErrorCodeReturnedEquals = httpErrorCodeReturnedEquals;
-        }
-
-        public void setKeyPrefixEquals(final String keyPrefixEquals) {
-            this.keyPrefixEquals = keyPrefixEquals;
         }
     }
 }

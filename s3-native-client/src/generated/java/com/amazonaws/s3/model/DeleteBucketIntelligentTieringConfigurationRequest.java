@@ -57,14 +57,6 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
         return id;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -123,14 +115,6 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
 
         public String id() {
             return id;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
         }
     }
 }

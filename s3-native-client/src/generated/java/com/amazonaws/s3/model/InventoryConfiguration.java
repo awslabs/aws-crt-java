@@ -121,35 +121,6 @@ public class InventoryConfiguration {
         return schedule;
     }
 
-    public void setDestination(final InventoryDestination destination) {
-        this.destination = destination;
-    }
-
-    public void setIsEnabled(final Boolean isEnabled) {
-        this.isEnabled = isEnabled;
-    }
-
-    public void setFilter(final InventoryFilter filter) {
-        this.filter = filter;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setIncludedObjectVersions(
-            final InventoryIncludedObjectVersions includedObjectVersions) {
-        this.includedObjectVersions = includedObjectVersions;
-    }
-
-    public void setOptionalFields(final List<InventoryOptionalField> optionalFields) {
-        this.optionalFields = optionalFields;
-    }
-
-    public void setSchedule(final InventorySchedule schedule) {
-        this.schedule = schedule;
-    }
-
     public interface Builder {
         Builder destination(InventoryDestination destination);
 
@@ -301,35 +272,6 @@ public class InventoryConfiguration {
 
         public InventorySchedule schedule() {
             return schedule;
-        }
-
-        public void setDestination(final InventoryDestination destination) {
-            this.destination = destination;
-        }
-
-        public void setIsEnabled(final Boolean isEnabled) {
-            this.isEnabled = isEnabled;
-        }
-
-        public void setFilter(final InventoryFilter filter) {
-            this.filter = filter;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setIncludedObjectVersions(
-                final InventoryIncludedObjectVersions includedObjectVersions) {
-            this.includedObjectVersions = includedObjectVersions;
-        }
-
-        public void setOptionalFields(final List<InventoryOptionalField> optionalFields) {
-            this.optionalFields = optionalFields;
-        }
-
-        public void setSchedule(final InventorySchedule schedule) {
-            this.schedule = schedule;
         }
     }
 }

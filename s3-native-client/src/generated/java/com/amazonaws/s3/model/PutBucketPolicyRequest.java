@@ -93,26 +93,6 @@ public class PutBucketPolicyRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setConfirmRemoveSelfBucketAccess(final Boolean confirmRemoveSelfBucketAccess) {
-        this.confirmRemoveSelfBucketAccess = confirmRemoveSelfBucketAccess;
-    }
-
-    public void setPolicy(final String policy) {
-        this.policy = policy;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -224,26 +204,6 @@ public class PutBucketPolicyRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setConfirmRemoveSelfBucketAccess(final Boolean confirmRemoveSelfBucketAccess) {
-            this.confirmRemoveSelfBucketAccess = confirmRemoveSelfBucketAccess;
-        }
-
-        public void setPolicy(final String policy) {
-            this.policy = policy;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

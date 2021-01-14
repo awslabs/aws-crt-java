@@ -1,7 +1,6 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpHeaderBlock;
 
 import java.nio.ByteBuffer;
 
@@ -22,7 +21,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         this.responseHandler.onFinished(errorCode);
     }
     
-    void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
-        responseHandler.onResponseHeaders(statusCode, headers);
+    void onResponseHeaders(final int statusCode, final ByteBuffer headersBlob) {
+        responseHandler.onResponseHeaders(statusCode, HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob));
     }
 }

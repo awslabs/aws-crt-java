@@ -511,7 +511,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
-        (*env)->GetMethodID(env, cls, "onResponseHeaders", "(I[Lsoftware/amazon/awssdk/crt/http/HttpHeader;)V");
+        (*env)->GetMethodID(env, cls, "onResponseHeaders", "(ILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
 }
 

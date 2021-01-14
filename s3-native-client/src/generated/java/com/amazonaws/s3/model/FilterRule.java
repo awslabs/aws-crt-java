@@ -60,14 +60,6 @@ public class FilterRule {
         return value;
     }
 
-    public void setName(final FilterRuleName name) {
-        this.name = name;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public interface Builder {
         Builder name(FilterRuleName name);
 
@@ -129,14 +121,6 @@ public class FilterRule {
 
         public String value() {
             return value;
-        }
-
-        public void setName(final FilterRuleName name) {
-            this.name = name;
-        }
-
-        public void setValue(final String value) {
-            this.value = value;
         }
     }
 }

@@ -97,30 +97,6 @@ public class RestoreObjectRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setRestoreRequest(final RestoreRequest restoreRequest) {
-        this.restoreRequest = restoreRequest;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -243,30 +219,6 @@ public class RestoreObjectRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setRestoreRequest(final RestoreRequest restoreRequest) {
-            this.restoreRequest = restoreRequest;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

@@ -60,15 +60,6 @@ public class ServerSideEncryptionRule {
         return bucketKeyEnabled;
     }
 
-    public void setApplyServerSideEncryptionByDefault(
-            final ServerSideEncryptionByDefault applyServerSideEncryptionByDefault) {
-        this.applyServerSideEncryptionByDefault = applyServerSideEncryptionByDefault;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
-    }
-
     public interface Builder {
         Builder applyServerSideEncryptionByDefault(
                 ServerSideEncryptionByDefault applyServerSideEncryptionByDefault);
@@ -132,15 +123,6 @@ public class ServerSideEncryptionRule {
 
         public Boolean bucketKeyEnabled() {
             return bucketKeyEnabled;
-        }
-
-        public void setApplyServerSideEncryptionByDefault(
-                final ServerSideEncryptionByDefault applyServerSideEncryptionByDefault) {
-            this.applyServerSideEncryptionByDefault = applyServerSideEncryptionByDefault;
-        }
-
-        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-            this.bucketKeyEnabled = bucketKeyEnabled;
         }
     }
 }

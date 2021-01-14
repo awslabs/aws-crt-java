@@ -46,10 +46,6 @@ public class SseKmsEncryptedObjects {
         return status;
     }
 
-    public void setStatus(final SseKmsEncryptedObjectsStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(SseKmsEncryptedObjectsStatus status);
 
@@ -92,10 +88,6 @@ public class SseKmsEncryptedObjects {
 
         public SseKmsEncryptedObjectsStatus status() {
             return status;
-        }
-
-        public void setStatus(final SseKmsEncryptedObjectsStatus status) {
-            this.status = status;
         }
     }
 }

@@ -115,34 +115,6 @@ public class UploadPartOutput {
         return requestCharged;
     }
 
-    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-        this.serverSideEncryption = serverSideEncryption;
-    }
-
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
-    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-        this.sSEKMSKeyId = sSEKMSKeyId;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder serverSideEncryption(ServerSideEncryption serverSideEncryption);
 
@@ -288,34 +260,6 @@ public class UploadPartOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-            this.serverSideEncryption = serverSideEncryption;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-        }
-
-        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-        }
-
-        public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-            this.sSEKMSKeyId = sSEKMSKeyId;
-        }
-
-        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-            this.bucketKeyEnabled = bucketKeyEnabled;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

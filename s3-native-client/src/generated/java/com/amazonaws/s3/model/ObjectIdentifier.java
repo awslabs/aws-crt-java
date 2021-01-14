@@ -57,14 +57,6 @@ public class ObjectIdentifier {
         return versionId;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -123,14 +115,6 @@ public class ObjectIdentifier {
 
         public String versionId() {
             return versionId;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
         }
     }
 }

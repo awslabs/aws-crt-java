@@ -179,54 +179,6 @@ public class UploadPartRequest {
         return expectedBucketOwner;
     }
 
-    public void setBody(final byte[] body) {
-        this.body = body;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContentLength(final Long contentLength) {
-        this.contentLength = contentLength;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
-    }
-
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerKey(final String sSECustomerKey) {
-        this.sSECustomerKey = sSECustomerKey;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder body(byte[] body);
 
@@ -465,54 +417,6 @@ public class UploadPartRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBody(final byte[] body) {
-            this.body = body;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContentLength(final Long contentLength) {
-            this.contentLength = contentLength;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setPartNumber(final Integer partNumber) {
-            this.partNumber = partNumber;
-        }
-
-        public void setUploadId(final String uploadId) {
-            this.uploadId = uploadId;
-        }
-
-        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-        }
-
-        public void setSSECustomerKey(final String sSECustomerKey) {
-            this.sSECustomerKey = sSECustomerKey;
-        }
-
-        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

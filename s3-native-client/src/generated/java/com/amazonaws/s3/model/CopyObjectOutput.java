@@ -161,50 +161,6 @@ public class CopyObjectOutput {
         return requestCharged;
     }
 
-    public void setCopyObjectResult(final CopyObjectResult copyObjectResult) {
-        this.copyObjectResult = copyObjectResult;
-    }
-
-    public void setExpiration(final String expiration) {
-        this.expiration = expiration;
-    }
-
-    public void setCopySourceVersionId(final String copySourceVersionId) {
-        this.copySourceVersionId = copySourceVersionId;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-        this.serverSideEncryption = serverSideEncryption;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
-    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-        this.sSEKMSKeyId = sSEKMSKeyId;
-    }
-
-    public void setSSEKMSEncryptionContext(final String sSEKMSEncryptionContext) {
-        this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder copyObjectResult(CopyObjectResult copyObjectResult);
 
@@ -420,50 +376,6 @@ public class CopyObjectOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setCopyObjectResult(final CopyObjectResult copyObjectResult) {
-            this.copyObjectResult = copyObjectResult;
-        }
-
-        public void setExpiration(final String expiration) {
-            this.expiration = expiration;
-        }
-
-        public void setCopySourceVersionId(final String copySourceVersionId) {
-            this.copySourceVersionId = copySourceVersionId;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-            this.serverSideEncryption = serverSideEncryption;
-        }
-
-        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-        }
-
-        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-        }
-
-        public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-            this.sSEKMSKeyId = sSEKMSKeyId;
-        }
-
-        public void setSSEKMSEncryptionContext(final String sSEKMSEncryptionContext) {
-            this.sSEKMSEncryptionContext = sSEKMSEncryptionContext;
-        }
-
-        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-            this.bucketKeyEnabled = bucketKeyEnabled;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

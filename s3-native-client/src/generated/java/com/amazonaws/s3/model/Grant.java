@@ -56,14 +56,6 @@ public class Grant {
         return permission;
     }
 
-    public void setGrantee(final Grantee grantee) {
-        this.grantee = grantee;
-    }
-
-    public void setPermission(final Permission permission) {
-        this.permission = permission;
-    }
-
     public interface Builder {
         Builder grantee(Grantee grantee);
 
@@ -122,14 +114,6 @@ public class Grant {
 
         public Permission permission() {
             return permission;
-        }
-
-        public void setGrantee(final Grantee grantee) {
-            this.grantee = grantee;
-        }
-
-        public void setPermission(final Permission permission) {
-            this.permission = permission;
         }
     }
 }

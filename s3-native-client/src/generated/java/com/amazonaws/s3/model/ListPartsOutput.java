@@ -212,62 +212,6 @@ public class ListPartsOutput {
         return requestCharged;
     }
 
-    public void setAbortDate(final Instant abortDate) {
-        this.abortDate = abortDate;
-    }
-
-    public void setAbortRuleId(final String abortRuleId) {
-        this.abortRuleId = abortRuleId;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
-    public void setPartNumberMarker(final String partNumberMarker) {
-        this.partNumberMarker = partNumberMarker;
-    }
-
-    public void setNextPartNumberMarker(final String nextPartNumberMarker) {
-        this.nextPartNumberMarker = nextPartNumberMarker;
-    }
-
-    public void setMaxParts(final Integer maxParts) {
-        this.maxParts = maxParts;
-    }
-
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setParts(final List<Part> parts) {
-        this.parts = parts;
-    }
-
-    public void setInitiator(final Initiator initiator) {
-        this.initiator = initiator;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder abortDate(Instant abortDate);
 
@@ -549,62 +493,6 @@ public class ListPartsOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setAbortDate(final Instant abortDate) {
-            this.abortDate = abortDate;
-        }
-
-        public void setAbortRuleId(final String abortRuleId) {
-            this.abortRuleId = abortRuleId;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setUploadId(final String uploadId) {
-            this.uploadId = uploadId;
-        }
-
-        public void setPartNumberMarker(final String partNumberMarker) {
-            this.partNumberMarker = partNumberMarker;
-        }
-
-        public void setNextPartNumberMarker(final String nextPartNumberMarker) {
-            this.nextPartNumberMarker = nextPartNumberMarker;
-        }
-
-        public void setMaxParts(final Integer maxParts) {
-            this.maxParts = maxParts;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setParts(final List<Part> parts) {
-            this.parts = parts;
-        }
-
-        public void setInitiator(final Initiator initiator) {
-            this.initiator = initiator;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
-        }
-
-        public void setStorageClass(final StorageClass storageClass) {
-            this.storageClass = storageClass;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

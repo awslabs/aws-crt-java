@@ -71,18 +71,6 @@ public class Transition {
         return storageClass;
     }
 
-    public void setDate(final Instant date) {
-        this.date = date;
-    }
-
-    public void setDays(final Integer days) {
-        this.days = days;
-    }
-
-    public void setStorageClass(final TransitionStorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
     public interface Builder {
         Builder date(Instant date);
 
@@ -160,18 +148,6 @@ public class Transition {
 
         public TransitionStorageClass storageClass() {
             return storageClass;
-        }
-
-        public void setDate(final Instant date) {
-            this.date = date;
-        }
-
-        public void setDays(final Integer days) {
-            this.days = days;
-        }
-
-        public void setStorageClass(final TransitionStorageClass storageClass) {
-            this.storageClass = storageClass;
         }
     }
 }

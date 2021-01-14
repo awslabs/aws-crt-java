@@ -190,58 +190,6 @@ public class PutObjectAclRequest {
         return expectedBucketOwner;
     }
 
-    public void setACL(final ObjectCannedACL aCL) {
-        this.aCL = aCL;
-    }
-
-    public void setAccessControlPolicy(final AccessControlPolicy accessControlPolicy) {
-        this.accessControlPolicy = accessControlPolicy;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setGrantFullControl(final String grantFullControl) {
-        this.grantFullControl = grantFullControl;
-    }
-
-    public void setGrantRead(final String grantRead) {
-        this.grantRead = grantRead;
-    }
-
-    public void setGrantReadACP(final String grantReadACP) {
-        this.grantReadACP = grantReadACP;
-    }
-
-    public void setGrantWrite(final String grantWrite) {
-        this.grantWrite = grantWrite;
-    }
-
-    public void setGrantWriteACP(final String grantWriteACP) {
-        this.grantWriteACP = grantWriteACP;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -499,58 +447,6 @@ public class PutObjectAclRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setACL(final ObjectCannedACL aCL) {
-            this.aCL = aCL;
-        }
-
-        public void setAccessControlPolicy(final AccessControlPolicy accessControlPolicy) {
-            this.accessControlPolicy = accessControlPolicy;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setGrantFullControl(final String grantFullControl) {
-            this.grantFullControl = grantFullControl;
-        }
-
-        public void setGrantRead(final String grantRead) {
-            this.grantRead = grantRead;
-        }
-
-        public void setGrantReadACP(final String grantReadACP) {
-            this.grantReadACP = grantReadACP;
-        }
-
-        public void setGrantWrite(final String grantWrite) {
-            this.grantWrite = grantWrite;
-        }
-
-        public void setGrantWriteACP(final String grantWriteACP) {
-            this.grantWriteACP = grantWriteACP;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

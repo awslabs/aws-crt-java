@@ -47,10 +47,6 @@ public class SSEKMS {
         return keyId;
     }
 
-    public void setKeyId(final String keyId) {
-        this.keyId = keyId;
-    }
-
     public interface Builder {
         Builder keyId(String keyId);
 
@@ -93,10 +89,6 @@ public class SSEKMS {
 
         public String keyId() {
             return keyId;
-        }
-
-        public void setKeyId(final String keyId) {
-            this.keyId = keyId;
         }
     }
 }

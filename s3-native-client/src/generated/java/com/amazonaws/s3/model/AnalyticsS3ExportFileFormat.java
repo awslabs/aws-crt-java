@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum AnalyticsS3ExportFileFormat {
-    CSV("software.amazon.smithy.crt.codegen.Field@597a255f"),
+public enum AnalyticsS3ExportFileFormat {
+    CSV("software.amazon.smithy.crt.codegen.Field@2e4ea8fe"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

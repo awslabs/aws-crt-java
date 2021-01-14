@@ -57,14 +57,6 @@ public class GetBucketAclOutput {
         return grants;
     }
 
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
-    public void setGrants(final List<Grant> grants) {
-        this.grants = grants;
-    }
-
     public interface Builder {
         Builder owner(Owner owner);
 
@@ -123,14 +115,6 @@ public class GetBucketAclOutput {
 
         public List<Grant> grants() {
             return grants;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
-        }
-
-        public void setGrants(final List<Grant> grants) {
-            this.grants = grants;
         }
     }
 }

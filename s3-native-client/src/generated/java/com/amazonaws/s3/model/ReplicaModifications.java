@@ -45,10 +45,6 @@ public class ReplicaModifications {
         return status;
     }
 
-    public void setStatus(final ReplicaModificationsStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(ReplicaModificationsStatus status);
 
@@ -90,10 +86,6 @@ public class ReplicaModifications {
 
         public ReplicaModificationsStatus status() {
             return status;
-        }
-
-        public void setStatus(final ReplicaModificationsStatus status) {
-            this.status = status;
         }
     }
 }

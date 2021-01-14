@@ -82,14 +82,6 @@ public class ServerSideEncryptionByDefault {
         return kMSMasterKeyID;
     }
 
-    public void setSSEAlgorithm(final ServerSideEncryption sSEAlgorithm) {
-        this.sSEAlgorithm = sSEAlgorithm;
-    }
-
-    public void setKMSMasterKeyID(final String kMSMasterKeyID) {
-        this.kMSMasterKeyID = kMSMasterKeyID;
-    }
-
     public interface Builder {
         Builder sSEAlgorithm(ServerSideEncryption sSEAlgorithm);
 
@@ -173,14 +165,6 @@ public class ServerSideEncryptionByDefault {
 
         public String kMSMasterKeyID() {
             return kMSMasterKeyID;
-        }
-
-        public void setSSEAlgorithm(final ServerSideEncryption sSEAlgorithm) {
-            this.sSEAlgorithm = sSEAlgorithm;
-        }
-
-        public void setKMSMasterKeyID(final String kMSMasterKeyID) {
-            this.kMSMasterKeyID = kMSMasterKeyID;
         }
     }
 }

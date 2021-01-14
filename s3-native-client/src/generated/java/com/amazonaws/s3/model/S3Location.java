@@ -121,38 +121,6 @@ public class S3Location {
         return storageClass;
     }
 
-    public void setBucketName(final String bucketName) {
-        this.bucketName = bucketName;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setEncryption(final Encryption encryption) {
-        this.encryption = encryption;
-    }
-
-    public void setCannedACL(final ObjectCannedACL cannedACL) {
-        this.cannedACL = cannedACL;
-    }
-
-    public void setAccessControlList(final List<Grant> accessControlList) {
-        this.accessControlList = accessControlList;
-    }
-
-    public void setTagging(final Tagging tagging) {
-        this.tagging = tagging;
-    }
-
-    public void setUserMetadata(final List<MetadataEntry> userMetadata) {
-        this.userMetadata = userMetadata;
-    }
-
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
     public interface Builder {
         Builder bucketName(String bucketName);
 
@@ -310,38 +278,6 @@ public class S3Location {
 
         public StorageClass storageClass() {
             return storageClass;
-        }
-
-        public void setBucketName(final String bucketName) {
-            this.bucketName = bucketName;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setEncryption(final Encryption encryption) {
-            this.encryption = encryption;
-        }
-
-        public void setCannedACL(final ObjectCannedACL cannedACL) {
-            this.cannedACL = cannedACL;
-        }
-
-        public void setAccessControlList(final List<Grant> accessControlList) {
-            this.accessControlList = accessControlList;
-        }
-
-        public void setTagging(final Tagging tagging) {
-            this.tagging = tagging;
-        }
-
-        public void setUserMetadata(final List<MetadataEntry> userMetadata) {
-            this.userMetadata = userMetadata;
-        }
-
-        public void setStorageClass(final StorageClass storageClass) {
-            this.storageClass = storageClass;
         }
     }
 }

@@ -42,10 +42,6 @@ public class PutObjectLegalHoldOutput {
         return requestCharged;
     }
 
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder requestCharged(RequestCharged requestCharged);
 
@@ -84,10 +80,6 @@ public class PutObjectLegalHoldOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

@@ -45,10 +45,6 @@ public class GetObjectRetentionOutput {
         return retention;
     }
 
-    public void setRetention(final ObjectLockRetention retention) {
-        this.retention = retention;
-    }
-
     public interface Builder {
         Builder retention(ObjectLockRetention retention);
 
@@ -90,10 +86,6 @@ public class GetObjectRetentionOutput {
 
         public ObjectLockRetention retention() {
             return retention;
-        }
-
-        public void setRetention(final ObjectLockRetention retention) {
-            this.retention = retention;
         }
     }
 }

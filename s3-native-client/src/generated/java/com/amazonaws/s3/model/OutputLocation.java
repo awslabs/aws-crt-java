@@ -45,10 +45,6 @@ public class OutputLocation {
         return s3;
     }
 
-    public void setS3(final S3Location s3) {
-        this.s3 = s3;
-    }
-
     public interface Builder {
         Builder s3(S3Location s3);
 
@@ -90,10 +86,6 @@ public class OutputLocation {
 
         public S3Location s3() {
             return s3;
-        }
-
-        public void setS3(final S3Location s3) {
-            this.s3 = s3;
         }
     }
 }

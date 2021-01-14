@@ -156,46 +156,6 @@ public class ListObjectsV2Request {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setFetchOwner(final Boolean fetchOwner) {
-        this.fetchOwner = fetchOwner;
-    }
-
-    public void setStartAfter(final String startAfter) {
-        this.startAfter = startAfter;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -399,46 +359,6 @@ public class ListObjectsV2Request {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
-        }
-
-        public void setMaxKeys(final Integer maxKeys) {
-            this.maxKeys = maxKeys;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setFetchOwner(final Boolean fetchOwner) {
-            this.fetchOwner = fetchOwner;
-        }
-
-        public void setStartAfter(final String startAfter) {
-            this.startAfter = startAfter;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

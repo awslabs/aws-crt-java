@@ -107,22 +107,6 @@ public class PublicAccessBlockConfiguration {
         return restrictPublicBuckets;
     }
 
-    public void setBlockPublicAcls(final Boolean blockPublicAcls) {
-        this.blockPublicAcls = blockPublicAcls;
-    }
-
-    public void setIgnorePublicAcls(final Boolean ignorePublicAcls) {
-        this.ignorePublicAcls = ignorePublicAcls;
-    }
-
-    public void setBlockPublicPolicy(final Boolean blockPublicPolicy) {
-        this.blockPublicPolicy = blockPublicPolicy;
-    }
-
-    public void setRestrictPublicBuckets(final Boolean restrictPublicBuckets) {
-        this.restrictPublicBuckets = restrictPublicBuckets;
-    }
-
     public interface Builder {
         Builder blockPublicAcls(Boolean blockPublicAcls);
 
@@ -243,22 +227,6 @@ public class PublicAccessBlockConfiguration {
 
         public Boolean restrictPublicBuckets() {
             return restrictPublicBuckets;
-        }
-
-        public void setBlockPublicAcls(final Boolean blockPublicAcls) {
-            this.blockPublicAcls = blockPublicAcls;
-        }
-
-        public void setIgnorePublicAcls(final Boolean ignorePublicAcls) {
-            this.ignorePublicAcls = ignorePublicAcls;
-        }
-
-        public void setBlockPublicPolicy(final Boolean blockPublicPolicy) {
-            this.blockPublicPolicy = blockPublicPolicy;
-        }
-
-        public void setRestrictPublicBuckets(final Boolean restrictPublicBuckets) {
-            this.restrictPublicBuckets = restrictPublicBuckets;
         }
     }
 }

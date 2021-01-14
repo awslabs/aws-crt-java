@@ -45,10 +45,6 @@ public class JSONInput {
         return type;
     }
 
-    public void setType(final JSONType type) {
-        this.type = type;
-    }
-
     public interface Builder {
         Builder type(JSONType type);
 
@@ -90,10 +86,6 @@ public class JSONInput {
 
         public JSONType type() {
             return type;
-        }
-
-        public void setType(final JSONType type) {
-            this.type = type;
         }
     }
 }

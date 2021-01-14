@@ -62,22 +62,6 @@ public class S3Exception extends RuntimeException {
         return cause;
     }
 
-    public void setMessage(final String message) {
-        this.message = message;
-    }
-
-    public void setRequestId(final String requestId) {
-        this.requestId = requestId;
-    }
-
-    public void setStatusCode(final int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    public void setCause(final Throwable cause) {
-        this.cause = cause;
-    }
-
     public interface Builder {
         Builder message(String message);
 
@@ -158,22 +142,6 @@ public class S3Exception extends RuntimeException {
 
         public Throwable cause() {
             return cause;
-        }
-
-        public void setMessage(final String message) {
-            this.message = message;
-        }
-
-        public void setRequestId(final String requestId) {
-            this.requestId = requestId;
-        }
-
-        public void setStatusCode(final int statusCode) {
-            this.statusCode = statusCode;
-        }
-
-        public void setCause(final Throwable cause) {
-            this.cause = cause;
         }
     }
 }

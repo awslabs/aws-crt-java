@@ -42,10 +42,6 @@ public class PutObjectAclOutput {
         return requestCharged;
     }
 
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder requestCharged(RequestCharged requestCharged);
 
@@ -84,10 +80,6 @@ public class PutObjectAclOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

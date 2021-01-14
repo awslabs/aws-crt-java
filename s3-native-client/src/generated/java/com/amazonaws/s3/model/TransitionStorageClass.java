@@ -9,16 +9,16 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum TransitionStorageClass {
-    GLACIER("software.amazon.smithy.crt.codegen.Field@742c2a4d"),
+public enum TransitionStorageClass {
+    GLACIER("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
 
-    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@742c2a4d"),
+    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
 
-    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@742c2a4d"),
+    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
 
-    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@742c2a4d"),
+    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
 
-    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@742c2a4d"),
+    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

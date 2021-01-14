@@ -99,26 +99,6 @@ public class Redirect {
         return replaceKeyWith;
     }
 
-    public void setHostName(final String hostName) {
-        this.hostName = hostName;
-    }
-
-    public void setHttpRedirectCode(final String httpRedirectCode) {
-        this.httpRedirectCode = httpRedirectCode;
-    }
-
-    public void setProtocol(final Protocol protocol) {
-        this.protocol = protocol;
-    }
-
-    public void setReplaceKeyPrefixWith(final String replaceKeyPrefixWith) {
-        this.replaceKeyPrefixWith = replaceKeyPrefixWith;
-    }
-
-    public void setReplaceKeyWith(final String replaceKeyWith) {
-        this.replaceKeyWith = replaceKeyWith;
-    }
-
     public interface Builder {
         Builder hostName(String hostName);
 
@@ -237,26 +217,6 @@ public class Redirect {
 
         public String replaceKeyWith() {
             return replaceKeyWith;
-        }
-
-        public void setHostName(final String hostName) {
-            this.hostName = hostName;
-        }
-
-        public void setHttpRedirectCode(final String httpRedirectCode) {
-            this.httpRedirectCode = httpRedirectCode;
-        }
-
-        public void setProtocol(final Protocol protocol) {
-            this.protocol = protocol;
-        }
-
-        public void setReplaceKeyPrefixWith(final String replaceKeyPrefixWith) {
-            this.replaceKeyPrefixWith = replaceKeyPrefixWith;
-        }
-
-        public void setReplaceKeyWith(final String replaceKeyWith) {
-            this.replaceKeyWith = replaceKeyWith;
         }
     }
 }

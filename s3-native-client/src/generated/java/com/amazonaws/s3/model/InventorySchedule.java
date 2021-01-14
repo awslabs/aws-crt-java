@@ -45,10 +45,6 @@ public class InventorySchedule {
         return frequency;
     }
 
-    public void setFrequency(final InventoryFrequency frequency) {
-        this.frequency = frequency;
-    }
-
     public interface Builder {
         Builder frequency(InventoryFrequency frequency);
 
@@ -90,10 +86,6 @@ public class InventorySchedule {
 
         public InventoryFrequency frequency() {
             return frequency;
-        }
-
-        public void setFrequency(final InventoryFrequency frequency) {
-            this.frequency = frequency;
         }
     }
 }

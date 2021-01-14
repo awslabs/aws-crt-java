@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum MetadataDirective {
-    COPY("software.amazon.smithy.crt.codegen.Field@4db5f6d9"),
+public enum MetadataDirective {
+    COPY("software.amazon.smithy.crt.codegen.Field@66df4636"),
 
-    REPLACE("software.amazon.smithy.crt.codegen.Field@4db5f6d9"),
+    REPLACE("software.amazon.smithy.crt.codegen.Field@66df4636"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

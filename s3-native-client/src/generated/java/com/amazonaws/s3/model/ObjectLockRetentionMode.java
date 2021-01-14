@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ObjectLockRetentionMode {
-    GOVERNANCE("software.amazon.smithy.crt.codegen.Field@3d599e0d"),
+public enum ObjectLockRetentionMode {
+    GOVERNANCE("software.amazon.smithy.crt.codegen.Field@712af6b2"),
 
-    COMPLIANCE("software.amazon.smithy.crt.codegen.Field@3d599e0d"),
+    COMPLIANCE("software.amazon.smithy.crt.codegen.Field@712af6b2"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

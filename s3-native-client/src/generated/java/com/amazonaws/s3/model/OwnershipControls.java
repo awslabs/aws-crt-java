@@ -46,10 +46,6 @@ public class OwnershipControls {
         return rules;
     }
 
-    public void setRules(final List<OwnershipControlsRule> rules) {
-        this.rules = rules;
-    }
-
     public interface Builder {
         Builder rules(List<OwnershipControlsRule> rules);
 
@@ -91,10 +87,6 @@ public class OwnershipControls {
 
         public List<OwnershipControlsRule> rules() {
             return rules;
-        }
-
-        public void setRules(final List<OwnershipControlsRule> rules) {
-            this.rules = rules;
         }
     }
 }

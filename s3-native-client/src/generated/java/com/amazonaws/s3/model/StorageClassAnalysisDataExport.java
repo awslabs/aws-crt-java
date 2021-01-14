@@ -57,15 +57,6 @@ public class StorageClassAnalysisDataExport {
         return destination;
     }
 
-    public void setOutputSchemaVersion(
-            final StorageClassAnalysisSchemaVersion outputSchemaVersion) {
-        this.outputSchemaVersion = outputSchemaVersion;
-    }
-
-    public void setDestination(final AnalyticsExportDestination destination) {
-        this.destination = destination;
-    }
-
     public interface Builder {
         Builder outputSchemaVersion(StorageClassAnalysisSchemaVersion outputSchemaVersion);
 
@@ -126,15 +117,6 @@ public class StorageClassAnalysisDataExport {
 
         public AnalyticsExportDestination destination() {
             return destination;
-        }
-
-        public void setOutputSchemaVersion(
-                final StorageClassAnalysisSchemaVersion outputSchemaVersion) {
-            this.outputSchemaVersion = outputSchemaVersion;
-        }
-
-        public void setDestination(final AnalyticsExportDestination destination) {
-            this.destination = destination;
         }
     }
 }

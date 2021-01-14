@@ -43,10 +43,6 @@ public class S3KeyFilter {
         return filterRules;
     }
 
-    public void setFilterRules(final List<FilterRule> filterRules) {
-        this.filterRules = filterRules;
-    }
-
     public interface Builder {
         Builder filterRules(List<FilterRule> filterRules);
 
@@ -85,10 +81,6 @@ public class S3KeyFilter {
 
         public List<FilterRule> filterRules() {
             return filterRules;
-        }
-
-        public void setFilterRules(final List<FilterRule> filterRules) {
-            this.filterRules = filterRules;
         }
     }
 }

@@ -65,18 +65,6 @@ public class GetObjectAclOutput {
         return requestCharged;
     }
 
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
-    public void setGrants(final List<Grant> grants) {
-        this.grants = grants;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder owner(Owner owner);
 
@@ -149,18 +137,6 @@ public class GetObjectAclOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
-        }
-
-        public void setGrants(final List<Grant> grants) {
-            this.grants = grants;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

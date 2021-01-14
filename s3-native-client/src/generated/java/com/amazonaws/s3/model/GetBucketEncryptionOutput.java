@@ -42,11 +42,6 @@ public class GetBucketEncryptionOutput {
         return serverSideEncryptionConfiguration;
     }
 
-    public void setServerSideEncryptionConfiguration(
-            final ServerSideEncryptionConfiguration serverSideEncryptionConfiguration) {
-        this.serverSideEncryptionConfiguration = serverSideEncryptionConfiguration;
-    }
-
     public interface Builder {
         Builder serverSideEncryptionConfiguration(
                 ServerSideEncryptionConfiguration serverSideEncryptionConfiguration);
@@ -87,11 +82,6 @@ public class GetBucketEncryptionOutput {
 
         public ServerSideEncryptionConfiguration serverSideEncryptionConfiguration() {
             return serverSideEncryptionConfiguration;
-        }
-
-        public void setServerSideEncryptionConfiguration(
-                final ServerSideEncryptionConfiguration serverSideEncryptionConfiguration) {
-            this.serverSideEncryptionConfiguration = serverSideEncryptionConfiguration;
         }
     }
 }

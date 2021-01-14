@@ -46,10 +46,6 @@ public class StorageClassAnalysis {
         return dataExport;
     }
 
-    public void setDataExport(final StorageClassAnalysisDataExport dataExport) {
-        this.dataExport = dataExport;
-    }
-
     public interface Builder {
         Builder dataExport(StorageClassAnalysisDataExport dataExport);
 
@@ -92,10 +88,6 @@ public class StorageClassAnalysis {
 
         public StorageClassAnalysisDataExport dataExport() {
             return dataExport;
-        }
-
-        public void setDataExport(final StorageClassAnalysisDataExport dataExport) {
-            this.dataExport = dataExport;
         }
     }
 }

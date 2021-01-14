@@ -59,14 +59,6 @@ public class LifecycleRuleAndOperator {
         return tags;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setTags(final List<Tag> tags) {
-        this.tags = tags;
-    }
-
     public interface Builder {
         Builder prefix(String prefix);
 
@@ -126,14 +118,6 @@ public class LifecycleRuleAndOperator {
 
         public List<Tag> tags() {
             return tags;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setTags(final List<Tag> tags) {
-            this.tags = tags;
         }
     }
 }

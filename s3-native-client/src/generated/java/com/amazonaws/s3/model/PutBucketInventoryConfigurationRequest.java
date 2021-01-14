@@ -79,22 +79,6 @@ public class PutBucketInventoryConfigurationRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
-        this.inventoryConfiguration = inventoryConfiguration;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -187,22 +171,6 @@ public class PutBucketInventoryConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
-            this.inventoryConfiguration = inventoryConfiguration;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

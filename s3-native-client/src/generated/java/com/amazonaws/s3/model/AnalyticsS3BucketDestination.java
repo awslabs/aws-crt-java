@@ -84,22 +84,6 @@ public class AnalyticsS3BucketDestination {
         return prefix;
     }
 
-    public void setFormat(final AnalyticsS3ExportFileFormat format) {
-        this.format = format;
-    }
-
-    public void setBucketAccountId(final String bucketAccountId) {
-        this.bucketAccountId = bucketAccountId;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
     public interface Builder {
         Builder format(AnalyticsS3ExportFileFormat format);
 
@@ -197,22 +181,6 @@ public class AnalyticsS3BucketDestination {
 
         public String prefix() {
             return prefix;
-        }
-
-        public void setFormat(final AnalyticsS3ExportFileFormat format) {
-            this.format = format;
-        }
-
-        public void setBucketAccountId(final String bucketAccountId) {
-            this.bucketAccountId = bucketAccountId;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
         }
     }
 }

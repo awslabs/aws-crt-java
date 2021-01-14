@@ -1945,22 +1945,6 @@ public class S3Error {
         return message;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setCode(final String code) {
-        this.code = code;
-    }
-
-    public void setMessage(final String message) {
-        this.message = message;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -3919,22 +3903,6 @@ public class S3Error {
 
         public String message() {
             return message;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setCode(final String code) {
-            this.code = code;
-        }
-
-        public void setMessage(final String message) {
-            this.message = message;
         }
     }
 }

@@ -45,10 +45,6 @@ public class GetObjectLockConfigurationOutput {
         return objectLockConfiguration;
     }
 
-    public void setObjectLockConfiguration(final ObjectLockConfiguration objectLockConfiguration) {
-        this.objectLockConfiguration = objectLockConfiguration;
-    }
-
     public interface Builder {
         Builder objectLockConfiguration(ObjectLockConfiguration objectLockConfiguration);
 
@@ -91,11 +87,6 @@ public class GetObjectLockConfigurationOutput {
 
         public ObjectLockConfiguration objectLockConfiguration() {
             return objectLockConfiguration;
-        }
-
-        public void setObjectLockConfiguration(
-                final ObjectLockConfiguration objectLockConfiguration) {
-            this.objectLockConfiguration = objectLockConfiguration;
         }
     }
 }

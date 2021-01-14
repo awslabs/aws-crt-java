@@ -57,14 +57,6 @@ public class ListBucketsOutput {
         return owner;
     }
 
-    public void setBuckets(final List<Bucket> buckets) {
-        this.buckets = buckets;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
     public interface Builder {
         Builder buckets(List<Bucket> buckets);
 
@@ -123,14 +115,6 @@ public class ListBucketsOutput {
 
         public Owner owner() {
             return owner;
-        }
-
-        public void setBuckets(final List<Bucket> buckets) {
-            this.buckets = buckets;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
         }
     }
 }

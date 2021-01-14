@@ -102,30 +102,6 @@ public class MultipartUpload {
         return initiator;
     }
 
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setInitiated(final Instant initiated) {
-        this.initiated = initiated;
-    }
-
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
-    public void setInitiator(final Initiator initiator) {
-        this.initiator = initiator;
-    }
-
     public interface Builder {
         Builder uploadId(String uploadId);
 
@@ -252,30 +228,6 @@ public class MultipartUpload {
 
         public Initiator initiator() {
             return initiator;
-        }
-
-        public void setUploadId(final String uploadId) {
-            this.uploadId = uploadId;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setInitiated(final Instant initiated) {
-            this.initiated = initiated;
-        }
-
-        public void setStorageClass(final StorageClass storageClass) {
-            this.storageClass = storageClass;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
-        }
-
-        public void setInitiator(final Initiator initiator) {
-            this.initiator = initiator;
         }
     }
 }

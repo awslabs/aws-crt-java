@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum MFADelete {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@5588b3f1"),
+public enum MFADelete {
+    ENABLED("software.amazon.smithy.crt.codegen.Field@7d161a60"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@5588b3f1"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@7d161a60"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

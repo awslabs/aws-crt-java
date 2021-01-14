@@ -58,14 +58,6 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
         return continuationToken;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -125,14 +117,6 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
 
         public String continuationToken() {
             return continuationToken;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
         }
     }
 }

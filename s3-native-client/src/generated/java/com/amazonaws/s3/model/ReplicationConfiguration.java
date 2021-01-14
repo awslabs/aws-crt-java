@@ -61,14 +61,6 @@ public class ReplicationConfiguration {
         return rules;
     }
 
-    public void setRole(final String role) {
-        this.role = role;
-    }
-
-    public void setRules(final List<ReplicationRule> rules) {
-        this.rules = rules;
-    }
-
     public interface Builder {
         Builder role(String role);
 
@@ -130,14 +122,6 @@ public class ReplicationConfiguration {
 
         public List<ReplicationRule> rules() {
             return rules;
-        }
-
-        public void setRole(final String role) {
-            this.role = role;
-        }
-
-        public void setRules(final List<ReplicationRule> rules) {
-            this.rules = rules;
         }
     }
 }

@@ -81,22 +81,6 @@ public class IntelligentTieringConfiguration {
         return tierings;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setFilter(final IntelligentTieringFilter filter) {
-        this.filter = filter;
-    }
-
-    public void setStatus(final IntelligentTieringStatus status) {
-        this.status = status;
-    }
-
-    public void setTierings(final List<Tiering> tierings) {
-        this.tierings = tierings;
-    }
-
     public interface Builder {
         Builder id(String id);
 
@@ -190,22 +174,6 @@ public class IntelligentTieringConfiguration {
 
         public List<Tiering> tierings() {
             return tierings;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setFilter(final IntelligentTieringFilter filter) {
-            this.filter = filter;
-        }
-
-        public void setStatus(final IntelligentTieringStatus status) {
-            this.status = status;
-        }
-
-        public void setTierings(final List<Tiering> tierings) {
-            this.tierings = tierings;
         }
     }
 }

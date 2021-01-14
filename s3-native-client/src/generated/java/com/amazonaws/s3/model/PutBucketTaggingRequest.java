@@ -82,22 +82,6 @@ public class PutBucketTaggingRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setTagging(final Tagging tagging) {
-        this.tagging = tagging;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -193,22 +177,6 @@ public class PutBucketTaggingRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setTagging(final Tagging tagging) {
-            this.tagging = tagging;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

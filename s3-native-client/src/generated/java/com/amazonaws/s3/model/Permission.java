@@ -9,16 +9,16 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum Permission {
-    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@419e51ef"),
+public enum Permission {
+    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@7549b546"),
 
-    WRITE("software.amazon.smithy.crt.codegen.Field@419e51ef"),
+    WRITE("software.amazon.smithy.crt.codegen.Field@7549b546"),
 
-    WRITE_ACP("software.amazon.smithy.crt.codegen.Field@419e51ef"),
+    WRITE_ACP("software.amazon.smithy.crt.codegen.Field@7549b546"),
 
-    READ("software.amazon.smithy.crt.codegen.Field@419e51ef"),
+    READ("software.amazon.smithy.crt.codegen.Field@7549b546"),
 
-    READ_ACP("software.amazon.smithy.crt.codegen.Field@419e51ef"),
+    READ_ACP("software.amazon.smithy.crt.codegen.Field@7549b546"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

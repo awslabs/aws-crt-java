@@ -133,38 +133,6 @@ public class ListObjectVersionsRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
-    public void setKeyMarker(final String keyMarker) {
-        this.keyMarker = keyMarker;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setVersionIdMarker(final String versionIdMarker) {
-        this.versionIdMarker = versionIdMarker;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -334,38 +302,6 @@ public class ListObjectVersionsRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
-        }
-
-        public void setKeyMarker(final String keyMarker) {
-            this.keyMarker = keyMarker;
-        }
-
-        public void setMaxKeys(final Integer maxKeys) {
-            this.maxKeys = maxKeys;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setVersionIdMarker(final String versionIdMarker) {
-            this.versionIdMarker = versionIdMarker;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

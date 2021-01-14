@@ -9,14 +9,14 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum BucketCannedACL {
-    PRIVATE("software.amazon.smithy.crt.codegen.Field@7746cb0c"),
+public enum BucketCannedACL {
+    PRIVATE("software.amazon.smithy.crt.codegen.Field@7d7254e3"),
 
-    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@7746cb0c"),
+    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@7d7254e3"),
 
-    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@7746cb0c"),
+    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@7d7254e3"),
 
-    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@7746cb0c"),
+    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@7d7254e3"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

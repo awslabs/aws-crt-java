@@ -56,14 +56,6 @@ public class OutputSerialization {
         return jSON;
     }
 
-    public void setCSV(final CSVOutput cSV) {
-        this.cSV = cSV;
-    }
-
-    public void setJSON(final JSONOutput jSON) {
-        this.jSON = jSON;
-    }
-
     public interface Builder {
         Builder cSV(CSVOutput cSV);
 
@@ -122,14 +114,6 @@ public class OutputSerialization {
 
         public JSONOutput jSON() {
             return jSON;
-        }
-
-        public void setCSV(final CSVOutput cSV) {
-            this.cSV = cSV;
-        }
-
-        public void setJSON(final JSONOutput jSON) {
-            this.jSON = jSON;
         }
     }
 }

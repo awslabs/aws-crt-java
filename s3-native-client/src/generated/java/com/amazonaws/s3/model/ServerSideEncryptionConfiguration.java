@@ -47,10 +47,6 @@ public class ServerSideEncryptionConfiguration {
         return rules;
     }
 
-    public void setRules(final List<ServerSideEncryptionRule> rules) {
-        this.rules = rules;
-    }
-
     public interface Builder {
         Builder rules(List<ServerSideEncryptionRule> rules);
 
@@ -93,10 +89,6 @@ public class ServerSideEncryptionConfiguration {
 
         public List<ServerSideEncryptionRule> rules() {
             return rules;
-        }
-
-        public void setRules(final List<ServerSideEncryptionRule> rules) {
-            this.rules = rules;
         }
     }
 }

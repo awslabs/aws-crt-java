@@ -45,10 +45,6 @@ public class GetObjectLegalHoldOutput {
         return legalHold;
     }
 
-    public void setLegalHold(final ObjectLockLegalHold legalHold) {
-        this.legalHold = legalHold;
-    }
-
     public interface Builder {
         Builder legalHold(ObjectLockLegalHold legalHold);
 
@@ -90,10 +86,6 @@ public class GetObjectLegalHoldOutput {
 
         public ObjectLockLegalHold legalHold() {
             return legalHold;
-        }
-
-        public void setLegalHold(final ObjectLockLegalHold legalHold) {
-            this.legalHold = legalHold;
         }
     }
 }

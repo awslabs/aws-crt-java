@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum RequestPayer {
-    REQUESTER("software.amazon.smithy.crt.codegen.Field@7045e81a"),
+public enum RequestPayer {
+    REQUESTER("software.amazon.smithy.crt.codegen.Field@782e0f4d"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

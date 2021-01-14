@@ -9,14 +9,14 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ReplicationStatus {
-    COMPLETE("software.amazon.smithy.crt.codegen.Field@643af387"),
+public enum ReplicationStatus {
+    COMPLETE("software.amazon.smithy.crt.codegen.Field@70f5bf1a"),
 
-    PENDING("software.amazon.smithy.crt.codegen.Field@643af387"),
+    PENDING("software.amazon.smithy.crt.codegen.Field@70f5bf1a"),
 
-    FAILED("software.amazon.smithy.crt.codegen.Field@643af387"),
+    FAILED("software.amazon.smithy.crt.codegen.Field@70f5bf1a"),
 
-    REPLICA("software.amazon.smithy.crt.codegen.Field@643af387"),
+    REPLICA("software.amazon.smithy.crt.codegen.Field@70f5bf1a"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

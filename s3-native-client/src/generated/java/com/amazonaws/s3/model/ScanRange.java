@@ -66,14 +66,6 @@ public class ScanRange {
         return end;
     }
 
-    public void setStart(final Long start) {
-        this.start = start;
-    }
-
-    public void setEnd(final Long end) {
-        this.end = end;
-    }
-
     public interface Builder {
         Builder start(Long start);
 
@@ -141,14 +133,6 @@ public class ScanRange {
 
         public Long end() {
             return end;
-        }
-
-        public void setStart(final Long start) {
-            this.start = start;
-        }
-
-        public void setEnd(final Long end) {
-            this.end = end;
         }
     }
 }

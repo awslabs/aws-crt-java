@@ -58,14 +58,6 @@ public class VersioningConfiguration {
         return status;
     }
 
-    public void setMFADelete(final MFADelete mFADelete) {
-        this.mFADelete = mFADelete;
-    }
-
-    public void setStatus(final BucketVersioningStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder mFADelete(MFADelete mFADelete);
 
@@ -126,14 +118,6 @@ public class VersioningConfiguration {
 
         public BucketVersioningStatus status() {
             return status;
-        }
-
-        public void setMFADelete(final MFADelete mFADelete) {
-            this.mFADelete = mFADelete;
-        }
-
-        public void setStatus(final BucketVersioningStatus status) {
-            this.status = status;
         }
     }
 }

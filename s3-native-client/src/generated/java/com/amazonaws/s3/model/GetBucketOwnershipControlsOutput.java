@@ -46,10 +46,6 @@ public class GetBucketOwnershipControlsOutput {
         return ownershipControls;
     }
 
-    public void setOwnershipControls(final OwnershipControls ownershipControls) {
-        this.ownershipControls = ownershipControls;
-    }
-
     public interface Builder {
         Builder ownershipControls(OwnershipControls ownershipControls);
 
@@ -92,10 +88,6 @@ public class GetBucketOwnershipControlsOutput {
 
         public OwnershipControls ownershipControls() {
             return ownershipControls;
-        }
-
-        public void setOwnershipControls(final OwnershipControls ownershipControls) {
-            this.ownershipControls = ownershipControls;
         }
     }
 }

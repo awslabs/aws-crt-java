@@ -45,11 +45,6 @@ public class GetBucketIntelligentTieringConfigurationOutput {
         return intelligentTieringConfiguration;
     }
 
-    public void setIntelligentTieringConfiguration(
-            final IntelligentTieringConfiguration intelligentTieringConfiguration) {
-        this.intelligentTieringConfiguration = intelligentTieringConfiguration;
-    }
-
     public interface Builder {
         Builder intelligentTieringConfiguration(
                 IntelligentTieringConfiguration intelligentTieringConfiguration);
@@ -93,11 +88,6 @@ public class GetBucketIntelligentTieringConfigurationOutput {
 
         public IntelligentTieringConfiguration intelligentTieringConfiguration() {
             return intelligentTieringConfiguration;
-        }
-
-        public void setIntelligentTieringConfiguration(
-                final IntelligentTieringConfiguration intelligentTieringConfiguration) {
-            this.intelligentTieringConfiguration = intelligentTieringConfiguration;
         }
     }
 }

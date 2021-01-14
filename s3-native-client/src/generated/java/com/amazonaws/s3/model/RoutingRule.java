@@ -61,14 +61,6 @@ public class RoutingRule {
         return redirect;
     }
 
-    public void setCondition(final Condition condition) {
-        this.condition = condition;
-    }
-
-    public void setRedirect(final Redirect redirect) {
-        this.redirect = redirect;
-    }
-
     public interface Builder {
         Builder condition(Condition condition);
 
@@ -132,14 +124,6 @@ public class RoutingRule {
 
         public Redirect redirect() {
             return redirect;
-        }
-
-        public void setCondition(final Condition condition) {
-            this.condition = condition;
-        }
-
-        public void setRedirect(final Redirect redirect) {
-            this.redirect = redirect;
         }
     }
 }

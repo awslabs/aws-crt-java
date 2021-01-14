@@ -46,10 +46,6 @@ public class GetBucketPolicyOutput {
         return policy;
     }
 
-    public void setPolicy(final String policy) {
-        this.policy = policy;
-    }
-
     public interface Builder {
         Builder policy(String policy);
 
@@ -91,10 +87,6 @@ public class GetBucketPolicyOutput {
 
         public String policy() {
             return policy;
-        }
-
-        public void setPolicy(final String policy) {
-            this.policy = policy;
         }
     }
 }

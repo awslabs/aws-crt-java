@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum MetricsStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@266fda74"),
+public enum MetricsStatus {
+    ENABLED("software.amazon.smithy.crt.codegen.Field@152b5f47"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@266fda74"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@152b5f47"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

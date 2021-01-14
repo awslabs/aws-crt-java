@@ -53,14 +53,6 @@ public class GetObjectTorrentOutput {
         return requestCharged;
     }
 
-    public void setBody(final byte[] body) {
-        this.body = body;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder body(byte[] body);
 
@@ -116,14 +108,6 @@ public class GetObjectTorrentOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setBody(final byte[] body) {
-            this.body = body;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

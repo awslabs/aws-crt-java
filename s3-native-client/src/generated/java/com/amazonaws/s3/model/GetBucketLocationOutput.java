@@ -48,10 +48,6 @@ public class GetBucketLocationOutput {
         return locationConstraint;
     }
 
-    public void setLocationConstraint(final BucketLocationConstraint locationConstraint) {
-        this.locationConstraint = locationConstraint;
-    }
-
     public interface Builder {
         Builder locationConstraint(BucketLocationConstraint locationConstraint);
 
@@ -96,10 +92,6 @@ public class GetBucketLocationOutput {
 
         public BucketLocationConstraint locationConstraint() {
             return locationConstraint;
-        }
-
-        public void setLocationConstraint(final BucketLocationConstraint locationConstraint) {
-            this.locationConstraint = locationConstraint;
         }
     }
 }

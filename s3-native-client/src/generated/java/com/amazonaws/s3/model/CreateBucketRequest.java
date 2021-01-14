@@ -136,43 +136,6 @@ public class CreateBucketRequest {
         return objectLockEnabledForBucket;
     }
 
-    public void setACL(final BucketCannedACL aCL) {
-        this.aCL = aCL;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setCreateBucketConfiguration(
-            final CreateBucketConfiguration createBucketConfiguration) {
-        this.createBucketConfiguration = createBucketConfiguration;
-    }
-
-    public void setGrantFullControl(final String grantFullControl) {
-        this.grantFullControl = grantFullControl;
-    }
-
-    public void setGrantRead(final String grantRead) {
-        this.grantRead = grantRead;
-    }
-
-    public void setGrantReadACP(final String grantReadACP) {
-        this.grantReadACP = grantReadACP;
-    }
-
-    public void setGrantWrite(final String grantWrite) {
-        this.grantWrite = grantWrite;
-    }
-
-    public void setGrantWriteACP(final String grantWriteACP) {
-        this.grantWriteACP = grantWriteACP;
-    }
-
-    public void setObjectLockEnabledForBucket(final Boolean objectLockEnabledForBucket) {
-        this.objectLockEnabledForBucket = objectLockEnabledForBucket;
-    }
-
     public interface Builder {
         Builder aCL(BucketCannedACL aCL);
 
@@ -352,43 +315,6 @@ public class CreateBucketRequest {
 
         public Boolean objectLockEnabledForBucket() {
             return objectLockEnabledForBucket;
-        }
-
-        public void setACL(final BucketCannedACL aCL) {
-            this.aCL = aCL;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setCreateBucketConfiguration(
-                final CreateBucketConfiguration createBucketConfiguration) {
-            this.createBucketConfiguration = createBucketConfiguration;
-        }
-
-        public void setGrantFullControl(final String grantFullControl) {
-            this.grantFullControl = grantFullControl;
-        }
-
-        public void setGrantRead(final String grantRead) {
-            this.grantRead = grantRead;
-        }
-
-        public void setGrantReadACP(final String grantReadACP) {
-            this.grantReadACP = grantReadACP;
-        }
-
-        public void setGrantWrite(final String grantWrite) {
-            this.grantWrite = grantWrite;
-        }
-
-        public void setGrantWriteACP(final String grantWriteACP) {
-            this.grantWriteACP = grantWriteACP;
-        }
-
-        public void setObjectLockEnabledForBucket(final Boolean objectLockEnabledForBucket) {
-            this.objectLockEnabledForBucket = objectLockEnabledForBucket;
         }
     }
 }

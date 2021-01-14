@@ -127,38 +127,6 @@ public class ObjectVersion {
         return owner;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setSize(final Integer size) {
-        this.size = size;
-    }
-
-    public void setStorageClass(final ObjectVersionStorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setIsLatest(final Boolean isLatest) {
-        this.isLatest = isLatest;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
     public interface Builder {
         Builder eTag(String eTag);
 
@@ -320,38 +288,6 @@ public class ObjectVersion {
 
         public Owner owner() {
             return owner;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setSize(final Integer size) {
-            this.size = size;
-        }
-
-        public void setStorageClass(final ObjectVersionStorageClass storageClass) {
-            this.storageClass = storageClass;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setIsLatest(final Boolean isLatest) {
-            this.isLatest = isLatest;
-        }
-
-        public void setLastModified(final Instant lastModified) {
-            this.lastModified = lastModified;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
         }
     }
 }

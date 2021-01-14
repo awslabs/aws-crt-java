@@ -84,22 +84,6 @@ public class DeletedObject {
         return deleteMarkerVersionId;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setDeleteMarker(final Boolean deleteMarker) {
-        this.deleteMarker = deleteMarker;
-    }
-
-    public void setDeleteMarkerVersionId(final String deleteMarkerVersionId) {
-        this.deleteMarkerVersionId = deleteMarkerVersionId;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -196,22 +180,6 @@ public class DeletedObject {
 
         public String deleteMarkerVersionId() {
             return deleteMarkerVersionId;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setDeleteMarker(final Boolean deleteMarker) {
-            this.deleteMarker = deleteMarker;
-        }
-
-        public void setDeleteMarkerVersionId(final String deleteMarkerVersionId) {
-            this.deleteMarkerVersionId = deleteMarkerVersionId;
         }
     }
 }

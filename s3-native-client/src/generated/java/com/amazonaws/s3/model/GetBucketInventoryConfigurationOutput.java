@@ -45,10 +45,6 @@ public class GetBucketInventoryConfigurationOutput {
         return inventoryConfiguration;
     }
 
-    public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
-        this.inventoryConfiguration = inventoryConfiguration;
-    }
-
     public interface Builder {
         Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration);
 
@@ -90,10 +86,6 @@ public class GetBucketInventoryConfigurationOutput {
 
         public InventoryConfiguration inventoryConfiguration() {
             return inventoryConfiguration;
-        }
-
-        public void setInventoryConfiguration(final InventoryConfiguration inventoryConfiguration) {
-            this.inventoryConfiguration = inventoryConfiguration;
         }
     }
 }

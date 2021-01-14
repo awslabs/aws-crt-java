@@ -55,14 +55,6 @@ public class RestoreObjectOutput {
         return restoreOutputPath;
     }
 
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
-    public void setRestoreOutputPath(final String restoreOutputPath) {
-        this.restoreOutputPath = restoreOutputPath;
-    }
-
     public interface Builder {
         Builder requestCharged(RequestCharged requestCharged);
 
@@ -119,14 +111,6 @@ public class RestoreObjectOutput {
 
         public String restoreOutputPath() {
             return restoreOutputPath;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
-        }
-
-        public void setRestoreOutputPath(final String restoreOutputPath) {
-            this.restoreOutputPath = restoreOutputPath;
         }
     }
 }

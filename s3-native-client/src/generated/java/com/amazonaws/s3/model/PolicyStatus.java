@@ -47,10 +47,6 @@ public class PolicyStatus {
         return isPublic;
     }
 
-    public void setIsPublic(final Boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
     public interface Builder {
         Builder isPublic(Boolean isPublic);
 
@@ -93,10 +89,6 @@ public class PolicyStatus {
 
         public Boolean isPublic() {
             return isPublic;
-        }
-
-        public void setIsPublic(final Boolean isPublic) {
-            this.isPublic = isPublic;
         }
     }
 }

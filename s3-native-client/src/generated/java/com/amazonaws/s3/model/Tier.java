@@ -9,12 +9,12 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum Tier {
-    STANDARD("software.amazon.smithy.crt.codegen.Field@2406ba42"),
+public enum Tier {
+    STANDARD("software.amazon.smithy.crt.codegen.Field@18bec6bf"),
 
-    BULK("software.amazon.smithy.crt.codegen.Field@2406ba42"),
+    BULK("software.amazon.smithy.crt.codegen.Field@18bec6bf"),
 
-    EXPEDITED("software.amazon.smithy.crt.codegen.Field@2406ba42"),
+    EXPEDITED("software.amazon.smithy.crt.codegen.Field@18bec6bf"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

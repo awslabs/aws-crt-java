@@ -69,18 +69,6 @@ public class DefaultRetention {
         return years;
     }
 
-    public void setMode(final ObjectLockRetentionMode mode) {
-        this.mode = mode;
-    }
-
-    public void setDays(final Integer days) {
-        this.days = days;
-    }
-
-    public void setYears(final Integer years) {
-        this.years = years;
-    }
-
     public interface Builder {
         Builder mode(ObjectLockRetentionMode mode);
 
@@ -157,18 +145,6 @@ public class DefaultRetention {
 
         public Integer years() {
             return years;
-        }
-
-        public void setMode(final ObjectLockRetentionMode mode) {
-            this.mode = mode;
-        }
-
-        public void setDays(final Integer days) {
-            this.days = days;
-        }
-
-        public void setYears(final Integer years) {
-            this.years = years;
         }
     }
 }

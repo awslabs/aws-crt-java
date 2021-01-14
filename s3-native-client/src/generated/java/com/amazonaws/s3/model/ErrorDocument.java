@@ -46,10 +46,6 @@ public class ErrorDocument {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -91,10 +87,6 @@ public class ErrorDocument {
 
         public String key() {
             return key;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
         }
     }
 }

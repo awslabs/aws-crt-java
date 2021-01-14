@@ -45,10 +45,6 @@ public class RequestPaymentConfiguration {
         return payer;
     }
 
-    public void setPayer(final Payer payer) {
-        this.payer = payer;
-    }
-
     public interface Builder {
         Builder payer(Payer payer);
 
@@ -90,10 +86,6 @@ public class RequestPaymentConfiguration {
 
         public Payer payer() {
             return payer;
-        }
-
-        public void setPayer(final Payer payer) {
-            this.payer = payer;
         }
     }
 }

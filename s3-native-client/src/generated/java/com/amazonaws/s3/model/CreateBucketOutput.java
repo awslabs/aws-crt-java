@@ -48,10 +48,6 @@ public class CreateBucketOutput {
         return location;
     }
 
-    public void setLocation(final String location) {
-        this.location = location;
-    }
-
     public interface Builder {
         Builder location(String location);
 
@@ -95,10 +91,6 @@ public class CreateBucketOutput {
 
         public String location() {
             return location;
-        }
-
-        public void setLocation(final String location) {
-            this.location = location;
         }
     }
 }

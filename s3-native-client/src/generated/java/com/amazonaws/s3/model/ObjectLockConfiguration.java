@@ -56,14 +56,6 @@ public class ObjectLockConfiguration {
         return rule;
     }
 
-    public void setObjectLockEnabled(final ObjectLockEnabled objectLockEnabled) {
-        this.objectLockEnabled = objectLockEnabled;
-    }
-
-    public void setRule(final ObjectLockRule rule) {
-        this.rule = rule;
-    }
-
     public interface Builder {
         Builder objectLockEnabled(ObjectLockEnabled objectLockEnabled);
 
@@ -122,14 +114,6 @@ public class ObjectLockConfiguration {
 
         public ObjectLockRule rule() {
             return rule;
-        }
-
-        public void setObjectLockEnabled(final ObjectLockEnabled objectLockEnabled) {
-            this.objectLockEnabled = objectLockEnabled;
-        }
-
-        public void setRule(final ObjectLockRule rule) {
-            this.rule = rule;
         }
     }
 }

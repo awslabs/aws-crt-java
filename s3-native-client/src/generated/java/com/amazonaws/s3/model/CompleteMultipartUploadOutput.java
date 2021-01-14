@@ -155,46 +155,6 @@ public class CompleteMultipartUploadOutput {
         return requestCharged;
     }
 
-    public void setLocation(final String location) {
-        this.location = location;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setExpiration(final String expiration) {
-        this.expiration = expiration;
-    }
-
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-        this.serverSideEncryption = serverSideEncryption;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-        this.sSEKMSKeyId = sSEKMSKeyId;
-    }
-
-    public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-        this.bucketKeyEnabled = bucketKeyEnabled;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
     public interface Builder {
         Builder location(String location);
 
@@ -398,46 +358,6 @@ public class CompleteMultipartUploadOutput {
 
         public RequestCharged requestCharged() {
             return requestCharged;
-        }
-
-        public void setLocation(final String location) {
-            this.location = location;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setExpiration(final String expiration) {
-            this.expiration = expiration;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setServerSideEncryption(final ServerSideEncryption serverSideEncryption) {
-            this.serverSideEncryption = serverSideEncryption;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setSSEKMSKeyId(final String sSEKMSKeyId) {
-            this.sSEKMSKeyId = sSEKMSKeyId;
-        }
-
-        public void setBucketKeyEnabled(final Boolean bucketKeyEnabled) {
-            this.bucketKeyEnabled = bucketKeyEnabled;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
         }
     }
 }

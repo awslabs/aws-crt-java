@@ -82,22 +82,6 @@ public class Part {
         return size;
     }
 
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setSize(final Integer size) {
-        this.size = size;
-    }
-
     public interface Builder {
         Builder partNumber(Integer partNumber);
 
@@ -191,22 +175,6 @@ public class Part {
 
         public Integer size() {
             return size;
-        }
-
-        public void setPartNumber(final Integer partNumber) {
-            this.partNumber = partNumber;
-        }
-
-        public void setLastModified(final Instant lastModified) {
-            this.lastModified = lastModified;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setSize(final Integer size) {
-            this.size = size;
         }
     }
 }

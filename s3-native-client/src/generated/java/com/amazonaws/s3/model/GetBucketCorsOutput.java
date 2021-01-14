@@ -47,10 +47,6 @@ public class GetBucketCorsOutput {
         return cORSRules;
     }
 
-    public void setCORSRules(final List<CORSRule> cORSRules) {
-        this.cORSRules = cORSRules;
-    }
-
     public interface Builder {
         Builder cORSRules(List<CORSRule> cORSRules);
 
@@ -93,10 +89,6 @@ public class GetBucketCorsOutput {
 
         public List<CORSRule> cORSRules() {
             return cORSRules;
-        }
-
-        public void setCORSRules(final List<CORSRule> cORSRules) {
-            this.cORSRules = cORSRules;
         }
     }
 }

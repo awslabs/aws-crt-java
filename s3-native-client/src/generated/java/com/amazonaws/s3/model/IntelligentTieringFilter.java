@@ -68,18 +68,6 @@ public class IntelligentTieringFilter {
         return and;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setTag(final Tag tag) {
-        this.tag = tag;
-    }
-
-    public void setAnd(final IntelligentTieringAndOperator and) {
-        this.and = and;
-    }
-
     public interface Builder {
         Builder prefix(String prefix);
 
@@ -155,18 +143,6 @@ public class IntelligentTieringFilter {
 
         public IntelligentTieringAndOperator and() {
             return and;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setTag(final Tag tag) {
-            this.tag = tag;
-        }
-
-        public void setAnd(final IntelligentTieringAndOperator and) {
-            this.and = and;
         }
     }
 }

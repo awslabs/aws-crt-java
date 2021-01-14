@@ -126,38 +126,6 @@ public class ListObjectsRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
-    public void setMarker(final String marker) {
-        this.marker = marker;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -320,38 +288,6 @@ public class ListObjectsRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
-        }
-
-        public void setMarker(final String marker) {
-            this.marker = marker;
-        }
-
-        public void setMaxKeys(final Integer maxKeys) {
-            this.maxKeys = maxKeys;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

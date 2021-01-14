@@ -117,34 +117,6 @@ public class RestoreRequest {
         return outputLocation;
     }
 
-    public void setDays(final Integer days) {
-        this.days = days;
-    }
-
-    public void setGlacierJobParameters(final GlacierJobParameters glacierJobParameters) {
-        this.glacierJobParameters = glacierJobParameters;
-    }
-
-    public void setType(final RestoreRequestType type) {
-        this.type = type;
-    }
-
-    public void setTier(final Tier tier) {
-        this.tier = tier;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    public void setSelectParameters(final SelectParameters selectParameters) {
-        this.selectParameters = selectParameters;
-    }
-
-    public void setOutputLocation(final OutputLocation outputLocation) {
-        this.outputLocation = outputLocation;
-    }
-
     public interface Builder {
         Builder days(Integer days);
 
@@ -292,34 +264,6 @@ public class RestoreRequest {
 
         public OutputLocation outputLocation() {
             return outputLocation;
-        }
-
-        public void setDays(final Integer days) {
-            this.days = days;
-        }
-
-        public void setGlacierJobParameters(final GlacierJobParameters glacierJobParameters) {
-            this.glacierJobParameters = glacierJobParameters;
-        }
-
-        public void setType(final RestoreRequestType type) {
-            this.type = type;
-        }
-
-        public void setTier(final Tier tier) {
-            this.tier = tier;
-        }
-
-        public void setDescription(final String description) {
-            this.description = description;
-        }
-
-        public void setSelectParameters(final SelectParameters selectParameters) {
-            this.selectParameters = selectParameters;
-        }
-
-        public void setOutputLocation(final OutputLocation outputLocation) {
-            this.outputLocation = outputLocation;
         }
     }
 }

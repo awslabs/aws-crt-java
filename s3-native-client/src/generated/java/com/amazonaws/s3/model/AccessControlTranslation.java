@@ -46,10 +46,6 @@ public class AccessControlTranslation {
         return owner;
     }
 
-    public void setOwner(final OwnerOverride owner) {
-        this.owner = owner;
-    }
-
     public interface Builder {
         Builder owner(OwnerOverride owner);
 
@@ -92,10 +88,6 @@ public class AccessControlTranslation {
 
         public OwnerOverride owner() {
             return owner;
-        }
-
-        public void setOwner(final OwnerOverride owner) {
-            this.owner = owner;
         }
     }
 }

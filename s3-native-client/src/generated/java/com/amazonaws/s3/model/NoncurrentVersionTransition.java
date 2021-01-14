@@ -60,14 +60,6 @@ public class NoncurrentVersionTransition {
         return storageClass;
     }
 
-    public void setNoncurrentDays(final Integer noncurrentDays) {
-        this.noncurrentDays = noncurrentDays;
-    }
-
-    public void setStorageClass(final TransitionStorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
     public interface Builder {
         Builder noncurrentDays(Integer noncurrentDays);
 
@@ -129,14 +121,6 @@ public class NoncurrentVersionTransition {
 
         public TransitionStorageClass storageClass() {
             return storageClass;
-        }
-
-        public void setNoncurrentDays(final Integer noncurrentDays) {
-            this.noncurrentDays = noncurrentDays;
-        }
-
-        public void setStorageClass(final TransitionStorageClass storageClass) {
-            this.storageClass = storageClass;
         }
     }
 }

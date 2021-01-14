@@ -187,54 +187,6 @@ public class ListMultipartUploadsOutput {
         return encodingType;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKeyMarker(final String keyMarker) {
-        this.keyMarker = keyMarker;
-    }
-
-    public void setUploadIdMarker(final String uploadIdMarker) {
-        this.uploadIdMarker = uploadIdMarker;
-    }
-
-    public void setNextKeyMarker(final String nextKeyMarker) {
-        this.nextKeyMarker = nextKeyMarker;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setNextUploadIdMarker(final String nextUploadIdMarker) {
-        this.nextUploadIdMarker = nextUploadIdMarker;
-    }
-
-    public void setMaxUploads(final Integer maxUploads) {
-        this.maxUploads = maxUploads;
-    }
-
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setUploads(final List<MultipartUpload> uploads) {
-        this.uploads = uploads;
-    }
-
-    public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-        this.commonPrefixes = commonPrefixes;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -480,54 +432,6 @@ public class ListMultipartUploadsOutput {
 
         public EncodingType encodingType() {
             return encodingType;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKeyMarker(final String keyMarker) {
-            this.keyMarker = keyMarker;
-        }
-
-        public void setUploadIdMarker(final String uploadIdMarker) {
-            this.uploadIdMarker = uploadIdMarker;
-        }
-
-        public void setNextKeyMarker(final String nextKeyMarker) {
-            this.nextKeyMarker = nextKeyMarker;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setNextUploadIdMarker(final String nextUploadIdMarker) {
-            this.nextUploadIdMarker = nextUploadIdMarker;
-        }
-
-        public void setMaxUploads(final Integer maxUploads) {
-            this.maxUploads = maxUploads;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setUploads(final List<MultipartUpload> uploads) {
-            this.uploads = uploads;
-        }
-
-        public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-            this.commonPrefixes = commonPrefixes;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
         }
     }
 }

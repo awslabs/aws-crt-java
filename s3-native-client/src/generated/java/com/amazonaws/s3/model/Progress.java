@@ -68,18 +68,6 @@ public class Progress {
         return bytesReturned;
     }
 
-    public void setBytesScanned(final Long bytesScanned) {
-        this.bytesScanned = bytesScanned;
-    }
-
-    public void setBytesProcessed(final Long bytesProcessed) {
-        this.bytesProcessed = bytesProcessed;
-    }
-
-    public void setBytesReturned(final Long bytesReturned) {
-        this.bytesReturned = bytesReturned;
-    }
-
     public interface Builder {
         Builder bytesScanned(Long bytesScanned);
 
@@ -155,18 +143,6 @@ public class Progress {
 
         public Long bytesReturned() {
             return bytesReturned;
-        }
-
-        public void setBytesScanned(final Long bytesScanned) {
-            this.bytesScanned = bytesScanned;
-        }
-
-        public void setBytesProcessed(final Long bytesProcessed) {
-            this.bytesProcessed = bytesProcessed;
-        }
-
-        public void setBytesReturned(final Long bytesReturned) {
-            this.bytesReturned = bytesReturned;
         }
     }
 }

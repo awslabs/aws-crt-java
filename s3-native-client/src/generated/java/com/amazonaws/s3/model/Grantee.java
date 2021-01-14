@@ -120,26 +120,6 @@ public class Grantee {
         return type;
     }
 
-    public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
-    }
-
-    public void setEmailAddress(final String emailAddress) {
-        this.emailAddress = emailAddress;
-    }
-
-    public void setID(final String iD) {
-        this.iD = iD;
-    }
-
-    public void setURI(final String uRI) {
-        this.uRI = uRI;
-    }
-
-    public void setType(final Type type) {
-        this.type = type;
-    }
-
     public interface Builder {
         Builder displayName(String displayName);
 
@@ -279,26 +259,6 @@ public class Grantee {
 
         public Type type() {
             return type;
-        }
-
-        public void setDisplayName(final String displayName) {
-            this.displayName = displayName;
-        }
-
-        public void setEmailAddress(final String emailAddress) {
-            this.emailAddress = emailAddress;
-        }
-
-        public void setID(final String iD) {
-            this.iD = iD;
-        }
-
-        public void setURI(final String uRI) {
-            this.uRI = uRI;
-        }
-
-        public void setType(final Type type) {
-            this.type = type;
         }
     }
 }

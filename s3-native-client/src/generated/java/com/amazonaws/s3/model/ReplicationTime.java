@@ -57,14 +57,6 @@ public class ReplicationTime {
         return time;
     }
 
-    public void setStatus(final ReplicationTimeStatus status) {
-        this.status = status;
-    }
-
-    public void setTime(final ReplicationTimeValue time) {
-        this.time = time;
-    }
-
     public interface Builder {
         Builder status(ReplicationTimeStatus status);
 
@@ -124,14 +116,6 @@ public class ReplicationTime {
 
         public ReplicationTimeValue time() {
             return time;
-        }
-
-        public void setStatus(final ReplicationTimeStatus status) {
-            this.status = status;
-        }
-
-        public void setTime(final ReplicationTimeValue time) {
-            this.time = time;
         }
     }
 }

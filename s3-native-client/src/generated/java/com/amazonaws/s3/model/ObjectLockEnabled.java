@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ObjectLockEnabled {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@5acdf6c1"),
+public enum ObjectLockEnabled {
+    ENABLED("software.amazon.smithy.crt.codegen.Field@668edb5b"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

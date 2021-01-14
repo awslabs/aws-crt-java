@@ -77,22 +77,6 @@ public class TopicConfiguration {
         return filter;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setTopicArn(final String topicArn) {
-        this.topicArn = topicArn;
-    }
-
-    public void setEvents(final List<Event> events) {
-        this.events = events;
-    }
-
-    public void setFilter(final NotificationConfigurationFilter filter) {
-        this.filter = filter;
-    }
-
     public interface Builder {
         Builder id(String id);
 
@@ -182,22 +166,6 @@ public class TopicConfiguration {
 
         public NotificationConfigurationFilter filter() {
             return filter;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setTopicArn(final String topicArn) {
-            this.topicArn = topicArn;
-        }
-
-        public void setEvents(final List<Event> events) {
-            this.events = events;
-        }
-
-        public void setFilter(final NotificationConfigurationFilter filter) {
-            this.filter = filter;
         }
     }
 }

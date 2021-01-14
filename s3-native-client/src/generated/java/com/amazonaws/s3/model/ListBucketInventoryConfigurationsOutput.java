@@ -86,23 +86,6 @@ public class ListBucketInventoryConfigurationsOutput {
         return nextContinuationToken;
     }
 
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setInventoryConfigurationList(
-            final List<InventoryConfiguration> inventoryConfigurationList) {
-        this.inventoryConfigurationList = inventoryConfigurationList;
-    }
-
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
     public interface Builder {
         Builder continuationToken(String continuationToken);
 
@@ -201,23 +184,6 @@ public class ListBucketInventoryConfigurationsOutput {
 
         public String nextContinuationToken() {
             return nextContinuationToken;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setInventoryConfigurationList(
-                final List<InventoryConfiguration> inventoryConfigurationList) {
-            this.inventoryConfigurationList = inventoryConfigurationList;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setNextContinuationToken(final String nextContinuationToken) {
-            this.nextContinuationToken = nextContinuationToken;
         }
     }
 }

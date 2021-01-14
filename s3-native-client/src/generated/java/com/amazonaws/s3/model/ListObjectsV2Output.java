@@ -208,54 +208,6 @@ public class ListObjectsV2Output {
         return startAfter;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setContents(final List<Object> contents) {
-        this.contents = contents;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setDelimiter(final String delimiter) {
-        this.delimiter = delimiter;
-    }
-
-    public void setMaxKeys(final Integer maxKeys) {
-        this.maxKeys = maxKeys;
-    }
-
-    public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-        this.commonPrefixes = commonPrefixes;
-    }
-
-    public void setEncodingType(final EncodingType encodingType) {
-        this.encodingType = encodingType;
-    }
-
-    public void setKeyCount(final Integer keyCount) {
-        this.keyCount = keyCount;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
-    public void setStartAfter(final String startAfter) {
-        this.startAfter = startAfter;
-    }
-
     public interface Builder {
         Builder isTruncated(Boolean isTruncated);
 
@@ -523,54 +475,6 @@ public class ListObjectsV2Output {
 
         public String startAfter() {
             return startAfter;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setContents(final List<Object> contents) {
-            this.contents = contents;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setDelimiter(final String delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public void setMaxKeys(final Integer maxKeys) {
-            this.maxKeys = maxKeys;
-        }
-
-        public void setCommonPrefixes(final List<CommonPrefix> commonPrefixes) {
-            this.commonPrefixes = commonPrefixes;
-        }
-
-        public void setEncodingType(final EncodingType encodingType) {
-            this.encodingType = encodingType;
-        }
-
-        public void setKeyCount(final Integer keyCount) {
-            this.keyCount = keyCount;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setNextContinuationToken(final String nextContinuationToken) {
-            this.nextContinuationToken = nextContinuationToken;
-        }
-
-        public void setStartAfter(final String startAfter) {
-            this.startAfter = startAfter;
         }
     }
 }

@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ObjectVersionStorageClass {
-    STANDARD("software.amazon.smithy.crt.codegen.Field@683dc6f2"),
+public enum ObjectVersionStorageClass {
+    STANDARD("software.amazon.smithy.crt.codegen.Field@5c8dcae0"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

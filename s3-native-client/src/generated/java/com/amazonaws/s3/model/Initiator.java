@@ -58,14 +58,6 @@ public class Initiator {
         return displayName;
     }
 
-    public void setID(final String iD) {
-        this.iD = iD;
-    }
-
-    public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
-    }
-
     public interface Builder {
         Builder iD(String iD);
 
@@ -125,14 +117,6 @@ public class Initiator {
 
         public String displayName() {
             return displayName;
-        }
-
-        public void setID(final String iD) {
-            this.iD = iD;
-        }
-
-        public void setDisplayName(final String displayName) {
-            this.displayName = displayName;
         }
     }
 }

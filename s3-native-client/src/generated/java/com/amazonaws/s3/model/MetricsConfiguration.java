@@ -59,14 +59,6 @@ public class MetricsConfiguration {
         return filter;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setFilter(final MetricsFilter filter) {
-        this.filter = filter;
-    }
-
     public interface Builder {
         Builder id(String id);
 
@@ -127,14 +119,6 @@ public class MetricsConfiguration {
 
         public MetricsFilter filter() {
             return filter;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setFilter(final MetricsFilter filter) {
-            this.filter = filter;
         }
     }
 }

@@ -142,43 +142,6 @@ public class ReplicationRule {
         return deleteMarkerReplication;
     }
 
-    public void setID(final String iD) {
-        this.iD = iD;
-    }
-
-    public void setPriority(final Integer priority) {
-        this.priority = priority;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setFilter(final ReplicationRuleFilter filter) {
-        this.filter = filter;
-    }
-
-    public void setStatus(final ReplicationRuleStatus status) {
-        this.status = status;
-    }
-
-    public void setSourceSelectionCriteria(final SourceSelectionCriteria sourceSelectionCriteria) {
-        this.sourceSelectionCriteria = sourceSelectionCriteria;
-    }
-
-    public void setExistingObjectReplication(
-            final ExistingObjectReplication existingObjectReplication) {
-        this.existingObjectReplication = existingObjectReplication;
-    }
-
-    public void setDestination(final Destination destination) {
-        this.destination = destination;
-    }
-
-    public void setDeleteMarkerReplication(final DeleteMarkerReplication deleteMarkerReplication) {
-        this.deleteMarkerReplication = deleteMarkerReplication;
-    }
-
     public interface Builder {
         Builder iD(String iD);
 
@@ -366,45 +329,6 @@ public class ReplicationRule {
 
         public DeleteMarkerReplication deleteMarkerReplication() {
             return deleteMarkerReplication;
-        }
-
-        public void setID(final String iD) {
-            this.iD = iD;
-        }
-
-        public void setPriority(final Integer priority) {
-            this.priority = priority;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setFilter(final ReplicationRuleFilter filter) {
-            this.filter = filter;
-        }
-
-        public void setStatus(final ReplicationRuleStatus status) {
-            this.status = status;
-        }
-
-        public void setSourceSelectionCriteria(
-                final SourceSelectionCriteria sourceSelectionCriteria) {
-            this.sourceSelectionCriteria = sourceSelectionCriteria;
-        }
-
-        public void setExistingObjectReplication(
-                final ExistingObjectReplication existingObjectReplication) {
-            this.existingObjectReplication = existingObjectReplication;
-        }
-
-        public void setDestination(final Destination destination) {
-            this.destination = destination;
-        }
-
-        public void setDeleteMarkerReplication(
-                final DeleteMarkerReplication deleteMarkerReplication) {
-            this.deleteMarkerReplication = deleteMarkerReplication;
         }
     }
 }

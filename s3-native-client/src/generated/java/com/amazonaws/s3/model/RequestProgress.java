@@ -47,10 +47,6 @@ public class RequestProgress {
         return enabled;
     }
 
-    public void setEnabled(final Boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public interface Builder {
         Builder enabled(Boolean enabled);
 
@@ -93,10 +89,6 @@ public class RequestProgress {
 
         public Boolean enabled() {
             return enabled;
-        }
-
-        public void setEnabled(final Boolean enabled) {
-            this.enabled = enabled;
         }
     }
 }

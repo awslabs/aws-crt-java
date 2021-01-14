@@ -57,14 +57,6 @@ public class AccessControlPolicy {
         return owner;
     }
 
-    public void setGrants(final List<Grant> grants) {
-        this.grants = grants;
-    }
-
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
     public interface Builder {
         Builder grants(List<Grant> grants);
 
@@ -123,14 +115,6 @@ public class AccessControlPolicy {
 
         public Owner owner() {
             return owner;
-        }
-
-        public void setGrants(final List<Grant> grants) {
-            this.grants = grants;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
         }
     }
 }

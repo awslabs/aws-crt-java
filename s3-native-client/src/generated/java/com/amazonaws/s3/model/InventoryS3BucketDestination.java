@@ -97,26 +97,6 @@ public class InventoryS3BucketDestination {
         return encryption;
     }
 
-    public void setAccountId(final String accountId) {
-        this.accountId = accountId;
-    }
-
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setFormat(final InventoryFormat format) {
-        this.format = format;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setEncryption(final InventoryEncryption encryption) {
-        this.encryption = encryption;
-    }
-
     public interface Builder {
         Builder accountId(String accountId);
 
@@ -233,26 +213,6 @@ public class InventoryS3BucketDestination {
 
         public InventoryEncryption encryption() {
             return encryption;
-        }
-
-        public void setAccountId(final String accountId) {
-            this.accountId = accountId;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setFormat(final InventoryFormat format) {
-            this.format = format;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setEncryption(final InventoryEncryption encryption) {
-            this.encryption = encryption;
         }
     }
 }

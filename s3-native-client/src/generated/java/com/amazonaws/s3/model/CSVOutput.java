@@ -105,26 +105,6 @@ public class CSVOutput {
         return quoteCharacter;
     }
 
-    public void setQuoteFields(final QuoteFields quoteFields) {
-        this.quoteFields = quoteFields;
-    }
-
-    public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
-        this.quoteEscapeCharacter = quoteEscapeCharacter;
-    }
-
-    public void setRecordDelimiter(final String recordDelimiter) {
-        this.recordDelimiter = recordDelimiter;
-    }
-
-    public void setFieldDelimiter(final String fieldDelimiter) {
-        this.fieldDelimiter = fieldDelimiter;
-    }
-
-    public void setQuoteCharacter(final String quoteCharacter) {
-        this.quoteCharacter = quoteCharacter;
-    }
-
     public interface Builder {
         Builder quoteFields(QuoteFields quoteFields);
 
@@ -249,26 +229,6 @@ public class CSVOutput {
 
         public String quoteCharacter() {
             return quoteCharacter;
-        }
-
-        public void setQuoteFields(final QuoteFields quoteFields) {
-            this.quoteFields = quoteFields;
-        }
-
-        public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
-            this.quoteEscapeCharacter = quoteEscapeCharacter;
-        }
-
-        public void setRecordDelimiter(final String recordDelimiter) {
-            this.recordDelimiter = recordDelimiter;
-        }
-
-        public void setFieldDelimiter(final String fieldDelimiter) {
-            this.fieldDelimiter = fieldDelimiter;
-        }
-
-        public void setQuoteCharacter(final String quoteCharacter) {
-            this.quoteCharacter = quoteCharacter;
         }
     }
 }

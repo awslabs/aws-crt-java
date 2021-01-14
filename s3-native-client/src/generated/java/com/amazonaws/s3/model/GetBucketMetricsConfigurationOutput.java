@@ -45,10 +45,6 @@ public class GetBucketMetricsConfigurationOutput {
         return metricsConfiguration;
     }
 
-    public void setMetricsConfiguration(final MetricsConfiguration metricsConfiguration) {
-        this.metricsConfiguration = metricsConfiguration;
-    }
-
     public interface Builder {
         Builder metricsConfiguration(MetricsConfiguration metricsConfiguration);
 
@@ -90,10 +86,6 @@ public class GetBucketMetricsConfigurationOutput {
 
         public MetricsConfiguration metricsConfiguration() {
             return metricsConfiguration;
-        }
-
-        public void setMetricsConfiguration(final MetricsConfiguration metricsConfiguration) {
-            this.metricsConfiguration = metricsConfiguration;
         }
     }
 }

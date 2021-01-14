@@ -51,10 +51,6 @@ public class EncryptionConfiguration {
         return replicaKmsKeyID;
     }
 
-    public void setReplicaKmsKeyID(final String replicaKmsKeyID) {
-        this.replicaKmsKeyID = replicaKmsKeyID;
-    }
-
     public interface Builder {
         Builder replicaKmsKeyID(String replicaKmsKeyID);
 
@@ -101,10 +97,6 @@ public class EncryptionConfiguration {
 
         public String replicaKmsKeyID() {
             return replicaKmsKeyID;
-        }
-
-        public void setReplicaKmsKeyID(final String replicaKmsKeyID) {
-            this.replicaKmsKeyID = replicaKmsKeyID;
         }
     }
 }

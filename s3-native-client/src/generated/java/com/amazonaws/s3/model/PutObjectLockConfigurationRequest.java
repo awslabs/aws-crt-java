@@ -99,30 +99,6 @@ public class PutObjectLockConfigurationRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setObjectLockConfiguration(final ObjectLockConfiguration objectLockConfiguration) {
-        this.objectLockConfiguration = objectLockConfiguration;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setToken(final String token) {
-        this.token = token;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -248,31 +224,6 @@ public class PutObjectLockConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setObjectLockConfiguration(
-                final ObjectLockConfiguration objectLockConfiguration) {
-            this.objectLockConfiguration = objectLockConfiguration;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setToken(final String token) {
-            this.token = token;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

@@ -79,22 +79,6 @@ public class SelectParameters {
         return outputSerialization;
     }
 
-    public void setInputSerialization(final InputSerialization inputSerialization) {
-        this.inputSerialization = inputSerialization;
-    }
-
-    public void setExpressionType(final ExpressionType expressionType) {
-        this.expressionType = expressionType;
-    }
-
-    public void setExpression(final String expression) {
-        this.expression = expression;
-    }
-
-    public void setOutputSerialization(final OutputSerialization outputSerialization) {
-        this.outputSerialization = outputSerialization;
-    }
-
     public interface Builder {
         Builder inputSerialization(InputSerialization inputSerialization);
 
@@ -187,22 +171,6 @@ public class SelectParameters {
 
         public OutputSerialization outputSerialization() {
             return outputSerialization;
-        }
-
-        public void setInputSerialization(final InputSerialization inputSerialization) {
-            this.inputSerialization = inputSerialization;
-        }
-
-        public void setExpressionType(final ExpressionType expressionType) {
-            this.expressionType = expressionType;
-        }
-
-        public void setExpression(final String expression) {
-            this.expression = expression;
-        }
-
-        public void setOutputSerialization(final OutputSerialization outputSerialization) {
-            this.outputSerialization = outputSerialization;
         }
     }
 }

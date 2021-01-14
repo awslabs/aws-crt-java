@@ -58,14 +58,6 @@ public class Bucket {
         return creationDate;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public void setCreationDate(final Instant creationDate) {
-        this.creationDate = creationDate;
-    }
-
     public interface Builder {
         Builder name(String name);
 
@@ -124,14 +116,6 @@ public class Bucket {
 
         public Instant creationDate() {
             return creationDate;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public void setCreationDate(final Instant creationDate) {
-            this.creationDate = creationDate;
         }
     }
 }

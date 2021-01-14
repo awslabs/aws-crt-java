@@ -47,10 +47,6 @@ public class AbortIncompleteMultipartUpload {
         return daysAfterInitiation;
     }
 
-    public void setDaysAfterInitiation(final Integer daysAfterInitiation) {
-        this.daysAfterInitiation = daysAfterInitiation;
-    }
-
     public interface Builder {
         Builder daysAfterInitiation(Integer daysAfterInitiation);
 
@@ -93,10 +89,6 @@ public class AbortIncompleteMultipartUpload {
 
         public Integer daysAfterInitiation() {
             return daysAfterInitiation;
-        }
-
-        public void setDaysAfterInitiation(final Integer daysAfterInitiation) {
-            this.daysAfterInitiation = daysAfterInitiation;
         }
     }
 }

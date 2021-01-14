@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ObjectOwnership {
-    BUCKET_OWNER_PREFERRED("software.amazon.smithy.crt.codegen.Field@9487add"),
+public enum ObjectOwnership {
+    BUCKET_OWNER_PREFERRED("software.amazon.smithy.crt.codegen.Field@42ddf7"),
 
-    OBJECT_WRITER("software.amazon.smithy.crt.codegen.Field@9487add"),
+    OBJECT_WRITER("software.amazon.smithy.crt.codegen.Field@42ddf7"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

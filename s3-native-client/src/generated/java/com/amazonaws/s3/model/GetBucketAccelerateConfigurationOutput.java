@@ -45,10 +45,6 @@ public class GetBucketAccelerateConfigurationOutput {
         return status;
     }
 
-    public void setStatus(final BucketAccelerateStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(BucketAccelerateStatus status);
 
@@ -90,10 +86,6 @@ public class GetBucketAccelerateConfigurationOutput {
 
         public BucketAccelerateStatus status() {
             return status;
-        }
-
-        public void setStatus(final BucketAccelerateStatus status) {
-            this.status = status;
         }
     }
 }

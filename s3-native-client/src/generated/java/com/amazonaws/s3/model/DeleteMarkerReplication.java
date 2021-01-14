@@ -48,10 +48,6 @@ public class DeleteMarkerReplication {
         return status;
     }
 
-    public void setStatus(final DeleteMarkerReplicationStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(DeleteMarkerReplicationStatus status);
 
@@ -96,10 +92,6 @@ public class DeleteMarkerReplication {
 
         public DeleteMarkerReplicationStatus status() {
             return status;
-        }
-
-        public void setStatus(final DeleteMarkerReplicationStatus status) {
-            this.status = status;
         }
     }
 }

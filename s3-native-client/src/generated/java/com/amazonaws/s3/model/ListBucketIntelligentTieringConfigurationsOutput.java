@@ -86,23 +86,6 @@ public class ListBucketIntelligentTieringConfigurationsOutput {
         return intelligentTieringConfigurationList;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
-    public void setIntelligentTieringConfigurationList(
-            final List<IntelligentTieringConfiguration> intelligentTieringConfigurationList) {
-        this.intelligentTieringConfigurationList = intelligentTieringConfigurationList;
-    }
-
     public interface Builder {
         Builder isTruncated(Boolean isTruncated);
 
@@ -202,23 +185,6 @@ public class ListBucketIntelligentTieringConfigurationsOutput {
 
         public List<IntelligentTieringConfiguration> intelligentTieringConfigurationList() {
             return intelligentTieringConfigurationList;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setNextContinuationToken(final String nextContinuationToken) {
-            this.nextContinuationToken = nextContinuationToken;
-        }
-
-        public void setIntelligentTieringConfigurationList(
-                final List<IntelligentTieringConfiguration> intelligentTieringConfigurationList) {
-            this.intelligentTieringConfigurationList = intelligentTieringConfigurationList;
         }
     }
 }

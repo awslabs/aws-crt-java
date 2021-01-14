@@ -42,10 +42,6 @@ public class NotificationConfigurationFilter {
         return key;
     }
 
-    public void setKey(final S3KeyFilter key) {
-        this.key = key;
-    }
-
     public interface Builder {
         Builder key(S3KeyFilter key);
 
@@ -84,10 +80,6 @@ public class NotificationConfigurationFilter {
 
         public S3KeyFilter key() {
             return key;
-        }
-
-        public void setKey(final S3KeyFilter key) {
-            this.key = key;
         }
     }
 }

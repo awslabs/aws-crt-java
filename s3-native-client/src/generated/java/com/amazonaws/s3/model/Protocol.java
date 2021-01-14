@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum Protocol {
-    HTTP("software.amazon.smithy.crt.codegen.Field@28abf46c"),
+public enum Protocol {
+    HTTP("software.amazon.smithy.crt.codegen.Field@1373bd8f"),
 
-    HTTPS("software.amazon.smithy.crt.codegen.Field@28abf46c"),
+    HTTPS("software.amazon.smithy.crt.codegen.Field@1373bd8f"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

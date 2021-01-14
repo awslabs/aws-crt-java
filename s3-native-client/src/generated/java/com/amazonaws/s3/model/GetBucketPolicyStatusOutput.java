@@ -45,10 +45,6 @@ public class GetBucketPolicyStatusOutput {
         return policyStatus;
     }
 
-    public void setPolicyStatus(final PolicyStatus policyStatus) {
-        this.policyStatus = policyStatus;
-    }
-
     public interface Builder {
         Builder policyStatus(PolicyStatus policyStatus);
 
@@ -90,10 +86,6 @@ public class GetBucketPolicyStatusOutput {
 
         public PolicyStatus policyStatus() {
             return policyStatus;
-        }
-
-        public void setPolicyStatus(final PolicyStatus policyStatus) {
-            this.policyStatus = policyStatus;
         }
     }
 }

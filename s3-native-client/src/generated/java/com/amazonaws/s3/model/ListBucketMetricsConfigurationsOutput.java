@@ -87,23 +87,6 @@ public class ListBucketMetricsConfigurationsOutput {
         return metricsConfigurationList;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
-    public void setMetricsConfigurationList(
-            final List<MetricsConfiguration> metricsConfigurationList) {
-        this.metricsConfigurationList = metricsConfigurationList;
-    }
-
     public interface Builder {
         Builder isTruncated(Boolean isTruncated);
 
@@ -203,23 +186,6 @@ public class ListBucketMetricsConfigurationsOutput {
 
         public List<MetricsConfiguration> metricsConfigurationList() {
             return metricsConfigurationList;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setNextContinuationToken(final String nextContinuationToken) {
-            this.nextContinuationToken = nextContinuationToken;
-        }
-
-        public void setMetricsConfigurationList(
-                final List<MetricsConfiguration> metricsConfigurationList) {
-            this.metricsConfigurationList = metricsConfigurationList;
         }
     }
 }

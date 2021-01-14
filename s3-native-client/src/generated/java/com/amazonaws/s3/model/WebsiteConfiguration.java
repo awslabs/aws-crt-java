@@ -82,22 +82,6 @@ public class WebsiteConfiguration {
         return routingRules;
     }
 
-    public void setErrorDocument(final ErrorDocument errorDocument) {
-        this.errorDocument = errorDocument;
-    }
-
-    public void setIndexDocument(final IndexDocument indexDocument) {
-        this.indexDocument = indexDocument;
-    }
-
-    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-        this.redirectAllRequestsTo = redirectAllRequestsTo;
-    }
-
-    public void setRoutingRules(final List<RoutingRule> routingRules) {
-        this.routingRules = routingRules;
-    }
-
     public interface Builder {
         Builder errorDocument(ErrorDocument errorDocument);
 
@@ -193,22 +177,6 @@ public class WebsiteConfiguration {
 
         public List<RoutingRule> routingRules() {
             return routingRules;
-        }
-
-        public void setErrorDocument(final ErrorDocument errorDocument) {
-            this.errorDocument = errorDocument;
-        }
-
-        public void setIndexDocument(final IndexDocument indexDocument) {
-            this.indexDocument = indexDocument;
-        }
-
-        public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-            this.redirectAllRequestsTo = redirectAllRequestsTo;
-        }
-
-        public void setRoutingRules(final List<RoutingRule> routingRules) {
-            this.routingRules = routingRules;
         }
     }
 }

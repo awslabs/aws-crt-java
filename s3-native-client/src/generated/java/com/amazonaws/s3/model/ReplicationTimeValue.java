@@ -47,10 +47,6 @@ public class ReplicationTimeValue {
         return minutes;
     }
 
-    public void setMinutes(final Integer minutes) {
-        this.minutes = minutes;
-    }
-
     public interface Builder {
         Builder minutes(Integer minutes);
 
@@ -93,10 +89,6 @@ public class ReplicationTimeValue {
 
         public Integer minutes() {
             return minutes;
-        }
-
-        public void setMinutes(final Integer minutes) {
-            this.minutes = minutes;
         }
     }
 }

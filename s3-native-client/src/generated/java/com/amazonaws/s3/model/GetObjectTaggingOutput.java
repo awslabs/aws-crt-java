@@ -58,14 +58,6 @@ public class GetObjectTaggingOutput {
         return tagSet;
     }
 
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setTagSet(final List<Tag> tagSet) {
-        this.tagSet = tagSet;
-    }
-
     public interface Builder {
         Builder versionId(String versionId);
 
@@ -124,14 +116,6 @@ public class GetObjectTaggingOutput {
 
         public List<Tag> tagSet() {
             return tagSet;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setTagSet(final List<Tag> tagSet) {
-            this.tagSet = tagSet;
         }
     }
 }

@@ -192,54 +192,6 @@ public class SelectObjectContentRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerKey(final String sSECustomerKey) {
-        this.sSECustomerKey = sSECustomerKey;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
-    public void setExpression(final String expression) {
-        this.expression = expression;
-    }
-
-    public void setExpressionType(final ExpressionType expressionType) {
-        this.expressionType = expressionType;
-    }
-
-    public void setRequestProgress(final RequestProgress requestProgress) {
-        this.requestProgress = requestProgress;
-    }
-
-    public void setInputSerialization(final InputSerialization inputSerialization) {
-        this.inputSerialization = inputSerialization;
-    }
-
-    public void setOutputSerialization(final OutputSerialization outputSerialization) {
-        this.outputSerialization = outputSerialization;
-    }
-
-    public void setScanRange(final ScanRange scanRange) {
-        this.scanRange = scanRange;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -493,54 +445,6 @@ public class SelectObjectContentRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-        }
-
-        public void setSSECustomerKey(final String sSECustomerKey) {
-            this.sSECustomerKey = sSECustomerKey;
-        }
-
-        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-        }
-
-        public void setExpression(final String expression) {
-            this.expression = expression;
-        }
-
-        public void setExpressionType(final ExpressionType expressionType) {
-            this.expressionType = expressionType;
-        }
-
-        public void setRequestProgress(final RequestProgress requestProgress) {
-            this.requestProgress = requestProgress;
-        }
-
-        public void setInputSerialization(final InputSerialization inputSerialization) {
-            this.inputSerialization = inputSerialization;
-        }
-
-        public void setOutputSerialization(final OutputSerialization outputSerialization) {
-            this.outputSerialization = outputSerialization;
-        }
-
-        public void setScanRange(final ScanRange scanRange) {
-            this.scanRange = scanRange;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

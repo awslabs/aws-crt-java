@@ -49,10 +49,6 @@ public class IndexDocument {
         return suffix;
     }
 
-    public void setSuffix(final String suffix) {
-        this.suffix = suffix;
-    }
-
     public interface Builder {
         Builder suffix(String suffix);
 
@@ -97,10 +93,6 @@ public class IndexDocument {
 
         public String suffix() {
             return suffix;
-        }
-
-        public void setSuffix(final String suffix) {
-            this.suffix = suffix;
         }
     }
 }

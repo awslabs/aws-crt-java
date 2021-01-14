@@ -42,10 +42,6 @@ public class BucketLoggingStatus {
         return loggingEnabled;
     }
 
-    public void setLoggingEnabled(final LoggingEnabled loggingEnabled) {
-        this.loggingEnabled = loggingEnabled;
-    }
-
     public interface Builder {
         Builder loggingEnabled(LoggingEnabled loggingEnabled);
 
@@ -84,10 +80,6 @@ public class BucketLoggingStatus {
 
         public LoggingEnabled loggingEnabled() {
             return loggingEnabled;
-        }
-
-        public void setLoggingEnabled(final LoggingEnabled loggingEnabled) {
-            this.loggingEnabled = loggingEnabled;
         }
     }
 }

@@ -46,10 +46,6 @@ public class CompletedMultipartUpload {
         return parts;
     }
 
-    public void setParts(final List<CompletedPart> parts) {
-        this.parts = parts;
-    }
-
     public interface Builder {
         Builder parts(List<CompletedPart> parts);
 
@@ -91,10 +87,6 @@ public class CompletedMultipartUpload {
 
         public List<CompletedPart> parts() {
             return parts;
-        }
-
-        public void setParts(final List<CompletedPart> parts) {
-            this.parts = parts;
         }
     }
 }

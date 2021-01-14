@@ -66,14 +66,6 @@ public class SourceSelectionCriteria {
         return replicaModifications;
     }
 
-    public void setSseKmsEncryptedObjects(final SseKmsEncryptedObjects sseKmsEncryptedObjects) {
-        this.sseKmsEncryptedObjects = sseKmsEncryptedObjects;
-    }
-
-    public void setReplicaModifications(final ReplicaModifications replicaModifications) {
-        this.replicaModifications = replicaModifications;
-    }
-
     public interface Builder {
         Builder sseKmsEncryptedObjects(SseKmsEncryptedObjects sseKmsEncryptedObjects);
 
@@ -142,14 +134,6 @@ public class SourceSelectionCriteria {
 
         public ReplicaModifications replicaModifications() {
             return replicaModifications;
-        }
-
-        public void setSseKmsEncryptedObjects(final SseKmsEncryptedObjects sseKmsEncryptedObjects) {
-            this.sseKmsEncryptedObjects = sseKmsEncryptedObjects;
-        }
-
-        public void setReplicaModifications(final ReplicaModifications replicaModifications) {
-            this.replicaModifications = replicaModifications;
         }
     }
 }

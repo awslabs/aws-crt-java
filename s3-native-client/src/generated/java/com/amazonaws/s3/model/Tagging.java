@@ -46,10 +46,6 @@ public class Tagging {
         return tagSet;
     }
 
-    public void setTagSet(final List<Tag> tagSet) {
-        this.tagSet = tagSet;
-    }
-
     public interface Builder {
         Builder tagSet(List<Tag> tagSet);
 
@@ -91,10 +87,6 @@ public class Tagging {
 
         public List<Tag> tagSet() {
             return tagSet;
-        }
-
-        public void setTagSet(final List<Tag> tagSet) {
-            this.tagSet = tagSet;
         }
     }
 }

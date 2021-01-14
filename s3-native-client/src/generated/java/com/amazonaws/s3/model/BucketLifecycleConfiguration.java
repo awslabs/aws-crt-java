@@ -46,10 +46,6 @@ public class BucketLifecycleConfiguration {
         return rules;
     }
 
-    public void setRules(final List<LifecycleRule> rules) {
-        this.rules = rules;
-    }
-
     public interface Builder {
         Builder rules(List<LifecycleRule> rules);
 
@@ -91,10 +87,6 @@ public class BucketLifecycleConfiguration {
 
         public List<LifecycleRule> rules() {
             return rules;
-        }
-
-        public void setRules(final List<LifecycleRule> rules) {
-            this.rules = rules;
         }
     }
 }

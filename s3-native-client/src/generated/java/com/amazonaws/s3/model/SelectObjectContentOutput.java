@@ -45,10 +45,6 @@ public class SelectObjectContentOutput {
         return payload;
     }
 
-    public void setPayload(final SelectObjectContentEventStream payload) {
-        this.payload = payload;
-    }
-
     public interface Builder {
         Builder payload(SelectObjectContentEventStream payload);
 
@@ -90,10 +86,6 @@ public class SelectObjectContentOutput {
 
         public SelectObjectContentEventStream payload() {
             return payload;
-        }
-
-        public void setPayload(final SelectObjectContentEventStream payload) {
-            this.payload = payload;
         }
     }
 }

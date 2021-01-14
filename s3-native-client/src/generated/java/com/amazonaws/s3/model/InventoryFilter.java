@@ -46,10 +46,6 @@ public class InventoryFilter {
         return prefix;
     }
 
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
     public interface Builder {
         Builder prefix(String prefix);
 
@@ -91,10 +87,6 @@ public class InventoryFilter {
 
         public String prefix() {
             return prefix;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
         }
     }
 }

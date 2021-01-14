@@ -45,10 +45,6 @@ public class StatsEvent {
         return details;
     }
 
-    public void setDetails(final Stats details) {
-        this.details = details;
-    }
-
     public interface Builder {
         Builder details(Stats details);
 
@@ -90,10 +86,6 @@ public class StatsEvent {
 
         public Stats details() {
             return details;
-        }
-
-        public void setDetails(final Stats details) {
-            this.details = details;
         }
     }
 }

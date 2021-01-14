@@ -75,18 +75,6 @@ public class LoggingEnabled {
         return targetPrefix;
     }
 
-    public void setTargetBucket(final String targetBucket) {
-        this.targetBucket = targetBucket;
-    }
-
-    public void setTargetGrants(final List<TargetGrant> targetGrants) {
-        this.targetGrants = targetGrants;
-    }
-
-    public void setTargetPrefix(final String targetPrefix) {
-        this.targetPrefix = targetPrefix;
-    }
-
     public interface Builder {
         Builder targetBucket(String targetBucket);
 
@@ -168,18 +156,6 @@ public class LoggingEnabled {
 
         public String targetPrefix() {
             return targetPrefix;
-        }
-
-        public void setTargetBucket(final String targetBucket) {
-            this.targetBucket = targetBucket;
-        }
-
-        public void setTargetGrants(final List<TargetGrant> targetGrants) {
-            this.targetGrants = targetGrants;
-        }
-
-        public void setTargetPrefix(final String targetPrefix) {
-            this.targetPrefix = targetPrefix;
         }
     }
 }

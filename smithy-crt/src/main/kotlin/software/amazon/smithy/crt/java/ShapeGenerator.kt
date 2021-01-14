@@ -3,13 +3,11 @@ package software.amazon.smithy.crt.java
 import com.squareup.javapoet.*
 import software.amazon.smithy.build.PluginContext
 import software.amazon.smithy.crt.codegen.SourceGenerator
-import software.amazon.smithy.crt.java.Types.Utils.toClassName
 import software.amazon.smithy.crt.java.Types.Utils.toTypeName
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.DocumentationTrait
-import software.amazon.smithy.utils.StringUtils
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer

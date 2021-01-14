@@ -46,11 +46,6 @@ public class GetPublicAccessBlockOutput {
         return publicAccessBlockConfiguration;
     }
 
-    public void setPublicAccessBlockConfiguration(
-            final PublicAccessBlockConfiguration publicAccessBlockConfiguration) {
-        this.publicAccessBlockConfiguration = publicAccessBlockConfiguration;
-    }
-
     public interface Builder {
         Builder publicAccessBlockConfiguration(
                 PublicAccessBlockConfiguration publicAccessBlockConfiguration);
@@ -95,11 +90,6 @@ public class GetPublicAccessBlockOutput {
 
         public PublicAccessBlockConfiguration publicAccessBlockConfiguration() {
             return publicAccessBlockConfiguration;
-        }
-
-        public void setPublicAccessBlockConfiguration(
-                final PublicAccessBlockConfiguration publicAccessBlockConfiguration) {
-            this.publicAccessBlockConfiguration = publicAccessBlockConfiguration;
         }
     }
 }

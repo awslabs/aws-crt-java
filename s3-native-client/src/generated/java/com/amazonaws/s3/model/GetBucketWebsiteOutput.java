@@ -81,22 +81,6 @@ public class GetBucketWebsiteOutput {
         return routingRules;
     }
 
-    public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-        this.redirectAllRequestsTo = redirectAllRequestsTo;
-    }
-
-    public void setIndexDocument(final IndexDocument indexDocument) {
-        this.indexDocument = indexDocument;
-    }
-
-    public void setErrorDocument(final ErrorDocument errorDocument) {
-        this.errorDocument = errorDocument;
-    }
-
-    public void setRoutingRules(final List<RoutingRule> routingRules) {
-        this.routingRules = routingRules;
-    }
-
     public interface Builder {
         Builder redirectAllRequestsTo(RedirectAllRequestsTo redirectAllRequestsTo);
 
@@ -191,22 +175,6 @@ public class GetBucketWebsiteOutput {
 
         public List<RoutingRule> routingRules() {
             return routingRules;
-        }
-
-        public void setRedirectAllRequestsTo(final RedirectAllRequestsTo redirectAllRequestsTo) {
-            this.redirectAllRequestsTo = redirectAllRequestsTo;
-        }
-
-        public void setIndexDocument(final IndexDocument indexDocument) {
-            this.indexDocument = indexDocument;
-        }
-
-        public void setErrorDocument(final ErrorDocument errorDocument) {
-            this.errorDocument = errorDocument;
-        }
-
-        public void setRoutingRules(final List<RoutingRule> routingRules) {
-            this.routingRules = routingRules;
         }
     }
 }

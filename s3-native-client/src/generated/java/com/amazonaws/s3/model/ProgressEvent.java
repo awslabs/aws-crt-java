@@ -45,10 +45,6 @@ public class ProgressEvent {
         return details;
     }
 
-    public void setDetails(final Progress details) {
-        this.details = details;
-    }
-
     public interface Builder {
         Builder details(Progress details);
 
@@ -90,10 +86,6 @@ public class ProgressEvent {
 
         public Progress details() {
             return details;
-        }
-
-        public void setDetails(final Progress details) {
-            this.details = details;
         }
     }
 }

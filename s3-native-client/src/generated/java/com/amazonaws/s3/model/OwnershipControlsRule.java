@@ -42,10 +42,6 @@ public class OwnershipControlsRule {
         return objectOwnership;
     }
 
-    public void setObjectOwnership(final ObjectOwnership objectOwnership) {
-        this.objectOwnership = objectOwnership;
-    }
-
     public interface Builder {
         Builder objectOwnership(ObjectOwnership objectOwnership);
 
@@ -84,10 +80,6 @@ public class OwnershipControlsRule {
 
         public ObjectOwnership objectOwnership() {
             return objectOwnership;
-        }
-
-        public void setObjectOwnership(final ObjectOwnership objectOwnership) {
-            this.objectOwnership = objectOwnership;
         }
     }
 }

@@ -56,14 +56,6 @@ public class InventoryEncryption {
         return sSEKMS;
     }
 
-    public void setSSES3(final SSES3 sSES3) {
-        this.sSES3 = sSES3;
-    }
-
-    public void setSSEKMS(final SSEKMS sSEKMS) {
-        this.sSEKMS = sSEKMS;
-    }
-
     public interface Builder {
         Builder sSES3(SSES3 sSES3);
 
@@ -122,14 +114,6 @@ public class InventoryEncryption {
 
         public SSEKMS sSEKMS() {
             return sSEKMS;
-        }
-
-        public void setSSES3(final SSES3 sSES3) {
-            this.sSES3 = sSES3;
-        }
-
-        public void setSSEKMS(final SSEKMS sSEKMS) {
-            this.sSEKMS = sSEKMS;
         }
     }
 }

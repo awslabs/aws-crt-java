@@ -68,18 +68,6 @@ public class PutBucketAccelerateConfigurationRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setAccelerateConfiguration(final AccelerateConfiguration accelerateConfiguration) {
-        this.accelerateConfiguration = accelerateConfiguration;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -156,19 +144,6 @@ public class PutBucketAccelerateConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setAccelerateConfiguration(
-                final AccelerateConfiguration accelerateConfiguration) {
-            this.accelerateConfiguration = accelerateConfiguration;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

@@ -45,10 +45,6 @@ public class ExistingObjectReplication {
         return status;
     }
 
-    public void setStatus(final ExistingObjectReplicationStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(ExistingObjectReplicationStatus status);
 
@@ -90,10 +86,6 @@ public class ExistingObjectReplication {
 
         public ExistingObjectReplicationStatus status() {
             return status;
-        }
-
-        public void setStatus(final ExistingObjectReplicationStatus status) {
-            this.status = status;
         }
     }
 }

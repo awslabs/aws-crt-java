@@ -45,10 +45,6 @@ public class ObjectLockLegalHold {
         return status;
     }
 
-    public void setStatus(final ObjectLockLegalHoldStatus status) {
-        this.status = status;
-    }
-
     public interface Builder {
         Builder status(ObjectLockLegalHoldStatus status);
 
@@ -90,10 +86,6 @@ public class ObjectLockLegalHold {
 
         public ObjectLockLegalHoldStatus status() {
             return status;
-        }
-
-        public void setStatus(final ObjectLockLegalHoldStatus status) {
-            this.status = status;
         }
     }
 }

@@ -58,14 +58,6 @@ public class RedirectAllRequestsTo {
         return protocol;
     }
 
-    public void setHostName(final String hostName) {
-        this.hostName = hostName;
-    }
-
-    public void setProtocol(final Protocol protocol) {
-        this.protocol = protocol;
-    }
-
     public interface Builder {
         Builder hostName(String hostName);
 
@@ -125,14 +117,6 @@ public class RedirectAllRequestsTo {
 
         public Protocol protocol() {
             return protocol;
-        }
-
-        public void setHostName(final String hostName) {
-            this.hostName = hostName;
-        }
-
-        public void setProtocol(final Protocol protocol) {
-            this.protocol = protocol;
         }
     }
 }

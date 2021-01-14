@@ -79,22 +79,6 @@ public class InputSerialization {
         return parquet;
     }
 
-    public void setCSV(final CSVInput cSV) {
-        this.cSV = cSV;
-    }
-
-    public void setCompressionType(final CompressionType compressionType) {
-        this.compressionType = compressionType;
-    }
-
-    public void setJSON(final JSONInput jSON) {
-        this.jSON = jSON;
-    }
-
-    public void setParquet(final ParquetInput parquet) {
-        this.parquet = parquet;
-    }
-
     public interface Builder {
         Builder cSV(CSVInput cSV);
 
@@ -188,22 +172,6 @@ public class InputSerialization {
 
         public ParquetInput parquet() {
             return parquet;
-        }
-
-        public void setCSV(final CSVInput cSV) {
-            this.cSV = cSV;
-        }
-
-        public void setCompressionType(final CompressionType compressionType) {
-            this.compressionType = compressionType;
-        }
-
-        public void setJSON(final JSONInput jSON) {
-            this.jSON = jSON;
-        }
-
-        public void setParquet(final ParquetInput parquet) {
-            this.parquet = parquet;
         }
     }
 }

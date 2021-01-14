@@ -113,34 +113,6 @@ public class ListPartsRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setMaxParts(final Integer maxParts) {
-        this.maxParts = maxParts;
-    }
-
-    public void setPartNumberMarker(final String partNumberMarker) {
-        this.partNumberMarker = partNumberMarker;
-    }
-
-    public void setUploadId(final String uploadId) {
-        this.uploadId = uploadId;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -284,34 +256,6 @@ public class ListPartsRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setMaxParts(final Integer maxParts) {
-            this.maxParts = maxParts;
-        }
-
-        public void setPartNumberMarker(final String partNumberMarker) {
-            this.partNumberMarker = partNumberMarker;
-        }
-
-        public void setUploadId(final String uploadId) {
-            this.uploadId = uploadId;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

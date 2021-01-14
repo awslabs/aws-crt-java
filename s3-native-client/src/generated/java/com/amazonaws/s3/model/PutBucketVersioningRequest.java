@@ -95,26 +95,6 @@ public class PutBucketVersioningRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setContentMD5(final String contentMD5) {
-        this.contentMD5 = contentMD5;
-    }
-
-    public void setMFA(final String mFA) {
-        this.mFA = mFA;
-    }
-
-    public void setVersioningConfiguration(final VersioningConfiguration versioningConfiguration) {
-        this.versioningConfiguration = versioningConfiguration;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -230,27 +210,6 @@ public class PutBucketVersioningRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setContentMD5(final String contentMD5) {
-            this.contentMD5 = contentMD5;
-        }
-
-        public void setMFA(final String mFA) {
-            this.mFA = mFA;
-        }
-
-        public void setVersioningConfiguration(
-                final VersioningConfiguration versioningConfiguration) {
-            this.versioningConfiguration = versioningConfiguration;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

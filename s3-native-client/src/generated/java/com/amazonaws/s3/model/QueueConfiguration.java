@@ -75,22 +75,6 @@ public class QueueConfiguration {
         return filter;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setQueueArn(final String queueArn) {
-        this.queueArn = queueArn;
-    }
-
-    public void setEvents(final List<Event> events) {
-        this.events = events;
-    }
-
-    public void setFilter(final NotificationConfigurationFilter filter) {
-        this.filter = filter;
-    }
-
     public interface Builder {
         Builder id(String id);
 
@@ -178,22 +162,6 @@ public class QueueConfiguration {
 
         public NotificationConfigurationFilter filter() {
             return filter;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setQueueArn(final String queueArn) {
-            this.queueArn = queueArn;
-        }
-
-        public void setEvents(final List<Event> events) {
-            this.events = events;
-        }
-
-        public void setFilter(final NotificationConfigurationFilter filter) {
-            this.filter = filter;
         }
     }
 }

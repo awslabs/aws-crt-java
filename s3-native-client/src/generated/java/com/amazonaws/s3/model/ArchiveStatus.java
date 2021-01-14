@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum ArchiveStatus {
-    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@310eadf8"),
+public enum ArchiveStatus {
+    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@476832d5"),
 
-    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@310eadf8"),
+    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@476832d5"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

@@ -67,18 +67,6 @@ public class DeleteObjectsOutput {
         return errors;
     }
 
-    public void setDeleted(final List<DeletedObject> deleted) {
-        this.deleted = deleted;
-    }
-
-    public void setRequestCharged(final RequestCharged requestCharged) {
-        this.requestCharged = requestCharged;
-    }
-
-    public void setErrors(final List<Error> errors) {
-        this.errors = errors;
-    }
-
     public interface Builder {
         Builder deleted(List<DeletedObject> deleted);
 
@@ -153,18 +141,6 @@ public class DeleteObjectsOutput {
 
         public List<Error> errors() {
             return errors;
-        }
-
-        public void setDeleted(final List<DeletedObject> deleted) {
-            this.deleted = deleted;
-        }
-
-        public void setRequestCharged(final RequestCharged requestCharged) {
-            this.requestCharged = requestCharged;
-        }
-
-        public void setErrors(final List<Error> errors) {
-            this.errors = errors;
         }
     }
 }

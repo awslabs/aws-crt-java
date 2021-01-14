@@ -59,14 +59,6 @@ public class Delete {
         return quiet;
     }
 
-    public void setObjects(final List<ObjectIdentifier> objects) {
-        this.objects = objects;
-    }
-
-    public void setQuiet(final Boolean quiet) {
-        this.quiet = quiet;
-    }
-
     public interface Builder {
         Builder objects(List<ObjectIdentifier> objects);
 
@@ -126,14 +118,6 @@ public class Delete {
 
         public Boolean quiet() {
             return quiet;
-        }
-
-        public void setObjects(final List<ObjectIdentifier> objects) {
-            this.objects = objects;
-        }
-
-        public void setQuiet(final Boolean quiet) {
-            this.quiet = quiet;
         }
     }
 }

@@ -57,14 +57,6 @@ public class Metrics {
         return eventThreshold;
     }
 
-    public void setStatus(final MetricsStatus status) {
-        this.status = status;
-    }
-
-    public void setEventThreshold(final ReplicationTimeValue eventThreshold) {
-        this.eventThreshold = eventThreshold;
-    }
-
     public interface Builder {
         Builder status(MetricsStatus status);
 
@@ -124,14 +116,6 @@ public class Metrics {
 
         public ReplicationTimeValue eventThreshold() {
             return eventThreshold;
-        }
-
-        public void setStatus(final MetricsStatus status) {
-            this.status = status;
-        }
-
-        public void setEventThreshold(final ReplicationTimeValue eventThreshold) {
-            this.eventThreshold = eventThreshold;
         }
     }
 }

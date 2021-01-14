@@ -93,26 +93,6 @@ public class DeleteMarkerEntry {
         return lastModified;
     }
 
-    public void setOwner(final Owner owner) {
-        this.owner = owner;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setIsLatest(final Boolean isLatest) {
-        this.isLatest = isLatest;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
     public interface Builder {
         Builder owner(Owner owner);
 
@@ -223,26 +203,6 @@ public class DeleteMarkerEntry {
 
         public Instant lastModified() {
             return lastModified;
-        }
-
-        public void setOwner(final Owner owner) {
-            this.owner = owner;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setIsLatest(final Boolean isLatest) {
-            this.isLatest = isLatest;
-        }
-
-        public void setLastModified(final Instant lastModified) {
-            this.lastModified = lastModified;
         }
     }
 }

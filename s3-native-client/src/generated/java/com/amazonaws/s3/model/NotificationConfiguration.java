@@ -71,19 +71,6 @@ public class NotificationConfiguration {
         return lambdaFunctionConfigurations;
     }
 
-    public void setTopicConfigurations(final List<TopicConfiguration> topicConfigurations) {
-        this.topicConfigurations = topicConfigurations;
-    }
-
-    public void setQueueConfigurations(final List<QueueConfiguration> queueConfigurations) {
-        this.queueConfigurations = queueConfigurations;
-    }
-
-    public void setLambdaFunctionConfigurations(
-            final List<LambdaFunctionConfiguration> lambdaFunctionConfigurations) {
-        this.lambdaFunctionConfigurations = lambdaFunctionConfigurations;
-    }
-
     public interface Builder {
         Builder topicConfigurations(List<TopicConfiguration> topicConfigurations);
 
@@ -164,19 +151,6 @@ public class NotificationConfiguration {
 
         public List<LambdaFunctionConfiguration> lambdaFunctionConfigurations() {
             return lambdaFunctionConfigurations;
-        }
-
-        public void setTopicConfigurations(final List<TopicConfiguration> topicConfigurations) {
-            this.topicConfigurations = topicConfigurations;
-        }
-
-        public void setQueueConfigurations(final List<QueueConfiguration> queueConfigurations) {
-            this.queueConfigurations = queueConfigurations;
-        }
-
-        public void setLambdaFunctionConfigurations(
-                final List<LambdaFunctionConfiguration> lambdaFunctionConfigurations) {
-            this.lambdaFunctionConfigurations = lambdaFunctionConfigurations;
         }
     }
 }

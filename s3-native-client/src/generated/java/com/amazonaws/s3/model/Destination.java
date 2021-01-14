@@ -129,35 +129,6 @@ public class Destination {
         return metrics;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setAccount(final String account) {
-        this.account = account;
-    }
-
-    public void setStorageClass(final StorageClass storageClass) {
-        this.storageClass = storageClass;
-    }
-
-    public void setAccessControlTranslation(
-            final AccessControlTranslation accessControlTranslation) {
-        this.accessControlTranslation = accessControlTranslation;
-    }
-
-    public void setEncryptionConfiguration(final EncryptionConfiguration encryptionConfiguration) {
-        this.encryptionConfiguration = encryptionConfiguration;
-    }
-
-    public void setReplicationTime(final ReplicationTime replicationTime) {
-        this.replicationTime = replicationTime;
-    }
-
-    public void setMetrics(final Metrics metrics) {
-        this.metrics = metrics;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -320,36 +291,6 @@ public class Destination {
 
         public Metrics metrics() {
             return metrics;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setAccount(final String account) {
-            this.account = account;
-        }
-
-        public void setStorageClass(final StorageClass storageClass) {
-            this.storageClass = storageClass;
-        }
-
-        public void setAccessControlTranslation(
-                final AccessControlTranslation accessControlTranslation) {
-            this.accessControlTranslation = accessControlTranslation;
-        }
-
-        public void setEncryptionConfiguration(
-                final EncryptionConfiguration encryptionConfiguration) {
-            this.encryptionConfiguration = encryptionConfiguration;
-        }
-
-        public void setReplicationTime(final ReplicationTime replicationTime) {
-            this.replicationTime = replicationTime;
-        }
-
-        public void setMetrics(final Metrics metrics) {
-            this.metrics = metrics;
         }
     }
 }

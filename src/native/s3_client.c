@@ -178,7 +178,6 @@ static int s_on_s3_meta_request_body_callback(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",
                 (void *)meta_request);
-            return_value = AWS_OP_ERR;
             goto cleanup;
         }
     }
@@ -190,46 +189,6 @@ cleanup:
     return return_value;
 }
 
-/* only used in S3 client for now, but has generic JNI/HTTP utility */
-static jobjectArray s_aws_java_http_headers_from_native(JNIEnv *env, const struct aws_http_headers *headers, struct aws_s3_meta_request *meta_request) {
-    const size_t header_count = aws_http_headers_count(headers);
-    const jobjectArray ret = (jobjectArray)(*env)->NewObjectArray(
-        env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
-    if (!ret) {
-        AWS_LOGF_ERROR(
-            AWS_LS_S3_META_REQUEST,
-            "id=%p: Could not create new Java array",
-            (void *)meta_request);
-        return NULL;
-    }
-
-    size_t index = 0;
-
-    for (index = 0; index < header_count; ++index) {
-        struct aws_http_header header;
-        aws_http_headers_get_index(headers, index, &header);
-        jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
-        jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
-
-        jobject java_http_header = (*env)->NewObject(
-            env,
-            http_header_properties.http_header_class,
-            http_header_properties.constructor_method_id,
-            header_name,
-            header_value);
-
-        if (aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_ERROR(
-                AWS_LS_S3_META_REQUEST,
-                "id=%p: Exception from HttpHeader(byte[], byte[])",
-                (void *)meta_request);
-        }
-        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
-    }
-
-    return ret;
-}
-
 static int s_on_s3_meta_request_headers_callback(
     struct aws_s3_meta_request *meta_request,
     const struct aws_http_headers *headers,
@@ -238,45 +197,53 @@ static int s_on_s3_meta_request_headers_callback(
     int return_value = AWS_OP_ERR;
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
+
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-    jobjectArray java_headers_array = s_aws_java_http_headers_from_native(env, headers, meta_request);
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    /* calculate initial header capacity */
+    size_t headers_initial_capacity = 0;
+    for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, header_index, &header);
+        /* aws_marshal_http_headers_to_dynamic_buffer() impl drives this calculation */
+        headers_initial_capacity += header.name.len + header.value.len + 8;
+    }
+
+    struct aws_byte_buf headers_buf;
+    AWS_ZERO_STRUCT(headers_buf);
+    if (aws_byte_buf_init(&headers_buf, allocator, headers_initial_capacity)) {
+        return AWS_OP_ERR;
+    }
+
+    for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, header_index, &header);
+        aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
+    }
+    jobject java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
-        if (java_headers_array != NULL) {
-            AWS_LOGF_TRACE(
+        (*env)->CallVoidMethod(
+            env,
+            callback_data->java_s3_meta_request_response_handler_native_adapter,
+            s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
+            response_status, java_headers_buffer);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
-                "id=%p: invoking S3MetaRequest.onResponseHeaders callback. Code: %d",
-                (void *)meta_request,
-                response_status);
-
-            (*env)->CallVoidMethod(
-                env,
-                callback_data->java_s3_meta_request_response_handler_native_adapter,
-                s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
-                response_status,
-                java_headers_array);
-
-            if (aws_jni_check_and_clear_exception(env)) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_S3_META_REQUEST,
-                    "id=%p: Exception thrown from S3MetaRequest.onResponseHeaders callback",
-                    (void *)meta_request);
-                return_value = AWS_OP_ERR;
-                goto cleanup;
-            } else {
-                AWS_LOGF_ERROR(
-                    AWS_LS_S3_META_REQUEST,
-                    "id=%p: No exception thrown from S3MetaRequest.onResponseHeaders callback",
-                    (void *)meta_request);
-            }
-        } else {
-            return_value = AWS_OP_ERR;
+                "id=%p: Exception thrown from S3MetaRequest.onResponseHeaders callback",
+                (void *)meta_request);
             goto cleanup;
         }
     }
     return_value = AWS_OP_SUCCESS;
 
 cleanup:
-    (*env)->DeleteLocalRef(env, java_headers_array);
+    aws_byte_buf_clean_up(&headers_buf);
+    if (java_headers_buffer) {
+        (*env)->DeleteLocalRef(env, java_headers_buffer);
+    }
 
     return return_value;
 }

@@ -88,23 +88,6 @@ public class ListBucketAnalyticsConfigurationsOutput {
         return analyticsConfigurationList;
     }
 
-    public void setIsTruncated(final Boolean isTruncated) {
-        this.isTruncated = isTruncated;
-    }
-
-    public void setContinuationToken(final String continuationToken) {
-        this.continuationToken = continuationToken;
-    }
-
-    public void setNextContinuationToken(final String nextContinuationToken) {
-        this.nextContinuationToken = nextContinuationToken;
-    }
-
-    public void setAnalyticsConfigurationList(
-            final List<AnalyticsConfiguration> analyticsConfigurationList) {
-        this.analyticsConfigurationList = analyticsConfigurationList;
-    }
-
     public interface Builder {
         Builder isTruncated(Boolean isTruncated);
 
@@ -205,23 +188,6 @@ public class ListBucketAnalyticsConfigurationsOutput {
 
         public List<AnalyticsConfiguration> analyticsConfigurationList() {
             return analyticsConfigurationList;
-        }
-
-        public void setIsTruncated(final Boolean isTruncated) {
-            this.isTruncated = isTruncated;
-        }
-
-        public void setContinuationToken(final String continuationToken) {
-            this.continuationToken = continuationToken;
-        }
-
-        public void setNextContinuationToken(final String nextContinuationToken) {
-            this.nextContinuationToken = nextContinuationToken;
-        }
-
-        public void setAnalyticsConfigurationList(
-                final List<AnalyticsConfiguration> analyticsConfigurationList) {
-            this.analyticsConfigurationList = analyticsConfigurationList;
         }
     }
 }

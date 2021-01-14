@@ -47,10 +47,6 @@ public class JSONOutput {
         return recordDelimiter;
     }
 
-    public void setRecordDelimiter(final String recordDelimiter) {
-        this.recordDelimiter = recordDelimiter;
-    }
-
     public interface Builder {
         Builder recordDelimiter(String recordDelimiter);
 
@@ -93,10 +89,6 @@ public class JSONOutput {
 
         public String recordDelimiter() {
             return recordDelimiter;
-        }
-
-        public void setRecordDelimiter(final String recordDelimiter) {
-            this.recordDelimiter = recordDelimiter;
         }
     }
 }

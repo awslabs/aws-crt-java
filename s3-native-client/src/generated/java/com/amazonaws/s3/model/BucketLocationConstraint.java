@@ -9,56 +9,56 @@ import java.util.stream.Stream;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
-enum BucketLocationConstraint {
-    AF_SOUTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+public enum BucketLocationConstraint {
+    AF_SOUTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_EAST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_EAST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_NORTHEAST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_NORTHEAST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_NORTHEAST_2("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_NORTHEAST_2("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_NORTHEAST_3("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_NORTHEAST_3("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_SOUTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_SOUTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_SOUTHEAST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_SOUTHEAST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    AP_SOUTHEAST_2("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    AP_SOUTHEAST_2("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    CA_CENTRAL_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    CA_CENTRAL_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    CN_NORTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    CN_NORTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    CN_NORTHWEST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    CN_NORTHWEST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_CENTRAL_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_CENTRAL_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_NORTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_NORTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_SOUTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_SOUTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_WEST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_WEST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_WEST_2("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_WEST_2("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    EU_WEST_3("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    EU_WEST_3("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    ME_SOUTH_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    ME_SOUTH_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    SA_EAST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    SA_EAST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    US_EAST_2("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    US_EAST_2("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    US_GOV_EAST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    US_GOV_EAST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    US_GOV_WEST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    US_GOV_WEST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    US_WEST_1("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    US_WEST_1("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
-    US_WEST_2("software.amazon.smithy.crt.codegen.Field@101ec0be"),
+    US_WEST_2("software.amazon.smithy.crt.codegen.Field@70bfb6a9"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

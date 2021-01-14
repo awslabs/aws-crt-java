@@ -133,45 +133,6 @@ public class LifecycleRule {
         return abortIncompleteMultipartUpload;
     }
 
-    public void setExpiration(final LifecycleExpiration expiration) {
-        this.expiration = expiration;
-    }
-
-    public void setID(final String iD) {
-        this.iD = iD;
-    }
-
-    public void setPrefix(final String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setFilter(final LifecycleRuleFilter filter) {
-        this.filter = filter;
-    }
-
-    public void setStatus(final ExpirationStatus status) {
-        this.status = status;
-    }
-
-    public void setTransitions(final List<Transition> transitions) {
-        this.transitions = transitions;
-    }
-
-    public void setNoncurrentVersionTransitions(
-            final List<NoncurrentVersionTransition> noncurrentVersionTransitions) {
-        this.noncurrentVersionTransitions = noncurrentVersionTransitions;
-    }
-
-    public void setNoncurrentVersionExpiration(
-            final NoncurrentVersionExpiration noncurrentVersionExpiration) {
-        this.noncurrentVersionExpiration = noncurrentVersionExpiration;
-    }
-
-    public void setAbortIncompleteMultipartUpload(
-            final AbortIncompleteMultipartUpload abortIncompleteMultipartUpload) {
-        this.abortIncompleteMultipartUpload = abortIncompleteMultipartUpload;
-    }
-
     public interface Builder {
         Builder expiration(LifecycleExpiration expiration);
 
@@ -353,45 +314,6 @@ public class LifecycleRule {
 
         public AbortIncompleteMultipartUpload abortIncompleteMultipartUpload() {
             return abortIncompleteMultipartUpload;
-        }
-
-        public void setExpiration(final LifecycleExpiration expiration) {
-            this.expiration = expiration;
-        }
-
-        public void setID(final String iD) {
-            this.iD = iD;
-        }
-
-        public void setPrefix(final String prefix) {
-            this.prefix = prefix;
-        }
-
-        public void setFilter(final LifecycleRuleFilter filter) {
-            this.filter = filter;
-        }
-
-        public void setStatus(final ExpirationStatus status) {
-            this.status = status;
-        }
-
-        public void setTransitions(final List<Transition> transitions) {
-            this.transitions = transitions;
-        }
-
-        public void setNoncurrentVersionTransitions(
-                final List<NoncurrentVersionTransition> noncurrentVersionTransitions) {
-            this.noncurrentVersionTransitions = noncurrentVersionTransitions;
-        }
-
-        public void setNoncurrentVersionExpiration(
-                final NoncurrentVersionExpiration noncurrentVersionExpiration) {
-            this.noncurrentVersionExpiration = noncurrentVersionExpiration;
-        }
-
-        public void setAbortIncompleteMultipartUpload(
-                final AbortIncompleteMultipartUpload abortIncompleteMultipartUpload) {
-            this.abortIncompleteMultipartUpload = abortIncompleteMultipartUpload;
         }
     }
 }

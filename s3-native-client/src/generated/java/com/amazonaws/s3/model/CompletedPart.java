@@ -59,14 +59,6 @@ public class CompletedPart {
         return partNumber;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
-    }
-
     public interface Builder {
         Builder eTag(String eTag);
 
@@ -126,14 +118,6 @@ public class CompletedPart {
 
         public Integer partNumber() {
             return partNumber;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setPartNumber(final Integer partNumber) {
-            this.partNumber = partNumber;
         }
     }
 }

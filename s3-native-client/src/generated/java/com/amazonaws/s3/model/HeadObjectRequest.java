@@ -207,62 +207,6 @@ public class HeadObjectRequest {
         return expectedBucketOwner;
     }
 
-    public void setBucket(final String bucket) {
-        this.bucket = bucket;
-    }
-
-    public void setIfMatch(final String ifMatch) {
-        this.ifMatch = ifMatch;
-    }
-
-    public void setIfModifiedSince(final Instant ifModifiedSince) {
-        this.ifModifiedSince = ifModifiedSince;
-    }
-
-    public void setIfNoneMatch(final String ifNoneMatch) {
-        this.ifNoneMatch = ifNoneMatch;
-    }
-
-    public void setIfUnmodifiedSince(final Instant ifUnmodifiedSince) {
-        this.ifUnmodifiedSince = ifUnmodifiedSince;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setRange(final String range) {
-        this.range = range;
-    }
-
-    public void setVersionId(final String versionId) {
-        this.versionId = versionId;
-    }
-
-    public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-        this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-    }
-
-    public void setSSECustomerKey(final String sSECustomerKey) {
-        this.sSECustomerKey = sSECustomerKey;
-    }
-
-    public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-        this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-    }
-
-    public void setRequestPayer(final RequestPayer requestPayer) {
-        this.requestPayer = requestPayer;
-    }
-
-    public void setPartNumber(final Integer partNumber) {
-        this.partNumber = partNumber;
-    }
-
-    public void setExpectedBucketOwner(final String expectedBucketOwner) {
-        this.expectedBucketOwner = expectedBucketOwner;
-    }
-
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -541,62 +485,6 @@ public class HeadObjectRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
-        }
-
-        public void setBucket(final String bucket) {
-            this.bucket = bucket;
-        }
-
-        public void setIfMatch(final String ifMatch) {
-            this.ifMatch = ifMatch;
-        }
-
-        public void setIfModifiedSince(final Instant ifModifiedSince) {
-            this.ifModifiedSince = ifModifiedSince;
-        }
-
-        public void setIfNoneMatch(final String ifNoneMatch) {
-            this.ifNoneMatch = ifNoneMatch;
-        }
-
-        public void setIfUnmodifiedSince(final Instant ifUnmodifiedSince) {
-            this.ifUnmodifiedSince = ifUnmodifiedSince;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setRange(final String range) {
-            this.range = range;
-        }
-
-        public void setVersionId(final String versionId) {
-            this.versionId = versionId;
-        }
-
-        public void setSSECustomerAlgorithm(final String sSECustomerAlgorithm) {
-            this.sSECustomerAlgorithm = sSECustomerAlgorithm;
-        }
-
-        public void setSSECustomerKey(final String sSECustomerKey) {
-            this.sSECustomerKey = sSECustomerKey;
-        }
-
-        public void setSSECustomerKeyMD5(final String sSECustomerKeyMD5) {
-            this.sSECustomerKeyMD5 = sSECustomerKeyMD5;
-        }
-
-        public void setRequestPayer(final RequestPayer requestPayer) {
-            this.requestPayer = requestPayer;
-        }
-
-        public void setPartNumber(final Integer partNumber) {
-            this.partNumber = partNumber;
-        }
-
-        public void setExpectedBucketOwner(final String expectedBucketOwner) {
-            this.expectedBucketOwner = expectedBucketOwner;
         }
     }
 }

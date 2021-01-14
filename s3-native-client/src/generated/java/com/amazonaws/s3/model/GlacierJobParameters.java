@@ -45,10 +45,6 @@ public class GlacierJobParameters {
         return tier;
     }
 
-    public void setTier(final Tier tier) {
-        this.tier = tier;
-    }
-
     public interface Builder {
         Builder tier(Tier tier);
 
@@ -90,10 +86,6 @@ public class GlacierJobParameters {
 
         public Tier tier() {
             return tier;
-        }
-
-        public void setTier(final Tier tier) {
-            this.tier = tier;
         }
     }
 }

@@ -46,10 +46,6 @@ public class ObjectLockRule {
         return defaultRetention;
     }
 
-    public void setDefaultRetention(final DefaultRetention defaultRetention) {
-        this.defaultRetention = defaultRetention;
-    }
-
     public interface Builder {
         Builder defaultRetention(DefaultRetention defaultRetention);
 
@@ -92,10 +88,6 @@ public class ObjectLockRule {
 
         public DefaultRetention defaultRetention() {
             return defaultRetention;
-        }
-
-        public void setDefaultRetention(final DefaultRetention defaultRetention) {
-            this.defaultRetention = defaultRetention;
         }
     }
 }

@@ -98,26 +98,6 @@ public class CORSRule {
         return maxAgeSeconds;
     }
 
-    public void setAllowedHeaders(final List<String> allowedHeaders) {
-        this.allowedHeaders = allowedHeaders;
-    }
-
-    public void setAllowedMethods(final List<String> allowedMethods) {
-        this.allowedMethods = allowedMethods;
-    }
-
-    public void setAllowedOrigins(final List<String> allowedOrigins) {
-        this.allowedOrigins = allowedOrigins;
-    }
-
-    public void setExposeHeaders(final List<String> exposeHeaders) {
-        this.exposeHeaders = exposeHeaders;
-    }
-
-    public void setMaxAgeSeconds(final Integer maxAgeSeconds) {
-        this.maxAgeSeconds = maxAgeSeconds;
-    }
-
     public interface Builder {
         Builder allowedHeaders(List<String> allowedHeaders);
 
@@ -233,26 +213,6 @@ public class CORSRule {
 
         public Integer maxAgeSeconds() {
             return maxAgeSeconds;
-        }
-
-        public void setAllowedHeaders(final List<String> allowedHeaders) {
-            this.allowedHeaders = allowedHeaders;
-        }
-
-        public void setAllowedMethods(final List<String> allowedMethods) {
-            this.allowedMethods = allowedMethods;
-        }
-
-        public void setAllowedOrigins(final List<String> allowedOrigins) {
-            this.allowedOrigins = allowedOrigins;
-        }
-
-        public void setExposeHeaders(final List<String> exposeHeaders) {
-            this.exposeHeaders = exposeHeaders;
-        }
-
-        public void setMaxAgeSeconds(final Integer maxAgeSeconds) {
-            this.maxAgeSeconds = maxAgeSeconds;
         }
     }
 }

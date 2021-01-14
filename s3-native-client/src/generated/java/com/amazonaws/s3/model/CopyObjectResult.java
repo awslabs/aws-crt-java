@@ -60,14 +60,6 @@ public class CopyObjectResult {
         return lastModified;
     }
 
-    public void setETag(final String eTag) {
-        this.eTag = eTag;
-    }
-
-    public void setLastModified(final Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
     public interface Builder {
         Builder eTag(String eTag);
 
@@ -128,14 +120,6 @@ public class CopyObjectResult {
 
         public Instant lastModified() {
             return lastModified;
-        }
-
-        public void setETag(final String eTag) {
-            this.eTag = eTag;
-        }
-
-        public void setLastModified(final Instant lastModified) {
-            this.lastModified = lastModified;
         }
     }
 }

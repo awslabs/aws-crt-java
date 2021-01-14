@@ -57,14 +57,6 @@ public class MetadataEntry {
         return value;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public interface Builder {
         Builder name(String name);
 
@@ -123,14 +115,6 @@ public class MetadataEntry {
 
         public String value() {
             return value;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public void setValue(final String value) {
-            this.value = value;
         }
     }
 }

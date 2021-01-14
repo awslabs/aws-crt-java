@@ -144,34 +144,6 @@ public class CSVInput {
         return allowQuotedRecordDelimiter;
     }
 
-    public void setFileHeaderInfo(final FileHeaderInfo fileHeaderInfo) {
-        this.fileHeaderInfo = fileHeaderInfo;
-    }
-
-    public void setComments(final String comments) {
-        this.comments = comments;
-    }
-
-    public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
-        this.quoteEscapeCharacter = quoteEscapeCharacter;
-    }
-
-    public void setRecordDelimiter(final String recordDelimiter) {
-        this.recordDelimiter = recordDelimiter;
-    }
-
-    public void setFieldDelimiter(final String fieldDelimiter) {
-        this.fieldDelimiter = fieldDelimiter;
-    }
-
-    public void setQuoteCharacter(final String quoteCharacter) {
-        this.quoteCharacter = quoteCharacter;
-    }
-
-    public void setAllowQuotedRecordDelimiter(final Boolean allowQuotedRecordDelimiter) {
-        this.allowQuotedRecordDelimiter = allowQuotedRecordDelimiter;
-    }
-
     public interface Builder {
         Builder fileHeaderInfo(FileHeaderInfo fileHeaderInfo);
 
@@ -346,34 +318,6 @@ public class CSVInput {
 
         public Boolean allowQuotedRecordDelimiter() {
             return allowQuotedRecordDelimiter;
-        }
-
-        public void setFileHeaderInfo(final FileHeaderInfo fileHeaderInfo) {
-            this.fileHeaderInfo = fileHeaderInfo;
-        }
-
-        public void setComments(final String comments) {
-            this.comments = comments;
-        }
-
-        public void setQuoteEscapeCharacter(final String quoteEscapeCharacter) {
-            this.quoteEscapeCharacter = quoteEscapeCharacter;
-        }
-
-        public void setRecordDelimiter(final String recordDelimiter) {
-            this.recordDelimiter = recordDelimiter;
-        }
-
-        public void setFieldDelimiter(final String fieldDelimiter) {
-            this.fieldDelimiter = fieldDelimiter;
-        }
-
-        public void setQuoteCharacter(final String quoteCharacter) {
-            this.quoteCharacter = quoteCharacter;
-        }
-
-        public void setAllowQuotedRecordDelimiter(final Boolean allowQuotedRecordDelimiter) {
-            this.allowQuotedRecordDelimiter = allowQuotedRecordDelimiter;
         }
     }
 }

@@ -71,18 +71,6 @@ public class AnalyticsConfiguration {
         return storageClassAnalysis;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public void setFilter(final AnalyticsFilter filter) {
-        this.filter = filter;
-    }
-
-    public void setStorageClassAnalysis(final StorageClassAnalysis storageClassAnalysis) {
-        this.storageClassAnalysis = storageClassAnalysis;
-    }
-
     public interface Builder {
         Builder id(String id);
 
@@ -161,18 +149,6 @@ public class AnalyticsConfiguration {
 
         public StorageClassAnalysis storageClassAnalysis() {
             return storageClassAnalysis;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public void setFilter(final AnalyticsFilter filter) {
-            this.filter = filter;
-        }
-
-        public void setStorageClassAnalysis(final StorageClassAnalysis storageClassAnalysis) {
-            this.storageClassAnalysis = storageClassAnalysis;
         }
     }
 }

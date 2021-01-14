@@ -57,14 +57,6 @@ public class Tag {
         return value;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public interface Builder {
         Builder key(String key);
 
@@ -123,14 +115,6 @@ public class Tag {
 
         public String value() {
             return value;
-        }
-
-        public void setKey(final String key) {
-            this.key = key;
-        }
-
-        public void setValue(final String value) {
-            this.value = value;
         }
     }
 }

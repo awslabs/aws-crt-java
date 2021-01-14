@@ -74,18 +74,6 @@ public class Encryption {
         return kMSContext;
     }
 
-    public void setEncryptionType(final ServerSideEncryption encryptionType) {
-        this.encryptionType = encryptionType;
-    }
-
-    public void setKMSKeyId(final String kMSKeyId) {
-        this.kMSKeyId = kMSKeyId;
-    }
-
-    public void setKMSContext(final String kMSContext) {
-        this.kMSContext = kMSContext;
-    }
-
     public interface Builder {
         Builder encryptionType(ServerSideEncryption encryptionType);
 
@@ -167,18 +155,6 @@ public class Encryption {
 
         public String kMSContext() {
             return kMSContext;
-        }
-
-        public void setEncryptionType(final ServerSideEncryption encryptionType) {
-            this.encryptionType = encryptionType;
-        }
-
-        public void setKMSKeyId(final String kMSKeyId) {
-            this.kMSKeyId = kMSKeyId;
-        }
-
-        public void setKMSContext(final String kMSContext) {
-            this.kMSContext = kMSContext;
         }
     }
 }

@@ -11,31 +11,24 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.s3.*;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 
 public class S3NativeClient implements  AutoCloseable {
-    final EventLoopGroup elGroup;
-    final ClientBootstrap clientBootstrap;
-    final String signingRegion;
-    final CredentialsProvider credentialsProvider;
-    final S3Client s3Client;
-
-    public S3NativeClient(final EventLoopGroup elGroup, 
+    private final S3Client s3Client;
+    private final String signingRegion;
+    
+    public S3NativeClient(final String signingRegion,
                           final ClientBootstrap clientBootstrap,
-                          final String signingRegion,
                           final CredentialsProvider credentialsProvider,
                           final long partSizeBytes,
                           final double targetThroughputGbps) {
-        this.elGroup = elGroup;
-        this.clientBootstrap = clientBootstrap;
         this.signingRegion = signingRegion;
-        this.credentialsProvider = credentialsProvider;
-
         final S3ClientOptions clientOptions = new S3ClientOptions()
                 .withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider)
@@ -46,9 +39,22 @@ public class S3NativeClient implements  AutoCloseable {
         s3Client = new S3Client(clientOptions); //lazy init this on the first request
     }
     
-    public GetObjectOutput getObject(GetObjectRequest request, final ResponseDataConsumer dataHandler) {
-        final CompletableFuture<Void> transferComplete = new CompletableFuture<>();
+    public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request, final ResponseDataConsumer dataHandler) {
+        final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
+        final GetObjectOutput.Builder resultBuilder = GetObjectOutput.builder();
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                for (int headerIndex = 0; headerIndex < headers.length; ++headerIndex) {
+                    try {
+                        populateGetObjectOutputHeader(resultBuilder, headers[headerIndex]);
+                    } catch (Exception e) {
+                        //TODO: log and ignore probably
+                    }
+                }
+                dataHandler.onResponseHeaders(statusCode, headers);
+            }
+            
             @Override
             public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 dataHandler.onResponseData(bodyBytesIn);
@@ -68,16 +74,17 @@ public class S3NativeClient implements  AutoCloseable {
                 } catch (Exception e) { /* ignore user callback exception */ 
                 } finally {
                     if (ex != null) {
-                        transferComplete.completeExceptionally(ex);
+                        resultFuture.completeExceptionally(ex);
                     }
                     else {
-                        transferComplete.complete(null);
+                        resultFuture.complete(resultBuilder.build());
                     }
                 }
             }
         };
 
         List<HttpHeader> headers = new LinkedList<>();
+        // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3."+ signingRegion + ".amazonaws.com"));
 
         final StringBuilder keyString = new StringBuilder("/" + request.key());
@@ -95,15 +102,13 @@ public class S3NativeClient implements  AutoCloseable {
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
-            transferComplete.get();
-            return GetObjectOutput.builder().build();   //TODO: empty response for now
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            return resultFuture;
         }
     }
     
-    public PutObjectOutput putObject(PutObjectRequest request, final RequestDataSupplier requestDataSupplier) {
-        final CompletableFuture<Void> transferComplete = new CompletableFuture<>();
+    public CompletableFuture<PutObjectOutput> putObject(PutObjectRequest request, final RequestDataSupplier requestDataSupplier) {
+        final CompletableFuture<PutObjectOutput> resultFuture = new CompletableFuture<>();
+        final PutObjectOutput.Builder resultBuilder = PutObjectOutput.builder();
         HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
             @Override
             public boolean sendRequestBody(final ByteBuffer outBuffer) {
@@ -117,8 +122,7 @@ public class S3NativeClient implements  AutoCloseable {
                         return returnFlag;
                     }
                 } catch (Exception e) {
-                    //TODO: this should represent a cancellation of sorts
-                    transferComplete.completeExceptionally(e);
+                    resultFuture.completeExceptionally(e);
                     return true;
                 }
             }
@@ -139,12 +143,18 @@ public class S3NativeClient implements  AutoCloseable {
         };
 
         final List<HttpHeader> headers = new LinkedList<>();
+        //TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         headers.add(new HttpHeader("Content-Length", Long.toString(request.contentLength())));
         final StringBuilder keyString = new StringBuilder("/" + request.key());
         HttpRequest httpRequest = new HttpRequest("PUT", keyString.toString(), headers.toArray(new HttpHeader[0]), payloadStream);
 
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                requestDataSupplier.onResponseHeaders(statusCode, headers);
+            }
+            
             @Override
             public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 return 0;
@@ -153,9 +163,9 @@ public class S3NativeClient implements  AutoCloseable {
             @Override
             public void onFinished(int errorCode) {
                 if (errorCode == CRT.AWS_CRT_SUCCESS) {
-                    transferComplete.complete(null);
+                    resultFuture.complete(resultBuilder.build());
                 } else {
-                    transferComplete.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+                    resultFuture.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
                 }
             }
         };
@@ -165,10 +175,7 @@ public class S3NativeClient implements  AutoCloseable {
                 .withResponseHandler(responseHandler);
         
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
-            transferComplete.get();
-            return PutObjectOutput.builder().build();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            return resultFuture;
         }
     }
 
@@ -176,6 +183,37 @@ public class S3NativeClient implements  AutoCloseable {
     public void close() {
         if (s3Client != null) {
             s3Client.close();
+        }
+    }
+    
+    protected void populateGetObjectOutputHeader(final GetObjectOutput.Builder builder, final HttpHeader header) {
+        if ("x-amz-id-2".equalsIgnoreCase(header.getName())) {
+            //TODO: customers want this for tracing availability issues
+        } else if ("x-amz-request-id".equalsIgnoreCase(header.getName())) {
+            //TODO: customers want this for tracing availability issues
+        } else if ("Last-Modified".equalsIgnoreCase(header.getName())) {
+            builder.lastModified(DateTimeFormatter.RFC_1123_DATE_TIME.parse(header.getValue(), Instant::from));
+        } else if ("ETag".equalsIgnoreCase(header.getName())) {
+            builder.eTag(header.getValue());
+        } else if ("x-amz-version-id".equalsIgnoreCase(header.getName())) {
+            builder.versionId(header.getValue());
+        } else if ("Accept-Ranges".equalsIgnoreCase(header.getName())) {
+            builder.acceptRanges(header.getValue());
+        } else if ("Content-Type".equalsIgnoreCase(header.getName())) {
+            builder.contentType(header.getValue());
+        } else if ("Content-Length".equalsIgnoreCase(header.getName())) {
+            builder.contentLength(Long.parseLong(header.getValue()));
+        } else {
+            //unhandled header is not necessarily bad, but potentially logged
+        }
+    }
+
+    protected void populatePutObjectOutputHeader(final PutObjectOutput.Builder builder, final HttpHeader header) {
+        if ("xamz-id-2".equalsIgnoreCase(header.getName())) {
+            //TODO: customers want this for tracing availability issues
+        } else if ("x-amz-request-id".equalsIgnoreCase(header.getName())) {
+            //TODO: customers want this for tracing availability issues
+        } else if ("x-amz-request-id".equalsIgnoreCase(header.getName())) {
         }
     }
 }

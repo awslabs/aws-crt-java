@@ -23,6 +23,6 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     }
     
     void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
-        responseHandler.onResponseHeader(statusCode, headers);
+        responseHandler.onResponseHeaders(statusCode, headers);
     }
 }

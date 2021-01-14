@@ -7,7 +7,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -32,7 +31,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
              final HostResolver resolver = new HostResolver(elGroup, 128);
              final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
              final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider,
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
                     64_000_000l, 100.);
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder()
@@ -62,7 +61,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
              final HostResolver resolver = new HostResolver(elGroup, 128);
              final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
              final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(elGroup, clientBootstrap, REGION, provider,
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
                     64_000_000l, 100.);
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };

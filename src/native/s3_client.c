@@ -96,7 +96,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
                                                  .part_size = part_size,
                                                  .throughput_target_gbps = throughput_target_gbps,
                                                  .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
-                                                 .shutdown_callback_user_data = callback_data};
+                                                 .shutdown_callback_user_data = callback_data, };
     client_config.signing_config = &signing_config;
 
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
@@ -300,25 +300,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     callback_data->java_s3_meta_request = (*env)->NewGlobalRef(env, java_s3_meta_request_jobject);
-    callback_data->java_s3_meta_request_response_handler_native_adapter =
-        (*env)->NewGlobalRef(env, java_response_handler_jobject);
-
     AWS_FATAL_ASSERT(callback_data->java_s3_meta_request != NULL);
 
     callback_data->java_s3_meta_request_response_handler_native_adapter =
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
-
     AWS_FATAL_ASSERT(callback_data->java_s3_meta_request_response_handler_native_adapter != NULL);
 
     struct aws_http_message *request_message = aws_http_message_new_request(allocator);
-    if (request_message == NULL) {
-        /* TODO */
-    }
+    AWS_FATAL_ASSERT(request_message);
 
-    if (aws_apply_java_http_request_changes_to_native_request(
-            env, jni_marshalled_message_data, jni_http_request_body_stream, request_message)) {
-        /* TODO */
-    }
+    AWS_FATAL_ASSERT(aws_apply_java_http_request_changes_to_native_request(
+            env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
@@ -331,12 +323,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 
-    aws_http_message_release(request_message);
-
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");
     }
+
+    aws_http_message_release(request_message);
 
     return (jlong)meta_request;
 }

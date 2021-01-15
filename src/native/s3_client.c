@@ -227,7 +227,8 @@ static int s_on_s3_meta_request_headers_callback(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
             s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
-            response_status, java_headers_buffer);
+            response_status,
+            java_headers_buffer);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(

@@ -37,7 +37,8 @@ public class S3NativeClient implements  AutoCloseable {
         s3Client = new S3Client(clientOptions);
     }
     
-    public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request, final ResponseDataConsumer dataHandler) {
+    public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
+                                                        final ResponseDataConsumer dataHandler) {
         final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
         final GetObjectOutput.Builder resultBuilder = GetObjectOutput.builder();
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -106,7 +107,8 @@ public class S3NativeClient implements  AutoCloseable {
         }
     }
     
-    public CompletableFuture<PutObjectOutput> putObject(PutObjectRequest request, final RequestDataSupplier requestDataSupplier) {
+    public CompletableFuture<PutObjectOutput> putObject(PutObjectRequest request,
+                                                        final RequestDataSupplier requestDataSupplier) {
         final CompletableFuture<PutObjectOutput> resultFuture = new CompletableFuture<>();
         final PutObjectOutput.Builder resultBuilder = PutObjectOutput.builder();
         HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
@@ -147,7 +149,8 @@ public class S3NativeClient implements  AutoCloseable {
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populatePutObjectRequestHeaders(header -> headers.add(header), request);
         final StringBuilder keyString = new StringBuilder("/" + request.key());
-        HttpRequest httpRequest = new HttpRequest("PUT", keyString.toString(), headers.toArray(new HttpHeader[0]), payloadStream);
+        HttpRequest httpRequest = new HttpRequest("PUT", keyString.toString(), 
+                headers.toArray(new HttpHeader[0]), payloadStream);
 
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
             @Override
@@ -195,13 +198,43 @@ public class S3NativeClient implements  AutoCloseable {
         }
     }
 
-    protected void populateGetObjectRequestHeaders(final Consumer<HttpHeader> headerConsumer, final GetObjectRequest request) {
+    protected void populateGetObjectRequestHeaders(final Consumer<HttpHeader> headerConsumer,
+                                                   final GetObjectRequest request) {
         //https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+        if (request.ifMatch() != null) {
+            headerConsumer.accept(new HttpHeader("If-Match", request.ifMatch()));
+        }
+        if (request.ifMatch() != null) {
+            headerConsumer.accept(new HttpHeader("If-Modified-Since",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.ifModifiedSince())));
+        }
+        if (request.ifNoneMatch() != null) {
+            headerConsumer.accept(new HttpHeader("If-None-Match", request.ifNoneMatch()));
+        }
+        if (request.ifUnmodifiedSince() != null) {
+            headerConsumer.accept(new HttpHeader("If-Unmodified-Since",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.ifUnmodifiedSince())));
+        }
         if (request.range() != null) {
             headerConsumer.accept(new HttpHeader("Range", request.range()));
         }
-        if (request.ifMatch() != null) {
-            headerConsumer.accept(new HttpHeader("If-Match", request.ifMatch()));
+        if (request.sSECustomerAlgorithm() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-algorithm",
+                    request.sSECustomerAlgorithm()));
+        }
+        if (request.sSECustomerKey() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-key",
+                    request.sSECustomerKey()));
+        }
+        if (request.sSECustomerKeyMD5() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-key-MD5",
+                    request.sSECustomerKeyMD5()));
+        }
+        if (request.requestPayer() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-request-payer", request.requestPayer().name()));
+        }
+        if (request.expectedBucketOwner() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-expected-bucket-owner", request.expectedBucketOwner()));
         }
         //in progress, but shape of method left here
     }
@@ -229,12 +262,104 @@ public class S3NativeClient implements  AutoCloseable {
         }
     }
 
-    protected void populatePutObjectRequestHeaders(final Consumer<HttpHeader> headerConsumer, final PutObjectRequest request) {
+    protected void populatePutObjectRequestHeaders(final Consumer<HttpHeader> headerConsumer,
+                                                   final PutObjectRequest request) {
         //https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
+        if (request.aCL() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-acl", request.aCL().name()));
+        }
+        if (request.cacheControl() != null) {
+            headerConsumer.accept(new HttpHeader("Cache-Control", request.cacheControl()));
+        }
+        if (request.contentDisposition() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Disposition", request.contentDisposition()));
+        }
+        if (request.contentEncoding() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Encoding", request.contentEncoding()));
+        }
+        if (request.contentLanguage() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Language", request.contentLanguage()));
+        }
         if (request.contentLength() != null) {
             headerConsumer.accept(new HttpHeader("Content-Length", Long.toString(request.contentLength())));
         }
-        //in progress, but shape of method left here
+        if (request.contentMD5() != null) {
+            headerConsumer.accept(new HttpHeader("Content-MD5", request.contentMD5()));
+        }
+        if (request.contentType() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Type", request.contentType()));
+        }
+        if (request.expires() != null) {
+            headerConsumer.accept(new HttpHeader("Expires",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.expires())));
+        }
+        if (request.grantFullControl() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-grant-full-control", request.grantFullControl()));
+        }
+        if (request.grantRead() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-grant-read", request.grantRead()));
+        }
+        if (request.grantReadACP() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-grant-read-acp", request.grantReadACP()));
+        }
+        if (request.grantWriteACP() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-grant-write-acp", request.grantWriteACP()));
+        }
+        if (request.serverSideEncryption() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption",
+                    request.serverSideEncryption().name()));
+        }
+        if (request.storageClass() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-storage-class", request.storageClass().name()));
+        }
+        if (request.websiteRedirectLocation() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-website-redirect-location",
+                    request.websiteRedirectLocation()));
+        }
+        if (request.sSECustomerAlgorithm() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-algorithm",
+                    request.sSECustomerAlgorithm()));
+        }
+        if (request.sSECustomerKey() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-key",
+                    request.sSECustomerKey()));
+        }
+        if (request.sSECustomerKeyMD5() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-customer-key-MD5",
+                    request.sSECustomerKeyMD5()));
+        }
+        if (request.sSEKMSKeyId() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-aws-kms-key-id",
+                    request.sSEKMSKeyId()));
+        }
+        if (request.sSEKMSEncryptionContext() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-context",
+                    request.sSEKMSEncryptionContext()));
+        }
+        if (request.bucketKeyEnabled() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-server-side-encryption-bucket-key-enabled",
+                    Boolean.toString(request.bucketKeyEnabled())));
+        }
+        if (request.requestPayer() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-request-payer", request.requestPayer().name()));
+        }
+        if (request.tagging() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-tagging", request.tagging()));
+        }
+        if (request.objectLockMode() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-object-lock-mode", request.objectLockMode().name()));
+        }
+        if (request.objectLockRetainUntilDate() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-object-lock-retain-until-date",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.objectLockRetainUntilDate())));
+        }
+        if (request.objectLockLegalHoldStatus() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-object-lock-legal-hold",
+                    request.objectLockLegalHoldStatus().name()));
+        }
+        if (request.expectedBucketOwner() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-expected-bucket-owner", request.expectedBucketOwner()));
+        }
     }
 
     protected void populatePutObjectOutputHeader(final PutObjectOutput.Builder builder, final HttpHeader header) {

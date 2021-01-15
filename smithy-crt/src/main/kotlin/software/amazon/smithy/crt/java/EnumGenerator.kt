@@ -6,9 +6,6 @@ import software.amazon.smithy.crt.java.Types.Utils.toClassName
 import software.amazon.smithy.model.shapes.StringShape
 import software.amazon.smithy.model.traits.EnumTrait
 import software.amazon.smithy.utils.CaseUtils
-import java.util.stream.Collectors
-import java.util.stream.Stream
-import javax.lang.model.element.Modifier
 
 class EnumGenerator(pluginContext: PluginContext, private val enumShape: StringShape)
     : ShapeGenerator(pluginContext, toClassName(enumShape)) {

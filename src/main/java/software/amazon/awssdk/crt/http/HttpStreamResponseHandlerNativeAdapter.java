@@ -23,8 +23,10 @@ class HttpStreamResponseHandlerNativeAdapter {
         responseHandler.onResponseHeadersDone(stream, blockType);
     }
 
-    int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-        return responseHandler.onResponseBody(stream, bodyBytesIn);
+    int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+        byte[] body = new byte[bodyBytesIn.limit()];
+        bodyBytesIn.get(body);
+        return responseHandler.onResponseBody(stream, body);
     }
 
     void onResponseComplete(HttpStream stream, int errorCode) {

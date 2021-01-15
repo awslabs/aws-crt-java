@@ -97,10 +97,13 @@ public class Log {
 
         // aws-c-event-stream
         EventStreamServerListener(0x1000),
+        // aws-c-s3
+        S3Client(0x4000),
 
         // aws-crt-java, we're authoritative
         JavaCrtGeneral(0x2400),
-        JavaCrtResource(0x2401)
+        JavaCrtResource(0x2401),
+        JavaCrtS3(0x2402)
         ;
 
         LogSubject(int value) {

@@ -26,7 +26,7 @@ public class CrtRuntimeException extends RuntimeException {
 
     public CrtRuntimeException(String msg) {
         super(msg);
-        
+
         Matcher matcher = crtExFormat.matcher(msg);
         if (matcher.matches()) {
             errorName = matcher.group(1);
@@ -38,7 +38,19 @@ public class CrtRuntimeException extends RuntimeException {
     }
 
     public CrtRuntimeException(int errorCode, String errorName) {
+        super(CRT.awsErrorString(errorCode));
         this.errorCode = errorCode;
         this.errorName = errorName;
+    }
+
+    public CrtRuntimeException(int errorCode) {
+        super(CRT.awsErrorString(errorCode));
+        this.errorCode = errorCode;
+        this.errorName = CRT.awsErrorName(errorCode);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s(%d)", super.toString(), errorName, errorCode);
     }
 };

@@ -11,7 +11,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +31,7 @@ public class PublishTest extends MqttClientConnectionFixture {
     public void testPublish() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
-        
+
         try {
             MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
             CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);

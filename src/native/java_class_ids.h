@@ -12,6 +12,7 @@
 struct java_http_request_body_stream_properties {
     jmethodID send_outgoing_body;
     jmethodID reset_position;
+    jmethodID get_length;
 };
 extern struct java_http_request_body_stream_properties http_request_body_stream_properties;
 
@@ -209,6 +210,26 @@ struct java_cpu_info_properties {
 };
 extern struct java_cpu_info_properties cpu_info_properties;
 
+struct java_s3_client_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_s3_client_properties s3_client_properties;
+
+/* S3Client */
+struct java_s3_meta_request_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_s3_meta_request_properties s3_meta_request_properties;
+
+/* */
+struct java_s3_meta_request_response_handler_native_adapter_properties {
+    jmethodID onResponseBody;
+    jmethodID onFinished;
+    jmethodID onResponseHeaders;
+};
+struct java_s3_meta_request_response_handler_native_adapter_properties
+    s3_meta_request_response_handler_native_adapter_properties;
+
 /* CompletableFuture */
 struct java_completable_future_properties {
     jmethodID complete_method_id;
@@ -224,6 +245,13 @@ struct java_crt_runtime_exception_properties {
     jfieldID error_code_field_id;
 };
 extern struct java_crt_runtime_exception_properties crt_runtime_exception_properties;
+
+/* HttpHeader */
+struct java_http_header_properties {
+    jclass http_header_class;
+    jmethodID constructor_method_id; /* (byte[], byte[]) */
+};
+extern struct java_http_header_properties http_header_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

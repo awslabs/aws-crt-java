@@ -68,7 +68,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
 
     struct s3_client_callback_data *callback_data =
-        aws_mem_calloc(allocator, sizeof(struct s3_client_callback_data), 1);
+        aws_mem_calloc(allocator, 1, sizeof(struct s3_client_callback_data));
     AWS_FATAL_ASSERT(callback_data);
     callback_data->java_s3_client = (*env)->NewGlobalRef(env, s3_client_jobject);
 

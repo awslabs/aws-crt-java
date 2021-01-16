@@ -95,7 +95,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,
         .signing_config = NULL,
-        .part_size = part_size,
+        .part_size = (size_t)part_size,
         .throughput_target_gbps = throughput_target_gbps,
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,

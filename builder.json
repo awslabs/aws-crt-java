@@ -4,6 +4,7 @@
         "maven"
     ],
     "build_steps": [
+        "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] && echo \"Credentials are empty\"",
         "mvn -B compile"
     ],
     "test_steps": [

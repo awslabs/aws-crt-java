@@ -13,7 +13,7 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import org.junit.Assume;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
-    private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>>");
+    private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "file.download");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");

@@ -5,6 +5,7 @@
     ],
     "build_steps": [
         "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] && echo \"Credentials are empty\"",
+        "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] || echo \"Credentials not empty\"",
         "mvn -B compile"
     ],
     "test_steps": [

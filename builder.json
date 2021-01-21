@@ -4,8 +4,6 @@
         "maven"
     ],
     "build_steps": [
-        "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] && echo \"Credentials are empty\"",
-        "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] || echo \"Credentials not empty\"",
         "mvn -B compile"
     ],
     "test_steps": [
@@ -39,6 +37,8 @@
                 "s2n"
             ],
             "!build_steps": [
+                "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] && echo \"Credentials are empty\"",
+                "[ -z \"$AWS_SECRET_ACCESS_KEY\" ] || echo \"Credentials not empty\"",
                 "{source_dir}/gradlew :s3-native-client:build -x test -PlibcryptoPath={source_dir}/{libcrypto_path}",
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],

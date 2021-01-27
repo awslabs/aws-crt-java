@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.io.*;
 public class PutGet {
     public static void main(String[] args) {
         final String USAGE = "\n"
+                + "Upload file to S3, then download it.\n\n"
                 + "Usage:\n"
                 + "    PutGet <bucket> <key> <filepath> <region> [throughput] [part-size]\n\n"
                 + "Where:\n"
@@ -39,13 +40,17 @@ public class PutGet {
             targetThroughputGbps = Double.parseDouble(args[5]);
 
         Log.initLoggingToStderr(Log.LogLevel.Error);
+
+        // try-with-resources to ensure these resources get closed
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(0 /* cpuGroup */, 0 /* numThreads 0=default */);
                 HostResolver hostResolver = new HostResolver(eventLoopGroup, 256 /* maxEntries */);
                 ClientBootstrap clientBootstrap = new ClientBootstrap(eventLoopGroup, hostResolver);
-                // Searches for AWS signing credentials in places like
-                // ~/.aws/credentials and env vars like AWS_ACCESS_KEY_ID
+
+                // default provider searches for AWS credentials in places like
+                // ~/.aws/credentials and env vars AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
                 CredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
                         .withClientBootstrap(clientBootstrap).build();
+
                 S3NativeClient s3Client = new S3NativeClient(signingRegion, clientBootstrap, credentialsProvider,
                         partSizeBytes, targetThroughputGbps);) {
 
@@ -77,11 +82,11 @@ public class PutGet {
 
     // Supplies the file body to upload for PUT
     static class PutDataSupplier implements RequestDataSupplier {
-        RandomAccessFile stream;
+        FileInputStream stream;
 
         public PutDataSupplier(File file) {
             try {
-                stream = new RandomAccessFile(file, "r");
+                stream = new FileInputStream(file);
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }

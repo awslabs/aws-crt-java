@@ -290,8 +290,8 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public MqttMessage getWillMessage() {
         if (willMessage == null || (deprecatedWillRetain == null && deprecatedWillQos == null)) {
-        return willMessage;
-    }
+            return willMessage;
+        }
         QualityOfService qos = deprecatedWillQos == null ? willMessage.getQos() : deprecatedWillQos;
         boolean retain = deprecatedWillRetain == null ? willMessage.getRetain() : deprecatedWillRetain;
         return new MqttMessage(willMessage.getTopic(), willMessage.getPayload(), qos, retain);
@@ -310,7 +310,13 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     @Deprecated
     public QualityOfService getWillQos() {
-        return deprecatedWillQos;
+        if (deprecatedWillQos != null) {
+            return deprecatedWillQos;
+        }
+        if (willMessage != null) {
+            return willMessage.getQos();
+        }
+        return null;
     }
 
     /**
@@ -326,7 +332,13 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     @Deprecated
     public boolean getWillRetain() {
-        return deprecatedWillRetain;
+        if (deprecatedWillRetain != null) {
+            return deprecatedWillRetain;
+        }
+        if (willMessage != null) {
+            return willMessage.getRetain();
+        }
+        return false;
     }
 
     /**
@@ -414,8 +426,6 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());
-            clone.setWillQos(getWillQos());
-            clone.setWillRetain(getWillRetain());
 
             clone.setUseWebsockets(getUseWebsockets());
             clone.setWebsocketProxyOptions(getWebsocketProxyOptions());

@@ -68,6 +68,9 @@ public final class MqttMessage {
         this(topic, payload, qos, false, false);
     }
 
+    /**
+     * @deprecated Use alternate constructor.
+     */
     @Deprecated
     public MqttMessage(String topic, byte[] payload) {
         this(topic, payload, QualityOfService.AT_LEAST_ONCE, false, false);

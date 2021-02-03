@@ -33,8 +33,8 @@ public class PublishTest extends MqttClientConnectionFixture {
         connect();
 
         try {
-            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
-            CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
+            CompletableFuture<Integer> published = connection.publish(message);
             published.thenApply(packetId -> pubsAcked++);
             published.get();
 

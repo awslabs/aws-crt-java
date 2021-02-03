@@ -8,6 +8,7 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
@@ -24,7 +25,7 @@ import java.io.UnsupportedEncodingException;
 public class SelfPubSubTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
-    
+
     public SelfPubSubTest() {
     }
 
@@ -41,14 +42,9 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         connect();
 
         try {
+            CompletableFuture<MqttMessage> receivedFuture = new CompletableFuture<>();
             Consumer<MqttMessage> messageHandler = (message) -> {
-                byte[] payload = message.getPayload();
-                try {
-                    String contents = new String(payload, "UTF-8");
-                    assertEquals("Message is intact", TEST_PAYLOAD, contents);
-                } catch (UnsupportedEncodingException ex) {
-                    fail("Unable to decode payload: " + ex.getMessage());
-                }
+                receivedFuture.complete(message);
             };
 
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
@@ -59,20 +55,26 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
             assertEquals("Single subscription", 1, subsAcked);
 
-            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
-            CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE, false);
+            CompletableFuture<Integer> published = connection.publish(message);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();
 
             assertNotSame(0, packetId);
             assertEquals("Published", 1, pubsAcked);
 
-            published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            published = connection.publish(message);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();
 
             assertNotSame(0, packetId);
             assertEquals("Published", 2, pubsAcked);
+
+            MqttMessage received = receivedFuture.get();
+            assertEquals("Received", message.getTopic(), received.getTopic());
+            assertArrayEquals("Received", message.getPayload(), received.getPayload());
+            assertEquals("Received", message.getQos(), received.getQos());
+            assertEquals("Received", message.getRetain(), received.getRetain());
 
             CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
             unsubscribed.thenApply(unused -> subsAcked--);
@@ -113,15 +115,15 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
             assertEquals("Single subscription", 1, subsAcked);
 
-            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes());
-            CompletableFuture<Integer> published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
+            CompletableFuture<Integer> published = connection.publish(message);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();
 
             assertNotSame(0, packetId);
             assertEquals("Published", 1, pubsAcked);
 
-            published = connection.publish(message, QualityOfService.AT_LEAST_ONCE, false);
+            published = connection.publish(message);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();
 

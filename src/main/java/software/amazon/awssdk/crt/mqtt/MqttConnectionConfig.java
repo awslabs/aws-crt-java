@@ -30,8 +30,8 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /* will */
     private MqttMessage willMessage;
-    private QualityOfService willQos;
-    private boolean willRetain;
+    private QualityOfService deprecatedWillQos;
+    private Boolean deprecatedWillRetain;
 
     /* websockets */
     private boolean useWebsockets = false;
@@ -289,43 +289,44 @@ public final class MqttConnectionConfig extends CrtResource {
      * @return the message to publish as the will
      */
     public MqttMessage getWillMessage() {
+        if (willMessage == null || (deprecatedWillRetain == null && deprecatedWillQos == null)) {
         return willMessage;
     }
+        QualityOfService qos = deprecatedWillQos == null ? willMessage.getQos() : deprecatedWillQos;
+        boolean retain = deprecatedWillRetain == null ? willMessage.getRetain() : deprecatedWillRetain;
+        return new MqttMessage(willMessage.getTopic(), willMessage.getPayload(), qos, retain);
+    }
 
     /**
-     * Configures the quality of service for the will message's publish action
-     *
-     * @param qos the quality of service for the will message's publish action
+     * @deprecated Set QoS directly on the will's {@link MqttMessage}.
      */
+    @Deprecated
     public void setWillQos(QualityOfService qos) {
-        this.willQos = qos;
+        this.deprecatedWillQos = qos;
     }
 
     /**
-     * Queries the quality of service for the will message's publish action
-     *
-     * @return the quality of service for the will message's publish action
+     * @deprecated Query QoS directly from the will's {@link MqttMessage}.
      */
+    @Deprecated
     public QualityOfService getWillQos() {
-        return willQos;
+        return deprecatedWillQos;
     }
 
     /**
-     * Configures whether or not the message should be retained by the broker to be delivered to future subscribers
-     *
-     * @param retain whether or not the message should be retained by the broker to be delivered to future subscribers
+     * @deprecated Set retain directly on the will's {@link MqttMessage}.
      */
+    @Deprecated
     public void setWillRetain(boolean retain) {
-        this.willRetain = retain;
+        this.deprecatedWillRetain = retain;
     }
 
     /**
-     * Queries whether or not the message should be retained by the broker to be delivered to future subscribers
-     *
-     * @return whether or not the message should be retained by the broker to be delivered to future subscribers
+     * @deprecated Query retain directly from the will's {@link MqttMessage}.
      */
+    @Deprecated
     public boolean getWillRetain() {
-        return willRetain;
+        return deprecatedWillRetain;
     }
 
     /**

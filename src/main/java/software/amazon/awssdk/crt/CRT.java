@@ -4,11 +4,12 @@
  */
 package software.amazon.awssdk.crt;
 
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
-import java.util.*;
+import java.util.Date;
+import java.util.Locale;
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the current
  * platform out of aws-crt-java.jar. One instance of this class has to be created
@@ -36,7 +37,8 @@ public final class CRT {
         try {
             memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
         } catch (Exception ex) {}
-        awsCrtInit(memoryTracingLevel, System.getProperty("aws.crt.debugwait") != null);
+        boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
+        awsCrtInit(memoryTracingLevel, debugWait);
 
         try {
             Log.initLoggingFromSystemProperties();

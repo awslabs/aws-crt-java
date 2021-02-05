@@ -12,6 +12,7 @@
 struct java_http_request_body_stream_properties {
     jmethodID send_outgoing_body;
     jmethodID reset_position;
+    jmethodID get_length;
 };
 extern struct java_http_request_body_stream_properties http_request_body_stream_properties;
 
@@ -154,11 +155,87 @@ struct java_http_stream_response_handler_native_adapter_properties {
 };
 extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
+/* EventStreamServerListener */
+struct java_event_stream_server_listener_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
+
+/* EventStreamServerListenerHandler */
+struct java_event_stream_server_listener_handler_properties {
+    jmethodID onNewConnection;
+    jmethodID onConnectionShutdown;
+    jmethodID newConnConstructor;
+    jclass connCls;
+};
+extern struct java_event_stream_server_listener_handler_properties event_stream_server_listener_handler_properties;
+
+struct java_event_stream_server_connection_handler_properties {
+    jmethodID onProtocolMessage;
+    jmethodID onIncomingStream;
+    jmethodID newContinuationConstructor;
+    jclass continuationCls;
+};
+extern struct java_event_stream_server_connection_handler_properties event_stream_server_connection_handler_properties;
+
+struct java_event_stream_server_continuation_handler_properties {
+    jmethodID onContinuationMessage;
+    jmethodID onContinuationClosed;
+};
+extern struct java_event_stream_server_continuation_handler_properties
+    event_stream_server_continuation_handler_properties;
+
+struct java_event_stream_client_connection_handler_properties {
+    jmethodID onSetup;
+    jmethodID onProtocolMessage;
+    jmethodID onClosed;
+};
+extern struct java_event_stream_client_connection_handler_properties event_stream_client_connection_handler_properties;
+
+struct java_event_stream_client_continuation_handler_properties {
+    jmethodID onContinuationMessage;
+    jmethodID onContinuationClosed;
+};
+extern struct java_event_stream_client_continuation_handler_properties
+    event_stream_client_continuation_handler_properties;
+
+struct java_event_stream_message_flush_properties {
+    jmethodID callback;
+};
+extern struct java_event_stream_message_flush_properties event_stream_server_message_flush_properties;
+
+struct java_cpu_info_properties {
+    jclass cpu_info_class;
+    jmethodID cpu_info_constructor;
+};
+extern struct java_cpu_info_properties cpu_info_properties;
+
+struct java_s3_client_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_s3_client_properties s3_client_properties;
+
+/* S3Client */
+struct java_s3_meta_request_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_s3_meta_request_properties s3_meta_request_properties;
+
+/* */
+struct java_s3_meta_request_response_handler_native_adapter_properties {
+    jmethodID onResponseBody;
+    jmethodID onFinished;
+    jmethodID onResponseHeaders;
+};
+struct java_s3_meta_request_response_handler_native_adapter_properties
+    s3_meta_request_response_handler_native_adapter_properties;
+
 /* CompletableFuture */
 struct java_completable_future_properties {
     jmethodID complete_method_id;
     jmethodID complete_exceptionally_method_id;
 };
+
 extern struct java_completable_future_properties completable_future_properties;
 
 /* CrtRuntimeException */
@@ -191,6 +268,13 @@ struct java_aws_signing_result_properties {
     jfieldID signature_field_id;
 };
 extern struct java_aws_signing_result_properties aws_signing_result_properties;
+
+/* HttpHeader */
+struct java_http_header_properties {
+    jclass http_header_class;
+    jmethodID constructor_method_id; /* (byte[], byte[]) */
+};
+extern struct java_http_header_properties http_header_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

@@ -348,7 +348,7 @@ public class SigningTest extends CrtTestFixture {
             assertTrue(cause != null);
             assertTrue(cause.getClass() == CrtRuntimeException.class);
             CrtRuntimeException crt = (CrtRuntimeException) cause;
-            assertTrue(crt.errorName.equals("AWS_IO_STREAM_READ_FAILED"));
+            assertTrue(crt.errorName.equals("AWS_ERROR_HTTP_CALLBACK_FAILURE"));
             throw crt;
         }
     }

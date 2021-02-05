@@ -24,4 +24,14 @@ public class EventLoopGroupTest extends CrtTestFixture  {
             fail(ex.getMessage());
         }
     }
+
+    @Test
+    public void testCreateDestroyWithCpuGroup() {
+        try (EventLoopGroup elg = new EventLoopGroup(0,2)) {
+            assertNotNull(elg);
+            assertTrue(!elg.isNull());
+        } catch (CrtRuntimeException ex) {
+            fail(ex.getMessage());
+        }
+    }
 };

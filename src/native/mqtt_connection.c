@@ -172,7 +172,7 @@ static void s_on_connection_complete(
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
-        if ((*env)->ExceptionCheck(env)) {
+        if (aws_jni_check_and_clear_exception(env)) {
             aws_mqtt_client_connection_disconnect(client_connection, s_on_connection_disconnected, connect_callback);
             return; /* callback and ref count will be cleaned up in s_on_connection_disconnected */
         }
@@ -196,7 +196,7 @@ static void s_on_connection_interrupted_internal(
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }
 
@@ -226,7 +226,7 @@ static void s_on_connection_resumed(
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }
 
@@ -241,7 +241,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback);
 
     mqtt_jni_async_callback_destroy(connect_callback);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     s_mqtt_jni_connection_release(jni_connection);
 }
@@ -344,7 +344,7 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
-        (*env)->ExceptionCheck(env);
+        aws_jni_check_and_clear_exception(env);
     }
 
     s_mqtt_connection_destroy(env, jni_connection);
@@ -506,7 +506,7 @@ static void s_deliver_ack_success(struct mqtt_jni_async_callback *callback) {
     if (callback->async_callback) {
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
         (*env)->CallVoidMethod(env, callback->async_callback, async_callback_properties.on_success);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }
 
@@ -519,7 +519,7 @@ static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int 
         jobject jni_reason = s_new_mqtt_exception(env, error_code);
         (*env)->CallVoidMethod(env, callback->async_callback, async_callback_properties.on_failure, jni_reason);
         (*env)->DeleteLocalRef(env, jni_reason);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }
 
@@ -588,10 +588,7 @@ static void s_on_subscription_delivered(
     (*env)->DeleteLocalRef(env, jni_payload);
     (*env)->DeleteLocalRef(env, jni_topic);
 
-    if ((*env)->ExceptionCheck(env)) {
-        (*env)->ExceptionDescribe(env);
-    }
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 }
 
 JNIEXPORT
@@ -916,7 +913,7 @@ static void s_ws_handshake_transform(
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
     (*env)->DeleteLocalRef(env, java_http_request);

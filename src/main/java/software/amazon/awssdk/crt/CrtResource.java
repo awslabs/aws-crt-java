@@ -4,18 +4,22 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.TimeUnit;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.Map;
+
+
 
 /**
  * This wraps a native pointer and/or one or more references to an AWS Common Runtime resource. It also ensures
@@ -265,7 +269,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
      */
-    protected void decRef() {
+    public void decRef() {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
@@ -389,6 +393,9 @@ public abstract class CrtResource implements AutoCloseable {
      * a period of waiting.
      */
     public static void waitForNoResources() {
+        EventLoopGroup.closeStaticDefault();
+        HostResolver.closeStaticDefault();
+
         if (debugNativeObjects) {
             lock.lock();
 

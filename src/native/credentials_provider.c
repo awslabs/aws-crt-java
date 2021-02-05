@@ -48,7 +48,7 @@ static void s_on_shutdown_complete(void *user_data) {
             env, java_crt_credentials_provider, credentials_provider_properties.on_shutdown_complete_method_id);
 
         (*env)->DeleteLocalRef(env, java_crt_credentials_provider);
-        AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
     (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
@@ -337,7 +337,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         callback_data->java_credentials_future,
         java_credentials);
 
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     if (java_credentials != NULL) {
         (*env)->DeleteLocalRef(env, access_key_id);

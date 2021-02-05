@@ -11,6 +11,7 @@
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/thread.h>
+#include <aws/event-stream/event_stream.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
 #include <aws/io/channel.h>
@@ -18,6 +19,7 @@
 #include <aws/io/logging.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
+#include <aws/s3/s3.h>
 
 #include <stdio.h>
 
@@ -65,6 +67,15 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
+bool aws_jni_check_and_clear_exception(JNIEnv *env) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
+}
+
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;
@@ -72,7 +83,7 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
 
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
-    return (*env)->ExceptionCheck(env);
+    return aws_jni_check_and_clear_exception(env);
 }
 
 /**
@@ -93,7 +104,7 @@ jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cur
  */
 int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
     jint position = (*env)->CallIntMethod(env, java_byte_buffer, byte_buffer_properties.get_position);
-    return ((*env)->ExceptionCheck(env)) ? -1 : (int)position;
+    return (aws_jni_check_and_clear_exception(env)) ? -1 : (int)position;
 }
 
 /**
@@ -101,7 +112,7 @@ int aws_jni_byte_buffer_get_position(JNIEnv *env, jobject java_byte_buffer) {
  */
 void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint position) {
     jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_position, position);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     (*env)->DeleteLocalRef(env, val);
 }
 
@@ -110,7 +121,7 @@ void aws_jni_byte_buffer_set_position(JNIEnv *env, jobject jByteBuf, jint positi
  */
 void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit) {
     jobject val = (*env)->CallObjectMethod(env, jByteBuf, byte_buffer_properties.set_limit, limit);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     (*env)->DeleteLocalRef(env, val);
 }
 
@@ -202,6 +213,8 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 static void s_jni_atexit(void) {
+    aws_s3_library_clean_up();
+    aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
@@ -255,9 +268,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);
+    aws_event_stream_library_init(allocator);
+    aws_s3_library_init(allocator);
 
     cache_java_class_ids(env);
-
     atexit(s_jni_atexit);
 }
 
@@ -315,10 +329,15 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
 
     aws_global_thread_creator_shutdown_wait_for(timeout_in_seconds);
 
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_GENERAL,
-        "At shutdown, %u bytes remaining",
-        (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+    if (g_memory_tracing) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_GENERAL,
+            "At shutdown, %u bytes remaining",
+            (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+        if (g_memory_tracing > 1) {
+            aws_mem_tracer_dump(aws_jni_get_allocator());
+        }
+    }
 }
 
 JNIEXPORT

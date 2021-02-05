@@ -50,7 +50,7 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     env = temp_env;
 #endif
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     // Remove the ref that was probably keeping the Java event loop group alive.
     (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
@@ -92,6 +92,51 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed");
+        goto on_error;
+    }
+
+    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
+
+    return (jlong)elg;
+
+on_error:
+
+    aws_mem_release(allocator, callback_data);
+
+    return (jlong)NULL;
+}
+
+JNIEXPORT
+jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNewPinnedToCpuGroup(
+    JNIEnv *env,
+    jclass jni_elg,
+    jobject elg_jobject,
+    jint cpu_group,
+    jint num_threads) {
+    (void)jni_elg;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+
+    struct event_loop_group_cleanup_callback_data *callback_data =
+        aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
+    if (callback_data == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: shutdown callback data allocation failed");
+        goto on_error;
+    }
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_shutdown_callback_options shutdown_options = {
+        .shutdown_callback_fn = s_event_loop_group_cleanup_completion_callback,
+        .shutdown_callback_user_data = callback_data,
+    };
+
+    struct aws_event_loop_group *elg = aws_event_loop_group_new_default_pinned_to_cpu_group(
+        allocator, (uint16_t)num_threads, (uint16_t)cpu_group, &shutdown_options);
+    if (elg == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed");
         goto on_error;
     }
 

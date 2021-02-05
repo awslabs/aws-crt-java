@@ -21,6 +21,15 @@ struct aws_allocator *aws_jni_get_allocator(void);
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
+ * Checks whether or not an exception is pending on the stack and clears it.
+ * If an exception was pending, it is cleared.
+ *
+ * @return true if an exception was pending, false otherwise. If it returns true
+ * the pending exception was cleared.
+ ******************************************************************************/
+bool aws_jni_check_and_clear_exception(JNIEnv *env);
+
+/*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
  ******************************************************************************/
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);

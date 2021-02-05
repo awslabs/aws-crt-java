@@ -19,6 +19,9 @@ static void s_cache_http_request_body_stream(JNIEnv *env) {
 
     http_request_body_stream_properties.reset_position = (*env)->GetMethodID(env, cls, "resetPosition", "()Z");
     AWS_FATAL_ASSERT(http_request_body_stream_properties.reset_position);
+
+    http_request_body_stream_properties.get_length = (*env)->GetMethodID(env, cls, "getLength", "()J");
+    AWS_FATAL_ASSERT(http_request_body_stream_properties.get_length);
 }
 
 struct java_aws_signing_config_properties aws_signing_config_properties;
@@ -333,13 +336,183 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeadersDone);
 
-    http_stream_response_handler_properties.onResponseBody =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;[B)I");
+    http_stream_response_handler_properties.onResponseBody = (*env)->GetMethodID(
+        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseBody);
 
     http_stream_response_handler_properties.onResponseComplete =
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
+}
+
+struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
+
+static void s_cache_event_stream_server_listener_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerListener");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_server_listener_properties.onShutdownComplete =
+        (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(event_stream_server_listener_properties.onShutdownComplete);
+}
+
+struct java_event_stream_server_listener_handler_properties event_stream_server_listener_handler_properties;
+
+static void s_cache_event_stream_server_listener_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerListenerHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_server_listener_handler_properties.connCls =
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnection"));
+    AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.connCls);
+
+    event_stream_server_listener_handler_properties.newConnConstructor =
+        (*env)->GetMethodID(env, event_stream_server_listener_handler_properties.connCls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.newConnConstructor);
+
+    event_stream_server_listener_handler_properties.onNewConnection = (*env)->GetMethodID(
+        env,
+        cls,
+        "onNewConnection",
+        "(Lsoftware/amazon/awssdk/crt/eventstream/ServerConnection;I)Lsoftware/amazon/awssdk/crt/eventstream/"
+        "ServerConnectionHandler;");
+    AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.onNewConnection);
+    event_stream_server_listener_handler_properties.onConnectionShutdown = (*env)->GetMethodID(
+        env, cls, "onConnectionShutdownShim", "(Lsoftware/amazon/awssdk/crt/eventstream/ServerConnection;I)V");
+    AWS_FATAL_ASSERT(event_stream_server_listener_handler_properties.onConnectionShutdown);
+}
+
+struct java_event_stream_server_connection_handler_properties event_stream_server_connection_handler_properties;
+
+static void s_cache_event_stream_server_connection_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_server_connection_handler_properties.continuationCls = (*env)->NewGlobalRef(
+        env, (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionContinuation"));
+    AWS_FATAL_ASSERT(event_stream_server_connection_handler_properties.continuationCls);
+
+    event_stream_server_connection_handler_properties.newContinuationConstructor =
+        (*env)->GetMethodID(env, event_stream_server_connection_handler_properties.continuationCls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(event_stream_server_connection_handler_properties.newContinuationConstructor);
+
+    event_stream_server_connection_handler_properties.onProtocolMessage =
+        (*env)->GetMethodID(env, cls, "onProtocolMessage", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_server_connection_handler_properties.onProtocolMessage);
+
+    event_stream_server_connection_handler_properties.onIncomingStream = (*env)->GetMethodID(
+        env,
+        cls,
+        "onIncomingStream",
+        "(Lsoftware/amazon/awssdk/crt/eventstream/ServerConnectionContinuation;[B)Lsoftware/amazon/awssdk/crt/"
+        "eventstream/ServerConnectionContinuationHandler;");
+    AWS_FATAL_ASSERT(event_stream_server_connection_handler_properties.onIncomingStream);
+}
+
+struct java_event_stream_server_continuation_handler_properties event_stream_server_continuation_handler_properties;
+
+static void s_cache_event_stream_server_continuation_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ServerConnectionContinuationHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_server_continuation_handler_properties.onContinuationMessage =
+        (*env)->GetMethodID(env, cls, "onContinuationMessageShim", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_server_continuation_handler_properties.onContinuationMessage);
+    event_stream_server_continuation_handler_properties.onContinuationClosed =
+        (*env)->GetMethodID(env, cls, "onContinuationClosedShim", "()V");
+    AWS_FATAL_ASSERT(event_stream_server_continuation_handler_properties.onContinuationClosed);
+}
+
+struct java_event_stream_client_connection_handler_properties event_stream_client_connection_handler_properties;
+
+static void s_cache_event_stream_client_connection_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ClientConnectionHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_client_connection_handler_properties.onSetup =
+        (*env)->GetMethodID(env, cls, "onConnectionSetupShim", "(JI)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onSetup);
+    event_stream_client_connection_handler_properties.onProtocolMessage =
+        (*env)->GetMethodID(env, cls, "onProtocolMessage", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onProtocolMessage);
+    event_stream_client_connection_handler_properties.onClosed =
+        (*env)->GetMethodID(env, cls, "onConnectionClosedShim", "(I)V");
+    AWS_FATAL_ASSERT(event_stream_client_connection_handler_properties.onClosed);
+}
+
+struct java_event_stream_client_continuation_handler_properties event_stream_client_continuation_handler_properties;
+
+static void s_cache_event_stream_client_continuation_handler_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/ClientConnectionContinuationHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_client_continuation_handler_properties.onContinuationMessage =
+        (*env)->GetMethodID(env, cls, "onContinuationMessageShim", "([B[BII)V");
+    AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationMessage);
+    event_stream_client_continuation_handler_properties.onContinuationClosed =
+        (*env)->GetMethodID(env, cls, "onContinuationClosedShim", "()V");
+    AWS_FATAL_ASSERT(event_stream_client_continuation_handler_properties.onContinuationClosed);
+}
+
+struct java_event_stream_message_flush_properties event_stream_server_message_flush_properties;
+
+static void s_cache_event_stream_message_flush_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/eventstream/MessageFlushCallback");
+    AWS_FATAL_ASSERT(cls);
+
+    event_stream_server_message_flush_properties.callback = (*env)->GetMethodID(env, cls, "onCallbackInvoked", "(I)V");
+    AWS_FATAL_ASSERT(event_stream_server_message_flush_properties.callback);
+}
+
+struct java_cpu_info_properties cpu_info_properties;
+
+static void s_cache_cpu_info_properties(JNIEnv *env) {
+    cpu_info_properties.cpu_info_class =
+        (*env)->NewGlobalRef(env, (*env)->FindClass(env, "software/amazon/awssdk/crt/SystemInfo$CpuInfo"));
+    AWS_FATAL_ASSERT(cpu_info_properties.cpu_info_class);
+
+    cpu_info_properties.cpu_info_constructor =
+        (*env)->GetMethodID(env, cpu_info_properties.cpu_info_class, "<init>", "(IZ)V");
+}
+
+struct java_s3_client_properties s3_client_properties;
+
+static void s_cache_s3_client_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3Client");
+    AWS_FATAL_ASSERT(cls);
+
+    s3_client_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(s3_client_properties.onShutdownComplete);
+}
+
+struct java_s3_meta_request_properties s3_meta_request_properties;
+
+static void s_cache_s3_meta_request_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3MetaRequest");
+    AWS_FATAL_ASSERT(cls);
+
+    s3_meta_request_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(s3_meta_request_properties.onShutdownComplete);
+}
+
+struct java_s3_meta_request_response_handler_native_adapter_properties
+    s3_meta_request_response_handler_native_adapter_properties;
+
+static void s_cache_s3_meta_request_response_handler_native_adapter_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandlerNativeAdapter");
+    AWS_FATAL_ASSERT(cls);
+
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBody =
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
+
+    s3_meta_request_response_handler_native_adapter_properties.onFinished =
+        (*env)->GetMethodID(env, cls, "onFinished", "(I)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
+
+    s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
+        (*env)->GetMethodID(env, cls, "onResponseHeaders", "(ILjava/nio/ByteBuffer;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -412,6 +585,17 @@ static void s_cache_aws_signing_result(JNIEnv *env) {
     AWS_FATAL_ASSERT(aws_signing_result_properties.signature_field_id);
 }
 
+struct java_http_header_properties http_header_properties;
+
+static void s_cache_http_header(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
+    AWS_FATAL_ASSERT(cls);
+    http_header_properties.http_header_class = (*env)->NewGlobalRef(env, cls);
+
+    http_header_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "([B[B)V");
+    AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -430,9 +614,21 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_client_connection_manager(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
+    s_cache_event_stream_server_listener_properties(env);
+    s_cache_event_stream_server_listener_handler_properties(env);
+    s_cache_event_stream_server_connection_handler_properties(env);
+    s_cache_event_stream_server_continuation_handler_properties(env);
+    s_cache_event_stream_client_connection_handler_properties(env);
+    s_cache_event_stream_client_continuation_handler_properties(env);
+    s_cache_event_stream_message_flush_properties(env);
+    s_cache_cpu_info_properties(env);
+    s_cache_s3_client_properties(env);
+    s_cache_s3_meta_request_properties(env);
+    s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
     s_cache_ecc_key_pair(env);
     s_cache_crt(env);
     s_cache_aws_signing_result(env);
+    s_cache_http_header(env);
 }

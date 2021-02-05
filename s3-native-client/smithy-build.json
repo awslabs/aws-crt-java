@@ -1,0 +1,10 @@
+{
+    "version": "1.0",
+    "plugins": {
+        "crt": {
+            "mappings": {
+                "Error": "S3Error"
+            }
+        }
+    }
+}

@@ -1,0 +1,105 @@
+
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+package software.amazon.awssdk.crt.s3;
+
+import java.nio.charset.Charset;
+import java.util.concurrent.CompletableFuture;
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
+
+public class S3Client extends CrtResource {
+
+    private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
+
+    private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+
+    public S3Client(S3ClientOptions options) throws CrtRuntimeException {
+        TlsContext tlsCtx = options.getTlsContext();
+
+        acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8), 
+                options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
+                options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
+                options.getCredentialsProvider().getNativeHandle(),
+                options.getPartSize(), options.getThroughputTargetGbps()));
+
+        addReferenceTo(options.getClientBootstrap());
+        addReferenceTo(options.getCredentialsProvider());
+    }
+
+    private void onShutdownComplete() {
+        releaseReferences();
+
+        this.shutdownComplete.complete(null);
+    }
+
+    public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
+
+        if(options.getHttpRequest() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+            return null;
+        }
+
+        if(options.getResponseHandler() == null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client, "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
+            return null;
+        }
+
+        S3MetaRequest metaRequest = new S3MetaRequest();
+        S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
+                options.getResponseHandler());
+
+        byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
+
+
+        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
+                options.getMetaRequestType().getNativeValue(), httpRequestBytes,
+                options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
+
+        metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
+
+        return metaRequest;
+    }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the
+     * native handle is released or if it waits. Resources that wait are responsible
+     * for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() {
+        return false;
+    }
+
+    /**
+     * Cleans up the native resources associated with this client. The client is
+     * unusable after this call
+     */
+    @Override
+    protected void releaseNativeHandle() {
+        if (!isNull()) {
+            s3ClientDestroy(getNativeHandle());
+        }
+    }
+
+    public CompletableFuture<Void> getShutdownCompleteFuture() {
+        return shutdownComplete;
+    }
+
+    /*******************************************************************************
+     * native methods
+     ******************************************************************************/
+    private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
+            long tlsContext,
+            long signingConfig, long partSize, double throughputTargetGbps) throws CrtRuntimeException;
+
+    private static native void s3ClientDestroy(long client);
+
+    private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, int metaRequestType,
+            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
+}

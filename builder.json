@@ -7,13 +7,16 @@
         "mvn -B compile"
     ],
     "test_steps": [
-        "mvn -B test -DredirectTestOutputToFile=true -DreuseForks=false"
+        "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5"
     ],
     "imports": [
         "JDK8"
     ],
     "build_dir": "target/cmake-build",
     "build_env": {
+        "JAVA_HOME": "{java_home}"
+    },
+    "test_env": {
         "JAVA_HOME": "{java_home}"
     },
     "hosts": {
@@ -34,10 +37,11 @@
                 "s2n"
             ],
             "!build_steps": [
+                "{source_dir}/gradlew :s3-native-client:build -x test -PlibcryptoPath={source_dir}/{libcrypto_path}",
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
             ],
             "architectures": {
                 "armv6": {
@@ -90,7 +94,7 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B test -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
             ],
             "architectures": {
                 "armv7": {
@@ -133,7 +137,7 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B test -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
             ]
         }
     }

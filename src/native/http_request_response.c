@@ -9,6 +9,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
+#include <aws/common/atomics.h>
 #include <aws/common/mutex.h>
 #include <aws/http/connection.h>
 #include <aws/http/http.h>
@@ -60,6 +61,11 @@ struct http_stream_callback_data {
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
+
+    /*
+     * Unactivated streams must have their callback data destroyed at release time
+     */
+    struct aws_atomic_var activated;
 };
 
 static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
@@ -104,6 +110,8 @@ static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env,
     callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
     AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
     AWS_FATAL_ASSERT(!aws_byte_buf_init(&callback->headers_buf, allocator, 1024));
+
+    aws_atomic_init_int(&callback->activated, 0);
 
     return callback;
 }
@@ -158,7 +166,7 @@ static int s_on_incoming_header_block_done_fn(
         (jint)block_type,
         jni_headers_buf);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         (*env)->DeleteLocalRef(env, jni_headers_buf);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
@@ -174,7 +182,7 @@ static int s_on_incoming_header_block_done_fn(
         callback->java_http_stream,
         jni_block_type);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
@@ -187,8 +195,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
     size_t total_window_increment = 0;
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
-    jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)data->len);
-    (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)data->len, (const signed char *)data->ptr);
+    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, data->ptr, data->len);
 
     jint window_increment = (*env)->CallIntMethod(
         env,
@@ -199,7 +206,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     (*env)->DeleteLocalRef(env, jni_payload);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onResponseBody", (void *)stream);
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
@@ -232,12 +239,39 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         callback->java_http_stream,
         jErrorCode);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         /* Close the Connection if the Java Callback throws an Exception */
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
     http_stream_callback_destroy(env, callback);
+}
+
+jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_headers *headers) {
+    (void)headers;
+    jobjectArray ret;
+    const size_t header_count = aws_http_headers_count(headers);
+
+    ret = (jobjectArray)(*env)->NewObjectArray(
+        env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
+
+    for (size_t index = 0; index < header_count; index += 1) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, index, &header);
+        jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
+        jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
+
+        jobject java_http_header = (*env)->NewObject(
+            env,
+            http_header_properties.http_header_class,
+            http_header_properties.constructor_method_id,
+            header_name,
+            header_value);
+
+        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
+    }
+
+    return (ret);
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -340,7 +374,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     /* global ref this because now the callbacks will be firing, and they will release their reference when the
      * stream callback sequence completes. */
     cb_data->java_http_stream = (*env)->NewGlobalRef(env, j_http_stream);
+    aws_atomic_store_int(&cb_data->activated, 1);
     if (aws_http_stream_activate(stream)) {
+        aws_atomic_store_int(&cb_data->activated, 0);
         (*env)->DeleteGlobalRef(env, cb_data->java_http_stream);
         aws_jni_throw_runtime_exception(
             env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
@@ -363,6 +399,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     }
     AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Releasing Stream. stream: %p", (void *)stream);
     aws_http_stream_release(stream);
+
+    size_t not_activated = 0;
+    if (aws_atomic_compare_exchange_int(&cb_data->activated, &not_activated, 1)) {
+        http_stream_callback_destroy(env, cb_data);
+    }
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamGetResponseStatusCode(

@@ -144,7 +144,7 @@ static void s_complete_signing_exceptionally(
         completable_future_properties.complete_exceptionally_method_id,
         crt_exception);
 
-    (*env)->ExceptionCheck(env);
+    aws_jni_check_and_clear_exception(env);
     (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
 }
@@ -182,7 +182,7 @@ static void s_aws_complete_signing_result(
 
     /* I have no idea what we should do here... but the JVM really doesn't like us NOT calling this function after
        we cross the barrier. */
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
 done:
 
@@ -254,7 +254,7 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
 
     bool result = (*env)->CallBooleanMethod(
         env, callback_data->java_sign_header_predicate, predicate_properties.test_method_id, (jobject)header_name);
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     (*env)->DeleteLocalRef(env, header_name);
 
@@ -318,9 +318,7 @@ static int s_build_signing_config(
     if (provider != NULL) {
         config->credentials_provider =
             (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
-        if ((*env)->ExceptionCheck(env)) {
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-        }
+        aws_jni_check_and_clear_exception(env);
     }
 
     jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
@@ -332,7 +330,7 @@ static int s_build_signing_config(
     config->expiration_in_seconds =
         (uint64_t)(*env)->GetLongField(env, java_config, aws_signing_config_properties.expiration_in_seconds_field_id);
 
-    if ((*env)->ExceptionCheck(env)) {
+    if (aws_jni_check_and_clear_exception(env)) {
         return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 

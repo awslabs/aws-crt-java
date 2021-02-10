@@ -5,7 +5,11 @@
 
 package software.amazon.awssdk.crt.http;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An HttpStream represents a single Http Request/Response pair within a HttpClientConnection, and wraps the native resources
@@ -14,6 +18,10 @@ import software.amazon.awssdk.crt.CrtResource;
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
  */
 public class HttpStream extends CrtResource {
+
+    public interface HttpStreamWriteChunkCompletionCallback {
+        void onChunkCompleted(int errorCode);
+    }
 
     /* Native code will call this constructor during HttpClientConnection.makeRequest() */
     protected HttpStream(long ptr) {
@@ -56,6 +64,57 @@ public class HttpStream extends CrtResource {
     }
 
     /**
+     * Use only for Http 1.1 Chunked Encoding. At some later point we may adapt this interface for H2, but not yet. If
+     * using chunked encoding, remember, you'll need to send an empty chunk to signal the end of your stream. You must call
+     * activate() before using this function.
+     *
+     * @param chunkData chunk of data to send.
+     * @param chunkCompletionCallback Invoked upon the data being flushed to the wire or an error occurring.
+     */
+    public void writeChunk(final byte[] chunkData, final HttpStreamWriteChunkCompletionCallback chunkCompletionCallback) {
+        if (chunkCompletionCallback == null) {
+            throw new IllegalArgumentException("You must supply a chunkCompletionCallback");
+        }
+
+        if (chunkData == null) {
+            throw new IllegalArgumentException("You must provide a non-null chunkData");
+        }
+
+        int error = httpStreamWriteChunk(getNativeHandle(), chunkData, chunkCompletionCallback);
+
+        if (error != 0) {
+            int lastError = CRT.awsLastError();
+            throw new CrtRuntimeException(lastError);
+        }
+    }
+
+    /**
+     * Use only for Http 1.1 Chunked Encoding. At some later point we may adapt this interface for H2, but not yet. If
+     * using chunked encoding, remember, you'll need to send an empty chunk to signal the end of your stream. You must call
+     * activate() before using this function.
+     *
+     * @param chunkData chunk of data to send.
+     * @return completable future which will complete upon the data being flushed to the wire or an error occurring.
+     */
+    public CompletableFuture<Void> writeChunk(final byte[] chunkData) {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+
+        HttpStreamWriteChunkCompletionCallback completionCallback = new HttpStreamWriteChunkCompletionCallback() {
+            @Override
+            public void onChunkCompleted(int errorCode) {
+                if (errorCode == 0) {
+                    completionFuture.complete(null);
+                } else {
+                    completionFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                }
+            }
+        };
+
+        writeChunk(chunkData, completionCallback);
+        return completionFuture;
+    }
+
+    /**
      * Activates the client stream.
      */
     public void activate() {
@@ -79,4 +138,5 @@ public class HttpStream extends CrtResource {
     private static native void httpStreamIncrementWindow(long http_stream, int window_size);
     private static native void httpStreamActivate(long http_stream, HttpStream streamObj);
     private static native int  httpStreamGetResponseStatusCode(long http_stream);
+    private static native int httpStreamWriteChunk(long http_stream, byte[] chunkData, HttpStreamWriteChunkCompletionCallback completionCallback);
 }

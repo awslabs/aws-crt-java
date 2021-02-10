@@ -104,7 +104,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         }
     }
 
-    public TestHttpResponse getResponse(URI uri, HttpRequest request) throws Exception {
+    public TestHttpResponse getResponse(URI uri, HttpRequest request, byte[] chunkedData) throws Exception {
         boolean actuallyConnected = false;
 
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
@@ -146,7 +146,14 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
                     }
                 };
 
-                conn.makeRequest(request, streamHandler).activate();
+                HttpStream stream = conn.makeRequest(request, streamHandler);
+                stream.activate();
+
+                if (chunkedData != null) {
+                    stream.writeChunk(chunkedData).get(5, TimeUnit.SECONDS);
+                    byte[] emptyData = new byte[0];
+                    stream.writeChunk(emptyData).get(5, TimeUnit.SECONDS);
+                }
                 // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);
             }
@@ -171,31 +178,46 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         return false;
     }
 
-    public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody, int expectedStatus) throws Exception {
+    public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody, boolean useChunkedEncoding, int expectedStatus) throws Exception {
         URI uri = new URI(endpoint);
 
-        HttpHeader[] requestHeaders =
-                new HttpHeader[]{
-                    new HttpHeader("Host", uri.getHost()),
-                    new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
-                };
+        HttpHeader[] requestHeaders = null;
 
-        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
-        HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
-            @Override
-            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
-                transferData(bodyBytesIn, bodyBytesOut);
+        if (!useChunkedEncoding) {
+            requestHeaders =
+                    new HttpHeader[]{
+                            new HttpHeader("Host", uri.getHost()),
+                            new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length))
+                    };
+        } else {
+            requestHeaders =
+                    new HttpHeader[]{
+                            new HttpHeader("Host", uri.getHost()),
+                            new HttpHeader("Transfer-Encoding", "chunked")
+                    };
+        }
 
-                return bodyBytesIn.remaining() == 0;
-            }
+        HttpRequestBodyStream bodyStream = null;
 
-            @Override
-            public boolean resetPosition() {
-                bodyBytesIn.position(0);
+        if (!useChunkedEncoding) {
+            final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
 
-                return true;
-            }
-        };
+            bodyStream = new HttpRequestBodyStream() {
+                @Override
+                public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                    transferData(bodyBytesIn, bodyBytesOut);
+
+                    return bodyBytesIn.remaining() == 0;
+                }
+
+                @Override
+                public boolean resetPosition() {
+                    bodyBytesIn.position(0);
+
+                    return true;
+                }
+            };
+        }
 
         HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
 
@@ -203,12 +225,18 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         int numAttempts = 0;
         do {
 
-            request.getBodyStream().resetPosition();
+            if (request.getBodyStream() != null) {
+                request.getBodyStream().resetPosition();
+            }
 
             numAttempts++;
             response = null;
             try {
-                response = getResponse(uri, request);
+                if (useChunkedEncoding) {
+                    response = getResponse(uri, request, requestBody.getBytes(UTF8));
+                } else {
+                    response = getResponse(uri, request, null);
+                }
             } catch (Exception ex) {
                 //do nothing just let it retry
             }
@@ -237,47 +265,47 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
     @Test
     public void testHttpDelete() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, 200);
-        testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, 405);
-        testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, 405);
-        testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+        testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, false,200);
+        testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
+        testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
+        testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
     }
 
 
     @Test
     public void testHttpGet() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, 200);
-        testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, 405);
-        testRequest("GET", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+        testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
+        testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, false,200);
+        testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, false,405);
+        testRequest("GET", "https://httpbin.org", "/put", EMPTY_BODY, false,405);
     }
 
     @Test
     public void testHttpPost() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, 405);
-        testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, 200);
-        testRequest("POST", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+        testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
+        testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
+        testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, false,200);
+        testRequest("POST", "https://httpbin.org", "/put", EMPTY_BODY, false,405);
     }
 
     @Test
     public void testHttpPut() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, 405);
-        testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, 405);
-        testRequest("PUT", "https://httpbin.org", "/put", EMPTY_BODY, 200);
+        testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
+        testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
+        testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
+        testRequest("PUT", "https://httpbin.org", "/put", EMPTY_BODY, false,200);
     }
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, 200);
-        testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, 300);
-        testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
-        testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, 500);
+        testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, false,200);
+        testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, false, 300);
+        testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, false, 400);
+        testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, false,500);
     }
 
 
@@ -285,7 +313,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
     @Test
     public void testHttpDownload() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com", "/http_test_doc.txt", EMPTY_BODY, 200);
+        TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com", "/http_test_doc.txt", EMPTY_BODY, false,200);
 
         ByteBuffer body = response.bodyBuffer;
         body.flip(); //Flip from Write mode to Read mode
@@ -305,11 +333,10 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
                     .replaceAll("^\"|\"$", ""); // Remove quotes from front and back
     }
 
-    @Test
-    public void testHttpUpload() throws Exception {
+    private void testHttpUpload(boolean chunked) throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         String bodyToSend = TEST_DOC_LINE;
-        TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, 200);
+        TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, chunked,200);
 
         // Get the Body bytes that were echoed back to us
         String body = response.getBody();
@@ -352,6 +379,18 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         Assert.assertNotNull("Response Body did not contain \"data\" JSON key:\n" + body, echoedBody);
         Assert.assertEquals(bodyToSend, echoedBody);
+    }
+
+    @Test
+    public void testHttpUpload() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        testHttpUpload(false);
+    }
+
+    @Test
+    public void testHttpUploadChunked() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        testHttpUpload(true);
     }
 
     @Test

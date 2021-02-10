@@ -155,6 +155,12 @@ struct java_http_stream_response_handler_native_adapter_properties {
 };
 extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
+/* HttpStreamWriteChunkCompletionCallback */
+struct java_http_stream_write_chunk_completion_properties {
+    jmethodID callback;
+};
+extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
+
 /* EventStreamServerListener */
 struct java_event_stream_server_listener_properties {
     jmethodID onShutdownComplete;

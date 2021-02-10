@@ -391,6 +391,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jclass jni_class,
     jlong jni_cb_data,
     jbyteArray chunk_data,
+    jboolean is_final_chunk,
     jobject completion_callback) {
     (void)jni_class;
 
@@ -420,6 +421,16 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     if (aws_http1_stream_write_chunk(stream, &chunk_options)) {
         s_cleanup_chunked_callback_data(env, chunked_callback_data);
         return AWS_OP_ERR;
+    }
+
+    if (is_final_chunk) {
+        struct aws_http1_chunk_options final_chunk_options = {
+            .chunk_data_size = 0,
+        };
+
+        if (aws_http1_stream_write_chunk(stream, &final_chunk_options)) {
+            return AWS_OP_ERR;
+        }
     }
 
     return AWS_OP_SUCCESS;

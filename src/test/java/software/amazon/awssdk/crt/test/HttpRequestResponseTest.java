@@ -150,9 +150,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
                 stream.activate();
 
                 if (chunkedData != null) {
-                    stream.writeChunk(chunkedData).get(5, TimeUnit.SECONDS);
-                    byte[] emptyData = new byte[0];
-                    stream.writeChunk(emptyData).get(5, TimeUnit.SECONDS);
+                    stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
                 }
                 // Give the request up to 60 seconds to complete, otherwise throw a TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);

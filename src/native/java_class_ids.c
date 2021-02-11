@@ -345,6 +345,17 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
 }
 
+struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
+
+static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStream$HttpStreamWriteChunkCompletionCallback");
+    AWS_FATAL_ASSERT(cls);
+
+    http_stream_write_chunk_completion_properties.callback = (*env)->GetMethodID(env, cls, "onChunkCompleted", "(I)V");
+    AWS_FATAL_ASSERT(http_stream_write_chunk_completion_properties.callback);
+}
+
 struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
 
 static void s_cache_event_stream_server_listener_properties(JNIEnv *env) {
@@ -574,6 +585,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_client_connection_manager(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
+    s_cache_http_stream_write_chunk_completion_properties(env);
     s_cache_event_stream_server_listener_properties(env);
     s_cache_event_stream_server_listener_handler_properties(env);
     s_cache_event_stream_server_connection_handler_properties(env);

@@ -18,7 +18,7 @@ public final class PackageInfo {
 
         public Version(String v) {
             version = v != null ? v : "UNKNOWN";
-            
+
             int dashIdx = version.indexOf('-');
             if (dashIdx != -1) {
                 tag = version.substring(dashIdx + 1);
@@ -48,7 +48,7 @@ public final class PackageInfo {
             return 0;
         }
     }
-    
+
     public Version version;
 
     public PackageInfo() {
@@ -59,9 +59,9 @@ public final class PackageInfo {
         }
 
         Package pkg = CRT.class.getPackage();
-        String pkgVersion = pkg.getSpecificationVersion();
+        String pkgVersion = pkg.getImplementationVersion();
         if (pkgVersion == null) {
-            pkgVersion = pkg.getImplementationVersion();
+            pkgVersion = pkg.getSpecificationVersion();
         }
         // There is no JAR/manifest during internal tests
         if (pkgVersion == null) {
@@ -69,5 +69,5 @@ public final class PackageInfo {
         }
         version = new Version(pkgVersion);
     }
-    
+
 }

@@ -8,12 +8,10 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -25,7 +23,8 @@ import java.util.function.Consumer;
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
-public class MqttClientConnection extends CrtResource {
+public class MqttClientConnection extends CrtResource implements MqttPublishInterface, MqttSubscribeHandlerInterface,
+        MqttSubscribeInterface {
 
     private MqttConnectionConfig config;
 
@@ -51,7 +50,7 @@ public class MqttClientConnection extends CrtResource {
     /**
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
-     * 
+     *
      * @param config Configuration to use
      * @throws MqttException If mqttClient is null
      */
@@ -209,14 +208,7 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Subscribes to a topic
-     *
-     * @param topic   The topic to subscribe to
-     * @param qos     {@link QualityOfService} for this subscription
-     * @param handler A handler which can recieve an MqttMessage when a message is
-     *                published to the topic
-     * @return Future result is the packet/message id associated with the subscribe
-     *         operation
+     * {@inheritDoc}
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
@@ -238,13 +230,7 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Subscribes to a topic without a handler (messages will only be delivered to
-     * the OnMessage handler)
-     *
-     * @param topic The topic to subscribe to
-     * @param qos   {@link QualityOfService} for this subscription
-     * @return Future result is the packet/message id associated with the subscribe
-     *         operation
+     * {@inheritDoc}
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos) {
         return subscribe(topic, qos, null);
@@ -280,15 +266,7 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Publishes a message to a topic
-     *
-     * @param message The message to publish. The message contains the topic to
-     *                publish to.
-     * @param qos     The {@link QualityOfService} to use for the publish operation
-     * @param retain  Whether or not the message should be retained by the broker to
-     *                be delivered to future subscribers
-     * @return Future value is the packet/message id associated with the publish
-     *         operation
+     * {@inheritDoc}
      */
     public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
         CompletableFuture<Integer> future = new CompletableFuture<>();

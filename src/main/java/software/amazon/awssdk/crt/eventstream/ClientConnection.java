@@ -67,7 +67,7 @@ public class ClientConnection extends CrtResource {
             if (errorCode == 0) {
                 messageFlush.complete(null);
             } else {
-                messageFlush.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+                messageFlush.completeExceptionally(new CrtRuntimeException(errorCode));
             }
         });
 
@@ -96,7 +96,7 @@ public class ClientConnection extends CrtResource {
 
         if (result != 0) {
             int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode));
+            throw new CrtRuntimeException(errorCode);
         }
     }
 
@@ -114,7 +114,7 @@ public class ClientConnection extends CrtResource {
 
         if (continuationHandle == 0) {
             int lastError = CRT.awsLastError();
-            throw new CrtRuntimeException(lastError, CRT.awsErrorString(lastError));
+            throw new CrtRuntimeException(lastError);
         }
 
         ClientConnectionContinuation connectionContinuation = new ClientConnectionContinuation(continuationHandle);
@@ -150,7 +150,7 @@ public class ClientConnection extends CrtResource {
                 if (errorCode == 0) {
                     future.complete(null);
                 } else {
-                    future.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorName(errorCode)));
+                    future.completeExceptionally(new CrtRuntimeException(errorCode));
                 }
             }
 
@@ -171,7 +171,7 @@ public class ClientConnection extends CrtResource {
 
         if (resultCode != 0) {
             int lastError = CRT.awsLastError();
-            throw new CrtRuntimeException(lastError, CRT.awsErrorName(lastError));
+            throw new CrtRuntimeException(lastError);
         }
 
         return future;

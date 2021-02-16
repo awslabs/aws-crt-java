@@ -37,5 +37,5 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_Process_processSetMaxIOHandlesS
     (void)env;
     (void)jni_crt_class;
     (void)max_handles;
-    return aws_raise_error(AWS_ERROR_UNIMPLEMENTED) == AWS_OP_SUCCESS;//aws_set_soft_limit_io_handles((size_t)max_handles) == AWS_OP_SUCCESS;
+    return aws_set_soft_limit_io_handles((size_t)max_handles) == AWS_OP_SUCCESS;
 }

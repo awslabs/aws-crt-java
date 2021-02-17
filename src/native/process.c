@@ -36,5 +36,6 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_Process_processSetMaxIOHandlesS
     jlong max_handles) {
     (void)env;
     (void)jni_crt_class;
+    (void)max_handles;
     return aws_set_soft_limit_io_handles((size_t)max_handles) == AWS_OP_SUCCESS;
 }

@@ -15,7 +15,7 @@ import software.amazon.awssdk.crt.Process;
 
 public class ProcessTest extends CrtTestFixture  {
     public ProcessTest() {}
-    
+
     @Test
     public void testGetPid() {
         int pid = Process.getPid();
@@ -43,7 +43,7 @@ public class ProcessTest extends CrtTestFixture  {
             Process.setMaxIOHandlesSoftLimit(softLimit - 1);
         } catch (CrtRuntimeException ex) {
             // make sure it's the not-implemented exception if it was thrown.
-            assertEquals(36, ex.errorCode);
+            assertEquals("AWS_ERROR_UNIMPLEMENTED", ex.errorName);
         }
     }
 };

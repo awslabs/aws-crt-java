@@ -169,7 +169,7 @@ static void s_cache_message_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttClientConnection$MessageHandler");
     AWS_FATAL_ASSERT(cls);
 
-    message_handler_properties.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;[B)V");
+    message_handler_properties.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;[BZIZ)V");
     AWS_FATAL_ASSERT(message_handler_properties.deliver);
 }
 

@@ -566,7 +566,11 @@ static void s_on_subscription_delivered(
     struct aws_mqtt_client_connection *connection,
     const struct aws_byte_cursor *topic,
     const struct aws_byte_cursor *payload,
+    bool dup,
+    enum aws_mqtt_qos qos,
+    bool retain,
     void *user_data) {
+
     AWS_FATAL_ASSERT(connection);
     AWS_FATAL_ASSERT(topic);
     AWS_FATAL_ASSERT(payload);
@@ -583,7 +587,8 @@ static void s_on_subscription_delivered(
 
     jstring jni_topic = aws_jni_string_from_cursor(env, topic);
 
-    (*env)->CallVoidMethod(env, callback->async_callback, message_handler_properties.deliver, jni_topic, jni_payload);
+    (*env)->CallVoidMethod(
+        env, callback->async_callback, message_handler_properties.deliver, jni_topic, jni_payload, dup, qos, retain);
 
     (*env)->DeleteLocalRef(env, jni_payload);
     (*env)->DeleteLocalRef(env, jni_topic);

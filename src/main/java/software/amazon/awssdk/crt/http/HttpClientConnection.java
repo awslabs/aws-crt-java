@@ -49,7 +49,7 @@ public class HttpClientConnection extends CrtResource {
             request.getBodyStream(),
             new HttpStreamResponseHandlerNativeAdapter(streamHandler));
         if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError(), "HttpStream creation failed");
+            throw new CrtRuntimeException(awsLastError());
         }
 
         return stream;

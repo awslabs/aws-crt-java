@@ -328,7 +328,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
     (void)env;
     (void)jni_crt_resource_class;
 
-    aws_thread_set_managed_join_timeout_ns(aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+    aws_thread_set_managed_join_timeout_ns(
+        aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
     aws_thread_join_all_managed();
 
     if (g_memory_tracing) {

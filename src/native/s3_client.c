@@ -76,11 +76,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    struct aws_signing_config_aws signing_config = {0};
+    struct aws_signing_config_aws signing_config;
     aws_s3_init_default_signing_config(&signing_config, region, credentials_provider);
 
     struct aws_tls_connection_options *tls_options = NULL;
-    struct aws_tls_connection_options tls_options_storage = {0};
+    struct aws_tls_connection_options tls_options_storage;
+    AWS_ZERO_STRUCT(tls_options_storage);
     if (jni_tls_ctx) {
         struct aws_tls_ctx *tls_ctx = (void *)jni_tls_ctx;
         tls_options = &tls_options_storage;

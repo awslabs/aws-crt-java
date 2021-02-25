@@ -36,6 +36,19 @@ struct aws_credentials_provider_callback_data {
     jobject jni_delegate_credential_handler;
 };
 
+static void s_callback_data_clean_up(
+    JNIEnv *env,
+    struct aws_allocator *allocator,
+    struct aws_credentials_provider_callback_data *callback_data) {
+
+    (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
+    if (callback_data->jni_delegate_credential_handler != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->jni_delegate_credential_handler);
+    }
+
+    aws_mem_release(allocator, callback_data);
+}
+
 static void s_on_shutdown_complete(void *user_data) {
     struct aws_credentials_provider_callback_data *callback_data = user_data;
 
@@ -53,14 +66,9 @@ static void s_on_shutdown_complete(void *user_data) {
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
-    (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
-    if (callback_data->jni_delegate_credential_handler != NULL) {
-        (*env)->DeleteGlobalRef(env, callback_data->jni_delegate_credential_handler);
-    }
-
-    // We're done with this callback data, free it.
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, callback_data);
+    // We're done with this callback data, clean it up.
+    s_callback_data_clean_up(env, allocator, callback_data);
 }
 
 JNIEXPORT jlong JNICALL
@@ -95,7 +103,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_static(allocator, &options);
     if (provider == NULL) {
-        aws_mem_release(allocator, callback_data);
+        s_callback_data_clean_up(env, allocator, callback_data);
         aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
     } else {
         callback_data->provider = provider;
@@ -137,7 +145,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_chain_default(allocator, &options);
     if (provider == NULL) {
-        aws_mem_release(allocator, callback_data);
+        s_callback_data_clean_up(env, allocator, callback_data);
         aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
     } else {
         callback_data->provider = provider;
@@ -210,7 +218,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_x509(allocator, &options);
     if (provider == NULL) {
-        aws_mem_release(allocator, callback_data);
+        s_callback_data_clean_up(env, allocator, callback_data);
         aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
     } else {
         callback_data->provider = provider;
@@ -264,7 +272,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_cached(allocator, &options);
     if (provider == NULL) {
-        aws_mem_release(allocator, callback_data);
+        s_callback_data_clean_up(env, allocator, callback_data);
         aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
     } else {
         callback_data->provider = provider;
@@ -354,7 +362,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_delegate(allocator, &options);
     if (provider == NULL) {
-        aws_mem_release(allocator, callback_data);
+        s_callback_data_clean_up(env, allocator, callback_data);
         aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
     } else {
         callback_data->provider = provider;

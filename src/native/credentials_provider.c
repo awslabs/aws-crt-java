@@ -282,12 +282,17 @@ static int s_credentials_provider_delegate_get_credentials(
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    int return_value = AWS_OP_ERR;
 
     // Fetch credentials from java
     jobject java_credentials = (*env)->CallObjectMethod(
         env,
         callback_data->jni_delegate_credential_handler,
         credentials_handler_properties.on_handler_get_credentials_method_id);
+    if (aws_jni_check_and_clear_exception(env)) {
+        goto call_failed;
+    }
+
     jbyteArray java_access_key_id =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id);
     jbyteArray java_secret_access_key =
@@ -303,11 +308,19 @@ static int s_credentials_provider_delegate_get_credentials(
     if (!native_credentials) {
         aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
         // error has been raised from creating function
-        return AWS_OP_ERR;
+        goto done;
     }
     callback(native_credentials, AWS_ERROR_SUCCESS, callback_user_data);
     aws_credentials_release(native_credentials);
-    return AWS_OP_SUCCESS;
+
+    return_value = AWS_OP_SUCCESS;
+done:
+    aws_jni_byte_cursor_from_jbyteArray_release(env, java_access_key_id, access_key_id);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, java_secret_access_key, secret_access_key);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
+call_failed:
+    (*env)->DeleteLocalRef(env, java_credentials);
+    return return_value;
 }
 
 JNIEXPORT jlong JNICALL

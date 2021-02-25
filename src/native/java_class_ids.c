@@ -260,6 +260,18 @@ static void s_cache_credentials(JNIEnv *env) {
     AWS_FATAL_ASSERT(credentials_properties.session_token_field_id);
 }
 
+struct java_credentials_handler_properties credentials_handler_properties;
+
+static void s_cache_credentials_handler(JNIEnv *env) {
+    jclass handler_cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/DelegateCredentialsHandler");
+    AWS_FATAL_ASSERT(handler_cls);
+
+    credentials_handler_properties.on_handler_get_credentials_method_id = (*env)->GetMethodID(
+        env, handler_cls, "getCredentials", "()Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;");
+    AWS_FATAL_ASSERT(credentials_handler_properties.on_handler_get_credentials_method_id);
+}
+
 struct java_async_callback_properties async_callback_properties;
 
 static void s_cache_async_callback(JNIEnv *env) {
@@ -579,6 +591,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_byte_buffer(env);
     s_cache_credentials_provider(env);
     s_cache_credentials(env);
+    s_cache_credentials_handler(env);
     s_cache_async_callback(env);
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);

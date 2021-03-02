@@ -36,10 +36,6 @@
         <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
         <cmake.buildconfig>${cmake.buildtype}</cmake.buildconfig>
         <cmake.binaries>target/cmake-build</cmake.binaries>
-        <cmake.libcrypto_include>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_include>
-        <cmake.libcrypto_shared>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_shared>
-        <cmake.libcrypto_static>-DLIBCRYPTO_NOT_USED=1</cmake.libcrypto_static>
-        <libcrypto.path></libcrypto.path>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -113,19 +109,6 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
-        <profile>
-            <id>use-custom-libcrypto</id>
-            <activation>
-                <property>
-                    <name>libcrypto.path</name>
-                </property>
-            </activation>
-            <properties>
-                <cmake.libcrypto_include>-DLibCrypto_INCLUDE_DIR=${libcrypto.path}/include</cmake.libcrypto_include>
-                <cmake.libcrypto_shared>-DLibCrypto_SHARED_LIBRARY=${libcrypto.path}/lib/libcrypto.so</cmake.libcrypto_shared>
-                <cmake.libcrypto_static>-DLibCrypto_STATIC_LIBRARY=${libcrypto.path}/lib/libcrypto.a</cmake.libcrypto_static>
-            </properties>
-        </profile>
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>
@@ -162,9 +145,6 @@
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
-                                        <argument>${cmake.libcrypto_include}</argument>
-                                        <argument>${cmake.libcrypto_shared}</argument>
-                                        <argument>${cmake.libcrypto_static}</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>

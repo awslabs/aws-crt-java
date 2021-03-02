@@ -32,3 +32,6 @@
 	path = crt/aws-c-s3
 	url = https://github.com/awslabs/aws-c-s3.git
 
+[submodule "crt/aws-lc"]
+	path = crt/aws-lc
+	url = https://github.com/awslabs/aws-lc.git

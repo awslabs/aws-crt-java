@@ -19,16 +19,19 @@ import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
-public class CredentialsProviderTest extends CrtTestFixture  {
+public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
 
-    public CredentialsProviderTest() {}
+    public CredentialsProviderTest() {
+    }
 
     @Test
     public void testCreateDestroyStatic() {
@@ -63,12 +66,11 @@ public class CredentialsProviderTest extends CrtTestFixture  {
         }
     }
 
-
     @Test
     public void testCreateDestroyDefaultChain() {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-             HostResolver resolver = new HostResolver(eventLoopGroup);
-             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -84,16 +86,17 @@ public class CredentialsProviderTest extends CrtTestFixture  {
     @Test
     public void testGetCredentialsDefaultChain() {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-             HostResolver resolver = new HostResolver(eventLoopGroup);
-             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
             try (DefaultChainCredentialsProvider provider = builder.build()) {
                 CompletableFuture<Credentials> future = provider.getCredentials();
                 /*
-                 * This may or may not succeed depending on the test environment and setting up the environment to force the test
-                 * to always succeed or fail would mean modifying the environment from Java, which is gross.
+                 * This may or may not succeed depending on the test environment and setting up
+                 * the environment to force the test to always succeed or fail would mean
+                 * modifying the environment from Java, which is gross.
                  */
                 Credentials credentials = future.get();
             }
@@ -124,6 +127,28 @@ public class CredentialsProviderTest extends CrtTestFixture  {
             } catch (Exception ex) {
                 fail(ex.getMessage());
             }
+        }
+    }
+
+    @Test
+    public void testDelegate() {
+        DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
+        DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
+            @Override
+            public Credentials getCredentials() {
+                return new Credentials(ACCESS_KEY_ID.getBytes(), SECRET_ACCESS_KEY.getBytes(),
+                        SESSION_TOKEN.getBytes());
+            }
+        };
+        builder.withHandler(credentialsHandler);
+        try (DelegateCredentialsProvider provider = builder.build()) {
+            CompletableFuture<Credentials> future = provider.getCredentials();
+            Credentials credentials = future.get();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+        } catch (Exception ex) {
+            fail(ex.getMessage());
         }
     }
 };

@@ -15,7 +15,7 @@
     "build_dir": "target/cmake-build",
     "build_env": {
         "JAVA_HOME": "{java_home}",
-        "CMAKE_BUILD_PARALLEL_LEVEL": 2
+        "CMAKE_BUILD_PARALLEL_LEVEL": "2"
     },
     "test_env": {
         "JAVA_HOME": "{java_home}"

@@ -112,6 +112,12 @@ struct java_credentials_properties {
 };
 extern struct java_credentials_properties credentials_properties;
 
+/* DelegateCredentialsHandler */
+struct java_credentials_handler_properties {
+    jmethodID on_handler_get_credentials_method_id;
+};
+extern struct java_credentials_handler_properties credentials_handler_properties;
+
 /* AsyncCallback */
 struct java_async_callback_properties {
     jmethodID on_success;

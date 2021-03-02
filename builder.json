@@ -37,11 +37,11 @@
                 "s2n"
             ],
             "!build_steps": [
-                "{source_dir}/gradlew :s3-native-client:build -x test -PlibcryptoPath={source_dir}/{libcrypto_path}",
-                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+                "{source_dir}/gradlew :s3-native-client:build -x test",
+                "mvn -B compile"
             ],
             "!test_steps": [
-                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
+                "mvn -B test -DforkCount=0 -DrerunFailingTestsCount=5"
             ],
             "architectures": {
                 "armv6": {
@@ -91,10 +91,7 @@
                 "ANDROID_SDK_ROOT": "{android_sdk_path}"
             },
             "!build_steps": [
-                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
-            ],
-            "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
+                "{source_dir}/gradlew assemble"
             ],
             "architectures": {
                 "armv7": {
@@ -134,10 +131,10 @@
                 "JAVA_HOME": "/usr/local/openjdk8"
             },
             "!build_steps": [
-                "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
+                "mvn -B compile"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
+                "mvn -B test -DrerunFailingTestsCount=5"
             ]
         }
     }

@@ -110,6 +110,9 @@ static void s_connection_protocol_message(
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
+
+    (*env)->DeleteLocalRef(env, payload_byte_array);
+    (*env)->DeleteLocalRef(env, headers_array);
     aws_jni_check_and_clear_exception(env);
 }
 
@@ -382,6 +385,9 @@ static void s_stream_continuation(
         payload_byte_array,
         (jint)message_args->message_type,
         (jint)message_args->message_flags);
+
+    (*env)->DeleteLocalRef(env, payload_byte_array);
+    (*env)->DeleteLocalRef(env, headers_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 }

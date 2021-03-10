@@ -8,7 +8,17 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/logging.h>
+
 #include <jni.h>
+
+#define AWS_CRT_JAVA_PACKAGE_ID 9
+
+enum aws_java_crt_log_subject {
+    AWS_LS_JAVA_CRT_GENERAL = AWS_LOG_SUBJECT_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+
+    AWS_LS_JAVA_CRT_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID)
+};
 
 struct aws_allocator *aws_jni_get_allocator(void);
 

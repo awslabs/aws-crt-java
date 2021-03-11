@@ -26,7 +26,7 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveMs = 0;
     private int pingTimeoutMs = 0;
-    private int publishTimeoutSecs = 0;
+    private int publishTimeoutMs = 0;
     private boolean cleanSession = true;
 
     /* will */
@@ -215,8 +215,8 @@ public final class MqttConnectionConfig extends CrtResource {
      *
      * @param publishTimeoutMs How long to wait for a publish response (in milliseconds) before failing
      */
-    public void setPublishTimeoutSecs(int publishTimeoutSecs) {
-        this.publishTimeoutSecs = publishTimeoutSecs;
+    public void setPublishTimeoutMs(int publishTimeoutMs) {
+        this.publishTimeoutMs = publishTimeoutMs;
     }
 
     /**
@@ -225,8 +225,8 @@ public final class MqttConnectionConfig extends CrtResource {
      *
      * @return How long to wait for a publish response (in milliseconds) before failing
      */
-    public int getPublishTimeoutSecs() {
-        return publishTimeoutSecs;
+    public int getPublishTimeoutMs() {
+        return publishTimeoutMs;
     }
 
     /**
@@ -444,7 +444,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
-            clone.setPublishTimeoutSecs(getPublishTimeoutSecs());
+            clone.setPublishTimeoutMs(getPublishTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());

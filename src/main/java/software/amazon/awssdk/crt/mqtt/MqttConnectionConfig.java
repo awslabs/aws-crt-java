@@ -39,29 +39,22 @@ public final class MqttConnectionConfig extends CrtResource {
     private HttpProxyOptions websocketProxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
-    public MqttConnectionConfig() {
-    }
+    public MqttConnectionConfig() {}
+
 
     /**
-     * Required override method that must begin the release process of the acquired
-     * native handle
+     * Required override method that must begin the release process of the acquired native handle
      */
     @Override
-    protected void releaseNativeHandle() {
-    }
+    protected void releaseNativeHandle() {}
 
     /**
-     * Override that determines whether a resource releases its dependencies at the
-     * same time the native handle is released or if it waits. Resources with
-     * asynchronous shutdown processes should override this with false, and
-     * establish a callback from native code that invokes releaseReferences() when
-     * the asynchronous shutdown process has completed. See
-     * HttpClientConnectionManager for an example.
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
-    }
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Configures the connection-related callbacks for a connection
@@ -84,8 +77,8 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Configures the client_id to use with a connection
      *
-     * @param clientId The client id for a connection. Needs to be unique across all
-     *                 devices/clients.this.credentialsProvider
+     * @param clientId The client id for a connection. Needs to be unique across
+     *                  all devices/clients.this.credentialsProvider
      */
     public void setClientId(String clientId) {
         this.clientId = clientId;
@@ -121,8 +114,7 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Configures the port to connect to.
      *
-     * @param port The port to connect to. Usually 8883 for MQTT, or 443 for
-     *             websockets
+     * @param port The port to connect to. Usually 8883 for MQTT, or 443 for websockets
      */
     public void setPort(int port) {
         this.port = port;
@@ -157,8 +149,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures whether or not the service should try to resume prior
-     * subscriptions, if it has any
+     * Configures whether or not the service should try to resume prior subscriptions, if it has any
      *
      * @param cleanSession true if the session should drop prior subscriptions when
      *                     a connection is established, false to resume the session
@@ -168,11 +159,10 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Queries whether or not the service should try to resume prior subscriptions,
-     * if it has any
+     * Queries whether or not the service should try to resume prior subscriptions, if it has any
      *
-     * @return true if the session should drop prior subscriptions when a connection
-     *         is established, false to resume the session
+     * @return true if the session should drop prior subscriptions when
+     *                     a connection is established, false to resume the session
      */
     public boolean getCleanSession() {
         return cleanSession;
@@ -182,8 +172,8 @@ public final class MqttConnectionConfig extends CrtResource {
      * Configures MQTT keep-alive via PING messages. Note that this is not TCP
      * keepalive.
      *
-     * @param keepAliveMs How often in milliseconds to send an MQTT PING message to
-     *                    the service to keep a connection alive
+     * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
      */
     public void setKeepAliveMs(int keepAliveMs) {
         this.keepAliveMs = keepAliveMs;
@@ -192,26 +182,25 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Queries the MQTT keep-alive via PING messages.
      *
-     * @return How often in milliseconds to send an MQTT PING message to the service
-     *         to keep a connection alive
+     * @return How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
      */
     public int getKeepAliveMs() {
         return keepAliveMs;
     }
 
     /**
-     * Configures ping timeout value. If a response is not received within this
+     * Configures ping timeout value.  If a response is not received within this
      * interval, the connection will be reestablished.
      *
-     * @param pingTimeoutMs How long to wait for a ping response (in milliseconds)
-     *                      before resetting the connection
+     * @param pingTimeoutMs How long to wait for a ping response (in milliseconds) before resetting the connection
      */
     public void setPingTimeoutMs(int pingTimeoutMs) {
         this.pingTimeoutMs = pingTimeoutMs;
     }
 
     /**
-     * Queries ping timeout value. If a response is not received within this
+     * Queries ping timeout value.  If a response is not received within this
      * interval, the connection will be reestablished.
      *
      * @return How long to wait for a ping response before resetting the connection
@@ -221,21 +210,20 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures publish timeout value. If a response is not received within this
+     * Configures publish timeout value.  If a response is not received within this
      * interval, the publish will fail as server not receiving the publish.
      *
-     * @param publishTimeoutMs How long to wait for a publish response (in seconds)
-     *                         before failing
+     * @param publishTimeoutMs How long to wait for a publish response (in milliseconds) before failing
      */
     public void setPublishTimeoutSecs(int publishTimeoutSecs) {
         this.publishTimeoutSecs = publishTimeoutSecs;
     }
 
     /**
-     * Queries publish timeout value. If a response is not received within this
+     * Queries publish timeout value.  If a response is not received within this
      * interval, the publish will fail as server not receiving the publish.
      *
-     * @return How long to wait for a publish response (in seconds) before failing
+     * @return How long to wait for a publish response (in milliseconds) before failing
      */
     public int getPublishTimeoutSecs() {
         return publishTimeoutSecs;
@@ -308,8 +296,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures the last will and testament message to be delivered to a topic
-     * when a connection disconnects
+     * Configures the last will and testament message to be delivered to a topic when a connection disconnects
      *
      * @param willMessage the message to publish as the will
      */
@@ -318,8 +305,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Queries the last will and testament message to be delivered to a topic when a
-     * connection disconnects
+     * Queries the last will and testament message to be delivered to a topic when a connection disconnects
      *
      * @return the message to publish as the will
      */
@@ -415,14 +401,13 @@ public final class MqttConnectionConfig extends CrtResource {
     /**
      * Set a transform operation to use on each websocket handshake http request.
      * The transform may modify the http request before it is sent to the server.
-     * The transform MUST call handshakeTransform.complete() or
-     * handshakeTransform.completeExceptionally() when the transform is complete,
-     * failure to do so will stall the mqtt connection indefinitely. The transform
-     * operation may be asynchronous.
+     * The transform MUST call handshakeTransform.complete() or handshakeTransform.completeExceptionally()
+     * when the transform is complete, failure to do so will stall the mqtt connection indefinitely.
+     * The transform operation may be asynchronous.
      *
-     * The default websocket handshake http request uses path "/mqtt". All required
-     * headers for a websocket handshake are present, plus the optional header
-     * "Sec-WebSocket-Protocol: mqtt".
+     * The default websocket handshake http request uses path "/mqtt".
+     * All required headers for a websocket handshake are present,
+     * plus the optional header "Sec-WebSocket-Protocol: mqtt".
      *
      * This is only applicable to websocket-based mqtt connections.
      *
@@ -433,8 +418,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Queries the handshake http request transform to use when upgrading the
-     * connection
+     * Queries the handshake http request transform to use when upgrading the connection
      *
      * @return http request handshake transform
      */

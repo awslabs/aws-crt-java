@@ -127,18 +127,18 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     }
 
     boolean connect() {
-        return connect(false, 0, null);
+        return connect(false, 0, 0, null);
     }
 
     boolean connect(Consumer<MqttMessage> anyMessageHandler) {
-        return connect(false, 0, anyMessageHandler);
+        return connect(false, 0, 0, anyMessageHandler);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveMs) {
-        return connect(cleanSession, keepAliveMs, null);
+    boolean connect(boolean cleanSession, int keepAliveMs, int publishTimeoutSecs) {
+        return connect(cleanSession, keepAliveMs, publishTimeoutSecs, null);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveMs, Consumer<MqttMessage> anyMessageHandler) {
+    boolean connect(boolean cleanSession, int keepAliveMs, int publishTimeoutSecs, Consumer<MqttMessage> anyMessageHandler) {
         Assume.assumeTrue(findCredentials());
 
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -182,6 +182,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setPort(port);
                 config.setCleanSession(cleanSession);
                 config.setKeepAliveMs(keepAliveMs);
+                config.setPublishTimeoutSecs(publishTimeoutSecs);
 
                 modifyConnectionConfiguration(config);
 

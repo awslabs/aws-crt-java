@@ -3,6 +3,7 @@ package com.amazonaws.s3;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
+import java.nio.ByteBuffer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -70,10 +71,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     .key(PUT_OBJECT_KEY)
                     .contentLength(contentLength)
                     .build(), buffer -> {
-                        for (int index = 0; index < buffer.length; ++index) {
-                            buffer[index] = 42;
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
                         }
-                        lengthWritten[0] += buffer.length;
+                        buffer.flip();
                         return lengthWritten[0] == contentLength;
                     });
 

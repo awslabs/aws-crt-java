@@ -26,7 +26,7 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveMs = 0;
     private int pingTimeoutMs = 0;
-    private int publishTimeoutMs = 0;
+    private int requestTimeoutMs = 0;
     private boolean cleanSession = true;
 
     /* will */
@@ -210,23 +210,23 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures publish timeout value.  If a response is not received within this
-     * interval, the publish will fail as server not receiving the publish.
+     * Configures request timeout value. If a response is not received within this
+     * interval, the request will fail as server not receiving it. Applied to publish (QoS>0) and unsubscribe
      *
-     * @param publishTimeoutMs How long to wait for a publish response (in milliseconds) before failing
+     * @param requestTimeoutMs How long to wait for a request response (in milliseconds) before failing
      */
-    public void setPublishTimeoutMs(int publishTimeoutMs) {
-        this.publishTimeoutMs = publishTimeoutMs;
+    public void setRequestTimeoutMs(int requestTimeoutMs) {
+        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     /**
-     * Queries publish timeout value.  If a response is not received within this
-     * interval, the publish will fail as server not receiving the publish.
+     * Queries request timeout value.  If a response is not received within this
+     * interval, the request will fail as server not receiving it. Applied to publish (QoS>0) and unsubscribe
      *
-     * @return How long to wait for a publish response (in milliseconds) before failing
+     * @return How long to wait for a request response (in milliseconds) before failing
      */
-    public int getPublishTimeoutMs() {
-        return publishTimeoutMs;
+    public int getRequestTimeoutMs() {
+        return requestTimeoutMs;
     }
 
     /**
@@ -444,7 +444,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
-            clone.setPublishTimeoutMs(getPublishTimeoutMs());
+            clone.setRequestTimeoutMs(getRequestTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());

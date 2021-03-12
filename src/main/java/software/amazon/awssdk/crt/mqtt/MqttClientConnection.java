@@ -172,7 +172,7 @@ public class MqttClientConnection extends CrtResource {
 
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
-        short publishTimeout = (short) Math.max(0, Math.min(config.getPublishTimeoutMs(), Short.MAX_VALUE));
+        short requestTimeout = (short) Math.max(0, Math.min(config.getRequestTimeoutMs(), Short.MAX_VALUE));
 
         short port = (short)config.getPort();
         if (port > Short.MAX_VALUE || port <= 0) {
@@ -186,7 +186,7 @@ public class MqttClientConnection extends CrtResource {
             mqttClientConnectionConnect(getNativeHandle(), config.getEndpoint(), port,
                     socketOptions != null ? socketOptions.getNativeHandle() : 0,
                     tls != null ? tls.getNativeHandle() : 0, config.getClientId(), config.getCleanSession(),
-                    config.getKeepAliveMs(), pingTimeout, publishTimeout);
+                    config.getKeepAliveMs(), pingTimeout, requestTimeout);
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
@@ -339,7 +339,7 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionConnect(long connection, String endpoint, short port,
             long socketOptions, long tlsContext, String clientId, boolean cleanSession, int keepAliveMs,
-            short pingTimeoutMs, short publishTimeoutMs) throws CrtRuntimeException;
+            short pingTimeoutMs, short requestTimeoutMs) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDisconnect(long connection, AsyncCallback ack);
 

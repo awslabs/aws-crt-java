@@ -1,6 +1,8 @@
 
 plugins {
     id("software.amazon.smithy").version("0.5.0")
+    id("com.github.johnrengelman.shadow") version "6.1.0"
+    `java-library`
 }
 
 repositories {
@@ -8,16 +10,23 @@ repositories {
     mavenCentral()
 }
 
-val copyTask = tasks.register<Copy>("copyGeneratedSource") {
-    from(fileTree("${buildDir}/smithyprojections/${project.name}/source/crt"))
-    into(file("${projectDir}/src/main/java"))
+tasks.compileJava {
     dependsOn("smithyBuildJar")
 }
 
-tasks.compileJava {
-    dependsOn("copyGeneratedSource")
+sourceSets {
+    main {
+        java {
+            //srcDirs("${buildDir}/smithyprojections/${project.name}/source/crt")
+            srcDirs("src/generated/java")
+        }
+    }
 }
 
 dependencies {
     implementation(project(":smithy-crt"))
+    implementation(rootProject)
+
+    testImplementation(testFixtures(rootProject))
+    testImplementation("junit:junit:4.13.1")    //matches dependency as parent pom.xml
 }

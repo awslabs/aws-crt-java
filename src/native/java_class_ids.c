@@ -169,7 +169,7 @@ static void s_cache_message_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttClientConnection$MessageHandler");
     AWS_FATAL_ASSERT(cls);
 
-    message_handler_properties.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;[B)V");
+    message_handler_properties.deliver = (*env)->GetMethodID(env, cls, "deliver", "(Ljava/lang/String;[BZIZ)V");
     AWS_FATAL_ASSERT(message_handler_properties.deliver);
 }
 
@@ -260,6 +260,18 @@ static void s_cache_credentials(JNIEnv *env) {
     AWS_FATAL_ASSERT(credentials_properties.session_token_field_id);
 }
 
+struct java_credentials_handler_properties credentials_handler_properties;
+
+static void s_cache_credentials_handler(JNIEnv *env) {
+    jclass handler_cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/DelegateCredentialsHandler");
+    AWS_FATAL_ASSERT(handler_cls);
+
+    credentials_handler_properties.on_handler_get_credentials_method_id = (*env)->GetMethodID(
+        env, handler_cls, "getCredentials", "()Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;");
+    AWS_FATAL_ASSERT(credentials_handler_properties.on_handler_get_credentials_method_id);
+}
+
 struct java_async_callback_properties async_callback_properties;
 
 static void s_cache_async_callback(JNIEnv *env) {
@@ -343,6 +355,17 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     http_stream_response_handler_properties.onResponseComplete =
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
+}
+
+struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
+
+static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStream$HttpStreamWriteChunkCompletionCallback");
+    AWS_FATAL_ASSERT(cls);
+
+    http_stream_write_chunk_completion_properties.callback = (*env)->GetMethodID(env, cls, "onChunkCompleted", "(I)V");
+    AWS_FATAL_ASSERT(http_stream_write_chunk_completion_properties.callback);
 }
 
 struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
@@ -509,6 +532,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
         (*env)->GetMethodID(env, cls, "onFinished", "(I)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
+
+    s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
+        (*env)->GetMethodID(env, cls, "onResponseHeaders", "(ILjava/nio/ByteBuffer;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -541,6 +568,17 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.error_code_field_id);
 }
 
+struct java_http_header_properties http_header_properties;
+
+static void s_cache_http_header(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpHeader");
+    AWS_FATAL_ASSERT(cls);
+    http_header_properties.http_header_class = (*env)->NewGlobalRef(env, cls);
+
+    http_header_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "([B[B)V");
+    AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -553,12 +591,14 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_byte_buffer(env);
     s_cache_credentials_provider(env);
     s_cache_credentials(env);
+    s_cache_credentials_handler(env);
     s_cache_async_callback(env);
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
+    s_cache_http_stream_write_chunk_completion_properties(env);
     s_cache_event_stream_server_listener_properties(env);
     s_cache_event_stream_server_listener_handler_properties(env);
     s_cache_event_stream_server_connection_handler_properties(env);
@@ -572,4 +612,5 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
+    s_cache_http_header(env);
 }

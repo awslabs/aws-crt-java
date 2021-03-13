@@ -247,6 +247,33 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
     http_stream_callback_destroy(env, callback);
 }
 
+jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_headers *headers) {
+    (void)headers;
+    jobjectArray ret;
+    const size_t header_count = aws_http_headers_count(headers);
+
+    ret = (jobjectArray)(*env)->NewObjectArray(
+        env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
+
+    for (size_t index = 0; index < header_count; index += 1) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, index, &header);
+        jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
+        jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
+
+        jobject java_http_header = (*env)->NewObject(
+            env,
+            http_header_properties.http_header_class,
+            http_header_properties.constructor_method_id,
+            header_name,
+            header_value);
+
+        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
+    }
+
+    return (ret);
+}
+
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
     JNIEnv *env,
     jclass jni_class,
@@ -325,6 +352,88 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     }
 
     return jHttpStream;
+}
+
+struct http_stream_chunked_callback_data {
+    struct http_stream_callback_data *stream_cb_data;
+    struct aws_byte_buf chunk_data;
+    struct aws_input_stream *chunk_stream;
+    jobject completion_callback;
+};
+
+static void s_cleanup_chunked_callback_data(
+    JNIEnv *env,
+    struct http_stream_chunked_callback_data *chunked_callback_data) {
+    aws_input_stream_destroy(chunked_callback_data->chunk_stream);
+    aws_byte_buf_clean_up(&chunked_callback_data->chunk_data);
+    (*env)->DeleteGlobalRef(env, chunked_callback_data->completion_callback);
+    aws_mem_release(aws_jni_get_allocator(), chunked_callback_data);
+}
+
+static void s_write_chunk_complete(struct aws_http_stream *stream, int error_code, void *user_data) {
+    (void)stream;
+
+    struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
+
+    JNIEnv *env = aws_jni_get_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    (*env)->CallVoidMethod(
+        env,
+        chunked_callback_data->completion_callback,
+        http_stream_write_chunk_completion_properties.callback,
+        error_code);
+    aws_jni_check_and_clear_exception(env);
+
+    s_cleanup_chunked_callback_data(env, chunked_callback_data);
+}
+
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamWriteChunk(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_cb_data,
+    jbyteArray chunk_data,
+    jboolean is_final_chunk,
+    jobject completion_callback) {
+    (void)jni_class;
+
+    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct aws_http_stream *stream = cb_data->native_stream;
+
+    struct http_stream_chunked_callback_data *chunked_callback_data =
+        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct http_stream_chunked_callback_data));
+
+    chunked_callback_data->stream_cb_data = cb_data;
+    chunked_callback_data->completion_callback = (*env)->NewGlobalRef(env, completion_callback);
+
+    struct aws_byte_cursor chunk_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, chunk_data);
+    aws_byte_buf_init_copy_from_cursor(&chunked_callback_data->chunk_data, aws_jni_get_allocator(), chunk_cur);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, chunk_data, chunk_cur);
+
+    struct aws_http1_chunk_options chunk_options = {
+        .chunk_data_size = chunked_callback_data->chunk_data.len,
+        .user_data = chunked_callback_data,
+        .on_complete = s_write_chunk_complete,
+    };
+
+    chunk_cur = aws_byte_cursor_from_buf(&chunked_callback_data->chunk_data);
+    chunked_callback_data->chunk_stream = aws_input_stream_new_from_cursor(aws_jni_get_allocator(), &chunk_cur);
+    chunk_options.chunk_data = chunked_callback_data->chunk_stream;
+
+    if (aws_http1_stream_write_chunk(stream, &chunk_options)) {
+        s_cleanup_chunked_callback_data(env, chunked_callback_data);
+        return AWS_OP_ERR;
+    }
+
+    if (is_final_chunk) {
+        struct aws_http1_chunk_options final_chunk_options = {
+            .chunk_data_size = 0,
+        };
+
+        if (aws_http1_stream_write_chunk(stream, &final_chunk_options)) {
+            return AWS_OP_ERR;
+        }
+    }
+
+    return AWS_OP_SUCCESS;
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamActivate(

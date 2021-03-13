@@ -314,7 +314,7 @@ open class Structure(className: ClassName)
             }
             addObjectOverrides(builder, src)
             addGetters(builder, src)
-            addSetters(builder, src)
+            //addSetters(builder, src)
             return src
         }
     }
@@ -336,6 +336,8 @@ open class Enum(className: ClassName, override var values: MutableMap<String, St
     override val javaBuilder: TypeSpec.Builder = TypeSpec.enumBuilder(className)
 
     override fun build(): Enum {
+        javaBuilder.addModifiers(Modifier.PUBLIC)
+        
         // private final String value
         val value = Field("value", TypeName.get(String::class.javaObjectType))
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
@@ -539,6 +541,14 @@ open class Builder<T: BuilderClient<*>>(private val client: T) {
             )
         }
 
+
+        builderInterface.addMethod(
+                Method(
+                        "build",
+                        client.className
+                ).addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            )
+        
         builderImpl
             .addConstructor(Constructor(client.className, Field("model", client.className))
                 .addModifier(Modifier.PRIVATE)

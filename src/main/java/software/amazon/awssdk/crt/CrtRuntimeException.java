@@ -37,6 +37,10 @@ public class CrtRuntimeException extends RuntimeException {
         }
     }
 
+    /**
+     * @deprecated use CrtRuntimeException(int errorCode)
+     */
+    @Deprecated
     public CrtRuntimeException(int errorCode, String errorName) {
         super(CRT.awsErrorString(errorCode));
         this.errorCode = errorCode;

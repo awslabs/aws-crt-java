@@ -53,7 +53,7 @@ public class Process {
     public static void setMaxIOHandlesSoftLimit(long maxHandles) {
          if (!processSetMaxIOHandlesSoftLimit(maxHandles)) {
              int lastError = awsLastError();
-             throw new CrtRuntimeException(lastError, awsErrorString(lastError));
+             throw new CrtRuntimeException(lastError);
          }
     }
 

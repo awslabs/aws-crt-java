@@ -6,8 +6,8 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 public class S3ClientOptions {
 
-    private String region;
     private String endpoint;
+    private String region;
     private ClientBootstrap clientBootstrap;
     private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
@@ -25,15 +25,6 @@ public class S3ClientOptions {
 
     public String getRegion() {
         return region;
-    }
-
-    public S3ClientOptions withEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-        return this;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
     }
 
     public S3ClientOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
@@ -70,6 +61,15 @@ public class S3ClientOptions {
 
     public double getThroughputTargetGbps() {
         return throughputTargetGbps;
+    }
+
+    public S3ClientOptions withEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
     }
 
     public S3ClientOptions withTlsContext(TlsContext tlsContext) {

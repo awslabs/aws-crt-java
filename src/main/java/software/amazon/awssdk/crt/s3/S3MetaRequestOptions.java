@@ -9,12 +9,11 @@ import java.util.Map;
 public class S3MetaRequestOptions {
 
     public enum MetaRequestType {
-
         DEFAULT(0),
         GET_OBJECT(1),
         PUT_OBJECT(2);
-
-		MetaRequestType(int nativeValue) {
+        
+        MetaRequestType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 

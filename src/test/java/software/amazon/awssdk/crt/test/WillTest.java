@@ -21,7 +21,7 @@ public class WillTest extends MqttClientConnectionFixture {
     @Rule
 
     public Timeout testTimeout = Timeout.seconds(15);
-    
+
     public WillTest() {
     }
 

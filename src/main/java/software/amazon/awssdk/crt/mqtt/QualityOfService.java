@@ -5,6 +5,11 @@
 
 package software.amazon.awssdk.crt.mqtt;
 
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Quality of Service associated with a publish action or subscription [MQTT-4.3].
   */
@@ -37,4 +42,19 @@ public enum QualityOfService {
     public int getValue() {
         return qos;
     }
+
+    public static QualityOfService getEnumValueFromInteger(int value) {
+        QualityOfService enumValue = enumMapping.get(value);
+        if (enumValue != null) {
+            return enumValue;
+        }
+        throw new RuntimeException("Illegal QualityOfService");
+    }
+
+    private static Map<Integer, QualityOfService> buildEnumMapping() {
+        return Stream.of(QualityOfService.values())
+            .collect(Collectors.toMap(QualityOfService::getValue, Function.identity()));
+    }
+
+    private static Map<Integer, QualityOfService> enumMapping = buildEnumMapping();
 }

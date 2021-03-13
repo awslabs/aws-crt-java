@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class S3NativeClient implements  AutoCloseable {
     private final S3Client s3Client;
     private final String signingRegion;
-    
+
     public S3NativeClient(final String signingRegion,
                           final ClientBootstrap clientBootstrap,
                           final CredentialsProvider credentialsProvider,
@@ -36,7 +36,7 @@ public class S3NativeClient implements  AutoCloseable {
                 .withThroughputTargetGbps(targetThroughputGbps);
         s3Client = new S3Client(clientOptions);
     }
-    
+
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
                                                         final ResponseDataConsumer dataHandler) {
         final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
@@ -55,7 +55,7 @@ public class S3NativeClient implements  AutoCloseable {
                 }
                 dataHandler.onResponseHeaders(statusCode, headers);
             }
-            
+
             @Override
             public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 dataHandler.onResponseData(bodyBytesIn);
@@ -67,12 +67,12 @@ public class S3NativeClient implements  AutoCloseable {
                 CrtRuntimeException ex = null;
                 try {
                     if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                         ex = new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode));
+                         ex = new CrtRuntimeException(errorCode);
                         dataHandler.onException(ex);
                     } else {
                         dataHandler.onFinished();
                     }
-                } catch (Exception e) { /* ignore user callback exception */ 
+                } catch (Exception e) { /* ignore user callback exception */
                 } finally {
                     if (ex != null) {
                         resultFuture.completeExceptionally(ex);
@@ -106,7 +106,7 @@ public class S3NativeClient implements  AutoCloseable {
             return resultFuture;
         }
     }
-    
+
     public CompletableFuture<PutObjectOutput> putObject(PutObjectRequest request,
                                                         final RequestDataSupplier requestDataSupplier) {
         final CompletableFuture<PutObjectOutput> resultFuture = new CompletableFuture<>();
@@ -149,7 +149,7 @@ public class S3NativeClient implements  AutoCloseable {
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populatePutObjectRequestHeaders(header -> headers.add(header), request);
         final StringBuilder keyString = new StringBuilder("/" + request.key());
-        HttpRequest httpRequest = new HttpRequest("PUT", keyString.toString(), 
+        HttpRequest httpRequest = new HttpRequest("PUT", keyString.toString(),
                 headers.toArray(new HttpHeader[0]), payloadStream);
 
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -166,7 +166,7 @@ public class S3NativeClient implements  AutoCloseable {
                 }
                 requestDataSupplier.onResponseHeaders(statusCode, headers);
             }
-            
+
             @Override
             public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 return 0;
@@ -185,7 +185,7 @@ public class S3NativeClient implements  AutoCloseable {
                 .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.PUT_OBJECT)
                 .withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler);
-        
+
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
             return resultFuture;
         }
@@ -238,7 +238,7 @@ public class S3NativeClient implements  AutoCloseable {
         }
         //in progress, but shape of method left here
     }
-    
+
     protected void populateGetObjectOutputHeader(final GetObjectOutput.Builder builder, final HttpHeader header) {
         //https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
         if ("x-amz-id-2".equalsIgnoreCase(header.getName())) {

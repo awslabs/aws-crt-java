@@ -6,6 +6,7 @@
 #include <aws/auth/auth.h>
 #include <aws/common/allocator.h>
 #include <aws/common/atomics.h>
+#include <aws/common/clock.h>
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
@@ -212,7 +213,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
-static void s_jni_atexit(void) {
+static void s_jni_atexit_strict(void) {
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
@@ -232,6 +233,38 @@ static void s_jni_atexit(void) {
     }
 }
 
+#define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
+
+static void s_jni_atexit_gentle(void) {
+
+    /* If not doing strict shutdown, wait only a short time before shutting down */
+    aws_thread_set_managed_join_timeout_ns(
+        aws_timestamp_convert(DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+
+    if (aws_thread_join_all_managed() == AWS_OP_SUCCESS) {
+        /* a successful managed join means it should be safe to do a full, strict clean up */
+        s_jni_atexit_strict();
+    } else {
+        /*
+         * We didn't successfully join all our threads so it's not really safe to clean up the libraries.
+         * Just dump memory if applicable and exit.
+         */
+        AWS_LOGF_WARN(
+            AWS_LS_JAVA_CRT_GENERAL,
+            "Not all native threads were successfully joined during gentle shutdown.  Memory may be leaked.");
+
+        if (g_memory_tracing) {
+            AWS_LOGF_DEBUG(
+                AWS_LS_JAVA_CRT_GENERAL,
+                "At shutdown, %u bytes remaining",
+                (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+            if (g_memory_tracing > 1) {
+                aws_mem_tracer_dump(aws_jni_get_allocator());
+            }
+        }
+    }
+}
+
 #define KB_256 (256 * 1024)
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -240,7 +273,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     JNIEnv *env,
     jclass jni_crt_class,
     jint jni_memtrace,
-    jboolean jni_debug_wait) {
+    jboolean jni_debug_wait,
+    jboolean jni_strict_shutdown) {
     (void)jni_crt_class;
 
     if (jni_debug_wait) {
@@ -272,7 +306,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_s3_library_init(allocator);
 
     cache_java_class_ids(env);
-    atexit(s_jni_atexit);
+
+    if (jni_strict_shutdown) {
+        atexit(s_jni_atexit_strict);
+    } else {
+        atexit(s_jni_atexit_gentle);
+    }
 }
 
 JNIEXPORT
@@ -327,7 +366,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
     (void)env;
     (void)jni_crt_resource_class;
 
-    aws_global_thread_creator_shutdown_wait_for(timeout_in_seconds);
+    aws_thread_set_managed_join_timeout_ns(
+        aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+    aws_thread_join_all_managed();
 
     if (g_memory_tracing) {
         AWS_LOGF_DEBUG(

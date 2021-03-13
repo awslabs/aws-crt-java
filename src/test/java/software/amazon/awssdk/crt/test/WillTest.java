@@ -19,7 +19,8 @@ import static org.junit.Assert.fail;
 
 public class WillTest extends MqttClientConnectionFixture {
     @Rule
-    public Timeout testTimeout = Timeout.seconds(3000);
+
+    public Timeout testTimeout = Timeout.seconds(15);
     
     public WillTest() {
     }
@@ -29,11 +30,9 @@ public class WillTest extends MqttClientConnectionFixture {
 
     @Override
     protected void modifyConnectionConfiguration(MqttConnectionConfig config) {
-        MqttMessage will = new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes());
+        MqttMessage will = new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes(), QualityOfService.AT_LEAST_ONCE);
 
         config.setWillMessage(will);
-        config.setWillQos(QualityOfService.AT_LEAST_ONCE);
-        config.setWillRetain(false);
     }
 
     @Test

@@ -43,15 +43,16 @@ public class MqttClientConnection extends CrtResource {
         }
 
         /* called from native when a message is delivered */
-        void deliver(String topic, byte[] payload) {
-            callback.accept(new MqttMessage(topic, payload));
+        void deliver(String topic, byte[] payload, boolean dup, int qos, boolean retain) {
+            QualityOfService qosEnum = QualityOfService.getEnumValueFromInteger(qos);
+            callback.accept(new MqttMessage(topic, payload, qosEnum, retain, dup));
         }
     }
 
     /**
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
-     * 
+     *
      * @param config Configuration to use
      * @throws MqttException If mqttClient is null
      */
@@ -78,8 +79,8 @@ public class MqttClientConnection extends CrtResource {
 
             MqttMessage message = config.getWillMessage();
             if (message != null) {
-                mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), config.getWillQos().getValue(), config.getWillRetain(),
-                        message.getPayload());
+                mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), message.getQos().getValue(),
+                        message.getRetain(), message.getPayload());
             }
 
             if (config.getUseWebsockets()) {
@@ -213,7 +214,7 @@ public class MqttClientConnection extends CrtResource {
      *
      * @param topic   The topic to subscribe to
      * @param qos     {@link QualityOfService} for this subscription
-     * @param handler A handler which can recieve an MqttMessage when a message is
+     * @param handler A handler which can receive an MqttMessage when a message is
      *                published to the topic
      * @return Future result is the packet/message id associated with the subscribe
      *         operation
@@ -280,17 +281,14 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Publishes a message to a topic
+     * Publishes a message to a topic.
      *
-     * @param message The message to publish. The message contains the topic to
-     *                publish to.
-     * @param qos     The {@link QualityOfService} to use for the publish operation
-     * @param retain  Whether or not the message should be retained by the broker to
-     *                be delivered to future subscribers
+     * @param message The message to publish.
+     *
      * @return Future value is the packet/message id associated with the publish
      *         operation
      */
-    public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
+    public CompletableFuture<Integer> publish(MqttMessage message) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         if (isNull()) {
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
@@ -298,14 +296,19 @@ public class MqttClientConnection extends CrtResource {
 
         AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(), qos.getValue(), retain,
-                    message.getPayload(), pubAck);
+            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(),
+                    message.getQos().getValue(), message.getRetain(), message.getPayload(), pubAck);
             // When the future completes, complete the returned future with the packetId
             return future.thenApply(unused -> packetId);
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
             return future;
         }
+    }
+
+    @Deprecated
+    public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
+        return publish(new MqttMessage(message.getTopic(), message.getPayload(), qos, retain));
     }
 
     // Called from native when a websocket handshake request is being prepared.

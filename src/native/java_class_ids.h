@@ -112,6 +112,12 @@ struct java_credentials_properties {
 };
 extern struct java_credentials_properties credentials_properties;
 
+/* DelegateCredentialsHandler */
+struct java_credentials_handler_properties {
+    jmethodID on_handler_get_credentials_method_id;
+};
+extern struct java_credentials_handler_properties credentials_handler_properties;
+
 /* AsyncCallback */
 struct java_async_callback_properties {
     jmethodID on_success;
@@ -154,6 +160,12 @@ struct java_http_stream_response_handler_native_adapter_properties {
     jmethodID onResponseComplete;
 };
 extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
+
+/* HttpStreamWriteChunkCompletionCallback */
+struct java_http_stream_write_chunk_completion_properties {
+    jmethodID callback;
+};
+extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
 
 /* EventStreamServerListener */
 struct java_event_stream_server_listener_properties {

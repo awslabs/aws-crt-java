@@ -67,7 +67,7 @@ public class ServerConnection extends CrtResource {
                 if (errorCode == 0) {
                     messageFlush.complete(null);
                 } else {
-                    messageFlush.completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+                    messageFlush.completeExceptionally(new CrtRuntimeException(errorCode));
                 }
             }
         });
@@ -95,7 +95,7 @@ public class ServerConnection extends CrtResource {
 
         if (result != 0) {
             int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode));
+            throw new CrtRuntimeException(errorCode);
         }
     }
 

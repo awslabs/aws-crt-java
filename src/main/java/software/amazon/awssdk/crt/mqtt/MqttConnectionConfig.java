@@ -210,7 +210,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures request timeout value that response is required on healthy connection. 
+     * Configures timeout value for requests that response is required on healthy connection. 
      * If a response is not received within this interval, the request will fail as server not receiving it. 
      * Applied to publish (QoS>0) and unsubscribe
      *
@@ -221,7 +221,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Queries request timeout value that response is required on healthy connection.
+     * Queries timeout value for requests that response is required on healthy connection.
      * If a response is not received within this interval, the request will fail as server not receiving it. 
      * Applied to publish (QoS>0) and unsubscribe
      *
@@ -446,7 +446,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
-            clone.setProtocolOperationTimeouMs(getProtocolOperationTimeoutMs());
+            clone.setProtocolOperationTimeoutMs(getProtocolOperationTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());

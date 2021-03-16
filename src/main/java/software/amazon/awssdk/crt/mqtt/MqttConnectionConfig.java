@@ -26,6 +26,7 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveMs = 0;
     private int pingTimeoutMs = 0;
+    private int protocolOperationTimeoutMs = 0;
     private boolean cleanSession = true;
 
     /* will */
@@ -206,6 +207,28 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public int getPingTimeoutMs() {
         return pingTimeoutMs;
+    }
+
+    /**
+     * Configures timeout value for requests that response is required on healthy connection. 
+     * If a response is not received within this interval, the request will fail as server not receiving it. 
+     * Applied to publish (QoS>0) and unsubscribe
+     *
+     * @param protocolOperationTimeoutMs How long to wait for a request response (in milliseconds) before failing
+     */
+    public void setProtocolOperationTimeoutMs(int protocolOperationTimeoutMs) {
+        this.protocolOperationTimeoutMs = protocolOperationTimeoutMs;
+    }
+
+    /**
+     * Queries timeout value for requests that response is required on healthy connection.
+     * If a response is not received within this interval, the request will fail as server not receiving it. 
+     * Applied to publish (QoS>0) and unsubscribe
+     *
+     * @return How long to wait for a request response (in milliseconds) before failing
+     */
+    public int getProtocolOperationTimeoutMs() {
+        return protocolOperationTimeoutMs;
     }
 
     /**
@@ -423,6 +446,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
+            clone.setProtocolOperationTimeoutMs(getProtocolOperationTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());

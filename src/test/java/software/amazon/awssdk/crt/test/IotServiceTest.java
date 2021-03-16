@@ -29,7 +29,7 @@ public class IotServiceTest extends MqttClientConnectionFixture {
     @Test
     public void testIotService() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        connect( true, (short)0, null);
+        connect( true, (short)0, 0, null);
 
         Consumer<MqttMessage> messageHandler = (message) -> {};
 

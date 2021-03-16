@@ -380,7 +380,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jboolean jni_clean_session,
     jint keep_alive_ms,
     jshort ping_timeout_ms,
-    jshort protocol_operation_timeout_ms) {
+    jint protocol_operation_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {

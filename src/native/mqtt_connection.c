@@ -379,7 +379,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jstring jni_client_id,
     jboolean jni_clean_session,
     jint keep_alive_ms,
-    jshort ping_timeout_ms) {
+    jshort ping_timeout_ms,
+    jshort protocol_operation_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -438,6 +439,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.client_id = client_id;
     connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
     connect_options.ping_timeout_ms = ping_timeout_ms;
+    connect_options.protocol_operation_timeout_ms = protocol_operation_timeout_ms;
     connect_options.clean_session = clean_session;
     connect_options.on_connection_complete = s_on_connection_complete;
     connect_options.user_data = connect_callback;

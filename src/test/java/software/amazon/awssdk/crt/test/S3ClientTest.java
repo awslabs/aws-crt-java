@@ -108,9 +108,11 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
                 @Override
-                public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    byte[] bytes = new byte[bodyBytesIn.remaining()];
+                    bodyBytesIn.get(bytes);
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Body Response: " + bodyBytesIn.toString());
+                            "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
 
@@ -174,7 +176,7 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
                 @Override
-                public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
                     return 0;
                 }
@@ -378,8 +380,8 @@ public class S3ClientTest extends CrtTestFixture {
                         TransferStats stats = new TransferStats();
 
                         @Override
-                        public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                            stats.recordRead(bodyBytesIn.length);
+                        public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                            stats.recordRead(bodyBytesIn.remaining());
                             return 0;
                         }
 

@@ -1,8 +1,12 @@
 package com.amazonaws.s3;
 
+import static org.junit.Assert.assertNotNull;
+
+import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
+import java.nio.ByteBuffer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -37,11 +41,16 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             nativeClient.getObject(GetObjectRequest.builder()
                     .bucket(BUCKET)
                     .key(GET_OBJECT_KEY)
-                    .build(), new ResponseDataConsumer() {
-                
+                    .build(), new ResponseDataConsumer<GetObjectOutput>() {
+
                 @Override
-                public void onResponseData(byte[] bodyBytesIn) {
-                    length[0] += bodyBytesIn.length;
+                public void onResponse(GetObjectOutput response) {
+                    assertNotNull(response);
+                }
+
+                @Override
+                public void onResponseData(ByteBuffer bodyBytesIn) {
+                    length[0] += bodyBytesIn.remaining();
                 }
 
                 @Override
@@ -49,7 +58,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                 @Override
                 public void onException(final CrtRuntimeException e) { }
-            });
+            }).join();
         }
     }
     
@@ -75,7 +84,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
                         lengthWritten[0] += buffer.length;
                         return lengthWritten[0] == contentLength;
-                    });
+                    }).join();
 
         }
     }

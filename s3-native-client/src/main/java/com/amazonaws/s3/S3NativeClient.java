@@ -38,10 +38,11 @@ public class S3NativeClient implements  AutoCloseable {
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
-                                                        final ResponseDataConsumer dataHandler) {
+                                                        final ResponseDataConsumer<GetObjectOutput> dataHandler) {
         final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
         final GetObjectOutput.Builder resultBuilder = GetObjectOutput.builder();
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            private GetObjectOutput getObjectOutput;
             @Override
             public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
                 for (int headerIndex = 0; headerIndex < headers.length; ++headerIndex) {
@@ -54,10 +55,12 @@ public class S3NativeClient implements  AutoCloseable {
                     }
                 }
                 dataHandler.onResponseHeaders(statusCode, headers);
+                getObjectOutput = resultBuilder.build();
+                dataHandler.onResponse(getObjectOutput);
             }
 
             @Override
-            public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 dataHandler.onResponseData(bodyBytesIn);
                 return 0;
             }
@@ -78,7 +81,7 @@ public class S3NativeClient implements  AutoCloseable {
                         resultFuture.completeExceptionally(ex);
                     }
                     else {
-                        resultFuture.complete(resultBuilder.build());
+                        resultFuture.complete(getObjectOutput);
                     }
                 }
             }
@@ -161,7 +164,7 @@ public class S3NativeClient implements  AutoCloseable {
             }
 
             @Override
-            public int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                 return 0;
             }
 

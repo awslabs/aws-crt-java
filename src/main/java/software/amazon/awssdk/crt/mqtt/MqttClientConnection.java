@@ -185,7 +185,7 @@ public class MqttClientConnection extends CrtResource {
             mqttClientConnectionConnect(getNativeHandle(), config.getEndpoint(), port,
                     socketOptions != null ? socketOptions.getNativeHandle() : 0,
                     tls != null ? tls.getNativeHandle() : 0, config.getClientId(), config.getCleanSession(),
-                    config.getKeepAliveMs(), pingTimeout);
+                    config.getKeepAliveMs(), pingTimeout, config.getProtocolOperationTimeoutMs());
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
@@ -338,7 +338,7 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionConnect(long connection, String endpoint, short port,
             long socketOptions, long tlsContext, String clientId, boolean cleanSession, int keepAliveMs,
-            short pingTimeoutMs) throws CrtRuntimeException;
+            short pingTimeoutMs, int protocolOperationTimeoutMs) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDisconnect(long connection, AsyncCallback ack);
 

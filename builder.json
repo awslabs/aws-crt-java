@@ -117,9 +117,6 @@
             }
         },
         "freebsd": {
-            "imports": [
-                "s2n"
-            ],
             "packages": [
                 "openjdk8"
             ],

@@ -33,9 +33,6 @@
     },
     "targets": {
         "linux": {
-            "imports": [
-                "s2n"
-            ],
             "!build_steps": [
                 "{source_dir}/gradlew :s3-native-client:build -x test",
                 "mvn -B compile"
@@ -84,7 +81,6 @@
         },
         "android": {
             "imports": [
-                "s2n",
                 "android-sdk"
             ],
             "build_env": {

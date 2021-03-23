@@ -118,14 +118,7 @@ public class S3NativeClient implements  AutoCloseable {
             @Override
             public boolean sendRequestBody(final ByteBuffer outBuffer) {
                 try {
-                    if (outBuffer.hasArray()) {
-                        return requestDataSupplier.getRequestBytes(outBuffer.array());
-                    } else {
-                        byte[] buffer = new byte[outBuffer.capacity()];
-                        boolean returnFlag = requestDataSupplier.getRequestBytes(buffer);
-                        outBuffer.put(buffer);  //assert outBuffer.remaining() == 0
-                        return returnFlag;
-                    }
+                    return requestDataSupplier.getRequestBytes(outBuffer);
                 } catch (Exception e) {
                     resultFuture.completeExceptionally(e);
                     return true;

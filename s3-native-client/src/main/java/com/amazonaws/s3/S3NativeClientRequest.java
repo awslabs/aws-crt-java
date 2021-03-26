@@ -19,9 +19,9 @@ import java.util.function.Consumer;
 
 public class S3NativeClientRequest {
 
-    String customQueryParameters = "";
+    protected String customQueryParameters = "";
 
-    LinkedList<HttpHeader> customHeaders = new LinkedList<HttpHeader>();
+    protected LinkedList<HttpHeader> customHeaders = new LinkedList<HttpHeader>();
 
     public S3NativeClientRequest() {
 
@@ -48,9 +48,9 @@ public class S3NativeClientRequest {
 
     protected static class BuilderImpl implements Builder {
 
-        String customQueryParameters = "";
+        protected String customQueryParameters = "";
 
-        LinkedList<HttpHeader> customHeaders = new LinkedList<HttpHeader>();
+        protected LinkedList<HttpHeader> customHeaders = new LinkedList<HttpHeader>();
 
         protected BuilderImpl() {
         }

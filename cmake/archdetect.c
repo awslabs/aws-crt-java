@@ -12,6 +12,12 @@
 #    elif defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__)
 #        error ARCH armv6
 #    endif
+#elif defined(__riscv)
+#    if __riscv_xlen==64
+#        error ARCH riscv64
+#    else
+#        error ARCH riscv32
+#    endif
 #else
 #    error ARCH unknown
 #endif

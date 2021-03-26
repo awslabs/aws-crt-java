@@ -114,6 +114,12 @@ public final class CRT {
             return (getOSIdentifier() == "android") ? "arm64-v8a": "armv8";
         } else if (arch.equals("arm")) {
            return "armv6";
+        } else if (arch.startsWith("riscv")) {
+           if (arch.contains("64")) {
+               return "riscv64";
+           } else {
+               return "riscv32";
+           }
         }
 
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);

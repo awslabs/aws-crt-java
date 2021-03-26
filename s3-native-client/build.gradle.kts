@@ -27,6 +27,6 @@ dependencies {
     implementation(project(":smithy-crt"))
     implementation(rootProject)
 
-    testImplementation(testFixtures(rootProject))
+    //testImplementation(testFixtures(rootProject))
     testImplementation("junit:junit:4.13.1")    //matches dependency as parent pom.xml
 }

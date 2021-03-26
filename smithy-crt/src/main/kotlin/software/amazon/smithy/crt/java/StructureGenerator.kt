@@ -48,6 +48,11 @@ open class StructureGenerator(pluginContext: PluginContext, protected val struct
 
     override fun generate(): TypeSpec.Builder {
         log.fine("Generating structure ${structure.id} -> $className")
+
+        if(javaStructure.className.toString().endsWith("Request")) {
+            javaStructure.superclass(ClassName.get("com.amazonaws.s3", "S3NativeClientRequest"))
+        }
+
         return super.generate()
     }
 }

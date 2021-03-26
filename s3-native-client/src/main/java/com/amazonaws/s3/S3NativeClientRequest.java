@@ -40,6 +40,10 @@ public class S3NativeClientRequest {
         return customHeaders;
     }
 
+    public Builder toBuilder() {
+        return new BuilderImpl(this);
+    }
+
     public interface Builder {
         Builder customQueryParameters(String customQueryParameters);
 

@@ -62,20 +62,21 @@ public class S3NativeClient implements AutoCloseable {
         }
     }
 
-    private void addCustomQueryParameters(StringBuilder queryParameters, String customQueryParameters) {
-        assert queryParameters != null : "Invalid argument - query parameters is null";
+    private String getEncodedPath(String key, String customQueryParameters) {
+        String encodedPath = "/" + key;
 
         if (customQueryParameters == null) {
-            return;
+            return encodedPath;
         }
 
         String trimmedCustomQueryParameters = customQueryParameters.trim();
 
         if (trimmedCustomQueryParameters.equals("")) {
-            return;
+            return encodedPath;
         }
 
-        queryParameters.append("?" + trimmedCustomQueryParameters);
+        encodedPath += "?" + trimmedCustomQueryParameters;
+        return encodedPath;
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
@@ -134,17 +135,16 @@ public class S3NativeClient implements AutoCloseable {
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populateGetObjectRequestHeaders(header -> headers.add(header), request);
-        final StringBuilder queryParameters = new StringBuilder("/" + request.key());
         final Map<String, String> requestParams = new HashMap<>();
         if (request.partNumber() != null) {
             requestParams.put("PartNumber", Integer.toString(request.partNumber()));
         }
 
         addCustomHeaders(headers, request.customHeaders());
-        addCustomQueryParameters(queryParameters, request.customQueryParameters());
 
-        HttpRequest httpRequest = new HttpRequest("GET", queryParameters.toString(), headers.toArray(new HttpHeader[0]),
-                null);
+        String encodedPath = getEncodedPath(request.key(), request.customQueryParameters());
+
+        HttpRequest httpRequest = new HttpRequest("GET", encodedPath, headers.toArray(new HttpHeader[0]), null);
 
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -190,12 +190,12 @@ public class S3NativeClient implements AutoCloseable {
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populatePutObjectRequestHeaders(header -> headers.add(header), request);
-        final StringBuilder queryParameters = new StringBuilder("/" + request.key());
 
         addCustomHeaders(headers, request.customHeaders());
-        addCustomQueryParameters(queryParameters, request.customQueryParameters());
 
-        HttpRequest httpRequest = new HttpRequest("PUT", queryParameters.toString(), headers.toArray(new HttpHeader[0]),
+        String encodedPath = getEncodedPath(request.key(), request.customQueryParameters());
+
+        HttpRequest httpRequest = new HttpRequest("PUT", encodedPath, headers.toArray(new HttpHeader[0]),
                 payloadStream);
 
         final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {

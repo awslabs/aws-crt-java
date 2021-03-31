@@ -50,7 +50,7 @@ public class S3NativeClient implements AutoCloseable {
 
             // Warn for any duplicates.
             for (HttpHeader header : headers) {
-                if (customHeader.getName() == header.getName()) {
+                if (customHeader.getName().equals(header.getName())) {
                     Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                             "Custom header '" + customHeader.getName() + "' is overriding existing header.");
                     headers.remove(header);
@@ -69,13 +69,7 @@ public class S3NativeClient implements AutoCloseable {
             return;
         }
 
-        if (queryParameters.length() > 0) {
-            queryParameters.append("&");
-        } else {
-            queryParameters.append("?");
-        }
-
-        queryParameters.append(customQueryParameters);
+        queryParameters.append("?" + customQueryParameters);
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,

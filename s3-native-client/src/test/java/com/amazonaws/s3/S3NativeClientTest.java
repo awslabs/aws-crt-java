@@ -2,6 +2,7 @@ package com.amazonaws.s3;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import org.mockito.ArgumentCaptor;
 
@@ -18,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -99,54 +101,103 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     }
 
     private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {
-
-        for (HttpHeader generatedHeader : generatedHeaders) {
-
+        for (HttpHeader customHeader : customHeaders) {
             int numTimesFound = 0;
 
-            for (HttpHeader customHeader : customHeaders) {
-                if (generatedHeader.getName() == customHeader.getName()) {
+            for (HttpHeader generatedHeader : generatedHeaders) {
+                if (generatedHeader.getName().equals(customHeader.getName())) {
                     assertEquals(generatedHeader.getValue(), customHeader.getValue());
-
                     ++numTimesFound;
                 }
             }
 
-            assertEquals(numTimesFound, 1);
+            assertEquals(1, numTimesFound);
         }
     }
 
     @Test
-    public void testCustomHeaders() {
+    public void testGetObjectCustomHeaders() {
         HttpHeader[] customHeaders = new HttpHeader[] { new HttpHeader("Host", "test_host"),
                 new HttpHeader("CustomHeader", "CustomHeaderValue"), };
 
         final S3Client mockInternalClient = mock(S3Client.class);
-        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
-        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
-
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
         nativeClient.getObject(
                 GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).customHeaders(customHeaders).build(),
                 null);
 
-        nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L)
-                .customHeaders(customHeaders).build(), null);
-
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
         List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
 
-        assertEquals(options.size(), 2);
+        assertEquals(options.size(), 1);
 
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+    }
 
-        S3MetaRequestOptions putObjectOptions = options.get(1);
+    @Test
+    public void testPutObjectCustomHeaders() {
+        HttpHeader[] customHeaders = new HttpHeader[] { new HttpHeader("Host", "test_host"),
+                new HttpHeader("CustomHeader", "CustomHeaderValue"), };
+
+        final S3Client mockInternalClient = mock(S3Client.class);
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
+
+        nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L)
+                .customHeaders(customHeaders).build(), null);
+
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
+
+        assertEquals(options.size(), 1);
+
+        S3MetaRequestOptions putObjectOptions = options.get(0);
         validateCustomHeaders(putObjectOptions.getHttpRequest().getHeaders(), customHeaders);
     }
 
     @Test
-    public void testCustomQueryParameters() {
+    public void testGetObjectCustomQueryParameters() {
+        String customQueryParameters = "param1=value1&param2=value2";
 
+        final S3Client mockInternalClient = mock(S3Client.class);
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
+
+        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY)
+                .customQueryParameters(customQueryParameters).build(), null);
+
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
+
+        assertEquals(options.size(), 1);
+
+        S3MetaRequestOptions getObjectOptions = options.get(0);
+        assertTrue(getObjectOptions.getHttpRequest().getEncodedPath().endsWith("?" + customQueryParameters));
+    }
+
+    @Test
+    public void testPutObjectCustomQueryParameters() {
+        String customQueryParameters = "param1=value1&param2=value2";
+
+        final S3Client mockInternalClient = mock(S3Client.class);
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
+
+        nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L)
+                .customQueryParameters(customQueryParameters).build(), null);
+
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
+
+        assertEquals(options.size(), 1);
+
+        S3MetaRequestOptions putObjectOptions = options.get(0);
+
+        System.out.println(putObjectOptions.getHttpRequest().getEncodedPath());
+
+        assertTrue(putObjectOptions.getHttpRequest().getEncodedPath().endsWith("?" + customQueryParameters));
     }
 }

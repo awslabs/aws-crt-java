@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectRequest {
@@ -237,6 +238,10 @@ public class PutObjectRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutObjectRequest() {
         this.aCL = null;
         this.body = null;
@@ -270,6 +275,8 @@ public class PutObjectRequest {
         this.objectLockRetainUntilDate = null;
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectRequest(BuilderImpl builder) {
@@ -305,6 +312,8 @@ public class PutObjectRequest {
         this.objectLockRetainUntilDate = builder.objectLockRetainUntilDate;
         this.objectLockLegalHoldStatus = builder.objectLockLegalHoldStatus;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -454,6 +463,14 @@ public class PutObjectRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -518,6 +535,10 @@ public class PutObjectRequest {
         Builder objectLockLegalHoldStatus(ObjectLockLegalHoldStatus objectLockLegalHoldStatus);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectRequest build();
     }
@@ -746,6 +767,10 @@ public class PutObjectRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -782,6 +807,8 @@ public class PutObjectRequest {
             objectLockRetainUntilDate(model.objectLockRetainUntilDate);
             objectLockLegalHoldStatus(model.objectLockLegalHoldStatus);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutObjectRequest build() {
@@ -949,6 +976,16 @@ public class PutObjectRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -1086,6 +1123,14 @@ public class PutObjectRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

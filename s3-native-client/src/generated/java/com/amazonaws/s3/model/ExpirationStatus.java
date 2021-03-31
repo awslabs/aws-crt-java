@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ExpirationStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@4c499629"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@9dc6f3f"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@4c499629"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@9dc6f3f"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

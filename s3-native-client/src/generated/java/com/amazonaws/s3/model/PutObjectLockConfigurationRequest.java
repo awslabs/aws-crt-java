@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectLockConfigurationRequest {
@@ -38,6 +39,10 @@ public class PutObjectLockConfigurationRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutObjectLockConfigurationRequest() {
         this.bucket = "";
         this.objectLockConfiguration = null;
@@ -45,6 +50,8 @@ public class PutObjectLockConfigurationRequest {
         this.token = "";
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectLockConfigurationRequest(BuilderImpl builder) {
@@ -54,6 +61,8 @@ public class PutObjectLockConfigurationRequest {
         this.token = builder.token;
         this.contentMD5 = builder.contentMD5;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -99,6 +108,14 @@ public class PutObjectLockConfigurationRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -111,6 +128,10 @@ public class PutObjectLockConfigurationRequest {
         Builder contentMD5(String contentMD5);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectLockConfigurationRequest build();
     }
@@ -144,6 +165,10 @@ public class PutObjectLockConfigurationRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -154,6 +179,8 @@ public class PutObjectLockConfigurationRequest {
             token(model.token);
             contentMD5(model.contentMD5);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutObjectLockConfigurationRequest build() {
@@ -191,6 +218,16 @@ public class PutObjectLockConfigurationRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -224,6 +261,14 @@ public class PutObjectLockConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

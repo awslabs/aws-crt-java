@@ -10,15 +10,15 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum Permission {
-    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@7549b546"),
+    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@66dd714b"),
 
-    WRITE("software.amazon.smithy.crt.codegen.Field@7549b546"),
+    WRITE("software.amazon.smithy.crt.codegen.Field@66dd714b"),
 
-    WRITE_ACP("software.amazon.smithy.crt.codegen.Field@7549b546"),
+    WRITE_ACP("software.amazon.smithy.crt.codegen.Field@66dd714b"),
 
-    READ("software.amazon.smithy.crt.codegen.Field@7549b546"),
+    READ("software.amazon.smithy.crt.codegen.Field@66dd714b"),
 
-    READ_ACP("software.amazon.smithy.crt.codegen.Field@7549b546"),
+    READ_ACP("software.amazon.smithy.crt.codegen.Field@66dd714b"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

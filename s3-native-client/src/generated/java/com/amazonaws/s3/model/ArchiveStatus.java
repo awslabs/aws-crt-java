@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ArchiveStatus {
-    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@476832d5"),
+    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@6f0ac721"),
 
-    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@476832d5"),
+    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@6f0ac721"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

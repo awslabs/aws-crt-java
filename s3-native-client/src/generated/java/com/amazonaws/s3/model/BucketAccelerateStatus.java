@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum BucketAccelerateStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@19a1823a"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@70f9f48a"),
 
-    SUSPENDED("software.amazon.smithy.crt.codegen.Field@19a1823a"),
+    SUSPENDED("software.amazon.smithy.crt.codegen.Field@70f9f48a"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

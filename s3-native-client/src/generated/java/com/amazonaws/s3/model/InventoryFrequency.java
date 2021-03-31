@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum InventoryFrequency {
-    DAILY("software.amazon.smithy.crt.codegen.Field@58ace3fd"),
+    DAILY("software.amazon.smithy.crt.codegen.Field@48a3f6c8"),
 
-    WEEKLY("software.amazon.smithy.crt.codegen.Field@58ace3fd"),
+    WEEKLY("software.amazon.smithy.crt.codegen.Field@48a3f6c8"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ObjectOwnership {
-    BUCKET_OWNER_PREFERRED("software.amazon.smithy.crt.codegen.Field@42ddf7"),
+    BUCKET_OWNER_PREFERRED("software.amazon.smithy.crt.codegen.Field@4cc207e4"),
 
-    OBJECT_WRITER("software.amazon.smithy.crt.codegen.Field@42ddf7"),
+    OBJECT_WRITER("software.amazon.smithy.crt.codegen.Field@4cc207e4"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

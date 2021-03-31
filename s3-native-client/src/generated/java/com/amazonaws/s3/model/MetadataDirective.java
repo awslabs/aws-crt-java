@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum MetadataDirective {
-    COPY("software.amazon.smithy.crt.codegen.Field@66df4636"),
+    COPY("software.amazon.smithy.crt.codegen.Field@2d618088"),
 
-    REPLACE("software.amazon.smithy.crt.codegen.Field@66df4636"),
+    REPLACE("software.amazon.smithy.crt.codegen.Field@2d618088"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

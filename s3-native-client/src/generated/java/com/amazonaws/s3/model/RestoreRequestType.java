@@ -10,7 +10,7 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum RestoreRequestType {
-    SELECT("software.amazon.smithy.crt.codegen.Field@260373f8"),
+    SELECT("software.amazon.smithy.crt.codegen.Field@484cc383"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

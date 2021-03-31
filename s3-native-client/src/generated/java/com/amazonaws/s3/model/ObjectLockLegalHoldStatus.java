@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ObjectLockLegalHoldStatus {
-    ON("software.amazon.smithy.crt.codegen.Field@524dd850"),
+    ON("software.amazon.smithy.crt.codegen.Field@7d59c9cb"),
 
-    OFF("software.amazon.smithy.crt.codegen.Field@524dd850"),
+    OFF("software.amazon.smithy.crt.codegen.Field@7d59c9cb"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

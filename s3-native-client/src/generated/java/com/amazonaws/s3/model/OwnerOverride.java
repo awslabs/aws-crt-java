@@ -10,7 +10,7 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum OwnerOverride {
-    DESTINATION("software.amazon.smithy.crt.codegen.Field@1f450d3a"),
+    DESTINATION("software.amazon.smithy.crt.codegen.Field@61a2bf66"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

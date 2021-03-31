@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum FileHeaderInfo {
-    USE("software.amazon.smithy.crt.codegen.Field@4a451319"),
+    USE("software.amazon.smithy.crt.codegen.Field@58a1371d"),
 
-    IGNORE("software.amazon.smithy.crt.codegen.Field@4a451319"),
+    IGNORE("software.amazon.smithy.crt.codegen.Field@58a1371d"),
 
-    NONE("software.amazon.smithy.crt.codegen.Field@4a451319"),
+    NONE("software.amazon.smithy.crt.codegen.Field@58a1371d"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

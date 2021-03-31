@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CompleteMultipartUploadRequest {
@@ -37,6 +38,10 @@ public class CompleteMultipartUploadRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     CompleteMultipartUploadRequest() {
         this.bucket = "";
         this.key = "";
@@ -44,6 +49,8 @@ public class CompleteMultipartUploadRequest {
         this.uploadId = "";
         this.requestPayer = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected CompleteMultipartUploadRequest(BuilderImpl builder) {
@@ -53,6 +60,8 @@ public class CompleteMultipartUploadRequest {
         this.uploadId = builder.uploadId;
         this.requestPayer = builder.requestPayer;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -98,6 +107,14 @@ public class CompleteMultipartUploadRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -110,6 +127,10 @@ public class CompleteMultipartUploadRequest {
         Builder requestPayer(RequestPayer requestPayer);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         CompleteMultipartUploadRequest build();
     }
@@ -142,6 +163,10 @@ public class CompleteMultipartUploadRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -152,6 +177,8 @@ public class CompleteMultipartUploadRequest {
             uploadId(model.uploadId);
             requestPayer(model.requestPayer);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public CompleteMultipartUploadRequest build() {
@@ -188,6 +215,16 @@ public class CompleteMultipartUploadRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -221,6 +258,14 @@ public class CompleteMultipartUploadRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

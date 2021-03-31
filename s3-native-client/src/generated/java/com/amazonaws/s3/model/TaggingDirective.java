@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum TaggingDirective {
-    COPY("software.amazon.smithy.crt.codegen.Field@5aec9de5"),
+    COPY("software.amazon.smithy.crt.codegen.Field@3f435277"),
 
-    REPLACE("software.amazon.smithy.crt.codegen.Field@5aec9de5"),
+    REPLACE("software.amazon.smithy.crt.codegen.Field@3f435277"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

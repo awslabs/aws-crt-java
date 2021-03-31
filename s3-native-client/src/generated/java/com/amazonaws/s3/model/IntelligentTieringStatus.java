@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum IntelligentTieringStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@681f9dc0"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@7ca7e166"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@681f9dc0"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@7ca7e166"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

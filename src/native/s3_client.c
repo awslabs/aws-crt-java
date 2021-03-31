@@ -93,7 +93,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     struct aws_s3_client_config client_config = {
-        .max_connections = max_connections,
+        .max_active_connections_override = max_connections,
         .region = region,
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,

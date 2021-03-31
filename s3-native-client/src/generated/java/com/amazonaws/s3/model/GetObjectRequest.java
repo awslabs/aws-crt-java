@@ -9,6 +9,7 @@ import java.lang.String;
 import java.time.Instant;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetObjectRequest {
@@ -128,6 +129,10 @@ public class GetObjectRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     GetObjectRequest() {
         this.bucket = "";
         this.ifMatch = "";
@@ -149,6 +154,8 @@ public class GetObjectRequest {
         this.requestPayer = null;
         this.partNumber = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected GetObjectRequest(BuilderImpl builder) {
@@ -172,6 +179,8 @@ public class GetObjectRequest {
         this.requestPayer = builder.requestPayer;
         this.partNumber = builder.partNumber;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -273,6 +282,14 @@ public class GetObjectRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -313,6 +330,10 @@ public class GetObjectRequest {
         Builder partNumber(Integer partNumber);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         GetObjectRequest build();
     }
@@ -434,6 +455,10 @@ public class GetObjectRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -458,6 +483,8 @@ public class GetObjectRequest {
             requestPayer(model.requestPayer);
             partNumber(model.partNumber);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public GetObjectRequest build() {
@@ -564,6 +591,16 @@ public class GetObjectRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -653,6 +690,14 @@ public class GetObjectRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

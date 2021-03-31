@@ -50,7 +50,12 @@ open class StructureGenerator(pluginContext: PluginContext, protected val struct
         log.fine("Generating structure ${structure.id} -> $className")
 
         if(javaStructure.className.toString().endsWith("Request")) {
-            javaStructure.superclass(ClassName.get("com.amazonaws.s3", "S3NativeClientRequest"))
+
+            val requestHeaderTypeName = ClassName.get("software.amazon.awssdk.crt.http", "HttpHeader");
+            val arrayRequestHeaderTypeName = ArrayTypeName.of( requestHeaderTypeName );
+            javaStructure.addMember(Field("customHeaders", arrayRequestHeaderTypeName));
+
+            javaStructure.addMember(Field("customQueryParameters", TypeName.get(String::class.javaObjectType)));
         }
 
         return super.generate()

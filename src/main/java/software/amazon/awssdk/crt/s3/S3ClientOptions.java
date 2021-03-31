@@ -13,6 +13,7 @@ public class S3ClientOptions {
     private CredentialsProvider credentialsProvider;
     private long partSize;
     private double throughputTargetGbps;
+    private int maxConnections;
 
     public S3ClientOptions() {
 
@@ -79,5 +80,14 @@ public class S3ClientOptions {
 
     public TlsContext getTlsContext() {
         return tlsContext;
+    }
+
+    public S3ClientOptions withMaxConnections(int maxConnections) {
+        this.maxConnections = maxConnections;
+        return this;
+    }
+
+    public int maxConnections() {
+        return maxConnections;
     }
 }

@@ -48,7 +48,7 @@ public class S3NativeClient implements AutoCloseable {
 
         for (HttpHeader customHeader : customHeaders) {
 
-            // Warn for any duplicates.
+            // Prevent duplicates and warn if any are found.
             for (HttpHeader header : headers) {
                 if (customHeader.getName().equals(header.getName())) {
                     Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
@@ -65,11 +65,17 @@ public class S3NativeClient implements AutoCloseable {
     private void addCustomQueryParameters(StringBuilder queryParameters, String customQueryParameters) {
         assert queryParameters != null : "Invalid argument - query parameters is null";
 
-        if (customQueryParameters == null || customQueryParameters == "") {
+        if (customQueryParameters == null) {
             return;
         }
 
-        queryParameters.append("?" + customQueryParameters);
+        String trimmedCustomQueryParameters = customQueryParameters.trim();
+
+        if (trimmedCustomQueryParameters.equals("")) {
+            return;
+        }
+
+        queryParameters.append("?" + trimmedCustomQueryParameters);
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
@@ -132,10 +138,6 @@ public class S3NativeClient implements AutoCloseable {
         final Map<String, String> requestParams = new HashMap<>();
         if (request.partNumber() != null) {
             requestParams.put("PartNumber", Integer.toString(request.partNumber()));
-        }
-
-        if (request.customQueryParameters() != "") {
-            queryParameters.append("?" + request.customQueryParameters());
         }
 
         addCustomHeaders(headers, request.customHeaders());

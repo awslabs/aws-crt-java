@@ -9,6 +9,8 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.s3.*;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -21,6 +23,11 @@ public class S3NativeClient implements AutoCloseable {
     private final S3Client s3Client;
     private final String signingRegion;
 
+    public S3NativeClient(final String signingRegion, final S3Client s3Client) {
+        this.signingRegion = signingRegion;
+        this.s3Client = s3Client;
+    }
+
     public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
             final CredentialsProvider credentialsProvider, final long partSizeBytes,
             final double targetThroughputGbps) {
@@ -30,6 +37,45 @@ public class S3NativeClient implements AutoCloseable {
                 .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
                 .withThroughputTargetGbps(targetThroughputGbps);
         s3Client = new S3Client(clientOptions);
+    }
+
+    private void addCustomHeaders(List<HttpHeader> headers, HttpHeader[] customHeaders) {
+        assert headers != null : "Invalid argument - headers list is null";
+
+        if (customHeaders == null || customHeaders.length == 0) {
+            return;
+        }
+
+        for (HttpHeader customHeader : customHeaders) {
+
+            // Warn for any duplicates.
+            for (HttpHeader header : headers) {
+                if (customHeader.getName() == header.getName()) {
+                    Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                            "Custom header '" + customHeader.getName() + "' is overriding existing header.");
+                    headers.remove(header);
+                    break;
+                }
+            }
+
+            headers.add(customHeader);
+        }
+    }
+
+    private void addCustomQueryParameters(StringBuilder queryParameters, String customQueryParameters) {
+        assert queryParameters != null : "Invalid argument - query parameters is null";
+
+        if (customQueryParameters == null || customQueryParameters == "") {
+            return;
+        }
+
+        if (queryParameters.length() > 0) {
+            queryParameters.append("&");
+        } else {
+            queryParameters.append("?");
+        }
+
+        queryParameters.append(customQueryParameters);
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
@@ -83,7 +129,7 @@ public class S3NativeClient implements AutoCloseable {
             }
         };
 
-        List<HttpHeader> headers = new LinkedList<>(request.customHeaders());
+        List<HttpHeader> headers = new LinkedList<>();
 
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
@@ -97,6 +143,9 @@ public class S3NativeClient implements AutoCloseable {
         if (request.customQueryParameters() != "") {
             queryParameters.append("?" + request.customQueryParameters());
         }
+
+        addCustomHeaders(headers, request.customHeaders());
+        addCustomQueryParameters(queryParameters, request.customQueryParameters());
 
         HttpRequest httpRequest = new HttpRequest("GET", queryParameters.toString(), headers.toArray(new HttpHeader[0]),
                 null);
@@ -140,16 +189,15 @@ public class S3NativeClient implements AutoCloseable {
             }
         };
 
-        final List<HttpHeader> headers = new LinkedList<>(request.customHeaders());
+        final List<HttpHeader> headers = new LinkedList<>();
 
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populatePutObjectRequestHeaders(header -> headers.add(header), request);
         final StringBuilder queryParameters = new StringBuilder("/" + request.key());
 
-        if (request.customQueryParameters() != "") {
-            queryParameters.append("?" + request.customQueryParameters());
-        }
+        addCustomHeaders(headers, request.customHeaders());
+        addCustomQueryParameters(queryParameters, request.customQueryParameters());
 
         HttpRequest httpRequest = new HttpRequest("PUT", queryParameters.toString(), headers.toArray(new HttpHeader[0]),
                 payloadStream);

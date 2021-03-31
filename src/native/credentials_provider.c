@@ -14,6 +14,7 @@
 #include <aws/common/clock.h>
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
+#include <aws/http/proxy.h>
 #include <aws/io/tls_channel_handler.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */

@@ -1,84 +1,92 @@
 package com.amazonaws.s3;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
-import java.nio.ByteBuffer;
+
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
-import org.junit.Assume;
+import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.s3.*;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>>");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "file.download");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
-    
+
     @BeforeClass
     public static void haveAwsCredentials() {
         Assume.assumeTrue(areAwsCredentialsAvailable());
     }
-    
+
     @Test
     public void testGetObject() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-             final HostResolver resolver = new HostResolver(elGroup, 128);
-             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-             final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
-                    64_000_000l, 100.);
+                final HostResolver resolver = new HostResolver(elGroup, 128);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
             final long length[] = { 0 };
-            nativeClient.getObject(GetObjectRequest.builder()
-                    .bucket(BUCKET)
-                    .key(GET_OBJECT_KEY)
-                    .build(), new ResponseDataConsumer<GetObjectOutput>() {
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
 
-                @Override
-                public void onResponse(GetObjectOutput response) {
-                    assertNotNull(response);
-                }
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
 
-                @Override
-                public void onResponseData(ByteBuffer bodyBytesIn) {
-                    length[0] += bodyBytesIn.remaining();
-                }
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
 
-                @Override
-                public void onFinished() { }
+                        @Override
+                        public void onFinished() {
+                        }
 
-                @Override
-                public void onException(final CrtRuntimeException e) { }
-            }).join();
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
         }
     }
-    
+
     @Test
     public void testPutObject() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-             final HostResolver resolver = new HostResolver(elGroup, 128);
-             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-             final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
-                    64_000_000l, 100.);
+                final HostResolver resolver = new HostResolver(elGroup, 128);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
-            nativeClient.putObject(PutObjectRequest.builder()
-                    .bucket(BUCKET)
-                    .key(PUT_OBJECT_KEY)
-                    .contentLength(contentLength)
-                    .build(), buffer -> {
+            nativeClient.putObject(
+                    PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
+                    buffer -> {
                         while (buffer.hasRemaining()) {
                             buffer.put((byte) 42);
                             ++lengthWritten[0];
@@ -88,5 +96,57 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     }).join();
 
         }
+    }
+
+    private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {
+
+        for (HttpHeader generatedHeader : generatedHeaders) {
+
+            int numTimesFound = 0;
+
+            for (HttpHeader customHeader : customHeaders) {
+                if (generatedHeader.getName() == customHeader.getName()) {
+                    assertEquals(generatedHeader.getValue(), customHeader.getValue());
+
+                    ++numTimesFound;
+                }
+            }
+
+            assertEquals(numTimesFound, 1);
+        }
+    }
+
+    @Test
+    public void testCustomHeaders() {
+        HttpHeader[] customHeaders = new HttpHeader[] { new HttpHeader("Host", "test_host"),
+                new HttpHeader("CustomHeader", "CustomHeaderValue"), };
+
+        final S3Client mockInternalClient = mock(S3Client.class);
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
+
+        nativeClient.getObject(
+                GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).customHeaders(customHeaders).build(),
+                null);
+
+        nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L)
+                .customHeaders(customHeaders).build(), null);
+
+        List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
+
+        assertEquals(options.size(), 2);
+
+        S3MetaRequestOptions getObjectOptions = options.get(0);
+        validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+
+        S3MetaRequestOptions putObjectOptions = options.get(1);
+        validateCustomHeaders(putObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+    }
+
+    @Test
+    public void testCustomQueryParameters() {
+
     }
 }

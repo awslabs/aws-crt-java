@@ -87,7 +87,7 @@ public class S3ClientOptions {
         return this;
     }
 
-    public int maxConnections() {
+    public int getMaxConnections() {
         return maxConnections;
     }
 }

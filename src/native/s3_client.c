@@ -47,7 +47,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
     jlong part_size,
-    jdouble throughput_target_gbps) {
+    jdouble throughput_target_gbps,
+    int max_connections) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -92,6 +93,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     struct aws_s3_client_config client_config = {
+        .max_connections = max_connections,
         .region = region,
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,

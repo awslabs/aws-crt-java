@@ -62,21 +62,31 @@ public class S3NativeClient implements AutoCloseable {
         }
     }
 
-    private String getEncodedPath(String key, String customQueryParameters) {
-        String encodedPath = "/" + key;
+    private String getEncodedPath(String key, Map<String, String> customQueryParameters) {
+        StringBuilder encodedPath = new StringBuilder();
+        encodedPath.append("/");
+        encodedPath.append(key);
 
-        if (customQueryParameters == null) {
-            return encodedPath;
+        if (customQueryParameters == null || customQueryParameters.isEmpty()) {
+            return encodedPath.toString();
         }
 
-        String trimmedCustomQueryParameters = customQueryParameters.trim();
+        boolean firstParameterAppended = false;
 
-        if (trimmedCustomQueryParameters.equals("")) {
-            return encodedPath;
+        for (Map.Entry<String, String> customQueryParameter : customQueryParameters.entrySet()) {
+            if(firstParameterAppended) { 
+                encodedPath.append("&");
+            } else {
+                encodedPath.append("?");
+                firstParameterAppended = true;
+            }
+
+            encodedPath.append(customQueryParameter.getKey());
+            encodedPath.append("=");
+            encodedPath.append(customQueryParameter.getValue());
         }
 
-        encodedPath += "?" + trimmedCustomQueryParameters;
-        return encodedPath;
+        return encodedPath.toString();
     }
 
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,

@@ -4,11 +4,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
@@ -27,7 +30,8 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.*;
+import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
+import software.amazon.awssdk.crt.s3.S3Client;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>>");
@@ -164,15 +168,15 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     }
 
     interface CustomQueryParametersTestLambda {
-        void run(final S3NativeClient s3NativeClient, String customQueryParameters);
+        void run(final S3NativeClient s3NativeClient, String key, Map<String, String> customQueryParameters);
     }
 
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
-            String customQueryParameters) {
+            String key, Map<String, String> customQueryParameters, String expectedCustomQueryParametersString) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
-        customQueryParametersTestLambda.run(nativeClient, customQueryParameters);
+        customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);
 
         ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
         verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
@@ -183,53 +187,48 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         HttpRequest httpRequest = options.getHttpRequest();
 
-        if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
-            assertFalse(httpRequest.getEncodedPath().endsWith("?"));
-            assertFalse(httpRequest.getEncodedPath().endsWith("&"));
-            assertFalse(httpRequest.getEncodedPath().endsWith(" "));
+        if (customQueryParameters == null || customQueryParameters.isEmpty()) {
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key));
         } else {
-            String encodedPath = httpRequest.getEncodedPath();
-            assertTrue(encodedPath.endsWith("?" + customQueryParameters));
-
-            int numInstances = 0;
-            int currentPosition = 0;
-
-            while (currentPosition != -1) {
-                int newPosition = encodedPath.indexOf(customQueryParameters, currentPosition);
-
-                if (newPosition == -1) {
-                    currentPosition = -1;
-                } else {
-                    ++numInstances;
-                    currentPosition = newPosition + customQueryParameters.length();
-                }
-            }
-
-            assertEquals(1, numInstances);
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key + expectedCustomQueryParametersString));
         }
     }
 
     private void testCustomQueryParameters(CustomQueryParametersTestLambda customQueryParametersTestLambda) {
-        customQueryParametersTestCase(customQueryParametersTestLambda, null);
-        customQueryParametersTestCase(customQueryParametersTestLambda, "");
-        customQueryParametersTestCase(customQueryParametersTestLambda, "  ");
+        String key = "test_key";
 
-        String customQueryParameters = "param1=value1&param2=value2";
-        customQueryParametersTestCase(customQueryParametersTestLambda, customQueryParameters);
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, null, "");
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, new HashMap<String, String>(), "");
+
+        String param1Name = "param1";
+        String param1Value = "value1";
+        String param2Name = "param2";
+        String param2Value = "value2";
+
+        HashMap<String, String> customQueryParameters = new HashMap<String, String>();
+        customQueryParameters.put(param1Name, param1Value);
+        customQueryParameters.put(param2Name, param2Value);
+
+        String expectedCustomQueryParameterString = "?" + param1Name + "=" + param1Value + "&" + param2Name + "="
+                + param2Value;
+
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, customQueryParameters,
+                expectedCustomQueryParameterString);
     }
 
     @Test
     public void testGetObjectCustomQueryParameters() {
-        testCustomQueryParameters((nativeClient, customQueryParameters) -> nativeClient.getObject(GetObjectRequest
-                .builder().bucket(BUCKET).key(GET_OBJECT_KEY).customQueryParameters(customQueryParameters).build(),
+        testCustomQueryParameters((nativeClient, key, customQueryParameters) -> nativeClient.getObject(
+                GetObjectRequest.builder().bucket(BUCKET).key(key).customQueryParameters(customQueryParameters).build(),
                 null));
     }
 
     @Test
     public void testPutObjectCustomQueryParameters() {
-        testCustomQueryParameters((nativeClient,
-                customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
-                        .key(PUT_OBJECT_KEY).contentLength(0L).customQueryParameters(customQueryParameters).build(),
-                        null));
+        testCustomQueryParameters(
+                (nativeClient, key,
+                        customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
+                                .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
+                                null));
     }
 }

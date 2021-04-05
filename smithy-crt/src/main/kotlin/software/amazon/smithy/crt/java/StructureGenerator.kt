@@ -55,7 +55,12 @@ open class StructureGenerator(pluginContext: PluginContext, protected val struct
             val arrayRequestHeaderTypeName = ArrayTypeName.of( requestHeaderTypeName );
             javaStructure.addMember(Field("customHeaders", arrayRequestHeaderTypeName));
 
-            javaStructure.addMember(Field("customQueryParameters", TypeName.get(String::class.javaObjectType)));
+            val customQueryParametersMapTypeName = ParameterizedTypeName.get( 
+                ClassName.get("java.util", "Map"),
+                TypeName.get(String::class.javaObjectType),
+                TypeName.get(String::class.javaObjectType));
+
+            javaStructure.addMember(Field("customQueryParameters", customQueryParametersMapTypeName));
         }
 
         return super.generate()

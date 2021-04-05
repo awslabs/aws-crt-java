@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum QuoteFields {
-    ALWAYS("software.amazon.smithy.crt.codegen.Field@fe3859f"),
+    ALWAYS("software.amazon.smithy.crt.codegen.Field@195d94c2"),
 
-    ASNEEDED("software.amazon.smithy.crt.codegen.Field@fe3859f"),
+    ASNEEDED("software.amazon.smithy.crt.codegen.Field@195d94c2"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

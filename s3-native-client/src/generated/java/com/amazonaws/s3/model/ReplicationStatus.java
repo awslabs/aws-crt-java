@@ -10,13 +10,13 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ReplicationStatus {
-    COMPLETE("software.amazon.smithy.crt.codegen.Field@35e259dd"),
+    COMPLETE("software.amazon.smithy.crt.codegen.Field@1b148e64"),
 
-    PENDING("software.amazon.smithy.crt.codegen.Field@35e259dd"),
+    PENDING("software.amazon.smithy.crt.codegen.Field@1b148e64"),
 
-    FAILED("software.amazon.smithy.crt.codegen.Field@35e259dd"),
+    FAILED("software.amazon.smithy.crt.codegen.Field@1b148e64"),
 
-    REPLICA("software.amazon.smithy.crt.codegen.Field@35e259dd"),
+    REPLICA("software.amazon.smithy.crt.codegen.Field@1b148e64"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

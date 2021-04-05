@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum JSONType {
-    DOCUMENT("software.amazon.smithy.crt.codegen.Field@44f5a830"),
+    DOCUMENT("software.amazon.smithy.crt.codegen.Field@63b730e5"),
 
-    LINES("software.amazon.smithy.crt.codegen.Field@44f5a830"),
+    LINES("software.amazon.smithy.crt.codegen.Field@63b730e5"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

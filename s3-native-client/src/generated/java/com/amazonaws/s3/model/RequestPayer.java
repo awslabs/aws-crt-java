@@ -10,7 +10,7 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum RequestPayer {
-    REQUESTER("software.amazon.smithy.crt.codegen.Field@2c319870"),
+    REQUESTER("software.amazon.smithy.crt.codegen.Field@3bfcda52"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

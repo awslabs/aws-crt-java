@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -28,14 +29,14 @@ public class PutBucketIntelligentTieringConfigurationRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     PutBucketIntelligentTieringConfigurationRequest() {
         this.bucket = "";
         this.id = "";
         this.intelligentTieringConfiguration = null;
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected PutBucketIntelligentTieringConfigurationRequest(BuilderImpl builder) {
@@ -81,7 +82,7 @@ public class PutBucketIntelligentTieringConfigurationRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -95,7 +96,7 @@ public class PutBucketIntelligentTieringConfigurationRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         PutBucketIntelligentTieringConfigurationRequest build();
     }
@@ -118,7 +119,7 @@ public class PutBucketIntelligentTieringConfigurationRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -156,7 +157,7 @@ public class PutBucketIntelligentTieringConfigurationRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -188,7 +189,7 @@ public class PutBucketIntelligentTieringConfigurationRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

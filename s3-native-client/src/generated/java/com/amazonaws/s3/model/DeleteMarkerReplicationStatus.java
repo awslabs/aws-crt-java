@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum DeleteMarkerReplicationStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@15fda04a"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@5c58a520"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@15fda04a"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@5c58a520"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

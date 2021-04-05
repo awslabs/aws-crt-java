@@ -10,7 +10,7 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ExpressionType {
-    SQL("software.amazon.smithy.crt.codegen.Field@780d47b4"),
+    SQL("software.amazon.smithy.crt.codegen.Field@2b5d26ad"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

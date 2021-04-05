@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum InventoryIncludedObjectVersions {
-    ALL("software.amazon.smithy.crt.codegen.Field@43c517dc"),
+    ALL("software.amazon.smithy.crt.codegen.Field@7ff2ce6e"),
 
-    CURRENT("software.amazon.smithy.crt.codegen.Field@43c517dc"),
+    CURRENT("software.amazon.smithy.crt.codegen.Field@7ff2ce6e"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

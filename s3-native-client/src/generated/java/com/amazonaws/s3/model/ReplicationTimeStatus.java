@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ReplicationTimeStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@32081760"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@607a5aec"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@32081760"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@607a5aec"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

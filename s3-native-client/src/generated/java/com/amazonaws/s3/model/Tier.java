@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum Tier {
-    STANDARD("software.amazon.smithy.crt.codegen.Field@9405071"),
+    STANDARD("software.amazon.smithy.crt.codegen.Field@2cbcaa64"),
 
-    BULK("software.amazon.smithy.crt.codegen.Field@9405071"),
+    BULK("software.amazon.smithy.crt.codegen.Field@2cbcaa64"),
 
-    EXPEDITED("software.amazon.smithy.crt.codegen.Field@9405071"),
+    EXPEDITED("software.amazon.smithy.crt.codegen.Field@2cbcaa64"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

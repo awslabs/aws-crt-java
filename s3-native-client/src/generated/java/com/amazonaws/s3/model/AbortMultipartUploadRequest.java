@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -37,7 +38,7 @@ public class AbortMultipartUploadRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     AbortMultipartUploadRequest() {
         this.bucket = "";
@@ -46,7 +47,7 @@ public class AbortMultipartUploadRequest {
         this.requestPayer = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected AbortMultipartUploadRequest(BuilderImpl builder) {
@@ -102,7 +103,7 @@ public class AbortMultipartUploadRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -119,7 +120,7 @@ public class AbortMultipartUploadRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         AbortMultipartUploadRequest build();
     }
@@ -151,7 +152,7 @@ public class AbortMultipartUploadRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -200,7 +201,7 @@ public class AbortMultipartUploadRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -240,7 +241,7 @@ public class AbortMultipartUploadRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

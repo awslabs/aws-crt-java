@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -23,13 +24,13 @@ public class GetBucketRequestPaymentRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     GetBucketRequestPaymentRequest() {
         this.bucket = "";
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected GetBucketRequestPaymentRequest(BuilderImpl builder) {
@@ -70,7 +71,7 @@ public class GetBucketRequestPaymentRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -81,7 +82,7 @@ public class GetBucketRequestPaymentRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         GetBucketRequestPaymentRequest build();
     }
@@ -99,7 +100,7 @@ public class GetBucketRequestPaymentRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -130,7 +131,7 @@ public class GetBucketRequestPaymentRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -158,7 +159,7 @@ public class GetBucketRequestPaymentRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

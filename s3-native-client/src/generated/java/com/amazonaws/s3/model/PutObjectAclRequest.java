@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -90,7 +91,7 @@ public class PutObjectAclRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     PutObjectAclRequest() {
         this.aCL = null;
@@ -107,7 +108,7 @@ public class PutObjectAclRequest {
         this.versionId = "";
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected PutObjectAclRequest(BuilderImpl builder) {
@@ -203,7 +204,7 @@ public class PutObjectAclRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -236,7 +237,7 @@ public class PutObjectAclRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         PutObjectAclRequest build();
     }
@@ -321,7 +322,7 @@ public class PutObjectAclRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -418,7 +419,7 @@ public class PutObjectAclRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -490,7 +491,7 @@ public class PutObjectAclRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

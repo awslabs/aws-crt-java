@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -37,7 +38,7 @@ public class PutBucketRequestPaymentRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     PutBucketRequestPaymentRequest() {
         this.bucket = "";
@@ -45,7 +46,7 @@ public class PutBucketRequestPaymentRequest {
         this.requestPaymentConfiguration = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected PutBucketRequestPaymentRequest(BuilderImpl builder) {
@@ -96,7 +97,7 @@ public class PutBucketRequestPaymentRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -112,7 +113,7 @@ public class PutBucketRequestPaymentRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         PutBucketRequestPaymentRequest build();
     }
@@ -144,7 +145,7 @@ public class PutBucketRequestPaymentRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -188,7 +189,7 @@ public class PutBucketRequestPaymentRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -224,7 +225,7 @@ public class PutBucketRequestPaymentRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

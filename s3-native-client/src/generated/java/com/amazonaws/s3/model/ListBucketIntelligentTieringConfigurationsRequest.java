@@ -5,6 +5,7 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
+import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -24,13 +25,13 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
 
     HttpHeader[] customHeaders;
 
-    String customQueryParameters;
+    Map<String, String> customQueryParameters;
 
     ListBucketIntelligentTieringConfigurationsRequest() {
         this.bucket = "";
         this.continuationToken = "";
         this.customHeaders = null;
-        this.customQueryParameters = "";
+        this.customQueryParameters = null;
     }
 
     protected ListBucketIntelligentTieringConfigurationsRequest(BuilderImpl builder) {
@@ -71,7 +72,7 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
         return customHeaders;
     }
 
-    public String customQueryParameters() {
+    public Map<String, String> customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -82,7 +83,7 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(String customQueryParameters);
+        Builder customQueryParameters(Map<String, String> customQueryParameters);
 
         ListBucketIntelligentTieringConfigurationsRequest build();
     }
@@ -101,7 +102,7 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
 
         HttpHeader[] customHeaders;
 
-        String customQueryParameters;
+        Map<String, String> customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -132,7 +133,7 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(String customQueryParameters) {
+        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -160,7 +161,7 @@ public class ListBucketIntelligentTieringConfigurationsRequest {
             return customHeaders;
         }
 
-        public String customQueryParameters() {
+        public Map<String, String> customQueryParameters() {
             return customQueryParameters;
         }
     }

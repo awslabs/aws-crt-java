@@ -124,10 +124,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
+    /*
+     * Interface for an anonymous function to generate a specific type of request
+     * (ie: PutObject, GetObject, etc.) with the given headers.
+     */
     interface CustomHeadersTestLambda {
         void run(final S3NativeClient s3NativeClient, HttpHeader[] customHeaders);
     }
 
+    /*
+     * Runs the given test lambda for custom headers, passing it the appropriate
+     * arguments, then validating the output.
+     */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
@@ -144,6 +152,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
     }
 
+    /*
+     * Using the customHeadersTestCase function, executes a series of test cases
+     * using the given test lambda.
+     */
     private void testCustomHeaders(CustomHeadersTestLambda customHeadersLambda) {
         customHeadersTestCase(customHeadersLambda, null);
         customHeadersTestCase(customHeadersLambda, new HttpHeader[] {});
@@ -167,10 +179,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L).customHeaders(customHeaders).build(), null));
     }
 
+    /*
+     * Interface for an anonymous function to generate a specific type of request
+     * (ie: PutObject, GetObject, etc.) with the given values.
+     */
     interface CustomQueryParametersTestLambda {
         void run(final S3NativeClient s3NativeClient, String key, Map<String, String> customQueryParameters);
     }
 
+    /*
+     * Runs the given test lambda for custom query parameters, passing it the
+     * appropriate arguments, then validating the output.
+     */
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, Map<String, String> customQueryParameters, String expectedCustomQueryParametersString) {
         final S3Client mockInternalClient = mock(S3Client.class);
@@ -194,6 +214,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
+    /*
+     * Using the customQueryParametersTestCase function, executes a series of tests
+     * using the given test lambda.
+     */
     private void testCustomQueryParameters(CustomQueryParametersTestLambda customQueryParametersTestLambda) {
         String key = "test_key";
 

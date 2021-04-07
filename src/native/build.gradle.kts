@@ -7,8 +7,6 @@ description = "JNI bindings for the AWS Common Runtime"
 
 buildDir = File("../../build")
 
-var libcryptoPath : String? = null
-
 var buildType = "RelWithDebInfo"
 if (project.hasProperty("buildType")) {
     buildType = project.property("buildType").toString()
@@ -25,22 +23,6 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         "-DBUILD_DEPS=ON",
         "-DBUILD_TESTING=OFF"
     )
-
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        libcryptoPath = null;
-        // To set this, add -PlibcryptoPath=/path/to/openssl/home on the command line
-        if (project.hasProperty("libcryptoPath")) {
-            libcryptoPath = project.property("libcryptoPath").toString()
-            logger.info("Using project libcrypto path: ${libcryptoPath}")
-        }
-    }
-
-    if (libcryptoPath != null) {
-        cmakeArgs += listOf(
-            "-DLibCrypto_INCLUDE_DIR=${libcryptoPath}/include",
-            "-DLibCrypto_STATIC_LIBRARY=${libcryptoPath}/lib/libcrypto.a"
-        )
-    }
 
     inputs.file("../../CMakeLists.txt")
     outputs.file("${buildDir}/cmake-build/CMakeCache.txt")

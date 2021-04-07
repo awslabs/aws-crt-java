@@ -789,13 +789,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_byte_buf_append_dynamic(&pub_ack->buffer, &topic));
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_byte_buf_append_dynamic(&pub_ack->buffer, &payload));
-    struct aws_byte_cursor pinned_payload = aws_byte_cursor_from_buf(&pub_ack->buffer);
-    struct aws_byte_cursor pinned_topic = aws_byte_cursor_advance(&pinned_payload, topic.len);
-
     uint16_t msg_id = aws_mqtt_client_connection_publish(
-        connection->client_connection, &pinned_topic, qos, retain, &pinned_payload, s_on_op_complete, pub_ack);
+        connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
 

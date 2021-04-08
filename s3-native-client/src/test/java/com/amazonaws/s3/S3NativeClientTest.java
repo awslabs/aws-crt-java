@@ -10,8 +10,6 @@ import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
@@ -184,7 +182,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      * (ie: PutObject, GetObject, etc.) with the given values.
      */
     interface CustomQueryParametersTestLambda {
-        void run(final S3NativeClient s3NativeClient, String key, Map<String, String> customQueryParameters);
+        void run(final S3NativeClient s3NativeClient, String key, String customQueryParameters);
     }
 
     /*
@@ -192,7 +190,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      * appropriate arguments, then validating the output.
      */
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
-            String key, Map<String, String> customQueryParameters, String expectedCustomQueryParametersString) {
+            String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
@@ -207,10 +205,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         HttpRequest httpRequest = options.getHttpRequest();
 
-        if (customQueryParameters == null || customQueryParameters.isEmpty()) {
+        if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key));
         } else {
-            assertTrue(httpRequest.getEncodedPath().equals("/" + key + expectedCustomQueryParametersString));
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
     }
 
@@ -221,23 +219,17 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     private void testCustomQueryParameters(CustomQueryParametersTestLambda customQueryParametersTestLambda) {
         String key = "test_key";
 
-        customQueryParametersTestCase(customQueryParametersTestLambda, key, null, "");
-        customQueryParametersTestCase(customQueryParametersTestLambda, key, new HashMap<String, String>(), "");
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, null);
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, "");
 
         String param1Name = "param1";
         String param1Value = "value1";
         String param2Name = "param2";
         String param2Value = "value2";
 
-        HashMap<String, String> customQueryParameters = new HashMap<String, String>();
-        customQueryParameters.put(param1Name, param1Value);
-        customQueryParameters.put(param2Name, param2Value);
+        String customQueryParameters = param1Name + "=" + param1Value + "&" + param2Name + "=" + param2Value;
 
-        String expectedCustomQueryParameterString = "?" + param1Name + "=" + param1Value + "&" + param2Name + "="
-                + param2Value;
-
-        customQueryParametersTestCase(customQueryParametersTestLambda, key, customQueryParameters,
-                expectedCustomQueryParameterString);
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, customQueryParameters);
     }
 
     @Test

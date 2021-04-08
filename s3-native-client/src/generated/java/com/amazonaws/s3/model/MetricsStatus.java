@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum MetricsStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@451c3de5"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@1cd5420e"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@451c3de5"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@1cd5420e"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

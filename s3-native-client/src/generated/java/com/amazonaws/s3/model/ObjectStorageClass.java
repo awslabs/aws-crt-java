@@ -10,21 +10,21 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ObjectStorageClass {
-    STANDARD("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    STANDARD("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    REDUCED_REDUNDANCY("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    REDUCED_REDUNDANCY("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    GLACIER("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    GLACIER("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
-    OUTPOSTS("software.amazon.smithy.crt.codegen.Field@1929fd0b"),
+    OUTPOSTS("software.amazon.smithy.crt.codegen.Field@3376c175"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

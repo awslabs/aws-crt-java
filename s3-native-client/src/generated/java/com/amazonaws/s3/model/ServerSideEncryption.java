@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ServerSideEncryption {
-    AES256("software.amazon.smithy.crt.codegen.Field@36fbc230"),
+    AES256("software.amazon.smithy.crt.codegen.Field@4782265a"),
 
-    AWS_KMS("software.amazon.smithy.crt.codegen.Field@36fbc230"),
+    AWS_KMS("software.amazon.smithy.crt.codegen.Field@4782265a"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

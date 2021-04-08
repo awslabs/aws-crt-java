@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum InventoryFormat {
-    CSV("software.amazon.smithy.crt.codegen.Field@1d7aeb7f"),
+    CSV("software.amazon.smithy.crt.codegen.Field@7b0581e0"),
 
-    ORC("software.amazon.smithy.crt.codegen.Field@1d7aeb7f"),
+    ORC("software.amazon.smithy.crt.codegen.Field@7b0581e0"),
 
-    PARQUET("software.amazon.smithy.crt.codegen.Field@1d7aeb7f"),
+    PARQUET("software.amazon.smithy.crt.codegen.Field@7b0581e0"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

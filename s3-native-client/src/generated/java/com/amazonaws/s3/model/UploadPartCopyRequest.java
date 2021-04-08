@@ -7,7 +7,6 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -150,7 +149,7 @@ public class UploadPartCopyRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     UploadPartCopyRequest() {
         this.bucket = "";
@@ -173,7 +172,7 @@ public class UploadPartCopyRequest {
         this.expectedBucketOwner = "";
         this.expectedSourceBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected UploadPartCopyRequest(BuilderImpl builder) {
@@ -299,7 +298,7 @@ public class UploadPartCopyRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -344,7 +343,7 @@ public class UploadPartCopyRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         UploadPartCopyRequest build();
     }
@@ -486,7 +485,7 @@ public class UploadPartCopyRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -619,7 +618,7 @@ public class UploadPartCopyRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -715,7 +714,7 @@ public class UploadPartCopyRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

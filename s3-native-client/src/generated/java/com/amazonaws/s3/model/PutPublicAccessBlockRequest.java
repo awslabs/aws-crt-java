@@ -5,7 +5,6 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -39,7 +38,7 @@ public class PutPublicAccessBlockRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     PutPublicAccessBlockRequest() {
         this.bucket = "";
@@ -47,7 +46,7 @@ public class PutPublicAccessBlockRequest {
         this.publicAccessBlockConfiguration = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected PutPublicAccessBlockRequest(BuilderImpl builder) {
@@ -98,7 +97,7 @@ public class PutPublicAccessBlockRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -114,7 +113,7 @@ public class PutPublicAccessBlockRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         PutPublicAccessBlockRequest build();
     }
@@ -147,7 +146,7 @@ public class PutPublicAccessBlockRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -191,7 +190,7 @@ public class PutPublicAccessBlockRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -227,7 +226,7 @@ public class PutPublicAccessBlockRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

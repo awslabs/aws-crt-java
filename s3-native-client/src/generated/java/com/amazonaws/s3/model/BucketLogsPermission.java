@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum BucketLogsPermission {
-    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@311c4c10"),
+    FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@fdf963b"),
 
-    READ("software.amazon.smithy.crt.codegen.Field@311c4c10"),
+    READ("software.amazon.smithy.crt.codegen.Field@fdf963b"),
 
-    WRITE("software.amazon.smithy.crt.codegen.Field@311c4c10"),
+    WRITE("software.amazon.smithy.crt.codegen.Field@fdf963b"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

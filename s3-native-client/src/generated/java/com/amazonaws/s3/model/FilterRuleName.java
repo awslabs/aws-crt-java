@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum FilterRuleName {
-    PREFIX("software.amazon.smithy.crt.codegen.Field@350572f0"),
+    PREFIX("software.amazon.smithy.crt.codegen.Field@657a9b2"),
 
-    SUFFIX("software.amazon.smithy.crt.codegen.Field@350572f0"),
+    SUFFIX("software.amazon.smithy.crt.codegen.Field@657a9b2"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

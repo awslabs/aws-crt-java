@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ExistingObjectReplicationStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@ff70e77"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@49600e8"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@ff70e77"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@49600e8"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

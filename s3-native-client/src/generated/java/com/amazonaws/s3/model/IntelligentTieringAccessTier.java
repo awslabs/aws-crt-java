@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum IntelligentTieringAccessTier {
-    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@5915843a"),
+    ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@6b2cac44"),
 
-    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@5915843a"),
+    DEEP_ARCHIVE_ACCESS("software.amazon.smithy.crt.codegen.Field@6b2cac44"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

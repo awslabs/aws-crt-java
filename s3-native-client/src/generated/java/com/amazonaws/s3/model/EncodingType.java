@@ -10,7 +10,7 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum EncodingType {
-    URL("software.amazon.smithy.crt.codegen.Field@6a9dc881"),
+    URL("software.amazon.smithy.crt.codegen.Field@14cd719e"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

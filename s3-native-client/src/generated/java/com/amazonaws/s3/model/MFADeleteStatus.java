@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum MFADeleteStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@42c6ae10"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@6054243"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@42c6ae10"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@6054243"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

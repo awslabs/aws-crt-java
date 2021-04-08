@@ -5,7 +5,6 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -34,7 +33,7 @@ public class PutBucketAnalyticsConfigurationRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     PutBucketAnalyticsConfigurationRequest() {
         this.bucket = "";
@@ -42,7 +41,7 @@ public class PutBucketAnalyticsConfigurationRequest {
         this.analyticsConfiguration = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketAnalyticsConfigurationRequest(BuilderImpl builder) {
@@ -93,7 +92,7 @@ public class PutBucketAnalyticsConfigurationRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -108,7 +107,7 @@ public class PutBucketAnalyticsConfigurationRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketAnalyticsConfigurationRequest build();
     }
@@ -136,7 +135,7 @@ public class PutBucketAnalyticsConfigurationRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -179,7 +178,7 @@ public class PutBucketAnalyticsConfigurationRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -215,7 +214,7 @@ public class PutBucketAnalyticsConfigurationRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

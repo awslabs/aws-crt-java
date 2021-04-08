@@ -4,7 +4,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
@@ -27,7 +28,8 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.*;
+import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
+import software.amazon.awssdk.crt.s3.S3Client;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>>");
@@ -120,10 +122,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
+    /*
+     * Interface for an anonymous function to generate a specific type of request
+     * (ie: PutObject, GetObject, etc.) with the given headers.
+     */
     interface CustomHeadersTestLambda {
         void run(final S3NativeClient s3NativeClient, HttpHeader[] customHeaders);
     }
 
+    /*
+     * Runs the given test lambda for custom headers, passing it the appropriate
+     * arguments, then validating the output.
+     */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
@@ -140,6 +150,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
     }
 
+    /*
+     * Using the customHeadersTestCase function, executes a series of test cases
+     * using the given test lambda.
+     */
     private void testCustomHeaders(CustomHeadersTestLambda customHeadersLambda) {
         customHeadersTestCase(customHeadersLambda, null);
         customHeadersTestCase(customHeadersLambda, new HttpHeader[] {});
@@ -163,16 +177,24 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L).customHeaders(customHeaders).build(), null));
     }
 
+    /*
+     * Interface for an anonymous function to generate a specific type of request
+     * (ie: PutObject, GetObject, etc.) with the given values.
+     */
     interface CustomQueryParametersTestLambda {
-        void run(final S3NativeClient s3NativeClient, String customQueryParameters);
+        void run(final S3NativeClient s3NativeClient, String key, String customQueryParameters);
     }
 
+    /*
+     * Runs the given test lambda for custom query parameters, passing it the
+     * appropriate arguments, then validating the output.
+     */
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
-            String customQueryParameters) {
+            String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
-        customQueryParametersTestLambda.run(nativeClient, customQueryParameters);
+        customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);
 
         ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
         verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
@@ -184,52 +206,45 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         HttpRequest httpRequest = options.getHttpRequest();
 
         if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
-            assertFalse(httpRequest.getEncodedPath().endsWith("?"));
-            assertFalse(httpRequest.getEncodedPath().endsWith("&"));
-            assertFalse(httpRequest.getEncodedPath().endsWith(" "));
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key));
         } else {
-            String encodedPath = httpRequest.getEncodedPath();
-            assertTrue(encodedPath.endsWith("?" + customQueryParameters));
-
-            int numInstances = 0;
-            int currentPosition = 0;
-
-            while (currentPosition != -1) {
-                int newPosition = encodedPath.indexOf(customQueryParameters, currentPosition);
-
-                if (newPosition == -1) {
-                    currentPosition = -1;
-                } else {
-                    ++numInstances;
-                    currentPosition = newPosition + customQueryParameters.length();
-                }
-            }
-
-            assertEquals(1, numInstances);
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
     }
 
+    /*
+     * Using the customQueryParametersTestCase function, executes a series of tests
+     * using the given test lambda.
+     */
     private void testCustomQueryParameters(CustomQueryParametersTestLambda customQueryParametersTestLambda) {
-        customQueryParametersTestCase(customQueryParametersTestLambda, null);
-        customQueryParametersTestCase(customQueryParametersTestLambda, "");
-        customQueryParametersTestCase(customQueryParametersTestLambda, "  ");
+        String key = "test_key";
 
-        String customQueryParameters = "param1=value1&param2=value2";
-        customQueryParametersTestCase(customQueryParametersTestLambda, customQueryParameters);
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, null);
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, "");
+
+        String param1Name = "param1";
+        String param1Value = "value1";
+        String param2Name = "param2";
+        String param2Value = "value2";
+
+        String customQueryParameters = param1Name + "=" + param1Value + "&" + param2Name + "=" + param2Value;
+
+        customQueryParametersTestCase(customQueryParametersTestLambda, key, customQueryParameters);
     }
 
     @Test
     public void testGetObjectCustomQueryParameters() {
-        testCustomQueryParameters((nativeClient, customQueryParameters) -> nativeClient.getObject(GetObjectRequest
-                .builder().bucket(BUCKET).key(GET_OBJECT_KEY).customQueryParameters(customQueryParameters).build(),
+        testCustomQueryParameters((nativeClient, key, customQueryParameters) -> nativeClient.getObject(
+                GetObjectRequest.builder().bucket(BUCKET).key(key).customQueryParameters(customQueryParameters).build(),
                 null));
     }
 
     @Test
     public void testPutObjectCustomQueryParameters() {
-        testCustomQueryParameters((nativeClient,
-                customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
-                        .key(PUT_OBJECT_KEY).contentLength(0L).customQueryParameters(customQueryParameters).build(),
-                        null));
+        testCustomQueryParameters(
+                (nativeClient, key,
+                        customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
+                                .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
+                                null));
     }
 }

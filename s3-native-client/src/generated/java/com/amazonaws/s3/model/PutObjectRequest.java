@@ -240,7 +240,7 @@ public class PutObjectRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     PutObjectRequest() {
         this.aCL = null;
@@ -276,7 +276,7 @@ public class PutObjectRequest {
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectRequest(BuilderImpl builder) {
@@ -467,7 +467,7 @@ public class PutObjectRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -538,7 +538,7 @@ public class PutObjectRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectRequest build();
     }
@@ -769,7 +769,7 @@ public class PutObjectRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -981,7 +981,7 @@ public class PutObjectRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -1129,7 +1129,7 @@ public class PutObjectRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

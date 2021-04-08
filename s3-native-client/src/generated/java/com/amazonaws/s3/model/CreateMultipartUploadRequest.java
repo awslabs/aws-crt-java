@@ -190,7 +190,7 @@ public class CreateMultipartUploadRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     CreateMultipartUploadRequest() {
         this.aCL = null;
@@ -223,7 +223,7 @@ public class CreateMultipartUploadRequest {
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected CreateMultipartUploadRequest(BuilderImpl builder) {
@@ -399,7 +399,7 @@ public class CreateMultipartUploadRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -464,7 +464,7 @@ public class CreateMultipartUploadRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         CreateMultipartUploadRequest build();
     }
@@ -646,7 +646,7 @@ public class CreateMultipartUploadRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -840,7 +840,7 @@ public class CreateMultipartUploadRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -976,7 +976,7 @@ public class CreateMultipartUploadRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

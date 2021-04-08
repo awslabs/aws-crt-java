@@ -6,7 +6,6 @@ import java.lang.Boolean;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -57,7 +56,7 @@ public class PutObjectRetentionRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     PutObjectRetentionRequest() {
         this.bucket = "";
@@ -69,7 +68,7 @@ public class PutObjectRetentionRequest {
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectRetentionRequest(BuilderImpl builder) {
@@ -140,7 +139,7 @@ public class PutObjectRetentionRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -163,7 +162,7 @@ public class PutObjectRetentionRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectRetentionRequest build();
     }
@@ -213,7 +212,7 @@ public class PutObjectRetentionRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -280,7 +279,7 @@ public class PutObjectRetentionRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -332,7 +331,7 @@ public class PutObjectRetentionRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

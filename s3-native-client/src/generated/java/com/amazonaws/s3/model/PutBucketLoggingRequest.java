@@ -5,7 +5,6 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -35,7 +34,7 @@ public class PutBucketLoggingRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     PutBucketLoggingRequest() {
         this.bucket = "";
@@ -43,7 +42,7 @@ public class PutBucketLoggingRequest {
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketLoggingRequest(BuilderImpl builder) {
@@ -94,7 +93,7 @@ public class PutBucketLoggingRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -109,7 +108,7 @@ public class PutBucketLoggingRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketLoggingRequest build();
     }
@@ -138,7 +137,7 @@ public class PutBucketLoggingRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -181,7 +180,7 @@ public class PutBucketLoggingRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -217,7 +216,7 @@ public class PutBucketLoggingRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

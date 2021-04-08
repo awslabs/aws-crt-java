@@ -5,7 +5,6 @@ package com.amazonaws.s3.model;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
-import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -24,13 +23,13 @@ public class GetBucketAccelerateConfigurationRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     GetBucketAccelerateConfigurationRequest() {
         this.bucket = "";
         this.expectedBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected GetBucketAccelerateConfigurationRequest(BuilderImpl builder) {
@@ -71,7 +70,7 @@ public class GetBucketAccelerateConfigurationRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -82,7 +81,7 @@ public class GetBucketAccelerateConfigurationRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         GetBucketAccelerateConfigurationRequest build();
     }
@@ -100,7 +99,7 @@ public class GetBucketAccelerateConfigurationRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -131,7 +130,7 @@ public class GetBucketAccelerateConfigurationRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -159,7 +158,7 @@ public class GetBucketAccelerateConfigurationRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

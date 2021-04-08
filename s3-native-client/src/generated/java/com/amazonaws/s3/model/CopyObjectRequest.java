@@ -279,7 +279,7 @@ public class CopyObjectRequest {
 
     HttpHeader[] customHeaders;
 
-    Map<String, String> customQueryParameters;
+    String customQueryParameters;
 
     CopyObjectRequest() {
         this.aCL = null;
@@ -323,7 +323,7 @@ public class CopyObjectRequest {
         this.expectedBucketOwner = "";
         this.expectedSourceBucketOwner = "";
         this.customHeaders = null;
-        this.customQueryParameters = null;
+        this.customQueryParameters = "";
     }
 
     protected CopyObjectRequest(BuilderImpl builder) {
@@ -554,7 +554,7 @@ public class CopyObjectRequest {
         return customHeaders;
     }
 
-    public Map<String, String> customQueryParameters() {
+    public String customQueryParameters() {
         return customQueryParameters;
     }
 
@@ -641,7 +641,7 @@ public class CopyObjectRequest {
 
         Builder customHeaders(HttpHeader[] customHeaders);
 
-        Builder customQueryParameters(Map<String, String> customQueryParameters);
+        Builder customQueryParameters(String customQueryParameters);
 
         CopyObjectRequest build();
     }
@@ -912,7 +912,7 @@ public class CopyObjectRequest {
 
         HttpHeader[] customHeaders;
 
-        Map<String, String> customQueryParameters;
+        String customQueryParameters;
 
         protected BuilderImpl() {
         }
@@ -1172,7 +1172,7 @@ public class CopyObjectRequest {
             return this;
         }
 
-        public final Builder customQueryParameters(Map<String, String> customQueryParameters) {
+        public final Builder customQueryParameters(String customQueryParameters) {
             this.customQueryParameters = customQueryParameters;
             return this;
         }
@@ -1352,7 +1352,7 @@ public class CopyObjectRequest {
             return customHeaders;
         }
 
-        public Map<String, String> customQueryParameters() {
+        public String customQueryParameters() {
             return customQueryParameters;
         }
     }

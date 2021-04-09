@@ -48,6 +48,16 @@ open class StructureGenerator(pluginContext: PluginContext, protected val struct
 
     override fun generate(): TypeSpec.Builder {
         log.fine("Generating structure ${structure.id} -> $className")
+
+        if(javaStructure.className.toString().endsWith("Request")) {
+
+            val requestHeaderTypeName = ClassName.get("software.amazon.awssdk.crt.http", "HttpHeader");
+            val arrayRequestHeaderTypeName = ArrayTypeName.of( requestHeaderTypeName );
+            javaStructure.addMember(Field("customHeaders", arrayRequestHeaderTypeName));
+
+            javaStructure.addMember(Field("customQueryParameters", TypeName.get(String::class.javaObjectType)));
+        }
+
         return super.generate()
     }
 }

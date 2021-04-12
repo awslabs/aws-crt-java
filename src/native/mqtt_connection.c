@@ -1035,7 +1035,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         proxy_options.tls_options = &proxy_tls_conn_options;
     }
 
-    if (aws_mqtt_client_connection_set_websocket_proxy_options(connection->client_connection, &proxy_options)) {
+    if (aws_mqtt_client_connection_set_http_proxy_options(connection->client_connection, &proxy_options)) {
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.setWebsocketProxyOptions: Failed to set proxy options");
     }

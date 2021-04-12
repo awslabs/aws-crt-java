@@ -23,20 +23,26 @@ public class S3NativeClient implements AutoCloseable {
     private final S3Client s3Client;
     private final String signingRegion;
 
-    public S3NativeClient(final String signingRegion, final S3Client s3Client) {
-        this.signingRegion = signingRegion;
-        this.s3Client = s3Client;
-    }
-
     public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
             final CredentialsProvider credentialsProvider, final long partSizeBytes,
             final double targetThroughputGbps) {
+
+        this(signingRegion, clientBootstrap, credentialsProvider, partSizeBytes, targetThroughputGbps, 0);
+    }
+
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+            final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+            final int maxConnections) {
+
+        this(signingRegion, new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
+                .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
+    }
+
+    public S3NativeClient(final String signingRegion, final S3Client s3Client) {
         // keep signing region to construct Host header per-request
         this.signingRegion = signingRegion;
-        final S3ClientOptions clientOptions = new S3ClientOptions().withClientBootstrap(clientBootstrap)
-                .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
-                .withThroughputTargetGbps(targetThroughputGbps);
-        s3Client = new S3Client(clientOptions);
+        this.s3Client = s3Client;
     }
 
     private void addCustomHeaders(List<HttpHeader> headers, HttpHeader[] customHeaders) {

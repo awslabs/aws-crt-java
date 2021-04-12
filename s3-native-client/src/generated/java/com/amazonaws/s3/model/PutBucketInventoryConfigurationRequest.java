@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketInventoryConfigurationRequest {
@@ -30,11 +31,17 @@ public class PutBucketInventoryConfigurationRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutBucketInventoryConfigurationRequest() {
         this.bucket = "";
         this.id = "";
         this.inventoryConfiguration = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketInventoryConfigurationRequest(BuilderImpl builder) {
@@ -42,6 +49,8 @@ public class PutBucketInventoryConfigurationRequest {
         this.id = builder.id;
         this.inventoryConfiguration = builder.inventoryConfiguration;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -79,6 +88,14 @@ public class PutBucketInventoryConfigurationRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -87,6 +104,10 @@ public class PutBucketInventoryConfigurationRequest {
         Builder inventoryConfiguration(InventoryConfiguration inventoryConfiguration);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketInventoryConfigurationRequest build();
     }
@@ -112,6 +133,10 @@ public class PutBucketInventoryConfigurationRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -120,6 +145,8 @@ public class PutBucketInventoryConfigurationRequest {
             id(model.id);
             inventoryConfiguration(model.inventoryConfiguration);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutBucketInventoryConfigurationRequest build() {
@@ -143,6 +170,16 @@ public class PutBucketInventoryConfigurationRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -171,6 +208,14 @@ public class PutBucketInventoryConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

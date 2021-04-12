@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CopyObjectRequest {
@@ -276,6 +277,10 @@ public class CopyObjectRequest {
      */
     String expectedSourceBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     CopyObjectRequest() {
         this.aCL = null;
         this.bucket = "";
@@ -317,6 +322,8 @@ public class CopyObjectRequest {
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
         this.expectedSourceBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected CopyObjectRequest(BuilderImpl builder) {
@@ -360,6 +367,8 @@ public class CopyObjectRequest {
         this.objectLockLegalHoldStatus = builder.objectLockLegalHoldStatus;
         this.expectedBucketOwner = builder.expectedBucketOwner;
         this.expectedSourceBucketOwner = builder.expectedSourceBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -541,6 +550,14 @@ public class CopyObjectRequest {
         return expectedSourceBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -621,6 +638,10 @@ public class CopyObjectRequest {
         Builder expectedBucketOwner(String expectedBucketOwner);
 
         Builder expectedSourceBucketOwner(String expectedSourceBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         CopyObjectRequest build();
     }
@@ -889,6 +910,10 @@ public class CopyObjectRequest {
          */
         String expectedSourceBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -933,6 +958,8 @@ public class CopyObjectRequest {
             objectLockLegalHoldStatus(model.objectLockLegalHoldStatus);
             expectedBucketOwner(model.expectedBucketOwner);
             expectedSourceBucketOwner(model.expectedSourceBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public CopyObjectRequest build() {
@@ -1140,6 +1167,16 @@ public class CopyObjectRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -1309,6 +1346,14 @@ public class CopyObjectRequest {
 
         public String expectedSourceBucketOwner() {
             return expectedSourceBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

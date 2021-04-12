@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketOwnershipControlsRequest {
@@ -32,11 +33,17 @@ public class PutBucketOwnershipControlsRequest {
      */
     OwnershipControls ownershipControls;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutBucketOwnershipControlsRequest() {
         this.bucket = "";
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
         this.ownershipControls = null;
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketOwnershipControlsRequest(BuilderImpl builder) {
@@ -44,6 +51,8 @@ public class PutBucketOwnershipControlsRequest {
         this.contentMD5 = builder.contentMD5;
         this.expectedBucketOwner = builder.expectedBucketOwner;
         this.ownershipControls = builder.ownershipControls;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -81,6 +90,14 @@ public class PutBucketOwnershipControlsRequest {
         return ownershipControls;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -89,6 +106,10 @@ public class PutBucketOwnershipControlsRequest {
         Builder expectedBucketOwner(String expectedBucketOwner);
 
         Builder ownershipControls(OwnershipControls ownershipControls);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketOwnershipControlsRequest build();
     }
@@ -116,6 +137,10 @@ public class PutBucketOwnershipControlsRequest {
          */
         OwnershipControls ownershipControls;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -124,6 +149,8 @@ public class PutBucketOwnershipControlsRequest {
             contentMD5(model.contentMD5);
             expectedBucketOwner(model.expectedBucketOwner);
             ownershipControls(model.ownershipControls);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutBucketOwnershipControlsRequest build() {
@@ -147,6 +174,16 @@ public class PutBucketOwnershipControlsRequest {
 
         public final Builder ownershipControls(OwnershipControls ownershipControls) {
             this.ownershipControls = ownershipControls;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -175,6 +212,14 @@ public class PutBucketOwnershipControlsRequest {
 
         public OwnershipControls ownershipControls() {
             return ownershipControls;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

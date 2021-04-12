@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CreateMultipartUploadRequest {
@@ -187,6 +188,10 @@ public class CreateMultipartUploadRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     CreateMultipartUploadRequest() {
         this.aCL = null;
         this.bucket = "";
@@ -217,6 +222,8 @@ public class CreateMultipartUploadRequest {
         this.objectLockRetainUntilDate = null;
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected CreateMultipartUploadRequest(BuilderImpl builder) {
@@ -249,6 +256,8 @@ public class CreateMultipartUploadRequest {
         this.objectLockRetainUntilDate = builder.objectLockRetainUntilDate;
         this.objectLockLegalHoldStatus = builder.objectLockLegalHoldStatus;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -386,6 +395,14 @@ public class CreateMultipartUploadRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -444,6 +461,10 @@ public class CreateMultipartUploadRequest {
         Builder objectLockLegalHoldStatus(ObjectLockLegalHoldStatus objectLockLegalHoldStatus);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         CreateMultipartUploadRequest build();
     }
@@ -623,6 +644,10 @@ public class CreateMultipartUploadRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -656,6 +681,8 @@ public class CreateMultipartUploadRequest {
             objectLockRetainUntilDate(model.objectLockRetainUntilDate);
             objectLockLegalHoldStatus(model.objectLockLegalHoldStatus);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public CreateMultipartUploadRequest build() {
@@ -808,6 +835,16 @@ public class CreateMultipartUploadRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -933,6 +970,14 @@ public class CreateMultipartUploadRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

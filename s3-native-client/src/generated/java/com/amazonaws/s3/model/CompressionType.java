@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum CompressionType {
-    NONE("software.amazon.smithy.crt.codegen.Field@25175fb9"),
+    NONE("software.amazon.smithy.crt.codegen.Field@3bd2effd"),
 
-    GZIP("software.amazon.smithy.crt.codegen.Field@25175fb9"),
+    GZIP("software.amazon.smithy.crt.codegen.Field@3bd2effd"),
 
-    BZIP2("software.amazon.smithy.crt.codegen.Field@25175fb9"),
+    BZIP2("software.amazon.smithy.crt.codegen.Field@3bd2effd"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

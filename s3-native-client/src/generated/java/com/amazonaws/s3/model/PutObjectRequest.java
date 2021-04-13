@@ -204,7 +204,7 @@ public class PutObjectRequest {
 
     /**
      * <p>Specifies whether Amazon S3 should use an S3 Bucket Key for object encryption with server-side encryption using AWS KMS (SSE-KMS). Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket Key for object encryption with SSE-KMS.</p>
-     *          <p>Specifying this header with a PUT operation doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+     *          <p>Specifying this header with a PUT operation doesn't affect bucket-level settings for S3 Bucket Key.</p>
      */
     Boolean bucketKeyEnabled;
 
@@ -733,7 +733,7 @@ public class PutObjectRequest {
 
         /**
          * <p>Specifies whether Amazon S3 should use an S3 Bucket Key for object encryption with server-side encryption using AWS KMS (SSE-KMS). Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket Key for object encryption with SSE-KMS.</p>
-         *          <p>Specifying this header with a PUT operation doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+         *          <p>Specifying this header with a PUT operation doesn't affect bucket-level settings for S3 Bucket Key.</p>
          */
         Boolean bucketKeyEnabled;
 

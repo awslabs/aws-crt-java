@@ -2,12 +2,11 @@
 
 set -e
 
-env
+if test -f "/tmp/setup_proxy_test_env.sh"; then
+    source /tmp/setup_proxy_test_env.sh
+fi
 
-# Enable squid-based integration tests
-# These steps are very specific to ubuntu 14.
-sudo apt-get -y install squid
-squid3 -YC -f /etc/squid3/squid.conf || sudo service squid restart
+env
 
 curl https://www.amazontrust.com/repository/AmazonRootCA1.pem --output /tmp/AmazonRootCA1.pem
 cert=$(aws secretsmanager get-secret-value --secret-id "unit-test/certificate" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$cert" > /tmp/certificate.pem

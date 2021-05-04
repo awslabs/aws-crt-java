@@ -137,6 +137,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
             throw new IllegalArgumentException("X509CredentialsProvider - clientBootstrap and tlsContext must be non null");
         }
 
+        int proxyConnectionType = 0;
         long proxyTlsContextHandle = 0;
         String proxyHost = null;
         int proxyPort = 0;
@@ -145,6 +146,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
         String proxyAuthorizationPassword = null;
         HttpProxyOptions proxyOptions = builder.getProxyOptions();
         if (proxyOptions != null) {
+            proxyConnectionType = proxyOptions.getConnectionType().getValue();
             TlsContext proxyTlsContext = proxyOptions.getTlsContext();
             if (proxyTlsContext != null) {
                 proxyTlsContextHandle = proxyTlsContext.getNativeHandle();
@@ -164,6 +166,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
                 thingName.getBytes(UTF8),
                 roleAlias.getBytes(UTF8),
                 endpoint.getBytes(UTF8),
+                proxyConnectionType,
                 proxyHost != null ? proxyHost.getBytes(UTF8) : null,
                 proxyPort,
                 proxyTlsContextHandle,
@@ -186,6 +189,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
                                                           byte[] thingName,
                                                           byte[] roleAlias,
                                                           byte[] endpoint,
+                                                          int proxyConnectionType,
                                                           byte[] proxyHost,
                                                           int proxyPort,
                                                           long proxyTlsContext,

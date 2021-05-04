@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -13,6 +14,9 @@ import static org.junit.Assert.assertTrue;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.auth.credentials.Credentials;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -31,6 +35,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /*
 
@@ -43,6 +48,13 @@ import java.util.concurrent.CompletableFuture;
 
 # AWS_TEST_BASIC_AUTH_USERNAME - username to use when using basic authentication to the proxy
 # AWS_TEST_BASIC_AUTH_PASSWORD - password to use when using basic authentication to the proxy
+
+# AWS_TEST_TLS_CERT_PATH - file path to certificate used to initialize the tls context of the x509 provider connection
+# AWS_TEST_TLS_KEY_PATH - file path to the key used to initialize the tls context of the x509 provider connection
+# AWS_TEST_TLS_ROOT_CERT_PATH - file path to the root CA used to initialize the tls context of the x509 provider connection
+# AWS_TEST_X509_ENDPOINT - AWS account-specific endpoint to source x509 credentials from
+# AWS_TEST_X509_THING_NAME - associated name of the x509 thing
+# AWS_TEST_X509_ROLE_ALIAS - associated role alias ...
 
  */
 public class ProxyTest extends CrtTestFixture  {
@@ -67,13 +79,34 @@ public class ProxyTest extends CrtTestFixture  {
     private static String HTTPS_PROXY_PORT = System.getenv("AWS_TEST_HTTPS_PROXY_PORT");
     private static String HTTP_PROXY_BASIC_HOST = System.getenv("AWS_TEST_HTTP_PROXY_BASIC_HOST");
     private static String HTTP_PROXY_BASIC_PORT = System.getenv("AWS_TEST_HTTP_PROXY_BASIC_PORT");
+
     private static String HTTP_PROXY_BASIC_AUTH_USERNAME = System.getenv("AWS_TEST_BASIC_AUTH_USERNAME");
     private static String HTTP_PROXY_BASIC_AUTH_PASSWORD = System.getenv("AWS_TEST_BASIC_AUTH_PASSWORD");
+
+    private static String X509_CERT_PATH = System.getenv("AWS_TEST_TLS_CERT_PATH");
+    private static String X509_KEY_PATH = System.getenv("AWS_TEST_TLS_KEY_PATH");
+    private static String X509_ROOT_CA_PATH = System.getenv("AWS_TEST_TLS_ROOT_CERT_PATH");
+
+    private static String X509_CREDENTIALS_ENDPOINT = System.getenv("AWS_TEST_X509_ENDPOINT");
+    private static String X509_CREDENTIALS_THING_NAME = System.getenv("AWS_TEST_X509_THING_NAME");
+    private static String X509_CREDENTIALS_ROLE_ALIAS = System.getenv("AWS_TEST_X509_ROLE_ALIAS");
 
     public ProxyTest() {}
 
     private boolean isEnvironmentSetUpForProxyTests() {
-        return HTTP_PROXY_HOST != null && HTTP_PROXY_PORT != null && HTTPS_PROXY_HOST != null && HTTPS_PROXY_PORT != null && HTTP_PROXY_BASIC_HOST != null && HTTP_PROXY_BASIC_PORT != null && HTTP_PROXY_BASIC_AUTH_USERNAME != null && HTTP_PROXY_BASIC_AUTH_PASSWORD != null;
+        if (HTTP_PROXY_HOST == null || HTTP_PROXY_PORT == null || HTTPS_PROXY_HOST == null || HTTPS_PROXY_PORT == null || HTTP_PROXY_BASIC_HOST == null || HTTP_PROXY_BASIC_PORT == null) {
+            return false;
+        }
+
+        if (HTTP_PROXY_BASIC_AUTH_USERNAME == null || HTTP_PROXY_BASIC_AUTH_PASSWORD == null) {
+            return false;
+        }
+
+        if (X509_CERT_PATH == null || X509_KEY_PATH == null || X509_ROOT_CA_PATH == null || X509_CREDENTIALS_ENDPOINT == null || X509_CREDENTIALS_THING_NAME == null || X509_CREDENTIALS_ROLE_ALIAS == null) {
+            return false;
+        }
+
+        return true;
     }
 
     private TlsContext createHttpClientTlsContext() {
@@ -148,6 +181,21 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
+    private HttpProxyOptions buildProxyOptions(ProxyTestType testType, ProxyAuthType authType, TlsContext proxyTlsContext) {
+        HttpProxyOptions proxyOptions = new HttpProxyOptions();
+        proxyOptions.setHost(getProxyHostForTest(testType, authType));
+        proxyOptions.setPort(getProxyPortForTest(testType, authType));
+        proxyOptions.setConnectionType(getProxyConnectionTypeForTest(testType));
+        proxyOptions.setTlsContext(proxyTlsContext);
+        if (authType == ProxyAuthType.Basic) {
+            proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
+            proxyOptions.setAuthorizationUsername(HTTP_PROXY_BASIC_AUTH_USERNAME);
+            proxyOptions.setAuthorizationPassword(HTTP_PROXY_BASIC_AUTH_PASSWORD);
+        }
+
+        return proxyOptions;
+    }
+
     private HttpClientConnectionManager buildProxiedConnectionManager(ProxyTestType testType, ProxyAuthType authType) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -156,16 +204,7 @@ public class ProxyTest extends CrtTestFixture  {
              TlsContext tlsContext = createHttpClientTlsContext();
              TlsContext proxyTlsContext = createProxyTlsContext(testType)) {
 
-            HttpProxyOptions proxyOptions = new HttpProxyOptions();
-            proxyOptions.setHost(getProxyHostForTest(testType, authType));
-            proxyOptions.setPort(getProxyPortForTest(testType, authType));
-            proxyOptions.setConnectionType(getProxyConnectionTypeForTest(testType));
-            proxyOptions.setTlsContext(proxyTlsContext);
-            if (authType == ProxyAuthType.Basic) {
-                proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
-                proxyOptions.setAuthorizationUsername(HTTP_PROXY_BASIC_AUTH_USERNAME);
-                proxyOptions.setAuthorizationPassword(HTTP_PROXY_BASIC_AUTH_PASSWORD);
-            }
+            HttpProxyOptions proxyOptions = buildProxyOptions(testType, authType, proxyTlsContext);
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
@@ -179,7 +218,7 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
-    private void doProxyTest(HttpClientConnectionManager manager) {
+    private void doHttpConnectionManagerProxyTest(HttpClientConnectionManager manager) {
         HttpRequest request = new HttpRequest("GET", "/");
 
         CompletableFuture requestCompleteFuture = new CompletableFuture();
@@ -225,7 +264,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.FORWARDING, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -235,7 +274,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -245,7 +284,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTPS, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -255,7 +294,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTP, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -265,7 +304,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -275,7 +314,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_DOUBLE_TLS, ProxyAuthType.None)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -285,7 +324,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.FORWARDING, ProxyAuthType.Basic)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -295,7 +334,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.Basic)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -305,7 +344,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTPS, ProxyAuthType.Basic)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -315,7 +354,7 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTP, ProxyAuthType.Basic)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
         }
     }
 
@@ -325,7 +364,74 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
-            doProxyTest(manager);
+            doHttpConnectionManagerProxyTest(manager);
+        }
+    }
+
+    private void doCredentialsProviderProxyTest(CredentialsProvider provider) {
+        try {
+            Credentials credentials = provider.getCredentials().get();
+            Assert.assertNotNull(credentials);
+        } catch (Exception e) {
+            throw new CrtRuntimeException(e.toString());
+        }
+    }
+
+    private TlsContext createX509TlsContext() {
+        TlsContextOptions options = TlsContextOptions.createWithMtlsFromPath(X509_CERT_PATH, X509_KEY_PATH);
+        options.withCertificateAuthorityFromPath(null, X509_ROOT_CA_PATH);
+
+        return new ClientTlsContext(options);
+    }
+
+    private CredentialsProvider buildProxiedX509CredentialsProvider(ProxyTestType testType, ProxyAuthType authType) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+             TlsContext tlsContext = createX509TlsContext();
+             TlsContext proxyTlsContext = createProxyTlsContext(testType)) {
+
+            HttpProxyOptions proxyOptions = buildProxyOptions(testType, authType, proxyTlsContext);
+
+            X509CredentialsProvider.X509CredentialsProviderBuilder builder = new X509CredentialsProvider.X509CredentialsProviderBuilder();
+            builder.withClientBootstrap(bootstrap)
+                    .withEndpoint(X509_CREDENTIALS_ENDPOINT)
+                    .withProxyOptions(proxyOptions)
+                    .withRoleAlias(X509_CREDENTIALS_ROLE_ALIAS)
+                    .withThingName(X509_CREDENTIALS_THING_NAME)
+                    .withTlsContext(tlsContext);
+
+            return builder.build();
+        }
+    }
+
+    @Test
+    public void testX509Credentials_TunnelingProxy_NoAuth() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.None)) {
+            doCredentialsProviderProxyTest(provider);
+        }
+    }
+
+    @Test
+    public void testX509Credentials_TunnelingProxy_DoubleTls_NoAuth() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_DOUBLE_TLS, ProxyAuthType.None)) {
+            doCredentialsProviderProxyTest(provider);
+        }
+    }
+
+    @Test
+    public void testX509Credentials_TunnelingProxy_BasicAuth() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
+            doCredentialsProviderProxyTest(provider);
         }
     }
 }

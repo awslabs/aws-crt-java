@@ -123,7 +123,9 @@ public class ProxyTest extends CrtTestFixture  {
     }
 
     private TlsContext createHttpClientTlsContext() {
-        return new ClientTlsContext();
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            return new ClientTlsContext(options);
+        }
     }
 
     private TlsContext createProxyTlsContext(ProxyTestType testType) {
@@ -280,7 +282,7 @@ public class ProxyTest extends CrtTestFixture  {
             doHttpConnectionManagerProxyTest(manager);
         }
     }
-/*
+
     @Test
     public void testConnectionManager_LegacyHttpProxy_NoAuth() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -508,5 +510,5 @@ public class ProxyTest extends CrtTestFixture  {
         try (MqttClientConnection connection = buildDirectMqttConnection(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
             doMqttConnectTest(connection);
         }
-    }*/
+    }
 }

@@ -25,15 +25,4 @@ public final class ServerTlsContext extends TlsContext {
     public ServerTlsContext(TlsContextOptions options) throws CrtRuntimeException {
         super(options);
     }
-
-    /**
-     * Creates a new Server TlsContext. There are significant native resources
-     * consumed to create a TlsContext, so most applications will only need to
-     * create one and re-use it for all connections.
-     */
-    public ServerTlsContext() throws CrtRuntimeException {
-        try (TlsContextOptions options = TlsContextOptions.createDefaultServer()) {
-            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-        }
-    }
 };

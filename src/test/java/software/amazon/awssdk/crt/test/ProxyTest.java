@@ -280,7 +280,7 @@ public class ProxyTest extends CrtTestFixture  {
             doHttpConnectionManagerProxyTest(manager);
         }
     }
-
+/*
     @Test
     public void testConnectionManager_LegacyHttpProxy_NoAuth() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -508,5 +508,5 @@ public class ProxyTest extends CrtTestFixture  {
         try (MqttClientConnection connection = buildDirectMqttConnection(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
             doMqttConnectTest(connection);
         }
-    }
+    }*/
 }

@@ -393,13 +393,14 @@ public class ProxyTest extends CrtTestFixture  {
     }
 
     private TlsContext createX509TlsContext(String alpn) {
-        TlsContextOptions options = TlsContextOptions.createWithMtlsFromPath(X509_CERT_PATH, X509_KEY_PATH);
-        options.withCertificateAuthorityFromPath(null, X509_ROOT_CA_PATH);
-        if (alpn != null) {
-            options.withAlpnList(alpn);
-        }
+        try (TlsContextOptions options = TlsContextOptions.createWithMtlsFromPath(X509_CERT_PATH, X509_KEY_PATH)) {
+            options.withCertificateAuthorityFromPath(null, X509_ROOT_CA_PATH);
+            if (alpn != null) {
+                options.withAlpnList(alpn);
+            }
 
-        return new ClientTlsContext(options);
+            return new ClientTlsContext(options);
+        }
     }
 
     private CredentialsProvider buildProxiedX509CredentialsProvider(ProxyTestType testType, ProxyAuthType authType) {

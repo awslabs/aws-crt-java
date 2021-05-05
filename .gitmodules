@@ -34,4 +34,4 @@
 
 [submodule "aws-lc"]
 	path = crt/aws-lc
-	url = https://github.com/awslabs/aws-lc.git
+	url = https://github.com/andrew-kaufman/aws-lc.git

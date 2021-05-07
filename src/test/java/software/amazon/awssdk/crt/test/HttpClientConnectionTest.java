@@ -73,11 +73,16 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
 
-            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, resp.actuallyConnected);
-            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, !resp.exceptionThrown);
-            if (resp.exception != null) {
-                Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
+            String assertMsg = uri.toString() + " " + pref;
+
+            // If an unexpected exception occurred, rethrow so we get details in the logs
+            if (resp.exceptionThrown && (expectConnected || !resp.exception.getMessage().contains(exceptionMsg))) {
+                System.out.println(assertMsg);
+                throw resp.exception;
             }
+
+            Assert.assertEquals(assertMsg + " connection success.", expectConnected, resp.actuallyConnected);
+            Assert.assertEquals(assertMsg + " exception thrown.", !expectConnected, resp.exceptionThrown);
 
             resp.shutdownComplete.get();
         }
@@ -112,9 +117,9 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
-             SocketOptions socketOptions = new SocketOptions();
-             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
-             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);

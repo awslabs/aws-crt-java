@@ -58,6 +58,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 continue;
             }
 
+            System.out.println("Testing " + uri.toString() + " " + pref);
+
             HttpConnectionTestResponse resp = null;
             try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref)) {
                 if (getContext().trustStore != null) {
@@ -71,6 +73,11 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
                     resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
                 }
+            }
+
+            if (expectConnected && resp.exception != null) {
+                System.out.println(resp.exception.toString());
+                resp.exception.printStackTrace();
             }
 
             Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, resp.actuallyConnected);

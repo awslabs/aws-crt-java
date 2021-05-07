@@ -75,7 +75,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
             String assertMsg = uri.toString() + " " + pref;
 
-            // If an unexpected exception occurred, rethrow it so we can see the details in the testing logs
+            // If an unexpected exception occurred, rethrow so we get details in the logs
             if (resp.exceptionThrown && (expectConnected || !resp.exception.getMessage().contains(exceptionMsg))) {
                 System.out.println(assertMsg);
                 throw resp.exception;

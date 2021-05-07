@@ -45,7 +45,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 resp.actuallyConnected = true;
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            resp.exceptionThrown = true;
+            resp.exception = e;
         }
 
         return resp;
@@ -99,10 +100,10 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
 
         // BadSSL
-        // testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
-        // testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
-        // testConnectionWithAllCiphers(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
-        // testConnectionWithAllCiphers(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
+        testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
+        testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+        testConnectionWithAllCiphers(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
+        testConnectionWithAllCiphers(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
     }
 
     @Test

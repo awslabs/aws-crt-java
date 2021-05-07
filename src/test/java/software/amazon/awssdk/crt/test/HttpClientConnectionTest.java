@@ -73,18 +73,16 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
 
-            // print exception details before test fails
-            if (expectConnected && resp.exception != null) {
-                System.out.println("URI: " + uri.toString() + " " + pref);
-                System.out.println(resp.exception.toString());
-                resp.exception.printStackTrace();
+            String assertMsg = uri.toString() + " " + pref;
+
+            // If an unexpected exception occurred, rethrow it so we can see the details in the testing logs
+            if (resp.exceptionThrown && (expectConnected || !resp.exception.getMessage().contains(exceptionMsg))) {
+                System.out.println(assertMsg);
+                throw resp.exception;
             }
 
-            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, resp.actuallyConnected);
-            Assert.assertEquals("URI: " + uri.toString() + " " + pref, expectConnected, !resp.exceptionThrown);
-            if (resp.exception != null) {
-                Assert.assertTrue(resp.exception.getMessage(), resp.exception.getMessage().contains(exceptionMsg));
-            }
+            Assert.assertEquals(assertMsg + " connection success.", expectConnected, resp.actuallyConnected);
+            Assert.assertEquals(assertMsg + " exception thrown.", !expectConnected, resp.exceptionThrown);
 
             resp.shutdownComplete.get();
         }

@@ -58,8 +58,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 continue;
             }
 
-            System.out.println("Testing " + uri.toString() + " " + pref);
-
             HttpConnectionTestResponse resp = null;
             try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref)) {
                 if (getContext().trustStore != null) {
@@ -75,7 +73,9 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
 
+            // print exception details before test fails
             if (expectConnected && resp.exception != null) {
+                System.out.println("URI: " + uri.toString() + " " + pref);
                 System.out.println(resp.exception.toString());
                 resp.exception.printStackTrace();
             }
@@ -119,9 +119,9 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
-             SocketOptions socketOptions = new SocketOptions();
-             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
-             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);

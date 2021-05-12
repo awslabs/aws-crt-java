@@ -167,7 +167,6 @@ public class ProxyTest extends CrtTestFixture  {
     private URI getUriForTest(ProxyTestType testType) {
         try {
             switch (testType) {
-                case TUNNELING_HTTP:
                 case TUNNELING_HTTPS:
                 case TUNNELING_DOUBLE_TLS:
                 case LEGACY_HTTPS:

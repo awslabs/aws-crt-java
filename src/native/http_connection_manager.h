@@ -15,6 +15,7 @@ struct aws_tls_ctx;
 void aws_http_proxy_options_jni_init(
     JNIEnv *env,
     struct aws_http_proxy_options *options,
+    jint proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
     jbyteArray proxy_host,
     uint16_t proxy_port,

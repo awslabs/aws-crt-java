@@ -987,10 +987,11 @@ done:
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetWebsocketProxyOptions(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetHttpProxyOptions(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
+    jint jni_proxy_connection_type,
     jstring jni_proxy_host,
     jint jni_proxy_port,
     jlong jni_proxy_tls_context,
@@ -1006,10 +1007,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     AWS_ZERO_STRUCT(proxy_options);
 
     if (!jni_proxy_host) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.setWebsocketProxyOptions: proxyHost must not be null.");
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.setHttpProxyOptions: proxyHost must not be null.");
         return;
     }
+
+    proxy_options.connection_type = (enum aws_http_proxy_connection_type)jni_proxy_connection_type;
 
     proxy_options.host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
     proxy_options.port = (uint16_t)jni_proxy_port;
@@ -1036,8 +1038,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     if (aws_mqtt_client_connection_set_http_proxy_options(connection->client_connection, &proxy_options)) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.setWebsocketProxyOptions: Failed to set proxy options");
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.setHttpProxyOptions: Failed to set proxy options");
     }
 
     if (jni_proxy_authorization_password) {

@@ -1,0 +1,31 @@
+version: 0.2
+#this build spec assumes the ubuntu aws/codebuild/java:openjdk-8 image
+phases:
+  install:
+    commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-get update -y
+      - sudo apt-get install gcc-7 cmake3 ninja-build -y
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+      - unzip -q -d /tmp /tmp/awscliv2.zip
+      - sudo /tmp/aws/install
+  pre_build:
+    commands:
+      - export CC=gcc-7
+  build:
+    commands:
+      - echo Build started on `date`
+      - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
+      - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
+      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+artifacts:
+  discard-paths: yes
+  files: 
+    - 'target/surefire-reports/**'
+    - 'hs_err_pid*'
+    - 'core*'

@@ -85,17 +85,19 @@ public class MqttClientConnection extends CrtResource {
 
             if (config.getUseWebsockets()) {
                 mqttClientConnectionUseWebsockets(getNativeHandle());
-                if (config.getWebsocketProxyOptions() != null) {
-                    HttpProxyOptions options = config.getWebsocketProxyOptions();
-                    TlsContext proxyTlsContext = options.getTlsContext();
-                    mqttClientConnectionSetWebsocketProxyOptions(getNativeHandle(),
+            }
+
+            if (config.getHttpProxyOptions() != null) {
+                HttpProxyOptions options = config.getHttpProxyOptions();
+                TlsContext proxyTlsContext = options.getTlsContext();
+                mqttClientConnectionSetHttpProxyOptions(getNativeHandle(),
+                        options.getConnectionType().getValue(),
                         options.getHost(),
                         options.getPort(),
                         proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                         options.getAuthorizationType().getValue(),
                         options.getAuthorizationUsername(),
                         options.getAuthorizationPassword());
-                }
             }
 
             addReferenceTo(config);
@@ -364,7 +366,8 @@ public class MqttClientConnection extends CrtResource {
     private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, byte[] marshalledRequest, Throwable throwable,
             long nativeUserData) throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionSetWebsocketProxyOptions(long connection,
+    private static native void mqttClientConnectionSetHttpProxyOptions(long connection,
+                                                                    int proxyConnectionType,
                                                                     String proxyHost,
                                                                     int proxyPort,
                                                                     long proxyTlsContext,

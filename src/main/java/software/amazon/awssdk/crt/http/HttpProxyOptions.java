@@ -18,6 +18,7 @@ public class HttpProxyOptions {
     private String authPassword;
     private TlsContext tlsContext;
     private HttpProxyAuthorizationType authorizationType;
+    private HttpProxyConnectionType connectionType;
 
     /**
      * what kind of authentication, if any, to use when connecting to a proxy server
@@ -45,12 +46,60 @@ public class HttpProxyOptions {
     }
 
     /**
+     * What kind of proxy connection to establish
+     */
+    public enum HttpProxyConnectionType {
+        /**
+         * The legacy default connection type:
+         *   (1) If Tls is being used to connect to the endpoint, use tunneling
+         *   (2) otherwise use forwarding
+         */
+        Legacy(0),
+
+        /**
+         * Establish a forwarding-based connection through the proxy.  It is invalid to use tls with
+         * a forwarding connection
+         */
+        Forwarding(1),
+
+        /**
+         * Establish a tunneling-based connection through the proxy.
+         */
+        Tunneling(2);
+
+        private int connectionType;
+
+        HttpProxyConnectionType(int val) {
+            connectionType = val;
+        }
+
+        public int getValue() {
+            return connectionType;
+        }
+
+    }
+
+    /**
      * Creates a new set of proxy options
      * @throws CrtRuntimeException If the system is unable to allocate space for a http proxy options instance
      */
     public HttpProxyOptions() {
         this.authorizationType = HttpProxyAuthorizationType.None;
+        this.connectionType = HttpProxyConnectionType.Legacy;
     }
+
+    /**
+     * Sets the proxy connection type
+     * @param connectionType what kind of connection to establish
+     */
+    public void setConnectionType(HttpProxyConnectionType connectionType) {
+        this.connectionType = connectionType;
+    }
+
+    /**
+     * @return the proxy connection type
+     */
+    public HttpProxyConnectionType getConnectionType() { return connectionType; }
 
     /**
      * Sets the proxy host to connect through

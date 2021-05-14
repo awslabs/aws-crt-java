@@ -83,6 +83,7 @@ public class HttpClientConnectionManager extends CrtResource {
         this.port = port;
         this.maxConnections = maxConnections;
 
+        int proxyConnectionType = 0;
         String proxyHost = null;
         int proxyPort = 0;
         TlsContext proxyTlsContext = null;
@@ -91,6 +92,7 @@ public class HttpClientConnectionManager extends CrtResource {
         String proxyAuthorizationPassword = null;
 
         if (proxyOptions != null) {
+            proxyConnectionType = proxyOptions.getConnectionType().getValue();
             proxyHost = proxyOptions.getHost();
             proxyPort = proxyOptions.getPort();
             proxyTlsContext = proxyOptions.getTlsContext();
@@ -115,6 +117,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                             uri.getHost().getBytes(UTF8),
                                             port,
                                             maxConnections,
+                                            proxyConnectionType,
                                             proxyHost != null ? proxyHost.getBytes(UTF8) : null,
                                             proxyPort,
                                             proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
@@ -256,6 +259,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         byte[] endpoint,
                                                         int port,
                                                         int maxConns,
+                                                        int proxyConnectionType,
                                                         byte[] proxyHost,
                                                         int proxyPort,
                                                         long proxyTlsContext,

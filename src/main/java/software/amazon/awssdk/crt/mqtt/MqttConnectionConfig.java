@@ -36,7 +36,7 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /* websockets */
     private boolean useWebsockets = false;
-    private HttpProxyOptions websocketProxyOptions;
+    private HttpProxyOptions proxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     public MqttConnectionConfig() {}
@@ -383,21 +383,42 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * @deprecated use setHttpProxyOptions instead
      * Configures proxy options for a websocket-based mqtt connection
      *
      * @param proxyOptions proxy options to use for the base http connection
      */
     public void setWebsocketProxyOptions(HttpProxyOptions proxyOptions) {
-        this.websocketProxyOptions = proxyOptions;
+        this.proxyOptions = proxyOptions;
     }
 
     /**
+     * @deprecated use getHttpProxyOptions instead
      * Queries proxy options for a websocket-based mqtt connection
      *
      * @return proxy options to use for the base http connection
      */
     public HttpProxyOptions getWebsocketProxyOptions() {
-        return websocketProxyOptions;
+        return proxyOptions;
+    }
+
+
+    /**
+     * Configures proxy options for the mqtt connection
+     *
+     * @param proxyOptions proxy options to use for the connection
+     */
+    public void setHttpProxyOptions(HttpProxyOptions proxyOptions) {
+        this.proxyOptions = proxyOptions;
+    }
+
+    /**
+     * Queries proxy options for an mqtt connection
+     *
+     * @return proxy options to use for the connection
+     */
+    public HttpProxyOptions getHttpProxyOptions() {
+        return proxyOptions;
     }
 
     /**
@@ -452,7 +473,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setWillMessage(getWillMessage());
 
             clone.setUseWebsockets(getUseWebsockets());
-            clone.setWebsocketProxyOptions(getWebsocketProxyOptions());
+            clone.setHttpProxyOptions(getHttpProxyOptions());
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             // success, bump up the ref count so we can escape the try-with-resources block

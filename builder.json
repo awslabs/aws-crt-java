@@ -4,7 +4,7 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -B compile"
+        "mvn -P continuous-integration -B compile"
     ],
     "test_steps": [
         "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5"
@@ -35,7 +35,7 @@
         "linux": {
             "!build_steps": [
                 "{source_dir}/gradlew :s3-native-client:build -x test",
-                "mvn -B compile"
+                "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [
                 "mvn -B test -DforkCount=0 -DrerunFailingTestsCount=5"
@@ -124,7 +124,7 @@
                 "JAVA_HOME": "/usr/local/openjdk8"
             },
             "!build_steps": [
-                "mvn -B compile"
+                "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"

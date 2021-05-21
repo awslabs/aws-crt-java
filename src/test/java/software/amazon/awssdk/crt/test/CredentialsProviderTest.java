@@ -5,8 +5,13 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.io.IOException;
 import java.lang.InterruptedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
@@ -21,6 +26,7 @@ import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
+import software.amazon.awssdk.crt.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -149,6 +155,36 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
         } catch (Exception ex) {
             fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testCreateDestroyProfile_ValidProfile() throws IOException {
+        Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
+        Files.write(credsPath, Arrays.asList("[default]"));
+
+        try {
+            ProfileCredentialsProvider.ProfileCredentialsProviderBuilder builder =
+                    new ProfileCredentialsProvider.ProfileCredentialsProviderBuilder()
+                    .withCredentialsFileNameOverride(credsPath.toString());
+
+            try (ProfileCredentialsProvider provider = builder.build()) {
+                assertNotNull(provider);
+                assertTrue(provider.getNativeHandle() != 0);
+            }
+        } finally {
+            Files.deleteIfExists(credsPath);
+        }
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void testCreateDestroyProfile_InvalidProfile() {
+        ProfileCredentialsProvider.ProfileCredentialsProviderBuilder builder =
+                new ProfileCredentialsProvider.ProfileCredentialsProviderBuilder();
+
+        try (ProfileCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
         }
     }
 };

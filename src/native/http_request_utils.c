@@ -25,7 +25,7 @@ struct aws_http_request_body_stream_impl {
 
 static int s_aws_input_stream_seek(
     struct aws_input_stream *stream,
-    aws_off_t offset,
+    int64_t offset,
     enum aws_stream_seek_basis basis) {
     struct aws_http_request_body_stream_impl *impl = stream->impl;
 

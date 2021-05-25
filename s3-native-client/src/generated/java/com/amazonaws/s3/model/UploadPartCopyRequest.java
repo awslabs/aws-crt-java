@@ -9,6 +9,7 @@ import java.lang.String;
 import java.time.Instant;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class UploadPartCopyRequest {
@@ -146,6 +147,10 @@ public class UploadPartCopyRequest {
      */
     String expectedSourceBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     UploadPartCopyRequest() {
         this.bucket = "";
         this.copySource = "";
@@ -166,6 +171,8 @@ public class UploadPartCopyRequest {
         this.requestPayer = null;
         this.expectedBucketOwner = "";
         this.expectedSourceBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected UploadPartCopyRequest(BuilderImpl builder) {
@@ -188,6 +195,8 @@ public class UploadPartCopyRequest {
         this.requestPayer = builder.requestPayer;
         this.expectedBucketOwner = builder.expectedBucketOwner;
         this.expectedSourceBucketOwner = builder.expectedSourceBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -285,6 +294,14 @@ public class UploadPartCopyRequest {
         return expectedSourceBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -323,6 +340,10 @@ public class UploadPartCopyRequest {
         Builder expectedBucketOwner(String expectedBucketOwner);
 
         Builder expectedSourceBucketOwner(String expectedSourceBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         UploadPartCopyRequest build();
     }
@@ -462,6 +483,10 @@ public class UploadPartCopyRequest {
          */
         String expectedSourceBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -485,6 +510,8 @@ public class UploadPartCopyRequest {
             requestPayer(model.requestPayer);
             expectedBucketOwner(model.expectedBucketOwner);
             expectedSourceBucketOwner(model.expectedSourceBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public UploadPartCopyRequest build() {
@@ -586,6 +613,16 @@ public class UploadPartCopyRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -671,6 +708,14 @@ public class UploadPartCopyRequest {
 
         public String expectedSourceBucketOwner() {
             return expectedSourceBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

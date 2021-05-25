@@ -10,9 +10,9 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum SseKmsEncryptedObjectsStatus {
-    ENABLED("software.amazon.smithy.crt.codegen.Field@4fc3d5d4"),
+    ENABLED("software.amazon.smithy.crt.codegen.Field@45fa0b3"),
 
-    DISABLED("software.amazon.smithy.crt.codegen.Field@4fc3d5d4"),
+    DISABLED("software.amazon.smithy.crt.codegen.Field@45fa0b3"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

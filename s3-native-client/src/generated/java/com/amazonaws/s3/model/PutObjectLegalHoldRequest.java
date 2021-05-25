@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectLegalHoldRequest {
@@ -45,6 +46,10 @@ public class PutObjectLegalHoldRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutObjectLegalHoldRequest() {
         this.bucket = "";
         this.key = "";
@@ -53,6 +58,8 @@ public class PutObjectLegalHoldRequest {
         this.versionId = "";
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectLegalHoldRequest(BuilderImpl builder) {
@@ -63,6 +70,8 @@ public class PutObjectLegalHoldRequest {
         this.versionId = builder.versionId;
         this.contentMD5 = builder.contentMD5;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -112,6 +121,14 @@ public class PutObjectLegalHoldRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -126,6 +143,10 @@ public class PutObjectLegalHoldRequest {
         Builder contentMD5(String contentMD5);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectLegalHoldRequest build();
     }
@@ -166,6 +187,10 @@ public class PutObjectLegalHoldRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -177,6 +202,8 @@ public class PutObjectLegalHoldRequest {
             versionId(model.versionId);
             contentMD5(model.contentMD5);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutObjectLegalHoldRequest build() {
@@ -218,6 +245,16 @@ public class PutObjectLegalHoldRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -255,6 +292,14 @@ public class PutObjectLegalHoldRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

@@ -10,11 +10,11 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum Type {
-    CANONICAL_USER("software.amazon.smithy.crt.codegen.Field@1c03861a"),
+    CANONICAL_USER("software.amazon.smithy.crt.codegen.Field@26da5e8d"),
 
-    AMAZON_CUSTOMER_BY_EMAIL("software.amazon.smithy.crt.codegen.Field@1c03861a"),
+    AMAZON_CUSTOMER_BY_EMAIL("software.amazon.smithy.crt.codegen.Field@26da5e8d"),
 
-    GROUP("software.amazon.smithy.crt.codegen.Field@1c03861a"),
+    GROUP("software.amazon.smithy.crt.codegen.Field@26da5e8d"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

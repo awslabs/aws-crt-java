@@ -10,15 +10,15 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum TransitionStorageClass {
-    GLACIER("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
+    GLACIER("software.amazon.smithy.crt.codegen.Field@778b300f"),
 
-    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
+    STANDARD_IA("software.amazon.smithy.crt.codegen.Field@778b300f"),
 
-    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
+    ONEZONE_IA("software.amazon.smithy.crt.codegen.Field@778b300f"),
 
-    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
+    INTELLIGENT_TIERING("software.amazon.smithy.crt.codegen.Field@778b300f"),
 
-    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@1c0fbc67"),
+    DEEP_ARCHIVE("software.amazon.smithy.crt.codegen.Field@778b300f"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

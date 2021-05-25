@@ -1,22 +1,19 @@
 package com.amazonaws.s3;
 
-import java.util.function.Function;
+import java.nio.ByteBuffer;
 
-public interface RequestDataSupplier extends Function<byte[], Boolean>, OperationHandler{
-    default Boolean apply(byte[] buffer) {
-        return getRequestBytes(buffer);
-    }
-
+@FunctionalInterface
+public interface RequestDataSupplier extends OperationHandler{
     /**
-     * Gives the supplier implement an array that must be fully populated with sequences of bytes, representing
-     * the data to be sent with the operation's request
+     * Called to retrieve data from this supplier. The supplier must write the
+     * available bytes to the given {@code ByteBuffer}.
      * 
      * Return true if all of the request data has been supplied
      * 
      * @param buffer byte array to populate with data.
      * @return true if and only if all of the data has been supplied and the transfer can complete 
      */
-    boolean getRequestBytes(byte[] buffer);
+    boolean getRequestBytes(ByteBuffer buffer);
 
     /**
      * Called when the processing needs the stream to rewind itself back to its beginning.

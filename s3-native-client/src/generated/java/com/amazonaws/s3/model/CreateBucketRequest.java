@@ -8,6 +8,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CreateBucketRequest {
@@ -57,6 +58,10 @@ public class CreateBucketRequest {
      */
     Boolean objectLockEnabledForBucket;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     CreateBucketRequest() {
         this.aCL = null;
         this.bucket = "";
@@ -67,6 +72,8 @@ public class CreateBucketRequest {
         this.grantWrite = "";
         this.grantWriteACP = "";
         this.objectLockEnabledForBucket = null;
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected CreateBucketRequest(BuilderImpl builder) {
@@ -79,6 +86,8 @@ public class CreateBucketRequest {
         this.grantWrite = builder.grantWrite;
         this.grantWriteACP = builder.grantWriteACP;
         this.objectLockEnabledForBucket = builder.objectLockEnabledForBucket;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -136,6 +145,14 @@ public class CreateBucketRequest {
         return objectLockEnabledForBucket;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(BucketCannedACL aCL);
 
@@ -154,6 +171,10 @@ public class CreateBucketRequest {
         Builder grantWriteACP(String grantWriteACP);
 
         Builder objectLockEnabledForBucket(Boolean objectLockEnabledForBucket);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         CreateBucketRequest build();
     }
@@ -205,6 +226,10 @@ public class CreateBucketRequest {
          */
         Boolean objectLockEnabledForBucket;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -218,6 +243,8 @@ public class CreateBucketRequest {
             grantWrite(model.grantWrite);
             grantWriteACP(model.grantWriteACP);
             objectLockEnabledForBucket(model.objectLockEnabledForBucket);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public CreateBucketRequest build() {
@@ -270,6 +297,16 @@ public class CreateBucketRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -315,6 +352,14 @@ public class CreateBucketRequest {
 
         public Boolean objectLockEnabledForBucket() {
             return objectLockEnabledForBucket;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

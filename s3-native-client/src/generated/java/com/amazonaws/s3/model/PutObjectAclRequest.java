@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectAclRequest {
@@ -87,6 +88,10 @@ public class PutObjectAclRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutObjectAclRequest() {
         this.aCL = null;
         this.accessControlPolicy = null;
@@ -101,6 +106,8 @@ public class PutObjectAclRequest {
         this.requestPayer = null;
         this.versionId = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectAclRequest(BuilderImpl builder) {
@@ -117,6 +124,8 @@ public class PutObjectAclRequest {
         this.requestPayer = builder.requestPayer;
         this.versionId = builder.versionId;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -190,6 +199,14 @@ public class PutObjectAclRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -216,6 +233,10 @@ public class PutObjectAclRequest {
         Builder versionId(String versionId);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectAclRequest build();
     }
@@ -298,6 +319,10 @@ public class PutObjectAclRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -315,6 +340,8 @@ public class PutObjectAclRequest {
             requestPayer(model.requestPayer);
             versionId(model.versionId);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutObjectAclRequest build() {
@@ -386,6 +413,16 @@ public class PutObjectAclRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -447,6 +484,14 @@ public class PutObjectAclRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

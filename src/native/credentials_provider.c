@@ -14,6 +14,7 @@
 #include <aws/common/clock.h>
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
+#include <aws/http/proxy.h>
 #include <aws/io/tls_channel_handler.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -164,6 +165,7 @@ JNIEXPORT jlong JNICALL
         jbyteArray thing_name,
         jbyteArray role_alias,
         jbyteArray endpoint,
+        jint proxy_connection_type,
         jbyteArray jni_proxy_host,
         jint jni_proxy_port,
         jlong jni_proxy_tls_context,
@@ -204,6 +206,7 @@ JNIEXPORT jlong JNICALL
     aws_http_proxy_options_jni_init(
         env,
         &proxy_options,
+        proxy_connection_type,
         &proxy_tls_connection_options,
         jni_proxy_host,
         (uint16_t)jni_proxy_port,

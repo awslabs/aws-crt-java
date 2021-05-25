@@ -10,19 +10,19 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum ObjectCannedACL {
-    PRIVATE("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    PRIVATE("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    PUBLIC_READ("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    PUBLIC_READ_WRITE("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    AUTHENTICATED_READ("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    AWS_EXEC_READ("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    AWS_EXEC_READ("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    BUCKET_OWNER_READ("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    BUCKET_OWNER_READ("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
-    BUCKET_OWNER_FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@18e5e9f8"),
+    BUCKET_OWNER_FULL_CONTROL("software.amazon.smithy.crt.codegen.Field@1ceae604"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

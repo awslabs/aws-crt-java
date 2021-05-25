@@ -26,6 +26,7 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveMs = 0;
     private int pingTimeoutMs = 0;
+    private int protocolOperationTimeoutMs = 0;
     private boolean cleanSession = true;
 
     /* will */
@@ -35,7 +36,7 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /* websockets */
     private boolean useWebsockets = false;
-    private HttpProxyOptions websocketProxyOptions;
+    private HttpProxyOptions proxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     public MqttConnectionConfig() {}
@@ -209,6 +210,28 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * Configures timeout value for requests that response is required on healthy connection. 
+     * If a response is not received within this interval, the request will fail as server not receiving it. 
+     * Applied to publish (QoS>0) and unsubscribe
+     *
+     * @param protocolOperationTimeoutMs How long to wait for a request response (in milliseconds) before failing
+     */
+    public void setProtocolOperationTimeoutMs(int protocolOperationTimeoutMs) {
+        this.protocolOperationTimeoutMs = protocolOperationTimeoutMs;
+    }
+
+    /**
+     * Queries timeout value for requests that response is required on healthy connection.
+     * If a response is not received within this interval, the request will fail as server not receiving it. 
+     * Applied to publish (QoS>0) and unsubscribe
+     *
+     * @return How long to wait for a request response (in milliseconds) before failing
+     */
+    public int getProtocolOperationTimeoutMs() {
+        return protocolOperationTimeoutMs;
+    }
+
+    /**
      * Configures the mqtt client to use for a connection
      *
      * @param mqttClient the mqtt client to use
@@ -360,21 +383,42 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * @deprecated use setHttpProxyOptions instead
      * Configures proxy options for a websocket-based mqtt connection
      *
      * @param proxyOptions proxy options to use for the base http connection
      */
     public void setWebsocketProxyOptions(HttpProxyOptions proxyOptions) {
-        this.websocketProxyOptions = proxyOptions;
+        this.proxyOptions = proxyOptions;
     }
 
     /**
+     * @deprecated use getHttpProxyOptions instead
      * Queries proxy options for a websocket-based mqtt connection
      *
      * @return proxy options to use for the base http connection
      */
     public HttpProxyOptions getWebsocketProxyOptions() {
-        return websocketProxyOptions;
+        return proxyOptions;
+    }
+
+
+    /**
+     * Configures proxy options for the mqtt connection
+     *
+     * @param proxyOptions proxy options to use for the connection
+     */
+    public void setHttpProxyOptions(HttpProxyOptions proxyOptions) {
+        this.proxyOptions = proxyOptions;
+    }
+
+    /**
+     * Queries proxy options for an mqtt connection
+     *
+     * @return proxy options to use for the connection
+     */
+    public HttpProxyOptions getHttpProxyOptions() {
+        return proxyOptions;
     }
 
     /**
@@ -423,12 +467,13 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setConnectionCallbacks(getConnectionCallbacks());
             clone.setKeepAliveMs(getKeepAliveMs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
+            clone.setProtocolOperationTimeoutMs(getProtocolOperationTimeoutMs());
             clone.setCleanSession(getCleanSession());
 
             clone.setWillMessage(getWillMessage());
 
             clone.setUseWebsockets(getUseWebsockets());
-            clone.setWebsocketProxyOptions(getWebsocketProxyOptions());
+            clone.setHttpProxyOptions(getHttpProxyOptions());
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             // success, bump up the ref count so we can escape the try-with-resources block

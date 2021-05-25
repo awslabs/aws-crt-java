@@ -10,39 +10,39 @@ import software.amazon.aws.sdk.crt.annotations.Generated;
 
 @Generated("software.amazon.smithy.crt.java.EnumGenerator")
 public enum Event {
-    S3_REDUCED_REDUNDANCY_LOST_OBJECT("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REDUCED_REDUNDANCY_LOST_OBJECT("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_CREATED("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_CREATED("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_CREATED_PUT("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_CREATED_PUT("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_CREATED_POST("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_CREATED_POST("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_CREATED_COPY("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_CREATED_COPY("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_CREATED_COMPLETE_MULTIPART_UPLOAD("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_CREATED_COMPLETE_MULTIPART_UPLOAD("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_REMOVED("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_REMOVED("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_REMOVED_DELETE("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_REMOVED_DELETE("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_REMOVED_DELETE_MARKER_CREATED("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_REMOVED_DELETE_MARKER_CREATED("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_RESTORE("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_RESTORE("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_RESTORE_POST("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_RESTORE_POST("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_OBJECT_RESTORE_COMPLETED("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_OBJECT_RESTORE_COMPLETED("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_REPLICATION("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REPLICATION("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_REPLICATION_OPERATION_FAILED_REPLICATION("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REPLICATION_OPERATION_FAILED_REPLICATION("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_REPLICATION_OPERATION_NOT_TRACKED("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REPLICATION_OPERATION_NOT_TRACKED("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_REPLICATION_OPERATION_MISSED_THRESHOLD("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REPLICATION_OPERATION_MISSED_THRESHOLD("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
-    S3_REPLICATION_OPERATION_REPLICATED_AFTER_THRESHOLD("software.amazon.smithy.crt.codegen.Field@690db51"),
+    S3_REPLICATION_OPERATION_REPLICATED_AFTER_THRESHOLD("software.amazon.smithy.crt.codegen.Field@3e3ec994"),
 
     UNKNOWN_TO_SDK_VERSION(null);
 

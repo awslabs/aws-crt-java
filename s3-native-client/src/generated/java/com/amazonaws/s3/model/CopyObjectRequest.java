@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class CopyObjectRequest {
@@ -66,12 +67,12 @@ public class CopyObjectRequest {
      *                   <code>awsexamplebucket/reports/january.pdf</code>. The value must be URL
      *                encoded.</p>
      *             </li>
-     *             <li> 
-     *                <p>For objects accessed through access points, specify the Amazon Resource Name (ARN) of the object as accessed through the access point, in the format <code>arn:aws:s3:<Region>:<account-id>:accesspoint/<access-point-name>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through access point <code>my-access-point</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3:us-west-2:123456789012:accesspoint/my-access-point/object/reports/january.pdf</code>. The value must be URL encoded.</p> 
+     *             <li>
+     *                <p>For objects accessed through access points, specify the Amazon Resource Name (ARN) of the object as accessed through the access point, in the format <code>arn:aws:s3:<Region>:<account-id>:accesspoint/<access-point-name>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through access point <code>my-access-point</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3:us-west-2:123456789012:accesspoint/my-access-point/object/reports/january.pdf</code>. The value must be URL encoded.</p>
      *                <note>
      *                   <p>Amazon S3 supports copy operations using access points only when the source and destination buckets are in the same AWS Region.</p>
-     *                </note> 
-     *                <p>Alternatively, for objects accessed through Amazon S3 on Outposts, specify the ARN of the object as accessed in the format <code>arn:aws:s3-outposts:<Region>:<account-id>:outpost/<outpost-id>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through outpost <code>my-outpost</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3-outposts:us-west-2:123456789012:outpost/my-outpost/object/reports/january.pdf</code>. The value must be URL encoded.  </p> 
+     *                </note>
+     *                <p>Alternatively, for objects accessed through Amazon S3 on Outposts, specify the ARN of the object as accessed in the format <code>arn:aws:s3-outposts:<Region>:<account-id>:outpost/<outpost-id>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through outpost <code>my-outpost</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3-outposts:us-west-2:123456789012:outpost/my-outpost/object/reports/january.pdf</code>. The value must be URL encoded.  </p>
      *             </li>
      *          </ul>
      *          <p>To copy a specific version of an object, append <code>?versionId=<version-id></code>
@@ -218,7 +219,7 @@ public class CopyObjectRequest {
 
     /**
      * <p>Specifies whether Amazon S3 should use an S3 Bucket Key for object encryption with server-side encryption using AWS KMS (SSE-KMS). Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket Key for object encryption with SSE-KMS. </p>
-     *          <p>Specifying this header with a COPY operation doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+     *          <p>Specifying this header with a COPY operation doesn't affect bucket-level settings for S3 Bucket Key.</p>
      */
     Boolean bucketKeyEnabled;
 
@@ -276,6 +277,10 @@ public class CopyObjectRequest {
      */
     String expectedSourceBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     CopyObjectRequest() {
         this.aCL = null;
         this.bucket = "";
@@ -317,6 +322,8 @@ public class CopyObjectRequest {
         this.objectLockLegalHoldStatus = null;
         this.expectedBucketOwner = "";
         this.expectedSourceBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected CopyObjectRequest(BuilderImpl builder) {
@@ -360,6 +367,8 @@ public class CopyObjectRequest {
         this.objectLockLegalHoldStatus = builder.objectLockLegalHoldStatus;
         this.expectedBucketOwner = builder.expectedBucketOwner;
         this.expectedSourceBucketOwner = builder.expectedSourceBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -541,6 +550,14 @@ public class CopyObjectRequest {
         return expectedSourceBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder aCL(ObjectCannedACL aCL);
 
@@ -622,6 +639,10 @@ public class CopyObjectRequest {
 
         Builder expectedSourceBucketOwner(String expectedSourceBucketOwner);
 
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
+
         CopyObjectRequest build();
     }
 
@@ -679,12 +700,12 @@ public class CopyObjectRequest {
          *                   <code>awsexamplebucket/reports/january.pdf</code>. The value must be URL
          *                encoded.</p>
          *             </li>
-         *             <li> 
-         *                <p>For objects accessed through access points, specify the Amazon Resource Name (ARN) of the object as accessed through the access point, in the format <code>arn:aws:s3:<Region>:<account-id>:accesspoint/<access-point-name>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through access point <code>my-access-point</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3:us-west-2:123456789012:accesspoint/my-access-point/object/reports/january.pdf</code>. The value must be URL encoded.</p> 
+         *             <li>
+         *                <p>For objects accessed through access points, specify the Amazon Resource Name (ARN) of the object as accessed through the access point, in the format <code>arn:aws:s3:<Region>:<account-id>:accesspoint/<access-point-name>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through access point <code>my-access-point</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3:us-west-2:123456789012:accesspoint/my-access-point/object/reports/january.pdf</code>. The value must be URL encoded.</p>
          *                <note>
          *                   <p>Amazon S3 supports copy operations using access points only when the source and destination buckets are in the same AWS Region.</p>
-         *                </note> 
-         *                <p>Alternatively, for objects accessed through Amazon S3 on Outposts, specify the ARN of the object as accessed in the format <code>arn:aws:s3-outposts:<Region>:<account-id>:outpost/<outpost-id>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through outpost <code>my-outpost</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3-outposts:us-west-2:123456789012:outpost/my-outpost/object/reports/january.pdf</code>. The value must be URL encoded.  </p> 
+         *                </note>
+         *                <p>Alternatively, for objects accessed through Amazon S3 on Outposts, specify the ARN of the object as accessed in the format <code>arn:aws:s3-outposts:<Region>:<account-id>:outpost/<outpost-id>/object/<key></code>. For example, to copy the object <code>reports/january.pdf</code> through outpost <code>my-outpost</code> owned by account <code>123456789012</code> in Region <code>us-west-2</code>, use the URL encoding of <code>arn:aws:s3-outposts:us-west-2:123456789012:outpost/my-outpost/object/reports/january.pdf</code>. The value must be URL encoded.  </p>
          *             </li>
          *          </ul>
          *          <p>To copy a specific version of an object, append <code>?versionId=<version-id></code>
@@ -831,7 +852,7 @@ public class CopyObjectRequest {
 
         /**
          * <p>Specifies whether Amazon S3 should use an S3 Bucket Key for object encryption with server-side encryption using AWS KMS (SSE-KMS). Setting this header to <code>true</code> causes Amazon S3 to use an S3 Bucket Key for object encryption with SSE-KMS. </p>
-         *          <p>Specifying this header with a COPY operation doesn’t affect bucket-level settings for S3 Bucket Key.</p>
+         *          <p>Specifying this header with a COPY operation doesn't affect bucket-level settings for S3 Bucket Key.</p>
          */
         Boolean bucketKeyEnabled;
 
@@ -889,6 +910,10 @@ public class CopyObjectRequest {
          */
         String expectedSourceBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -933,6 +958,8 @@ public class CopyObjectRequest {
             objectLockLegalHoldStatus(model.objectLockLegalHoldStatus);
             expectedBucketOwner(model.expectedBucketOwner);
             expectedSourceBucketOwner(model.expectedSourceBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public CopyObjectRequest build() {
@@ -1140,6 +1167,16 @@ public class CopyObjectRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -1309,6 +1346,14 @@ public class CopyObjectRequest {
 
         public String expectedSourceBucketOwner() {
             return expectedSourceBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

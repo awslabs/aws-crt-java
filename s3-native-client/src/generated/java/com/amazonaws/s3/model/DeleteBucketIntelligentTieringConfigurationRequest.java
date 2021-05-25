@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteBucketIntelligentTieringConfigurationRequest {
@@ -20,14 +21,22 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
      */
     String id;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     DeleteBucketIntelligentTieringConfigurationRequest() {
         this.bucket = "";
         this.id = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected DeleteBucketIntelligentTieringConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.id = builder.id;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -57,10 +66,22 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
         return id;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
         Builder id(String id);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         DeleteBucketIntelligentTieringConfigurationRequest build();
     }
@@ -76,12 +97,18 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
          */
         String id;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
         private BuilderImpl(DeleteBucketIntelligentTieringConfigurationRequest model) {
             bucket(model.bucket);
             id(model.id);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public DeleteBucketIntelligentTieringConfigurationRequest build() {
@@ -95,6 +122,16 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
 
         public final Builder id(String id) {
             this.id = id;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -115,6 +152,14 @@ public class DeleteBucketIntelligentTieringConfigurationRequest {
 
         public String id() {
             return id;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

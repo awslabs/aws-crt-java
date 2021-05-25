@@ -8,6 +8,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class DeleteObjectsRequest {
@@ -43,6 +44,10 @@ public class DeleteObjectsRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     DeleteObjectsRequest() {
         this.bucket = "";
         this.delete = null;
@@ -50,6 +55,8 @@ public class DeleteObjectsRequest {
         this.requestPayer = null;
         this.bypassGovernanceRetention = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected DeleteObjectsRequest(BuilderImpl builder) {
@@ -59,6 +66,8 @@ public class DeleteObjectsRequest {
         this.requestPayer = builder.requestPayer;
         this.bypassGovernanceRetention = builder.bypassGovernanceRetention;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -104,6 +113,14 @@ public class DeleteObjectsRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -116,6 +133,10 @@ public class DeleteObjectsRequest {
         Builder bypassGovernanceRetention(Boolean bypassGovernanceRetention);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         DeleteObjectsRequest build();
     }
@@ -153,6 +174,10 @@ public class DeleteObjectsRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -163,6 +188,8 @@ public class DeleteObjectsRequest {
             requestPayer(model.requestPayer);
             bypassGovernanceRetention(model.bypassGovernanceRetention);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public DeleteObjectsRequest build() {
@@ -199,6 +226,16 @@ public class DeleteObjectsRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -232,6 +269,14 @@ public class DeleteObjectsRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

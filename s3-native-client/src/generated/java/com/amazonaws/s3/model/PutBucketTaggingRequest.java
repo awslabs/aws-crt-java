@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketTaggingRequest {
@@ -33,11 +34,17 @@ public class PutBucketTaggingRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutBucketTaggingRequest() {
         this.bucket = "";
         this.contentMD5 = "";
         this.tagging = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketTaggingRequest(BuilderImpl builder) {
@@ -45,6 +52,8 @@ public class PutBucketTaggingRequest {
         this.contentMD5 = builder.contentMD5;
         this.tagging = builder.tagging;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -82,6 +91,14 @@ public class PutBucketTaggingRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -90,6 +107,10 @@ public class PutBucketTaggingRequest {
         Builder tagging(Tagging tagging);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketTaggingRequest build();
     }
@@ -118,6 +139,10 @@ public class PutBucketTaggingRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -126,6 +151,8 @@ public class PutBucketTaggingRequest {
             contentMD5(model.contentMD5);
             tagging(model.tagging);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutBucketTaggingRequest build() {
@@ -149,6 +176,16 @@ public class PutBucketTaggingRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -177,6 +214,14 @@ public class PutBucketTaggingRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

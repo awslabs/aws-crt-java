@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class AbortMultipartUploadRequest {
@@ -34,12 +35,18 @@ public class AbortMultipartUploadRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     AbortMultipartUploadRequest() {
         this.bucket = "";
         this.key = "";
         this.uploadId = "";
         this.requestPayer = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected AbortMultipartUploadRequest(BuilderImpl builder) {
@@ -48,6 +55,8 @@ public class AbortMultipartUploadRequest {
         this.uploadId = builder.uploadId;
         this.requestPayer = builder.requestPayer;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -89,6 +98,14 @@ public class AbortMultipartUploadRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -99,6 +116,10 @@ public class AbortMultipartUploadRequest {
         Builder requestPayer(RequestPayer requestPayer);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         AbortMultipartUploadRequest build();
     }
@@ -128,6 +149,10 @@ public class AbortMultipartUploadRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -137,6 +162,8 @@ public class AbortMultipartUploadRequest {
             uploadId(model.uploadId);
             requestPayer(model.requestPayer);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public AbortMultipartUploadRequest build() {
@@ -165,6 +192,16 @@ public class AbortMultipartUploadRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -197,6 +234,14 @@ public class AbortMultipartUploadRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

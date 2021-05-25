@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class GetBucketPolicyStatusRequest {
@@ -20,14 +21,22 @@ public class GetBucketPolicyStatusRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     GetBucketPolicyStatusRequest() {
         this.bucket = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected GetBucketPolicyStatusRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -57,10 +66,22 @@ public class GetBucketPolicyStatusRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         GetBucketPolicyStatusRequest build();
     }
@@ -76,12 +97,18 @@ public class GetBucketPolicyStatusRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
         private BuilderImpl(GetBucketPolicyStatusRequest model) {
             bucket(model.bucket);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public GetBucketPolicyStatusRequest build() {
@@ -95,6 +122,16 @@ public class GetBucketPolicyStatusRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -115,6 +152,14 @@ public class GetBucketPolicyStatusRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

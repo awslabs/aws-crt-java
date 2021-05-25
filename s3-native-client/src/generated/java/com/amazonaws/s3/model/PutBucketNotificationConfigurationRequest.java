@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketNotificationConfigurationRequest {
@@ -22,16 +23,24 @@ public class PutBucketNotificationConfigurationRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutBucketNotificationConfigurationRequest() {
         this.bucket = "";
         this.notificationConfiguration = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketNotificationConfigurationRequest(BuilderImpl builder) {
         this.bucket = builder.bucket;
         this.notificationConfiguration = builder.notificationConfiguration;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -65,12 +74,24 @@ public class PutBucketNotificationConfigurationRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
         Builder notificationConfiguration(NotificationConfiguration notificationConfiguration);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketNotificationConfigurationRequest build();
     }
@@ -88,6 +109,10 @@ public class PutBucketNotificationConfigurationRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -95,6 +120,8 @@ public class PutBucketNotificationConfigurationRequest {
             bucket(model.bucket);
             notificationConfiguration(model.notificationConfiguration);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutBucketNotificationConfigurationRequest build() {
@@ -114,6 +141,16 @@ public class PutBucketNotificationConfigurationRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -138,6 +175,14 @@ public class PutBucketNotificationConfigurationRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

@@ -8,6 +8,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutBucketPolicyRequest {
@@ -38,12 +39,18 @@ public class PutBucketPolicyRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutBucketPolicyRequest() {
         this.bucket = "";
         this.contentMD5 = "";
         this.confirmRemoveSelfBucketAccess = null;
         this.policy = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutBucketPolicyRequest(BuilderImpl builder) {
@@ -52,6 +59,8 @@ public class PutBucketPolicyRequest {
         this.confirmRemoveSelfBucketAccess = builder.confirmRemoveSelfBucketAccess;
         this.policy = builder.policy;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -93,6 +102,14 @@ public class PutBucketPolicyRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -103,6 +120,10 @@ public class PutBucketPolicyRequest {
         Builder policy(String policy);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutBucketPolicyRequest build();
     }
@@ -135,6 +156,10 @@ public class PutBucketPolicyRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -144,6 +169,8 @@ public class PutBucketPolicyRequest {
             confirmRemoveSelfBucketAccess(model.confirmRemoveSelfBucketAccess);
             policy(model.policy);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutBucketPolicyRequest build() {
@@ -172,6 +199,16 @@ public class PutBucketPolicyRequest {
 
         public final Builder expectedBucketOwner(String expectedBucketOwner) {
             this.expectedBucketOwner = expectedBucketOwner;
+            return this;
+        }
+
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
             return this;
         }
 
@@ -204,6 +241,14 @@ public class PutBucketPolicyRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

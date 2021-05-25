@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class RestoreObjectRequest {
@@ -36,6 +37,10 @@ public class RestoreObjectRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     RestoreObjectRequest() {
         this.bucket = "";
         this.key = "";
@@ -43,6 +48,8 @@ public class RestoreObjectRequest {
         this.restoreRequest = null;
         this.requestPayer = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected RestoreObjectRequest(BuilderImpl builder) {
@@ -52,6 +59,8 @@ public class RestoreObjectRequest {
         this.restoreRequest = builder.restoreRequest;
         this.requestPayer = builder.requestPayer;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -97,6 +106,14 @@ public class RestoreObjectRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -109,6 +126,10 @@ public class RestoreObjectRequest {
         Builder requestPayer(RequestPayer requestPayer);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         RestoreObjectRequest build();
     }
@@ -140,6 +161,10 @@ public class RestoreObjectRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -150,6 +175,8 @@ public class RestoreObjectRequest {
             restoreRequest(model.restoreRequest);
             requestPayer(model.requestPayer);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public RestoreObjectRequest build() {
@@ -186,6 +213,16 @@ public class RestoreObjectRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -219,6 +256,14 @@ public class RestoreObjectRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

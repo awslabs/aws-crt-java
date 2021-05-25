@@ -7,6 +7,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class SelectObjectContentRequest {
@@ -95,6 +96,10 @@ public class SelectObjectContentRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     SelectObjectContentRequest() {
         this.bucket = "";
         this.key = "";
@@ -108,6 +113,8 @@ public class SelectObjectContentRequest {
         this.outputSerialization = null;
         this.scanRange = null;
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected SelectObjectContentRequest(BuilderImpl builder) {
@@ -123,6 +130,8 @@ public class SelectObjectContentRequest {
         this.outputSerialization = builder.outputSerialization;
         this.scanRange = builder.scanRange;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -192,6 +201,14 @@ public class SelectObjectContentRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -216,6 +233,10 @@ public class SelectObjectContentRequest {
         Builder scanRange(ScanRange scanRange);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         SelectObjectContentRequest build();
     }
@@ -306,6 +327,10 @@ public class SelectObjectContentRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -322,6 +347,8 @@ public class SelectObjectContentRequest {
             outputSerialization(model.outputSerialization);
             scanRange(model.scanRange);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public SelectObjectContentRequest build() {
@@ -388,6 +415,16 @@ public class SelectObjectContentRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -445,6 +482,14 @@ public class SelectObjectContentRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

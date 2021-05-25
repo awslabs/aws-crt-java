@@ -11,6 +11,7 @@
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
 #include <aws/http/connection.h>
+#include <aws/http/proxy.h>
 #include <aws/http/request_response.h>
 #include <aws/io/channel.h>
 #include <aws/io/channel_bootstrap.h>
@@ -379,7 +380,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jstring jni_client_id,
     jboolean jni_clean_session,
     jint keep_alive_ms,
-    jshort ping_timeout_ms) {
+    jshort ping_timeout_ms,
+    jint protocol_operation_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -438,6 +440,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.client_id = client_id;
     connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
     connect_options.ping_timeout_ms = ping_timeout_ms;
+    connect_options.protocol_operation_timeout_ms = protocol_operation_timeout_ms;
     connect_options.clean_session = clean_session;
     connect_options.on_connection_complete = s_on_connection_complete;
     connect_options.user_data = connect_callback;
@@ -786,13 +789,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_byte_buf_append_dynamic(&pub_ack->buffer, &topic));
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_byte_buf_append_dynamic(&pub_ack->buffer, &payload));
-    struct aws_byte_cursor pinned_payload = aws_byte_cursor_from_buf(&pub_ack->buffer);
-    struct aws_byte_cursor pinned_topic = aws_byte_cursor_advance(&pinned_payload, topic.len);
-
     uint16_t msg_id = aws_mqtt_client_connection_publish(
-        connection->client_connection, &pinned_topic, qos, retain, &pinned_payload, s_on_op_complete, pub_ack);
+        connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
 
@@ -989,10 +987,11 @@ done:
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetWebsocketProxyOptions(
+void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetHttpProxyOptions(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
+    jint jni_proxy_connection_type,
     jstring jni_proxy_host,
     jint jni_proxy_port,
     jlong jni_proxy_tls_context,
@@ -1008,10 +1007,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     AWS_ZERO_STRUCT(proxy_options);
 
     if (!jni_proxy_host) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.setWebsocketProxyOptions: proxyHost must not be null.");
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.setHttpProxyOptions: proxyHost must not be null.");
         return;
     }
+
+    proxy_options.connection_type = (enum aws_http_proxy_connection_type)jni_proxy_connection_type;
 
     proxy_options.host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
     proxy_options.port = (uint16_t)jni_proxy_port;
@@ -1037,9 +1037,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         proxy_options.tls_options = &proxy_tls_conn_options;
     }
 
-    if (aws_mqtt_client_connection_set_websocket_proxy_options(connection->client_connection, &proxy_options)) {
-        aws_jni_throw_runtime_exception(
-            env, "MqttClientConnection.setWebsocketProxyOptions: Failed to set proxy options");
+    if (aws_mqtt_client_connection_set_http_proxy_options(connection->client_connection, &proxy_options)) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.setHttpProxyOptions: Failed to set proxy options");
     }
 
     if (jni_proxy_authorization_password) {

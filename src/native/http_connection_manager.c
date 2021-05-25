@@ -21,6 +21,7 @@
 #include <aws/http/connection.h>
 #include <aws/http/connection_manager.h>
 #include <aws/http/http.h>
+#include <aws/http/proxy.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -62,6 +63,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 void aws_http_proxy_options_jni_init(
     JNIEnv *env,
     struct aws_http_proxy_options *options,
+    int proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
     jbyteArray proxy_host,
     uint16_t proxy_port,
@@ -72,6 +74,7 @@ void aws_http_proxy_options_jni_init(
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
+    options->connection_type = proxy_connection_type;
     options->port = proxy_port;
     options->auth_type = proxy_authorization_type;
 
@@ -129,6 +132,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jbyteArray jni_endpoint,
     jint jni_port,
     jint jni_max_conns,
+    jint jni_proxy_connection_type,
     jbyteArray jni_proxy_host,
     jint jni_proxy_port,
     jlong jni_proxy_tls_context,
@@ -237,6 +241,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     aws_http_proxy_options_jni_init(
         env,
         &proxy_options,
+        jni_proxy_connection_type,
         &proxy_tls_conn_options,
         jni_proxy_host,
         (uint16_t)jni_proxy_port,

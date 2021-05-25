@@ -8,6 +8,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class PutObjectRetentionRequest {
@@ -53,6 +54,10 @@ public class PutObjectRetentionRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     PutObjectRetentionRequest() {
         this.bucket = "";
         this.key = "";
@@ -62,6 +67,8 @@ public class PutObjectRetentionRequest {
         this.bypassGovernanceRetention = null;
         this.contentMD5 = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected PutObjectRetentionRequest(BuilderImpl builder) {
@@ -73,6 +80,8 @@ public class PutObjectRetentionRequest {
         this.bypassGovernanceRetention = builder.bypassGovernanceRetention;
         this.contentMD5 = builder.contentMD5;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -126,6 +135,14 @@ public class PutObjectRetentionRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -142,6 +159,10 @@ public class PutObjectRetentionRequest {
         Builder contentMD5(String contentMD5);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         PutObjectRetentionRequest build();
     }
@@ -189,6 +210,10 @@ public class PutObjectRetentionRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -201,6 +226,8 @@ public class PutObjectRetentionRequest {
             bypassGovernanceRetention(model.bypassGovernanceRetention);
             contentMD5(model.contentMD5);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public PutObjectRetentionRequest build() {
@@ -247,6 +274,16 @@ public class PutObjectRetentionRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -288,6 +325,14 @@ public class PutObjectRetentionRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

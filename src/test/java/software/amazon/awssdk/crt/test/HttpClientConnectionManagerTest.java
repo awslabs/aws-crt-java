@@ -43,9 +43,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
 
-    static final String PROXY_HOST = System.getProperty("proxyhost");
-    static final String PROXY_PORT = System.getProperty("proxyport");
-
     private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections) {
         return createConnectionManager(uri, numThreads, numConnections, null, 0);
     }
@@ -207,26 +204,4 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 
-    @Test
-    public void testParallelRequestsWithLocalProxy() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-
-        String proxyHost = PROXY_HOST;
-        int proxyPort = 0;
-        if (PROXY_PORT != null) {
-            proxyPort = Integer.parseInt(PROXY_PORT);
-        }
-
-        Assume.assumeTrue(proxyHost != null && proxyHost.length() > 0 && proxyPort > 0);
-
-        URI uri = new URI(endpoint);
-
-        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, NUM_THREADS, NUM_CONNECTIONS, proxyHost, proxyPort)) {
-            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
-
-            testParallelConnections(connectionPool, request, 1, NUM_REQUESTS);
-        }
-
-        CrtResource.waitForNoResources();
-    }
 }

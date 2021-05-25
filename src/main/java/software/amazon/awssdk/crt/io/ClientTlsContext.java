@@ -25,15 +25,4 @@ public final class ClientTlsContext extends TlsContext {
     public ClientTlsContext(TlsContextOptions options) throws CrtRuntimeException {
         super(options);
     }
-
-    /**
-     * Creates a new Client TlsContext. There are significant native resources
-     * consumed to create a TlsContext, so most applications will only need to
-     * create one and re-use it for all connections.
-     */
-    public ClientTlsContext() throws CrtRuntimeException {
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-        }
-    }
 };

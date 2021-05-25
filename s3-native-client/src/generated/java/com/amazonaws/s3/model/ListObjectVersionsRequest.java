@@ -8,6 +8,7 @@ import java.lang.Override;
 import java.lang.String;
 import java.util.Objects;
 import software.amazon.aws.sdk.crt.annotations.Generated;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 @Generated("software.amazon.smithy.crt.java.StructureGenerator")
 public class ListObjectVersionsRequest {
@@ -60,6 +61,10 @@ public class ListObjectVersionsRequest {
      */
     String expectedBucketOwner;
 
+    HttpHeader[] customHeaders;
+
+    String customQueryParameters;
+
     ListObjectVersionsRequest() {
         this.bucket = "";
         this.delimiter = "";
@@ -69,6 +74,8 @@ public class ListObjectVersionsRequest {
         this.prefix = "";
         this.versionIdMarker = "";
         this.expectedBucketOwner = "";
+        this.customHeaders = null;
+        this.customQueryParameters = "";
     }
 
     protected ListObjectVersionsRequest(BuilderImpl builder) {
@@ -80,6 +87,8 @@ public class ListObjectVersionsRequest {
         this.prefix = builder.prefix;
         this.versionIdMarker = builder.versionIdMarker;
         this.expectedBucketOwner = builder.expectedBucketOwner;
+        this.customHeaders = builder.customHeaders;
+        this.customQueryParameters = builder.customQueryParameters;
     }
 
     public Builder toBuilder() {
@@ -133,6 +142,14 @@ public class ListObjectVersionsRequest {
         return expectedBucketOwner;
     }
 
+    public HttpHeader[] customHeaders() {
+        return customHeaders;
+    }
+
+    public String customQueryParameters() {
+        return customQueryParameters;
+    }
+
     public interface Builder {
         Builder bucket(String bucket);
 
@@ -149,6 +166,10 @@ public class ListObjectVersionsRequest {
         Builder versionIdMarker(String versionIdMarker);
 
         Builder expectedBucketOwner(String expectedBucketOwner);
+
+        Builder customHeaders(HttpHeader[] customHeaders);
+
+        Builder customQueryParameters(String customQueryParameters);
 
         ListObjectVersionsRequest build();
     }
@@ -203,6 +224,10 @@ public class ListObjectVersionsRequest {
          */
         String expectedBucketOwner;
 
+        HttpHeader[] customHeaders;
+
+        String customQueryParameters;
+
         protected BuilderImpl() {
         }
 
@@ -215,6 +240,8 @@ public class ListObjectVersionsRequest {
             prefix(model.prefix);
             versionIdMarker(model.versionIdMarker);
             expectedBucketOwner(model.expectedBucketOwner);
+            customHeaders(model.customHeaders);
+            customQueryParameters(model.customQueryParameters);
         }
 
         public ListObjectVersionsRequest build() {
@@ -261,6 +288,16 @@ public class ListObjectVersionsRequest {
             return this;
         }
 
+        public final Builder customHeaders(HttpHeader[] customHeaders) {
+            this.customHeaders = customHeaders;
+            return this;
+        }
+
+        public final Builder customQueryParameters(String customQueryParameters) {
+            this.customQueryParameters = customQueryParameters;
+            return this;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(BuilderImpl.class);
@@ -302,6 +339,14 @@ public class ListObjectVersionsRequest {
 
         public String expectedBucketOwner() {
             return expectedBucketOwner;
+        }
+
+        public HttpHeader[] customHeaders() {
+            return customHeaders;
+        }
+
+        public String customQueryParameters() {
+            return customQueryParameters;
         }
     }
 }

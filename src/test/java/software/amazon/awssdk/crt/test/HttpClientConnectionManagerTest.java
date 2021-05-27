@@ -16,6 +16,7 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -44,30 +45,18 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final String EMPTY_BODY = "";
 
     private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections) {
-        return createConnectionManager(uri, numThreads, numConnections, null, 0);
-    }
-
-    private HttpClientConnectionManager createConnectionManager(URI uri, int numThreads, int numConnections, String proxyHost, int proxyPort) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
                 TlsContext tlsContext = createHttpClientTlsContext()) {
 
-            HttpProxyOptions proxyOptions = null;
-            if (proxyHost != null) {
-                proxyOptions = new HttpProxyOptions();
-                proxyOptions.setHost(proxyHost);
-                proxyOptions.setPort(proxyPort);
-            }
-
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
                     .withTlsContext(tlsContext)
                     .withUri(uri)
-                    .withMaxConnections(numConnections)
-                    .withProxyOptions(proxyOptions);
+                    .withMaxConnections(numConnections);
 
             return HttpClientConnectionManager.create(options);
         }
@@ -204,4 +193,28 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 
+    @Test
+    public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        HttpClientConnection firstConnection = null;
+        CompletableFuture<HttpClientConnection> firstAcquisition;
+        CompletableFuture<HttpClientConnection> secondAcquisition;
+        CompletableFuture<HttpClientConnection> thirdAcquisition;
+
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
+
+            firstAcquisition = connectionPool.acquireConnection();
+            secondAcquisition = connectionPool.acquireConnection();
+            thirdAcquisition = connectionPool.acquireConnection();
+
+            firstConnection = firstAcquisition.get();
+        }
+
+        firstConnection.close();
+
+        secondAcquisition.get().close();
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

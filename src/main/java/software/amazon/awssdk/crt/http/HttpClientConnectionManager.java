@@ -141,7 +141,19 @@ public class HttpClientConnectionManager extends CrtResource {
         CompletableFuture<HttpClientConnection> connectionRequest = connectionAcquisitionRequests.poll();
 
         if (connectionRequest == null) {
-            throw new IllegalStateException("No Future for Connection Acquisition");
+            /*
+            // this can happen if you shut down the pool while there are still pending acquisitions
+            if (connection != 0) {
+                // if the native pool is giving us a real connection but we've already shut down then
+                // make a dummy connection and then release it back to the pool
+                HttpClientConnection conn = new HttpClientConnection(this, connection);
+                conn.close();
+            }
+
+            return;
+
+             */
+            throw new IllegalStateException("Derp");
         }
 
         if (errorCode != CRT.AWS_CRT_SUCCESS) {

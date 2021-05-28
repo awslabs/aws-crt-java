@@ -160,31 +160,38 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyProfile_ValidProfile() throws IOException {
+        Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
         Files.write(credsPath, Arrays.asList("[default]"));
 
-        try {
-            ProfileCredentialsProvider.ProfileCredentialsProviderBuilder builder =
-                    new ProfileCredentialsProvider.ProfileCredentialsProviderBuilder()
-                    .withCredentialsFileNameOverride(credsPath.toString());
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
+                .builder()
+                .withConfigFileNameOverride(confPath.toString())
+                .withCredentialsFileNameOverride(credsPath.toString());
 
-            try (ProfileCredentialsProvider provider = builder.build()) {
-                assertNotNull(provider);
-                assertTrue(provider.getNativeHandle() != 0);
-            }
+        try (ProfileCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
         } finally {
             Files.deleteIfExists(credsPath);
         }
     }
 
-    @Test(expected = CrtRuntimeException.class)
-    public void testCreateDestroyProfile_InvalidProfile() {
-        ProfileCredentialsProvider.ProfileCredentialsProviderBuilder builder =
-                new ProfileCredentialsProvider.ProfileCredentialsProviderBuilder();
+    @Test(expected = CrtRuntimeException.class) // Because the profile files don't contain a [default] section
+    public void testCreateDestroyProfile_InvalidProfile() throws IOException {
+        Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
+        Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
+
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
+                .builder()
+                .withConfigFileNameOverride(confPath.toString())
+                .withCredentialsFileNameOverride(credsPath.toString());
 
         try (ProfileCredentialsProvider provider = builder.build()) {
-            assertNotNull(provider);
-            assertTrue(provider.getNativeHandle() != 0);
+            // The .build() call will have failed...let the implicit finally block release the file & native resources.
+        } finally {
+            Files.deleteIfExists(confPath);
+            Files.deleteIfExists(credsPath);
         }
     }
 };

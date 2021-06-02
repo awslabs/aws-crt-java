@@ -32,7 +32,6 @@ static int s_aws_input_stream_seek(
 
     if (!impl->is_valid) {
         return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
-        ;
     }
 
     int result = AWS_OP_SUCCESS;

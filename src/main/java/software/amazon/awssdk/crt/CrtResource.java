@@ -104,7 +104,7 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             String canonicalName = this.getClass().getCanonicalName();
 
-            synchronized(getClass()) {
+            synchronized(CrtResource.class) {
                 CRT_RESOURCES.put(id, new ResourceInstance(this, canonicalName));
             }
 
@@ -179,7 +179,7 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         if (debugNativeObjects) {
-            synchronized(getClass()) {
+            synchronized(CrtResource.class) {
                 ResourceInstance instance = CRT_RESOURCES.get(id);
                 if (instance != null) {
                     instance.setNativeHandle(handle);
@@ -199,7 +199,7 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s(%d)", this.getClass().getCanonicalName(), id));
 
-            synchronized(getClass()) {
+            synchronized(CrtResource.class) {
                 CRT_RESOURCES.remove(id);
             }
         }

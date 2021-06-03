@@ -323,7 +323,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        Log.initLoggingToStdout(LogLevel.Error);
+        Log.initLoggingToStdout(LogLevel.Debug);
 
         // Override defaults with values from system properties, via -D on mvn
         // commandline
@@ -333,8 +333,7 @@ public class S3ClientTest extends CrtTestFixture {
                 (region == "us-west-2") ? "aws-crt-canary-bucket" : String.format("aws-crt-canary-bucket-%s", region));
         final String endpoint = System.getProperty("aws.crt.s3.benchmark.endpoint",
                 String.format("%s.s3.%s.amazonaws.com", bucket, region));
-        final String objectName = System.getProperty("aws.crt.s3.benchmark.object",
-                "crt-canary-obj-single-part-9223372036854775807");
+        final String objectName = System.getProperty("aws.crt.s3.benchmark.object", "crt-canary-obj-multipart");
         final boolean useTls = Boolean.parseBoolean(System.getProperty("aws.crt.s3.benchmark.tls", "false"));
         final double expectedGbps = Double.parseDouble(System.getProperty("aws.crt.s3.benchmark.gbps", "10"));
         final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "16"));

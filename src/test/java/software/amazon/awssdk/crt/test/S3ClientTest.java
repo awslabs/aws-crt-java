@@ -461,4 +461,156 @@ public class S3ClientTest extends CrtTestFixture {
             }
         }
     }
+
+    @Test
+    public void benchmarkS3Put() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Assume.assumeTrue(hasAwsCredentials());
+        Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
+
+        Log.initLoggingToStdout(LogLevel.Error);
+
+        // Override defaults with values from system properties, via -D on mvn
+        // commandline
+        final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "0"));
+        final String region = System.getProperty("aws.crt.s3.benchmark.region", "us-west-2");
+        final String bucket = System.getProperty("aws.crt.s3.benchmark.bucket",
+                (region == "us-west-2") ? "aws-crt-canary-bucket" : String.format("aws-crt-canary-bucket-%s", region));
+        final String endpoint = System.getProperty("aws.crt.s3.benchmark.endpoint",
+                String.format("%s.s3.%s.amazonaws.com", bucket, region));
+        final boolean useTls = Boolean.parseBoolean(System.getProperty("aws.crt.s3.benchmark.tls", "false"));
+        final double expectedGbps = Double.parseDouble(System.getProperty("aws.crt.s3.benchmark.gbps", "10"));
+        final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "16"));
+        final int concurrentTransfers = Integer.parseInt(
+                System.getProperty("aws.crt.s3.benchmark.concurrent", "16")); /* should be 1.6 * expectedGbps */
+        // avg of .3Gbps per connection, 32 connections per vip, 5 seconds per vip
+        // resolution
+        final int vipsNeeded = (int) Math.ceil(expectedGbps / 0.5 / 10);
+        final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup",
+                new Integer((int) Math.ceil(vipsNeeded / 5)).toString()));
+        System.out.println(String.format("REGION=%s, WARMUP=%s", region, sampleDelay));
+
+        // Ignore stats during warm up time, they skew results
+        TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
+
+        try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+                    .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
+
+            try (S3Client client = createS3Client(clientOptions, threadCount)) {
+                List<CompletableFuture<TransferStats>> requestFutures = new LinkedList<>();
+
+                // Each meta request will acquire a slot, and release it when it's done
+                Semaphore concurrentSlots = new Semaphore(concurrentTransfers);
+
+                for (int transferIdx = 0; transferIdx < numTransfers; ++transferIdx) {
+                    try {
+                        concurrentSlots.acquire();
+                    } catch (InterruptedException ex) {
+                        Assert.fail(ex.toString());
+                    }
+
+                    final int myIdx = transferIdx;
+                    CompletableFuture<TransferStats> onFinishedFuture = new CompletableFuture<>();
+                    requestFutures.add(onFinishedFuture);
+
+                    S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                        TransferStats stats = new TransferStats();
+
+                        @Override
+                        public void onFinished(int errorCode) {
+                            // release the slot first
+                            concurrentSlots.release();
+
+                            if (errorCode != 0) {
+                                onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                                return;
+                            }
+
+                            synchronized (System.out) {
+                                System.out.println(String.format("Transfer %d finished.", myIdx + 1));
+                            }
+
+                            onFinishedFuture.complete(stats);
+                        }
+                    };
+
+                    final long payloadSize = 5L * 1024L * 1024L * 1024L;
+                    final String payloadString = "This is an S3 Test.  This is an S3 Test.  This is an S3 Test.  This is an S3 Test.";
+
+                    HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
+
+                        private long remainingBody = payloadSize;
+
+                        @Override
+                        public boolean sendRequestBody(ByteBuffer outBuffer) {
+
+                            byte[] payloadBytes = null;
+
+                            try {
+                                payloadBytes = payloadString.getBytes("ASCII");
+                            } catch (Exception ex) {
+                                System.out.println("Encountered error trying to get payload bytes.");
+                                return true;
+                            }
+
+                            while (remainingBody > 0 && outBuffer.remaining() > 0) {
+                                long amtToTransfer = Math.min(remainingBody, (long) outBuffer.remaining());
+                                amtToTransfer = Math.min(amtToTransfer, (long) payloadBytes.length);
+
+                                // Transfer the data
+                                outBuffer.put(payloadBytes, 0, (int) amtToTransfer);
+
+                                remainingBody -= amtToTransfer;
+                            }
+
+                            return remainingBody == 0;
+                        }
+
+                        @Override
+                        public boolean resetPosition() {
+                            return true;
+                        }
+
+                        @Override
+                        public long getLength() {
+                            return payloadSize;
+                        }
+                    };
+
+                    HttpHeader[] headers = { new HttpHeader("Host", endpoint),
+                            new HttpHeader("Content-Length", Long.valueOf(payloadSize).toString()), };
+                    HttpRequest httpRequest = new HttpRequest("PUT",
+                            String.format("/put_object_test_5GB_%d.txt", myIdx + 1), headers, payloadStream);
+
+                    S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                            .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
+                            .withResponseHandler(responseHandler);
+
+                    try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                    }
+
+                }
+
+                // Finish each future, and deduct failures from completedTransfers
+                int completedTransfers = numTransfers;
+                for (CompletableFuture<TransferStats> request : requestFutures) {
+                    try {
+                        request.join();
+                    } catch (CompletionException ex) {
+                        System.out.println(ex.toString());
+                        Throwable cause = ex.getCause();
+                        if (cause != ex && cause != null) {
+                            System.out.println(cause.toString());
+                        }
+                        cause = cause.getCause();
+                        if (cause != null && cause != ex) {
+                            System.out.println(cause.toString());
+                        }
+                        --completedTransfers;
+                    }
+                }
+            }
+        }
+    }
 }

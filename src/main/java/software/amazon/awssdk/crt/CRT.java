@@ -261,4 +261,13 @@ public final class CRT {
     private static native long awsNativeMemory();
 
 
+    static void testJniException(boolean throwException) {
+        if (throwException) {
+            throw new RuntimeException("Testing");
+        }
+    }
+
+    public static void checkJniExceptionContract(boolean clearException) { nativeCheckJniExceptionContract(clearException); }
+
+    private static native void nativeCheckJniExceptionContract(boolean clearException);
 };

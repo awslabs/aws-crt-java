@@ -401,6 +401,7 @@ struct aws_credentials_provider_get_credentials_callback_data {
 
 static void s_on_get_credentials_callback(struct aws_credentials *credentials, int error_code, void *user_data) {
     (void)error_code;
+
     struct aws_credentials_provider_get_credentials_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);

@@ -568,6 +568,46 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.error_code_field_id);
 }
 
+struct java_ecc_key_pair_properties ecc_key_pair_properties;
+
+static void s_cache_ecc_key_pair(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/cal/EccKeyPair");
+    AWS_FATAL_ASSERT(cls);
+    ecc_key_pair_properties.ecc_key_pair_class = (*env)->NewGlobalRef(env, cls);
+
+    ecc_key_pair_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(ecc_key_pair_properties.constructor);
+}
+
+struct java_crt_properties crt_properties;
+
+static void s_cache_crt(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/CRT");
+    AWS_FATAL_ASSERT(cls);
+    crt_properties.crt_class = (*env)->NewGlobalRef(env, cls);
+
+    crt_properties.test_jni_exception_method_id = (*env)->GetStaticMethodID(env, cls, "testJniException", "(Z)V");
+    AWS_FATAL_ASSERT(crt_properties.test_jni_exception_method_id);
+}
+
+struct java_aws_signing_result_properties aws_signing_result_properties;
+
+static void s_cache_aws_signing_result(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/signing/AwsSigningResult");
+    AWS_FATAL_ASSERT(cls);
+    aws_signing_result_properties.aws_signing_result_class = (*env)->NewGlobalRef(env, cls);
+
+    aws_signing_result_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "()V");
+    AWS_FATAL_ASSERT(aws_signing_result_properties.constructor);
+
+    aws_signing_result_properties.signed_request_field_id =
+        (*env)->GetFieldID(env, cls, "signedRequest", "Lsoftware/amazon/awssdk/crt/http/HttpRequest;");
+    AWS_FATAL_ASSERT(aws_signing_result_properties.signed_request_field_id);
+
+    aws_signing_result_properties.signature_field_id = (*env)->GetFieldID(env, cls, "signature", "[B");
+    AWS_FATAL_ASSERT(aws_signing_result_properties.signature_field_id);
+}
+
 struct java_http_header_properties http_header_properties;
 
 static void s_cache_http_header(JNIEnv *env) {
@@ -612,5 +652,8 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
+    s_cache_ecc_key_pair(env);
+    s_cache_crt(env);
+    s_cache_aws_signing_result(env);
     s_cache_http_header(env);
 }

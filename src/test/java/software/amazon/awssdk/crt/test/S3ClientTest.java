@@ -110,8 +110,7 @@ public class S3ClientTest extends CrtTestFixture {
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Body Response: " + Arrays.toString(bytes));
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
 
@@ -324,7 +323,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        // Log.initLoggingToStdout(LogLevel.Trace);
+        Log.initLoggingToStdout(LogLevel.Debug);
 
         // Override defaults with values from system properties, via -D on mvn
         // commandline

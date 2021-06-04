@@ -323,7 +323,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        Log.initLoggingToStdout(LogLevel.Debug);
+        Log.initLoggingToStdout(LogLevel.Error);
 
         // Override defaults with values from system properties, via -D on mvn
         // commandline

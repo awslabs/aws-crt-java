@@ -6,18 +6,15 @@
 package software.amazon.awssdk.crt.test;
 
 import java.io.IOException;
-import java.lang.InterruptedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+
 import org.junit.Test;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -159,10 +156,15 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
-    public void testCreateDestroyProfile_ValidProfile() throws IOException {
+    public void testCreateDestroyProfile_ValidCreds() throws IOException {
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
-        Files.write(credsPath, Arrays.asList("[default]"));
+        Files.write(credsPath, Arrays.asList(
+                "[default]",
+                "aws_access_key_id=" + ACCESS_KEY_ID,
+                "aws_secret_access_key=" + SECRET_ACCESS_KEY,
+                "aws_session_token=" + SESSION_TOKEN
+        ));
 
         ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
                 .builder()
@@ -172,12 +174,18 @@ public class CredentialsProviderTest extends CrtTestFixture {
         try (ProfileCredentialsProvider provider = builder.build()) {
             assertNotNull(provider);
             assertTrue(provider.getNativeHandle() != 0);
+
+            Credentials credentials = provider.getCredentials().join();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
         } finally {
             Files.deleteIfExists(credsPath);
+            Files.deleteIfExists(confPath);
         }
     }
 
-    @Test(expected = CrtRuntimeException.class) // Because the profile files don't contain a [default] section
+    @Test
     public void testCreateDestroyProfile_InvalidProfile() throws IOException {
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
@@ -187,11 +195,46 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 .withConfigFileNameOverride(confPath.toString())
                 .withCredentialsFileNameOverride(credsPath.toString());
 
-        try (ProfileCredentialsProvider provider = builder.build()) {
-            // The .build() call will have failed...let the implicit finally block release the file & native resources.
+        try {
+            builder.build();
+            fail("Expected builder.build() call to throw exception due to missing [default] section in profile files.");
+        } catch (CrtRuntimeException e) {
+            // Got correct exception, nothing to do
         } finally {
             Files.deleteIfExists(confPath);
             Files.deleteIfExists(credsPath);
+        }
+    }
+
+    @Test
+    public void testCreateDestroyProfile_MissingCreds() throws ExecutionException, InterruptedException, IOException {
+        Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
+        Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
+        Files.write(credsPath, Arrays.asList("[default]")); // Contains a section header but no actual credentials
+
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
+                .builder()
+                .withConfigFileNameOverride(confPath.toString())
+                .withCredentialsFileNameOverride(credsPath.toString());
+
+        try (ProfileCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
+
+            try {
+                provider.getCredentials().join();
+                fail("Expected credential fetching to throw an exception since creds are missing from profile");
+            } catch (CompletionException e) {
+                assertNotNull(e.getCause());
+                Throwable innerException = e.getCause();
+
+                // Check that the right exception type caused the completion error in the future
+                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+                assertEquals(RuntimeException.class, innerException.getClass());
+            }
+        } finally {
+            Files.deleteIfExists(credsPath);
+            Files.deleteIfExists(confPath);
         }
     }
 };

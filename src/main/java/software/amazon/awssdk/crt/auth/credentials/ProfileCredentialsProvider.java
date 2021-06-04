@@ -42,9 +42,13 @@ public class ProfileCredentialsProvider extends CredentialsProvider {
     private ProfileCredentialsProvider(BuilderImpl builder) {
         super();
 
+        ClientBootstrap bootstrap = builder.clientBootstrap == null
+                ? new ClientBootstrap(null, null)
+                : builder.clientBootstrap;
+
         long nativeHandle = profileCredentialsProviderNew(
                 this,
-                toNativeHandle(builder.clientBootstrap),
+                toNativeHandle(bootstrap),
                 toNativeHandle(builder.tlsContext),
                 toByteArray(builder.profileName),
                 toByteArray(builder.configFileNameOverride),
@@ -52,7 +56,7 @@ public class ProfileCredentialsProvider extends CredentialsProvider {
         );
 
         acquireNativeHandle(nativeHandle);
-        if (builder.clientBootstrap != null) { addReferenceTo(builder.clientBootstrap); }
+        addReferenceTo(bootstrap);
         if (builder.tlsContext != null) { addReferenceTo(builder.tlsContext); }
     }
 
@@ -107,7 +111,7 @@ public class ProfileCredentialsProvider extends CredentialsProvider {
     }
 
     static final class BuilderImpl implements Builder {
-        private ClientBootstrap clientBootstrap = new ClientBootstrap(null, null);
+        private ClientBootstrap clientBootstrap;
         private TlsContext tlsContext;
         private String profileName;
         private String configFileNameOverride;

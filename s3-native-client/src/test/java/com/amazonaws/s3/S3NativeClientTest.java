@@ -9,7 +9,9 @@ import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
@@ -32,7 +34,7 @@ import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
-    private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "<bucket>>");
+    private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket-us-east-1");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "file.download");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
@@ -100,6 +102,61 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         return lengthWritten[0] == contentLength;
                     }).join();
 
+        }
+    }
+
+    @Test
+    public void testConcurrentRequests() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
+                final HostResolver resolver = new HostResolver(elGroup, 128);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
+            final long lengthWritten[] = { 0 };
+            final long contentLength = 1024l;
+            final long length[] = { 0 };
+            List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
+
+            for (int i = 0; i < 100; i++) {
+                futures.add(
+                        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+                                new ResponseDataConsumer<GetObjectOutput>() {
+
+                                    @Override
+                                    public void onResponse(GetObjectOutput response) {
+                                        assertNotNull(response);
+                                    }
+
+                                    @Override
+                                    public void onResponseData(ByteBuffer bodyBytesIn) {
+                                        length[0] += bodyBytesIn.remaining();
+                                    }
+
+                                    @Override
+                                    public void onFinished() {
+                                    }
+
+                                    @Override
+                                    public void onException(final CrtRuntimeException e) {
+                                    }
+                                }));
+
+                futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
+                        .contentLength(contentLength).build(), buffer -> {
+                            while (buffer.hasRemaining()) {
+                                buffer.put((byte) 42);
+                                ++lengthWritten[0];
+                            }
+                            buffer.flip();
+                            return lengthWritten[0] == contentLength;
+                        }));
+            }
+            ;
+            CompletableFuture<?> allFutures = CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+            allFutures.join();
         }
     }
 

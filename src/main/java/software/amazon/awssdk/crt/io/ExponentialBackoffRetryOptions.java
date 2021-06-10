@@ -47,7 +47,7 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
         }
     }
 
-    private ExponentialBackoffRetryOptions(ExponentialBackoffRetryOptionsBuilder builder)
+    private ExponentialBackoffRetryOptions(Builder builder)
     {
         super();
 
@@ -61,18 +61,18 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
         }
     }
 
-    static public class ExponentialBackoffRetryOptionsBuilder
+    static public class Builder
     {
         private EventLoopGroup eventLoopGroup;
         private long maxRetries;
         private long backoffScaleFactorMS;
         private ExponentialBackoffJitterMode jitterMode;
 
-        public ExponentialBackoffRetryOptionsBuilder() {
+        public Builder() {
             jitterMode = ExponentialBackoffJitterMode.Default;
         }
 
-        public ExponentialBackoffRetryOptionsBuilder withEventLoopGroup(EventLoopGroup eventLoopGroup) {
+        public Builder withEventLoopGroup(EventLoopGroup eventLoopGroup) {
             this.eventLoopGroup = eventLoopGroup;
             return this;
         }
@@ -81,7 +81,7 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
             return this.eventLoopGroup;
         }
 
-        public ExponentialBackoffRetryOptionsBuilder withMaxRetries(long maxRetries) {
+        public Builder withMaxRetries(long maxRetries) {
             this.maxRetries = maxRetries;
             return this;
         }
@@ -90,7 +90,7 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
             return this.maxRetries;
         }
 
-        public ExponentialBackoffRetryOptionsBuilder withBackoffScaleFactorMS(long backoffScaleFactorMS) {
+        public Builder withBackoffScaleFactorMS(long backoffScaleFactorMS) {
             this.backoffScaleFactorMS = backoffScaleFactorMS;
             return this;
         }
@@ -99,7 +99,7 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
             return this.backoffScaleFactorMS;
         }
 
-        public ExponentialBackoffRetryOptionsBuilder withJitterMode(ExponentialBackoffJitterMode jitterMode) {
+        public Builder withJitterMode(ExponentialBackoffJitterMode jitterMode) {
             this.jitterMode = jitterMode;
             return this;
         }

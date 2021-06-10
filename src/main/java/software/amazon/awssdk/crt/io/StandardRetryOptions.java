@@ -6,7 +6,6 @@
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 
 public class StandardRetryOptions extends CrtResource {
 
@@ -28,13 +27,13 @@ public class StandardRetryOptions extends CrtResource {
         }
     }
 
-    private StandardRetryOptions(StandardRetryOptionsBuilder builder) {
+    private StandardRetryOptions(Builder builder) {
         super();
 
         ExponentialBackoffRetryOptions backoffRetryOptions = builder.backoffRetryOptions;
 
         if(backoffRetryOptions == null) {
-            backoffRetryOptions = new ExponentialBackoffRetryOptions.ExponentialBackoffRetryOptionsBuilder().build();
+            backoffRetryOptions = new ExponentialBackoffRetryOptions.Builder().build();
         }
 
         acquireNativeHandle(standardRetryOptionsNew(
@@ -44,15 +43,15 @@ public class StandardRetryOptions extends CrtResource {
         addReferenceTo(backoffRetryOptions);
     }
 
-    static public class StandardRetryOptionsBuilder {
+    static public class Builder {
 
         private ExponentialBackoffRetryOptions backoffRetryOptions;
         private long initialBucketCapacity;
 
-        public StandardRetryOptionsBuilder() {
+        public Builder() {
         }
 
-        public StandardRetryOptionsBuilder withBackoffRetryOptions(ExponentialBackoffRetryOptions backoffRetryOptions) {
+        public Builder withBackoffRetryOptions(ExponentialBackoffRetryOptions backoffRetryOptions) {
             this.backoffRetryOptions = backoffRetryOptions;
             return this;
         }
@@ -61,7 +60,7 @@ public class StandardRetryOptions extends CrtResource {
             return this.backoffRetryOptions;
         }
 
-        public StandardRetryOptionsBuilder withInitialBucketCapcity(long initialBucketCapacity) {
+        public Builder withInitialBucketCapcity(long initialBucketCapacity) {
             this.initialBucketCapacity = initialBucketCapacity;
             return this;
         }

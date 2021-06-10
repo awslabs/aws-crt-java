@@ -13,7 +13,6 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import org.junit.Assert;
@@ -34,17 +33,13 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
-import java.util.stream.LongStream;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.OptionalDouble;
+
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions;
 
@@ -99,14 +94,14 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         /* No backoff retry options specified. */
-        try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.StandardRetryOptionsBuilder().withInitialBucketCapcity(100).build();
+        try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapcity(100).build();
              S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
         }
 
         /* Backoff retry options specified. */
         try (EventLoopGroup retryElg = new EventLoopGroup(0,1);
-             ExponentialBackoffRetryOptions backoffRetryOptions = new ExponentialBackoffRetryOptions.ExponentialBackoffRetryOptionsBuilder().withEventLoopGroup(retryElg).build();
-             StandardRetryOptions standardRetryOptions = new StandardRetryOptions.StandardRetryOptionsBuilder().withInitialBucketCapcity(100).withBackoffRetryOptions(backoffRetryOptions).build();
+             ExponentialBackoffRetryOptions backoffRetryOptions = new ExponentialBackoffRetryOptions.Builder().withEventLoopGroup(retryElg).build();
+             StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapcity(100).withBackoffRetryOptions(backoffRetryOptions).build();
              S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
         }
     }

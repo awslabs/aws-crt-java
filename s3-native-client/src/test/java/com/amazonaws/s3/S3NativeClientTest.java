@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -228,7 +232,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            StandardRetryOptions standardRetryOptions = new StandardRetryOptions.StandardRetryOptionsBuilder().build();
+            StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().build();
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100., 0, standardRetryOptions);

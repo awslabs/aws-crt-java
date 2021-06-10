@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
@@ -40,7 +45,7 @@ public class S3NativeClient implements AutoCloseable {
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
     }
 
-	// TODO S3NativeClient needs a Builder.
+    // TODO Write Builder class for S3NativeClient.
     public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
             final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
             final int maxConnections, final StandardRetryOptions retryOptions) {

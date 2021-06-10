@@ -21,7 +21,6 @@ public class StandardRetryOptions extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        // It is perfectly acceptable for this to have never created a native resource
         if (!isNull()) {
             standardRetryOptionsDestroy(getNativeHandle());
         }

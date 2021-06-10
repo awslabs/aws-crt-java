@@ -41,7 +41,6 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        // It is perfectly acceptable for this to have never created a native resource
         if (!isNull()) {
             exponentialBackoffRetryOptionsDestroy(getNativeHandle());
         }

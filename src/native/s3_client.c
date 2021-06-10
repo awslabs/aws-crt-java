@@ -67,7 +67,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     if (!credentials_provider) {
         aws_jni_throw_runtime_exception(env, "Invalid Credentials Provider");
         return (jlong)NULL;
-	}
+    }
 
     struct aws_standard_retry_options *retry_options = (struct aws_standard_retry_options *)jni_standard_retry_options;
     struct aws_retry_strategy *retry_strategy = NULL;

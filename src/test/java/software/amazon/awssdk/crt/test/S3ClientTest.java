@@ -50,7 +50,9 @@ import java.util.stream.LongStream;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.OptionalDouble;
+
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions;
 
 public class S3ClientTest extends CrtTestFixture {
 
@@ -94,6 +96,23 @@ public class S3ClientTest extends CrtTestFixture {
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
 
+        }
+    }
+
+    @Test
+    public void testS3ClientCreateDestroyRetryOptions() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        /* No backoff retry options specified. */
+        try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapcity(100).build();
+             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
+        }
+
+        /* Backoff retry options specified. */
+        try (EventLoopGroup retryElg = new EventLoopGroup(0,1);
+             ExponentialBackoffRetryOptions backoffRetryOptions = new ExponentialBackoffRetryOptions.Builder().withEventLoopGroup(retryElg).build();
+             StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapcity(100).withBackoffRetryOptions(backoffRetryOptions).build();
+             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
         }
     }
 

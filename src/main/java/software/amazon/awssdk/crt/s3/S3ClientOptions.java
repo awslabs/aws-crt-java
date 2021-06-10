@@ -1,7 +1,13 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 public class S3ClientOptions {
@@ -14,6 +20,7 @@ public class S3ClientOptions {
     private long partSize;
     private double throughputTargetGbps;
     private int maxConnections;
+    private StandardRetryOptions standardRetryOptions;
 
     public S3ClientOptions() {
 
@@ -89,5 +96,14 @@ public class S3ClientOptions {
 
     public int getMaxConnections() {
         return maxConnections;
+    }
+
+    public S3ClientOptions withStandardRetryOptions(StandardRetryOptions standardRetryOptions) {
+        this.standardRetryOptions = standardRetryOptions;
+        return this;
+    }
+
+    public StandardRetryOptions getStandardRetryOptions() {
+        return this.standardRetryOptions;
     }
 }

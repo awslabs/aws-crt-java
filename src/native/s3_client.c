@@ -6,6 +6,8 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include <aws/http/request_response.h>
+#include <aws/io/channel_bootstrap.h>
+#include <aws/io/retry_strategy.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/s3/s3_client.h>
 #include <jni.h>
@@ -48,7 +50,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_credentials_provider,
     jlong part_size,
     jdouble throughput_target_gbps,
-    int max_connections) {
+    int max_connections,
+    jlong jni_standard_retry_options) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -64,6 +67,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     if (!credentials_provider) {
         aws_jni_throw_runtime_exception(env, "Invalid Credentials Provider");
         return (jlong)NULL;
+	}
+
+    struct aws_standard_retry_options *retry_options = (struct aws_standard_retry_options *)jni_standard_retry_options;
+    struct aws_retry_strategy *retry_strategy = NULL;
+
+    if (retry_options != NULL) {
+        struct aws_standard_retry_options retry_options_copy = *retry_options;
+
+        if (retry_options_copy.backoff_retry_options.el_group == NULL) {
+            retry_options_copy.backoff_retry_options.el_group = client_bootstrap->event_loop_group;
+        }
+
+        retry_strategy = aws_retry_strategy_new_standard(allocator, &retry_options_copy);
+
+        if (retry_strategy == NULL) {
+            aws_jni_throw_runtime_exception(env, "Could not create retry strategy with standard-retry-options");
+            return (jlong)NULL;
+        }
     }
 
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
@@ -100,6 +121,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .signing_config = NULL,
         .part_size = (size_t)part_size,
         .throughput_target_gbps = throughput_target_gbps,
+        .retry_strategy = retry_strategy,
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
     };
@@ -112,6 +134,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
 clean_up:
+    aws_retry_strategy_release(retry_strategy);
+
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     return (jlong)client;

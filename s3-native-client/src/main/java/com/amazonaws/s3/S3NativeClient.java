@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
@@ -8,6 +13,7 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -37,6 +43,18 @@ public class S3NativeClient implements AutoCloseable {
         this(signingRegion, new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
+    }
+
+    // TODO Write Builder class for S3NativeClient.
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+            final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+            final int maxConnections, final StandardRetryOptions retryOptions) {
+
+        this(signingRegion,
+                new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                        .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
+                        .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
+                        .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)));
     }
 
     public S3NativeClient(final String signingRegion, final S3Client s3Client) {

@@ -11,11 +11,8 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
 
     public enum ExponentialBackoffJitterMode {
         Default(0),
-
         None(1),
-
         Full(2),
-
         Decorrelated(3);
 
         private int jitterMode;

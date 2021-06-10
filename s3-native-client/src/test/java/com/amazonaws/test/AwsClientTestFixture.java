@@ -14,9 +14,10 @@ import java.nio.charset.StandardCharsets;
  */
 public class AwsClientTestFixture {
     protected static boolean areAwsCredentialsAvailable() {
-        return System.getProperty("aws_access_key_id") != null && !System.getProperty("aws_access_key_id").equals("");
+        return System.getProperty("crt.aws_access_key_id") != null
+                && !System.getProperty("crt.aws_access_key_id").equals("");
     }
-    
+
     /**
      * Temporary implementation for local testing
      */
@@ -25,8 +26,7 @@ public class AwsClientTestFixture {
         final String awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
         final String awsSessionToken = System.getProperty("crt.aws_session_token");
 
-        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = 
-                new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
                 .withAccessKeyId(awsAccessKeyId.getBytes(StandardCharsets.UTF_8))
                 .withSecretAccessKey(awsSecretAccessKey.getBytes(StandardCharsets.UTF_8));
         if (awsSessionToken != null && !awsSessionToken.equals("")) {

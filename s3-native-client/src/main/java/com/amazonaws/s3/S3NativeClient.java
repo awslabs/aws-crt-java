@@ -8,6 +8,7 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -37,6 +38,18 @@ public class S3NativeClient implements AutoCloseable {
         this(signingRegion, new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
+    }
+
+	// TODO S3NativeClient needs a Builder.
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+            final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+            final int maxConnections, final StandardRetryOptions retryOptions) {
+
+        this(signingRegion,
+                new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                        .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
+                        .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
+                        .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)));
     }
 
     public S3NativeClient(final String signingRegion, final S3Client s3Client) {
@@ -231,15 +244,23 @@ public class S3NativeClient implements AutoCloseable {
                     resultFuture.complete(resultBuilder.build());
                 } else {
                     resultFuture
-                            .completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+                            .completeExceptionally(new CrtRuntimeException(errorCode));
                 }
             }
         };
+
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+
+            resultFuture.whenComplete((r, t) -> {
+                if (resultFuture.isCancelled()) {
+                    metaRequest.cancel();
+                }
+            });
+
             return resultFuture;
         }
     }

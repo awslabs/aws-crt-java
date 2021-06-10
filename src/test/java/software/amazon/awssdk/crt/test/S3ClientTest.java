@@ -1,11 +1,6 @@
 package software.amazon.awssdk.crt.test;
 
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.ClientTlsContext;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
+import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.S3Client;
 import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequest;
@@ -50,6 +45,8 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.OptionalDouble;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions;
 
 public class S3ClientTest extends CrtTestFixture {
 
@@ -98,6 +95,23 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
+    public void testS3ClientCreateDestroyRetryOptions() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        /* No backoff retry options specified. */
+        try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.StandardRetryOptionsBuilder().withInitialBucketCapcity(100).build();
+             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
+        }
+
+        /* Backoff retry options specified. */
+        try (EventLoopGroup retryElg = new EventLoopGroup(0,1);
+             ExponentialBackoffRetryOptions backoffRetryOptions = new ExponentialBackoffRetryOptions.ExponentialBackoffRetryOptionsBuilder().withEventLoopGroup(retryElg).build();
+             StandardRetryOptions standardRetryOptions = new StandardRetryOptions.StandardRetryOptionsBuilder().withInitialBucketCapcity(100).withBackoffRetryOptions(backoffRetryOptions).build();
+             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
+        }
+    }
+
+    @Test
     public void testS3Get() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(hasAwsCredentials());
@@ -111,8 +125,7 @@ public class S3ClientTest extends CrtTestFixture {
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Body Response: " + Arrays.toString(bytes));
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
 

@@ -235,11 +235,19 @@ public class S3NativeClient implements AutoCloseable {
                 }
             }
         };
+
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+
+            resultFuture.whenComplete((r, t) -> {
+                if (resultFuture.isCancelled()) {
+                    metaRequest.cancel();
+                }
+            });
+
             return resultFuture;
         }
     }

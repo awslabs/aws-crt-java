@@ -9,7 +9,7 @@ import software.amazon.awssdk.crt.CrtResource;
 
 public class ExponentialBackoffRetryOptions extends CrtResource {
 
-    public enum ExponentialBackoffJitterMode {
+    public enum JitterMode {
         Default(0),
         None(1),
         Full(2),
@@ -17,7 +17,7 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
 
         private int jitterMode;
 
-        ExponentialBackoffJitterMode(int jitterMode) {
+        JitterMode(int jitterMode) {
             this.jitterMode = jitterMode;
         }
 
@@ -62,10 +62,10 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
         private EventLoopGroup eventLoopGroup;
         private long maxRetries;
         private long backoffScaleFactorMS;
-        private ExponentialBackoffJitterMode jitterMode;
+        private JitterMode jitterMode;
 
         public Builder() {
-            jitterMode = ExponentialBackoffJitterMode.Default;
+            jitterMode = JitterMode.Default;
         }
 
         public Builder withEventLoopGroup(EventLoopGroup eventLoopGroup) {
@@ -95,12 +95,12 @@ public class ExponentialBackoffRetryOptions extends CrtResource {
             return this.backoffScaleFactorMS;
         }
 
-        public Builder withJitterMode(ExponentialBackoffJitterMode jitterMode) {
+        public Builder withJitterMode(JitterMode jitterMode) {
             this.jitterMode = jitterMode;
             return this;
         }
 
-        public ExponentialBackoffJitterMode getJitterMode() {
+        public JitterMode getJitterMode() {
             return this.jitterMode;
         }
 

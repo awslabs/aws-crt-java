@@ -9,18 +9,20 @@ import software.amazon.awssdk.crt.io.HostResolver;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.Map;
+
+
 
 /**
- * This wraps a native pointer to an AWS Common Runtime resource. It also ensures
+ * This wraps a native pointer and/or one or more references to an AWS Common Runtime resource. It also ensures
  * that the first time a resource is referenced, the CRT will be loaded and bound.
  */
 public abstract class CrtResource implements AutoCloseable {
@@ -28,14 +30,15 @@ public abstract class CrtResource implements AutoCloseable {
     private static final int DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS = 60;
     private static final long NULL = 0;
 
+    private static final Log.LogLevel ResourceLogLevel = Log.LogLevel.Debug;
+
     public class ResourceInstance {
-        public final long nativeHandle;
+        public long nativeHandle;
         public final String canonicalName;
         private Throwable instantiation;
         private CrtResource wrapper;
 
-        public ResourceInstance(CrtResource wrapper, long handle, String name) {
-            nativeHandle = handle;
+        public ResourceInstance(CrtResource wrapper, String name) {
             canonicalName = name;
             this.wrapper = wrapper;
             if (debugNativeObjects) {
@@ -69,9 +72,11 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         public CrtResource getWrapper() { return wrapper; }
+
+        public void setNativeHandle(long handle) { nativeHandle = handle; }
     }
 
-    private static final ConcurrentHashMap<Long, ResourceInstance> NATIVE_RESOURCES = new ConcurrentHashMap<>();
+    private static final HashMap<Long, ResourceInstance> CRT_RESOURCES = new HashMap<>();
 
     /*
      * Primarily intended for testing only.  Tracks the number of non-closed resources and signals
@@ -96,6 +101,15 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     public CrtResource() {
+        if (debugNativeObjects) {
+            String canonicalName = this.getClass().getCanonicalName();
+
+            synchronized(CrtResource.class) {
+                CRT_RESOURCES.put(id, new ResourceInstance(this, canonicalName));
+            }
+
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("CrtResource of class %s(%d) created", this.getClass().getCanonicalName(), id));
+        }
     }
 
     /**
@@ -109,7 +123,7 @@ public abstract class CrtResource implements AutoCloseable {
         }
 
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s is adding a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) is adding a reference to instance of class %s(%d)", this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
         }
     }
 
@@ -125,9 +139,9 @@ public abstract class CrtResource implements AutoCloseable {
 
         if (debugNativeObjects) {
             if (removed) {
-                Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s is removing a reference to instance of class %s", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) is removing a reference to instance of class %s(%d)", this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
             } else {
-                Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s erroneously tried to remove a reference to instance of class %s that it was not referencing", this.getClass().getCanonicalName(), resource.getClass().getCanonicalName()));
+                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) erroneously tried to remove a reference to instance of class %s(%d) that it was not referencing", this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
             }
         }
 
@@ -164,14 +178,14 @@ public abstract class CrtResource implements AutoCloseable {
             throw new IllegalStateException("Can't acquire NULL Pointer: " + canonicalName);
         }
 
-        ResourceInstance lastValue = NATIVE_RESOURCES.put(handle, new ResourceInstance(this, handle, canonicalName));
-
-        if (lastValue != null) {
-            throw new IllegalStateException("Acquired two CrtResources to the same Native Resource! Class: " + lastValue);
-        }
-
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s(%d) acquired native pointer %d", canonicalName, id, handle));
+            synchronized(CrtResource.class) {
+                ResourceInstance instance = CRT_RESOURCES.get(id);
+                if (instance != null) {
+                    instance.setNativeHandle(handle);
+                }
+            }
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("acquireNativeHandle - %s(%d) acquired native pointer %d", canonicalName, id, handle));
         }
 
         nativeHandle = handle;
@@ -183,16 +197,11 @@ public abstract class CrtResource implements AutoCloseable {
      */
     private void release() {
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s", this.getClass().getCanonicalName()));
-        }
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s(%d)", this.getClass().getCanonicalName(), id));
 
-        if (nativeHandle != 0) {
-            /*
-             * Recyclable resources (like http connections) may be given to another Java object during the call to releaseNativeHandle.
-             * By removing from the map first, we prevent a double-acquire exception from getting thrown when the second Java object
-             * calls acquire on the native handle.
-             */
-            NATIVE_RESOURCES.remove(nativeHandle);
+            synchronized(CrtResource.class) {
+                CRT_RESOURCES.remove(id);
+            }
         }
 
         releaseNativeHandle();
@@ -264,7 +273,7 @@ public abstract class CrtResource implements AutoCloseable {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Closing instance of class %s with %d remaining refs", this.getClass().getCanonicalName(), remainingRefs));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Closing instance of class %s(%d) with %d remaining refs", this.getClass().getCanonicalName(), id, remainingRefs));
         }
 
         if (remainingRefs != 0) {
@@ -285,7 +294,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     protected void releaseReferences() {
         if (debugNativeObjects) {
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s closing referenced objects", this.getClass().getCanonicalName()));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) closing all referenced objects", this.getClass().getCanonicalName(), id));
         }
 
         synchronized(this) {
@@ -308,7 +317,7 @@ public abstract class CrtResource implements AutoCloseable {
             if (referencedResources.size() > 0) {
                 builder.append("\n   Forward references by Id: ");
                 for (CrtResource reference : referencedResources) {
-                    builder.append(String.format("%d", reference.id));
+                    builder.append(String.format("%d ", reference.id));
                 }
             }
         }
@@ -325,8 +334,10 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     public static void collectNativeResource(Consumer<ResourceInstance> fn) {
-        for (Map.Entry<Long, ResourceInstance> entry : NATIVE_RESOURCES.entrySet()) {
-            fn.accept(entry.getValue());
+        synchronized(CrtResource.class) {
+            for (Map.Entry<Long, ResourceInstance> entry : CRT_RESOURCES.entrySet()) {
+                fn.accept(entry.getValue());
+            }
         }
     }
 
@@ -334,9 +345,9 @@ public abstract class CrtResource implements AutoCloseable {
      * Debug method to log all of the currently un-closed CRTResource objects.
      */
     public static void logNativeResources() {
-        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
+        Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
         collectNativeResource((resource) -> {
-            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, resource.getWrapper().getResourceLogDescription());
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, resource.getWrapper().getResourceLogDescription());
         });
     }
 
@@ -351,7 +362,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             ++resourceCount;
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("incrementNativeObjectCount - count = %d", resourceCount));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("incrementNativeObjectCount - count = %d", resourceCount));
         } finally {
             lock.unlock();
         }
@@ -368,7 +379,7 @@ public abstract class CrtResource implements AutoCloseable {
         lock.lock();
         try {
             --resourceCount;
-            Log.log(Log.LogLevel.Trace, Log.LogSubject.JavaCrtResource, String.format("decrementNativeObjectCount - count = %d", resourceCount));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("decrementNativeObjectCount - count = %d", resourceCount));
             if (resourceCount == 0) {
                 emptyResources.signal();
             }

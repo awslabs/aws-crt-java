@@ -258,6 +258,29 @@ struct java_crt_runtime_exception_properties {
 };
 extern struct java_crt_runtime_exception_properties crt_runtime_exception_properties;
 
+/* EccKeyPair */
+struct java_ecc_key_pair_properties {
+    jclass ecc_key_pair_class;
+    jmethodID constructor;
+};
+extern struct java_ecc_key_pair_properties ecc_key_pair_properties;
+
+/* CRT */
+struct java_crt_properties {
+    jclass crt_class;
+    jmethodID test_jni_exception_method_id;
+};
+extern struct java_crt_properties crt_properties;
+
+/* AwsSigningResult */
+struct java_aws_signing_result_properties {
+    jclass aws_signing_result_class;
+    jmethodID constructor;
+    jfieldID signed_request_field_id;
+    jfieldID signature_field_id;
+};
+extern struct java_aws_signing_result_properties aws_signing_result_properties;
+
 /* HttpHeader */
 struct java_http_header_properties {
     jclass http_header_class;

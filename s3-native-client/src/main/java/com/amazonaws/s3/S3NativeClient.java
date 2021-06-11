@@ -45,7 +45,7 @@ public class S3NativeClient implements AutoCloseable {
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
     }
 
-    // TODO Write Builder class for S3NativeClient.
+    // TODO Builder class for S3NativeClient
     public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
             final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
             final int maxConnections, final StandardRetryOptions retryOptions) {

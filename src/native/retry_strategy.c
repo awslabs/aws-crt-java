@@ -8,6 +8,19 @@
 #include <aws/io/retry_strategy.h>
 #include <jni.h>
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#        pragma warning(disable : 4221)
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
+#endif
+
 JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ExponentialBackoffRetryOptions_exponentialBackoffRetryOptionsNew(
     JNIEnv *env,
@@ -35,7 +48,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ExponentialBackoffRetryOptions_
     AWS_ZERO_STRUCT(*options);
     options->el_group = (struct aws_event_loop_group *)jni_elg;
     options->max_retries = jni_max_retries;
-    options->backoff_scale_factor_ms = jni_backoff_scale_factor_ms;
+    options->backoff_scale_factor_ms = (uint32_t)jni_backoff_scale_factor_ms;
     options->jitter_mode = jni_jitter_mode;
 
     return (jlong)options;
@@ -108,3 +121,11 @@ void JNICALL Java_software_amazon_awssdk_crt_io_StandardRetryOptions_standardRet
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, options);
 }
+
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(pop)
+#    else
+#        pragma GCC diagnostic pop
+#    endif
+#endif

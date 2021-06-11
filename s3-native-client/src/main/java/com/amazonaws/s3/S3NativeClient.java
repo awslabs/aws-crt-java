@@ -85,6 +85,14 @@ public class S3NativeClient implements AutoCloseable {
         return encodedPath;
     }
 
+    private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
+        future.whenComplete((r, t) -> {
+            if (future.isCancelled()) {
+                metaRequest.cancel();
+            }
+        });
+    }
+
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
             final ResponseDataConsumer<GetObjectOutput> dataHandler) {
         final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
@@ -157,6 +165,7 @@ public class S3NativeClient implements AutoCloseable {
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+            addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
     }
@@ -241,13 +250,7 @@ public class S3NativeClient implements AutoCloseable {
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
-
-            resultFuture.whenComplete((r, t) -> {
-                if (resultFuture.isCancelled()) {
-                    metaRequest.cancel();
-                }
-            });
-
+            addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
     }

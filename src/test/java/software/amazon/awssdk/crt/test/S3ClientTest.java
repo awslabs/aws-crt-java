@@ -100,13 +100,18 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3ClientCreateDestroyRetryOptions() {
+    public void testS3ClientCreateDestroyRetryOptions_NoBackoffOptions() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         /* Test that a client can be created without any back-off retry options specified. */
         try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapcity(100).build();
              S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
         }
+    }
+
+    @Test
+    public void testS3ClientCreateDestroyRetryOptions() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         /* Test that a client can be created with back-off retry options specified. */
         try (EventLoopGroup retryElg = new EventLoopGroup(0,1);
@@ -115,6 +120,7 @@ public class S3ClientTest extends CrtTestFixture {
              S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
         }
     }
+
 
     @Test
     public void testS3Get() {

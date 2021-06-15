@@ -2,7 +2,7 @@ package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
@@ -116,11 +116,11 @@ public class S3NativeClient implements AutoCloseable {
             }
 
             @Override
-            public void onFinished(int errorCode) {
-                CrtRuntimeException ex = null;
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                CrtS3RuntimeException ex = null;
                 try {
                     if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                        ex = new CrtRuntimeException(errorCode);
+                        ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
                         dataHandler.onException(ex);
                     } else {
                         dataHandler.onFinished();
@@ -226,12 +226,12 @@ public class S3NativeClient implements AutoCloseable {
             }
 
             @Override
-            public void onFinished(int errorCode) {
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                 if (errorCode == CRT.AWS_CRT_SUCCESS) {
                     resultFuture.complete(resultBuilder.build());
                 } else {
                     resultFuture
-                            .completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+                            .completeExceptionally(new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                 }
             }
         };

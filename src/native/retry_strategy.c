@@ -6,6 +6,7 @@
 #include "crt.h"
 #include "java_class_ids.h"
 #include <aws/io/retry_strategy.h>
+#include <inttypes.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -32,6 +33,26 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ExponentialBackoffRetryOptions_
     (void)env;
     (void)jni_class;
 
+    if (jni_max_retries < 0 || (uint64_t)jni_max_retries > SIZE_MAX) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(
+            env,
+            "ExponentialBackoffRetryOptions.exponentialBackoffRetryOptionsNew: Max-Retries value must be between 0 and "
+            "%" PRIu64,
+            (uint64_t)SIZE_MAX);
+        return (jlong)0;
+    }
+
+    if (jni_backoff_scale_factor_ms < 0 || jni_backoff_scale_factor_ms > UINT_MAX) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(
+            env,
+            "ExponentialBackoffRetryOptions.exponentialBackoffRetryOptionsNew: Backoff-Scale-Factor-MS must be between "
+            "0 and %u",
+            UINT_MAX);
+        return (jlong)0;
+    }
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_exponential_backoff_retry_options *options =
         (struct aws_exponential_backoff_retry_options *)aws_mem_calloc(
@@ -47,7 +68,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ExponentialBackoffRetryOptions_
 
     AWS_ZERO_STRUCT(*options);
     options->el_group = (struct aws_event_loop_group *)jni_elg;
-    options->max_retries = jni_max_retries;
+    options->max_retries = (size_t)jni_max_retries;
     options->backoff_scale_factor_ms = (uint32_t)jni_backoff_scale_factor_ms;
     options->jitter_mode = jni_jitter_mode;
 
@@ -80,6 +101,16 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_StandardRetryOptions_standardRe
     jlong initial_bucket_capacity) {
     (void)env;
     (void)jni_class;
+
+    if (initial_bucket_capacity < 0 || (uint64_t)initial_bucket_capacity > SIZE_MAX) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(
+            env,
+            "StandardRetryOptions.standardRetryOptionsNew: Initial-Bucket-Capacity value must be between 0 and "
+            "%" PRIu64,
+            (uint64_t)SIZE_MAX);
+        return (jlong)0;
+    }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_standard_retry_options *options =

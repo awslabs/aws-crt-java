@@ -53,7 +53,7 @@ public class StandardRetryOptions extends CrtResource {
             return this.backoffRetryOptions;
         }
 
-        public Builder withInitialBucketCapcity(long initialBucketCapacity) {
+        public Builder withInitialBucketCapacity(long initialBucketCapacity) {
             this.initialBucketCapacity = initialBucketCapacity;
             return this;
         }

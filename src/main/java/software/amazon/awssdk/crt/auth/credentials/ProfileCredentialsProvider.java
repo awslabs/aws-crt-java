@@ -42,22 +42,29 @@ public class ProfileCredentialsProvider extends CredentialsProvider {
     private ProfileCredentialsProvider(BuilderImpl builder) {
         super();
 
-        ClientBootstrap bootstrap = builder.clientBootstrap == null
+        try (ClientBootstrap bootstrap = builder.clientBootstrap == null
                 ? new ClientBootstrap(null, null)
-                : builder.clientBootstrap;
+                : builder.clientBootstrap) {
 
-        long nativeHandle = profileCredentialsProviderNew(
-                this,
-                toNativeHandle(bootstrap),
-                toNativeHandle(builder.tlsContext),
-                toByteArray(builder.profileName),
-                toByteArray(builder.configFileNameOverride),
-                toByteArray(builder.credentialsFileNameOverride)
-        );
+            long nativeHandle = profileCredentialsProviderNew(
+                    this,
+                    toNativeHandle(bootstrap),
+                    toNativeHandle(builder.tlsContext),
+                    toByteArray(builder.profileName),
+                    toByteArray(builder.configFileNameOverride),
+                    toByteArray(builder.credentialsFileNameOverride)
+            );
 
-        acquireNativeHandle(nativeHandle);
-        addReferenceTo(bootstrap);
-        if (builder.tlsContext != null) { addReferenceTo(builder.tlsContext); }
+            acquireNativeHandle(nativeHandle);
+            addReferenceTo(bootstrap);
+            if (builder.tlsContext != null) {
+                addReferenceTo(builder.tlsContext);
+            }
+
+            if (builder.clientBootstrap != null) {
+                bootstrap.addRef();
+            }
+        }
     }
 
     /**

@@ -268,11 +268,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 testData.ResultFuture.join();
             } catch (Exception e) {
                 exceptionResult = e;
-            } finally {
-                Assume.assumeTrue(exceptionResult != null);
-                Assume.assumeTrue(exceptionResult instanceof CancellationException);
-                Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
             }
+
+            Assume.assumeTrue(exceptionResult != null);
+            Assume.assumeTrue(exceptionResult instanceof CancellationException);
+            Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
         }
     }
 
@@ -315,11 +315,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 testData.ResultFuture.join();
             } catch (Exception e) {
                 exceptionResult = e;
-            } finally {
-                Assume.assumeTrue(exceptionResult != null);
-                Assume.assumeTrue(exceptionResult instanceof CancellationException);
-                Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
             }
+
+            Assume.assumeTrue(exceptionResult != null);
+            Assume.assumeTrue(exceptionResult instanceof CancellationException);
+            Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
         }
     }
 

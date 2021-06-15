@@ -31,15 +31,9 @@ public class StandardRetryOptions extends CrtResource {
 
         ExponentialBackoffRetryOptions backoffRetryOptions = builder.backoffRetryOptions;
 
-        if(backoffRetryOptions == null) {
-            backoffRetryOptions = new ExponentialBackoffRetryOptions.Builder().build();
-        }
-
         acquireNativeHandle(standardRetryOptionsNew(
-                backoffRetryOptions.getNativeHandle(),
+                backoffRetryOptions != null ? backoffRetryOptions.getNativeHandle() : 0l,
                 builder.initialBucketCapacity));
-
-        addReferenceTo(backoffRetryOptions);
     }
 
     static public class Builder {

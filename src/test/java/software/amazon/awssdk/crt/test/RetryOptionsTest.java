@@ -36,18 +36,33 @@ public class RetryOptionsTest extends CrtTestFixture {
     @Test
     public void testStandardRetryOptions() {
         try(ExponentialBackoffRetryOptions backoffOptions = new ExponentialBackoffRetryOptions.Builder().build()) {
-            final long initialBucketCapcity = 42l;
+            final long initialBucketCapacity = 42l;
 
             StandardRetryOptions.Builder builder = new StandardRetryOptions.Builder();
             builder.withBackoffRetryOptions(backoffOptions);
-            builder.withInitialBucketCapcity(initialBucketCapcity);
+            builder.withInitialBucketCapcity(initialBucketCapacity);
 
             Assume.assumeTrue(builder.getBackoffRetryOptions() == backoffOptions);
-            Assume.assumeTrue(builder.getInitialBucketCapacity() == initialBucketCapcity);
+            Assume.assumeTrue(builder.getInitialBucketCapacity() == initialBucketCapacity);
 
             try (StandardRetryOptions retryOptions = builder.build()) {
 
             }
+        }
+    }
+
+    @Test
+    public void testStandardRetryOptions_NoBackoffOptions() {
+        final long initialBucketCapacity = 42l;
+
+        StandardRetryOptions.Builder builder = new StandardRetryOptions.Builder();
+        builder.withInitialBucketCapcity(initialBucketCapacity);
+
+        Assume.assumeTrue(builder.getBackoffRetryOptions() == null);
+        Assume.assumeTrue(builder.getInitialBucketCapacity() == initialBucketCapacity);
+
+        try (StandardRetryOptions retryOptions = builder.build()) {
+
         }
     }
 }

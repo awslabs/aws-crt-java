@@ -210,9 +210,9 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures timeout value for requests that response is required on healthy connection. 
-     * If a response is not received within this interval, the request will fail as server not receiving it. 
-     * Applied to publish (QoS>0) and unsubscribe
+     * Configures timeout value for requests that response is required on healthy connection.
+     * If a response is not received within this interval, the request will fail as server not receiving it.
+     * Applied to publish (QoS&gt;0) and unsubscribe
      *
      * @param protocolOperationTimeoutMs How long to wait for a request response (in milliseconds) before failing
      */
@@ -222,8 +222,8 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /**
      * Queries timeout value for requests that response is required on healthy connection.
-     * If a response is not received within this interval, the request will fail as server not receiving it. 
-     * Applied to publish (QoS>0) and unsubscribe
+     * If a response is not received within this interval, the request will fail as server not receiving it.
+     * Applied to publish (QoS&gt;0) and unsubscribe
      *
      * @return How long to wait for a request response (in milliseconds) before failing
      */

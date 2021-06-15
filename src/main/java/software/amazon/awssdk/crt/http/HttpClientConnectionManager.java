@@ -137,23 +137,18 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     /** Called from Native when a new connection is acquired **/
-    private void onConnectionAcquired(long connection, int errorCode) {
+    private void onConnectionAcquired(long connection, int errorCode, long manager) {
         CompletableFuture<HttpClientConnection> connectionRequest = connectionAcquisitionRequests.poll();
 
         if (connectionRequest == null) {
-            /*
             // this can happen if you shut down the pool while there are still pending acquisitions
             if (connection != 0) {
                 // if the native pool is giving us a real connection but we've already shut down then
-                // make a dummy connection and then release it back to the pool
-                HttpClientConnection conn = new HttpClientConnection(this, connection);
-                conn.close();
+                // release the native connection immediately
+                releaseConnectionPointer(connection, manager);
             }
 
             return;
-
-             */
-            throw new IllegalStateException("Derp");
         }
 
         if (errorCode != CRT.AWS_CRT_SUCCESS) {
@@ -161,7 +156,7 @@ public class HttpClientConnectionManager extends CrtResource {
             return;
         }
 
-        HttpClientConnection conn = new HttpClientConnection(this, connection);
+        HttpClientConnection conn = new HttpClientConnection(this, connection, manager);
         connectionRequest.complete(conn);
     }
 
@@ -189,10 +184,8 @@ public class HttpClientConnectionManager extends CrtResource {
         conn.close();
     }
 
-    protected void releaseConnectionPointer(long connection_ptr) {
-        if (!isNull()) {
-            httpClientConnectionManagerReleaseConnection(this.getNativeHandle(), connection_ptr);
-        }
+    protected static void releaseConnectionPointer(long connection_ptr, long manager_ptr) {
+        httpClientConnectionManagerReleaseConnection(manager_ptr, connection_ptr);
     }
 
     private void closePendingAcquisitions(Throwable throwable) {

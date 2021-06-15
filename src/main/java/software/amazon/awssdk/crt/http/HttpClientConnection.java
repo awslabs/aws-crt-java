@@ -23,11 +23,17 @@ import static software.amazon.awssdk.crt.CRT.awsLastError;
 public class HttpClientConnection extends CrtResource {
 
     private final HttpClientConnectionManager manager;
+    private long nativeManager;
 
     protected HttpClientConnection(HttpClientConnectionManager manager, long connection) {
+        this(manager, connection, manager.getNativeHandle());
+    }
+
+    protected HttpClientConnection(HttpClientConnectionManager manager, long connection, long nativeManager) {
         acquireNativeHandle(connection);
         addReferenceTo(manager);
         this.manager = manager;
+        this.nativeManager = nativeManager;
     }
 
     /**
@@ -68,10 +74,15 @@ public class HttpClientConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()){
-            manager.releaseConnectionPointer(getNativeHandle());
+            manager.releaseConnectionPointer(getNativeHandle(), nativeManager);
         }
     }
 
+    /**
+     * @deprecated Given the strong coupling between connection and manager, it doesn't make sense to ever close the
+     * http connection.  If you're shutting down, give it back to the manager and close the manager.
+     */
+    @Deprecated
     public void shutdown() {
         httpClientConnectionShutdown(getNativeHandle());
     }

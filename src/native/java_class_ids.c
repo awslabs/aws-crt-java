@@ -312,7 +312,7 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
 
     http_client_connection_manager_properties.onConnectionAcquired =
-        (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
+        (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JIJ)V");
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onConnectionAcquired);
 
     http_client_connection_manager_properties.onShutdownComplete =

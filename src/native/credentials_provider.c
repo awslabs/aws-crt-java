@@ -32,7 +32,7 @@
 struct aws_credentials_provider_callback_data {
     JavaVM *jvm;
     struct aws_credentials_provider *provider;
-    jweak java_crt_credentials_provider;
+    jobject java_crt_credentials_provider;
 
     jobject jni_delegate_credential_handler;
 };
@@ -42,7 +42,7 @@ static void s_callback_data_clean_up(
     struct aws_allocator *allocator,
     struct aws_credentials_provider_callback_data *callback_data) {
 
-    (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
+    (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
     if (callback_data->jni_delegate_credential_handler != NULL) {
         (*env)->DeleteGlobalRef(env, callback_data->jni_delegate_credential_handler);
     }
@@ -58,14 +58,11 @@ static void s_on_shutdown_complete(void *user_data) {
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject java_crt_credentials_provider = (*env)->NewLocalRef(env, callback_data->java_crt_credentials_provider);
-    if (java_crt_credentials_provider != NULL) {
-        (*env)->CallVoidMethod(
-            env, java_crt_credentials_provider, credentials_provider_properties.on_shutdown_complete_method_id);
-
-        (*env)->DeleteLocalRef(env, java_crt_credentials_provider);
-        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-    }
+    (*env)->CallVoidMethod(
+        env,
+        callback_data->java_crt_credentials_provider,
+        credentials_provider_properties.on_shutdown_complete_method_id);
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     // We're done with this callback data, clean it up.
@@ -87,7 +84,12 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    if (callback_data->java_crt_credentials_provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java provider");
+        return 0;
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -133,7 +135,12 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    if (callback_data->java_crt_credentials_provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java provider");
+        return 0;
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -179,7 +186,12 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    if (callback_data->java_crt_credentials_provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java provider");
+        return 0;
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -259,7 +271,12 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    if (callback_data->java_crt_credentials_provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java provider");
+        return 0;
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -347,8 +364,19 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
+    if (callback_data->java_crt_credentials_provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java provider");
+        return 0;
+    }
+
     callback_data->jni_delegate_credential_handler = (*env)->NewGlobalRef(env, jni_delegate_credential_handler);
+    if (callback_data->jni_delegate_credential_handler == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create strong ref to java delegate handler");
+        return 0;
+    }
 
     struct aws_credentials_provider_delegate_options options = {
         .get_credentials = s_credentials_provider_delegate_get_credentials,

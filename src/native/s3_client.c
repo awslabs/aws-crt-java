@@ -268,9 +268,12 @@ static void s_on_s3_meta_request_finish_callback(
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         struct aws_byte_buf *error_response_body = meta_request_result->error_response_body;
-        struct aws_byte_cursor error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
+        struct aws_byte_cursor error_response_cursor;
+        AWS_ZERO_STRUCT(error_response_cursor);
+        if (error_response_body) {
+            error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
+        }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
-
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,

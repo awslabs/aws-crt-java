@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -59,9 +60,9 @@ public class S3ClientTest extends CrtTestFixture {
     public S3ClientTest() {
     }
 
-	private S3Client createS3Client(S3ClientOptions options, int numThreads) {
-    	return createS3Client(options, numThreads, 0);
-	}
+    private S3Client createS3Client(S3ClientOptions options, int numThreads) {
+        return createS3Client(options, numThreads, 0);
+    }
 
     private S3Client createS3Client(S3ClientOptions options, int numThreads, int cpuGroup) {
         try (EventLoopGroup elg = new EventLoopGroup(cpuGroup, numThreads);
@@ -72,8 +73,7 @@ public class S3ClientTest extends CrtTestFixture {
             try (DefaultChainCredentialsProvider credentialsProvider = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
                     .withClientBootstrap(clientBootstrap).build()) {
                 Assert.assertNotNull(credentialsProvider);
-                options.withClientBootstrap(clientBootstrap)
-                        .withCredentialsProvider(credentialsProvider);
+                options.withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
                 return new S3Client(options);
             }
         } catch (NullPointerException ex) {
@@ -111,17 +111,17 @@ public class S3ClientTest extends CrtTestFixture {
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Body Response: " + Arrays.toString(bytes));
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
 
                 @Override
-                public void onFinished(int errorCode) {
+                public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
                             "Meta request finished with error code " + errorCode);
                     if (errorCode != 0) {
-                        onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(errorCode));
@@ -132,8 +132,7 @@ public class S3ClientTest extends CrtTestFixture {
             HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
-                    .withHttpRequest(httpRequest)
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
@@ -150,8 +149,7 @@ public class S3ClientTest extends CrtTestFixture {
         while (true) {
             try {
                 payload.put(msg.getBytes());
-            }
-            catch (BufferOverflowException ex1) {
+            } catch (BufferOverflowException ex1) {
                 while (true) {
                     try {
                         payload.put("#".getBytes());
@@ -182,11 +180,12 @@ public class S3ClientTest extends CrtTestFixture {
                 }
 
                 @Override
-                public void onFinished(int errorCode) {
+                public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
                             "Meta request finished with error code " + errorCode);
                     if (errorCode != 0) {
-                        onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(errorCode));
@@ -281,8 +280,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
 
         public DoubleStream allSamples() {
-            return Arrays.stream(bytesPerSecond.toArray(new Long[1]))
-                    .mapToDouble(a -> a.doubleValue() * 8 / GBPS);
+            return Arrays.stream(bytesPerSecond.toArray(new Long[1])).mapToDouble(a -> a.doubleValue() * 8 / GBPS);
         }
 
         public DoubleStream samples() {
@@ -308,7 +306,7 @@ public class S3ClientTest extends CrtTestFixture {
             double sumOfSquares = samples().map((a) -> a * a).sum();
             double avg = samples().average().getAsDouble();
             long count = samples().count();
-            return (count > 0) ?  Math.sqrt((sumOfSquares / count) - (avg * avg)) : 0;
+            return (count > 0) ? Math.sqrt((sumOfSquares / count) - (avg * avg)) : 0;
         }
 
         public double peakGbps() {
@@ -328,9 +326,10 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        //Log.initLoggingToStdout(LogLevel.Trace);
+        // Log.initLoggingToStdout(LogLevel.Trace);
 
-        // Override defaults with values from system properties, via -D on mvn commandline
+        // Override defaults with values from system properties, via -D on mvn
+        // commandline
         final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "0"));
         final String region = System.getProperty("aws.crt.s3.benchmark.region", "us-west-2");
         final String bucket = System.getProperty("aws.crt.s3.benchmark.bucket",
@@ -344,9 +343,11 @@ public class S3ClientTest extends CrtTestFixture {
         final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "16"));
         final int concurrentTransfers = Integer.parseInt(
                 System.getProperty("aws.crt.s3.benchmark.concurrent", "16")); /* should be 1.6 * expectedGbps */
-        // avg of .3Gbps per connection, 32 connections per vip, 5 seconds per vip resolution
-        final int vipsNeeded = (int)Math.ceil(expectedGbps / 0.5 / 10);
-        final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup", new Integer((int)Math.ceil(vipsNeeded / 5)).toString()));
+        // avg of .3Gbps per connection, 32 connections per vip, 5 seconds per vip
+        // resolution
+        final int vipsNeeded = (int) Math.ceil(expectedGbps / 0.5 / 10);
+        final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup",
+                new Integer((int) Math.ceil(vipsNeeded / 5)).toString()));
         System.out.println(String.format("REGION=%s, WARMUP=%s", region, sampleDelay));
 
         // Ignore stats during warm up time, they skew results
@@ -386,12 +387,13 @@ public class S3ClientTest extends CrtTestFixture {
                         }
 
                         @Override
-                        public void onFinished(int errorCode) {
+                        public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                             // release the slot first
                             concurrentSlots.release();
 
                             if (errorCode != 0) {
-                                onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                                onFinishedFuture.completeExceptionally(
+                                        new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                                 return;
                             }
 

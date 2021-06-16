@@ -114,9 +114,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             try {
                 throw e.getCause();
             } catch (CrtS3RuntimeException causeException) {
+                /**
+                 * Assert the exceptions are set correctly.
+                 */
                 assertTrue(causeException.errorName.equals("AWS_ERROR_S3_INVALID_RESPONSE_STATUS"));
-                assertTrue(causeException.awsErrorCode.equals("NoSuchKey"));
-                assertTrue(causeException.statusCode == 404);
+                assertTrue(causeException.getAwsErrorCode().equals("NoSuchKey"));
+                assertTrue(causeException.getAwsErrorMessage().equals("The specified key does not exist."));
+                assertTrue(causeException.getStatusCode() == 404);
             }
         }
     }

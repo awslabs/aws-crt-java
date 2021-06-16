@@ -7,19 +7,22 @@ import java.util.regex.Pattern;
 
 public class CrtS3RuntimeException extends CrtRuntimeException {
 
-    public final int statusCode;
-    public final String awsErrorCode;
-    public final String errorPayload;
+    private final int statusCode;
+    private final String awsErrorCode;
+    private final String awsErrorMessage;
+    private final String errorPayload;
 
-    private final static String beginBlock = new String("<Code>");
-    private final static String endBlock = new String("</Code>");
-    private final static Pattern codeFormat = Pattern.compile(beginBlock + ".*" + endBlock);
+    private final static String codeBeginBlock = new String("<Code>");
+    private final static String codeEndBlock = new String("</Code>");
+    private final static String messageBeginBlock = new String("<Message>");
+    private final static String messageEndBlock = new String("</Message>");
 
     public CrtS3RuntimeException(int errorCode, int responseStatus, String errorPayload) {
         super(errorCode);
         this.statusCode = responseStatus;
         this.errorPayload = errorPayload;
-        this.awsErrorCode = GetAwsErrorCode(errorPayload);
+        this.awsErrorCode = GetElementFromPyload(errorPayload, codeBeginBlock, codeEndBlock);
+        this.awsErrorMessage = GetElementFromPyload(errorPayload, messageBeginBlock, messageEndBlock);
     }
 
     public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload) {
@@ -27,17 +30,52 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         String errorString = new String(errorPayload, java.nio.charset.StandardCharsets.UTF_8);
         this.statusCode = responseStatus;
         this.errorPayload = errorString;
-        this.awsErrorCode = GetAwsErrorCode(this.errorPayload);
+        this.awsErrorCode = GetElementFromPyload(this.errorPayload, codeBeginBlock, codeEndBlock);
+        this.awsErrorMessage = GetElementFromPyload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
-    private String GetAwsErrorCode(String errorPayload) {
-        Matcher matcher = codeFormat.matcher(errorPayload);
-        String awsErrorCode = "";
+    /**
+     * Helper function to get the detail of an element from xml payload. If not
+     * found, empty string will be returned.
+     */
+    private String GetElementFromPyload(String errorPayload, String beginBlock, String endBlock) {
+        Pattern regexFormat = Pattern.compile(beginBlock + ".*" + endBlock);
+        Matcher matcher = regexFormat.matcher(errorPayload);
+        String result = "";
         if (matcher.find()) {
-            awsErrorCode = errorPayload.substring(matcher.start() + beginBlock.length(),
-                    matcher.end() - endBlock.length());
+            result = errorPayload.substring(matcher.start() + beginBlock.length(), matcher.end() - endBlock.length());
         }
+        return result;
+    }
+
+    /**
+     * Returns the aws error code from S3 response. The <Code> element in xml
+     * response.
+     *
+     * @return errorCode, if no <Code> element in the response, empty string will be
+     *         returned
+     */
+    public String getAwsErrorCode() {
         return awsErrorCode;
     }
 
+    /**
+     * Returns the error message from S3 response. The detail among <Message>
+     * element in xml response.
+     *
+     * @return error message, if no <Message> element in the response, empty string
+     *         will be returned
+     */
+    public String getAwsErrorMessage() {
+        return awsErrorMessage;
+    }
+
+    /**
+     * Returns the status code in S3 response.
+     *
+     * @return status code in int
+     */
+    public int getStatusCode() {
+        return statusCode;
+    }
 }

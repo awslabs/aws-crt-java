@@ -187,7 +187,7 @@ public class MqttClientConnection extends CrtResource {
             mqttClientConnectionConnect(getNativeHandle(), config.getEndpoint(), port,
                     socketOptions != null ? socketOptions.getNativeHandle() : 0,
                     tls != null ? tls.getNativeHandle() : 0, config.getClientId(), config.getCleanSession(),
-                    config.getKeepAliveMs(), pingTimeout, config.getProtocolOperationTimeoutMs());
+                    config.getKeepAliveSecs(), pingTimeout, config.getProtocolOperationTimeoutMs());
 
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);

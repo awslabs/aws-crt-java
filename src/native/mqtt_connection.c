@@ -369,7 +369,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_tls_ctx,
     jstring jni_client_id,
     jboolean jni_clean_session,
-    jint keep_alive_ms,
+    jint keep_alive_secs,
     jshort ping_timeout_ms,
     jint protocol_operation_timeout_ms) {
     (void)jni_class;
@@ -428,7 +428,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.socket_options = &connection->socket_options;
     connect_options.tls_options = tls_options;
     connect_options.client_id = client_id;
-    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
+    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_secs;
     connect_options.ping_timeout_ms = ping_timeout_ms;
     connect_options.protocol_operation_timeout_ms = protocol_operation_timeout_ms;
     connect_options.clean_session = clean_session;

@@ -195,7 +195,8 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /**
      * Configures MQTT keep-alive via PING messages. Note that this is not TCP
-     * keepalive.
+     * keepalive. Note: AWS IoT Core only allows 30-1200 Secs. Anything larger than 
+     * 65535 will be capped.
      *
      * @param keepAliveSecs How often in seconds to send an MQTT PING message to the
      *                   service to keep a connection alive

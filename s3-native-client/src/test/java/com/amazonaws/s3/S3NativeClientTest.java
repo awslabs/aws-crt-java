@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
@@ -23,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -76,6 +78,50 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         public void onException(final CrtRuntimeException e) {
                         }
                     }).join();
+        }
+    }
+
+    @Test
+    public void testGetObjectExceptionCatch() throws Throwable {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
+                final HostResolver resolver = new HostResolver(elGroup, 128);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        } catch (CompletionException e) {
+            try {
+                throw e.getCause();
+            } catch (CrtS3RuntimeException causeException) {
+                /**
+                 * Assert the exceptions are set correctly.
+                 */
+                assertTrue(causeException.errorName.equals("AWS_ERROR_S3_INVALID_RESPONSE_STATUS"));
+                assertTrue(causeException.getAwsErrorCode().equals("NoSuchKey"));
+                assertTrue(causeException.getAwsErrorMessage().equals("The specified key does not exist."));
+                assertTrue(causeException.getStatusCode() == 404);
+            }
         }
     }
 

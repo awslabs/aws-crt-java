@@ -134,11 +134,11 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connect(false, 0, 0, anyMessageHandler);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveMs, int protocolOperationTimeout) {
-        return connect(cleanSession, keepAliveMs, protocolOperationTimeout, null);
+    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout) {
+        return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveMs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler) {
+    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler) {
         Assume.assumeTrue(findCredentials());
 
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -181,7 +181,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setEndpoint(iotEndpoint);
                 config.setPort(port);
                 config.setCleanSession(cleanSession);
-                config.setKeepAliveMs(keepAliveMs);
+                config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
 
                 modifyConnectionConfiguration(config);

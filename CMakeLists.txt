@@ -57,9 +57,9 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        set(BUILD_LIBSSL OFF) # don't need libssl, only need libcrypto
-        set(DISABLE_PERL ON) # disables codegen
-        set(DISABLE_GO ON) # disables codegen
+        set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
+        set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
+        set(DISABLE_GO ON CACHE BOOL "Disable codegen")
         add_subdirectory(crt/aws-lc)
         set(SEARCH_LIBCRYPTO OFF CACHE BOOL "Let S2N use libcrypto from AWS-LC.")
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")

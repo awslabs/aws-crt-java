@@ -62,7 +62,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
@@ -77,7 +76,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
         </profile>
@@ -89,7 +87,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
         </profile>
@@ -177,7 +174,7 @@
                                         <argument>--config</argument>
                                         <argument>${cmake.buildconfig}</argument>
                                         <argument>--target</argument>
-                                        <argument>${cmake.target}</argument>
+                                        <argument>aws-crt-jni</argument>
                                     </arguments>
                                 </configuration>
                             </execution>

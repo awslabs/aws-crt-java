@@ -1,0 +1,7 @@
+extraction:
+  cpp:
+    prepare:
+      packages:
+        - maven
+    index:
+      build_command: "mvn --batch-mode compile"

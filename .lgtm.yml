@@ -1,4 +1,7 @@
 extraction:
   cpp:
+    prepare:
+      packages:
+        - mvn
     index:
       build_command: "mvn --batch-mode compile"

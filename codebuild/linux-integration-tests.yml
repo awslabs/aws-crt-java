@@ -6,14 +6,13 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install g++-7 cmake3 ninja-build -y
+      - sudo apt-get install gcc-7 cmake3 ninja-build -y
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
   pre_build:
     commands:
       - export CC=gcc-7
-      - export CXX=g++-7
   build:
     commands:
       - echo Build started on `date`
@@ -26,7 +25,7 @@ phases:
 
 artifacts:
   discard-paths: yes
-  files:
+  files: 
     - 'target/surefire-reports/**'
     - 'hs_err_pid*'
     - 'core*'

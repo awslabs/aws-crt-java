@@ -36,12 +36,11 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.s3.S3ClientNativeCallbacks;
+import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
 
@@ -418,12 +417,23 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().build();
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
+                    .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));
 
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100., 0, standardRetryOptions);
+            try(final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                    .withCredentialsProvider(provider).withRegion(REGION)
+                    .withPartSize(64_000_000l).withThroughputTargetGbps(100.)
+                    .withMaxConnections(0).withStandardRetryOptions(standardRetryOptions).withNativeCallbacks(new S3ClientNativeCallbacks() {
 
-            Assume.assumeTrue(nativeClient != null);
+                        @Override
+                        public void onSetupStandardRetryOptions(long standardRetryOptionsNativeHandle) {
+                            Assume.assumeTrue(standardRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
+                        }
+                    }));
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
+
+
+            }
         }
     }
 

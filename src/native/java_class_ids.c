@@ -508,6 +508,17 @@ static void s_cache_s3_client_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(s3_client_properties.onShutdownComplete);
 }
 
+struct java_s3_client_native_callbacks_native_adapter_properties s3_client_native_callbacks_native_adapter_properties;
+
+static void s_cache_s3_client_native_callbacks_native_adapter_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ClientNativeCallbacksNativeAdapter");
+    AWS_FATAL_ASSERT(cls);
+
+    s3_client_native_callbacks_native_adapter_properties.onSetupStandardRetryOptions =
+        (*env)->GetMethodID(env, cls, "onSetupStandardRetryOptions", "(J)V");
+    AWS_FATAL_ASSERT(s3_client_native_callbacks_native_adapter_properties.onSetupStandardRetryOptions);
+}
+
 struct java_s3_meta_request_properties s3_meta_request_properties;
 
 static void s_cache_s3_meta_request_properties(JNIEnv *env) {
@@ -619,6 +630,69 @@ static void s_cache_http_header(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
 }
 
+struct java_aws_exponential_backoff_retry_options_properties exponential_backoff_retry_options_properties;
+
+static void s_cache_exponential_backoff_retry_options(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions");
+    AWS_FATAL_ASSERT(cls);
+    exponential_backoff_retry_options_properties.exponential_backoff_retry_options_class =
+        (*env)->NewGlobalRef(env, cls);
+
+    exponential_backoff_retry_options_properties.exponential_backoff_retry_options_constructor_method_id =
+        (*env)->GetMethodID(
+            env, exponential_backoff_retry_options_properties.exponential_backoff_retry_options_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(
+        exponential_backoff_retry_options_properties.exponential_backoff_retry_options_constructor_method_id);
+
+    exponential_backoff_retry_options_properties.el_group_field_id =
+        (*env)->GetFieldID(env, cls, "eventLoopGroup", "Lsoftware/amazon/awssdk/crt/io/EventLoopGroup;");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.el_group_field_id);
+
+    exponential_backoff_retry_options_properties.max_retries_field_id = (*env)->GetFieldID(env, cls, "maxRetries", "J");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.max_retries_field_id);
+
+    exponential_backoff_retry_options_properties.backoff_scale_factor_ms_field_id =
+        (*env)->GetFieldID(env, cls, "backoffScaleFactorMS", "J");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.backoff_scale_factor_ms_field_id);
+
+    exponential_backoff_retry_options_properties.jitter_mode_field_id = (*env)->GetFieldID(
+        env, cls, "jitterMode", "Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode;");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.jitter_mode_field_id);
+
+    jclass jitter_mode_cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode");
+    AWS_FATAL_ASSERT(jitter_mode_cls);
+    exponential_backoff_retry_options_properties.jitter_mode_class = (*env)->NewGlobalRef(env, jitter_mode_cls);
+
+    exponential_backoff_retry_options_properties.jitter_mode_value_field_id =
+        (*env)->GetFieldID(env, jitter_mode_cls, "value", "I");
+
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.jitter_mode_value_field_id);
+}
+
+struct java_aws_standard_retry_options_properties standard_retry_options_properties;
+
+static void s_cache_standard_retry_options(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/StandardRetryOptions");
+    AWS_FATAL_ASSERT(cls);
+    standard_retry_options_properties.standard_retry_options_class = (*env)->NewGlobalRef(env, cls);
+
+    standard_retry_options_properties.standard_retry_options_constructor_method_id =
+        (*env)->GetMethodID(env, standard_retry_options_properties.standard_retry_options_class, "<init>", "()V");
+
+    standard_retry_options_properties.backoff_retry_options_field_id = (*env)->GetFieldID(
+        env, cls, "backoffRetryOptions", "Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions;");
+    AWS_FATAL_ASSERT(standard_retry_options_properties.backoff_retry_options_field_id);
+
+    standard_retry_options_properties.initial_bucket_capacity_field_id =
+        (*env)->GetFieldID(env, cls, "initialBucketCapacity", "J");
+    AWS_FATAL_ASSERT(standard_retry_options_properties.initial_bucket_capacity_field_id);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -648,6 +722,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_stream_message_flush_properties(env);
     s_cache_cpu_info_properties(env);
     s_cache_s3_client_properties(env);
+    s_cache_s3_client_native_callbacks_native_adapter_properties(env);
     s_cache_s3_meta_request_properties(env);
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);
@@ -656,4 +731,6 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_crt(env);
     s_cache_aws_signing_result(env);
     s_cache_http_header(env);
+    s_cache_exponential_backoff_retry_options(env);
+    s_cache_standard_retry_options(env);
 }

@@ -5,72 +5,35 @@
 
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtResource;
+public class StandardRetryOptions {
 
-public class StandardRetryOptions extends CrtResource {
+    private ExponentialBackoffRetryOptions backoffRetryOptions;
+    private long initialBucketCapacity;
 
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees the native resources associated with this instance
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            standardRetryOptionsDestroy(getNativeHandle());
-        }
+    public StandardRetryOptions withBackoffRetryOptions(ExponentialBackoffRetryOptions backoffRetryOptions) {
+        this.backoffRetryOptions = backoffRetryOptions;
+        return this;
     }
 
-    private StandardRetryOptions(Builder builder) {
-        super();
-
-        ExponentialBackoffRetryOptions backoffRetryOptions = builder.backoffRetryOptions;
-
-        acquireNativeHandle(standardRetryOptionsNew(
-                backoffRetryOptions != null ? backoffRetryOptions.getNativeHandle() : 0l,
-                builder.initialBucketCapacity));
+    public ExponentialBackoffRetryOptions getBackoffRetryOptions() {
+        return this.backoffRetryOptions;
     }
 
-    static public class Builder {
+    public StandardRetryOptions withInitialBucketCapacity(long initialBucketCapacity) {
+        this.initialBucketCapacity = initialBucketCapacity;
+        return this;
+    }
 
-        private ExponentialBackoffRetryOptions backoffRetryOptions;
-        private long initialBucketCapacity;
+    public long getInitialBucketCapacity() {
+        return this.initialBucketCapacity;
+    }
 
-        public Builder() {
-        }
-
-        public Builder withBackoffRetryOptions(ExponentialBackoffRetryOptions backoffRetryOptions) {
-            this.backoffRetryOptions = backoffRetryOptions;
-            return this;
-        }
-
-        public ExponentialBackoffRetryOptions getBackoffRetryOptions() {
-            return this.backoffRetryOptions;
-        }
-
-        public Builder withInitialBucketCapacity(long initialBucketCapacity) {
-            this.initialBucketCapacity = initialBucketCapacity;
-            return this;
-        }
-
-        public long getInitialBucketCapacity() {
-            return this.initialBucketCapacity;
-        }
-
-        public StandardRetryOptions build() {
-            return new StandardRetryOptions(this);
-        }
+    public boolean compareToNative(long standardRetryOptionsNativeHandle) {
+        return StandardRetryOptions.compareToNative(this, standardRetryOptionsNativeHandle);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long standardRetryOptionsNew(long backoffRetryOptions, long initialBucketCapacity);
-
-    private static native void standardRetryOptionsDestroy(long retryOptions);
+    private static native boolean compareToNative(StandardRetryOptions expectedStandardRetryOptions, long retryOptionsNativeHandle);
 }

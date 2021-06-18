@@ -227,19 +227,26 @@ struct java_s3_client_properties {
 };
 extern struct java_s3_client_properties s3_client_properties;
 
+/* S3ClientNativeCallbacksNativeAdapter */
+struct java_s3_client_native_callbacks_native_adapter_properties {
+    jmethodID onSetupStandardRetryOptions;
+};
+extern struct java_s3_client_native_callbacks_native_adapter_properties
+    s3_client_native_callbacks_native_adapter_properties;
+
 /* S3Client */
 struct java_s3_meta_request_properties {
     jmethodID onShutdownComplete;
 };
 extern struct java_s3_meta_request_properties s3_meta_request_properties;
 
-/* */
+/* S3MetaRequestResponseHandlerNativeAdapter */
 struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseBody;
     jmethodID onFinished;
     jmethodID onResponseHeaders;
 };
-struct java_s3_meta_request_response_handler_native_adapter_properties
+extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
 
 /* CompletableFuture */
@@ -287,6 +294,29 @@ struct java_http_header_properties {
     jmethodID constructor_method_id; /* (byte[], byte[]) */
 };
 extern struct java_http_header_properties http_header_properties;
+
+/* ExponentialBackoffRetryOptions */
+struct java_aws_exponential_backoff_retry_options_properties {
+    jclass exponential_backoff_retry_options_class;
+    jmethodID exponential_backoff_retry_options_constructor_method_id;
+    jfieldID el_group_field_id;
+    jfieldID max_retries_field_id;
+    jfieldID backoff_scale_factor_ms_field_id;
+    jfieldID jitter_mode_field_id;
+
+    jclass jitter_mode_class;
+    jfieldID jitter_mode_value_field_id;
+};
+extern struct java_aws_exponential_backoff_retry_options_properties exponential_backoff_retry_options_properties;
+
+/* StandardRetryOptions */
+struct java_aws_standard_retry_options_properties {
+    jclass standard_retry_options_class;
+    jmethodID standard_retry_options_constructor_method_id;
+    jfieldID backoff_retry_options_field_id;
+    jfieldID initial_bucket_capacity_field_id;
+};
+extern struct java_aws_standard_retry_options_properties standard_retry_options_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

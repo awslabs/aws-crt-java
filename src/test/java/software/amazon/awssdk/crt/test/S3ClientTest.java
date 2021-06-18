@@ -1,14 +1,11 @@
 package software.amazon.awssdk.crt.test;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.s3.S3Client;
-import software.amazon.awssdk.crt.s3.S3ClientOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequest;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
+import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -60,8 +57,13 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     private S3Client createS3Client(S3ClientOptions options, int numThreads, int cpuGroup) {
-        try (EventLoopGroup elg = new EventLoopGroup(cpuGroup, numThreads);
-                HostResolver hostResolver = new HostResolver(elg);
+        try(EventLoopGroup elg = new EventLoopGroup(numThreads, cpuGroup)) {
+            return createS3Client(options, elg);
+        }
+    }
+
+    private S3Client createS3Client(S3ClientOptions options, EventLoopGroup elg) {
+        try (HostResolver hostResolver = new HostResolver(elg);
                 ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
             Assert.assertNotNull(clientBootstrap);
 
@@ -92,28 +94,55 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    /* Test that retry options given to the client are used.*/
     @Test
-    public void testS3ClientCreateDestroyRetryOptions_NoBackoffOptions() {
+    public void testS3ClientRetryOptions() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        /* Test that a client can be created without any back-off retry options specified. */
-        try (StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapacity(100).build();
-             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123).withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(retry_elg));
+            final StandardRetryOptions expectedRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123).withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(retry_elg));
+
+            /* Test that a client can be created without any back-off retry options specified. */
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions).withNativeCallbacks(new S3ClientNativeCallbacks() {
+
+                @Override
+                public void onSetupStandardRetryOptions(long standardRetryOptionsNativeHandle) {
+                    Assume.assumeTrue(expectedRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
+                }
+
+            }), elg)) {
+
+            }
         }
     }
-
+    /* Test that the client bootstrap ELG is used when a retry ELG isn't specified. */
     @Test
-    public void testS3ClientCreateDestroyRetryOptions() {
+    public void testS3ClientRetryOptionsUnspecifiedELG() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        /* Test that a client can be created with back-off retry options specified. */
-        try (EventLoopGroup retryElg = new EventLoopGroup(0,1);
-             ExponentialBackoffRetryOptions backoffRetryOptions = new ExponentialBackoffRetryOptions.Builder().withEventLoopGroup(retryElg).build();
-             StandardRetryOptions standardRetryOptions = new StandardRetryOptions.Builder().withInitialBucketCapacity(100).withBackoffRetryOptions(backoffRetryOptions).build();
-             S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions) )) {
+        Log.initLoggingToStdout(Log.LogLevel.Error);
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
+
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123).withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withMaxRetries(30));
+            final StandardRetryOptions expectedRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123).withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withMaxRetries(30).withEventLoopGroup(elg));
+
+            /* Test that a client can be created without any back-off retry options specified. */
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withStandardRetryOptions(standardRetryOptions).withNativeCallbacks(new S3ClientNativeCallbacks() {
+
+                @Override
+                public void onSetupStandardRetryOptions(long standardRetryOptionsNativeHandle) {
+                    Assume.assumeTrue(expectedRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
+                }
+
+            }), elg)) {
+
+            }
         }
     }
-
 
     @Test
     public void testS3Get() {

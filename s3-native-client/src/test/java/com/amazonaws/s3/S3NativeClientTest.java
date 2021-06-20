@@ -395,7 +395,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     }
 
     @Test
-    public void testPutObjectHeaders() {
+    public void testPutObjectCancelHeaders() {
         final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
 
         testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(2, testData) {

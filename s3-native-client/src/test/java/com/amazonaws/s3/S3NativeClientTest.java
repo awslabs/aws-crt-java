@@ -420,18 +420,16 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));
 
-            try(final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
-                    .withCredentialsProvider(provider).withRegion(REGION)
-                    .withPartSize(64_000_000l).withThroughputTargetGbps(100.)
-                    .withMaxConnections(0).withStandardRetryOptions(standardRetryOptions).withNativeCallbacks(new S3ClientNativeCallbacks() {
+            try (final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                    .withCredentialsProvider(provider).withRegion(REGION).withPartSize(64_000_000l)
+                    .withThroughputTargetGbps(100.).withMaxConnections(0).withStandardRetryOptions(standardRetryOptions)
+                    .withNativeCallbacks(new S3ClientNativeCallbacks() {
 
                         @Override
                         public void onSetupStandardRetryOptions(long standardRetryOptionsNativeHandle) {
-                            Assume.assumeTrue(standardRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
+                            assertTrue(standardRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
                         }
-                    }));
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
-
+                    })); final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
 
             }
         }

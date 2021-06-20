@@ -1,5 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.Log;
@@ -18,28 +20,31 @@ public class RetryOptionsTest extends CrtTestFixture {
 
     @Test
     public void testExponentialBackoffRetryOptions() {
-        try(EventLoopGroup elg = new EventLoopGroup(0,1)) {
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
             final long scaleFactorMS = 123l;
             final long maxRetries = 456;
             final ExponentialBackoffRetryOptions.JitterMode jitterMode = ExponentialBackoffRetryOptions.JitterMode.Decorrelated;
 
             final ExponentialBackoffRetryOptions retryOptions = new ExponentialBackoffRetryOptions()
-                    .withEventLoopGroup(elg)
-                    .withBackoffScaleFactorMS(scaleFactorMS)
-                    .withJitterMode(jitterMode)
+                    .withEventLoopGroup(elg).withBackoffScaleFactorMS(scaleFactorMS).withJitterMode(jitterMode)
                     .withMaxRetries(maxRetries);
 
-            Assume.assumeTrue(retryOptions.getEventLoopGroup() == elg);
-            Assume.assumeTrue(retryOptions.getBackoffScaleFactorMS() == scaleFactorMS);
-            Assume.assumeTrue(retryOptions.getJitterMode() == jitterMode);
-            Assume.assumeTrue(retryOptions.getMaxRetries() == maxRetries);
+            final boolean copiedToNativeTriggered[] = new boolean[1];
+
+            assertTrue(retryOptions.getEventLoopGroup() == elg);
+            assertTrue(retryOptions.getBackoffScaleFactorMS() == scaleFactorMS);
+            assertTrue(retryOptions.getJitterMode() == jitterMode);
+            assertTrue(retryOptions.getMaxRetries() == maxRetries);
 
             copyExponentialBackoffRetryOptionsToNative(retryOptions, new CopyToNativeCallback() {
                 @Override
                 public void onCopiedToNative(long nativeHandle) {
-                    Assume.assumeTrue(retryOptions.compareToNative(nativeHandle));
+                    assertTrue(retryOptions.compareToNative(nativeHandle));
+                    copiedToNativeTriggered[0] = true;
                 }
             });
+
+            assertTrue(copiedToNativeTriggered[0]);
         }
     }
 
@@ -48,7 +53,7 @@ public class RetryOptionsTest extends CrtTestFixture {
 
         try {
             copyExponentialBackoffRetryOptionsToNative(retryOptions, null);
-        } catch(CrtRuntimeException e) {
+        } catch (CrtRuntimeException e) {
             exceptionCaught = true;
         }
 
@@ -63,38 +68,41 @@ public class RetryOptionsTest extends CrtTestFixture {
         copyExponentialBackoffRetryOptionsToNative(retryOptions, null);
 
         retryOptions = new ExponentialBackoffRetryOptions().withMaxRetries(-1);
-        Assume.assumeTrue( copyExponentialBackoffRetryOptionsExpectError(retryOptions) );
+        assertTrue(copyExponentialBackoffRetryOptionsExpectError(retryOptions));
 
         retryOptions = new ExponentialBackoffRetryOptions().withBackoffScaleFactorMS(-1);
-        Assume.assumeTrue( copyExponentialBackoffRetryOptionsExpectError(retryOptions) );
+        assertTrue(copyExponentialBackoffRetryOptionsExpectError(retryOptions));
 
         retryOptions = new ExponentialBackoffRetryOptions().withBackoffScaleFactorMS(Long.MAX_VALUE);
-        Assume.assumeTrue( copyExponentialBackoffRetryOptionsExpectError(retryOptions) );
+        assertTrue(copyExponentialBackoffRetryOptionsExpectError(retryOptions));
     }
 
     @Test
     public void testStandardRetryOptions() {
-        try(EventLoopGroup elg = new EventLoopGroup(0,1)) {
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
             final ExponentialBackoffRetryOptions backoffOptions = new ExponentialBackoffRetryOptions()
                     .withBackoffScaleFactorMS(123)
-                    .withJitterMode(ExponentialBackoffRetryOptions.JitterMode.Decorrelated)
-                    .withMaxRetries(456);
+                    .withJitterMode(ExponentialBackoffRetryOptions.JitterMode.Decorrelated).withMaxRetries(456);
 
             final long initialBucketCapacity = 100;
 
-            final StandardRetryOptions retryOptions = new StandardRetryOptions()
-                    .withBackoffRetryOptions(backoffOptions)
+            final StandardRetryOptions retryOptions = new StandardRetryOptions().withBackoffRetryOptions(backoffOptions)
                     .withInitialBucketCapacity(initialBucketCapacity);
 
-            Assume.assumeTrue(retryOptions.getBackoffRetryOptions() == backoffOptions);
-            Assume.assumeTrue(retryOptions.getInitialBucketCapacity() == initialBucketCapacity);
+            final boolean copiedToNativeTriggered[] = new boolean[1];
+
+            assertTrue(retryOptions.getBackoffRetryOptions() == backoffOptions);
+            assertTrue(retryOptions.getInitialBucketCapacity() == initialBucketCapacity);
 
             copyStandardRetryOptionsToNative(retryOptions, new CopyToNativeCallback() {
                 @Override
                 public void onCopiedToNative(long nativeHandle) {
-                    Assume.assumeTrue(retryOptions.compareToNative(nativeHandle));
+                    assertTrue(retryOptions.compareToNative(nativeHandle));
+                    copiedToNativeTriggered[0] = true;
                 }
             });
+
+            assertTrue(copiedToNativeTriggered[0]);
         }
     }
 
@@ -103,7 +111,7 @@ public class RetryOptionsTest extends CrtTestFixture {
 
         try {
             copyStandardRetryOptionsToNative(retryOptions, null);
-        } catch(CrtRuntimeException e) {
+        } catch (CrtRuntimeException e) {
             exceptionCaught = true;
         }
 
@@ -118,33 +126,27 @@ public class RetryOptionsTest extends CrtTestFixture {
         copyStandardRetryOptionsToNative(retryOptions, null);
 
         retryOptions = new StandardRetryOptions().withInitialBucketCapacity(-1);
-        Assume.assumeTrue( copyStandardRetryOptionsToNativeExpectError(retryOptions) );
+        assertTrue(copyStandardRetryOptionsToNativeExpectError(retryOptions));
     }
 
     @Test
     public void testNativeRetryFunctions() {
-        Log.initLoggingToStdout(Log.LogLevel.Info);
-
         nativeTestCopyToNative();
-
-        Assume.assumeTrue(true);
     }
 
     @Test
     public void testNativeOptionsCompare() {
-        Log.initLoggingToStdout(Log.LogLevel.Info);
-
         nativeTestOptionsCompare();
-
-        Assume.assumeTrue(true);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void copyExponentialBackoffRetryOptionsToNative(ExponentialBackoffRetryOptions retryOptions, CopyToNativeCallback callback);
+    private static native void copyExponentialBackoffRetryOptionsToNative(ExponentialBackoffRetryOptions retryOptions,
+            CopyToNativeCallback callback);
 
-    private static native void copyStandardRetryOptionsToNative(StandardRetryOptions retryOptions, CopyToNativeCallback callback);
+    private static native void copyStandardRetryOptionsToNative(StandardRetryOptions retryOptions,
+            CopyToNativeCallback callback);
 
     private static native void nativeTestCopyToNative();
 

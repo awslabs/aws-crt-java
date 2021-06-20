@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.amazonaws.s3.model.PutObjectOutput;
+import org.junit.runner.Request;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
@@ -221,110 +222,190 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         public int ExpectedPartCount;
         public int PartCount;
         public CompletableFuture<T> ResultFuture;
+
+        public CancelTestData(int ExpectedPartCount) {
+            this.ExpectedPartCount = ExpectedPartCount;
+        }
     }
 
-    @Test
-    public void testGetObjectCancel() {
+    private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput>
+    {
+        private CancelTestData<GetObjectOutput> cancelTestData;
+
+        public CancelResponseDataConsumer(CancelTestData<GetObjectOutput> cancelTestData) {
+            this.cancelTestData = cancelTestData;
+        }
+
+        @Override
+        public void onResponse(GetObjectOutput response) {
+            assertNotNull(response);
+        }
+
+        @Override
+        public void onResponseData(ByteBuffer bodyBytesIn) {
+            ++cancelTestData.PartCount;
+        }
+
+        @Override
+        public void onFinished() {
+        }
+
+        @Override
+        public void onException(final CrtRuntimeException e) {
+        }
+    }
+
+    public void testGetObjectCancelHelper(final CancelTestData<GetObjectOutput> testData, CancelResponseDataConsumer dataConsumer) {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+             final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             Exception exceptionResult = null;
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
 
-            final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>();
-            testData.ExpectedPartCount = 1;
-
             try {
                 testData.ResultFuture =
-                         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
-                                                new ResponseDataConsumer<GetObjectOutput>() {
-
-                            @Override
-                            public void onResponse(GetObjectOutput response) {
-                                assertNotNull(response);
-                            }
-
-                            @Override
-                            public void onResponseData(ByteBuffer bodyBytesIn) {
-                                ++testData.PartCount;
-
-                                if (testData.PartCount == testData.ExpectedPartCount) {
-                                    testData.ResultFuture.cancel(true);
-                                }
-                            }
-
-                            @Override
-                            public void onFinished() {
-                            }
-
-                            @Override
-                            public void onException(final CrtRuntimeException e) {
-                            }
-                        });
+                        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
                 testData.ResultFuture.join();
             } catch (Exception e) {
                 exceptionResult = e;
             }
 
-            Assume.assumeTrue(exceptionResult != null);
-            Assume.assumeTrue(exceptionResult instanceof CancellationException);
-            Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
+            assertTrue(exceptionResult != null);
+            assertTrue(exceptionResult instanceof CancellationException);
+            assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }
     }
 
     @Test
-    public void testPutObjectCancel() {
+    public void testGetObjectCancelHeaders() {
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
+
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
+
+                testData.ResultFuture.cancel(true);
+            }
+        });
+    }
+
+    @Test
+    public void testGetObjectCancelDuringParts() {
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
+
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseData(ByteBuffer bodyBytesIn) {
+                super.onResponseData(bodyBytesIn);
+
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
+            }
+        });
+    }
+
+    private class CancelRequestDataSupplier implements RequestDataSupplier {
+
+        private CancelTestData<PutObjectOutput> cancelTestData;
+        private long lengthWritten;
+        private long partSize;
+        private int numParts;
+
+        public CancelRequestDataSupplier(int numParts, CancelTestData<PutObjectOutput> cancelTestData) {
+            this.numParts = numParts;
+            this.cancelTestData = cancelTestData;
+        }
+
+        public void setPartSize(long partSize) {
+            this.partSize = partSize;
+        }
+
+        public long contentLength() {
+            return this.partSize*this.numParts;
+        }
+
+        @Override
+        public boolean getRequestBytes(ByteBuffer buffer) {
+            while (buffer.hasRemaining()) {
+                buffer.put((byte) 42);
+                ++this.lengthWritten;
+            }
+
+            ++cancelTestData.PartCount;
+
+            return this.lengthWritten == this.contentLength();
+        }
+    }
+
+    public void testPutObjectCancelHelper(final CancelTestData<PutObjectOutput> testData, final CancelRequestDataSupplier dataSupplier) {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+             final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            Exception exceptionResult = null;
+            CancellationException exceptionResult = null;
 
             final long partSize5MB = 5l * 1024l * 1024l;
-
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
                     100.);
-            final long contentLength = partSize5MB * 10;
-            final long lengthWritten[] = { 0 };
 
-            final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>();
-            testData.ExpectedPartCount = 2;
+            dataSupplier.setPartSize(partSize5MB);
 
             try {
                 testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder()
-                        .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(), buffer -> {
-                            while (buffer.hasRemaining()) {
-                                buffer.put((byte) 42);
-                                ++lengthWritten[0];
-                            }
-
-                            ++testData.PartCount;
-
-                            if (testData.PartCount == testData.ExpectedPartCount) {
-                                testData.ResultFuture.cancel(true);
-                            }
-
-                            return lengthWritten[0] == contentLength;
-                        });
+                        .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(dataSupplier.contentLength()).build(), dataSupplier);
 
                 testData.ResultFuture.join();
-            } catch (Exception e) {
+            } catch (CancellationException e) {
                 exceptionResult = e;
             }
 
-            Assume.assumeTrue(exceptionResult != null);
-            Assume.assumeTrue(exceptionResult instanceof CancellationException);
-            Assume.assumeTrue(testData.PartCount == testData.ExpectedPartCount);
+            assertTrue(exceptionResult != null);
+            assertTrue(exceptionResult instanceof CancellationException);
+            assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }
+    }
+
+    @Test
+    public void testPutObjectCancelParts() {
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(10, testData) {
+            @Override
+            public boolean getRequestBytes(ByteBuffer buffer) {
+                boolean result = super.getRequestBytes(buffer);
+
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
+
+                return result;
+            }
+        });
+    }
+
+    @Test
+    public void testPutObjectHeaders() {
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(2, testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
+
+                testData.ResultFuture.cancel(true);
+            }
+        });
     }
 
     private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {

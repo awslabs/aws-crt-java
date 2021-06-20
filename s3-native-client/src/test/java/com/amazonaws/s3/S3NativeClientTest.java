@@ -12,7 +12,6 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.s3.model.PutObjectOutput;
 import org.junit.runner.Request;
 import org.mockito.ArgumentCaptor;
 
@@ -25,6 +24,7 @@ import java.util.concurrent.CompletionException;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
+import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
 
@@ -217,8 +217,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    private class CancelTestData<T>
-    {
+    private class CancelTestData<T> {
         public int ExpectedPartCount;
         public int PartCount;
         public CompletableFuture<T> ResultFuture;
@@ -228,8 +227,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput>
-    {
+    private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput> {
         private CancelTestData<GetObjectOutput> cancelTestData;
 
         public CancelResponseDataConsumer(CancelTestData<GetObjectOutput> cancelTestData) {
@@ -255,13 +253,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    public void testGetObjectCancelHelper(final CancelTestData<GetObjectOutput> testData, CancelResponseDataConsumer dataConsumer) {
+    public void testGetObjectCancelHelper(final CancelTestData<GetObjectOutput> testData,
+            CancelResponseDataConsumer dataConsumer) {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-             final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             Exception exceptionResult = null;
 
@@ -269,8 +268,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     100.);
 
             try {
-                testData.ResultFuture =
-                        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
+                testData.ResultFuture = nativeClient
+                        .getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
                 testData.ResultFuture.join();
             } catch (Exception e) {
                 exceptionResult = e;
@@ -329,7 +328,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
 
         public long contentLength() {
-            return this.partSize*this.numParts;
+            return this.partSize * this.numParts;
         }
 
         @Override
@@ -345,13 +344,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    public void testPutObjectCancelHelper(final CancelTestData<PutObjectOutput> testData, final CancelRequestDataSupplier dataSupplier) {
+    public void testPutObjectCancelHelper(final CancelTestData<PutObjectOutput> testData,
+            final CancelRequestDataSupplier dataSupplier) {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-             final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             CancellationException exceptionResult = null;
 
@@ -362,8 +362,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             dataSupplier.setPartSize(partSize5MB);
 
             try {
-                testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder()
-                        .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(dataSupplier.contentLength()).build(), dataSupplier);
+                testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
+                        .key(PUT_OBJECT_KEY).contentLength(dataSupplier.contentLength()).build(), dataSupplier);
 
                 testData.ResultFuture.join();
             } catch (CancellationException e) {

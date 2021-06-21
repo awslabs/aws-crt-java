@@ -119,8 +119,6 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        Log.initLoggingToStdout(Log.LogLevel.Error);
-
         try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
 
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)

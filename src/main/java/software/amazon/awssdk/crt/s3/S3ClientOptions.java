@@ -117,6 +117,7 @@ public class S3ClientOptions {
     public Boolean getComputeContentMd5() {
         return computeContentMd5;
     }
+<<<<<<< HEAD
 
     public S3ClientOptions withStandardRetryOptions(StandardRetryOptions standardRetryOptions) {
         this.standardRetryOptions = standardRetryOptions;
@@ -126,4 +127,6 @@ public class S3ClientOptions {
     public StandardRetryOptions getStandardRetryOptions() {
         return this.standardRetryOptions;
     }
+=======
+>>>>>>> 89340d5 (support configure of md5)
 }

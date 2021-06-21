@@ -199,20 +199,16 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         HttpClientConnection firstConnection = null;
         CompletableFuture<HttpClientConnection> firstAcquisition;
         CompletableFuture<HttpClientConnection> secondAcquisition;
-        CompletableFuture<HttpClientConnection> thirdAcquisition;
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
 
             firstAcquisition = connectionPool.acquireConnection();
             secondAcquisition = connectionPool.acquireConnection();
-            thirdAcquisition = connectionPool.acquireConnection();
 
             firstConnection = firstAcquisition.get();
         }
 
         firstConnection.close();
-
-        secondAcquisition.get().close();
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();

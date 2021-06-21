@@ -139,10 +139,16 @@ extern struct java_client_bootstrap_properties client_bootstrap_properties;
 
 /* HttpClientConnectionManager */
 struct java_http_client_connection_manager_properties {
-    jmethodID onConnectionAcquired;
     jmethodID onShutdownComplete;
 };
 extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
+
+/* HttpClientConnection */
+struct java_http_client_connection_properties {
+    jclass http_client_connection_class;
+    jmethodID on_connection_acquired_method_id;
+};
+extern struct java_http_client_connection_properties http_client_connection_properties;
 
 /* HttpStream */
 struct java_http_stream_properties {

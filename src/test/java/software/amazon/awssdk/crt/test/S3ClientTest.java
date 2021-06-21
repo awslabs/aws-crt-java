@@ -518,7 +518,7 @@ public class S3ClientTest extends CrtTestFixture {
                         TransferStats stats = new TransferStats();
 
                         @Override
-                        public void onFinished(int errorCode) {
+                        public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                             // release the slot first
                             concurrentSlots.release();
 

@@ -412,8 +412,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testRetryOptions() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 

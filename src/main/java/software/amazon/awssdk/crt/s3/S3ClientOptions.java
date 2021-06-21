@@ -14,9 +14,19 @@ public class S3ClientOptions {
     private long partSize;
     private double throughputTargetGbps;
     private int maxConnections;
+    /**
+     * For multi-part upload, content-md5 will be calculated if the
+     * computeContentMd5 is set to true.
+     *
+     * For single-part upload, keep the content-md5 in the initial request
+     * unchanged.
+     *
+     * Default is false;
+     */
+    private Boolean computeContentMd5;
 
     public S3ClientOptions() {
-
+        this.computeContentMd5 = false;
     }
 
     public S3ClientOptions withRegion(String region) {
@@ -89,5 +99,14 @@ public class S3ClientOptions {
 
     public int getMaxConnections() {
         return maxConnections;
+    }
+
+    public S3ClientOptions withComputeContentMd5(Boolean computeContentMd5) {
+        this.computeContentMd5 = computeContentMd5;
+        return this;
+    }
+
+    public Boolean getComputeContentMd5() {
+        return computeContentMd5;
     }
 }

@@ -48,7 +48,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_credentials_provider,
     jlong part_size,
     jdouble throughput_target_gbps,
-    int max_connections) {
+    int max_connections,
+    jboolean compute_content_md5) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -102,6 +103,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .throughput_target_gbps = throughput_target_gbps,
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
+        .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
     };
     client_config.signing_config = &signing_config;
 

@@ -508,17 +508,6 @@ static void s_cache_s3_client_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(s3_client_properties.onShutdownComplete);
 }
 
-struct java_s3_client_native_callbacks_native_adapter_properties s3_client_native_callbacks_native_adapter_properties;
-
-static void s_cache_s3_client_native_callbacks_native_adapter_properties(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ClientNativeCallbacksNativeAdapter");
-    AWS_FATAL_ASSERT(cls);
-
-    s3_client_native_callbacks_native_adapter_properties.onSetupStandardRetryOptions =
-        (*env)->GetMethodID(env, cls, "onSetupStandardRetryOptions", "(J)V");
-    AWS_FATAL_ASSERT(s3_client_native_callbacks_native_adapter_properties.onSetupStandardRetryOptions);
-}
-
 struct java_s3_meta_request_properties s3_meta_request_properties;
 
 static void s_cache_s3_meta_request_properties(JNIEnv *env) {
@@ -722,7 +711,6 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_stream_message_flush_properties(env);
     s_cache_cpu_info_properties(env);
     s_cache_s3_client_properties(env);
-    s_cache_s3_client_native_callbacks_native_adapter_properties(env);
     s_cache_s3_meta_request_properties(env);
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_completable_future(env);

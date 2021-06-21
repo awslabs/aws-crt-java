@@ -12,7 +12,6 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.junit.runner.Request;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
@@ -34,12 +33,10 @@ import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
-import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.S3ClientNativeCallbacks;
 import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
@@ -422,14 +419,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             try (final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
                     .withCredentialsProvider(provider).withRegion(REGION).withPartSize(64_000_000l)
-                    .withThroughputTargetGbps(100.).withMaxConnections(0).withStandardRetryOptions(standardRetryOptions)
-                    .withNativeCallbacks(new S3ClientNativeCallbacks() {
-
-                        @Override
-                        public void onSetupStandardRetryOptions(long standardRetryOptionsNativeHandle) {
-                            assertTrue(standardRetryOptions.compareToNative(standardRetryOptionsNativeHandle));
-                        }
-                    })); final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
+                    .withThroughputTargetGbps(100.).withStandardRetryOptions(standardRetryOptions));
+                    final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
 
             }
         }

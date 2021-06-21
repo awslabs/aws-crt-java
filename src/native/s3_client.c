@@ -52,8 +52,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong part_size,
     jdouble throughput_target_gbps,
     int max_connections,
-    jobject jni_standard_retry_options,
-    jobject jni_native_callbacks_adapter) {
+    jobject jni_standard_retry_options) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -82,21 +81,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
         if (retry_options.backoff_retry_options.el_group == NULL) {
             retry_options.backoff_retry_options.el_group = client_bootstrap->event_loop_group;
-        }
-
-        if (jni_native_callbacks_adapter != NULL) {
-            (*env)->CallVoidMethod(
-                env,
-                jni_native_callbacks_adapter,
-                s3_client_native_callbacks_native_adapter_properties.onSetupStandardRetryOptions,
-                (jlong)&retry_options);
-
-            if (aws_jni_check_and_clear_exception(env)) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_S3_CLIENT,
-                    "Could not create s3 client: onSetupStandardRetryOptions callback threw exception");
-                return (jlong)NULL;
-            }
         }
 
         retry_strategy = aws_retry_strategy_new_standard(allocator, &retry_options);

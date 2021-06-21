@@ -227,13 +227,6 @@ struct java_s3_client_properties {
 };
 extern struct java_s3_client_properties s3_client_properties;
 
-/* S3ClientNativeCallbacksNativeAdapter */
-struct java_s3_client_native_callbacks_native_adapter_properties {
-    jmethodID onSetupStandardRetryOptions;
-};
-extern struct java_s3_client_native_callbacks_native_adapter_properties
-    s3_client_native_callbacks_native_adapter_properties;
-
 /* S3Client */
 struct java_s3_meta_request_properties {
     jmethodID onShutdownComplete;

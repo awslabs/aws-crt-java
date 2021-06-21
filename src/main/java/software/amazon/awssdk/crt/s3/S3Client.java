@@ -27,8 +27,7 @@ public class S3Client extends CrtResource {
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
                 options.getThroughputTargetGbps(), options.getMaxConnections(),
-                options.getStandardRetryOptions(),
-                options.getNativeCallbacks() != null ? new S3ClientNativeCallbacksNativeAdapter(options.getNativeCallbacks()) : null));
+                options.getStandardRetryOptions()));
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
@@ -99,7 +98,7 @@ public class S3Client extends CrtResource {
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
             long tlsContext, long signingConfig, long partSize, double throughputTargetGbps, int maxConnections,
-            StandardRetryOptions standardRetryOptions, S3ClientNativeCallbacksNativeAdapter nativeCallbacksAdapter) throws CrtRuntimeException;
+            StandardRetryOptions standardRetryOptions) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 

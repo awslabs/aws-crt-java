@@ -21,7 +21,6 @@ public class S3ClientOptions {
     private double throughputTargetGbps;
     private int maxConnections;
     private StandardRetryOptions standardRetryOptions;
-    private S3ClientNativeCallbacks nativeCallbacks;
 
     public S3ClientOptions() {
 
@@ -106,14 +105,5 @@ public class S3ClientOptions {
 
     public StandardRetryOptions getStandardRetryOptions() {
         return this.standardRetryOptions;
-    }
-
-    public S3ClientOptions withNativeCallbacks(S3ClientNativeCallbacks nativeCallbacks) {
-        this.nativeCallbacks = nativeCallbacks;
-        return this;
-    }
-
-    public S3ClientNativeCallbacks getNativeCallbacks() {
-        return this.nativeCallbacks;
     }
 }

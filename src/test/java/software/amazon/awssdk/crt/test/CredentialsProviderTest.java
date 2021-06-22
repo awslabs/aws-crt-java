@@ -14,6 +14,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
+import org.mockito.internal.matchers.Null;
+
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
@@ -113,7 +115,6 @@ public class CredentialsProviderTest extends CrtTestFixture {
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
         builder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
         builder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
-        builder.withSessionToken(SESSION_TOKEN.getBytes());
 
         try (StaticCredentialsProvider provider = builder.build()) {
 
@@ -126,7 +127,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 Credentials credentials = future.get();
                 assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
                 assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
-                assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+                assertTrue(Arrays.equals(credentials.getSessionToken(), null));
             } catch (Exception ex) {
                 fail(ex.getMessage());
             }
@@ -156,20 +157,35 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
+    public void testDelegateWithoutToken() {
+        DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
+        DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
+            @Override
+            public Credentials getCredentials() {
+                return new Credentials(ACCESS_KEY_ID.getBytes(), SECRET_ACCESS_KEY.getBytes(), null);
+            }
+        };
+        builder.withHandler(credentialsHandler);
+        try (DelegateCredentialsProvider provider = builder.build()) {
+            CompletableFuture<Credentials> future = provider.getCredentials();
+            Credentials credentials = future.get();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), null));
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
     public void testCreateDestroyProfile_ValidCreds() throws IOException {
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
-        Files.write(credsPath, Arrays.asList(
-                "[default]",
-                "aws_access_key_id=" + ACCESS_KEY_ID,
-                "aws_secret_access_key=" + SECRET_ACCESS_KEY,
-                "aws_session_token=" + SESSION_TOKEN
-        ));
+        Files.write(credsPath, Arrays.asList("[default]", "aws_access_key_id=" + ACCESS_KEY_ID,
+                "aws_secret_access_key=" + SECRET_ACCESS_KEY, "aws_session_token=" + SESSION_TOKEN));
 
-        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
-                .builder()
-                .withConfigFileNameOverride(confPath.toString())
-                .withCredentialsFileNameOverride(credsPath.toString());
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
+                .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
         try (ProfileCredentialsProvider provider = builder.build()) {
             assertNotNull(provider);
@@ -190,10 +206,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
 
-        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
-                .builder()
-                .withConfigFileNameOverride(confPath.toString())
-                .withCredentialsFileNameOverride(credsPath.toString());
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
+                .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
         try {
             builder.build();
@@ -212,10 +226,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
         Files.write(credsPath, Arrays.asList("[default]")); // Contains a section header but no actual credentials
 
-        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider
-                .builder()
-                .withConfigFileNameOverride(confPath.toString())
-                .withCredentialsFileNameOverride(credsPath.toString());
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
+                .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
         try (ProfileCredentialsProvider provider = builder.build()) {
             assertNotNull(provider);

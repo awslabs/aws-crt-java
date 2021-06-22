@@ -379,7 +379,11 @@ static int s_credentials_provider_delegate_get_credentials(
 
     struct aws_byte_cursor access_key_id = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_access_key_id);
     struct aws_byte_cursor secret_access_key = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_secret_access_key);
-    struct aws_byte_cursor session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_session_token);
+    struct aws_byte_cursor session_token;
+    AWS_ZERO_STRUCT(session_token);
+    if (java_session_token != NULL) {
+        session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_session_token);
+    }
     struct aws_credentials *native_credentials =
         aws_credentials_new(allocator, access_key_id, secret_access_key, session_token, UINT64_MAX);
     if (!native_credentials) {
@@ -394,7 +398,9 @@ static int s_credentials_provider_delegate_get_credentials(
 done:
     aws_jni_byte_cursor_from_jbyteArray_release(env, java_access_key_id, access_key_id);
     aws_jni_byte_cursor_from_jbyteArray_release(env, java_secret_access_key, secret_access_key);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
+    if (java_session_token != NULL) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
+    }
 call_failed:
     (*env)->DeleteLocalRef(env, java_credentials);
     return return_value;

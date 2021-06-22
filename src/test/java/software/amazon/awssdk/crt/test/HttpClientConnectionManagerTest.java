@@ -209,8 +209,5 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
 
         firstConnection.close();
-
-        CrtResource.logNativeResources();
-        CrtResource.waitForNoResources();
     }
 }

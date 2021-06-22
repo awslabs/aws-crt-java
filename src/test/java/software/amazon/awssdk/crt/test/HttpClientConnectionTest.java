@@ -86,9 +86,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
             resp.shutdownComplete.get();
         }
-
-        CrtResource.logNativeResources();
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -133,8 +130,5 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
         }
-
-        CrtResource.logNativeResources();
-        CrtResource.waitForNoResources();
     }
 }

@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import static org.junit.Assert.assertNotNull;
@@ -6,16 +11,20 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import org.junit.runner.Request;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
+import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
 
@@ -40,6 +49,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "file.download");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
+    private static final int DEFAULT_NUM_THREADS = 3;
+    private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
 
     @BeforeClass
     public static void haveAwsCredentials() {
@@ -50,8 +61,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testGetObject() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
@@ -129,8 +140,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testPutObject() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
@@ -144,7 +155,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                             buffer.put((byte) 42);
                             ++lengthWritten[0];
                         }
-                        buffer.flip();
+
                         return lengthWritten[0] == contentLength;
                     }).join();
 
@@ -154,8 +165,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @Test
     public void testConcurrentRequests() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
@@ -195,7 +206,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 buffer.put((byte) 42);
                                 ++lengthWritten[0];
                             }
-                            buffer.flip();
+
                             return lengthWritten[0] == contentLength;
                         }));
             }
@@ -204,6 +215,197 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
         }
+    }
+
+    private class CancelTestData<T> {
+        public int ExpectedPartCount;
+        public int PartCount;
+        public CompletableFuture<T> ResultFuture;
+
+        public CancelTestData(int ExpectedPartCount) {
+            this.ExpectedPartCount = ExpectedPartCount;
+        }
+    }
+
+    private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput> {
+        private CancelTestData<GetObjectOutput> cancelTestData;
+
+        public CancelResponseDataConsumer(CancelTestData<GetObjectOutput> cancelTestData) {
+            this.cancelTestData = cancelTestData;
+        }
+
+        @Override
+        public void onResponse(GetObjectOutput response) {
+            assertNotNull(response);
+        }
+
+        @Override
+        public void onResponseData(ByteBuffer bodyBytesIn) {
+            ++cancelTestData.PartCount;
+        }
+
+        @Override
+        public void onFinished() {
+        }
+
+        @Override
+        public void onException(final CrtRuntimeException e) {
+        }
+    }
+
+    public void testGetObjectCancelHelper(CancelTestData<GetObjectOutput> testData,
+            CancelResponseDataConsumer dataConsumer) {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+
+            Exception exceptionResult = null;
+
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
+
+            try {
+                testData.ResultFuture = nativeClient
+                        .getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
+                testData.ResultFuture.join();
+            } catch (Exception e) {
+                exceptionResult = e;
+            }
+
+            assertTrue(exceptionResult != null);
+            assertTrue(exceptionResult instanceof CancellationException);
+            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+        }
+    }
+
+    @Test
+    public void testGetObjectCancelHeaders() {
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
+
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
+
+                testData.ResultFuture.cancel(true);
+            }
+        });
+    }
+
+    @Test
+    public void testGetObjectCancelDuringParts() {
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
+
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseData(ByteBuffer bodyBytesIn) {
+                super.onResponseData(bodyBytesIn);
+
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
+            }
+        });
+    }
+
+    private class CancelRequestDataSupplier implements RequestDataSupplier {
+
+        private CancelTestData<PutObjectOutput> cancelTestData;
+        private long lengthWritten;
+        private long partSize;
+        private int numParts;
+
+        public CancelRequestDataSupplier(int numParts, CancelTestData<PutObjectOutput> cancelTestData) {
+            this.numParts = numParts;
+            this.cancelTestData = cancelTestData;
+        }
+
+        public void setPartSize(long partSize) {
+            this.partSize = partSize;
+        }
+
+        public long contentLength() {
+            return this.partSize * this.numParts;
+        }
+
+        @Override
+        public boolean getRequestBytes(ByteBuffer buffer) {
+            while (buffer.hasRemaining()) {
+                buffer.put((byte) 42);
+                ++this.lengthWritten;
+            }
+
+            ++cancelTestData.PartCount;
+
+            return this.lengthWritten == this.contentLength();
+        }
+    }
+
+    public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
+            CancelRequestDataSupplier dataSupplier) {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+
+            CancellationException exceptionResult = null;
+
+            final long partSize5MB = 5l * 1024l * 1024l;
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
+                    100.);
+
+            dataSupplier.setPartSize(partSize5MB);
+
+            try {
+                testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
+                        .key(PUT_OBJECT_KEY).contentLength(dataSupplier.contentLength()).build(), dataSupplier);
+
+                testData.ResultFuture.join();
+            } catch (CancellationException e) {
+                exceptionResult = e;
+            }
+
+            assertTrue(exceptionResult != null);
+            assertTrue(exceptionResult instanceof CancellationException);
+            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+        }
+    }
+
+    @Test
+    public void testPutObjectCancelParts() {
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(10, testData) {
+            @Override
+            public boolean getRequestBytes(ByteBuffer buffer) {
+                boolean result = super.getRequestBytes(buffer);
+
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
+
+                return result;
+            }
+        });
+    }
+
+    @Test
+    public void testPutObjectCancelHeaders() {
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(2, testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
+
+                testData.ResultFuture.cancel(true);
+            }
+        });
     }
 
     private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {

@@ -392,11 +392,28 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
-        aws_jni_throw_runtime_exception(env, "S3Client.s3_client_clean_up: Invalid/null client");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestDestroy: Invalid/null meta request");
         return;
     }
 
     aws_s3_meta_request_release(meta_request);
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestCancel(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request) {
+    (void)jni_class;
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestCancel: Invalid/null meta request");
+        return;
+    }
+
+    aws_s3_meta_request_cancel(meta_request);
 }
 
 #if UINTPTR_MAX == 0xffffffff

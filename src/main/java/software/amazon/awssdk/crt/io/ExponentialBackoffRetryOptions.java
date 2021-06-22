@@ -68,13 +68,4 @@ public class ExponentialBackoffRetryOptions {
     public JitterMode getJitterMode() {
         return this.jitterMode;
     }
-
-    public boolean compareToNative(long exponentialBackoffRetryOptionsNativeHandle) {
-        return ExponentialBackoffRetryOptions.compareToNative(this, exponentialBackoffRetryOptionsNativeHandle);
-    }
-
-    /*******************************************************************************
-     * native methods
-     ******************************************************************************/
-    private static native boolean compareToNative(ExponentialBackoffRetryOptions exponentialBackoffRetryOptions, long exponentialBackoffRetryOptionsNativeHandle);
 }

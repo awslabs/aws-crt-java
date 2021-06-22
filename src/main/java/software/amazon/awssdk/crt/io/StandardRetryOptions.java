@@ -27,13 +27,4 @@ public class StandardRetryOptions {
     public long getInitialBucketCapacity() {
         return this.initialBucketCapacity;
     }
-
-    public boolean compareToNative(long standardRetryOptionsNativeHandle) {
-        return StandardRetryOptions.compareToNative(this, standardRetryOptionsNativeHandle);
-    }
-
-    /*******************************************************************************
-     * native methods
-     ******************************************************************************/
-    private static native boolean compareToNative(StandardRetryOptions expectedStandardRetryOptions, long retryOptionsNativeHandle);
 }

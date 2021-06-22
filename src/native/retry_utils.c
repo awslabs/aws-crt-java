@@ -110,59 +110,6 @@ int aws_standard_retry_options_from_java(
     return AWS_OP_SUCCESS;
 }
 
-bool aws_exponential_backoff_retry_options_equals(
-    const struct aws_exponential_backoff_retry_options *options,
-    const struct aws_exponential_backoff_retry_options *expected_options) {
-
-    return options->el_group == expected_options->el_group && options->max_retries == expected_options->max_retries &&
-           options->backoff_scale_factor_ms == expected_options->backoff_scale_factor_ms &&
-           options->jitter_mode == expected_options->jitter_mode &&
-           options->generate_random == expected_options->generate_random;
-}
-
-bool aws_standard_retry_options_equals(
-    const struct aws_standard_retry_options *options,
-    const struct aws_standard_retry_options *expected_options) {
-
-    return options->initial_bucket_capacity == expected_options->initial_bucket_capacity &&
-           aws_exponential_backoff_retry_options_equals(
-               &options->backoff_retry_options, &expected_options->backoff_retry_options);
-}
-
-JNIEXPORT jboolean Java_software_amazon_awssdk_crt_io_ExponentialBackoffRetryOptions_compareToNative(
-    JNIEnv *env,
-    jclass jni_class,
-    jobject jni_expected_options,
-    jlong jni_options_native_handle) {
-    (void)jni_class;
-
-    struct aws_exponential_backoff_retry_options expected_options;
-
-    if (aws_exponential_backoff_retry_options_from_java(env, jni_expected_options, &expected_options)) {
-        return false;
-    }
-
-    return aws_exponential_backoff_retry_options_equals(
-        (struct aws_exponential_backoff_retry_options *)jni_options_native_handle, &expected_options);
-}
-
-JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_io_StandardRetryOptions_compareToNative(
-    JNIEnv *env,
-    jclass jni_class,
-    jobject jni_expected_options,
-    jlong jni_options_native_handle) {
-    (void)jni_class;
-
-    struct aws_standard_retry_options expected_options;
-
-    if (aws_standard_retry_options_from_java(env, jni_expected_options, &expected_options)) {
-        return false;
-    }
-
-    return aws_standard_retry_options_equals(
-        (struct aws_standard_retry_options *)jni_options_native_handle, &expected_options);
-}
-
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

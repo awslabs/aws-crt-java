@@ -52,6 +52,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @BeforeClass
     public static void haveAwsCredentials() {
+        if (!areAwsCredentialsAvailable()) {
+            System.out.println(System.getenv("AWS_ACCESS_KEY_ID").equals(""));
+        }
         Assume.assumeTrue(areAwsCredentialsAvailable());
     }
 

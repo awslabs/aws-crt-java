@@ -870,6 +870,27 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     }
 }
 
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetReconnectTimeout(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_connection,
+        jlong jni_min_timeout,
+        jlong jni_max_timeout) {
+    (void)jni_class;
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_reconnect_timeout: Invalid connection");
+        return;
+    }
+
+    if (aws_mqtt_client_connection_set_reconnect_timeout(
+            connection->client_connection, jni_min_timeout, jni_max_timeout)) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.mqtt_reconnect_timeout: Failed to set reconnect timeout");
+    }
+}
+
 ///////
 static void s_ws_handshake_destroy(struct mqtt_jni_ws_handshake *ws_handshake) {
     if (!ws_handshake) {

@@ -77,6 +77,10 @@ public class MqttClientConnection extends CrtResource {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
 
+            if(config.getMinReconnectTimeoutSecs() != 0L) {
+                mqttClientConnectionSetReconnectTimeout(getNativeHandle(), config.getMinReconnectTimeoutSecs(), config.getMaxReconnectTimeoutSecs());
+            }
+
             MqttMessage message = config.getWillMessage();
             if (message != null) {
                 mqttClientConnectionSetWill(getNativeHandle(), message.getTopic(), message.getQos().getValue(),
@@ -359,6 +363,9 @@ public class MqttClientConnection extends CrtResource {
             byte[] payload) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetLogin(long connection, String username, String password)
+            throws CrtRuntimeException;
+
+    private static native void mqttClientConnectionSetReconnectTimeout(long connection, long minTimeout, long maxTimeout)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionUseWebsockets(long connection) throws CrtRuntimeException;

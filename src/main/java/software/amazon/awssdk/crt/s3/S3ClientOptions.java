@@ -1,7 +1,13 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 public class S3ClientOptions {
@@ -24,6 +30,7 @@ public class S3ClientOptions {
      * Default is false;
      */
     private Boolean computeContentMd5;
+    private StandardRetryOptions standardRetryOptions;
 
     public S3ClientOptions() {
         this.computeContentMd5 = false;
@@ -108,5 +115,14 @@ public class S3ClientOptions {
 
     public Boolean getComputeContentMd5() {
         return computeContentMd5;
+    }
+
+    public S3ClientOptions withStandardRetryOptions(StandardRetryOptions standardRetryOptions) {
+        this.standardRetryOptions = standardRetryOptions;
+        return this;
+    }
+
+    public StandardRetryOptions getStandardRetryOptions() {
+        return this.standardRetryOptions;
     }
 }

@@ -47,7 +47,7 @@ import software.amazon.awssdk.crt.s3.S3Client;
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket-us-east-1");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-east-1");
-    private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "file.download");
+    private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "0.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
@@ -89,6 +89,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         public void onException(final CrtRuntimeException e) {
                         }
                     }).join();
+        } catch (CompletionException e) {
+            System.out.print(e);
         }
     }
 

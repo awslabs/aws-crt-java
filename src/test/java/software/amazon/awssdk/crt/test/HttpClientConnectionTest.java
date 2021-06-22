@@ -133,5 +133,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
         }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 }

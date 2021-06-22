@@ -86,8 +86,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         public void onException(final CrtRuntimeException e) {
                         }
                     }).join();
-        } catch (CompletionException e) {
-            System.out.print(e);
         }
     }
 

@@ -261,9 +261,9 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Return the minimum reconnect timeout.
+     * Return the maximum reconnect timeout.
      *
-     * @return The timeout to start with
+     * @return The highest allowable wait time between reconnect attempts
      */
     public long getMaxReconnectTimeoutSecs() {
         return maxReconnectTimeoutSecs;

@@ -1,16 +1,11 @@
 package software.amazon.awssdk.crt.test;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.s3.S3Client;
-import software.amazon.awssdk.crt.s3.S3ClientOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequest;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler;
+import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -18,7 +13,6 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 
@@ -40,17 +34,15 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
-import java.util.stream.LongStream;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.OptionalDouble;
+
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions;
 
 public class S3ClientTest extends CrtTestFixture {
 
@@ -65,8 +57,13 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     private S3Client createS3Client(S3ClientOptions options, int numThreads, int cpuGroup) {
-        try (EventLoopGroup elg = new EventLoopGroup(cpuGroup, numThreads);
-                HostResolver hostResolver = new HostResolver(elg);
+        try (EventLoopGroup elg = new EventLoopGroup(numThreads, cpuGroup)) {
+            return createS3Client(options, elg);
+        }
+    }
+
+    private S3Client createS3Client(S3ClientOptions options, EventLoopGroup elg) {
+        try (HostResolver hostResolver = new HostResolver(elg);
                 ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
             Assert.assertNotNull(clientBootstrap);
 
@@ -94,6 +91,43 @@ public class S3ClientTest extends CrtTestFixture {
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
 
+        }
+    }
+
+    /* Test that a client can be created successfully with retry options. */
+    @Test
+    public void testS3ClientCreateDestroyRetryOptions() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
+                    .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(retry_elg));
+
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withStandardRetryOptions(standardRetryOptions), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with retry options that do not
+     * specify an ELG.
+     */
+    @Test
+    public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
+
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
+                    .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withMaxRetries(30));
+
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withStandardRetryOptions(standardRetryOptions), elg)) {
+
+            }
         }
     }
 

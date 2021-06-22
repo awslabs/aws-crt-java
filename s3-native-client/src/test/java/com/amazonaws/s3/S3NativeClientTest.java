@@ -12,7 +12,6 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.junit.runner.Request;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
@@ -34,13 +33,11 @@ import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
-import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
 
@@ -406,6 +403,27 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 testData.ResultFuture.cancel(true);
             }
         });
+    }
+
+    @Test
+    public void testRetryOptions() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
+
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
+                    .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));
+
+            try (final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                    .withCredentialsProvider(provider).withRegion(REGION).withPartSize(64_000_000l)
+                    .withThroughputTargetGbps(100.).withStandardRetryOptions(standardRetryOptions));
+                    final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
+
+            }
+        }
     }
 
     private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {

@@ -127,7 +127,7 @@
                 "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [
-                "mvn -B test -DrerunFailingTestsCount=5 -Dcrt.aws_access_key_id=$AWS_ACCESS_KEY_ID -Dcrt.aws_secret_access_key=$AWS_SECRET_ACCESS_KEY"
+                "mvn -B test -DrerunFailingTestsCount=5"
             ]
         }
     }

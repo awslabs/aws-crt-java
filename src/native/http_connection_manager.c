@@ -81,7 +81,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 void aws_http_proxy_options_jni_init(
     JNIEnv *env,
     struct aws_http_proxy_options *options,
-    int proxy_connection_type,
+    jint proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
     jbyteArray proxy_host,
     uint16_t proxy_port,

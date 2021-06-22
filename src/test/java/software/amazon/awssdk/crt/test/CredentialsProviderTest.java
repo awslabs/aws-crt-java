@@ -115,6 +115,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
         builder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
         builder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
+        builder.withSessionToken(SESSION_TOKEN.getBytes());
 
         try (StaticCredentialsProvider provider = builder.build()) {
 
@@ -127,7 +128,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 Credentials credentials = future.get();
                 assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
                 assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
-                assertTrue(Arrays.equals(credentials.getSessionToken(), null));
+                assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
             } catch (Exception ex) {
                 fail(ex.getMessage());
             }

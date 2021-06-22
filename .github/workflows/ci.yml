@@ -37,8 +37,8 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ matrix.image }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF $DOCKER_IMAGE --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
-          build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
+          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
+          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
@@ -61,8 +61,8 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-x64:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF $DOCKER_IMAGE --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
-          build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
+          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
+          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
@@ -88,8 +88,8 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF $DOCKER_IMAGE --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
-          build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=clang-${{ matrix.version }}
+          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
+          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=clang-${{ matrix.version }}
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
@@ -115,8 +115,8 @@ jobs:
         export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
         docker pull $DOCKER_IMAGE
         docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF $DOCKER_IMAGE --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
-          build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
+          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION \
+          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
     - uses: actions/upload-artifact@v2
       if: failure()
       with:

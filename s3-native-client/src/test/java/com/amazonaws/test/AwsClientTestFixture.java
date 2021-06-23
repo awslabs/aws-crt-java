@@ -16,9 +16,11 @@ import java.nio.charset.StandardCharsets;
  */
 public class AwsClientTestFixture {
     protected static boolean areAwsCredentialsAvailable() {
-        return (System.getProperty("crt.aws_access_key_id") != null
-                && !System.getProperty("crt.aws_access_key_id").equals(""))
-                || (System.getenv("AWS_ACCESS_KEY_ID") != null && !System.getenv("AWS_ACCESS_KEY_ID").equals(""));
+        return false;
+        // return (System.getProperty("crt.aws_access_key_id") != null
+        // && !System.getProperty("crt.aws_access_key_id").equals(""))
+        // || (System.getenv("AWS_ACCESS_KEY_ID") != null &&
+        // !System.getenv("AWS_ACCESS_KEY_ID").equals(""));
     }
 
     /**

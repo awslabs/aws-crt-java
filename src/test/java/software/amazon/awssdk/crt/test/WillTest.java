@@ -8,7 +8,6 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.Rule;
-import org.junit.BeforeClass;
 import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
@@ -24,11 +23,6 @@ public class WillTest extends MqttClientConnectionFixture {
     public Timeout testTimeout = Timeout.seconds(15);
 
     public WillTest() {
-    }
-
-    @BeforeClass
-    public static void haveAwsCredentials() {
-        Assume.assumeTrue(false);
     }
 
     static final String TEST_TOPIC = "/i/am/ded";

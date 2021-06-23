@@ -11,7 +11,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
-import org.junit.BeforeClass;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,11 +18,6 @@ import java.util.concurrent.CompletableFuture;
 public class PublishTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
-
-    @BeforeClass
-    public static void haveAwsCredentials() {
-        Assume.assumeTrue(false);
-    }
 
     public PublishTest() {
     }

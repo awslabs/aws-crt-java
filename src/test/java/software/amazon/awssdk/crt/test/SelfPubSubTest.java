@@ -12,6 +12,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.rules.Timeout;
 
 import software.amazon.awssdk.crt.CrtResource;
@@ -25,6 +26,11 @@ import java.io.UnsupportedEncodingException;
 public class SelfPubSubTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
+
+    @BeforeClass
+    public static void haveAwsCredentials() {
+        Assume.assumeTrue(false);
+    }
 
     public SelfPubSubTest() {
     }
@@ -55,7 +61,8 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
             assertEquals("Single subscription", 1, subsAcked);
 
-            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE, false);
+            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE,
+                    false);
             CompletableFuture<Integer> published = connection.publish(message);
             published.thenApply(unused -> pubsAcked++);
             packetId = published.get();

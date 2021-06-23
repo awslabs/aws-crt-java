@@ -12,6 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import org.junit.BeforeClass;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
@@ -23,6 +24,11 @@ import java.util.function.Consumer;
 public class SubscribeTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
+
+    @BeforeClass
+    public static void haveAwsCredentials() {
+        Assume.assumeTrue(false);
+    }
 
     public SubscribeTest() {
     }
@@ -36,10 +42,12 @@ public class SubscribeTest extends MqttClientConnectionFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
 
-        Consumer<MqttMessage> messageHandler = (message) -> { };
+        Consumer<MqttMessage> messageHandler = (message) -> {
+        };
 
         try {
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
+                    messageHandler);
             subscribed.thenAccept(packetId -> subsAcked++);
             subscribed.get();
 
@@ -53,7 +61,7 @@ public class SubscribeTest extends MqttClientConnectionFixture {
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
-        
+
         disconnect();
         close();
     }

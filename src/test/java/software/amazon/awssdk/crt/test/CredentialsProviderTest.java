@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
@@ -71,6 +72,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyDefaultChain() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
@@ -88,6 +90,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testGetCredentialsDefaultChain() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {

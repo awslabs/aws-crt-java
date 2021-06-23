@@ -88,7 +88,8 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                .withComputeContentMd5(true);
         try (S3Client client = createS3Client(clientOptions)) {
 
         }

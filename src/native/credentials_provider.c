@@ -377,7 +377,7 @@ static int s_credentials_provider_delegate_get_credentials(
     jbyteArray java_session_token =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
 
-    if (java_access_key_id = NULL || java_secret_access_key == NULL) {
+    if (java_access_key_id == NULL || java_secret_access_key == NULL) {
         aws_jni_throw_runtime_exception(
             env, "DelegateCredentialProvider - accessKeyId and secretAccessKey must be non null");
         goto call_failed;

@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches:
-      - '*'
-      - '!main'
+      - "*"
+      - "!main"
 
 env:
   BUILDER_VERSION: v0.8.11
@@ -26,50 +26,50 @@ jobs:
           - manylinux2014-x64
           #- manylinux2014-x86 until we find 32-bit linux binaries we can use
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ matrix.image }}:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
-          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
+          export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ matrix.image }}:${{ env.BUILDER_VERSION }}
+          docker pull $DOCKER_IMAGE
+          docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
+            --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
+            $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   al2:
     runs-on: ubuntu-latest
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-x64:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
-          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
+          export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-al2-x64:${{ env.BUILDER_VERSION }}
+          docker pull $DOCKER_IMAGE
+          docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
+            --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
+            $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   clang-compat:
     runs-on: ubuntu-latest
@@ -77,26 +77,26 @@ jobs:
       matrix:
         version: [3, 6, 8, 9, 10, 11]
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
-          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=clang-${{ matrix.version }}
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
+          export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
+          docker pull $DOCKER_IMAGE
+          docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
+            --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
+            $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=clang-${{ matrix.version }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   gcc-compat:
     runs-on: ubuntu-latest
@@ -104,26 +104,26 @@ jobs:
       matrix:
         version: [4.8, 5, 6, 7, 8]
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
-        export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
-        docker pull $DOCKER_IMAGE
-        docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
-          --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
-          $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
+          export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
+          docker pull $DOCKER_IMAGE
+          docker run --mount type=bind,source=$(pwd),target=/root/${{ env.PACKAGE_NAME }} \
+            --env GITHUB_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY \
+            $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --build-dir=/root/${{ env.PACKAGE_NAME }} --spec=downstream --compiler=gcc-${{ matrix.version }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
@@ -132,23 +132,23 @@ jobs:
       matrix:
         arch: [armv6, armv7, arm64]
     steps:
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-        chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
   windows:
     runs-on: windows-latest
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   windows-vc14:
     runs-on: windows-latest
@@ -156,39 +156,39 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      env:
-        AWS_CMAKE_TOOLSET: v140
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        env:
+          AWS_CMAKE_TOOLSET: v140
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   osx:
     runs-on: macos-latest
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-        chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   check-submodules:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Source
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Check Submodules
-      # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
-      # https://github.com/actions/runner/issues/480
-      uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
+      - name: Checkout Source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Check Submodules
+        # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
+        # https://github.com/actions/runner/issues/480
+        uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main

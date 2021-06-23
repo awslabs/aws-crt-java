@@ -407,6 +407,10 @@
                     </systemPropertyVariables>
                     <shutdown>kill</shutdown>
                     <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                    <runOrder>alphabetical</runOrder>
+                    <useFile>false</useFile>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>1</forkCount>
                 </configuration>
             </plugin>
         </plugins>

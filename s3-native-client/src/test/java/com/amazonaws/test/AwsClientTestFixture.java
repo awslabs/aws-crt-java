@@ -25,21 +25,26 @@ public class AwsClientTestFixture {
      * Temporary implementation for local testing
      */
     protected static CredentialsProvider getTestCredentialsProvider(ClientBootstrap clientBootstrap) {
+        final String awsAccessKeyId;
+        final String awsSecretAccessKey;
+        final String awsSessionToken;
         if (System.getProperty("crt.aws_access_key_id") != null) {
-            final String awsAccessKeyId = System.getProperty("crt.aws_access_key_id");
-            final String awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
-            final String awsSessionToken = System.getProperty("crt.aws_session_token");
-
-            StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
-                    .withAccessKeyId(awsAccessKeyId.getBytes(StandardCharsets.UTF_8))
-                    .withSecretAccessKey(awsSecretAccessKey.getBytes(StandardCharsets.UTF_8));
-            if (awsSessionToken != null && !awsSessionToken.equals("")) {
-                builder.withSessionToken(awsSessionToken.getBytes(StandardCharsets.UTF_8));
-            }
-            return builder.build();
+            awsAccessKeyId = System.getProperty("crt.aws_access_key_id");
+            awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
+            awsSessionToken = System.getProperty("crt.aws_session_token");
         } else {
-            return new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
-                    .withClientBootstrap(clientBootstrap).build();
+            awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+            awsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+            awsSessionToken = null;
         }
+
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+                .withAccessKeyId(awsAccessKeyId.getBytes(StandardCharsets.UTF_8))
+                .withSecretAccessKey(awsSecretAccessKey.getBytes(StandardCharsets.UTF_8));
+        if (awsSessionToken != null && !awsSessionToken.equals("")) {
+            builder.withSessionToken(awsSessionToken.getBytes(StandardCharsets.UTF_8));
+        }
+        return builder.build();
+
     }
 }

@@ -189,3 +189,9 @@ endif ()
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+
+# Strip debug symbols from s2n and libcrypto to keep the .so size down
+if (UNIX AND NOT APPLE AND CMAKE_BUILD_TYPE MATCHES Rel AND CMAKE_STRIP)
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:s2n>)
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:crypto>)
+endif()

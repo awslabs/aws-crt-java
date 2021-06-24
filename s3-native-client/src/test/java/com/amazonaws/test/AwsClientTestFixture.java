@@ -7,8 +7,6 @@ package com.amazonaws.test;
 
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -24,7 +22,7 @@ public class AwsClientTestFixture {
     /**
      * Temporary implementation for local testing
      */
-    protected static CredentialsProvider getTestCredentialsProvider(ClientBootstrap clientBootstrap) {
+    protected static CredentialsProvider getTestCredentialsProvider() {
         final String awsAccessKeyId;
         final String awsSecretAccessKey;
         final String awsSessionToken;

@@ -62,7 +62,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
             final long length[] = { 0 };
@@ -97,7 +97,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(9);
                 final HostResolver resolver = new HostResolver(elGroup, 128);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
@@ -141,7 +141,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
             final long contentLength = 1024l;
@@ -166,7 +166,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
             final long lengthWritten[] = { 0 };
@@ -258,7 +258,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             Exception exceptionResult = null;
 
@@ -349,7 +349,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             CancellationException exceptionResult = null;
 
@@ -413,7 +413,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider(clientBootstrap)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));

@@ -120,6 +120,10 @@ public class S3NativeClient implements AutoCloseable {
 
             @Override
             public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                if(resultFuture.isCancelled()) {
+                    return;
+                }
+
                 for (int headerIndex = 0; headerIndex < headers.length; ++headerIndex) {
                     try {
                         populateGetObjectOutputHeader(resultBuilder, headers[headerIndex]);
@@ -137,6 +141,10 @@ public class S3NativeClient implements AutoCloseable {
 
             @Override
             public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                if(resultFuture.isCancelled()) {
+                    return 0;
+                }
+
                 dataHandler.onResponseData(bodyBytesIn);
                 return 0;
             }

@@ -24,9 +24,9 @@ public class S3ClientOptions {
      * For multi-part upload, content-md5 will be calculated if the
      * computeContentMd5 is set to true.
      *
-     * For single-part upload, leave the md5 header as-is if it was specified.
-     * If the header is not set by in the initial request, it will calculated,
-     * when the computeContentMd5 is set to true.
+     * For single-part upload, leave the md5 header as-is if it was specified. If
+     * the header is not set by in the initial request, it will calculated, when the
+     * computeContentMd5 is set to true.
      *
      * Default is false;
      */

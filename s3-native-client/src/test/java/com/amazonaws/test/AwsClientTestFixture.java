@@ -14,17 +14,27 @@ import java.nio.charset.StandardCharsets;
  */
 public class AwsClientTestFixture {
     protected static boolean areAwsCredentialsAvailable() {
-        return System.getProperty("crt.aws_access_key_id") != null
-                && !System.getProperty("crt.aws_access_key_id").equals("");
+        return (System.getProperty("crt.aws_access_key_id") != null
+                && !System.getProperty("crt.aws_access_key_id").equals(""))
+                || (System.getenv("AWS_ACCESS_KEY_ID") != null && !System.getenv("AWS_ACCESS_KEY_ID").equals(""));
     }
 
     /**
      * Temporary implementation for local testing
      */
     protected static CredentialsProvider getTestCredentialsProvider() {
-        final String awsAccessKeyId = System.getProperty("crt.aws_access_key_id");
-        final String awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
-        final String awsSessionToken = System.getProperty("crt.aws_session_token");
+        final String awsAccessKeyId;
+        final String awsSecretAccessKey;
+        final String awsSessionToken;
+        if (System.getProperty("crt.aws_access_key_id") != null) {
+            awsAccessKeyId = System.getProperty("crt.aws_access_key_id");
+            awsSecretAccessKey = System.getProperty("crt.aws_secret_access_key");
+            awsSessionToken = System.getProperty("crt.aws_session_token");
+        } else {
+            awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+            awsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+            awsSessionToken = null;
+        }
 
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
                 .withAccessKeyId(awsAccessKeyId.getBytes(StandardCharsets.UTF_8))
@@ -33,5 +43,6 @@ public class AwsClientTestFixture {
             builder.withSessionToken(awsSessionToken.getBytes(StandardCharsets.UTF_8));
         }
         return builder.build();
+
     }
 }

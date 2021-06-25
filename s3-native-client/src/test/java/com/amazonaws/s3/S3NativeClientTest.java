@@ -41,6 +41,8 @@ import software.amazon.awssdk.crt.s3.S3ClientOptions;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
 import software.amazon.awssdk.crt.s3.S3Client;
 
+import javax.annotation.processing.Completion;
+
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
@@ -264,7 +266,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             CancellationException cancellationException = null;
-            CrtRuntimeException runtimeException = null;
+            CrtS3RuntimeException runtimeException = null;
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
@@ -279,12 +281,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             try {
                 testData.VerifyFinishFuture.join();
-            } catch(CrtRuntimeException e) {
-                runtimeException = e;
+            } catch(CompletionException e) {
+                if(e.getCause() instanceof CrtS3RuntimeException) {
+                    runtimeException = (CrtS3RuntimeException)e.getCause();
+                }
             }
 
             assertTrue(runtimeException != null);
-
+            assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
             assertTrue(cancellationException != null);
             assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }
@@ -373,7 +377,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             CancellationException cancelException = null;
-            CrtRuntimeException runtimeException = null;
+            CrtS3RuntimeException runtimeException = null;
 
             final long partSize5MB = 5l * 1024l * 1024l;
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
@@ -392,11 +396,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             try {
                 testData.VerifyFinishFuture.join();
-            } catch(CrtRuntimeException e) {
-                runtimeException = e;
+            } catch(CompletionException e) {
+                if(e.getCause() instanceof CrtS3RuntimeException) {
+                    runtimeException = (CrtS3RuntimeException)e.getCause();
+                }
             }
 
             assertTrue(runtimeException != null);
+            assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
             assertTrue(cancelException != null);
             assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }

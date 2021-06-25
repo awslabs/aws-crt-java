@@ -11,6 +11,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
 
@@ -32,14 +35,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
+import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.S3ClientOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
-import software.amazon.awssdk.crt.s3.S3Client;
 
 import javax.annotation.processing.Completion;
 
@@ -96,8 +96,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testGetObjectExceptionCatch() throws Throwable {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
@@ -488,6 +488,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
         customHeadersLambda.run(nativeClient, customHeaders);
@@ -544,6 +546,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
         customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);

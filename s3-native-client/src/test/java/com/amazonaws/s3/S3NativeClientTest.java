@@ -219,6 +219,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         public int ExpectedPartCount;
         public int PartCount;
         public CompletableFuture<T> ResultFuture;
+        public CompletableFuture<Void> VerifyFinishFuture = new CompletableFuture<Void>();
 
         public CancelTestData(int ExpectedPartCount) {
             this.ExpectedPartCount = ExpectedPartCount;
@@ -244,10 +245,12 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         @Override
         public void onFinished() {
+            cancelTestData.VerifyFinishFuture.complete(null);
         }
 
         @Override
         public void onException(final CrtRuntimeException e) {
+            cancelTestData.VerifyFinishFuture.completeExceptionally(e);
         }
     }
 
@@ -260,7 +263,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            Exception exceptionResult = null;
+            CancellationException cancellationException = null;
+            CrtRuntimeException runtimeException = null;
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
@@ -269,12 +273,19 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 testData.ResultFuture = nativeClient
                         .getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
                 testData.ResultFuture.join();
-            } catch (Exception e) {
-                exceptionResult = e;
+            } catch (CancellationException e) {
+                cancellationException = e;
             }
 
-            assertTrue(exceptionResult != null);
-            assertTrue(exceptionResult instanceof CancellationException);
+            try {
+                testData.VerifyFinishFuture.join();
+            } catch(CrtRuntimeException e) {
+                runtimeException = e;
+            }
+
+            assertTrue(runtimeException != null);
+
+            assertTrue(cancellationException != null);
             assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }
     }
@@ -340,6 +351,16 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             return this.lengthWritten == this.contentLength();
         }
+
+        @Override
+        public void onFinished() {
+            cancelTestData.VerifyFinishFuture.complete(null);
+        }
+
+        @Override
+        public void onException(final CrtRuntimeException e) {
+            cancelTestData.VerifyFinishFuture.completeExceptionally(e);
+        }
     }
 
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
@@ -351,7 +372,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            CancellationException exceptionResult = null;
+            CancellationException cancelException = null;
+            CrtRuntimeException runtimeException = null;
 
             final long partSize5MB = 5l * 1024l * 1024l;
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
@@ -365,11 +387,17 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                 testData.ResultFuture.join();
             } catch (CancellationException e) {
-                exceptionResult = e;
+                cancelException = e;
             }
 
-            assertTrue(exceptionResult != null);
-            assertTrue(exceptionResult instanceof CancellationException);
+            try {
+                testData.VerifyFinishFuture.join();
+            } catch(CrtRuntimeException e) {
+                runtimeException = e;
+            }
+
+            assertTrue(runtimeException != null);
+            assertTrue(cancelException != null);
             assertTrue(testData.PartCount == testData.ExpectedPartCount);
         }
     }

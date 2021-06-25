@@ -265,7 +265,7 @@ public class S3NativeClient implements AutoCloseable {
                 } catch (Exception e) { /* ignore user callback exception */
                 } finally {
                     if (ex != null) {
-                        resultFuture.completeExceptionally(ex);
+                        resultFuture.completeExceptionally(new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                     } else {
                         resultFuture.complete(resultBuilder.build());
                     }

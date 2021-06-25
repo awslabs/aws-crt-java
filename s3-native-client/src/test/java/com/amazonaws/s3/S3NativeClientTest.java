@@ -240,7 +240,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
 
         assertTrue(runtimeException != null);
-        assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
+        assertTrue(runtimeException.errorName.equals("AWS_ERROR_S3_CANCELED"));
         assertTrue(cancellationException != null);
         assertTrue(testData.PartCount == testData.ExpectedPartCount);
     }

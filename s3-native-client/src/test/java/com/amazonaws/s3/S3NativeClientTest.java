@@ -228,6 +228,23 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
+    private void FinishCancelTest(CancelTestData<?> testData, CancellationException cancellationException) {
+        CrtS3RuntimeException runtimeException = null;
+
+        try {
+            testData.VerifyFinishFuture.join();
+        } catch(CompletionException e) {
+            if(e.getCause() instanceof CrtS3RuntimeException) {
+                runtimeException = (CrtS3RuntimeException)e.getCause();
+            }
+        }
+
+        assertTrue(runtimeException != null);
+        assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
+        assertTrue(cancellationException != null);
+        assertTrue(testData.PartCount == testData.ExpectedPartCount);
+    }
+
     private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput> {
         private CancelTestData<GetObjectOutput> cancelTestData;
 
@@ -265,8 +282,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            CancellationException cancellationException = null;
-            CrtS3RuntimeException runtimeException = null;
+            CancellationException cancelException = null;
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
@@ -276,21 +292,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         .getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
                 testData.ResultFuture.join();
             } catch (CancellationException e) {
-                cancellationException = e;
+                cancelException = e;
             }
 
-            try {
-                testData.VerifyFinishFuture.join();
-            } catch(CompletionException e) {
-                if(e.getCause() instanceof CrtS3RuntimeException) {
-                    runtimeException = (CrtS3RuntimeException)e.getCause();
-                }
-            }
-
-            assertTrue(runtimeException != null);
-            assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
-            assertTrue(cancellationException != null);
-            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+            FinishCancelTest(testData, cancelException);
         }
     }
 
@@ -377,7 +382,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
             CancellationException cancelException = null;
-            CrtS3RuntimeException runtimeException = null;
 
             final long partSize5MB = 5l * 1024l * 1024l;
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
@@ -394,18 +398,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 cancelException = e;
             }
 
-            try {
-                testData.VerifyFinishFuture.join();
-            } catch(CompletionException e) {
-                if(e.getCause() instanceof CrtS3RuntimeException) {
-                    runtimeException = (CrtS3RuntimeException)e.getCause();
-                }
-            }
-
-            assertTrue(runtimeException != null);
-            assertTrue(runtimeException.errorName.equals("AWS_S3_ERROR_CANCELED"));
-            assertTrue(cancelException != null);
-            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+            FinishCancelTest(testData, cancelException);
         }
     }
 

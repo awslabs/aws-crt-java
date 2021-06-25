@@ -278,6 +278,7 @@
                 <excludes>
                     <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
+                    <exclude>**/*.dbg</exclude>
                 </excludes>
             </resource>
         </resources>

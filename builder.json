@@ -127,7 +127,8 @@
                 "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [
-                "mvn -B test -DrerunFailingTestsCount=5"
+                "mvn -B test -DrerunFailingTestsCount=5",
+                "cat log.txt"
             ]
         }
     }

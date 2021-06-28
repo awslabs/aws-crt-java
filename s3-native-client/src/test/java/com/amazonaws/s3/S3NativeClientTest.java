@@ -11,6 +11,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
 
@@ -33,19 +36,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
+import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.s3.S3ClientOptions;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions;
-import software.amazon.awssdk.crt.s3.S3Client;
+
+import javax.annotation.processing.Completion;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
-    private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key", "get_object_test_10MB.txt");
+    private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key",
+            "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
@@ -94,8 +97,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testGetObjectExceptionCatch() throws Throwable {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
-        try (final EventLoopGroup elGroup = new EventLoopGroup(9);
-                final HostResolver resolver = new HostResolver(elGroup, 128);
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
@@ -221,10 +224,28 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         public int ExpectedPartCount;
         public int PartCount;
         public CompletableFuture<T> ResultFuture;
+        public CompletableFuture<Void> VerifyFinishFuture = new CompletableFuture<Void>();
 
         public CancelTestData(int ExpectedPartCount) {
             this.ExpectedPartCount = ExpectedPartCount;
         }
+    }
+
+    private void FinishCancelTest(CancelTestData<?> testData, CancellationException cancellationException) {
+        CrtS3RuntimeException runtimeException = null;
+
+        try {
+            testData.VerifyFinishFuture.join();
+        } catch(CompletionException e) {
+            if(e.getCause() instanceof CrtS3RuntimeException) {
+                runtimeException = (CrtS3RuntimeException)e.getCause();
+            }
+        }
+
+        assertTrue(runtimeException != null);
+        assertTrue(runtimeException.errorName.equals("AWS_ERROR_S3_CANCELED"));
+        assertTrue(cancellationException != null);
+        assertTrue(testData.PartCount == testData.ExpectedPartCount);
     }
 
     private class CancelResponseDataConsumer implements ResponseDataConsumer<GetObjectOutput> {
@@ -246,10 +267,12 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         @Override
         public void onFinished() {
+            cancelTestData.VerifyFinishFuture.complete(null);
         }
 
         @Override
         public void onException(final CrtRuntimeException e) {
+            cancelTestData.VerifyFinishFuture.completeExceptionally(e);
         }
     }
 
@@ -262,7 +285,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            Exception exceptionResult = null;
+            CancellationException cancelException = null;
 
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
@@ -271,13 +294,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 testData.ResultFuture = nativeClient
                         .getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(), dataConsumer);
                 testData.ResultFuture.join();
-            } catch (Exception e) {
-                exceptionResult = e;
+            } catch (CancellationException e) {
+                cancelException = e;
             }
 
-            assertTrue(exceptionResult != null);
-            assertTrue(exceptionResult instanceof CancellationException);
-            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+            FinishCancelTest(testData, cancelException);
         }
     }
 
@@ -342,6 +363,16 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             return this.lengthWritten == this.contentLength();
         }
+
+        @Override
+        public void onFinished() {
+            cancelTestData.VerifyFinishFuture.complete(null);
+        }
+
+        @Override
+        public void onException(final CrtRuntimeException e) {
+            cancelTestData.VerifyFinishFuture.completeExceptionally(e);
+        }
     }
 
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
@@ -353,7 +384,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-            CancellationException exceptionResult = null;
+            CancellationException cancelException = null;
 
             final long partSize5MB = 5l * 1024l * 1024l;
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
@@ -367,12 +398,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                 testData.ResultFuture.join();
             } catch (CancellationException e) {
-                exceptionResult = e;
+                cancelException = e;
             }
 
-            assertTrue(exceptionResult != null);
-            assertTrue(exceptionResult instanceof CancellationException);
-            assertTrue(testData.PartCount == testData.ExpectedPartCount);
+            FinishCancelTest(testData, cancelException);
         }
     }
 
@@ -462,6 +491,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
         customHeadersLambda.run(nativeClient, customHeaders);
@@ -518,6 +549,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
         customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);

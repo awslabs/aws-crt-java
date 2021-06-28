@@ -39,7 +39,8 @@
                 "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [
-                "mvn -B test -DforkCount=0 -DrerunFailingTestsCount=5"
+                "mvn -B test -DforkCount=0 -DrerunFailingTestsCount=5",
+                "cat log.txt"
             ],
             "architectures": {
                 "armv6": {

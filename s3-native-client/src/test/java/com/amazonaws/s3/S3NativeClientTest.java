@@ -166,14 +166,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @Test
     public void testConcurrentRequests() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider();
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.)) {
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
+            Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.);
             final long lengthWritten[] = { 0 };
             final long contentLength = 1024l;
             final long length[] = { 0 };
@@ -236,9 +236,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         try {
             testData.VerifyFinishFuture.join();
-        } catch(CompletionException e) {
-            if(e.getCause() instanceof CrtS3RuntimeException) {
-                runtimeException = (CrtS3RuntimeException)e.getCause();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof CrtS3RuntimeException) {
+                runtimeException = (CrtS3RuntimeException) e.getCause();
             }
         }
 

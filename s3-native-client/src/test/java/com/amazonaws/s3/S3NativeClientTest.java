@@ -26,6 +26,7 @@ import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
+import software.amazon.awssdk.crt.Log;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -162,12 +163,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @Test
     public void testConcurrentRequests() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                    100.)) {
+
             final long lengthWritten[] = { 0 };
             final long contentLength = 1024l;
             final long length[] = { 0 };

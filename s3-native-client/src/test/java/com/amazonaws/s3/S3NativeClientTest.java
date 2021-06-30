@@ -217,7 +217,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
-            assertTrue(false);
         }
     }
 

@@ -10,7 +10,8 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
 
-        if os.system("mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5"):
+        if os.system("mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5 \
+            -Daws.crt.log.level=Error -Daws.crt.log.destination=File -Daws.crt.log.filename=log.txt"):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

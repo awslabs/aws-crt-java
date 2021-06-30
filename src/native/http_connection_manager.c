@@ -285,6 +285,7 @@ cleanup:
 
     if (binding->manager == NULL) {
         s_destroy_manager_binding(binding);
+        binding = NULL;
     }
 
     return (jlong)binding;

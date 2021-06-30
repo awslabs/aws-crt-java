@@ -40,6 +40,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.Log;
 
 import javax.annotation.processing.Completion;
 
@@ -47,7 +48,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key",
-            "get_object_test_10MB.txt");
+            "get_object_test_5120MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
@@ -165,10 +166,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @Test
     public void testConcurrentRequests() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+        try (
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(null, null);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
+            Log.initLoggingToFile(Log.LogLevel.Debug, "log3.txt");
             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                     100.);
             final long lengthWritten[] = { 0 };
@@ -199,16 +200,16 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                     public void onException(final CrtRuntimeException e) {
                                     }
                                 }));
-
-                futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
-                        .contentLength(contentLength).build(), buffer -> {
-                            while (buffer.hasRemaining()) {
-                                buffer.put((byte) 42);
-                                ++lengthWritten[0];
-                            }
-
-                            return lengthWritten[0] == contentLength;
-                        }));
+//
+//                futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
+//                        .contentLength(contentLength).build(), buffer -> {
+//                            while (buffer.hasRemaining()) {
+//                                buffer.put((byte) 42);
+//                                ++lengthWritten[0];
+//                            }
+//
+//                            return lengthWritten[0] == contentLength;
+//                        }));
             }
             ;
             CompletableFuture<?> allFutures = CompletableFuture
@@ -233,9 +234,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         try {
             testData.VerifyFinishFuture.join();
-        } catch(CompletionException e) {
-            if(e.getCause() instanceof CrtS3RuntimeException) {
-                runtimeException = (CrtS3RuntimeException)e.getCause();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof CrtS3RuntimeException) {
+                runtimeException = (CrtS3RuntimeException) e.getCause();
             }
         }
 

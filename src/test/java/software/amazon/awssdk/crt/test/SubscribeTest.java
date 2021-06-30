@@ -36,10 +36,12 @@ public class SubscribeTest extends MqttClientConnectionFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         connect();
 
-        Consumer<MqttMessage> messageHandler = (message) -> { };
+        Consumer<MqttMessage> messageHandler = (message) -> {
+        };
 
         try {
-            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
+                    messageHandler);
             subscribed.thenAccept(packetId -> subsAcked++);
             subscribed.get();
 
@@ -53,7 +55,7 @@ public class SubscribeTest extends MqttClientConnectionFixture {
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
-        
+
         disconnect();
         close();
     }

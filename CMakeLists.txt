@@ -62,15 +62,19 @@ if (BUILD_DEPS)
         set(DISABLE_GO ON CACHE BOOL "Disable codegen")
 
         # experimental
-        set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
         if (NOT MSVC)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error")
+            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
+            if (HAS_WNO_STRINGOP_OVERFLOW)
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
+            endif()
+
+            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
+            if (HAS_WNO_ARRAY_PARAMETER)
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
+            endif()
         endif()
 
         add_subdirectory(crt/aws-lc)
-
-        set(CMAKE_C_FLAGS "${OLD_CMAKE_C_FLAGS}")
-
         set(SEARCH_LIBCRYPTO OFF CACHE BOOL "Let S2N use libcrypto from AWS-LC.")
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)

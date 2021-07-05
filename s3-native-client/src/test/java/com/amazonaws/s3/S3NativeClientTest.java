@@ -176,7 +176,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             final long contentLength = 1024l;
             final long length[] = { 0 };
             List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
-            final int concurrentNum = 50;
+            final int concurrentNum = 20;
             for (int i = 0; i < concurrentNum; i++) {
                 futures.add(
                         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),

@@ -29,7 +29,6 @@ import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
-import software.amazon.awssdk.crt.Log;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -56,7 +55,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @BeforeClass
     public static void haveAwsCredentials() {
         Assume.assumeTrue(areAwsCredentialsAvailable());
-        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
     }
 
     @Test

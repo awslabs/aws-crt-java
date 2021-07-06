@@ -311,13 +311,21 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnectionManager");
     AWS_FATAL_ASSERT(cls);
 
-    http_client_connection_manager_properties.onConnectionAcquired =
-        (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
-    AWS_FATAL_ASSERT(http_client_connection_manager_properties.onConnectionAcquired);
-
     http_client_connection_manager_properties.onShutdownComplete =
         (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
+}
+
+struct java_http_client_connection_properties http_client_connection_properties;
+
+static void s_cache_http_client_connection(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnection");
+    AWS_FATAL_ASSERT(cls);
+    http_client_connection_properties.http_client_connection_class = (*env)->NewGlobalRef(env, cls);
+
+    http_client_connection_properties.on_connection_acquired_method_id =
+        (*env)->GetStaticMethodID(env, cls, "onConnectionAcquired", "(Ljava/util/concurrent/CompletableFuture;JI)V");
+    AWS_FATAL_ASSERT(http_client_connection_properties.on_connection_acquired_method_id);
 }
 
 struct java_http_stream_properties http_stream_properties;
@@ -699,6 +707,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
+    s_cache_http_client_connection(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);

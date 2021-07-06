@@ -169,14 +169,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
+
+            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l, 10.);
             final long lengthWritten[] = { 0 };
             final long contentLength = 1024l;
             final long length[] = { 0 };
             List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
-
-            for (int i = 0; i < 100; i++) {
+            final int concurrentNum = 20;
+            for (int i = 0; i < concurrentNum; i++) {
                 futures.add(
                         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
                                 new ResponseDataConsumer<GetObjectOutput>() {
@@ -233,9 +233,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         try {
             testData.VerifyFinishFuture.join();
-        } catch(CompletionException e) {
-            if(e.getCause() instanceof CrtS3RuntimeException) {
-                runtimeException = (CrtS3RuntimeException)e.getCause();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof CrtS3RuntimeException) {
+                runtimeException = (CrtS3RuntimeException) e.getCause();
             }
         }
 

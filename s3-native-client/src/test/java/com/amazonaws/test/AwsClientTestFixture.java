@@ -7,7 +7,10 @@ package com.amazonaws.test;
 
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.crt.Log;
 import java.nio.charset.StandardCharsets;
+
+import org.junit.BeforeClass;
 
 /**
  * Stub for getting Aws credentials from environment for running CI tests
@@ -17,6 +20,11 @@ public class AwsClientTestFixture {
         return (System.getProperty("crt.aws_access_key_id") != null
                 && !System.getProperty("crt.aws_access_key_id").equals(""))
                 || (System.getenv("AWS_ACCESS_KEY_ID") != null && !System.getenv("AWS_ACCESS_KEY_ID").equals(""));
+    }
+
+    @BeforeClass
+    public static void enable_log() {
+        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
     }
 
     /**

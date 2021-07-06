@@ -69,6 +69,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                         SocketOptions socketOptions = new SocketOptions();
                         TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
+                    socketOptions.connectTimeoutMs = 10000;
                     resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
                 }
             }
@@ -107,8 +108,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         // BadSSL
         testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
         testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
-        testConnectionWithAllCiphers(new URI("https://expired.badssl.com/"), false, "TLS (SSL) negotiation failed");
-        testConnectionWithAllCiphers(new URI("https://self-signed.badssl.com/"), false, "TLS (SSL) negotiation failed");
     }
 
     @Test

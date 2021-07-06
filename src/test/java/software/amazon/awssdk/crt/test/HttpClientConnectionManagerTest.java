@@ -184,11 +184,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     }
 
     @Test
-    public void testParallelRequests() throws Exception {
-        testParallelRequestsWithLeakCheck(2, (NUM_REQUESTS / NUM_THREADS) * 2);
-    }
-
-    @Test
     public void testMaxParallelRequests() throws Exception {
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }

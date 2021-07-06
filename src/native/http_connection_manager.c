@@ -272,6 +272,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     binding->manager = aws_http_connection_manager_new(allocator, &manager_options);
+    if (binding->manager == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "Failed to create connection manager: %s", aws_error_str(aws_last_error()));
+    }
 
     aws_http_proxy_options_jni_clean_up(
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);

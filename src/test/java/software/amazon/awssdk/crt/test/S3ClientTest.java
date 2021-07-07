@@ -503,8 +503,6 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
-        Log.initLoggingToStdout(LogLevel.Error);
-
         // Override defaults with values from system properties, via -D on mvn
         // commandline
         final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "0"));
@@ -553,12 +551,13 @@ public class S3ClientTest extends CrtTestFixture {
                         TransferStats stats = new TransferStats();
 
                         @Override
-                        public void onFinished(int errorCode) {
+                        public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
                             // release the slot first
                             concurrentSlots.release();
 
                             if (errorCode != 0) {
-                                onFinishedFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+                                onFinishedFuture.completeExceptionally(
+                                        new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
                                 return;
                             }
 

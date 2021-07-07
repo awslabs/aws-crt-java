@@ -15,10 +15,10 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         return this.responseHandler.onResponseBody(bodyBytesIn, objectRangeStart, objectRangeEnd);
     }
 
-    void onFinished(int errorCode) {
-        this.responseHandler.onFinished(errorCode);
+    void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+        this.responseHandler.onFinished(errorCode, responseStatus, errorPayload);
     }
-    
+
     void onResponseHeaders(final int statusCode, final ByteBuffer headersBlob) {
         responseHandler.onResponseHeaders(statusCode, HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob));
     }

@@ -40,6 +40,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
+        <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
     </properties>
 
     <profiles>
@@ -61,7 +62,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>ALL_BUILD</cmake.target>
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
@@ -76,7 +76,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
         </profile>
@@ -88,7 +87,6 @@
                 </os>
             </activation>
             <properties>
-                <cmake.target>all</cmake.target>
                 <cmake.cflags/>
             </properties>
         </profile>
@@ -152,6 +150,7 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${cmake.generator}</argument>
@@ -175,7 +174,7 @@
                                         <argument>--config</argument>
                                         <argument>${cmake.buildconfig}</argument>
                                         <argument>--target</argument>
-                                        <argument>${cmake.target}</argument>
+                                        <argument>aws-crt-jni</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -279,6 +278,7 @@
                 <excludes>
                     <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
+                    <exclude>**/*.dbg</exclude>
                 </excludes>
             </resource>
         </resources>
@@ -408,6 +408,10 @@
                     </systemPropertyVariables>
                     <shutdown>kill</shutdown>
                     <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                    <runOrder>alphabetical</runOrder>
+                    <useFile>false</useFile>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>1</forkCount>
                 </configuration>
             </plugin>
         </plugins>

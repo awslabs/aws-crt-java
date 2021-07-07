@@ -379,7 +379,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_tls_ctx,
     jstring jni_client_id,
     jboolean jni_clean_session,
-    jint keep_alive_ms,
+    jint keep_alive_secs,
     jshort ping_timeout_ms,
     jint protocol_operation_timeout_ms) {
     (void)jni_class;
@@ -438,7 +438,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.socket_options = &connection->socket_options;
     connect_options.tls_options = tls_options;
     connect_options.client_id = client_id;
-    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_ms / 1000;
+    connect_options.keep_alive_time_secs = (uint16_t)keep_alive_secs;
     connect_options.ping_timeout_ms = ping_timeout_ms;
     connect_options.protocol_operation_timeout_ms = protocol_operation_timeout_ms;
     connect_options.clean_session = clean_session;
@@ -867,6 +867,27 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
 
     if (password.len > 0) {
         aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
+    }
+}
+
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetReconnectTimeout(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_connection,
+        jlong jni_min_timeout,
+        jlong jni_max_timeout) {
+    (void)jni_class;
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_reconnect_timeout: Invalid connection");
+        return;
+    }
+
+    if (aws_mqtt_client_connection_set_reconnect_timeout(
+            connection->client_connection, jni_min_timeout, jni_max_timeout)) {
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.mqtt_reconnect_timeout: Failed to set reconnect timeout");
     }
 }
 

@@ -5,7 +5,10 @@
 #include "crt.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
+#include "retry_utils.h"
 #include <aws/http/request_response.h>
+#include <aws/io/channel_bootstrap.h>
+#include <aws/io/retry_strategy.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/s3/s3_client.h>
 #include <jni.h>
@@ -48,7 +51,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_credentials_provider,
     jlong part_size,
     jdouble throughput_target_gbps,
-    int max_connections) {
+    int max_connections,
+    jobject jni_standard_retry_options,
+    jboolean compute_content_md5) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -64,6 +69,27 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     if (!credentials_provider) {
         aws_jni_throw_runtime_exception(env, "Invalid Credentials Provider");
         return (jlong)NULL;
+    }
+
+    struct aws_retry_strategy *retry_strategy = NULL;
+
+    if (jni_standard_retry_options != NULL) {
+        struct aws_standard_retry_options retry_options;
+
+        if (aws_standard_retry_options_from_java(env, jni_standard_retry_options, &retry_options)) {
+            return (jlong)NULL;
+        }
+
+        if (retry_options.backoff_retry_options.el_group == NULL) {
+            retry_options.backoff_retry_options.el_group = client_bootstrap->event_loop_group;
+        }
+
+        retry_strategy = aws_retry_strategy_new_standard(allocator, &retry_options);
+
+        if (retry_strategy == NULL) {
+            aws_jni_throw_runtime_exception(env, "Could not create retry strategy with standard-retry-options");
+            return (jlong)NULL;
+        }
     }
 
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
@@ -100,8 +126,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .signing_config = NULL,
         .part_size = (size_t)part_size,
         .throughput_target_gbps = throughput_target_gbps,
+        .retry_strategy = retry_strategy,
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
+        .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
     };
     client_config.signing_config = &signing_config;
 
@@ -112,6 +140,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
 clean_up:
+    aws_retry_strategy_release(retry_strategy);
+
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     return (jlong)client;
@@ -267,11 +297,20 @@ static void s_on_s3_meta_request_finish_callback(
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
+        struct aws_byte_buf *error_response_body = meta_request_result->error_response_body;
+        struct aws_byte_cursor error_response_cursor;
+        AWS_ZERO_STRUCT(error_response_cursor);
+        if (error_response_body) {
+            error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
+        }
+        jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
             s3_meta_request_response_handler_native_adapter_properties.onFinished,
-            meta_request_result->error_code);
+            meta_request_result->error_code,
+            meta_request_result->response_status,
+            jni_payload);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -279,6 +318,7 @@ static void s_on_s3_meta_request_finish_callback(
                 "id=%p: Ignored Exception from S3MetaRequest.onFinished callback",
                 (void *)meta_request);
         }
+        (*env)->DeleteLocalRef(env, jni_payload);
     }
 }
 
@@ -382,11 +422,28 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
-        aws_jni_throw_runtime_exception(env, "S3Client.s3_client_clean_up: Invalid/null client");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestDestroy: Invalid/null meta request");
         return;
     }
 
     aws_s3_meta_request_release(meta_request);
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestCancel(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request) {
+    (void)jni_class;
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestCancel: Invalid/null meta request");
+        return;
+    }
+
+    aws_s3_meta_request_cancel(meta_request);
 }
 
 #if UINTPTR_MAX == 0xffffffff

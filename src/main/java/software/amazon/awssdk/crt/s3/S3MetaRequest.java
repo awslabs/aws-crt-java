@@ -8,7 +8,7 @@ public class S3MetaRequest extends CrtResource {
 
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
-    S3MetaRequest() {
+    public S3MetaRequest() {
 
     }
 
@@ -45,8 +45,14 @@ public class S3MetaRequest extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
+    public void cancel() {
+        s3MetaRequestCancel(getNativeHandle());
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native void s3MetaRequestDestroy(long s3MetaRequest);
+
+    private static native void s3MetaRequestCancel(long s3MetaRequest);
 }

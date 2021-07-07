@@ -1,13 +1,19 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -37,6 +43,18 @@ public class S3NativeClient implements AutoCloseable {
         this(signingRegion, new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
+    }
+
+    // TODO Builder class for S3NativeClient
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+            final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+            final int maxConnections, final StandardRetryOptions retryOptions) {
+
+        this(signingRegion,
+                new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                        .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
+                        .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
+                        .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)));
     }
 
     public S3NativeClient(final String signingRegion, final S3Client s3Client) {
@@ -85,6 +103,17 @@ public class S3NativeClient implements AutoCloseable {
         return encodedPath;
     }
 
+    private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
+        metaRequest.addRef();
+
+        future.whenComplete((r, t) -> {
+            if (future.isCancelled()) {
+                metaRequest.cancel();
+            }
+            metaRequest.close();
+        });
+    }
+
     public CompletableFuture<GetObjectOutput> getObject(GetObjectRequest request,
             final ResponseDataConsumer<GetObjectOutput> dataHandler) {
         final CompletableFuture<GetObjectOutput> resultFuture = new CompletableFuture<>();
@@ -116,11 +145,11 @@ public class S3NativeClient implements AutoCloseable {
             }
 
             @Override
-            public void onFinished(int errorCode) {
-                CrtRuntimeException ex = null;
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                CrtS3RuntimeException ex = null;
                 try {
                     if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                        ex = new CrtRuntimeException(errorCode);
+                        ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
                         dataHandler.onException(ex);
                     } else {
                         dataHandler.onFinished();
@@ -157,6 +186,7 @@ public class S3NativeClient implements AutoCloseable {
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+            addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
     }
@@ -226,20 +256,32 @@ public class S3NativeClient implements AutoCloseable {
             }
 
             @Override
-            public void onFinished(int errorCode) {
-                if (errorCode == CRT.AWS_CRT_SUCCESS) {
-                    resultFuture.complete(resultBuilder.build());
-                } else {
-                    resultFuture
-                            .completeExceptionally(new CrtRuntimeException(errorCode, CRT.awsErrorString(errorCode)));
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                CrtS3RuntimeException ex = null;
+                try {
+                    if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                        ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
+                        requestDataSupplier.onException(ex);
+                    } else {
+                        requestDataSupplier.onFinished();
+                    }
+                } catch (Exception e) { /* ignore user callback exception */
+                } finally {
+                    if (ex != null) {
+                        resultFuture.completeExceptionally(ex);
+                    } else {
+                        resultFuture.complete(resultBuilder.build());
+                    }
                 }
             }
         };
+
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler);
 
         try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+            addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
     }

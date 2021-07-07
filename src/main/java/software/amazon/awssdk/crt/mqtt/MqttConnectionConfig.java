@@ -24,8 +24,10 @@ public final class MqttConnectionConfig extends CrtResource {
     private String username;
     private String password;
     private MqttClientConnectionEvents connectionCallbacks;
-    private int keepAliveMs = 0;
+    private int keepAliveSecs = 0;
     private int pingTimeoutMs = 0;
+    private long minReconnectTimeoutSecs = 0L;
+    private long maxReconnectTimeoutSecs = 0L;
     private int protocolOperationTimeoutMs = 0;
     private boolean cleanSession = true;
 
@@ -169,24 +171,51 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
-     * keepalive.
+     * @deprecated Configures MQTT keep-alive via PING messages. Note that this is not TCP
+     * keepalive. Please use setKeepAliveSecs instead.
      *
      * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
      *                   service to keep a connection alive
+     *
      */
+    @Deprecated
     public void setKeepAliveMs(int keepAliveMs) {
-        this.keepAliveMs = keepAliveMs;
+        this.keepAliveSecs = keepAliveMs/1000;
+    }
+
+    /**
+     * @deprecated Queries the MQTT keep-alive via PING messages. Please use
+     * getKeepAliveSecs instead.
+     *
+     * @return How often in milliseconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
+     */
+    @Deprecated
+    public int getKeepAliveMs() {
+        return keepAliveSecs*1000;
+    }
+
+    /**
+     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
+     * keepalive. Note: AWS IoT Core only allows 30-1200 Secs. Anything larger than
+     * 65535 will be capped.
+     *
+     * @param keepAliveSecs How often in seconds to send an MQTT PING message to the
+     *                   service to keep a connection alive
+     *
+     */
+    public void setKeepAliveSecs(int keepAliveSecs) {
+        this.keepAliveSecs = keepAliveSecs;
     }
 
     /**
      * Queries the MQTT keep-alive via PING messages.
      *
-     * @return How often in milliseconds to send an MQTT PING message to the
+     * @return How often in seconds to send an MQTT PING message to the
      *                   service to keep a connection alive
      */
-    public int getKeepAliveMs() {
-        return keepAliveMs;
+    public int getKeepAliveSecs() {
+        return keepAliveSecs;
     }
 
     /**
@@ -210,9 +239,40 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Configures timeout value for requests that response is required on healthy connection. 
-     * If a response is not received within this interval, the request will fail as server not receiving it. 
-     * Applied to publish (QoS>0) and unsubscribe
+     * Configures the minimum and maximum reconnect timeouts.
+     *
+     * The time between reconnect attempts will start at min and multiply by 2 until max is reached.
+     *
+     * @param minTimeoutSecs The timeout to start with
+     * @param maxTimeoutSecs The highest allowable wait time between reconnect attempts
+     */
+    public void setReconnectTimeoutSecs(long minTimeoutSecs, long maxTimeoutSecs) {
+        this.minReconnectTimeoutSecs = minTimeoutSecs;
+        this.maxReconnectTimeoutSecs = maxTimeoutSecs;
+    }
+
+    /**
+     * Return the minimum reconnect timeout.
+     *
+     * @return The timeout to start with
+     */
+    public long getMinReconnectTimeoutSecs() {
+        return minReconnectTimeoutSecs;
+    }
+
+    /**
+     * Return the maximum reconnect timeout.
+     *
+     * @return The highest allowable wait time between reconnect attempts
+     */
+    public long getMaxReconnectTimeoutSecs() {
+        return maxReconnectTimeoutSecs;
+    }
+
+    /**
+     * Configures timeout value for requests that response is required on healthy connection.
+     * If a response is not received within this interval, the request will fail as server not receiving it.
+     * Applied to publish (QoS&gt;0) and unsubscribe
      *
      * @param protocolOperationTimeoutMs How long to wait for a request response (in milliseconds) before failing
      */
@@ -222,8 +282,8 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /**
      * Queries timeout value for requests that response is required on healthy connection.
-     * If a response is not received within this interval, the request will fail as server not receiving it. 
-     * Applied to publish (QoS>0) and unsubscribe
+     * If a response is not received within this interval, the request will fail as server not receiving it.
+     * Applied to publish (QoS&gt;0) and unsubscribe
      *
      * @return How long to wait for a request response (in milliseconds) before failing
      */
@@ -465,7 +525,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setUsername(getUsername());
             clone.setPassword(getPassword());
             clone.setConnectionCallbacks(getConnectionCallbacks());
-            clone.setKeepAliveMs(getKeepAliveMs());
+            clone.setKeepAliveSecs(getKeepAliveSecs());
             clone.setPingTimeoutMs(getPingTimeoutMs());
             clone.setProtocolOperationTimeoutMs(getProtocolOperationTimeoutMs());
             clone.setCleanSession(getCleanSession());

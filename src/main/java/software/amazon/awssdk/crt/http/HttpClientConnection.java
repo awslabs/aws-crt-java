@@ -6,6 +6,8 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
+
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
@@ -22,12 +24,8 @@ import static software.amazon.awssdk.crt.CRT.awsLastError;
  */
 public class HttpClientConnection extends CrtResource {
 
-    private final HttpClientConnectionManager manager;
-
-    protected HttpClientConnection(HttpClientConnectionManager manager, long connection) {
-        acquireNativeHandle(connection);
-        addReferenceTo(manager);
-        this.manager = manager;
+    protected HttpClientConnection(long connectionBinding) {
+        acquireNativeHandle(connectionBinding);
     }
 
     /**
@@ -68,21 +66,39 @@ public class HttpClientConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()){
-            manager.releaseConnectionPointer(getNativeHandle());
+            httpClientConnectionReleaseManaged(getNativeHandle());
         }
     }
 
+    /**
+     * Shuts down the underlying http connection.  Even if this function is called, you still need to properly close
+     * the connection as well in order to release the native resources.
+     */
     public void shutdown() {
         httpClientConnectionShutdown(getNativeHandle());
+    }
+
+
+    /** Called from Native when a new connection is acquired **/
+    private static void onConnectionAcquired(CompletableFuture<HttpClientConnection> acquireFuture, long nativeConnectionBinding, int errorCode) {
+        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+            acquireFuture.completeExceptionally(new HttpException(errorCode));
+            return;
+        }
+
+        HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
+        acquireFuture.complete(conn);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpClientConnectionMakeRequest(long connection,
+    private static native HttpStream httpClientConnectionMakeRequest(long connectionBinding,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
 
-    private static native void httpClientConnectionShutdown(long connection) throws CrtRuntimeException;
+    private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
+
+    private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
 }

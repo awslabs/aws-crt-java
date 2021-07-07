@@ -156,6 +156,72 @@ JNIEXPORT jlong JNICALL
 }
 
 JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_ProfileCredentialsProvider_profileCredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jlong bootstrapHandle,
+        jlong tls_context_handle,
+        jbyteArray profile_name_override,
+        jbyteArray config_file_name_override,
+        jbyteArray credentials_file_name_override) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_credentials_provider_profile_options options;
+    AWS_ZERO_STRUCT(options);
+    options.bootstrap = (struct aws_client_bootstrap *)bootstrapHandle;
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+    options.tls_ctx = (struct aws_tls_ctx *)tls_context_handle;
+
+    if (profile_name_override) {
+        options.profile_name_override = aws_jni_byte_cursor_from_jbyteArray_acquire(env, profile_name_override);
+    }
+
+    if (config_file_name_override) {
+        options.config_file_name_override = aws_jni_byte_cursor_from_jbyteArray_acquire(env, config_file_name_override);
+    }
+
+    if (credentials_file_name_override) {
+        options.credentials_file_name_override =
+            aws_jni_byte_cursor_from_jbyteArray_acquire(env, credentials_file_name_override);
+    }
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_profile(allocator, &options);
+    if (provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create profile credentials provider");
+    } else {
+        callback_data->provider = provider;
+    }
+
+    if (profile_name_override) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, profile_name_override, options.profile_name_override);
+    }
+
+    if (config_file_name_override) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, config_file_name_override, options.config_file_name_override);
+    }
+
+    if (credentials_file_name_override) {
+        aws_jni_byte_cursor_from_jbyteArray_release(
+            env, credentials_file_name_override, options.credentials_file_name_override);
+    }
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_X509CredentialsProvider_x509CredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
@@ -311,9 +377,19 @@ static int s_credentials_provider_delegate_get_credentials(
     jbyteArray java_session_token =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
 
+    if (java_access_key_id == NULL || java_secret_access_key == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "DelegateCredentialProvider - accessKeyId and secretAccessKey must be non null");
+        goto call_failed;
+    }
+
     struct aws_byte_cursor access_key_id = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_access_key_id);
     struct aws_byte_cursor secret_access_key = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_secret_access_key);
-    struct aws_byte_cursor session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_session_token);
+    struct aws_byte_cursor session_token;
+    AWS_ZERO_STRUCT(session_token);
+    if (java_session_token != NULL) {
+        session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_session_token);
+    }
     struct aws_credentials *native_credentials =
         aws_credentials_new(allocator, access_key_id, secret_access_key, session_token, UINT64_MAX);
     if (!native_credentials) {
@@ -328,7 +404,9 @@ static int s_credentials_provider_delegate_get_credentials(
 done:
     aws_jni_byte_cursor_from_jbyteArray_release(env, java_access_key_id, access_key_id);
     aws_jni_byte_cursor_from_jbyteArray_release(env, java_secret_access_key, secret_access_key);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
+    if (java_session_token != NULL) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
+    }
 call_failed:
     (*env)->DeleteLocalRef(env, java_credentials);
     return return_value;

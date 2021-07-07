@@ -6,6 +6,7 @@
 #include <jni.h>
 
 #include "crt.h"
+#include "http_connection_manager.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
@@ -283,7 +284,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     jobject jni_http_response_callback_handler) {
 
     (void)jni_class;
-    struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
@@ -546,7 +548,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     jlong jni_connection) {
 
     (void)jni_class;
-    struct aws_http_connection *native_conn = (struct aws_http_connection *)jni_connection;
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.Shutdown: Invalid aws_http_connection");

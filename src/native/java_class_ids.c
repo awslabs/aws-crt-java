@@ -311,13 +311,21 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnectionManager");
     AWS_FATAL_ASSERT(cls);
 
-    http_client_connection_manager_properties.onConnectionAcquired =
-        (*env)->GetMethodID(env, cls, "onConnectionAcquired", "(JI)V");
-    AWS_FATAL_ASSERT(http_client_connection_manager_properties.onConnectionAcquired);
-
     http_client_connection_manager_properties.onShutdownComplete =
         (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
+}
+
+struct java_http_client_connection_properties http_client_connection_properties;
+
+static void s_cache_http_client_connection(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpClientConnection");
+    AWS_FATAL_ASSERT(cls);
+    http_client_connection_properties.http_client_connection_class = (*env)->NewGlobalRef(env, cls);
+
+    http_client_connection_properties.on_connection_acquired_method_id =
+        (*env)->GetStaticMethodID(env, cls, "onConnectionAcquired", "(Ljava/util/concurrent/CompletableFuture;JI)V");
+    AWS_FATAL_ASSERT(http_client_connection_properties.on_connection_acquired_method_id);
 }
 
 struct java_http_stream_properties http_stream_properties;
@@ -530,7 +538,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
-        (*env)->GetMethodID(env, cls, "onFinished", "(I)V");
+        (*env)->GetMethodID(env, cls, "onFinished", "(II[B)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
@@ -619,6 +627,69 @@ static void s_cache_http_header(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
 }
 
+struct java_aws_exponential_backoff_retry_options_properties exponential_backoff_retry_options_properties;
+
+static void s_cache_exponential_backoff_retry_options(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions");
+    AWS_FATAL_ASSERT(cls);
+    exponential_backoff_retry_options_properties.exponential_backoff_retry_options_class =
+        (*env)->NewGlobalRef(env, cls);
+
+    exponential_backoff_retry_options_properties.exponential_backoff_retry_options_constructor_method_id =
+        (*env)->GetMethodID(
+            env, exponential_backoff_retry_options_properties.exponential_backoff_retry_options_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(
+        exponential_backoff_retry_options_properties.exponential_backoff_retry_options_constructor_method_id);
+
+    exponential_backoff_retry_options_properties.el_group_field_id =
+        (*env)->GetFieldID(env, cls, "eventLoopGroup", "Lsoftware/amazon/awssdk/crt/io/EventLoopGroup;");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.el_group_field_id);
+
+    exponential_backoff_retry_options_properties.max_retries_field_id = (*env)->GetFieldID(env, cls, "maxRetries", "J");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.max_retries_field_id);
+
+    exponential_backoff_retry_options_properties.backoff_scale_factor_ms_field_id =
+        (*env)->GetFieldID(env, cls, "backoffScaleFactorMS", "J");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.backoff_scale_factor_ms_field_id);
+
+    exponential_backoff_retry_options_properties.jitter_mode_field_id = (*env)->GetFieldID(
+        env, cls, "jitterMode", "Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode;");
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.jitter_mode_field_id);
+
+    jclass jitter_mode_cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode");
+    AWS_FATAL_ASSERT(jitter_mode_cls);
+    exponential_backoff_retry_options_properties.jitter_mode_class = (*env)->NewGlobalRef(env, jitter_mode_cls);
+
+    exponential_backoff_retry_options_properties.jitter_mode_value_field_id =
+        (*env)->GetFieldID(env, jitter_mode_cls, "value", "I");
+
+    AWS_FATAL_ASSERT(exponential_backoff_retry_options_properties.jitter_mode_value_field_id);
+}
+
+struct java_aws_standard_retry_options_properties standard_retry_options_properties;
+
+static void s_cache_standard_retry_options(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/StandardRetryOptions");
+    AWS_FATAL_ASSERT(cls);
+    standard_retry_options_properties.standard_retry_options_class = (*env)->NewGlobalRef(env, cls);
+
+    standard_retry_options_properties.standard_retry_options_constructor_method_id =
+        (*env)->GetMethodID(env, standard_retry_options_properties.standard_retry_options_class, "<init>", "()V");
+
+    standard_retry_options_properties.backoff_retry_options_field_id = (*env)->GetFieldID(
+        env, cls, "backoffRetryOptions", "Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions;");
+    AWS_FATAL_ASSERT(standard_retry_options_properties.backoff_retry_options_field_id);
+
+    standard_retry_options_properties.initial_bucket_capacity_field_id =
+        (*env)->GetFieldID(env, cls, "initialBucketCapacity", "J");
+    AWS_FATAL_ASSERT(standard_retry_options_properties.initial_bucket_capacity_field_id);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -636,6 +707,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_http_client_connection_manager(env);
+    s_cache_http_client_connection(env);
     s_cache_http_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
@@ -656,4 +728,6 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_crt(env);
     s_cache_aws_signing_result(env);
     s_cache_http_header(env);
+    s_cache_exponential_backoff_retry_options(env);
+    s_cache_standard_retry_options(env);
 }

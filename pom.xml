@@ -278,6 +278,7 @@
                 <excludes>
                     <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
+                    <exclude>**/*.dbg</exclude>
                 </excludes>
             </resource>
         </resources>
@@ -374,6 +375,10 @@
                     </systemPropertyVariables>
                     <shutdown>kill</shutdown>
                     <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                    <runOrder>alphabetical</runOrder>
+                    <useFile>false</useFile>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>1</forkCount>
                 </configuration>
             </plugin>
         </plugins>

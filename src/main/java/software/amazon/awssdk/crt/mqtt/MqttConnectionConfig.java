@@ -26,6 +26,8 @@ public final class MqttConnectionConfig extends CrtResource {
     private MqttClientConnectionEvents connectionCallbacks;
     private int keepAliveSecs = 0;
     private int pingTimeoutMs = 0;
+    private long minReconnectTimeoutSecs = 0L;
+    private long maxReconnectTimeoutSecs = 0L;
     private int protocolOperationTimeoutMs = 0;
     private boolean cleanSession = true;
 
@@ -174,7 +176,7 @@ public final class MqttConnectionConfig extends CrtResource {
      *
      * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
      *                   service to keep a connection alive
-     * 
+     *
      */
     @Deprecated
     public void setKeepAliveMs(int keepAliveMs) {
@@ -182,7 +184,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * @deprecated Queries the MQTT keep-alive via PING messages. Please use 
+     * @deprecated Queries the MQTT keep-alive via PING messages. Please use
      * getKeepAliveSecs instead.
      *
      * @return How often in milliseconds to send an MQTT PING message to the
@@ -195,12 +197,12 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /**
      * Configures MQTT keep-alive via PING messages. Note that this is not TCP
-     * keepalive. Note: AWS IoT Core only allows 30-1200 Secs. Anything larger than 
+     * keepalive. Note: AWS IoT Core only allows 30-1200 Secs. Anything larger than
      * 65535 will be capped.
      *
      * @param keepAliveSecs How often in seconds to send an MQTT PING message to the
      *                   service to keep a connection alive
-     * 
+     *
      */
     public void setKeepAliveSecs(int keepAliveSecs) {
         this.keepAliveSecs = keepAliveSecs;
@@ -234,6 +236,37 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public int getPingTimeoutMs() {
         return pingTimeoutMs;
+    }
+
+    /**
+     * Configures the minimum and maximum reconnect timeouts.
+     *
+     * The time between reconnect attempts will start at min and multiply by 2 until max is reached.
+     *
+     * @param minTimeoutSecs The timeout to start with
+     * @param maxTimeoutSecs The highest allowable wait time between reconnect attempts
+     */
+    public void setReconnectTimeoutSecs(long minTimeoutSecs, long maxTimeoutSecs) {
+        this.minReconnectTimeoutSecs = minTimeoutSecs;
+        this.maxReconnectTimeoutSecs = maxTimeoutSecs;
+    }
+
+    /**
+     * Return the minimum reconnect timeout.
+     *
+     * @return The timeout to start with
+     */
+    public long getMinReconnectTimeoutSecs() {
+        return minReconnectTimeoutSecs;
+    }
+
+    /**
+     * Return the maximum reconnect timeout.
+     *
+     * @return The highest allowable wait time between reconnect attempts
+     */
+    public long getMaxReconnectTimeoutSecs() {
+        return maxReconnectTimeoutSecs;
     }
 
     /**

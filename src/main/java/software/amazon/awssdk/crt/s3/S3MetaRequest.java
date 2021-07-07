@@ -8,7 +8,7 @@ public class S3MetaRequest extends CrtResource {
 
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
-    S3MetaRequest() {
+    public S3MetaRequest() {
 
     }
 

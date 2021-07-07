@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
@@ -8,6 +13,7 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -37,6 +43,18 @@ public class S3NativeClient implements AutoCloseable {
         this(signingRegion, new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
                 .withCredentialsProvider(credentialsProvider).withRegion(signingRegion).withPartSize(partSizeBytes)
                 .withThroughputTargetGbps(targetThroughputGbps).withMaxConnections(maxConnections)));
+    }
+
+    // TODO Builder class for S3NativeClient
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+            final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+            final int maxConnections, final StandardRetryOptions retryOptions) {
+
+        this(signingRegion,
+                new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                        .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
+                        .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
+                        .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)));
     }
 
     public S3NativeClient(final String signingRegion, final S3Client s3Client) {
@@ -86,10 +104,13 @@ public class S3NativeClient implements AutoCloseable {
     }
 
     private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
+        metaRequest.addRef();
+
         future.whenComplete((r, t) -> {
             if (future.isCancelled()) {
                 metaRequest.cancel();
             }
+            metaRequest.close();
         });
     }
 
@@ -236,11 +257,21 @@ public class S3NativeClient implements AutoCloseable {
 
             @Override
             public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
-                if (errorCode == CRT.AWS_CRT_SUCCESS) {
-                    resultFuture.complete(resultBuilder.build());
-                } else {
-                    resultFuture
-                            .completeExceptionally(new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
+                CrtS3RuntimeException ex = null;
+                try {
+                    if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                        ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
+                        requestDataSupplier.onException(ex);
+                    } else {
+                        requestDataSupplier.onFinished();
+                    }
+                } catch (Exception e) { /* ignore user callback exception */
+                } finally {
+                    if (ex != null) {
+                        resultFuture.completeExceptionally(ex);
+                    } else {
+                        resultFuture.complete(resultBuilder.build());
+                    }
                 }
             }
         };

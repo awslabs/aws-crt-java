@@ -17,8 +17,7 @@ tasks.compileJava {
 sourceSets {
     main {
         java {
-            //srcDirs("${buildDir}/smithyprojections/${project.name}/source/crt")
-            srcDirs("src/generated/java")
+            srcDirs("../src/main/java/s3-native-client")
         }
     }
 }

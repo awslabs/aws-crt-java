@@ -4,6 +4,6 @@
 -doctitle 'AWS Common Runtime for Java/JVM'
 -header '<b>AWS Common Runtime for Java/JVM</b>'
 -bottom 'Copyright &copy; Amazon.com, Inc. or its affiliates. All Rights Reserved.'
--sourcepath src/main/java
+-sourcepath src/main/java/software/amazon/awssdk/crt
 -subpackages
 software.amazon.awssdk.crt

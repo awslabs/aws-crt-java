@@ -30,9 +30,9 @@ description = "software.amazon.awssdk.crt:aws-crt"
 sourceSets {
     main {
         java {
-            setSrcDirs(listOf("src/main/java", 
-                    "${project(":s3-native-client").projectDir}/src/main/java",
-                    "${project(":s3-native-client").projectDir}/src/generated/java"))
+            setSrcDirs(listOf("src/main/java/software/amazon/awssdk/crt",
+                    "src/main/java/s3-native-client/com",
+                    "src/main/java/s3-native-client/generated"))
         }
         // include shared libraries built by cmake/CI/CD in the lib folder
         resources {

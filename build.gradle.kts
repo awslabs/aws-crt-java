@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
     testImplementation("junit:junit:4.12")
+    testImplementation("org.mockito:mockito-core:3.+")
 }
 
 group = "software.amazon.awssdk.crt"
@@ -30,9 +31,7 @@ description = "software.amazon.awssdk.crt:aws-crt"
 sourceSets {
     main {
         java {
-            setSrcDirs(listOf("src/main/java", 
-                    "${project(":s3-native-client").projectDir}/src/main/java",
-                    "${project(":s3-native-client").projectDir}/src/generated/java"))
+            setSrcDirs(listOf("src/main/java"))
         }
         // include shared libraries built by cmake/CI/CD in the lib folder
         resources {

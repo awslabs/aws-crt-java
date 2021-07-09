@@ -1,48 +1,34 @@
 package software.amazon.awssdk.crt.test;
 
-import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.s3.*;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
-import software.amazon.awssdk.crt.utils.ByteBufferUtils;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
+import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.io.*;
+import software.amazon.awssdk.crt.s3.*;
+import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.time.Instant;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
-import java.util.LinkedList;
-import java.util.List;
-
-import software.amazon.awssdk.crt.io.StandardRetryOptions;
-import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions;
 
 public class S3ClientTest extends CrtTestFixture {
 

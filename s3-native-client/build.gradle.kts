@@ -17,7 +17,7 @@ tasks.compileJava {
 sourceSets {
     main {
         java {
-            srcDirs("../src/main/java/s3-native-client")
+            srcDirs("../src/main/java/s3NativeClient")
         }
     }
 }

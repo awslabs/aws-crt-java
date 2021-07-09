@@ -101,6 +101,7 @@ endif()
 
 include(UseJava)
 include(AwsPlatformDetect)
+include(AwsSharedLibSetup)
 
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"

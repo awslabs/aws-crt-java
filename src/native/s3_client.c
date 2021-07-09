@@ -196,7 +196,7 @@ static int s_on_s3_meta_request_body_callback(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, body->ptr, body->len);
+    jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
     jint body_response_result = 0;
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {

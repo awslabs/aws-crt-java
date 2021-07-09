@@ -17,9 +17,10 @@ Requirements:
 
 Building:
 1) apt-get install cmake3 maven openjdk-8-jdk-headless -y
-2) git clone --recursive https://github.com/awslabs/aws-crt-java.git
+2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) mvn compile
+4) git submodule update --init --recursive
+5) mvn compile
 
 ### OSX
 Requirements:
@@ -30,7 +31,8 @@ Requirements:
 1) brew install maven cmake3 (if you have homebrew installed, otherwise install these manually)
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) mvn compile
+4) git submodule update --init --recursive
+5) mvn compile
 
 ### Windows
 Requirements:
@@ -41,7 +43,8 @@ Requirements:
 1) choco install maven (if you have chocolatey installed), otherwise install maven and the JDK manually
 2) git clone https://github.com/awslabs/aws-crt-java.git
 3) cd aws-crt-java
-4) mvn compile
+4) git submodule update --init --recursive
+5) mvn compile
 
 NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
 CMake can find Visual Studio.

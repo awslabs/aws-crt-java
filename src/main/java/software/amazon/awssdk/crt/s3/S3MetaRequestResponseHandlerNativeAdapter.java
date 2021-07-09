@@ -11,8 +11,8 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         this.responseHandler = responseHandler;
     }
 
-    int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-        return this.responseHandler.onResponseBody(bodyBytesIn, objectRangeStart, objectRangeEnd);
+    int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+        return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {

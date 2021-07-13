@@ -384,7 +384,8 @@ JNIEXPORT void JNICALL
 
     jobject future_ref = (*env)->NewGlobalRef(env, acquire_future);
     if (future_ref == NULL) {
-        aws_jni_throw_runtime_exception(env, "httpClientConnectionManagerAcquireConnection: failed to obtain ref to future");
+        aws_jni_throw_runtime_exception(
+            env, "httpClientConnectionManagerAcquireConnection: failed to obtain ref to future");
         return;
     }
 

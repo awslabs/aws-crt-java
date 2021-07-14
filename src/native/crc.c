@@ -18,7 +18,7 @@ jint crc_common(JNIEnv *env, jbyteArray input, jint previous, uint32_t (*checksu
         buf += (size_t)INT_MAX;
         len -= (size_t)INT_MAX;
     }
-    jint res_signed = (jint)checksum_fn(buf, len, res);
+    jint res_signed = (jint)checksum_fn(buf, (int)len, res);
     return res_signed;
 }
 

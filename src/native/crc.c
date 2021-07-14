@@ -15,7 +15,8 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Crc_crc32(
     jint previous) {
     (void)jni_class;
     struct aws_byte_cursor cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
-    return (jint)aws_checksums_crc32(cursor.ptr, cursor.len, (uint32_t)previous);
+    jint res = (jint)aws_checksums_crc32(cursor.ptr, cursor.len, (uint32_t)previous);
+    return res;
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Crc_crc32c(
@@ -25,5 +26,6 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Crc_crc32c(
     jint previous) {
     (void)jni_class;
     struct aws_byte_cursor cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
-    return (jint)aws_checksums_crc32c(cursor.ptr, cursor.len, (uint32_t)previous);
+    jint res = (jint)aws_checksums_crc32c(cursor.ptr, cursor.len, (uint32_t)previous);
+    return res;
 }

@@ -16,7 +16,7 @@ struct aws_tls_ctx;
 
 struct aws_http_connection_binding {
     JavaVM *jvm;
-    jweak java_acquire_connection_future;
+    jobject java_acquire_connection_future;
     struct aws_http_connection_manager *manager;
     struct aws_http_connection *connection;
 };

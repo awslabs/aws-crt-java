@@ -6,7 +6,7 @@ package software.amazon.awssdk.crt.checksums;
 
 import software.amazon.awssdk.crt.CrtResource;
 
-public abstract class Crc extends CrtResource {
+public abstract class Checksums {
 
     /* java built in implementation of crc32 and crc32c returns a long, this can cause some confusion if not handled
        properly as crc32 and crc32c only result in 32 bits. be careful when mixing the built in implementation with this

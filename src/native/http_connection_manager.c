@@ -362,9 +362,6 @@ static void s_on_http_conn_acquisition_callback(
         jni_error_code);
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-
-    (*env)->DeleteGlobalRef(env, binding->java_acquire_connection_future);
-    binding->java_acquire_connection_future = NULL;
 }
 
 JNIEXPORT void JNICALL

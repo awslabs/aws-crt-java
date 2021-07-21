@@ -5,6 +5,7 @@
 package software.amazon.awssdk.crt.checksums;
 
 import software.amazon.awssdk.crt.CrtResource;
+import java.nio.ByteBuffer;
 
 public abstract class Checksums {
 
@@ -16,6 +17,24 @@ public abstract class Checksums {
     }
     public static int crc32c(byte[] input) {
         return crc32c(input, 0, 0, input.length);
+    }
+
+    public static int crc32(int input, int prev) {
+        byte[] buf = ByteBuffer.allocate(4).putInt(input).array();
+        return crc32(buf, prev, 0, buf.length);
+    }
+    public static int crc32c(int input, int prev) {
+        byte[] buf = ByteBuffer.allocate(4).putInt(input).array();
+        return crc32c(buf, prev, 0, buf.length);
+    }
+
+    public static int crc32(int input) {
+        byte[] buf = ByteBuffer.allocate(4).putInt(input).array();
+        return crc32(buf, 0, 0, buf.length);
+    }
+    public static int crc32c(int input) {
+        byte[] buf = ByteBuffer.allocate(4).putInt(input).array();
+        return crc32c(buf, 0, 0, buf.length);
     }
 
     public static int crc32(byte[] input, int previous) {

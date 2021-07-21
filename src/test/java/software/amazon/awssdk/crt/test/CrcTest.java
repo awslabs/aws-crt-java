@@ -51,6 +51,32 @@ public class CrcTest extends CrtTestFixture {
         assertEquals(expected, res);
     }
     @Test
+    public void testCrc32ValuesSectionIterated5() {
+        byte[] values = new byte[32];
+        for (byte i = 0; i < 32; i++) {
+            values[i] = i;
+        }
+        int res = 0;
+        for (byte i = 0; i < 32; i += 5) {
+            res = Checksums.crc32(values, res, i, 5);
+        }
+        int expected = 0x91267E8A;
+        assertEquals(expected, res);
+    }
+    @Test
+    public void testCrc32ValuesSectionIterated4() {
+        byte[] values = new byte[32];
+        for (byte i = 0; i < 32; i++) {
+            values[i] = i;
+        }
+        int res = 0;
+        for (byte i = 0; i < 32; i += 4) {
+            res = Checksums.crc32(values, res, i, 4);
+        }
+        int expected = 0x91267E8A;
+        assertEquals(expected, res);
+    }
+    @Test
     public void testCrc32LargeBuffer() {
         byte[] zeroes = new byte[25 * (1 << 20)];
         int res = Checksums.crc32(zeroes);
@@ -89,6 +115,32 @@ public class CrcTest extends CrtTestFixture {
         for (byte i = 0; i < 32; i++) {
             byte[] buf = {i};
             res = Checksums.crc32c(buf, res);
+        }
+        int expected = 0x46DD794E;
+        assertEquals(expected, res);
+    }
+    @Test
+    public void testCrc32CValuesSectionIterated5() {
+        byte[] values = new byte[32];
+        for (byte i = 0; i < 32; i++) {
+            values[i] = i;
+        }
+        int res = 0;
+        for (byte i = 0; i < 32; i += 5) {
+            res = Checksums.crc32c(values, res, i, 5);
+        }
+        int expected = 0x46DD794E;
+        assertEquals(expected, res);
+    }
+    @Test
+    public void testCrc32CValuesSectionIterated4() {
+        byte[] values = new byte[32];
+        for (byte i = 0; i < 32; i++) {
+            values[i] = i;
+        }
+        int res = 0;
+        for (byte i = 0; i < 32; i += 4) {
+            res = Checksums.crc32c(values, res, i, 4);
         }
         int expected = 0x46DD794E;
         assertEquals(expected, res);

@@ -8,17 +8,24 @@
 
 #include "crt.h"
 
-jint crc_common(JNIEnv *env, jbyteArray input, jint previous, uint32_t (*checksum_fn)(const uint8_t *, int, uint32_t)) {
+jint crc_common(
+    JNIEnv *env,
+    jbyteArray input,
+    jint previous,
+    const size_t start,
+    size_t length,
+    uint32_t (*checksum_fn)(const uint8_t *, int, uint32_t)) {
     struct aws_byte_cursor cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
-    size_t len = cursor.len;
+    aws_byte_cursor_advance(&cursor, start);
+    cursor.len = aws_min_i64(length, cursor.len);
     uint32_t res = (uint32_t)previous;
-    uint8_t *buf = cursor.ptr;
-    while (len > INT_MAX) {
-        res = checksum_fn(buf, INT_MAX, res);
-        buf += (size_t)INT_MAX;
-        len -= (size_t)INT_MAX;
+    while (cursor.len > INT_MAX) {
+        res = checksum_fn(cursor.ptr, INT_MAX, res);
+        aws_byte_cursor_advance(&cursor, INT_MAX);
     }
-    jint res_signed = (jint)checksum_fn(buf, (int)len, res);
+    jint res_signed = (jint)checksum_fn(cursor.ptr, (int)cursor.len, res);
+    (void)start;
+    (void)length;
     return res_signed;
 }
 
@@ -26,16 +33,20 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Checksums_crc32
     JNIEnv *env,
     jclass jni_class,
     jbyteArray input,
-    jint previous) {
+    jint previous,
+    jint offset,
+    jint length) {
     (void)jni_class;
-    return crc_common(env, input, previous, aws_checksums_crc32);
+    return crc_common(env, input, previous, offset, length, aws_checksums_crc32);
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Checksums_crc32c(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray input,
-    jint previous) {
+    jint previous,
+    jint offset,
+    jint length) {
     (void)jni_class;
-    return crc_common(env, input, previous, aws_checksums_crc32c);
+    return crc_common(env, input, previous, offset, length, aws_checksums_crc32c);
 }

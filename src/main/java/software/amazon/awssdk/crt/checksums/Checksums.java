@@ -12,12 +12,19 @@ public abstract class Checksums {
        properly as crc32 and crc32c only result in 32 bits. be careful when mixing the built in implementation with this
        one */
     public static int crc32(byte[] input) {
-        return crc32(input, 0);
+        return crc32(input, 0, 0, input.length);
     }
     public static int crc32c(byte[] input) {
-        return crc32c(input, 0);
+        return crc32c(input, 0, 0, input.length);
     }
 
-    public static native int crc32(byte[] input, int previous);
-    public static native int crc32c(byte[] input, int previous);
+    public static int crc32(byte[] input, int previous) {
+        return crc32(input, previous, 0, input.length);
+    }
+    public static int crc32c(byte[] input, int previous) {
+        return crc32c(input, previous, 0, input.length);
+    }
+
+    public static native int crc32(byte[] input, int previous, int offset, int length);
+    public static native int crc32c(byte[] input, int previous, int offset, int length);
 }

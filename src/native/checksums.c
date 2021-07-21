@@ -24,8 +24,6 @@ jint crc_common(
         aws_byte_cursor_advance(&cursor, INT_MAX);
     }
     jint res_signed = (jint)checksum_fn(cursor.ptr, (int)cursor.len, res);
-    (void)start;
-    (void)length;
     return res_signed;
 }
 

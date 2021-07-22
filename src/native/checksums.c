@@ -27,7 +27,7 @@ jint crc_common(
     return res_signed;
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Checksums_crc32(
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32_crc32(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray input,
@@ -38,7 +38,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Checksums_crc32
     return crc_common(env, input, previous, offset, length, aws_checksums_crc32);
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_Checksums_crc32c(
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32C_crc32c(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray input,

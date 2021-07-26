@@ -83,16 +83,16 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
         (*env)->DeleteGlobalRef(env, callback->java_http_response_stream_handler);
     }
 
-    if (callback->native_request) {
-        // struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
-        // if (input_stream != NULL) {
-        //     aws_input_stream_destroy(input_stream);
-        // }
+    // if (callback->native_request) {
+    //     struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
+    //     if (input_stream != NULL) {
+    //         aws_input_stream_destroy(input_stream);
+    //     }
 
-        aws_http_message_destroy(callback->native_request);
-    }
+    //     aws_http_message_destroy(callback->native_request);
+    // }
 
-    aws_byte_buf_clean_up(&callback->headers_buf);
+    // aws_byte_buf_clean_up(&callback->headers_buf);
     aws_mem_release(aws_jni_get_allocator(), callback);
 }
 

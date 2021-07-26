@@ -84,10 +84,10 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
     }
 
     if (callback->native_request) {
-        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
-        if (input_stream != NULL) {
-            aws_input_stream_destroy(input_stream);
-        }
+        // struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
+        // if (input_stream != NULL) {
+        //     aws_input_stream_destroy(input_stream);
+        // }
 
         aws_http_message_destroy(callback->native_request);
     }

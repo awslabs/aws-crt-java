@@ -298,7 +298,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
         g_memory_tracing = 1;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
+    struct aws_allocator *allocator = aws_default_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);

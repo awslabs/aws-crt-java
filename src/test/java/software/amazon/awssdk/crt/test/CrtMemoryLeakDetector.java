@@ -223,6 +223,4 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     public void testLeakDetectorParallel_32() throws Exception {
         runViaThreadPool(32);
     }
-
-    /* Native methods */
 }

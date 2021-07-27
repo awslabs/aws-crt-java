@@ -346,6 +346,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     return allocated;
 }
 
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CRT_awsMemTracerDump(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+    if (g_memory_tracing > 1) {
+        aws_mem_tracer_dump(aws_jni_get_allocator());
+    }
+}
+
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
     struct aws_string *string = aws_string_new_from_array(aws_jni_get_allocator(), native_data->ptr, native_data->len);
     if (string == NULL) {

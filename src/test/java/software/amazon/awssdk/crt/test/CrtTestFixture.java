@@ -53,6 +53,14 @@ public class CrtTestFixture {
         HostResolver.closeStaticDefault();
 
         CrtResource.waitForNoResources();
+        if (CRT.getOSIdentifier() != "android") {
+            try {
+                Runtime.getRuntime().gc();
+                CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+            } catch (Exception e) {
+                throw new RuntimeException("Memory leak from native resource detected!");
+            }
+        }
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {
@@ -75,12 +83,12 @@ public class CrtTestFixture {
         if (credentials == null) {
             try {
                 try (EventLoopGroup elg = new EventLoopGroup(1);
-                    HostResolver hostResolver = new HostResolver(elg);
-                    ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
+                        HostResolver hostResolver = new HostResolver(elg);
+                        ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver)) {
 
-                    try (DefaultChainCredentialsProvider provider = ((new DefaultChainCredentialsProviderBuilder()).withClientBootstrap(clientBootstrap)).build()) {
-                        credentials = Optional
-                            .of(provider.getCredentials().get());
+                    try (DefaultChainCredentialsProvider provider = ((new DefaultChainCredentialsProviderBuilder())
+                            .withClientBootstrap(clientBootstrap)).build()) {
+                        credentials = Optional.of(provider.getCredentials().get());
                     }
                 }
             } catch (Exception ex) {

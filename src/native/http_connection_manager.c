@@ -362,6 +362,9 @@ static void s_on_http_conn_acquisition_callback(
         jni_error_code);
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    if (error_code) {
+        s_destroy_connection_binding(binding);
+    }
 }
 
 JNIEXPORT void JNICALL

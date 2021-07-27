@@ -57,6 +57,8 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         String output = "";
         long nativeMemory = getNativeMemoryInUse();
         if (nativeMemory > 0) {
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+
             output += "Potential Native Memory Leak!\n";
             Assert.fail(String.format("%s\nNative Memory remain: %s\n", output, nativeMemory));
             CRT.awsMemTracerDump();

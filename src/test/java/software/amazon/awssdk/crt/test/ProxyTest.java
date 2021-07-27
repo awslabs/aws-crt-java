@@ -27,6 +27,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
@@ -494,6 +495,8 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_DoubleTls_NoAuth() {
+        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+        
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 

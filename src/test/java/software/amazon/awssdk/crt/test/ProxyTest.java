@@ -125,7 +125,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     private TlsContext createHttpClientTlsContext() {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            return new ClientTlsContext(options);
+            return new TlsContext(options);
         }
     }
 
@@ -134,7 +134,7 @@ public class ProxyTest extends CrtTestFixture  {
             try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
                 options.verifyPeer = false;
 
-                return new ClientTlsContext(options);
+                return new TlsContext(options);
             }
         }
 
@@ -399,7 +399,7 @@ public class ProxyTest extends CrtTestFixture  {
                 options.withAlpnList(alpn);
             }
 
-            return new ClientTlsContext(options);
+            return new TlsContext(options);
         }
     }
 
@@ -495,7 +495,6 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_DoubleTls_NoAuth() {
-        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());

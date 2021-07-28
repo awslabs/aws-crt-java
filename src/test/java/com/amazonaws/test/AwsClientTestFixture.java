@@ -23,35 +23,14 @@ import org.junit.After;
  * Stub for getting Aws credentials from environment for running CI tests
  */
 public class AwsClientTestFixture {
-    private CrtTestContext context;
-
-    public final CrtTestContext getContext() {
-        return context;
-    }
 
     @BeforeClass
     public static void enable_log() {
         Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
     }
 
-    @Before
-    public void setup() {
-        context = new CrtTestContext();
-        CrtPlatform platform = CRT.getPlatformImpl();
-        if (platform != null) {
-            platform.testSetup(context);
-        }
-    }
-
     @After
     public void tearDown() {
-        CrtPlatform platform = CRT.getPlatformImpl();
-        if (platform != null) {
-            platform.testTearDown(context);
-        }
-
-        context = null;
-
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {

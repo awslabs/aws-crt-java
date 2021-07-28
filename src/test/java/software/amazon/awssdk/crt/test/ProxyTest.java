@@ -27,7 +27,6 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
@@ -125,7 +124,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     private TlsContext createHttpClientTlsContext() {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            return new TlsContext(options);
+            return new ClientTlsContext(options);
         }
     }
 
@@ -134,7 +133,7 @@ public class ProxyTest extends CrtTestFixture  {
             try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
                 options.verifyPeer = false;
 
-                return new TlsContext(options);
+                return new ClientTlsContext(options);
             }
         }
 
@@ -216,7 +215,7 @@ public class ProxyTest extends CrtTestFixture  {
              HostResolver resolver = new HostResolver(eventLoopGroup);
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
              SocketOptions sockOpts = new SocketOptions();
-             TlsContext tlsContext = createHttpClientTlsContext();
+            //  TlsContext tlsContext = createHttpClientTlsContext();
              TlsContext proxyTlsContext = createProxyTlsContext(testType)) {
 
             HttpProxyOptions proxyOptions = buildProxyOptions(testType, authType, proxyTlsContext);
@@ -224,7 +223,7 @@ public class ProxyTest extends CrtTestFixture  {
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
-                    .withTlsContext(tlsContext)
+                    // .withTlsContext(tlsContext)
                     .withUri(getUriForTest(testType))
                     .withMaxConnections(1)
                     .withProxyOptions(proxyOptions);
@@ -399,7 +398,7 @@ public class ProxyTest extends CrtTestFixture  {
                 options.withAlpnList(alpn);
             }
 
-            return new TlsContext(options);
+            return new ClientTlsContext(options);
         }
     }
 
@@ -495,7 +494,6 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_DoubleTls_NoAuth() {
-        
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 

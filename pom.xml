@@ -378,7 +378,7 @@
                     <runOrder>alphabetical</runOrder>
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
-                    <forkCount>1</forkCount>
+                    <forkCount>0</forkCount>
                 </configuration>
             </plugin>
         </plugins>

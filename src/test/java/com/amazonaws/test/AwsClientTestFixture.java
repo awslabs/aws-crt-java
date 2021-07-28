@@ -25,13 +25,8 @@ import org.junit.After;
  */
 public class AwsClientTestFixture {
 
-    @BeforeClass
-    public static void enable_log() {
-        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
-    }
-
-    @After
-    public void tearDown() {
+    @Before
+    public void cleanup_log() {
         /* Only want to see the log from one test */
         File myObj = new File("log.txt");
         if (myObj.delete()) {
@@ -39,6 +34,11 @@ public class AwsClientTestFixture {
         } else {
             System.out.println("Failed to delete the file.");
         }
+        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+    }
+
+    @After
+    public void tearDown() {
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {

@@ -35,7 +35,8 @@ public enum TlsCipherPreference {
      * While these Post Quantum Hybrid TLS Ciphers are the most preferred ciphers in the preference list, classical
      * ciphers are still present and can be negotiated if the TLS peer does not support these Hybrid TLS Ciphers.
      *
-     * This Cipher Preference may stop being supported at any time.
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
      */
     TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06(1),
 
@@ -46,7 +47,8 @@ public enum TlsCipherPreference {
      *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
      *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
      *
-     * This Cipher Preference may stop being supported at any time.
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
      */
     TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2019_11(2),
 
@@ -58,7 +60,8 @@ public enum TlsCipherPreference {
      *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
      *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
      *
-     * This Cipher Preference may stop being supported at any time.
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
      */
     TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_02(3),
 
@@ -70,7 +73,8 @@ public enum TlsCipherPreference {
      *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
      *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
      *
-     * This Cipher Preference may stop being supported at any time.
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
      */
     TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02(4),
 
@@ -82,9 +86,24 @@ public enum TlsCipherPreference {
      *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
      *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
      *
-     * This Cipher Preference may stop being supported at any time.
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
      */
-    TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07(5);
+    TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07(5),
+
+    /**
+     * This TlsCipherPreference supports TLS 1.0 through TLS 1.3, as well as supporting Kyber Round 3, Bike Round 3,
+     * and SIKE Round 3.
+     *
+     * For more info see:
+     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
+     *   - https://datatracker.ietf.org/doc/html/draft-ietf-tls-hybrid-design
+     *   - https://aws.amazon.com/blogs/security/post-quantum-tls-now-supported-in-aws-kms/
+     *
+     * Since this Cipher Preference contains algorithms still being evaluated by NIST, it may stop being supported at
+     * any time.
+     */
+    TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05(6);
 
     private int val;
 

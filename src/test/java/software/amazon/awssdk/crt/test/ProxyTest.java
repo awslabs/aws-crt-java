@@ -215,7 +215,7 @@ public class ProxyTest extends CrtTestFixture  {
              HostResolver resolver = new HostResolver(eventLoopGroup);
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
              SocketOptions sockOpts = new SocketOptions();
-            //  TlsContext tlsContext = createHttpClientTlsContext();
+             TlsContext tlsContext = createHttpClientTlsContext();
              TlsContext proxyTlsContext = createProxyTlsContext(testType)) {
 
             HttpProxyOptions proxyOptions = buildProxyOptions(testType, authType, proxyTlsContext);
@@ -223,7 +223,7 @@ public class ProxyTest extends CrtTestFixture  {
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
-                    // .withTlsContext(tlsContext)
+                    .withTlsContext(tlsContext)
                     .withUri(getUriForTest(testType))
                     .withMaxConnections(1)
                     .withProxyOptions(proxyOptions);

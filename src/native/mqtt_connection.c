@@ -1071,6 +1071,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_options.host);
+    aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
 }
 
 #if UINTPTR_MAX == 0xffffffff

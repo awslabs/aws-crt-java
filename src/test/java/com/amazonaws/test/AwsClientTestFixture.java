@@ -14,6 +14,7 @@ import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
 import java.nio.charset.StandardCharsets;
+import java.io.File;
 
 import org.junit.BeforeClass;
 import org.junit.Before;
@@ -31,6 +32,13 @@ public class AwsClientTestFixture {
 
     @After
     public void tearDown() {
+        /* Only want to see the log from one test */
+        File myObj = new File("log.txt");
+        if (myObj.delete()) {
+            System.out.println("Deleted the file: " + myObj.getName());
+        } else {
+            System.out.println("Failed to delete the file.");
+        }
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {

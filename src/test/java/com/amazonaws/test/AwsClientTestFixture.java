@@ -26,7 +26,7 @@ public class AwsClientTestFixture {
 
     @BeforeClass
     public static void enable_log() {
-        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
     }
 
     @After

@@ -304,7 +304,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testGetObjectCancelHelper(CancelTestData<GetObjectOutput> testData,
             CancelResponseDataConsumer dataConsumer) {
-        System.out.println("testGetObjectCancelHelper");
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -330,6 +329,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCancelHeaders() {
+        System.out.println("testGetObjectCancelHeaders");
         final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
 
         testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
@@ -344,6 +344,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCancelDuringParts() {
+        System.out.println("testGetObjectCancelDuringParts");
         final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
 
         testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {

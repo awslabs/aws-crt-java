@@ -62,6 +62,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObject() {
+        System.out.println("testGetObject");
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -98,6 +99,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectExceptionCatch() throws Throwable {
+        System.out.println("testGetObjectExceptionCatch");
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -143,6 +145,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
+        System.out.println("testPutObject");
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -170,76 +173,131 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequestsWithLeakCheck() {
+        System.out.println("testConcurrentRequestsWithLeakCheck");
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        Callable<Void> fn = () -> {
 
-            try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-                    final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-                    final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                    final CredentialsProvider provider = getTestCredentialsProvider();
-                    final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
-                            64_000_000l, 10.)) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        10.)) {
 
-                final long lengthWritten[] = { 0 };
-                final long contentLength = 1024l;
-                final long length[] = { 0 };
-                List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
-                final int concurrentNum = 20;
-                for (int i = 0; i < concurrentNum; i++) {
-                    futures.add(nativeClient.getObject(
-                            GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
-                            new ResponseDataConsumer<GetObjectOutput>() {
+            final long lengthWritten[] = { 0 };
+            final long contentLength = 1024l;
+            final long length[] = { 0 };
+            List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
+            final int concurrentNum = 20;
+            for (int i = 0; i < concurrentNum; i++) {
+                futures.add(
+                        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+                                new ResponseDataConsumer<GetObjectOutput>() {
 
-                                @Override
-                                public void onResponse(GetObjectOutput response) {
-                                    assertNotNull(response);
-                                }
+                                    @Override
+                                    public void onResponse(GetObjectOutput response) {
+                                        assertNotNull(response);
+                                    }
 
-                                @Override
-                                public void onResponseData(ByteBuffer bodyBytesIn) {
-                                    length[0] += bodyBytesIn.remaining();
-                                }
+                                    @Override
+                                    public void onResponseData(ByteBuffer bodyBytesIn) {
+                                        length[0] += bodyBytesIn.remaining();
+                                    }
 
-                                @Override
-                                public void onFinished() {
-                                }
+                                    @Override
+                                    public void onFinished() {
+                                    }
 
-                                @Override
-                                public void onException(final CrtRuntimeException e) {
-                                }
-                            }));
+                                    @Override
+                                    public void onException(final CrtRuntimeException e) {
+                                    }
+                                }));
 
-                    futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
-                            .contentLength(contentLength).build(), buffer -> {
-                                while (buffer.hasRemaining()) {
-                                    buffer.put((byte) 42);
-                                    ++lengthWritten[0];
-                                }
+                futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
+                        .contentLength(contentLength).build(), buffer -> {
+                            while (buffer.hasRemaining()) {
+                                buffer.put((byte) 42);
+                                ++lengthWritten[0];
+                            }
 
-                                return lengthWritten[0] == contentLength;
-                            }));
-                }
-                ;
-                CompletableFuture<?> allFutures = CompletableFuture
-                        .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
-                allFutures.join();
+                            return lengthWritten[0] == contentLength;
+                        }));
             }
-            return null;
-        };
-
-        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
-        // observable correlation
-        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we
-        // don't bother.
-        // If we have a leak, we should have it on all platforms, and we'll catch it
-        // elsewhere.
-        if (CRT.getOSIdentifier() != "android") {
-            try {
-                CrtMemoryLeakDetector.leakCheck(fn);
-            } catch (Exception e) {
-                throw new RuntimeException("concurrent test failed!");
-            }
+            CompletableFuture<?> allFutures = CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+            allFutures.join();
         }
+        // Callable<Void> fn = () -> {
+
+        // try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+        // final HostResolver resolver = new HostResolver(elGroup,
+        // DEFAULT_MAX_HOST_ENTRIES);
+        // final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup,
+        // resolver);
+        // final CredentialsProvider provider = getTestCredentialsProvider();
+        // final S3NativeClient nativeClient = new S3NativeClient(REGION,
+        // clientBootstrap, provider,
+        // 64_000_000l, 10.)) {
+
+        // final long lengthWritten[] = { 0 };
+        // final long contentLength = 1024l;
+        // final long length[] = { 0 };
+        // List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
+        // final int concurrentNum = 20;
+        // for (int i = 0; i < concurrentNum; i++) {
+        // futures.add(nativeClient.getObject(
+        // GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+        // new ResponseDataConsumer<GetObjectOutput>() {
+
+        // @Override
+        // public void onResponse(GetObjectOutput response) {
+        // assertNotNull(response);
+        // }
+
+        // @Override
+        // public void onResponseData(ByteBuffer bodyBytesIn) {
+        // length[0] += bodyBytesIn.remaining();
+        // }
+
+        // @Override
+        // public void onFinished() {
+        // }
+
+        // @Override
+        // public void onException(final CrtRuntimeException e) {
+        // }
+        // }));
+
+        // futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
+        // .contentLength(contentLength).build(), buffer -> {
+        // while (buffer.hasRemaining()) {
+        // buffer.put((byte) 42);
+        // ++lengthWritten[0];
+        // }
+
+        // return lengthWritten[0] == contentLength;
+        // }));
+        // }
+        // CompletableFuture<?> allFutures = CompletableFuture
+        // .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+        // allFutures.join();
+        // }
+        // return null;
+        // };
+
+        // // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
+        // // observable correlation
+        // // to when System.gc() is called. Therefore, we cannot reliably sample it, so
+        // we
+        // // don't bother.
+        // // If we have a leak, we should have it on all platforms, and we'll catch it
+        // // elsewhere.
+        // if (CRT.getOSIdentifier() != "android") {
+        // try {
+        // CrtMemoryLeakDetector.leakCheck(fn);
+        // } catch (Exception e) {
+        // throw new RuntimeException("concurrent test failed!");
+        // }
+        // }
     }
 
     private class CancelTestData<T> {
@@ -325,6 +383,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCancelHeaders() {
+        System.out.println("testGetObjectCancelHeaders");
         final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
 
         testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
@@ -339,6 +398,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCancelDuringParts() {
+        System.out.println("testGetObjectCancelDuringParts");
         final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
 
         testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
@@ -428,6 +488,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObjectCancelParts() {
+        System.out.println("testPutObjectCancelParts");
         final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
 
         testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(10, testData) {
@@ -544,6 +605,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCustomHeaders() {
+        System.out.println("testGetObjectCustomHeaders");
         testCustomHeaders((nativeClient, customHeaders) -> nativeClient.getObject(
                 GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).customHeaders(customHeaders).build(),
                 null));
@@ -614,6 +676,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectCustomQueryParameters() {
+        System.out.println("testGetObjectCustomQueryParameters");
         testCustomQueryParameters((nativeClient, key, customQueryParameters) -> nativeClient.getObject(
                 GetObjectRequest.builder().bucket(BUCKET).key(key).customQueryParameters(customQueryParameters).build(),
                 null));

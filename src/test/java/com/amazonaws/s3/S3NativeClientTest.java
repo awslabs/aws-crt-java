@@ -284,12 +284,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
             CancellationException cancelException = null;
-
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
 
             try {
                 testData.ResultFuture = nativeClient

@@ -229,9 +229,10 @@ static void s_jni_atexit_strict(void) {
 
     if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
-        aws_mem_tracer_destroy(tracer_allocator);
+        s_allocator = aws_mem_tracer_destroy(tracer_allocator);
     }
     aws_small_block_allocator_destroy(s_allocator);
+    s_allocator = NULL;
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1

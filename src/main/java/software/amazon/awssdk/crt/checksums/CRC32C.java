@@ -20,7 +20,7 @@ public class CRC32C implements Checksum, Clone{
     }
 
     @Override
-    Clone() {
+    public Object Clone() {
         return CRC32C(value);
     }
 

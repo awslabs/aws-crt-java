@@ -21,7 +21,7 @@ public class CRC32C implements Checksum, Clone{
 
     @Override
     public Object Clone() {
-        return CRC32C(value);
+        return new CRC32C(value);
     }
 
     @Override

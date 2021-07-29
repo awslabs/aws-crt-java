@@ -213,8 +213,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
                 .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
-        try {
-            builder.build();
+        try (ProfileCredentialsProvider provider = builder.build()) {
             fail("Expected builder.build() call to throw exception due to missing [default] section in profile files.");
         } catch (CrtRuntimeException e) {
             // Got correct exception, nothing to do

@@ -8,11 +8,20 @@ import software.amazon.awssdk.crt.CrtResource;
 import java.nio.ByteBuffer;
 import java.util.zip.Checksum;
 
-public class CRC32 implements Checksum{
+public class CRC32 implements Checksum, Clone{
 
     private int value = 0;
 
     public CRC32() {
+    }
+
+    private CRC32C(int value) {
+        this.value = value;
+    }
+
+    @Override
+    Clone() {
+        return CRC32C(value);
     }
 
     @Override

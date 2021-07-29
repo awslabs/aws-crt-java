@@ -26,7 +26,7 @@ import org.junit.After;
 public class AwsClientTestFixture {
 
     @BeforeClass
-    public void enable_log() {
+    public static void enable_log() {
         Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
     }
 

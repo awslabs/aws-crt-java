@@ -27,4 +27,5 @@ mvn -B test $* \
     -Dprivatekey=/tmp/privatekey.pem \
     -Drootca=/tmp/AmazonRootCA1.pem \
     -Daws.crt.debugnative=true \
-    -Dcmake.s2nNoPqAsm=ON
+    -Dcmake.s2nNoPqAsm=ON \
+    -DforkCount=1

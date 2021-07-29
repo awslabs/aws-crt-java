@@ -26,8 +26,17 @@ import org.junit.After;
 public class AwsClientTestFixture {
 
     @BeforeClass
-    public static void enable_log() {
+    public static void enableLog() {
         Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
+    }
+
+    @Before
+    public void traceLogForSingleTest() {
+        if  (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
+            File logsFile = new File("log.txt");
+            logsFile.delete();
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+        }
     }
 
     @After

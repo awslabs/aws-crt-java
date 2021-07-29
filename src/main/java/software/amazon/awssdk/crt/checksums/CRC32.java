@@ -15,13 +15,13 @@ public class CRC32 implements Checksum, Clone{
     public CRC32() {
     }
 
-    private CRC32C(int value) {
+    private CRC32(int value) {
         this.value = value;
     }
 
     @Override
     public Object Clone() {
-        return CRC32C(value);
+        return CRC32(value);
     }
 
     @Override

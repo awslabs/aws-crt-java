@@ -31,7 +31,7 @@
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator(void) {
-    struct aws_allocator *default_allocator = aws_default_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
     struct aws_allocator *sba_allocator = aws_small_block_allocator_new(allocator, true);
     if (g_memory_tracing) {
         return aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);

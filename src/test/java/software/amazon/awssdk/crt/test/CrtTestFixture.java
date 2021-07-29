@@ -52,7 +52,11 @@ public class CrtTestFixture {
         EventLoopGroup.closeStaticDefault();
         HostResolver.closeStaticDefault();
 
-        CrtResource.waitForNoResources();
+        try {
+            CrtResource.waitForNoResources();
+        } catch (Exception e) {
+            throw new RuntimeException("Resource leak detected!");
+        }
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();

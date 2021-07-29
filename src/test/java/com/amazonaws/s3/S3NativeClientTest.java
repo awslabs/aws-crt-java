@@ -497,13 +497,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         customHeadersLambda.run(nativeClient, customHeaders);
 
         ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
-        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        S3MetaRequest metaRequest = verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
         List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
 
         assertEquals(options.size(), 1);
 
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+        metaRequest.close();
         reset(mockInternalClient);
     }
 
@@ -556,7 +557,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);
 
         ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
-        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        S3MetaRequest metaRequest = verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
         List<S3MetaRequestOptions> optionsList = optionsArgument.getAllValues();
 
         assertEquals(optionsList.size(), 1);
@@ -569,6 +570,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         } else {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
+        metaRequest.close();
         reset(mockInternalClient);
     }
 

@@ -25,16 +25,9 @@ import org.junit.After;
  */
 public class AwsClientTestFixture {
 
-    @Before
-    public void cleanup_log() {
-        /* Only want to see the log from one test */
-        File myObj = new File("log.txt");
-        if (myObj.delete()) {
-            System.out.println("Deleted the file: " + myObj.getName());
-        } else {
-            System.out.println("Failed to delete the file.");
-        }
-        Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+    @BeforeClass
+    public void enable_log() {
+        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
     }
 
     @After

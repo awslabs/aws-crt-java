@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
@@ -17,6 +18,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
+import java.io.File;
 
 import org.junit.Before;
 import org.junit.After;
@@ -33,6 +35,11 @@ public class CrtTestFixture {
 
     @Before
     public void setup() {
+        if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
+            File logsFile = new File("log.txt");
+            logsFile.delete();
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+        }
         context = new CrtTestContext();
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {

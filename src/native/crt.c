@@ -32,11 +32,11 @@
 int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator(void) {
     struct aws_allocator *allocator = aws_default_allocator();
-    struct aws_allocator *sba_allocator = aws_small_block_allocator_new(allocator, true);
+    // struct aws_allocator *sba_allocator = aws_small_block_allocator_new(allocator, true);
     if (g_memory_tracing) {
-        return aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
+        return aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
     }
-    return sba_allocator;
+    return allocator;
 }
 
 static struct aws_allocator *s_allocator = NULL;
@@ -231,7 +231,7 @@ static void s_jni_atexit_strict(void) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         s_allocator = aws_mem_tracer_destroy(tracer_allocator);
     }
-    aws_small_block_allocator_destroy(s_allocator);
+    // aws_small_block_allocator_destroy(s_allocator);
     s_allocator = NULL;
 }
 

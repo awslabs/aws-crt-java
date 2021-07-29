@@ -26,4 +26,5 @@ mvn -B test $* \
     -Dcertificate=/tmp/certificate.pem \
     -Dprivatekey=/tmp/privatekey.pem \
     -Drootca=/tmp/AmazonRootCA1.pem \
+    -Daws.crt.debugnative=true \
     -Dcmake.s2nNoPqAsm=ON

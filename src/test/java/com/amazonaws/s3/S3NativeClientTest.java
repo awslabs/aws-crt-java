@@ -490,7 +490,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
-        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+        final S3MetaRequest request = new S3MetaRequest();
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(request);
 
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
@@ -505,6 +506,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
         reset(mockInternalClient);
+        request.close();
     }
 
     /*
@@ -549,7 +551,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
-        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+        final S3MetaRequest request = new S3MetaRequest();
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(request);
 
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
@@ -570,6 +573,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
         reset(mockInternalClient);
+        request.close();
     }
 
     /*

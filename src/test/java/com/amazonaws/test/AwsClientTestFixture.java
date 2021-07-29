@@ -32,11 +32,7 @@ public class AwsClientTestFixture {
 
     @After
     public void tearDown() {
-        try {
-            CrtResource.waitForNoResources();
-        } catch (Exception e) {
-            throw new RuntimeException("Resource leak detected!");
-        }
+        CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();

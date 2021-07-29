@@ -492,19 +492,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         final S3Client mockInternalClient = mock(S3Client.class);
         when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
 
-        try (final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);) {
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
-            customHeadersLambda.run(nativeClient, customHeaders);
+        customHeadersLambda.run(nativeClient, customHeaders);
 
-            ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
-            verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
-            List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        List<S3MetaRequestOptions> options = optionsArgument.getAllValues();
 
-            assertEquals(options.size(), 1);
+        assertEquals(options.size(), 1);
 
-            S3MetaRequestOptions getObjectOptions = options.get(0);
-            validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
-        }
+        S3MetaRequestOptions getObjectOptions = options.get(0);
+        validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
     }
 
     /*
@@ -550,24 +549,24 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
         when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
-        try (final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);) {
 
-            customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);
+        final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
-            ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
-            verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
-            List<S3MetaRequestOptions> optionsList = optionsArgument.getAllValues();
+        customQueryParametersTestLambda.run(nativeClient, key, customQueryParameters);
 
-            assertEquals(optionsList.size(), 1);
-            S3MetaRequestOptions options = optionsList.get(0);
+        ArgumentCaptor<S3MetaRequestOptions> optionsArgument = ArgumentCaptor.forClass(S3MetaRequestOptions.class);
+        verify(mockInternalClient).makeMetaRequest(optionsArgument.capture());
+        List<S3MetaRequestOptions> optionsList = optionsArgument.getAllValues();
 
-            HttpRequest httpRequest = options.getHttpRequest();
+        assertEquals(optionsList.size(), 1);
+        S3MetaRequestOptions options = optionsList.get(0);
 
-            if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
-                assertTrue(httpRequest.getEncodedPath().equals("/" + key));
-            } else {
-                assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
-            }
+        HttpRequest httpRequest = options.getHttpRequest();
+
+        if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key));
+        } else {
+            assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
     }
 

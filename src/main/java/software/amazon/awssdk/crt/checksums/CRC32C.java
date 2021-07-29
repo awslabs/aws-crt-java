@@ -8,7 +8,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import java.nio.ByteBuffer;
 import java.util.zip.Checksum;
 
-public class CRC32C implements Checksum, Clone{
+public class CRC32C implements Checksum, Cloneable{
 
     private int value = 0;
 
@@ -20,7 +20,7 @@ public class CRC32C implements Checksum, Clone{
     }
 
     @Override
-    public Object Clone() {
+    public Object clone() {
         return new CRC32C(value);
     }
 

@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -504,6 +504,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+        reset(mockInternalClient);
     }
 
     /*
@@ -568,6 +569,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         } else {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
+        reset(mockInternalClient);
     }
 
     /*

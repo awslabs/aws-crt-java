@@ -231,6 +231,7 @@ static void s_jni_atexit_strict(void) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_destroy(tracer_allocator);
     }
+    s_allocator = NULL;
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
@@ -298,7 +299,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
         g_memory_tracing = 1;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
+    struct aws_allocator *allocator = aws_default_allocator();
     aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
     aws_auth_library_init(allocator);
@@ -344,6 +346,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
         allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
     }
     return allocated;
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+    if (g_memory_tracing > 1) {
+        aws_mem_tracer_dump(aws_jni_get_allocator());
+    }
 }
 
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {

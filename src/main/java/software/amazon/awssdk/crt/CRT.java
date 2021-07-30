@@ -261,9 +261,12 @@ public final class CRT {
     }
 
     /**
-     * Memory Tracer dump when trace level is 2
+     * Dump info to logs about all memory currently allocated by native resources.
+     * The following system properties must be set to see a dump:
+     * aws.crt.memory.tracing must be 1 or 2
+     * aws.crt.log.level must be "Trace"
      */
-    public static native void awsMemTracerDump();
+    public static native void dumpNativeMemory();
 
     private static native long awsNativeMemory();
 

@@ -61,7 +61,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
 
             output += "Potential Native Memory Leak!\n";
             Assert.fail(String.format("%s\nNative Memory remain: %s\n", output, nativeMemory));
-            CRT.awsMemTracerDump();
+            CRT.dumpNativeMemory();
         }
     }
 
@@ -94,7 +94,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         }
         if (medianNativeDelta > maxLeakage) {
             output += "Potential Native Memory Leak!\n";
-            CRT.awsMemTracerDump();
+            CRT.dumpNativeMemory();
         }
 
         final List<String> resources = new ArrayList<>();

@@ -31,12 +31,12 @@
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator(void) {
-    struct aws_allocator *allocator = aws_default_allocator();
-    struct aws_allocator *sba_allocator = aws_small_block_allocator_new(allocator, true);
     if (g_memory_tracing) {
-        return aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
+        struct aws_allocator *allocator = aws_default_allocator();
+        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
+        return allocator;
     }
-    return sba_allocator;
+    return aws_default_allocator();
 }
 
 static struct aws_allocator *s_allocator = NULL;
@@ -229,9 +229,8 @@ static void s_jni_atexit_strict(void) {
 
     if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
-        s_allocator = aws_mem_tracer_destroy(tracer_allocator);
+        aws_mem_tracer_destroy(tracer_allocator);
     }
-    aws_small_block_allocator_destroy(s_allocator);
     s_allocator = NULL;
 }
 
@@ -350,7 +349,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_CRT_awsMemTracerDump(JNIEnv *env, jclass jni_crt_class) {
+void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, jclass jni_crt_class) {
     (void)env;
     (void)jni_crt_class;
     if (g_memory_tracing > 1) {

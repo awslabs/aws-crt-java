@@ -409,6 +409,9 @@ done:
     }
 call_failed:
     (*env)->DeleteLocalRef(env, java_credentials);
+    (*env)->DeleteLocalRef(env, java_access_key_id);
+    (*env)->DeleteLocalRef(env, java_secret_access_key);
+    (*env)->DeleteLocalRef(env, java_session_token);
     return return_value;
 }
 

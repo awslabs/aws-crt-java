@@ -7,7 +7,6 @@ package software.amazon.awssdk.crt.checksums;
 import software.amazon.awssdk.crt.CrtResource;
 import java.nio.ByteBuffer;
 import java.util.zip.Checksum;
-
 public class CRC32 implements Checksum, Cloneable{
 
     private int value = 0;
@@ -49,7 +48,7 @@ public class CRC32 implements Checksum, Cloneable{
 
     public void update(int b) {
         if (b < 0 || b > 0xff) {
-            throw new IlligalArgumentException();
+            throw new IllegalArgumentException();
         }
         byte[] buf = {(byte)(b & 0x000000ff)};
         this.update(buf);

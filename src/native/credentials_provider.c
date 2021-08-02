@@ -367,7 +367,7 @@ static int s_credentials_provider_delegate_get_credentials(
         callback_data->jni_delegate_credential_handler,
         credentials_handler_properties.on_handler_get_credentials_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
-        goto call_failed;
+        goto no_credentials;
     }
 
     jbyteArray java_access_key_id =
@@ -380,7 +380,7 @@ static int s_credentials_provider_delegate_get_credentials(
     if (java_access_key_id == NULL || java_secret_access_key == NULL) {
         aws_jni_throw_runtime_exception(
             env, "DelegateCredentialProvider - accessKeyId and secretAccessKey must be non null");
-        goto call_failed;
+        goto credentials_empty;
     }
 
     struct aws_byte_cursor access_key_id = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_access_key_id);
@@ -407,11 +407,12 @@ done:
     if (java_session_token != NULL) {
         aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
     }
-call_failed:
-    (*env)->DeleteLocalRef(env, java_credentials);
+credentials_empty:
     (*env)->DeleteLocalRef(env, java_access_key_id);
     (*env)->DeleteLocalRef(env, java_secret_access_key);
     (*env)->DeleteLocalRef(env, java_session_token);
+no_credentials:
+    (*env)->DeleteLocalRef(env, java_credentials);
     return return_value;
 }
 

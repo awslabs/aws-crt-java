@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -64,9 +64,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -99,9 +100,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 
@@ -143,9 +145,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
             nativeClient.putObject(
@@ -168,9 +171,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        10.)) {
 
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l, 10.);
             final long lengthWritten[] = { 0 };
             final long contentLength = 1024l;
             final long length[] = { 0 };
@@ -210,7 +214,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                             return lengthWritten[0] == contentLength;
                         }));
             }
-            ;
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
@@ -280,12 +283,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
             CancellationException cancelException = null;
-
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-                    100.);
 
             try {
                 testData.ResultFuture = nativeClient
@@ -375,17 +377,17 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-                final CredentialsProvider provider = getTestCredentialsProvider()) {
+                final CredentialsProvider provider = getTestCredentialsProvider();
+
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
+                        100.)) {
 
             CancellationException cancelException = null;
-
-            final long partSize5MB = 5l * 1024l * 1024l;
-            final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
-                    100.);
 
             dataSupplier.setPartSize(partSize5MB);
 
@@ -488,7 +490,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      */
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
-        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+        final S3MetaRequest request = new S3MetaRequest();
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(request);
 
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
@@ -502,6 +505,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
+        reset(mockInternalClient);
+        request.close();
     }
 
     /*
@@ -546,7 +551,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, String customQueryParameters) {
         final S3Client mockInternalClient = mock(S3Client.class);
-        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(new S3MetaRequest());
+        final S3MetaRequest request = new S3MetaRequest();
+        when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(request);
 
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
 
@@ -566,6 +572,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         } else {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
+        reset(mockInternalClient);
+        request.close();
     }
 
     /*

@@ -25,7 +25,7 @@ phases:
 
 artifacts:
   discard-paths: yes
-  files: 
-    - 'target/surefire-reports/**'
-    - 'hs_err_pid*'
-    - 'core*'
+  files:
+    - "target/surefire-reports/**"
+    - "hs_err_pid*"
+    - "core*"

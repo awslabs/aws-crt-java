@@ -65,6 +65,10 @@ public class ProfileCredentialsProvider extends CredentialsProvider {
                 bootstrap.addRef();
             }
         }
+        catch (Exception e) {
+            super.close();
+            throw e;
+        }
     }
 
     /**

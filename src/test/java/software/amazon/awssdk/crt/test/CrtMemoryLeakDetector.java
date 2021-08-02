@@ -18,11 +18,11 @@ import software.amazon.awssdk.crt.Log;
  * Checks that the CRT doesn't have any major memory leaks. Probably won't
  * detect very small leaks but will likely find obvious large ones.
  */
-public class CrtMemoryLeakDetector extends CrtTestFixture  {
+public class CrtMemoryLeakDetector extends CrtTestFixture {
     static {
         new CRT(); // force the CRT to load before doing anything
     };
-    
+
     private final static int DEFAULT_NUM_LEAK_TEST_ITERATIONS = 20;
 
     private static long getNativeMemoryInUse() {
@@ -51,6 +51,18 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
                 String.format("JVM MemUsage: %d", estimatedMemInUse));
 
         return estimatedMemInUse;
+    }
+
+    public static void nativeMemoryLeakCheck() throws Exception {
+        String output = "";
+        long nativeMemory = getNativeMemoryInUse();
+        if (nativeMemory > 0) {
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+
+            output += "Potential Native Memory Leak!\n";
+            Assert.fail(String.format("%s\nNative Memory remain: %s\n", output, nativeMemory));
+            CRT.dumpNativeMemory();
+        }
     }
 
     public static void leakCheck(Callable<Void> fn) throws Exception {
@@ -82,6 +94,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
         }
         if (medianNativeDelta > maxLeakage) {
             output += "Potential Native Memory Leak!\n";
+            CRT.dumpNativeMemory();
         }
 
         final List<String> resources = new ArrayList<>();
@@ -122,6 +135,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
     }
 
     private static int FIXED_EXECUTOR_GROWTH = 0;
+
     public static int expectedFixedGrowth() {
         if (FIXED_EXECUTOR_GROWTH == 0) {
             determineBaselineGrowth();
@@ -136,7 +150,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
         List<Long> jvmSamples = new ArrayList<>();
 
         Callable<Void> fn = () -> {
-            final ExecutorService threadPool = Executors.newFixedThreadPool(32);            
+            final ExecutorService threadPool = Executors.newFixedThreadPool(32);
             List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (int idx = 0; idx < DEFAULT_NUM_LEAK_TEST_ITERATIONS; ++idx) {
                 CompletableFuture<Void> future = new CompletableFuture<>();
@@ -189,7 +203,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture  {
                     }
                 });
             }
-            
+
             for (CompletableFuture f : futures) {
                 f.join();
             }

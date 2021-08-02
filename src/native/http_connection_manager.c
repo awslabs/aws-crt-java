@@ -325,7 +325,7 @@ static void s_destroy_connection_binding(struct aws_http_connection_binding *bin
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (binding->java_acquire_connection_future != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, binding->java_acquire_connection_future);
+        (*env)->DeleteGlobalRef(env, binding->java_acquire_connection_future);
     }
 
     if (binding->manager != NULL && binding->connection != NULL) {
@@ -353,19 +353,16 @@ static void s_on_http_conn_acquisition_callback(
         error_code,
         aws_error_str(error_code));
 
-    jobject acquire_connection_future = (*env)->NewLocalRef(env, binding->java_acquire_connection_future);
-    if (acquire_connection_future != NULL) {
-        (*env)->CallStaticVoidMethod(
-            env,
-            http_client_connection_properties.http_client_connection_class,
-            http_client_connection_properties.on_connection_acquired_method_id,
-            acquire_connection_future,
-            (jlong)binding,
-            jni_error_code);
+    (*env)->CallStaticVoidMethod(
+        env,
+        http_client_connection_properties.http_client_connection_class,
+        http_client_connection_properties.on_connection_acquired_method_id,
+        binding->java_acquire_connection_future,
+        (jlong)binding,
+        jni_error_code);
 
-        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-        (*env)->DeleteLocalRef(env, acquire_connection_future);
-    } else {
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    if (error_code) {
         s_destroy_connection_binding(binding);
     }
 }
@@ -388,12 +385,19 @@ JNIEXPORT void JNICALL
         return;
     }
 
+    jobject future_ref = (*env)->NewGlobalRef(env, acquire_future);
+    if (future_ref == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "httpClientConnectionManagerAcquireConnection: failed to obtain ref to future");
+        return;
+    }
+
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Requesting a new connection from conn_manager: %p", (void *)conn_manager);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_http_connection_binding *connection_binding =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_http_connection_binding));
-    connection_binding->java_acquire_connection_future = (*env)->NewWeakGlobalRef(env, acquire_future);
+    connection_binding->java_acquire_connection_future = future_ref;
     connection_binding->manager = conn_manager;
 
     jint jvmresult = (*env)->GetJavaVM(env, &connection_binding->jvm);

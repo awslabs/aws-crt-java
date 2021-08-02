@@ -30,14 +30,14 @@ public class CrcTest extends CrtTestFixture {
     public void testCrc32Ints() {
         java.util.zip.CRC32 crcj = new java.util.zip.CRC32();
         software.amazon.awssdk.crt.checksums.CRC32 crcc = new software.amazon.awssdk.crt.checksums.CRC32();
-        crcj.update(0x123456ff);
-        crcc.update(0x123456ff);
-        crcj.update(12344554);
-        crcc.update(12344554);
-        crcj.update(40000);
-        crcc.update(40000);
-        crcj.update(0x123456ab);
-        crcc.update(0x654321ab);
+        crcj.update(0x000000ff);
+        crcc.update(0x000000ff);
+        crcj.update(234);
+        crcc.update(234);
+        crcj.update(160);
+        crcc.update(160);
+        crcj.update(0x000000ab);
+        crcc.update(0x000000ab);
         assertEquals(crcj.getValue(), crcc.getValue());
     }
     @Test
@@ -106,10 +106,10 @@ public class CrcTest extends CrtTestFixture {
     @Test
     public void testCrc32CInts() {
         software.amazon.awssdk.crt.checksums.CRC32C crcc = new software.amazon.awssdk.crt.checksums.CRC32C();
-        crcc.update(0x123456ff);
-        crcc.update(12344554);
-        crcc.update(40000);
-        crcc.update(0x654321ab);
+        crcc.update(0x000000ff);
+        crcc.update(234);
+        crcc.update(160);
+        crcc.update(0x000000ab);
         assertEquals(0x7E891B5A, crcc.getValue());
     }
     @Test

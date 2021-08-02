@@ -38,6 +38,9 @@ public class CrcTest extends CrtTestFixture {
         crcc.update(160);
         crcj.update(0x000000ab);
         crcc.update(0x000000ab);
+        assertThrows(IllegalArgumentException.class, () -> {
+            crcc.update(500000);
+        });
         assertEquals(crcj.getValue(), crcc.getValue());
     }
     @Test
@@ -110,7 +113,10 @@ public class CrcTest extends CrtTestFixture {
         crcc.update(234);
         crcc.update(160);
         crcc.update(0x000000ab);
-        assertEquals(0x7E891B5A, crcc.getValue());
+        assertThrows(IllegalArgumentException.class, () -> {
+            crcc.update(500000);
+        });
+        assertEquals(0x5D6C4A5, crcc.getValue());
     }
     @Test
     public void testCrc32CZeroesIterated() {

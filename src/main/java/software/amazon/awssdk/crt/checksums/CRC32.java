@@ -48,6 +48,9 @@ public class CRC32 implements Checksum, Cloneable{
     }
 
     public void update(int b) {
+        if (b < 0 || b > 0xff) {
+            throw new IlligalArgumentException();
+        }
         byte[] buf = {(byte)(b & 0x000000ff)};
         this.update(buf);
     }

@@ -1,8 +1,6 @@
 import java.util.regex.Pattern
 
 apply plugin: 'com.android.library'
-//apply plugin: 'kotlin-android'
-//apply plugin: 'kotlin-android-extensions'
 
 // Before configuring, make sure libcrypto is installed
 preBuild {
@@ -96,11 +94,13 @@ android {
     buildTypes {
         debug {
             versionNameSuffix = gitVersionTag()
+            buildConfigField("String", "VERSION_NAME", "\"" + gitVersionName() + "\"")
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             versionNameSuffix ""
+            buildConfigField("String", "VERSION_NAME", "\"" + gitVersionName() + "\"")
         }
     }
 
@@ -122,7 +122,6 @@ build.dependsOn preBuild
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test:monitor:1.2.0@aar'
@@ -162,7 +161,7 @@ afterEvaluate {
                 from components.release
 
                 groupId = 'software.amazon.awssdk.crt'
-                artifactId = 'android'
+                artifactId = 'aws-crt-android'
                 version = android.defaultConfig.versionName
             }
 
@@ -170,7 +169,7 @@ afterEvaluate {
                 from components.debug
 
                 groupId = 'software.amazon.awssdk.crt'
-                artifactId = 'android'
+                artifactId = 'aws-crt-android'
                 version = android.defaultConfig.versionName + '-SNAPSHOT'
             }
         }

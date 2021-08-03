@@ -1,8 +1,8 @@
 import java.util.regex.Pattern
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+//apply plugin: 'kotlin-android'
+//apply plugin: 'kotlin-android-extensions'
 
 // Before configuring, make sure libcrypto is installed
 preBuild {
@@ -52,15 +52,15 @@ ext {
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.3"
-    ndkVersion "21.0.6113669"
+    buildToolsVersion "30.0.2"
+    ndkVersion "21.4.7075529" // LTS version
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
     useLibrary 'android.test.mock'
 
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode = gitVersionCode()
         versionName = gitVersionName()

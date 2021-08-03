@@ -9,3 +9,4 @@ project(":native").projectDir = File("${settingsDir}/src/native")
 
 include(":smithy-crt")
 include(":s3-native-client")
+includeBuild("./android")

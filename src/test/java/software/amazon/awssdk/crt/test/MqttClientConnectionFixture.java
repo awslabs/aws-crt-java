@@ -49,7 +49,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String TEST_ROOTCA = System.getProperty("rootca");
     static final short TEST_PORT = 8883;
     static final short TEST_PORT_ALPN = 443;
-    static final String TEST_CLIENTID = "aws-crt-java-";
+    static final String TEST_CLIENTID = "aws-crt-java-"; //check against IoT policy attached to thing certificate
 
     Path pathToCert = null;
     Path pathToKey = null;

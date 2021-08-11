@@ -35,8 +35,7 @@
     "targets": {
         "linux": {
             "!build_steps": [
-                "{source_dir}/gradlew :s3-native-client:build -x test",
-                "mvn -P continuous-integration -B compile"
+                ""
             ],
             "!test_steps": [
                 "aws-crt-java-test"

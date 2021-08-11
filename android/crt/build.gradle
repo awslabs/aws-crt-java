@@ -155,6 +155,10 @@ task androidDocsJar(type: Jar) {
 
 afterEvaluate {
     publishing {
+        repositories {
+            maven { name = "testLocal"; url = "$rootProject.buildDir/m2" }
+        }
+
         publications {
             release(MavenPublication) {
                 from components.release

@@ -75,6 +75,11 @@ tasks.compileTestJava {
 }
 
 publishing {
+
+    repositories {
+        maven { name = "testLocal"; url = file("${rootProject.buildDir}/m2").toURI() }
+    }
+
     publications {
         create<MavenPublication>("maven") {
             artifactId = project.name

@@ -229,7 +229,7 @@ static void s_jni_atexit_strict(void) {
         if (g_memory_tracing) {
             s_allocator = aws_mem_tracer_destroy(s_allocator);
         }
-        aws_small_block_allocator_destroy(s_allocator);
+        // aws_small_block_allocator_destroy(s_allocator);
         s_allocator = NULL;
     }
 }

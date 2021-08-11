@@ -2,7 +2,7 @@
     "name": "aws-crt-java",
     "packages": [
         "maven",
-        "catchsegv"
+        "libc-bin"
     ],
     "build_steps": [
         "mvn -P continuous-integration -B compile"

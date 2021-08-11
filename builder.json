@@ -1,8 +1,7 @@
 {
     "name": "aws-crt-java",
     "packages": [
-        "maven",
-        "libc-bin"
+        "maven"
     ],
     "build_steps": [
         "mvn -P continuous-integration -B compile"
@@ -34,8 +33,12 @@
     },
     "targets": {
         "linux": {
+            "!build_steps": [
+                "{source_dir}/gradlew :s3-native-client:build -x test",
+                "mvn -P continuous-integration -B compile"
+            ],
             "!test_steps": [
-                "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"
+                "aws-crt-java-test"
             ],
             "architectures": {
                 "armv6": {

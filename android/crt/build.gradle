@@ -1,6 +1,7 @@
 import java.util.regex.Pattern
 
 apply plugin: 'com.android.library'
+apply plugin: 'signing'
 
 // Before configuring, make sure libcrypto is installed
 preBuild {
@@ -153,6 +154,23 @@ task androidDocsJar(type: Jar) {
     from androidDocs.destinationDir
 }
 
+
+if (project.hasProperty("sonatypeUsername") && project.hasProperty("sonatypePassword")) {
+    apply plugin: 'io.github.gradle-nexus.publish-plugin'
+
+    nexusPublishing {
+        repositories {
+            create("awsNexus") {
+                nexusUrl.set(uri("https://aws.oss.sonatype.org/service/local/"))
+                snapshotRepositoryUrl.set(uri("https://aws.oss.sonatype.org/content/repositories/snapshots/"))
+                username.set(project.property("sonatypeUsername") as String)
+                password.set(project.property("sonatypePassword") as String)
+            }
+        }
+    }
+}
+
+
 afterEvaluate {
     publishing {
         repositories {
@@ -181,6 +199,17 @@ afterEvaluate {
                 def snapshotRepo = "https://aws.oss.sonatype.org/content/repositories/snapshots"
                 def releaseRepo = "https://aws.oss.sonatype.org/"
                 url = version.endsWith('SNAPSHOT') ? snapshotRepo : releaseRepo
+            }
+        }
+
+        if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+            signing {
+                useInMemoryPgpKeys(
+                        (String) project.property("signingKey"),
+                        (String) project.property("signingPassword")
+                )
+                println("key=" + project.property("signingKey"))
+                sign(publications)
             }
         }
     }

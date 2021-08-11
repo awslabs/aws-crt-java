@@ -35,7 +35,7 @@
     "targets": {
         "linux": {
             "!test_steps": [
-                "catchsegv mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"
+                "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"
             ],
             "architectures": {
                 "armv6": {

@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Assume;
 import org.junit.Test;
-import org.mockito.internal.matchers.Null;
 
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;

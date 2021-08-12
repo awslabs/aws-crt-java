@@ -20,8 +20,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation("junit:junit:4.12")
-    testImplementation("org.mockito:mockito-core:3.+")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:3.11.2")
 }
 
 group = "software.amazon.awssdk.crt"

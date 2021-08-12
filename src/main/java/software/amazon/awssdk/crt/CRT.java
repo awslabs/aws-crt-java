@@ -5,9 +5,9 @@
 package software.amazon.awssdk.crt;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
 import java.util.Date;
 import java.util.Locale;
 
@@ -126,20 +126,21 @@ public final class CRT {
         try {
             // Check java.io.tmpdir
             String tmpdir = System.getProperty("java.io.tmpdir");
-            Path tmpdirPath;
+            String tmpdirPath;
+            File tmpdirFile;
             try {
-                tmpdirPath = Paths.get(tmpdir).toAbsolutePath().normalize();
-                File tmpdirFile = tmpdirPath.toFile();
+                tmpdirFile = new File(tmpdir).getAbsoluteFile();
+                tmpdirPath = tmpdirFile.getAbsolutePath();
                 if (tmpdirFile.exists()) {
                     if (!tmpdirFile.isDirectory()) {
-                        throw new NotDirectoryException(tmpdirPath.toString());
+                        throw new IOException("not a directory: " + tmpdirPath);
                     }
                 } else {
-                    Files.createDirectories(tmpdirPath);
+                    tmpdirFile.mkdirs();
                 }
 
                 if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                    throw new AccessDeniedException(tmpdirPath.toString());
+                    throw new IOException("access denied: " + tmpdirPath);
                 }
             } catch (Exception ex) {
                 String msg = "java.io.tmpdir=\"" + tmpdir + "\": Invalid directory";
@@ -150,19 +151,30 @@ public final class CRT {
             String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
-            Path libTempPath = Files.createTempFile(tmpdirPath, prefix, libraryName);
+
+            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
+            System.out.println(tempSharedLib.getAbsolutePath());
 
             // open a stream to read the shared lib contents from this JAR
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
                 }
+
+                if (tempSharedLib.exists()) {
+                    tempSharedLib.delete();
+                }
+
                 // Copy from jar stream to temp file
-                Files.deleteIfExists(libTempPath);
-                Files.copy(in, libTempPath);
+                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
+                    int read;
+                    byte [] bytes = new byte[1024];
+                    while ((read = in.read(bytes)) != -1){
+                        out.write(bytes, 0, read);
+                    }
+                }
             }
 
-            File tempSharedLib = libTempPath.toFile();
             if (!tempSharedLib.setExecutable(true)) {
                 throw new CrtRuntimeException("Unable to make shared library executable");
             }
@@ -177,7 +189,7 @@ public final class CRT {
             tempSharedLib.deleteOnExit();
 
             // load the shared lib from the temp path
-            System.load(libTempPath.toString());
+            System.load(tempSharedLib.getAbsolutePath());
         } catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
             crtex.printStackTrace();

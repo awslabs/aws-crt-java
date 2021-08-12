@@ -4,10 +4,9 @@ version: 0.2
 # into it once all platforms are built and artifacted
 phases:
   install:
-    commands:
-      - sudo add-apt-repository ppa:openjdk-r/ppa
-      - sudo apt-get update -y
-      - sudo apt-get install openjdk-8-jdk-headless maven -y -f
+    runtime-versions:
+      java: openjdk11
+      android: 29
 
   pre_build:
     commands:
@@ -37,6 +36,10 @@ phases:
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
       - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
+      # deploy android
+      - cd ./android
+      # test build first
+      - ./gradlew build
   post_build:
     commands:
 
@@ -49,4 +52,4 @@ artifacts:
 
 cache:
   paths:
-    - '/root/.m2/**/*'
+    - "/root/.m2/**/*"

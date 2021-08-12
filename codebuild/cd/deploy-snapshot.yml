@@ -7,6 +7,10 @@ phases:
     runtime-versions:
       java: openjdk11
       android: 29
+    commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
+      - sudo apt-get update -y
+      - sudo apt-get install openjdk-11-jdk-headless maven -y -f
 
   pre_build:
     commands:

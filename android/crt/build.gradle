@@ -50,7 +50,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     buildToolsVersion "30.0.3"
     ndkVersion "21.4.7075529" // LTS version
 
@@ -59,8 +59,8 @@ android {
     useLibrary 'android.test.mock'
 
     defaultConfig {
-        minSdkVersion 26
-        targetSdkVersion 29
+        minSdkVersion 26  // TODO - dictated by CompletableFuture which is API 24+ and CRT::loadLibraryFromJar java.nio.File/Path usage
+        targetSdkVersion 30
         versionCode = gitVersionCode()
         versionName = gitVersionName()
 

@@ -212,7 +212,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
-static void s_jni_atexit_strict(void) {
+static void s_jni_atexit_common(void) {
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
@@ -225,16 +225,21 @@ static void s_jni_atexit_strict(void) {
     }
 
     aws_jni_cleanup_logging();
+}
+
+static void s_jni_atexit_strict(void) {
+    s_jni_atexit_common();
+
     if (s_allocator) {
         if (g_memory_tracing) {
-            /*
-             * If there are outstanding leaks, something is likely to crash on shutdown
-             * so leave the allocators in place to avoid this
-             */
-            if (aws_mem_tracer_bytes(s_allocator) > 0) {
-                return;
-            }
             s_allocator = aws_mem_tracer_destroy(s_allocator);
+        }
+        /*
+         * If there are outstanding leaks, something is likely to crash on shutdown
+         * so leave the allocators in place to avoid this
+         */
+        if (aws_small_block_allocator_bytes_active(s_allocator)) {
+            return;
         }
         aws_small_block_allocator_destroy(s_allocator);
         s_allocator = NULL;
@@ -251,7 +256,7 @@ static void s_jni_atexit_gentle(void) {
 
     if (aws_thread_join_all_managed() == AWS_OP_SUCCESS) {
         /* a successful managed join means it should be safe to do a full, strict clean up */
-        s_jni_atexit_strict();
+        s_jni_atexit_common();
     } else {
         /*
          * We didn't successfully join all our threads so it's not really safe to clean up the libraries.

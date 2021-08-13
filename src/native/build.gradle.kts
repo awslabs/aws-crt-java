@@ -33,7 +33,9 @@ val cmakeConfigure = tasks.register("cmakeConfigure") {
         exec {
             executable("cmake")
             args(cmakeArgs)
-            environment(mapOf<String, String>("JAVA_HOME" to System.getProperty("java.home")))
+            environment(mapOf<String, String>(
+                "JAVA_HOME" to System.getProperty("java.home")
+            ))
         }
     }
 }
@@ -62,6 +64,9 @@ val cmakeBuild = tasks.register("cmakeBuild") {
         exec {
             executable("cmake")
             args(cmakeArgs)
+            environment(mapOf<String, String>(
+                "CMAKE_BUILD_PARALLEL_LEVEL" to "0"
+            ))
         }
     }
 }

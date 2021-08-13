@@ -168,6 +168,9 @@
                                 <configuration>
                                     <executable>${cmake.command}</executable>
                                     <workingDirectory>${cmake.binaries}</workingDirectory>
+                                    <environmentVariables>
+                                        <CMAKE_BUILD_PARALLEL_LEVEL>0</CMAKE_BUILD_PARALLEL_LEVEL>
+                                    </environmentVariables>
                                     <arguments>
                                         <argument>--build</argument>
                                         <argument>.</argument>

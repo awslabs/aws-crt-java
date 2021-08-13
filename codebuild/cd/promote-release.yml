@@ -8,7 +8,7 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get install openjdk-8-jdk-headless maven -y -f
-  
+
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
@@ -22,11 +22,13 @@ phases:
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       - export REPOSITORY_ID=$(cat $CODEBUILD_SRC_DIR_aws_crt/repositoryId.txt)
+      - export ANDROID_REPOSITORY_ID=$(cat $CODEBUILD_SRC_DIR_aws_crt/android_repositoryId.txt)
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # Trigger the release of the last staged package in the staging repository
       - mvn -B nexus-staging:release -Prelease -DstagingRepositoryId=$REPOSITORY_ID
+      - mvn -B nexus-staging:release -Prelease -DstagingRepositoryId=$ANDROID_REPOSITORY_ID
   post_build:
     commands:
 

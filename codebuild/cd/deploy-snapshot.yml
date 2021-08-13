@@ -20,17 +20,17 @@ phases:
 
   pre_build:
     commands:
-      # - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - mkdir -p target/cmake-build/lib
-      # - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
-      # - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
-      # - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
-      # - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
-      # - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
-      # - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
+      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
       # import gpg key
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
@@ -38,19 +38,17 @@ phases:
       - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
   build:
     commands:
-      - git submodule update --init
-      # - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # # update the version to match the git tag, make a snapshot version we can test
-      # - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
-      # # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
-      # - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
-      # # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
-      # - mvn -B versions:set -DnewVersion=${PKG_VERSION}
-      # - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
-      # - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      # update the version to match the git tag, make a snapshot version we can test
+      - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
+      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
+      # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
+      - mvn -B versions:set -DnewVersion=${PKG_VERSION}
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
+      - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
       # deploy android
       - bash ./codebuild/cd/deploy-snapshot-android.sh
-      - cat /tmp/android_repositoryId.txt #test
   post_build:
     commands:
 

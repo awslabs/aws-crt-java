@@ -4,11 +4,7 @@ version: 0.2
 # into it once all platforms are built and artifacted
 phases:
   install:
-    runtime-versions:
-      java: openjdk11
-      android: 29
     commands:
-      # install java11
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get install openjdk-11-jdk-headless maven -y -f

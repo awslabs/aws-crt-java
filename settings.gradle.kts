@@ -9,4 +9,19 @@ project(":native").projectDir = File("${settingsDir}/src/native")
 
 include(":smithy-crt")
 include(":s3-native-client")
-includeBuild("./android")
+
+
+val localPropertiesFile = File(rootProject.projectDir, "local.properties")
+val localProperties = java.util.Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+val androidHomeSet = System.getenv().containsKey("ANDROID_HOME") || localProperties.containsKey("sdk.dir")
+if (androidHomeSet) {
+    val androidHome = System.getenv()["ANDROID_HOME"] ?: localProperties.getProperty("sdk.dir")
+    println("Android home: $androidHome")
+    includeBuild("./android")
+}else {
+    logger.warn("Android SDK dir not set, android build disabled. Define location with `sdk.dir` in local.properties file or with `ANDROID_HOME` environment variable ")
+}

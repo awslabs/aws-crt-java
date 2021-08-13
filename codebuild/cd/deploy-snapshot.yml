@@ -50,7 +50,6 @@ phases:
       # - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
       # deploy android
       - bash ./codebuild/cd/deploy-snapshot-android.sh
-      - cat /tmp/android_deploy.log | grep "Created staging repository" | cut -d\' -f2 | tee /tmp/android_repositoryId.txt
   post_build:
     commands:
 

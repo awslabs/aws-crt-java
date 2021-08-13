@@ -225,13 +225,13 @@ static void s_jni_atexit_strict(void) {
     }
 
     aws_jni_cleanup_logging();
-    if (s_allocator) {
-        if (g_memory_tracing) {
-            s_allocator = aws_mem_tracer_destroy(s_allocator);
-        }
-        aws_small_block_allocator_destroy(s_allocator);
-        s_allocator = aws_default_allocator();
-    }
+    // if (s_allocator) {
+    //     if (g_memory_tracing) {
+    //         s_allocator = aws_mem_tracer_destroy(s_allocator);
+    //     }
+    //     aws_small_block_allocator_destroy(s_allocator);
+    //     s_allocator = aws_default_allocator();
+    // }
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1

@@ -21,23 +21,26 @@ phases:
   pre_build:
     commands:
       # - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
-      # - mkdir -p target/cmake-build/lib
+      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
+      - mkdir -p target/cmake-build/lib
       # - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       # - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       # - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       # - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
-      # # install settings.xml to ~/.m2/settings.xml
-      # - mkdir -p $HOME/.m2
-      # - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
-      # # import gpg key
-      # - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
-      # - gpg --import /tmp/aws-sdk-common-runtime.key.asc
-      # - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      # install settings.xml to ~/.m2/settings.xml
+      - mkdir -p $HOME/.m2
+      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
+      # import gpg key
+      - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
+      - gpg --import /tmp/aws-sdk-common-runtime.key.asc
+      - export GPG_KEY=$(cat /tmp/aws-sdk-common-runtime.key.asc)
+      - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
   build:
     commands:
       - git submodule update --init
+      # - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # # update the version to match the git tag, make a snapshot version we can test
       # - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
       # # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
@@ -51,22 +54,8 @@ phases:
       # test build first
       - ./gradlew build
       # TODO: script the publish credentials into
-      # ./gradlew \
-      # -PsigningKey=$'<key>' \                 //key is in /tmp/aws-sdk-common-runtime.key.asc
-      # -PsigningPassword='<password>' \        //GPG_PASSPHRASE is password
-      # -PsonatypeUsername='<username>' \       //Username is in $HOME/.m2/settings.xml The file is structured as shown blow
-      # -PsonatypePassword='<password>' \       //Same as username. Or to make it simpler, I can just store it into secret manager and grab it.
-      # publishToAwsNexus
-
-      # <settings>
-      # <servers>
-      #   <server>
-      #     <id>ossrh</id>
-      #     <username>sonatypeUsername</username>
-      #     <password>sonatypePassword</password>
-      #   </server>
-
-      # TODO: get the staging repositoryID for promo release.
+      - ./gradlew -PsigningKey=$GPG_KEY -PsigningPassword=$GPG_PASSPHRASE -PsonatypeUsername='aws-sdk-common-runtime' -PsonatypePassword=$ST_PASSWORD publishToAwsNexus | tee /tmp/android_deploy.log
+      - cat /tmp/android_deploy.log | grep "Created staging repository" | cut -d\' -f2 | tee /tmp/android_repositoryId.txt
   post_build:
     commands:
 
@@ -76,6 +65,7 @@ artifacts:
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.asc
     - /tmp/repositoryId.txt
+    - /tmp/android_repositoryId.txt
 
 cache:
   paths:

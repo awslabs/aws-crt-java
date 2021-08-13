@@ -41,7 +41,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
-        <cmake.parallelBuild>-1</cmake.parallelBuild>
+        <cmake.parallelBuild>4</cmake.parallelBuild>
     </properties>
 
     <profiles>

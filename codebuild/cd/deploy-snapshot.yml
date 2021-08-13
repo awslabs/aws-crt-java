@@ -52,8 +52,6 @@ phases:
       # deploy android
       - cd ./android
       # test build first
-      - ./gradlew build
-      # TODO: script the publish credentials into
       - ./gradlew -PsigningKey=$GPG_KEY -PsigningPassword=$GPG_PASSPHRASE -PsonatypeUsername='aws-sdk-common-runtime' -PsonatypePassword=$ST_PASSWORD publishToAwsNexus | tee /tmp/android_deploy.log
       - cat /tmp/android_deploy.log | grep "Created staging repository" | cut -d\' -f2 | tee /tmp/android_repositoryId.txt
   post_build:

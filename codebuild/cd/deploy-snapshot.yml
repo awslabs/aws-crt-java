@@ -50,6 +50,23 @@ phases:
       - cd ./android
       # test build first
       - ./gradlew build
+      # TODO: script the publish credentials into
+      # ./gradlew \
+      # -PsigningKey=$'<key>' \                 //key is in /tmp/aws-sdk-common-runtime.key.asc
+      # -PsigningPassword='<password>' \        //GPG_PASSPHRASE is password
+      # -PsonatypeUsername='<username>' \       //Username is in $HOME/.m2/settings.xml The file is structured as shown blow
+      # -PsonatypePassword='<password>' \       //Same as username. Or to make it simpler, I can just store it into secret manager and grab it.
+      # publishToAwsNexus
+
+      # <settings>
+      # <servers>
+      #   <server>
+      #     <id>ossrh</id>
+      #     <username>sonatypeUsername</username>
+      #     <password>sonatypePassword</password>
+      #   </server>
+
+      # TODO: get the staging repositoryID for promo release.
   post_build:
     commands:
 

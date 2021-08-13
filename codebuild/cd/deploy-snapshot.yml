@@ -7,7 +7,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-11-jdk-headless maven -y -f
+      - sudo apt-get install openjdk-11-jdk-headless maven wget -y -f
       # install android sdk
       - wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
       - mkdir /tmp/cmdline-tools

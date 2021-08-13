@@ -65,7 +65,7 @@ val cmakeBuild = tasks.register("cmakeBuild") {
             executable("cmake")
             args(cmakeArgs)
             environment(mapOf<String, String>(
-                "CMAKE_BUILD_PARALLEL_LEVEL" to "0"
+                "CMAKE_BUILD_PARALLEL_LEVEL" to ""
             ))
         }
     }

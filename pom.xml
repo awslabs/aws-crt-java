@@ -41,6 +41,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
+        <cmake.parallelBuild>-1</cmake.parallelBuild>
     </properties>
 
     <profiles>
@@ -169,7 +170,7 @@
                                     <executable>${cmake.command}</executable>
                                     <workingDirectory>${cmake.binaries}</workingDirectory>
                                     <environmentVariables>
-                                        <CMAKE_BUILD_PARALLEL_LEVEL>0</CMAKE_BUILD_PARALLEL_LEVEL>
+                                        <CMAKE_BUILD_PARALLEL_LEVEL>${cmake.parallelBuild}</CMAKE_BUILD_PARALLEL_LEVEL>
                                     </environmentVariables>
                                     <arguments>
                                         <argument>--build</argument>

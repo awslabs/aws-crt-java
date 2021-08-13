@@ -34,7 +34,6 @@ phases:
       # import gpg key
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
-      - export GPG_KEY=$(cat /tmp/aws-sdk-common-runtime.key.asc | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
   build:
@@ -50,9 +49,7 @@ phases:
       # - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
       # - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
       # deploy android
-      - cd ./android
-      # test build first
-      - ./gradlew -PsigningKey=$GPG_KEY -PsigningPassword=$GPG_PASSPHRASE -PsonatypeUsername='aws-sdk-common-runtime' -PsonatypePassword=$ST_PASSWORD publishToAwsNexus | tee /tmp/android_deploy.log
+      - bash ./codebuild/cd/deploy-snapshot-android.sh
       - cat /tmp/android_deploy.log | grep "Created staging repository" | cut -d\' -f2 | tee /tmp/android_repositoryId.txt
   post_build:
     commands:

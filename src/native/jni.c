@@ -11,3 +11,12 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     (void)reserved;
     return JNI_VERSION_1_6;
 }
+
+extern void jni_on_unload(void);
+
+JNIEXPORT
+void JNI_OnUnload(JavaVM *vm, void *reserved) {
+    (void)vm;
+    (void)reserved;
+    jni_on_unload();
+}

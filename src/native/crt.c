@@ -278,6 +278,11 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
+static void (*jni_atexit) = s_jni_atexit_gentle;
+void jni_on_unload(void) {
+    jni_atexit();
+}
+
 #define KB_256 (256 * 1024)
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -322,9 +327,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
-        atexit(s_jni_atexit_strict);
-    } else {
-        atexit(s_jni_atexit_gentle);
+        jni_atexit = s_jni_atexit_strict;
     }
 }
 

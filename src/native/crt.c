@@ -278,7 +278,7 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
-static void (*jni_atexit) = s_jni_atexit_gentle;
+static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
     jni_atexit();
 }

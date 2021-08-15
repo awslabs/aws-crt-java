@@ -47,6 +47,7 @@ jobs:
         path: |
           hs_err_pid*
           target/surefire-reports/*stream
+          core*
 
   al2:
     runs-on: ubuntu-latest
@@ -71,6 +72,7 @@ jobs:
         path: |
           hs_err_pid*
           target/surefire-reports/*stream
+          core*
 
   clang-compat:
     runs-on: ubuntu-latest
@@ -99,6 +101,7 @@ jobs:
         path: |
           hs_err_pid*
           target/surefire-reports/*stream
+          core*
 
   gcc-compat:
     runs-on: ubuntu-latest
@@ -127,6 +130,7 @@ jobs:
         path: |
           hs_err_pid*
           target/surefire-reports/*stream
+          core*
 
   linux-arm:
     name: ARM (${{ matrix.arch }})

@@ -1,6 +1,6 @@
 
 import Builder
-import os
+import os, sys
 
 
 class AWSCrtJavaTest(Builder.Action):
@@ -10,8 +10,13 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
 
-        if os.system("mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 \
-            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"):
+        mvn_test = "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 \
+            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"
+
+        if sys.platform == "linux":
+            mvn_test = "catchsegv " + mvn_test
+
+        if os.system(mvn_test):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

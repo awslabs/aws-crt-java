@@ -172,6 +172,27 @@ afterEvaluate {
 
                 groupId = 'software.amazon.awssdk.crt'
                 artifactId = 'aws-crt-android'
+                name = "software.amazon.awssdk.crt:aws-crt-android"
+                url = 'https://github.com/awslabs/aws-crt-java'
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "AWS SDK Common Runtime Team"
+                        email = "aws-sdk-common-runtime@amazon.com"
+                        organization = "Amazon Web Services"
+                        organizationUrl = "https://aws.amazon.com"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/awslabs/aws-crt-java.git"
+                    developerConnection = "scm:git:ssh://github.com:awslabs/aws-crt-java.git"
+                    url = "https://github.com/awslabs/aws-crt-java/tree/main"
+                }
                 version = android.defaultConfig.versionName
             }
 
@@ -180,6 +201,27 @@ afterEvaluate {
 
                 groupId = 'software.amazon.awssdk.crt'
                 artifactId = 'aws-crt-android'
+                name = "software.amazon.awssdk.crt:aws-crt-android"
+                url = 'https://github.com/awslabs/aws-crt-java'
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "AWS SDK Common Runtime Team"
+                        email = "aws-sdk-common-runtime@amazon.com"
+                        organization = "Amazon Web Services"
+                        organizationUrl = "https://aws.amazon.com"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/awslabs/aws-crt-java.git"
+                    developerConnection = "scm:git:ssh://github.com:awslabs/aws-crt-java.git"
+                    url = "https://github.com/awslabs/aws-crt-java/tree/main"
+                }
                 version = android.defaultConfig.versionName + '-DEBUG'
             }
         }

@@ -197,37 +197,6 @@ afterEvaluate {
                 }
                 version = android.defaultConfig.versionName
             }
-
-            debug(MavenPublication) {
-                from components.debug
-
-                groupId = 'software.amazon.awssdk.crt'
-                artifactId = 'aws-crt-android'
-                pom {
-                    name.set("software.amazon.awssdk.crt:aws-crt-android")
-                    description.set("Java Android bindings for the AWS SDK Common Runtime SNAPSHOT TEST")
-                    url.set("https://github.com/awslabs/aws-crt-java")
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("aws-sdk-common-runtime")
-                            name.set("AWS SDK Common Runtime Team")
-                            email.set("aws-sdk-common-runtime@amazon.com")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/awslabs/aws-crt-java.git")
-                        developerConnection.set("scm:git:ssh://github.com/awslabs/aws-crt-java.git")
-                        url.set("https://github.com/awslabs/aws-crt-java")
-                    }
-                }
-                version = android.defaultConfig.versionName + '-DEBUG'
-            }
         }
         repositories {
             maven {

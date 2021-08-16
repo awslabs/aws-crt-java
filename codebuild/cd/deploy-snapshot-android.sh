@@ -1,3 +1,4 @@
+git submodule update --init
 cd ./android
 
 GPG_KEY=$(cat /tmp/aws-sdk-common-runtime.key.asc)

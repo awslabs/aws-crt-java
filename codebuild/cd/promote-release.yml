@@ -27,8 +27,8 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # Trigger the release of the last staged package in the staging repository
-      - mvn -B nexus-staging:close -Prelease -DstagingRepositoryId=$REPOSITORY_ID
-      - mvn -B nexus-staging:close -Prelease -DstagingRepositoryId=$ANDROID_REPOSITORY_ID
+      - mvn -B nexus-staging:drop -Prelease -DstagingRepositoryId=$REPOSITORY_ID
+      - mvn -B nexus-staging:drop -Prelease -DstagingRepositoryId=$ANDROID_REPOSITORY_ID
   post_build:
     commands:
 

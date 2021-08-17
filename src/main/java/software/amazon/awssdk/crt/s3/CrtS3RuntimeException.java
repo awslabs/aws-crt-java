@@ -49,10 +49,10 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
     }
 
     /**
-     * Returns the aws error code from S3 response. The <Code> element in xml
+     * Returns the aws error code from S3 response. The {@code Code} element in xml
      * response.
      *
-     * @return errorCode, if no <Code> element in the response, empty string will be
+     * @return errorCode, if no {@code Code} element in the response, empty string will be
      *         returned
      */
     public String getAwsErrorCode() {
@@ -60,10 +60,10 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
     }
 
     /**
-     * Returns the error message from S3 response. The detail among <Message>
+     * Returns the error message from S3 response. The detail among {@code Message}
      * element in xml response.
      *
-     * @return error message, if no <Message> element in the response, empty string
+     * @return error message, if no {@code Message} element in the response, empty string
      *         will be returned
      */
     public String getAwsErrorMessage() {

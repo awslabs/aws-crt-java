@@ -41,7 +41,6 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 
-import javax.annotation.processing.Completion;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");

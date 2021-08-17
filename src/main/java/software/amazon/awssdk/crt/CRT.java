@@ -153,7 +153,6 @@ public final class CRT {
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
 
             File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
-            System.out.println(tempSharedLib.getAbsolutePath());
 
             // open a stream to read the shared lib contents from this JAR
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {

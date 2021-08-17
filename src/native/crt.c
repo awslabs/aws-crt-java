@@ -380,7 +380,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
     aws_thread_set_managed_join_timeout_ns(
         aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
     if (aws_thread_join_all_managed()) {
-        AWS_LOG_DEBUG(AWS_LS_COMMON_GENERAL, "wait for global resource failed");
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "wait for global resource failed");
         /* failed to join all threads, throw an exception */
         aws_jni_throw_runtime_exception(
             env, "wait for global resource failed, which will lead to potential leak or crash");

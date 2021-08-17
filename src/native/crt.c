@@ -368,7 +368,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
 
     aws_thread_set_managed_join_timeout_ns(
         aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
-    aws_thread_join_all_managed();
+    if (aws_thread_join_all_managed()) {
+        /* failed to join all threads, throw an exception */
+        aws_jni_throw_runtime_exception(
+            env, "wait for global resource failed, which will lead to potential leak or crash");
+        return;
+    }
 
     if (g_memory_tracing) {
         AWS_LOGF_DEBUG(

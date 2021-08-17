@@ -7,7 +7,7 @@
         "mvn -B compile"
     ],
     "test_steps": [
-        "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 -DrerunFailingTestsCount=5"
+        "aws-crt-java-test"
     ],
     "imports": [
         "JDK8"
@@ -41,7 +41,7 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -DforkCount=0 -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
+                "aws-crt-java-test"
             ],
             "architectures": {
                 "armv6": {
@@ -137,7 +137,7 @@
                 "mvn -B compile -Dlibcrypto.path={libcrypto_path}"
             ],
             "!test_steps": [
-                "mvn -B test -Dlibcrypto.path={libcrypto_path} -DrerunFailingTestsCount=5"
+                "aws-crt-java-test"
             ]
         }
     }

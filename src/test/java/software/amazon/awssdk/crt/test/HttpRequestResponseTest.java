@@ -170,7 +170,8 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     private boolean shouldRetry(TestHttpResponse response) {
         // Retry if we couldn't connect or if we got 503 response
-        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503) {
+        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503
+                || response.statusCode == 502) {
             return true;
         }
         return false;
@@ -236,6 +237,10 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
                     response = getResponse(uri, request, null);
                 }
             } catch (Exception ex) {
+                if(response != null && !shouldRetry(response)) {
+                    /* Not retryable exception */
+                    throw new RuntimeException(ex);
+                }
                 //do nothing just let it retry
             }
 

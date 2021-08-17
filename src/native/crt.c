@@ -383,6 +383,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
         /* failed to join all threads, throw an exception */
         aws_jni_throw_runtime_exception(
             env, "wait for global resource failed, which will lead to potential leak or crash");
+        return;
     }
 
     if (g_memory_tracing) {

@@ -407,9 +407,8 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_nativeCheckJniExceptionContract
 
     if (clear_exception) {
         (*env)->ExceptionClear(env);
+        (*env)->CallStaticVoidMethod(env, jni_crt_class, crt_properties.test_jni_exception_method_id, false);
     } else {
         (*env)->ExceptionCheck(env);
     }
-
-    (*env)->CallStaticVoidMethod(env, jni_crt_class, crt_properties.test_jni_exception_method_id, false);
 }

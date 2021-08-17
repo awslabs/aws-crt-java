@@ -5,7 +5,6 @@
 
 package software.amazon.awssdk.crt.test.android;
 
-import android.Manifest;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 
@@ -16,7 +15,6 @@ import java.io.InputStream;
 import java.util.Set;
 
 import software.amazon.awssdk.crt.test.CrtTestContext;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 // Overrides just for testing
@@ -45,7 +43,7 @@ public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatf
             assetStream.read(contents);
             return contents;
         } catch (IOException ex) {
-            throw new CrtRuntimeException(ex.toString());
+            return null;
         }
     }
 
@@ -54,7 +52,10 @@ public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatf
         ctx.trustStore = assetContents("ca-certificates.crt");
         ctx.iotClientCertificate = assetContents("certificate.pem");
         ctx.iotClientPrivateKey = assetContents("privatekey.pem");
-        ctx.iotEndpoint = new String(assetContents("endpoint.txt")).trim();
+        byte[] endpoint = assetContents("endpoint.txt");
+        if (endpoint != null) {
+            ctx.iotEndpoint = new String(endpoint).trim();
+        }
         ctx.iotCARoot = assetContents("AmazonRootCA1.pem");
     }
 

@@ -17,7 +17,7 @@ jint crc_common(
     uint32_t (*checksum_fn)(const uint8_t *, int, uint32_t)) {
     struct aws_byte_cursor cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
     aws_byte_cursor_advance(&cursor, start);
-    cursor.len = aws_min_i64(length, cursor.len);
+    cursor.len = (size_t)aws_min_i64(length, cursor.len);
     uint32_t res = (uint32_t)previous;
     while (cursor.len > INT_MAX) {
         res = checksum_fn(cursor.ptr, INT_MAX, res);

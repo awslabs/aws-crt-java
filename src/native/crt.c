@@ -33,7 +33,6 @@ int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator(void) {
     struct aws_allocator *sba_allocator = aws_small_block_allocator_new(aws_default_allocator(), true);
     if (g_memory_tracing) {
-        struct aws_allocator *allocator = aws_default_allocator();
         return aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
     }
     return sba_allocator;
@@ -230,13 +229,6 @@ static void s_jni_atexit_strict(void) {
     if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_destroy(tracer_allocator);
-    }
-    /*
-     * If there are outstanding leaks, something is likely to crash on shutdown
-     * so leave the allocators in place to avoid this
-     */
-    if (aws_small_block_allocator_bytes_active(s_allocator)) {
-        return;
     }
     aws_small_block_allocator_destroy(s_allocator);
     s_allocator = NULL;

@@ -29,7 +29,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     jint type,
     jint connect_timeout_ms,
     jint keep_alive_interval_secs,
-    jint keep_alive_timeout_secs) {
+    jint keep_alive_timeout_secs,
+    jint windows_named_pipe_open_flags) {
     (void)env;
     (void)jni_class;
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -42,6 +43,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     options->connect_timeout_ms = connect_timeout_ms;
     options->keep_alive_interval_sec = (short)keep_alive_interval_secs;
     options->keep_alive_timeout_sec = (short)keep_alive_timeout_secs;
+    options->windows_named_pipe_open_flags = windows_named_pipe_open_flags;
 
     return (jlong)options;
 }

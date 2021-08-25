@@ -5,7 +5,6 @@
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * This class wraps the aws_socket_options from aws-c-io to provide
@@ -89,22 +88,30 @@ public final class SocketOptions extends CrtResource {
     public int keepAliveTimeoutSecs = 0;
 
     /**
+     * If running on Windows and this socket is a LOCAL type, this option sets the flags used for the
+     * open pipe options when calling CreateNamedPipe.
+     * 0 is the default which means that no additional flags are added.
+     */
+    public int windowsNamedPipeOpenFlags = 0;
+
+    /**
      * Creates a new set of socket options
      */
     public SocketOptions() {
-        
+
     }
 
     @Override
     public long getNativeHandle() {
         if (super.getNativeHandle() == 0) {
             acquireNativeHandle(socketOptionsNew(
-                domain.getValue(),
-                type.getValue(),
-                connectTimeoutMs,
-                keepAliveIntervalSecs,
-                keepAliveTimeoutSecs
-            ));   
+                    domain.getValue(),
+                    type.getValue(),
+                    connectTimeoutMs,
+                    keepAliveIntervalSecs,
+                    keepAliveTimeoutSecs,
+                    windowsNamedPipeOpenFlags
+            ));
         }
         return super.getNativeHandle();
     }
@@ -129,7 +136,7 @@ public final class SocketOptions extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs);
+    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, int windowsNamedPipeOpenFlags);
 
     private static native void socketOptionsDestroy(long elg);
 };

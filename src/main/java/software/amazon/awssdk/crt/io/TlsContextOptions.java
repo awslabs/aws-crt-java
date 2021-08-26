@@ -55,7 +55,7 @@ public final class TlsContextOptions extends CrtResource {
      * Sets the minimum acceptable TLS version that the {@link TlsContext} will
      * allow. Not compatible with setCipherPreference() API.
      *
-     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS 
+     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
      * as this will update if the OS TLS is updated
      */
     public TlsVersions minTlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
@@ -88,12 +88,17 @@ public final class TlsContextOptions extends CrtResource {
     private String caDir;
     private String pkcs12Path;
     private String pkcs12Password;
+    private Pkcs11Lib pkcs11Lib;
+    private Integer pkcs11SlotId;
+    private String pkcs11TokenLabel;
+    private String pkcs11Pin;
+    private String pkcs11PrivateKeyLabel;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
      */
     private TlsContextOptions() {
-        
+
     }
 
     @Override
@@ -165,7 +170,7 @@ public final class TlsContextOptions extends CrtResource {
     /**
      * Sets the certificate/key pair that identifies this TLS host. Must be in
      * PEM format.
-     * 
+     *
      * @param certificate PEM armored certificate
      * @param privateKey  PEM armored private key
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
@@ -225,7 +230,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper function to provide a TlsContext-local trust store
-     * 
+     *
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      * @throws IllegalArgumentException if the CA Root PEM file is malformed
      */
@@ -250,7 +255,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates a default set of TLS options for the current platform
-     * 
+     *
      * @return A default configured set of options for a TLS server connection
      */
     public static TlsContextOptions createDefaultServer() {
@@ -274,7 +279,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates TLS options using a certificate and private key
-     * 
+     *
      * @param certificate String containing a PEM format certificate
      * @param privateKey  String containing a PEM format private key
      * @return A set of options for setting up an MTLS connection
@@ -362,6 +367,28 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Set the certificate for mutual TLS (mTLS).
+     * A private key must also be set.
+     * @param contents contents of PEM-formatted certificate
+     * @return this
+     */
+    public TlsContextOptions withMtlsCertificate(String contents) {
+        this.certificate = contents;
+        return this;
+    }
+
+    /**
+     * Set the certificate for mutual TLS (mTLS).
+     * A private key must also be set.
+     * @param path path to PEM-formatted certificate
+     * @return this
+     */
+    public TlsContextOptions withMtlsCertificatePath(String path) {
+        this.certificatePath = path;
+        return this;
+    }
+
+    /**
      * Specifies the certificate authority to use. By default, the OS CA repository will be used.
      * @param caRoot Certificate Authority, in PEM format
      * @return this
@@ -390,6 +417,63 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         this.initMtlsPkcs12(pkcs12Path, pkcs12Password);
+        return this;
+    }
+
+    /**
+     * Unix platforms only, specifies mTLS using a PKCS#11 library for private key operations.
+     * Use other methods to specify the mTLS certificate and private key
+     * (ex: {@link withMtlsCertificate}, {@link withPkcs11PrivateKeyLabel}).
+     * Consult the "withPkcs11" methods for further options.
+     * @param pkcs11Lib PKCS#11 library handle to use.
+     * @return this
+     */
+    public TlsContextOptions withMtlsPkcs11(Pkcs11Lib pkcs11Lib) {
+        this.pkcs11Lib = pkcs11Lib;
+        return this;
+    }
+
+    /**
+     * (PKCS#11 only) Use the token in this slot ID.
+     * If not specified, the token will be chosen based on other criteria (such as token label).
+     * @return this
+     * @see withMtlsPkcs11
+     */
+    public TlsContextOptions withPkcs11SlotId(int slotId) {
+        this.pkcs11SlotId = slotId;
+        return this;
+    }
+
+    /**
+     * (PKCS#11 only) Use the token with this label.
+     * If not specified, the token will be chosen based on other criteria (such as slot ID).
+     * @return this
+     * @see withMtlsPkcs11
+     */
+    public TlsContextOptions withPkcs11TokenLabel(String label) {
+        this.pkcs11TokenLabel = label;
+        return this;
+    }
+
+    /**
+     * (PKCS#11 only) Use this PIN to log the user into the token.
+     * Leave unspecified to log into a token with a "protected authentication path".
+     * @return this
+     * @see withMtlsPkcs11
+     */
+    public TlsContextOptions withPkcs11Pin(String pin) {
+        this.pkcs11Pin = pin;
+        return this;
+    }
+
+    /**
+     * (PKCS#11 only) Use the private key with this label.
+     * If not specified, the key will be chosen based on other criteria (such as being the only available key).
+     * @return this
+     * @see withMtlsPkcs11
+     */
+    public TlsContextOptions withPkcs11PrivateKeyLabel(String label) {
+        this.pkcs11PrivateKeyLabel = label;
         return this;
     }
 

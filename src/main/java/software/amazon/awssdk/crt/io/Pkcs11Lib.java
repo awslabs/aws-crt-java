@@ -1,7 +1,6 @@
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * Handle to a loaded PKCS#11 library.
@@ -17,22 +16,20 @@ public class Pkcs11Lib extends CrtResource {
 
     /**
      * Load and initialize a PKCS#11 library.
-     *
      * @param path path to PKCS#11 library.
      */
-    public Pkcs11Lib(String path) throws CrtRuntimeException {
+    public Pkcs11Lib(String path) {
         this(path, false);
     }
 
     /**
      * Load a PKCS#11 library, with explicit control over initialization.
-     *
      * @param path           path to PKCS#11 library.
      * @param omitInitialize if true, {@code C_Initialize()} and
      *                       {@code C_Finalize()} will not be called on the PKCS#11
      *                       library. See {@link Pkcs11Lib Notes on initialization}
      */
-    public Pkcs11Lib(String path, boolean omitInitialize) throws CrtRuntimeException {
+    public Pkcs11Lib(String path, boolean omitInitialize) {
         acquireNativeHandle(pkcs11LibNew(path, omitInitialize));
     }
 

@@ -367,8 +367,8 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Set the certificate for mutual TLS (mTLS).
-     * A private key must also be set.
+     * Enables mutual TLS (mTLS), using this certificate.
+     * Use other methods to set the associated private key.
      * @param contents contents of PEM-formatted certificate
      * @return this
      */
@@ -378,8 +378,8 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Set the certificate for mutual TLS (mTLS).
-     * A private key must also be set.
+     * Enables mutual TLS (mTLS), using this certificate.
+     * Use other methods to set the associated private key.
      * @param path path to PEM-formatted certificate
      * @return this
      */

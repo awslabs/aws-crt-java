@@ -15,7 +15,8 @@ jint crc_common(
     const size_t start,
     size_t length,
     uint32_t (*checksum_fn)(const uint8_t *, int, uint32_t)) {
-    struct aws_byte_cursor cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
+    struct aws_byte_cursor cursor = c_byte_array;
     aws_byte_cursor_advance(&cursor, start);
     cursor.len = aws_min_size(length, cursor.len);
     uint32_t res = (uint32_t)previous;
@@ -24,7 +25,7 @@ jint crc_common(
         aws_byte_cursor_advance(&cursor, INT_MAX);
     }
     jint res_signed = (jint)checksum_fn(cursor.ptr, (int)cursor.len, res);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, input, cursor);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, input, c_byte_array);
     return res_signed;
 }
 

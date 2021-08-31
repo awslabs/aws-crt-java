@@ -1,4 +1,4 @@
-Files required to make tests pass:
+Files required to make MQTT/IoT tests pass:
 ca-certificates.crt - Taken from any recent Linux /etc/ssl
 certificate.pem - IoT Thing Certificate
 privatekey.pem - IoT Thing Private Key

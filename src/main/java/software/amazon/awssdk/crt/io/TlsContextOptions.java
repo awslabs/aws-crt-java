@@ -11,6 +11,7 @@ import java.util.List;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.PemUtils;
+import software.amazon.awssdk.crt.utils.StringUtils;
 
 /**
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
@@ -105,7 +106,7 @@ public final class TlsContextOptions extends CrtResource {
             acquireNativeHandle(tlsContextOptionsNew(
                 minTlsVersion.getValue(),
                 tlsCipherPreference.getValue(),
-                alpnList.size() > 0 ? String.join(";", alpnList) : null,
+                alpnList.size() > 0 ? StringUtils.join(";", alpnList) : null,
                 certificate,
                 privateKey,
                 certificatePath,

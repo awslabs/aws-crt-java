@@ -106,6 +106,9 @@ void aws_jni_byte_buffer_set_limit(JNIEnv *env, jobject jByteBuf, jint limit);
  * characters extracted from the supplied jstring. The string value is null-terminated.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
+ *
+ * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
+ * and a java exception is being thrown (OutOfMemoryError or NullPointerException)
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str);
 

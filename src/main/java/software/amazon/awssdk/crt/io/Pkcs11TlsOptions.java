@@ -99,32 +99,4 @@ public class Pkcs11TlsOptions {
         this.certificateFileContents = contents;
         return this;
     }
-
-    public Pkcs11Lib pkcs11Lib() {
-        return pkcs11Lib;
-    }
-
-    public String userPin() {
-        return userPin;
-    }
-
-    public Integer slotId() {
-        return slotId;
-    }
-
-    public String tokenLabel() {
-        return tokenLabel;
-    }
-
-    public String privateKeyObjectLabel() {
-        return privateKeyObjectLabel;
-    }
-
-    public String certificateFilePath() {
-        return certificateFilePath;
-    }
-
-    public String certificateFileContents() {
-        return certificateFileContents;
-    }
 }

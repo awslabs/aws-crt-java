@@ -55,7 +55,7 @@ public final class TlsContextOptions extends CrtResource {
      * Sets the minimum acceptable TLS version that the {@link TlsContext} will
      * allow. Not compatible with setCipherPreference() API.
      *
-     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS 
+     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
      * as this will update if the OS TLS is updated
      */
     public TlsVersions minTlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
@@ -88,12 +88,13 @@ public final class TlsContextOptions extends CrtResource {
     private String caDir;
     private String pkcs12Path;
     private String pkcs12Password;
+    private Pkcs11TlsOptions pkcs11Options;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
      */
     private TlsContextOptions() {
-        
+
     }
 
     @Override
@@ -165,7 +166,7 @@ public final class TlsContextOptions extends CrtResource {
     /**
      * Sets the certificate/key pair that identifies this TLS host. Must be in
      * PEM format.
-     * 
+     *
      * @param certificate PEM armored certificate
      * @param privateKey  PEM armored private key
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
@@ -225,7 +226,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper function to provide a TlsContext-local trust store
-     * 
+     *
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      * @throws IllegalArgumentException if the CA Root PEM file is malformed
      */
@@ -250,7 +251,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates a default set of TLS options for the current platform
-     * 
+     *
      * @return A default configured set of options for a TLS server connection
      */
     public static TlsContextOptions createDefaultServer() {
@@ -274,7 +275,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates TLS options using a certificate and private key
-     * 
+     *
      * @param certificate String containing a PEM format certificate
      * @param privateKey  String containing a PEM format private key
      * @return A set of options for setting up an MTLS connection
@@ -390,6 +391,16 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         this.initMtlsPkcs12(pkcs12Path, pkcs12Password);
+        return this;
+    }
+
+    /**
+     * Unix platforms only, specifies mTLS using a PKCS#11 library for private key operations.
+     * @param pkcs11Options PKCS#11 options
+     * @return this
+     */
+    public TlsContextOptions withMtlsPkcs11(Pkcs11TlsOptions pkcs11Options) {
+        this.pkcs11Options = pkcs11Options;
         return this;
     }
 

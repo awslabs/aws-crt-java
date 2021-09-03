@@ -1,9 +1,17 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * Handle to a loaded PKCS#11 library.
+ * <p>
+ * For most use cases, a single instance of Pkcs11Lib should be used for the
+ * lifetime of your application.
  * <p>
  * <b>Notes on initialization:</b> By default, {@code C_Initialize()} and
  * {@code C_Finalize()} are called when the PKCS#11 library is loaded and
@@ -16,6 +24,7 @@ public class Pkcs11Lib extends CrtResource {
 
     /**
      * Load and initialize a PKCS#11 library.
+     *
      * @param path path to PKCS#11 library.
      */
     public Pkcs11Lib(String path) {
@@ -24,6 +33,7 @@ public class Pkcs11Lib extends CrtResource {
 
     /**
      * Load a PKCS#11 library, with explicit control over initialization.
+     *
      * @param path           path to PKCS#11 library.
      * @param omitInitialize if true, {@code C_Initialize()} and
      *                       {@code C_Finalize()} will not be called on the PKCS#11

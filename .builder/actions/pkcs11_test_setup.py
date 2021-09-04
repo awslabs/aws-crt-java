@@ -49,7 +49,7 @@ class Pkcs11TestSetup(Builder.Action):
         slot = self._get_token_slots()[0]
 
         # add private key to token
-        resources_dir = '../../tests/resources'
+        resources_dir = '../../crt/aws-c-io/tests/resources'
         this_dir = os.path.dirname(__file__)
         resources_dir = os.path.realpath(os.path.join(this_dir, resources_dir))
         self._exec_softhsm2_util(

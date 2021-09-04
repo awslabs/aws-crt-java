@@ -37,7 +37,10 @@
                 "{source_dir}/gradlew :s3-native-client:build -x test",
                 "mvn -P continuous-integration -B compile"
             ],
+            "_comment": "Set up SoftHSM2 for PKCS#11 tests (see ./builder/actions/pks11_test_setup.py)",
+            "packages": ["softhsm"],
             "!test_steps": [
+                "pkcs11-test-setup",
                 "aws-crt-java-test"
             ],
             "architectures": {

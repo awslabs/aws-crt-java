@@ -5,7 +5,6 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.zip.*;
@@ -40,6 +39,12 @@ public class CrcTest extends CrtTestFixture {
         crcj.update(0x000000ab);
         crcc.update(0x000000ab);
         assertEquals(crcj.getValue(), crcc.getValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCrc32ThrowsException() {
+        software.amazon.awssdk.crt.checksums.CRC32 crcc = new software.amazon.awssdk.crt.checksums.CRC32();
+        crcc.update(500000);
     }
 
     @Test
@@ -117,6 +122,12 @@ public class CrcTest extends CrtTestFixture {
         crcc.update(160);
         crcc.update(0x000000ab);
         assertEquals(0x5D6C4A5, crcc.getValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCrc32CThrowsException() {
+        software.amazon.awssdk.crt.checksums.CRC32C crcc = new software.amazon.awssdk.crt.checksums.CRC32C();
+        crcc.update(500000);
     }
 
     @Test

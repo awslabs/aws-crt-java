@@ -34,6 +34,7 @@ public class Pkcs11LibTest extends CrtTestFixture {
         // check that errors during initialization bubble up as Exceptions
         assertThrows(Exception.class, () -> new Pkcs11Lib(null));
         assertThrows(Exception.class, () -> new Pkcs11Lib("obviously-invalid-path.so"));
+        assertThrows(Exception.class, () -> new Pkcs11Lib(""));
     }
 
     @Test

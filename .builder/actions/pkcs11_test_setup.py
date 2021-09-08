@@ -29,7 +29,7 @@ class Pkcs11TestSetup(Builder.Action):
         conf_path = os.path.join(softhsm2_dir, 'softhsm2.conf')
         token_dir = os.path.join(softhsm2_dir, 'tokens')
         env.shell.mkdir(token_dir)
-        self.env.shell.setenv('SOFTHSM2_CONF', conf_path)
+        self._setenv('SOFTHSM2_CONF', conf_path)
         with open(conf_path, 'w') as conf_file:
             conf_file.write(f"directories.tokendir = {token_dir}\n")
 
@@ -63,34 +63,28 @@ class Pkcs11TestSetup(Builder.Action):
         self._exec_softhsm2_util('--show-slots', '--pin', '0000')
 
         # set env vars for tests
-        self.env.shell.setenv('TEST_PKCS11_LIB', softhsm_lib)
-        self.env.shell.setenv('TEST_PKCS11_TOKEN_LABEL', 'my-test-token')
-        self.env.shell.setenv('TEST_PKCS11_PIN', '0000')
-        self.env.shell.setenv('TEST_PKCS11_PKEY_LABEL', 'my-test-key')
-        self.env.shell.setenv('TEST_PKCS11_CERT_FILE', os.path.join(resources_dir, 'unittests.crt'))
-        self.env.shell.setenv('TEST_PKCS11_CA_FILE', os.path.join(resources_dir, 'unittests.crt'))
+        self._setenv('TEST_PKCS11_LIB', softhsm_lib)
+        self._setenv('TEST_PKCS11_TOKEN_LABEL', 'my-test-token')
+        self._setenv('TEST_PKCS11_PIN', '0000')
+        self._setenv('TEST_PKCS11_PKEY_LABEL', 'my-test-key')
+        self._setenv('TEST_PKCS11_CERT_FILE', os.path.join(resources_dir, 'unittests.crt'))
+        self._setenv('TEST_PKCS11_CA_FILE', os.path.join(resources_dir, 'unittests.crt'))
 
 
     def _find_softhsm_lib(self):
         """Return path to SoftHSM2 shared lib, or None if not found"""
 
-        # Run `ldconfig` to refresh the shared-lib cache,
-        # so we can find SoftHSM2 if it JUST got installed.
-        # Continue if this fails, it requires root privileges
-        # but on a user machine it's probably already in the cache
-        self.env.shell.exec('ldconfig', check=False, quiet=True)
+        # note: not using `ldconfig --print-cache` to find it because
+        # some installers put it in weird places where ldconfig doesn't look
+        # (like in a subfolder under lib/)
 
-        # examine the shared-lib cache
-        output = self.env.shell.exec('ldconfig', '--print-cache', quiet=True).output
-
-        # each line of output looks like:
-        #      libsofthsm2.so (libc6,x86-64) => /lib64/libsofthsm2.so
-        for line in output.splitlines():
-            tokens = line.split()
-            if len(tokens) >= 2 and tokens[0] == 'libsofthsm2.so':
-                return tokens[-1]
-
-        # didn't find it
+        for lib_dir in ['lib64', 'lib']: # search lib64 before lib
+            for base_dir in ['/usr/local', '/usr', '/',]:
+                search_dir = os.path.join(base_dir, lib_dir)
+                for root, dirs, files in os.walk(search_dir):
+                    for file_name in files:
+                        if 'libsofthsm2.so' in file_name:
+                            return os.path.join(root, file_name)
         return None
 
 
@@ -156,3 +150,10 @@ class Pkcs11TestSetup(Builder.Action):
                     token_slot_ids.append(current_slot)
 
         return token_slot_ids
+
+
+    def _setenv(self, var, value):
+        """
+        Set environment variable now,
+        """
+        self.env.shell.setenv(var, value)

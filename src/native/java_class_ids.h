@@ -43,6 +43,12 @@ struct java_predicate_properties {
 };
 extern struct java_predicate_properties predicate_properties;
 
+/* java/lang/Integer */
+struct java_integer_properties {
+    jmethodID int_value_method_id;
+};
+extern struct java_integer_properties integer_properties;
+
 /* HttpRequest */
 struct java_http_request_properties {
     jclass http_request_class;
@@ -136,6 +142,18 @@ struct java_client_bootstrap_properties {
     jmethodID onShutdownComplete;
 };
 extern struct java_client_bootstrap_properties client_bootstrap_properties;
+
+/* TlsContextPkcs11Options */
+struct java_tls_context_pkcs11_options_properties {
+    jfieldID pkcs11Lib;
+    jfieldID userPin;
+    jfieldID slotId;
+    jfieldID tokenLabel;
+    jfieldID privateKeyObjectLabel;
+    jfieldID certificateFilePath;
+    jfieldID certificateFileContents;
+};
+extern struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_options_properties;
 
 /* HttpClientConnectionManager */
 struct java_http_client_connection_manager_properties {

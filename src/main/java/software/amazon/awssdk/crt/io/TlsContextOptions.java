@@ -88,7 +88,7 @@ public final class TlsContextOptions extends CrtResource {
     private String caDir;
     private String pkcs12Path;
     private String pkcs12Password;
-    private Pkcs11TlsOptions pkcs11Options;
+    private TlsContextPkcs11Options pkcs11Options;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
@@ -117,7 +117,8 @@ public final class TlsContextOptions extends CrtResource {
                 caDir,
                 verifyPeer,
                 pkcs12Path,
-                pkcs12Password
+                pkcs12Password,
+                pkcs11Options
             ));
         }
         return super.getNativeHandle();
@@ -399,7 +400,7 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs11Options PKCS#11 options
      * @return this
      */
-    public TlsContextOptions withMtlsPkcs11(Pkcs11TlsOptions pkcs11Options) {
+    public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
         this.pkcs11Options = pkcs11Options;
         return this;
     }
@@ -440,7 +441,8 @@ public final class TlsContextOptions extends CrtResource {
                 String caDir,
                 boolean verifyPeer,
                 String pkcs12Path,
-                String pkcs12Password
+                String pkcs12Password,
+                TlsContextPkcs11Options pkcs11Options
             );
 
     private static native void tlsContextOptionsDestroy(long elg);

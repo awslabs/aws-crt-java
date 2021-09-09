@@ -9,6 +9,7 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include "crt.h"
+#include "tls_context_pkcs11_options.h"
 
 /* Have to wrap the native struct so we can manage string lifetime */
 struct jni_tls_ctx_options {
@@ -25,6 +26,8 @@ struct jni_tls_ctx_options {
     struct aws_string *certificate;
     struct aws_string *private_key;
     struct aws_string *ca_root;
+
+    struct aws_tls_ctx_pkcs11_options *pkcs11_options;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -55,6 +58,8 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_string_destroy_secure(tls->private_key);
     aws_string_destroy(tls->ca_root);
 
+    aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
+
     aws_tls_ctx_options_clean_up(&tls->options);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -77,13 +82,16 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jstring jni_ca_dirpath,
     jboolean jni_verify_peer,
     jstring jni_pkcs12_path,
-    jstring jni_pkcs12_password) {
+    jstring jni_pkcs12_password,
+    jobject jni_pkcs11_options) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls = aws_mem_calloc(allocator, 1, sizeof(struct jni_tls_ctx_options));
     AWS_FATAL_ASSERT(tls);
     aws_tls_ctx_options_init_default_client(&tls->options, allocator);
+
+    /* TODO: rewrite this function so that it's an error we ignore any settings. */
 
     /* Certs or paths will cause an init, which overwrites other fields, so do those first */
     if (jni_certificate && jni_private_key) {
@@ -125,7 +133,41 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_path failed");
             goto on_error;
         }
+    } else if (jni_pkcs11_options) {
+        tls->pkcs11_options = aws_tls_ctx_pkcs11_options_from_java_new(env, jni_pkcs11_options);
+        if (tls->pkcs11_options == NULL) {
+            /* exception already thrown */
+            goto on_error;
+        }
+
+        if (aws_tls_ctx_options_init_client_mtls_with_pkcs11(&tls->options, allocator, tls->pkcs11_options)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failedn");
+            goto on_error;
+        }
     }
+#if defined(__APPLE__)
+    else if (jni_pkcs12_path && jni_pkcs12_password) {
+        tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
+        if (!tls->pkcs12_path) {
+            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Path string");
+            goto on_error;
+        }
+        tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
+        if (!tls->pkcs12_password) {
+            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Password string");
+            goto on_error;
+        }
+
+        struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
+        if (aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
+                &tls->options, allocator, aws_string_c_str(tls->pkcs12_path), &password)) {
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
+            goto on_error;
+        }
+    }
+#endif
+    (void)jni_pkcs12_path;
+    (void)jni_pkcs12_password;
 
     if (jni_ca) {
         tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);
@@ -165,30 +207,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
     }
-
-#if defined(__APPLE__)
-    if (jni_pkcs12_path && jni_pkcs12_password) {
-        tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
-        if (!tls->pkcs12_path) {
-            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Path string");
-            goto on_error;
-        }
-        tls->pkcs12_password = aws_jni_new_string_from_jstring(env, jni_pkcs12_password);
-        if (!tls->pkcs12_password) {
-            aws_jni_throw_runtime_exception(env, "failed to get pkcs12Password string");
-            goto on_error;
-        }
-
-        struct aws_byte_cursor password = aws_byte_cursor_from_string(tls->pkcs12_password);
-        if (aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(
-                &tls->options, allocator, aws_string_c_str(tls->pkcs12_path), &password)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
-            goto on_error;
-        }
-    }
-#endif
-    (void)jni_pkcs12_path;
-    (void)jni_pkcs12_password;
 
     /* apply the rest of the non-init settings */
     tls->options.minimum_tls_version = (enum aws_tls_versions)jni_min_tls_version;

@@ -11,12 +11,11 @@
 #include <aws/common/string.h>
 #include <aws/io/tls_channel_handler.h>
 
-/* aws_tls_ctx_pkcs11_options, plus values copied out of the originating TlsContextPkcs11Options java object */
+/* Contains aws_tls_ctx_pkcs11_options, plus values copied from
+ * the TlsContextPkcs11Options java object */
 struct aws_tls_ctx_pkcs11_options_binding {
-    /* Must be first thing in the structure so casts to aws_tls_ctx_pkcs11_options work */
     struct aws_tls_ctx_pkcs11_options options;
 
-    /* these strings get copied from java, so we don't have to pin and track references */
     struct aws_string *user_pin;
     struct aws_string *token_label;
     struct aws_string *private_key_object_label;
@@ -43,7 +42,7 @@ void aws_tls_ctx_pkcs11_options_from_java_destroy(struct aws_tls_ctx_pkcs11_opti
     aws_mem_release(aws_jni_get_allocator(), binding);
 }
 
-/* Helper for processing optional byte-cursors in the options.
+/* Helper for processing optional strings.
  * If false is returned then a java exception has occurred */
 static bool s_read_optional_string(
     JNIEnv *env,
@@ -59,12 +58,13 @@ static bool s_read_optional_string(
         return true;
     }
 
-    *out_string = aws_jni_new_string_from_jstring(env, field);
-    if (*out_string == NULL) {
+    struct aws_string *value = aws_jni_new_string_from_jstring(env, field);
+    if (value == NULL) {
         return false;
     }
 
-    *out_cursor = aws_byte_cursor_from_string(*out_string);
+    *out_string = value;
+    *out_cursor = aws_byte_cursor_from_string(value);
     return true;
 }
 

@@ -91,8 +91,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     AWS_FATAL_ASSERT(tls);
     aws_tls_ctx_options_init_default_client(&tls->options, allocator);
 
-    /* TODO: rewrite this function so that it's an error we ignore any settings. */
-
     /* Certs or paths will cause an init, which overwrites other fields, so do those first */
     if (jni_certificate && jni_private_key) {
         tls->certificate = aws_jni_new_string_from_jstring(env, jni_certificate);

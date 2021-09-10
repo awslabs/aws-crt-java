@@ -11,8 +11,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.is;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
+import software.amazon.awssdk.crt.io.TlsContextPkcs11Options;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.utils.PemUtils;
 
@@ -213,6 +215,31 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         }
 
         assertFalse(successfullyCreatedTlsContext);
+    }
+
+    @Test
+    public void testMtlsPkcs11() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Pkcs11LibTest.assumeEnvironmentSetUpForPkcs11Tests();
+
+        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+
+            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
+                    .withUserPin("1234")
+                    .withSlotId(1)
+                    .withTokenLabel("my-token")
+                    .withPrivateKeyObjectLabel("my-key")
+                    .withCertificateFileContents("asdf")
+                    .withCertificateFilePath("qwer");
+
+            tlsOptions.withMtlsPkcs11(pkcs11Options);
+
+            try (TlsContext tls = new TlsContext(tlsOptions)) {
+            } catch (Exception ex) {
+                // TODO: remove this catch-block.
+            }
+        }
     }
 
     @Test

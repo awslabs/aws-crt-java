@@ -9,6 +9,7 @@
 #include "java_class_ids.h"
 
 #include <aws/common/string.h>
+#include <aws/io/pkcs11.h>
 #include <aws/io/tls_channel_handler.h>
 
 /* Contains aws_tls_ctx_pkcs11_options, plus values copied from
@@ -33,6 +34,7 @@ void aws_tls_ctx_pkcs11_options_from_java_destroy(struct aws_tls_ctx_pkcs11_opti
     struct aws_tls_ctx_pkcs11_options_binding *binding =
         AWS_CONTAINER_OF(options, struct aws_tls_ctx_pkcs11_options_binding, options);
 
+    aws_pkcs11_lib_release(binding->options.pkcs11_lib);
     aws_string_destroy_secure(binding->user_pin);
     aws_string_destroy(binding->token_label);
     aws_string_destroy(binding->private_key_object_label);
@@ -78,12 +80,16 @@ struct aws_tls_ctx_pkcs11_options *aws_tls_ctx_pkcs11_options_from_java_new(JNIE
         aws_jni_throw_null_pointer_exception(env, "Pkcs11Lib is null");
         goto error;
     }
-    binding->options.pkcs11_lib =
-        (void *)(*env)->CallLongMethod(env, pkcs11_lib_jni, crt_resource_properties.get_native_handle_method_id);
-    if (binding->options.pkcs11_lib == NULL) {
+
+    jlong pkcs11_lib_handle =
+        (*env)->CallLongMethod(env, pkcs11_lib_jni, crt_resource_properties.get_native_handle_method_id);
+    if (pkcs11_lib_handle == 0) {
         aws_jni_throw_null_pointer_exception(env, "Pkcs11Lib.getNativeHandle() returned null");
         goto error;
     }
+
+    /* don't forget ref-counting to keep C object alive */
+    binding->options.pkcs11_lib = aws_pkcs11_lib_acquire((void *)pkcs11_lib_handle);
 
     /* user_pin is optional String */
     if (!s_read_optional_string(

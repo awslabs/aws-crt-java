@@ -139,7 +139,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
 
         if (aws_tls_ctx_options_init_client_mtls_with_pkcs11(&tls->options, allocator, tls->pkcs11_options)) {
-            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failedn");
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failed");
             goto on_error;
         }
     }

@@ -5,12 +5,14 @@
 
 package software.amazon.awssdk.crt.io;
 
+import software.amazon.awssdk.crt.CrtResource;
+
 /**
  * Options for TLS using a PKCS#11 library for private key operations.
  *
  * @see TlsContextOptions#withMtlsPkcs11(TlsContextPkcs11Options)
  */
-public class TlsContextPkcs11Options {
+public class TlsContextPkcs11Options extends CrtResource {
     Pkcs11Lib pkcs11Lib;
     String userPin;
     Integer slotId;
@@ -25,6 +27,7 @@ public class TlsContextPkcs11Options {
      * @param pkcs11Lib use this PKCS#11 library
      */
     public TlsContextPkcs11Options(Pkcs11Lib pkcs11Lib) {
+        addReferenceTo(pkcs11Lib);
         this.pkcs11Lib = pkcs11Lib;
     }
 
@@ -99,5 +102,22 @@ public class TlsContextPkcs11Options {
     public TlsContextPkcs11Options withCertificateFileContents(String contents) {
         this.certificateFileContents = contents;
         return this;
+    }
+
+    /*
+     * Doesn't actually have a native handle. This class is just a CrtResource
+     * because it references one
+     */
+    @Override
+    protected void releaseNativeHandle() {
+    }
+
+    /*
+     * Doesn't actually have a native handle. This class is just a CrtResource
+     * because it references one
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() {
+        return true;
     }
 }

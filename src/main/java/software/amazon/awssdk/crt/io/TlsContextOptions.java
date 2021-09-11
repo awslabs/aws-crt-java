@@ -303,6 +303,18 @@ public final class TlsContextOptions extends CrtResource {
         return options;
     }
 
+    /**
+     * Unix platforms only - Helper which creates TLS options using a PKCS#11 library for private key operations.
+     * @param pkcs11Options PKCS#11 options
+     * @return A set of options for creating a PKCS#11 TLS connection
+     */
+    public static TlsContextOptions createWithMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsPkcs11(pkcs11Options);
+        options.verifyPeer = true;
+        return options;
+    }
+
     /*******************************************************************************
      * .with() methods
      ******************************************************************************/
@@ -401,6 +413,7 @@ public final class TlsContextOptions extends CrtResource {
      * @return this
      */
     public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        addReferenceTo(pkcs11Options);
         this.pkcs11Options = pkcs11Options;
         return this;
     }

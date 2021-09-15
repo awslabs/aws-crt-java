@@ -4,10 +4,13 @@
  */
 package software.amazon.awssdk.crt.checksums;
 
-import software.amazon.awssdk.crt.CrtResource;
-import java.nio.ByteBuffer;
+import software.amazon.awssdk.crt.CRT;
 import java.util.zip.Checksum;
-public class CRC32 implements Checksum, Cloneable{
+
+public class CRC32 implements Checksum, Cloneable {
+    static {
+        new CRT();
+    };
 
     private int value = 0;
 
@@ -25,7 +28,7 @@ public class CRC32 implements Checksum, Cloneable{
 
     @Override
     public long getValue() {
-        return (long)value & 0xffffffffL;
+        return (long) value & 0xffffffffL;
     }
 
     public void reset() {
@@ -50,7 +53,7 @@ public class CRC32 implements Checksum, Cloneable{
         if (b < 0 || b > 0xff) {
             throw new IllegalArgumentException();
         }
-        byte[] buf = {(byte)(b & 0x000000ff)};
+        byte[] buf = { (byte) (b & 0x000000ff) };
         this.update(buf);
     }
 

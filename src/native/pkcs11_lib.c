@@ -32,18 +32,16 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
     struct aws_pkcs11_lib *pkcs11_lib = NULL;
     struct aws_pkcs11_lib_options options;
     AWS_ZERO_STRUCT(options);
-    struct aws_byte_cursor filename = {.ptr = NULL};
 
     /* read jni args into C options */
 
     /* filename is required in Java binding
      * (it's optional in C because user could link their PKCS#11 lib statically,
      * but that's not happening in Java) */
-    filename = aws_jni_byte_cursor_from_jstring_acquire(env, jni_filename);
-    if (filename.ptr == NULL) {
+    options.filename = aws_jni_byte_cursor_from_jstring_acquire(env, jni_filename);
+    if (options.filename.ptr == NULL) {
         goto cleanup;
     }
-    options.filename = &filename;
 
     options.omit_initialize = jni_omit_initialize != 0;
 
@@ -56,7 +54,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
 
 cleanup:
     /* clean up, whether or not we were successful */
-    aws_jni_byte_cursor_from_jstring_release(env, jni_filename, filename);
+    aws_jni_byte_cursor_from_jstring_release(env, jni_filename, options.filename);
 
     return (jlong)pkcs11_lib;
 }

@@ -10,9 +10,9 @@ import software.amazon.awssdk.crt.io.Pkcs11Lib;
 public class Pkcs11LibTest extends CrtTestFixture {
 
     // The PKCS#11 tests are skipped unless the following env variables are set:
-    String TEST_PKCS11_LIB = System.getenv("TEST_PKCS11_LIB");
+    static String TEST_PKCS11_LIB = System.getenv("TEST_PKCS11_LIB");
 
-    void assumeEnvironmentSetUpForPkcs11Tests() {
+    static void assumeEnvironmentSetUpForPkcs11Tests() {
         Assume.assumeNotNull(TEST_PKCS11_LIB);
     }
 

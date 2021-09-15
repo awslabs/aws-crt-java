@@ -31,6 +31,16 @@ struct aws_allocator *aws_jni_get_allocator(void);
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
+ * Throws java NullPointerException
+ ******************************************************************************/
+void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
+ * Throws java IllegalArgumentException
+ ******************************************************************************/
+void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
  * Checks whether or not an exception is pending on the stack and clears it.
  * If an exception was pending, it is cleared.
  *

@@ -88,7 +88,7 @@ public final class TlsContextOptions extends CrtResource {
     private String caDir;
     private String pkcs12Path;
     private String pkcs12Password;
-    private Pkcs11TlsOptions pkcs11Options;
+    private TlsContextPkcs11Options pkcs11Options;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
@@ -117,7 +117,8 @@ public final class TlsContextOptions extends CrtResource {
                 caDir,
                 verifyPeer,
                 pkcs12Path,
-                pkcs12Password
+                pkcs12Password,
+                pkcs11Options
             ));
         }
         return super.getNativeHandle();
@@ -302,6 +303,18 @@ public final class TlsContextOptions extends CrtResource {
         return options;
     }
 
+    /**
+     * Unix platforms only - Helper which creates TLS options using a PKCS#11 library for private key operations.
+     * @param pkcs11Options PKCS#11 options
+     * @return A set of options for creating a PKCS#11 TLS connection
+     */
+    public static TlsContextOptions createWithMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsPkcs11(pkcs11Options);
+        options.verifyPeer = true;
+        return options;
+    }
+
     /*******************************************************************************
      * .with() methods
      ******************************************************************************/
@@ -399,7 +412,8 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs11Options PKCS#11 options
      * @return this
      */
-    public TlsContextOptions withMtlsPkcs11(Pkcs11TlsOptions pkcs11Options) {
+    public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        addReferenceTo(pkcs11Options);
         this.pkcs11Options = pkcs11Options;
         return this;
     }
@@ -440,7 +454,8 @@ public final class TlsContextOptions extends CrtResource {
                 String caDir,
                 boolean verifyPeer,
                 String pkcs12Path,
-                String pkcs12Password
+                String pkcs12Password,
+                TlsContextPkcs11Options pkcs11Options
             );
 
     private static native void tlsContextOptionsDestroy(long elg);

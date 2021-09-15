@@ -12,6 +12,18 @@
 #include <aws/io/pkcs11.h>
 #include <aws/io/tls_channel_handler.h>
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to pointer */
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
+#endif
+
 /* Contains aws_tls_ctx_pkcs11_options, plus values copied from
  * the TlsContextPkcs11Options java object */
 struct aws_tls_ctx_pkcs11_options_binding {

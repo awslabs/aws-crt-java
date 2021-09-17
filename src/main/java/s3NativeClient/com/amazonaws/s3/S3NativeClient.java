@@ -329,7 +329,8 @@ public class S3NativeClient implements AutoCloseable {
             headerConsumer.accept(new HttpHeader("Content-Type", request.responseContentType()));
         }
         if (request.responseExpires() != null) {
-            headerConsumer.accept(new HttpHeader("Expires", request.responseExpires()));
+            headerConsumer.accept(
+                    new HttpHeader("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(request.responseExpires())));
         }
         if (request.versionId() != null) {
             headerConsumer.accept(new HttpHeader("versionId", request.versionId()));

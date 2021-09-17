@@ -299,7 +299,7 @@ public class S3NativeClient implements AutoCloseable {
         if (request.ifMatch() != null) {
             headerConsumer.accept(new HttpHeader("If-Match", request.ifMatch()));
         }
-        if (request.ifMatch() != null) {
+        if (request.ifModifiedSince() != null) {
             headerConsumer.accept(new HttpHeader("If-Modified-Since",
                     DateTimeFormatter.RFC_1123_DATE_TIME.format(request.ifModifiedSince())));
         }
@@ -312,6 +312,27 @@ public class S3NativeClient implements AutoCloseable {
         }
         if (request.range() != null) {
             headerConsumer.accept(new HttpHeader("Range", request.range()));
+        }
+        if (request.responseCacheControl() != null) {
+            headerConsumer.accept(new HttpHeader("Cache-Control", request.responseCacheControl()));
+        }
+        if (request.responseContentDisposition() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Disposition", request.responseContentDisposition()));
+        }
+        if (request.responseContentEncoding() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Encoding", request.responseContentEncoding()));
+        }
+        if (request.responseContentLanguage() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Language", request.responseContentLanguage()));
+        }
+        if (request.responseContentType() != null) {
+            headerConsumer.accept(new HttpHeader("Content-Type", request.responseContentType()));
+        }
+        if (request.responseExpires() != null) {
+            headerConsumer.accept(new HttpHeader("Expires", request.responseExpires()));
+        }
+        if (request.versionId() != null) {
+            headerConsumer.accept(new HttpHeader("versionId", request.versionId()));
         }
         if (request.sSECustomerAlgorithm() != null) {
             headerConsumer.accept(

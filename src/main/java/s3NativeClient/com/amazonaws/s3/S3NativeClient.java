@@ -24,6 +24,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.lang.String;
+import java.io.UnsupportedEncodingException;
 
 public class S3NativeClient implements AutoCloseable {
     private final S3Client s3Client;
@@ -103,6 +107,60 @@ public class S3NativeClient implements AutoCloseable {
         return encodedPath;
     }
 
+    private String encodeValue(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new UnsupportedOperationException(e);
+        }
+    }
+
+    private String urlParamBuild(Map<?, ?> map) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (sb.length() > 0) {
+                sb.append("&");
+            }
+            sb.append(String.format("%s=%s", encodeValue(entry.getKey().toString()),
+                    encodeValue(entry.getValue().toString())));
+        }
+        return sb.toString();
+    }
+
+    private String getGetObjectRequestQueryParameters(GetObjectRequest request) {
+        final Map<String, String> requestParams = new HashMap<>();
+        if (request.partNumber() != null) {
+            requestParams.put("partNumber", Integer.toString(request.partNumber()));
+        }
+        if (request.responseCacheControl() != null) {
+            requestParams.put("response-cache-control", request.responseCacheControl());
+        }
+        if (request.responseContentDisposition() != null) {
+            requestParams.put("response-content-disposition", request.responseContentDisposition());
+        }
+        if (request.responseContentEncoding() != null) {
+            requestParams.put("response-content-encoding", request.responseContentEncoding());
+        }
+        if (request.responseContentLanguage() != null) {
+            requestParams.put("response-content-language", request.responseContentLanguage());
+        }
+        if (request.responseContentType() != null) {
+            requestParams.put("response-content-type", request.responseContentType());
+        }
+        if (request.responseExpires() != null) {
+            requestParams.put("response-expires",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.responseExpires()));
+        }
+        if (request.versionId() != null) {
+            requestParams.put("versionId", request.versionId());
+        }
+        String queryParams = urlParamBuild(requestParams);
+        if (queryParams != "") {
+            return queryParams + "&" + request.customQueryParameters();
+        }
+        return request.customQueryParameters();
+    }
+
     private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
         metaRequest.addRef();
 
@@ -170,14 +228,10 @@ public class S3NativeClient implements AutoCloseable {
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populateGetObjectRequestHeaders(header -> headers.add(header), request);
-        final Map<String, String> requestParams = new HashMap<>();
-        if (request.partNumber() != null) {
-            requestParams.put("PartNumber", Integer.toString(request.partNumber()));
-        }
 
         addCustomHeaders(headers, request.customHeaders());
-
-        String encodedPath = getEncodedPath(request.key(), request.customQueryParameters());
+        String getObjectRequestQueryParameters = getGetObjectRequestQueryParameters(request);
+        String encodedPath = getEncodedPath(request.key(), getObjectRequestQueryParameters);
 
         HttpRequest httpRequest = new HttpRequest("GET", encodedPath, headers.toArray(new HttpHeader[0]), null);
 
@@ -312,28 +366,6 @@ public class S3NativeClient implements AutoCloseable {
         }
         if (request.range() != null) {
             headerConsumer.accept(new HttpHeader("Range", request.range()));
-        }
-        if (request.responseCacheControl() != null) {
-            headerConsumer.accept(new HttpHeader("Cache-Control", request.responseCacheControl()));
-        }
-        if (request.responseContentDisposition() != null) {
-            headerConsumer.accept(new HttpHeader("Content-Disposition", request.responseContentDisposition()));
-        }
-        if (request.responseContentEncoding() != null) {
-            headerConsumer.accept(new HttpHeader("Content-Encoding", request.responseContentEncoding()));
-        }
-        if (request.responseContentLanguage() != null) {
-            headerConsumer.accept(new HttpHeader("Content-Language", request.responseContentLanguage()));
-        }
-        if (request.responseContentType() != null) {
-            headerConsumer.accept(new HttpHeader("Content-Type", request.responseContentType()));
-        }
-        if (request.responseExpires() != null) {
-            headerConsumer.accept(
-                    new HttpHeader("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(request.responseExpires())));
-        }
-        if (request.versionId() != null) {
-            headerConsumer.accept(new HttpHeader("versionId", request.versionId()));
         }
         if (request.sSECustomerAlgorithm() != null) {
             headerConsumer.accept(

@@ -607,6 +607,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         HttpRequest httpRequest = options.getHttpRequest();
 
         if (customQueryParameters == null || customQueryParameters.trim().equals("")) {
+            System.out.println(httpRequest.getEncodedPath());
             assertTrue(httpRequest.getEncodedPath().equals("/" + key));
         } else {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));

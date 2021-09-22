@@ -155,8 +155,7 @@ public class S3NativeClient implements AutoCloseable {
             requestParams.put("versionId", request.versionId());
         }
         String queryParams = urlParamBuild(requestParams);
-        if (queryParams != "") {
-            System.out.println(queryParams);
+        if (!queryParams.trim().equals("")) {
             return queryParams + "&" + request.customQueryParameters();
         }
         return request.customQueryParameters();

@@ -41,7 +41,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
         try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
             resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connectionPool.acquireConnection().get(120, TimeUnit.SECONDS)) {
+            try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 resp.actuallyConnected = true;
             }
         } catch (Exception e) {
@@ -69,7 +69,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                         SocketOptions socketOptions = new SocketOptions();
                         TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                    socketOptions.connectTimeoutMs = 10000;
+                    socketOptions.connectTimeoutMs = 100000;
                     resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
                 }
             }

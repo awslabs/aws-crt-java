@@ -38,17 +38,21 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
         HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
         options.withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
-
-        try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
-            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                resp.actuallyConnected = true;
+        int retryCounts = 3;
+        for (int iter = 0; iter < retryCounts; iter++) {
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    resp.actuallyConnected = true;
+                }
+                break;
+            } catch (Exception e) {
+                if (iter == retryCounts - 1) {
+                    resp.exceptionThrown = true;
+                    resp.exception = e;
+                }
             }
-        } catch (Exception e) {
-            resp.exceptionThrown = true;
-            resp.exception = e;
         }
-
         return resp;
     }
 
@@ -69,7 +73,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                         SocketOptions socketOptions = new SocketOptions();
                         TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                    socketOptions.connectTimeoutMs = 100000;
+                    socketOptions.connectTimeoutMs = 10000;
                     resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
                 }
             }

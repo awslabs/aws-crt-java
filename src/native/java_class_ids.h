@@ -44,10 +44,10 @@ struct java_predicate_properties {
 extern struct java_predicate_properties predicate_properties;
 
 /* java/lang/Integer */
-struct java_integer_properties {
-    jmethodID int_value_method_id;
+struct java_boxed_long_properties {
+    jmethodID long_value_method_id;
 };
-extern struct java_integer_properties integer_properties;
+extern struct java_boxed_long_properties boxed_long_properties;
 
 /* HttpRequest */
 struct java_http_request_properties {

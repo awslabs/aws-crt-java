@@ -35,7 +35,7 @@ struct aws_tls_ctx_pkcs11_options_binding {
     struct aws_string *cert_file_path;
     struct aws_string *cert_file_contents;
 
-    uint32_t slot_id;
+    uint64_t slot_id;
 };
 
 void aws_tls_ctx_pkcs11_options_from_java_destroy(struct aws_tls_ctx_pkcs11_options *options) {
@@ -113,18 +113,14 @@ struct aws_tls_ctx_pkcs11_options *aws_tls_ctx_pkcs11_options_from_java_new(JNIE
         goto error;
     }
 
-    /* slot_id is optional Integer */
+    /* slot_id is optional Long */
     jobject slot_id_jni = (*env)->GetObjectField(env, options_jni, tls_context_pkcs11_options_properties.slotId);
     if (slot_id_jni != NULL) {
-        jint slot_id_value = (*env)->CallIntMethod(env, slot_id_jni, integer_properties.int_value_method_id);
+        jlong slot_id_value = (*env)->CallLongMethod(env, slot_id_jni, boxed_long_properties.long_value_method_id);
         if ((*env)->ExceptionCheck(env)) {
             goto error;
         }
-        if (slot_id_value < 0) {
-            aws_jni_throw_illegal_argument_exception(env, "PKCS#11 slot ID cannot be negative");
-            goto error;
-        }
-        binding->slot_id = (uint32_t)slot_id_value;
+        binding->slot_id = (uint64_t)slot_id_value;
         binding->options.slot_id = &binding->slot_id;
     }
 

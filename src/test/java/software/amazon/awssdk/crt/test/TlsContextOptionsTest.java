@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -218,6 +219,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         assertFalse(successfullyCreatedTlsContext);
     }
 
+    @Ignore // TODO: figure out how to test this
     @Test
     public void testMtlsPkcs11() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -235,7 +237,6 @@ public class TlsContextOptionsTest extends CrtTestFixture {
                 TlsContext tls = new TlsContext(tlsOptions)) {
 
         }
-        // TODO: remove this catch block once aws-c-io has actual implementation
         catch (CrtRuntimeException ex) {
             assertEquals("AWS_ERROR_UNIMPLEMENTED", ex.errorName);
         }

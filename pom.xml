@@ -45,6 +45,15 @@
 
     <profiles>
         <profile>
+            <id>compile-for-java-8</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+        <profile>
             <id>continuous-integration</id>
             <properties>
                 <cmake.warningsareerrors>ON</cmake.warningsareerrors>
@@ -288,6 +297,11 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

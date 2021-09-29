@@ -14,6 +14,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.Uri;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -91,7 +92,7 @@ public class S3NativeClient implements AutoCloseable {
     }
 
     private String getEncodedPath(String key, String customQueryParameters) {
-        String encodedPath = "/" + key;
+        String encodedPath = Uri.appendEncodingUriPath("/", key);
 
         if (customQueryParameters == null) {
             return encodedPath;

@@ -15,7 +15,7 @@ import software.amazon.awssdk.crt.CrtResource;
 public class TlsContextPkcs11Options extends CrtResource {
     Pkcs11Lib pkcs11Lib;
     String userPin;
-    Integer slotId;
+    Long slotId;
     String tokenLabel;
     String privateKeyObjectLabel;
     String certificateFilePath;
@@ -50,7 +50,7 @@ public class TlsContextPkcs11Options extends CrtResource {
      * @param slotId slot ID
      * @return this
      */
-    public TlsContextPkcs11Options withSlotId(int slotId) {
+    public TlsContextPkcs11Options withSlotId(long slotId) {
         this.slotId = slotId;
         return this;
     }

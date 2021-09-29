@@ -102,14 +102,14 @@ static void s_cache_predicate(JNIEnv *env) {
     AWS_FATAL_ASSERT(predicate_properties.test_method_id);
 }
 
-struct java_integer_properties integer_properties;
+struct java_boxed_long_properties boxed_long_properties;
 
-static void s_cache_integer(JNIEnv *env) {
-    jclass integer_class = (*env)->FindClass(env, "java/lang/Integer");
-    AWS_FATAL_ASSERT(integer_class);
+static void s_cache_boxed_long(JNIEnv *env) {
+    jclass boxed_long_class = (*env)->FindClass(env, "java/lang/Long");
+    AWS_FATAL_ASSERT(boxed_long_class);
 
-    integer_properties.int_value_method_id = (*env)->GetMethodID(env, integer_class, "intValue", "()I");
-    AWS_FATAL_ASSERT(integer_properties.int_value_method_id);
+    boxed_long_properties.long_value_method_id = (*env)->GetMethodID(env, boxed_long_class, "longValue", "()J");
+    AWS_FATAL_ASSERT(boxed_long_properties.long_value_method_id);
 }
 
 struct java_http_request_properties http_request_properties;
@@ -328,7 +328,7 @@ static void s_cache_tls_context_pkcs11_options(JNIEnv *env) {
     tls_context_pkcs11_options_properties.userPin = (*env)->GetFieldID(env, cls, "userPin", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.userPin);
 
-    tls_context_pkcs11_options_properties.slotId = (*env)->GetFieldID(env, cls, "slotId", "Ljava/lang/Integer;");
+    tls_context_pkcs11_options_properties.slotId = (*env)->GetFieldID(env, cls, "slotId", "Ljava/lang/Long;");
     AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.slotId);
 
     tls_context_pkcs11_options_properties.tokenLabel = (*env)->GetFieldID(env, cls, "tokenLabel", "Ljava/lang/String;");
@@ -736,7 +736,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
-    s_cache_integer(env);
+    s_cache_boxed_long(env);
     s_cache_http_request(env);
     s_cache_crt_resource(env);
     s_cache_mqtt_connection(env);

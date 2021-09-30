@@ -13,7 +13,9 @@ public class Uri {
     };
 
     public static String appendEncodingUriPath(String encoded, String path) {
-        return new String(appendEncodingUriPath(encoded.getBytes(), path.getBytes()), StandardCharsets.UTF_8);
+        return new String(
+                appendEncodingUriPath(encoded.getBytes(StandardCharsets.UTF_8), path.getBytes(StandardCharsets.UTF_8)),
+                StandardCharsets.UTF_8);
     }
 
     public static String appendEncodingUriPath(String path) {
@@ -21,7 +23,8 @@ public class Uri {
     }
 
     public static String appendEncodingUriParam(String encoded, String param) {
-        return new String(appendEncodingUriParam(encoded.getBytes(), param.getBytes()), StandardCharsets.UTF_8);
+        return new String(appendEncodingUriParam(encoded.getBytes(StandardCharsets.UTF_8),
+                param.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
     }
 
     public static String appendEncodingUriParam(String param) {
@@ -29,7 +32,9 @@ public class Uri {
     }
 
     public static String appendDecodingUri(String base, String encoded) {
-        return new String(appendDecodingUri(base.getBytes(), encoded.getBytes()), StandardCharsets.UTF_8);
+        return new String(
+                appendDecodingUri(base.getBytes(StandardCharsets.UTF_8), encoded.getBytes(StandardCharsets.UTF_8)),
+                StandardCharsets.UTF_8);
     }
 
     public static String appendDecodingUri(String encoded) {

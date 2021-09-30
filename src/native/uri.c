@@ -6,19 +6,18 @@
 #include <aws/io/uri.h>
 #include <jni.h>
 
-jbyteArray encoding_common(
+static jbyteArray encoding_common(
     JNIEnv *env,
     jbyteArray buffer,
     jbyteArray cursor,
     int (*encoding_fn)(struct aws_byte_buf *, const struct aws_byte_cursor *)) {
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_byte_cursor c_intermediate_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, buffer);
     struct aws_byte_cursor c_byte_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, cursor);
     struct aws_byte_buf c_byte_buf;
     jbyteArray uri_encoding = NULL;
     AWS_ZERO_STRUCT(c_byte_buf);
-    aws_byte_buf_init_copy_from_cursor(&c_byte_buf, allocator, c_intermediate_cursor);
+    aws_byte_buf_init_copy_from_cursor(&c_byte_buf, aws_jni_get_allocator(), c_intermediate_cursor);
     if (encoding_fn(&c_byte_buf, &c_byte_cursor)) {
         aws_jni_throw_runtime_exception(env, "uri.encodingCommon: failed to encode buffer");
         goto clean_up;

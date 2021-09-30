@@ -49,7 +49,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
 
-    private static final String GET_OBJECT_SPECIAL_CHARACTERS = "filename _@_=_&_?_+_)_.txt";
+    private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
+            "filename _@_=_&_?_+_)_.txt");
 
     private static final String GET_OBJECT_VERSION = System.getProperty("crt.test_s3_get_object_version",
             "2Z_dpqRBdrGjax8dyIZ3XYnASOVkdY9J");

@@ -12,21 +12,33 @@ public class Uri {
         new CRT();
     };
 
-    public static String appendEncodingUriPath(String buffer, String cursor) {
-        return new String(appendEncodingUriPath(buffer.getBytes(), cursor.getBytes()), StandardCharsets.UTF_8);
+    public static String appendEncodingUriPath(String encoded, String path) {
+        return new String(appendEncodingUriPath(encoded.getBytes(), path.getBytes()), StandardCharsets.UTF_8);
     }
 
-    public static String appendEncodingUriParam(String buffer, String cursor) {
-        return new String(appendEncodingUriParam(buffer.getBytes(), cursor.getBytes()), StandardCharsets.UTF_8);
+    public static String appendEncodingUriPath(String path) {
+        return appendEncodingUriPath("", path);
     }
 
-    public static String appendDecodingUri(String buffer, String cursor) {
-        return new String(appendDecodingUri(buffer.getBytes(), cursor.getBytes()), StandardCharsets.UTF_8);
+    public static String appendEncodingUriParam(String encoded, String param) {
+        return new String(appendEncodingUriParam(encoded.getBytes(), param.getBytes()), StandardCharsets.UTF_8);
     }
 
-    private static native byte[] appendEncodingUriPath(byte[] buffer, byte[] cursor);
+    public static String appendEncodingUriParam(String param) {
+        return appendEncodingUriParam("", param);
+    }
 
-    private static native byte[] appendEncodingUriParam(byte[] buffer, byte[] cursor);
+    public static String appendDecodingUri(String base, String encoded) {
+        return new String(appendDecodingUri(base.getBytes(), encoded.getBytes()), StandardCharsets.UTF_8);
+    }
 
-    private static native byte[] appendDecodingUri(byte[] buffer, byte[] cursor);
+    public static String appendDecodingUri(String encoded) {
+        return appendDecodingUri("", encoded);
+    }
+
+    private static native byte[] appendEncodingUriPath(byte[] encoding, byte[] path);
+
+    private static native byte[] appendEncodingUriParam(byte[] encoding, byte[] param);
+
+    private static native byte[] appendDecodingUri(byte[] base, byte[] encoded);
 }

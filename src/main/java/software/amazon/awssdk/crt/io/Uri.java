@@ -15,6 +15,9 @@ public class Uri {
     /**
      * Returns a concatanation of an encoded base, and the uri path encoding of a
      * string. This is the modified version of rfc3986 used by sigv4 signing.
+     * 
+     * @param encoded The encoded original path.
+     * @param path The path to be encoded and appended to the original path
      */
     public static String appendEncodingUriPath(String encoded, String path) {
         return new String(

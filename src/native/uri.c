@@ -16,7 +16,6 @@ static jbyteArray s_encoding_common(
     struct aws_byte_cursor c_byte_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, cursor);
     jbyteArray uri_encoding = NULL;
     struct aws_byte_buf c_byte_buf;
-    AWS_ZERO_STRUCT(c_byte_buf);
     aws_byte_buf_init_copy_from_cursor(&c_byte_buf, aws_jni_get_allocator(), c_intermediate_cursor);
     if (encoding_fn(&c_byte_buf, &c_byte_cursor)) {
         aws_jni_throw_runtime_exception(env, "uri.encodingCommon: failed to encode buffer");

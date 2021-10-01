@@ -113,8 +113,8 @@ public class S3NativeClient implements AutoCloseable {
             if (sb.length() > 0) {
                 sb.append("&");
             }
-            sb.append(String.format("%s=%s", Uri.encodeUriPath(entry.getKey().toString()),
-                    Uri.encodeUriPath(entry.getValue().toString())));
+            sb.append(String.format("%s=%s", Uri.encodeUriParam(entry.getKey().toString()),
+                    Uri.encodeUriParam(entry.getValue().toString())));
         }
         return sb.toString();
     }

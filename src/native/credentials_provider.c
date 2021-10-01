@@ -259,8 +259,7 @@ JNIEXPORT jlong JNICALL
     }
 
     if (auth_token) {
-        options.auth_token =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, auth_token);
+        options.auth_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, auth_token);
     }
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_ecs(allocator, &options);
@@ -280,8 +279,7 @@ JNIEXPORT jlong JNICALL
     }
 
     if (auth_token) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
-            env, auth_token, options.auth_token);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, auth_token, options.auth_token);
     }
 
     return (jlong)provider;

@@ -108,22 +108,14 @@ public class S3NativeClient implements AutoCloseable {
         return encodedPath;
     }
 
-    private String encodeValue(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
-
     private String urlParamBuild(Map<?, ?> map) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if (sb.length() > 0) {
                 sb.append("&");
             }
-            sb.append(String.format("%s=%s", encodeValue(entry.getKey().toString()),
-                    encodeValue(entry.getValue().toString())));
+            sb.append(String.format("%s=%s", Uri.encodeUriPath(entry.getKey().toString()),
+                    Uri.encodeUriPath(entry.getValue().toString())));
         }
         return sb.toString();
     }

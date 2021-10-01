@@ -6,26 +6,24 @@
 package software.amazon.awssdk.crt.test;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
+import java.util.concurrent.*;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.Assume;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
-import software.amazon.awssdk.crt.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -249,6 +247,65 @@ public class CredentialsProviderTest extends CrtTestFixture {
         } finally {
             Files.deleteIfExists(credsPath);
             Files.deleteIfExists(confPath);
+        }
+    }
+
+    @Test
+    public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server.createContext("/", httpExchange -> {
+            String response = "{\"AccessKeyId\":\"ACCESS_KEY_ID\"," +
+                    "\"SecretAccessKey\":\"SECRET_ACCESS_KEY\"," +
+                    "\"Token\":\"TOKEN_TOKEN_TOKEN\"," +
+                    "\"Expiration\":\"3000-05-03T04:55:54Z\"}";
+            httpExchange.sendResponseHeaders(200, response.length());
+            List<String> hv = new ArrayList<String>();
+            hv.add("application/json");
+            httpExchange.getResponseHeaders().put("Content-Type", hv);
+            OutputStream os = httpExchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        });
+        server.start();
+
+        EcsCredentialsProvider unit = EcsCredentialsProvider.builder()
+                .withHost("127.0.0.1")
+                .withPathAndQuery("/")
+                .build();
+
+        CompletableFuture<Credentials> credentialsFuture = unit.getCredentials();
+
+        Credentials creds = credentialsFuture.get(8, TimeUnit.SECONDS);
+
+        assertNotNull(creds);
+        assertNotNull(creds.getAccessKeyId());
+        assertEquals("ACCESS_KEY_ID", new String(creds.getAccessKeyId()));
+        assertEquals("SECRET_ACCESS_KEY", new String(creds.getSecretAccessKey()));
+        assertEquals("TOKEN_TOKEN_TOKEN", new String(creds.getSessionToken()));
+
+        server.stop(0);
+        unit.close();
+    }
+
+    @Test
+    public void testCreateDestroyEcs_MissingCreds() {
+        EcsCredentialsProvider.Builder builder = EcsCredentialsProvider.builder();
+
+        try (EcsCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
+
+            try {
+                provider.getCredentials().join();
+                fail("Expected credential fetching to throw an exception since creds are missing from profile");
+            } catch (CompletionException e) {
+                assertNotNull(e.getCause());
+                Throwable innerException = e.getCause();
+
+                // Check that the right exception type caused the completion error in the future
+                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+                assertEquals(RuntimeException.class, innerException.getClass());
+            }
         }
     }
 };

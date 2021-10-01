@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class EcsCredentialsProvider extends CredentialsProvider {
     /**
-     * Create a profile credentials provider using the defaults.
+     * Create an ECS credentials provider using the defaults.
      * @return An ECS credentials provider.
      */
     public static EcsCredentialsProvider create() {
@@ -25,7 +25,7 @@ public class EcsCredentialsProvider extends CredentialsProvider {
     }
 
     /**
-     * Get a builder for creating a custom profile credentials provider.
+     * Get a builder for creating a custom ECS credentials provider.
      * @return A builder.
      */
     public static Builder builder() {
@@ -73,7 +73,7 @@ public class EcsCredentialsProvider extends CredentialsProvider {
     }
 
     /**
-     * A builder for creating a custom profile credentials provider.
+     * A builder for creating a custom ECS credentials provider.
      */
     public interface Builder {
         /**
@@ -112,8 +112,8 @@ public class EcsCredentialsProvider extends CredentialsProvider {
         Builder withAuthToken(String authToken);
 
         /**
-         * Create a profile credentials provider using the configuration applied to this builder.
-         * @return A new profile credentials provider.
+         * Create an ECS credentials provider using the configuration applied to this builder.
+         * @return A new ECS credentials provider.
          */
         EcsCredentialsProvider build();
     }

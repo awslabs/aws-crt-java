@@ -25,6 +25,12 @@ public class Uri {
                 StandardCharsets.UTF_8);
     }
 
+    /**
+     * Returns the uri path encoding of a string. This is the modified version of
+     * rfc3986 used by sigv4 signing.
+     * 
+     * @param path The path to be encoded and appended to the original path
+     */
     public static String encodeUriPath(String path) {
         return appendEncodingUriPath("", path);
     }
@@ -42,6 +48,12 @@ public class Uri {
                 param.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
     }
 
+    /**
+     * Returns the uri query param encoding (passthrough alnum + '-' '_' '~' '.') of
+     * a UTF-8 string. For example, reading "a b_c" would write "a%20b_c".
+     * 
+     * @param param The param to be encoded and appended to the original param
+     */
     public static String encodeUriParam(String param) {
         return appendEncodingUriParam("", param);
     }
@@ -60,6 +72,12 @@ public class Uri {
                 StandardCharsets.UTF_8);
     }
 
+    /**
+     * Returns the uri decoding of a UTF-8 string, replacing %xx escapes by their
+     * single byte equivalent. For example, reading "a%20b_c" would write "a b_c".
+     * 
+     * @param encoded The encoded uri to be decoded and appended to the base uri.
+     */
     public static String decodeUri(String encoded) {
         return appendDecodingUri("", encoded);
     }

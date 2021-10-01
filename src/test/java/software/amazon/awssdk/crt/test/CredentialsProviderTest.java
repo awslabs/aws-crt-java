@@ -19,6 +19,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -250,6 +251,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         }
     }
 
+    @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has been resolved
     @Test
     public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);

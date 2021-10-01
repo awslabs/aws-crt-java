@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * A class that wraps a provider that gets credentials from an ECS service.
+ * See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html for details.
  */
 public class EcsCredentialsProvider extends CredentialsProvider {
     /**
@@ -92,20 +93,20 @@ public class EcsCredentialsProvider extends CredentialsProvider {
         Builder withTlsContext(TlsContext tlsContext);
 
         /**
-         * Host to query credentials from.
+         * Host used to connect to the credential service.
          * @param host the host name to use
          * @return The current builder
          */
         Builder withHost(String host);
 
         /**
-         * FIXME
+         * The URL path and query used to connect to the credential service.
          * @return The current builder
          */
         Builder withPathAndQuery(String pathAndQuery);
 
         /**
-         * FIXME
+         * Token used to retrieve credentials.
          * @return The current builder
          */
         Builder withAuthToken(String authToken);

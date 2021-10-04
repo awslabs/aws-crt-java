@@ -14,6 +14,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.Uri;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -24,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.lang.String;
 import java.io.UnsupportedEncodingException;
@@ -91,7 +91,7 @@ public class S3NativeClient implements AutoCloseable {
     }
 
     private String getEncodedPath(String key, String customQueryParameters) {
-        String encodedPath = "/" + key;
+        String encodedPath = Uri.appendEncodingUriPath("/", key);
 
         if (customQueryParameters == null) {
             return encodedPath;
@@ -107,22 +107,14 @@ public class S3NativeClient implements AutoCloseable {
         return encodedPath;
     }
 
-    private String encodeValue(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
-
     private String urlParamBuild(Map<?, ?> map) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if (sb.length() > 0) {
                 sb.append("&");
             }
-            sb.append(String.format("%s=%s", encodeValue(entry.getKey().toString()),
-                    encodeValue(entry.getValue().toString())));
+            sb.append(String.format("%s=%s", Uri.encodeUriParam(entry.getKey().toString()),
+                    Uri.encodeUriParam(entry.getValue().toString())));
         }
         return sb.toString();
     }

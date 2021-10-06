@@ -12,11 +12,11 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import java.nio.charset.StandardCharsets;
 
 /**
- * A class that wraps a provider that gets credentials from sts files.
+ * A class that wraps a provider that gets credentials from Security Token Service (STS).
  */
 public class StsCredentialsProvider extends CredentialsProvider {
     /**
-     * Create a sts credentials provider using TODO
+     * Create a sts credentials provider.
      * @return A sts credentials provider.
      */
     public static StsCredentialsProvider create() {
@@ -50,7 +50,7 @@ public class StsCredentialsProvider extends CredentialsProvider {
                     this,
                     toNativeHandle(bootstrap),
                     toNativeHandle(builder.tlsContext),
-                    toNativeHandle(builder.credsProvider),
+                    builder.credsProvider.getNativeHandle(),
                     toByteArray(builder.roleArn),
                     toByteArray(builder.sessionName),
                     builder.durationSeconds
@@ -73,7 +73,7 @@ public class StsCredentialsProvider extends CredentialsProvider {
     }
 
     /**
-     * A builder for creating a custom sts credentials provider.
+     * A builder for creating a sts credentials provider.
      */
     public interface Builder {
         /**
@@ -93,7 +93,7 @@ public class StsCredentialsProvider extends CredentialsProvider {
         Builder withTlsContext(TlsContext tlsContext);
 
         /**
-         * Sets the name of the sts to use. If none is specified, the sts named "default" is used.
+         * Sets the underlying Credentials Provider to use for source credentials
          * @param credsProvider the CredentialsProvider for source credentials
          * @return The current builder
          */

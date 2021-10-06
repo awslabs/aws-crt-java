@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -18,17 +19,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
-import software.amazon.awssdk.crt.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.auth.credentials.*;
+import software.amazon.awssdk.crt.io.*;
 
 public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -249,6 +241,36 @@ public class CredentialsProviderTest extends CrtTestFixture {
         } finally {
             Files.deleteIfExists(credsPath);
             Files.deleteIfExists(confPath);
+        }
+    }
+
+    @Test public void testCreateDestroySts_InvalidRole() {
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder staticBuilder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
+        staticBuilder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
+        staticBuilder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
+        staticBuilder.withSessionToken(SESSION_TOKEN.getBytes());
+
+        StsCredentialsProvider unit = StsCredentialsProvider.builder()
+                .withCredsProvider(staticBuilder.build())
+                .withDurationSeconds(10)
+                .withSessionName("test-session")
+                .withRoleArn("invalid-role-arn")
+                .withTlsContext(new TlsContext(TlsContextOptions.createDefaultClient()))
+                .build();
+
+        assertNotNull(unit);
+        assertTrue(unit.getNativeHandle() != 0);
+
+        try {
+            unit.getCredentials().join();
+            fail("Expected builder.build() call to throw exception due to invalid STS configuration.");
+        } catch (CompletionException e) {
+            assertNotNull(e.getCause());
+            Throwable innerException = e.getCause();
+
+            // Check that the right exception type caused the completion error in the future
+            assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+            assertEquals(RuntimeException.class, innerException.getClass());
         }
     }
 };

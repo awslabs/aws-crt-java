@@ -228,7 +228,7 @@ JNIEXPORT jlong JNICALL
         jobject java_crt_credentials_provider,
         jlong bootstrapHandle,
         jlong tls_context_handle,
-        jlong native_cached_provider,
+        jlong creds_provider,
         jbyteArray role_arn,
         jbyteArray session_name,
         jlong duration_seconds) {
@@ -251,7 +251,7 @@ JNIEXPORT jlong JNICALL
     options.shutdown_options.shutdown_user_data = callback_data;
     options.tls_ctx = (struct aws_tls_ctx *)tls_context_handle;
 
-    options.creds_provider = (struct aws_credentials_provider *)native_cached_provider;
+    options.creds_provider = (struct aws_credentials_provider *)creds_provider;
 
     if (role_arn) {
         options.role_arn = aws_jni_byte_cursor_from_jbyteArray_acquire(env, role_arn);

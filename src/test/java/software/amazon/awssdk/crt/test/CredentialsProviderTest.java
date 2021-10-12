@@ -18,17 +18,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
-import software.amazon.awssdk.crt.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.auth.credentials.*;
+import software.amazon.awssdk.crt.io.*;
 
 public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -249,6 +240,20 @@ public class CredentialsProviderTest extends CrtTestFixture {
         } finally {
             Files.deleteIfExists(credsPath);
             Files.deleteIfExists(confPath);
+        }
+    }
+
+    @Test
+    public void testCreateDestroyStsWebIdentity_InvalidEnv() {
+        try {
+            StsWebIdentityCredentialsProvider.builder()
+                    .withTlsContext(new TlsContext(TlsContextOptions.createDefaultClient()))
+                    .build();
+
+            fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
+        } catch (CrtRuntimeException e) {
+            // Check that the right exception type caused the completion error in the future
+            assertEquals("Failed to create STS web identity credentials provider (aws_last_error: AWS_ERROR_SUCCESS(0), Success.)", e.getMessage());
         }
     }
 };

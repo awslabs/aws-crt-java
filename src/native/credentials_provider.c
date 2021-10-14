@@ -262,7 +262,7 @@ JNIEXPORT jlong JNICALL
     }
 
     options.duration_seconds =
-        aws_timestamp_convert(duration_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_SECS, NULL);
+        (uint16_t)aws_timestamp_convert(duration_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_SECS, NULL);
 
     struct aws_credentials_provider *provider = aws_credentials_provider_new_sts(allocator, &options);
     if (provider == NULL) {

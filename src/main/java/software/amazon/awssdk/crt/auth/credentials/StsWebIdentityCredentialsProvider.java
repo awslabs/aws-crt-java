@@ -54,10 +54,6 @@ public class StsWebIdentityCredentialsProvider extends CredentialsProvider {
             if (builder.tlsContext != null) {
                 addReferenceTo(builder.tlsContext);
             }
-
-            if (builder.clientBootstrap != null) {
-                bootstrap.addRef();
-            }
         }
         catch (Exception e) {
             super.close();

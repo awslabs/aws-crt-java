@@ -253,7 +253,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
         } catch (CrtRuntimeException e) {
             // Check that the right exception type caused the completion error in the future
-            assertEquals("Failed to create STS web identity credentials provider (aws_last_error: AWS_ERROR_SUCCESS(0), Success.)", e.getMessage());
+            assertTrue(e.getMessage().startsWith("Failed to create STS web identity credentials provider"));
         }
     }
 };

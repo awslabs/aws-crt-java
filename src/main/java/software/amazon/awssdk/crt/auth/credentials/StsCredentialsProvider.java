@@ -58,13 +58,7 @@ public class StsCredentialsProvider extends CredentialsProvider {
 
             acquireNativeHandle(nativeHandle);
             addReferenceTo(bootstrap);
-            if (builder.tlsContext != null) {
-                addReferenceTo(builder.tlsContext);
-            }
-
-            if (builder.clientBootstrap != null) {
-                bootstrap.addRef();
-            }
+            addReferenceTo(builder.tlsContext);
         }
         catch (Exception e) {
             super.close();
@@ -172,6 +166,9 @@ public class StsCredentialsProvider extends CredentialsProvider {
 
         @Override
         public StsCredentialsProvider build() {
+            if (this.tlsContext == null) {
+                throw new IllegalArgumentException("TlsContext must be provided");
+            }
             return new StsCredentialsProvider(this);
         }
     }

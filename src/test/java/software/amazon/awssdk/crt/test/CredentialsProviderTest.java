@@ -18,6 +18,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.*;
 import software.amazon.awssdk.crt.io.*;
@@ -67,8 +68,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testCreateDestroyDefaultChain() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -85,8 +86,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testGetCredentialsDefaultChain() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -244,24 +245,28 @@ public class CredentialsProviderTest extends CrtTestFixture {
         }
     }
 
-    @Test public void testCreateDestroySts_InvalidRole() {
-        StaticCredentialsProvider.StaticCredentialsProviderBuilder staticBuilder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder();
-        staticBuilder.withAccessKeyId(ACCESS_KEY_ID.getBytes());
-        staticBuilder.withSecretAccessKey(SECRET_ACCESS_KEY.getBytes());
-        staticBuilder.withSessionToken(SESSION_TOKEN.getBytes());
-
-        StsCredentialsProvider unit = StsCredentialsProvider.builder()
-                .withCredsProvider(staticBuilder.build())
-                .withDurationSeconds(10)
-                .withSessionName("test-session")
-                .withRoleArn("invalid-role-arn")
-                .withTlsContext(new TlsContext(TlsContextOptions.createDefaultClient()))
-                .build();
-
-        assertNotNull(unit);
-        assertTrue(unit.getNativeHandle() != 0);
-
-        try {
+    @Test
+    public void testCreateDestroySts_InvalidRole() {
+        try (
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StaticCredentialsProvider staticCP = new StaticCredentialsProvider
+                        .StaticCredentialsProviderBuilder()
+                        .withAccessKeyId(ACCESS_KEY_ID.getBytes())
+                        .withSecretAccessKey(SECRET_ACCESS_KEY.getBytes())
+                        .withSessionToken(SESSION_TOKEN.getBytes())
+                        .build();
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsContextOptions);
+                StsCredentialsProvider unit = StsCredentialsProvider.builder()
+                        .withCredsProvider(staticCP)
+                        .withDurationSeconds(10)
+                        .withSessionName("test-session")
+                        .withRoleArn("invalid-role-arn")
+                        .withTlsContext(tlsContext)
+                        .withClientBootstrap(bootstrap)
+                        .build()) {
             unit.getCredentials().join();
             fail("Expected builder.build() call to throw exception due to invalid STS configuration.");
         } catch (CompletionException e) {

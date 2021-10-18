@@ -222,6 +222,70 @@ JNIEXPORT jlong JNICALL
 }
 
 JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_EcsCredentialsProvider_ecsCredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jlong bootstrapHandle,
+        jlong tls_context_handle,
+        jbyteArray host,
+        jbyteArray path_and_query,
+        jbyteArray auth_token) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_credentials_provider_ecs_options options;
+    AWS_ZERO_STRUCT(options);
+    options.bootstrap = (struct aws_client_bootstrap *)bootstrapHandle;
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+    options.tls_ctx = (struct aws_tls_ctx *)tls_context_handle;
+
+    if (host) {
+        options.host = aws_jni_byte_cursor_from_jbyteArray_acquire(env, host);
+    }
+
+    if (path_and_query) {
+        options.path_and_query = aws_jni_byte_cursor_from_jbyteArray_acquire(env, path_and_query);
+    }
+
+    if (auth_token) {
+        options.auth_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, auth_token);
+    }
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_ecs(allocator, &options);
+    if (provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create ECS credentials provider");
+    } else {
+        callback_data->provider = provider;
+    }
+
+    if (host) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, host, options.host);
+    }
+
+    if (path_and_query) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, path_and_query, options.path_and_query);
+    }
+
+    if (auth_token) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, auth_token, options.auth_token);
+    }
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_StsWebIdentityCredentialsProvider_stsWebIdentityCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,

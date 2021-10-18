@@ -17,6 +17,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.*;
 import software.amazon.awssdk.crt.io.*;
@@ -66,8 +67,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testCreateDestroyDefaultChain() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -84,8 +85,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testGetCredentialsDefaultChain() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -245,10 +246,17 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyStsWebIdentity_InvalidEnv() {
-        try {
-            StsWebIdentityCredentialsProvider.builder()
-                    .withTlsContext(new TlsContext(TlsContextOptions.createDefaultClient()))
-                    .build();
+        try (
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsContextOptions);
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StsWebIdentityCredentialsProvider unit = StsWebIdentityCredentialsProvider.builder()
+                        .withClientBootstrap(bootstrap)
+                        .withTlsContext(tlsCtx)
+                        .build()) {
+
 
             fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
         } catch (CrtRuntimeException e) {

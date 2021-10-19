@@ -72,7 +72,7 @@ public class AwsClientTestFixture {
         } else {
             awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
             awsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
-            awsSessionToken = null;
+            awsSessionToken = System.getenv("AWS_SESSION_TOKEN");
         }
 
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()

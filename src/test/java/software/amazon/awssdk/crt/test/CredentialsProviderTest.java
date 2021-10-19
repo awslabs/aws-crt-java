@@ -247,6 +247,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         }
     }
 
+
     @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has been resolved
     @Test
     public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
@@ -308,6 +309,27 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
+    public void testCreateDestroyStsWebIdentity_InvalidEnv() {
+        try (
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsContextOptions);
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StsWebIdentityCredentialsProvider unit = StsWebIdentityCredentialsProvider.builder()
+                        .withClientBootstrap(bootstrap)
+                        .withTlsContext(tlsCtx)
+                        .build()) {
+
+
+            fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
+        } catch (CrtRuntimeException e) {
+            // Check that the right exception type caused the completion error in the future
+            assertTrue(e.getMessage().startsWith("Failed to create STS web identity credentials provider"));
+        }
+    }
+
+    @Test
     public void testCreateDestroySts_InvalidRole() {
         try (
                 EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
@@ -340,4 +362,4 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertEquals(RuntimeException.class, innerException.getClass());
         }
     }
-};
+}

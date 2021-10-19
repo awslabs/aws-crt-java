@@ -348,6 +348,43 @@ JNIEXPORT jlong JNICALL
 }
 
 JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_StsWebIdentityCredentialsProvider_stsWebIdentityCredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jlong bootstrapHandle,
+        jlong tls_context_handle) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_credentials_provider_sts_web_identity_options options;
+    AWS_ZERO_STRUCT(options);
+    options.bootstrap = (struct aws_client_bootstrap *)bootstrapHandle;
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+    options.tls_ctx = (struct aws_tls_ctx *)tls_context_handle;
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_sts_web_identity(allocator, &options);
+    if (provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create STS web identity credentials provider");
+    } else {
+        callback_data->provider = provider;
+    }
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_X509CredentialsProvider_x509CredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,

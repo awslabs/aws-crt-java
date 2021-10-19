@@ -286,6 +286,68 @@ JNIEXPORT jlong JNICALL
 }
 
 JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_auth_credentials_StsCredentialsProvider_stsCredentialsProviderNew(
+        JNIEnv *env,
+        jclass jni_class,
+        jobject java_crt_credentials_provider,
+        jlong bootstrapHandle,
+        jlong tls_context_handle,
+        jlong creds_provider,
+        jbyteArray role_arn,
+        jbyteArray session_name,
+        jlong duration_seconds) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_credentials_provider_sts_options options;
+    AWS_ZERO_STRUCT(options);
+    options.bootstrap = (struct aws_client_bootstrap *)bootstrapHandle;
+    options.shutdown_options.shutdown_callback = s_on_shutdown_complete;
+    options.shutdown_options.shutdown_user_data = callback_data;
+    options.tls_ctx = (struct aws_tls_ctx *)tls_context_handle;
+
+    options.creds_provider = (struct aws_credentials_provider *)creds_provider;
+
+    if (role_arn) {
+        options.role_arn = aws_jni_byte_cursor_from_jbyteArray_acquire(env, role_arn);
+    }
+
+    if (session_name) {
+        options.session_name = aws_jni_byte_cursor_from_jbyteArray_acquire(env, session_name);
+    }
+
+    options.duration_seconds =
+        (uint16_t)aws_timestamp_convert(duration_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_SECS, NULL);
+
+    struct aws_credentials_provider *provider = aws_credentials_provider_new_sts(allocator, &options);
+    if (provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create STS credentials provider");
+    } else {
+        callback_data->provider = provider;
+    }
+
+    if (role_arn) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, role_arn, options.role_arn);
+    }
+
+    if (session_name) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, session_name, options.session_name);
+    }
+
+    return (jlong)provider;
+}
+
+JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_X509CredentialsProvider_x509CredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,

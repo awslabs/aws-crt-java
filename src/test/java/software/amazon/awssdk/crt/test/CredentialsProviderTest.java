@@ -328,4 +328,38 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertTrue(e.getMessage().startsWith("Failed to create STS web identity credentials provider"));
         }
     }
+
+    @Test
+    public void testCreateDestroySts_InvalidRole() {
+        try (
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StaticCredentialsProvider staticCP = new StaticCredentialsProvider
+                        .StaticCredentialsProviderBuilder()
+                        .withAccessKeyId(ACCESS_KEY_ID.getBytes())
+                        .withSecretAccessKey(SECRET_ACCESS_KEY.getBytes())
+                        .withSessionToken(SESSION_TOKEN.getBytes())
+                        .build();
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsContextOptions);
+                StsCredentialsProvider unit = StsCredentialsProvider.builder()
+                        .withCredsProvider(staticCP)
+                        .withDurationSeconds(10)
+                        .withSessionName("test-session")
+                        .withRoleArn("invalid-role-arn")
+                        .withTlsContext(tlsContext)
+                        .withClientBootstrap(bootstrap)
+                        .build()) {
+            unit.getCredentials().join();
+            fail("Expected builder.build() call to throw exception due to invalid STS configuration.");
+        } catch (CompletionException e) {
+            assertNotNull(e.getCause());
+            Throwable innerException = e.getCause();
+
+            // Check that the right exception type caused the completion error in the future
+            assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+            assertEquals(RuntimeException.class, innerException.getClass());
+        }
+    }
 }

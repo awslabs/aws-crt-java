@@ -43,7 +43,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
         goto cleanup;
     }
 
-    options.omit_initialize = jni_omit_initialize != 0;
+    if (jni_omit_initialize) {
+        options.initialize_finalize_behavior = AWS_PKCS11_LIB_OMIT_INITIALIZE;
+    }
 
     /* create aws_pkcs11_lib */
     pkcs11_lib = aws_pkcs11_lib_new(aws_jni_get_allocator(), &options);

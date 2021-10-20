@@ -19,7 +19,9 @@ import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -28,6 +30,7 @@ import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
+
 import com.amazonaws.test.AwsClientTestFixture;
 
 import org.junit.Assume;
@@ -688,5 +691,75 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
                                 .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
                                 null));
+    }
+
+    @Test
+    public void testPutObjectWithUserDefinedMetadata() throws Exception {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
+            final long contentLength = 1024l;
+            final long lengthWritten[] = { 0 };
+            final String userMetadataKey = "CustomKey1";
+            final String userMetadataValue = "SampleValue";
+
+            final Map<String, String> userMetadata = new HashMap<String, String>();
+            userMetadata.put(userMetadataKey, userMetadataValue);
+
+            nativeClient.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(BUCKET)
+                            .key(PUT_OBJECT_KEY)
+                            .contentLength(contentLength)
+                            .metadata(userMetadata)
+                            .build(),
+                    buffer -> {
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
+                        }
+
+                        return lengthWritten[0] == contentLength;
+                    }).join();
+
+            final long length[] = { 0 };
+            final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
+                            .bucket(BUCKET)
+                            .key(PUT_OBJECT_KEY)
+                            .build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).get();
+
+            assertNotNull(getObjectOutput);
+            final Map<String, String> getMetadata = getObjectOutput.metadata();
+            assertNotNull(getMetadata);
+            // Amazon S3 stores user-defined metadata keys in lowercase.
+            // reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html
+            assertEquals(userMetadataValue, getMetadata.get(userMetadataKey.toLowerCase()));
+        }
     }
 }

@@ -29,6 +29,7 @@ public class HttpClientConnectionManagerOptions {
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
+    private HttpClientConnection.AwsHTTPProtocolVersion expectedProtocolVersion = HttpClientConnection.AwsHTTPProtocolVersion.HTTP_1_1;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -197,6 +198,24 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
+     * If called, HTTP2 connection will be made by connection manager with ALPN (h2;http/1.1) when TLS is used.
+     * @TODO: When TLS is not used, HTTP2 connection will be made with prior knowledge
+     *
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withExpectedProtocolVersion(HttpClientConnection.AwsHTTPProtocolVersion expectedProtocolVersion) {
+        this.expectedProtocolVersion = expectedProtocolVersion;
+        return this;
+    }
+
+    /**
+     * @return Return the expected HTTP protocol version.
+     */
+    public HttpClientConnection.AwsHTTPProtocolVersion getExpectedProtocolVersion() {
+        return expectedProtocolVersion;
+    }
+
+    /**
      * Sets maximum amount of time, in milliseconds, that the connection can be idle in the manager before
      * getting culled by the manager
      * @param maxConnectionIdleInMilliseconds How long to allow connections to be idle before reaping them
@@ -227,4 +246,3 @@ public class HttpClientConnectionManagerOptions {
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
 }
-

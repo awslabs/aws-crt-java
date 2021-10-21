@@ -23,6 +23,24 @@ import static software.amazon.awssdk.crt.CRT.awsLastError;
  * This class is not thread safe and should not be called from different threads.
  */
 public class HttpClientConnection extends CrtResource {
+    /**
+     * HTTP protocol version.
+     */
+    public enum AwsHTTPProtocolVersion {
+        HTTP_1_0(1),
+        HTTP_1_1(2),
+        HTTP_2(3);
+
+        private int protocolVersion;
+
+        AwsHTTPProtocolVersion(int value) {
+            protocolVersion = value;
+        }
+
+        public int getValue() {
+            return protocolVersion;
+        }
+    }
 
     protected HttpClientConnection(long connectionBinding) {
         acquireNativeHandle(connectionBinding);

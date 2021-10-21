@@ -22,6 +22,7 @@ import java.io.File;
 
 import org.junit.Before;
 import org.junit.After;
+import org.junit.Assume;
 
 import java.util.Optional;
 
@@ -103,5 +104,9 @@ public class CrtTestFixture {
             }
         }
         return credentials.isPresent();
+    }
+
+    protected void skipIfNetworkUnavailable() {
+        skipIfNetworkUnavailable();
     }
 }

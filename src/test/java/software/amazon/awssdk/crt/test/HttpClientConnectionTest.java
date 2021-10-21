@@ -95,7 +95,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpConnection() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
@@ -116,7 +116,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testStaticDefaults() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);

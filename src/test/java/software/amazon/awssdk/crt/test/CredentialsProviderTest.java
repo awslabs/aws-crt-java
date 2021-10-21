@@ -68,7 +68,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyDefaultChain() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
@@ -86,7 +86,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testGetCredentialsDefaultChain() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
@@ -251,6 +251,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has been resolved
     @Test
     public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+        skipIfNetworkUnavailable();
+
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/", httpExchange -> {
             String response = "{\"AccessKeyId\":\"ACCESS_KEY_ID\"," +
@@ -310,6 +312,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyStsWebIdentity_InvalidEnv() {
+        skipIfNetworkUnavailable();
         try (
                 TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
                 TlsContext tlsCtx = new TlsContext(tlsContextOptions);
@@ -331,6 +334,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroySts_InvalidRole() {
+        skipIfNetworkUnavailable();
         try (
                 EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);

@@ -262,7 +262,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpDelete() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, false,200);
         testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
         testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
@@ -272,7 +272,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpGet() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
         testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, false,200);
         testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, false,405);
@@ -281,7 +281,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpPost() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
         testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
         testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, false,200);
@@ -290,7 +290,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpPut() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, false,405);
         testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
         testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
@@ -299,7 +299,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, false,200);
         testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, false, 300);
         testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, false, 400);
@@ -310,7 +310,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpDownload() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com", "/http_test_doc.txt", EMPTY_BODY, false,200);
 
         ByteBuffer body = response.bodyBuffer;
@@ -332,7 +332,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
     }
 
     private void testHttpUpload(boolean chunked) throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, chunked,200);
 
@@ -381,19 +381,19 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpUpload() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testHttpUpload(false);
     }
 
     @Test
     public void testHttpUploadChunked() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testHttpUpload(true);
     }
 
     @Test
     public void testHttpRequestUnActivated() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         URI uri = new URI("https://httpbin.org");
 

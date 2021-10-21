@@ -412,8 +412,6 @@ public class S3NativeClient implements AutoCloseable {
         final Map<String, String> metadata = new HashMap<>();
 
         for (final HttpHeader header : headers) {
-            //final String lowerCaseHeaderName = header.getName().toLowerCase();
-
             if (header.getName().startsWith(USER_METADATA_PREFIX)) {
                 // removes prefix
                 final String metadataKey = header.getName().replaceFirst(USER_METADATA_PREFIX, "");

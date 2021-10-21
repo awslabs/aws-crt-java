@@ -107,6 +107,6 @@ public class CrtTestFixture {
     }
 
     protected void skipIfNetworkUnavailable() {
-        skipIfNetworkUnavailable();
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
     }
 }

@@ -72,7 +72,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -108,7 +108,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectSpecialCharacters() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
@@ -143,7 +143,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectVersioned() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -181,7 +181,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectExceptionCatch() throws Throwable {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -226,7 +226,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -253,7 +253,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
@@ -364,7 +364,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testGetObjectCancelHelper(CancelTestData<GetObjectOutput> testData,
             CancelResponseDataConsumer dataConsumer) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -462,7 +462,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -524,7 +524,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testRetryOptions() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);

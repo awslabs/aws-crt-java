@@ -37,7 +37,7 @@ public class WillTest extends MqttClientConnectionFixture {
 
     @Test
     public void testWill() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         connect();
         disconnect();
         close();

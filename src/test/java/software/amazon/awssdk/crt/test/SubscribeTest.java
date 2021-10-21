@@ -33,7 +33,7 @@ public class SubscribeTest extends MqttClientConnectionFixture {
 
     @Test
     public void testSubscribeUnsubscribe() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         connect();
 
         Consumer<MqttMessage> messageHandler = (message) -> {

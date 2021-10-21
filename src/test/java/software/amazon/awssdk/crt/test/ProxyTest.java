@@ -274,7 +274,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_ForwardingProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.FORWARDING, ProxyAuthType.None)) {
@@ -284,7 +284,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_LegacyHttpProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.None)) {
@@ -294,7 +294,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_LegacyHttpsProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTPS, ProxyAuthType.None)) {
@@ -304,7 +304,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_TunnelingHttpProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTP, ProxyAuthType.None)) {
@@ -314,7 +314,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_TunnelingHttpsProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.None)) {
@@ -324,7 +324,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_TunnelingHttpsProxy_NoAuth_DoubleTls() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_DOUBLE_TLS, ProxyAuthType.None)) {
@@ -334,7 +334,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_ForwardingProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.FORWARDING, ProxyAuthType.Basic)) {
@@ -344,7 +344,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_LegacyHttpProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.Basic)) {
@@ -354,7 +354,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_LegacyHttpsProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTPS, ProxyAuthType.Basic)) {
@@ -364,7 +364,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_TunnelingHttpProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTP, ProxyAuthType.Basic)) {
@@ -374,7 +374,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testConnectionManager_TunnelingHttpsProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
@@ -425,7 +425,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testX509Credentials_TunnelingProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.None)) {
@@ -435,7 +435,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testX509Credentials_TunnelingProxy_DoubleTls_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_DOUBLE_TLS, ProxyAuthType.None)) {
@@ -445,7 +445,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testX509Credentials_TunnelingProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (CredentialsProvider provider = buildProxiedX509CredentialsProvider(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
@@ -484,7 +484,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (MqttClientConnection connection = buildDirectMqttConnection(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.None)) {
@@ -494,7 +494,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_DoubleTls_NoAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (MqttClientConnection connection = buildDirectMqttConnection(ProxyTestType.TUNNELING_DOUBLE_TLS, ProxyAuthType.None)) {
@@ -504,7 +504,7 @@ public class ProxyTest extends CrtTestFixture  {
 
     @Test
     public void testMqttDirect_TunnelingProxy_BasicAuth() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (MqttClientConnection connection = buildDirectMqttConnection(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {

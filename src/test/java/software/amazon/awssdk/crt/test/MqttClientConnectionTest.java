@@ -16,7 +16,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
 
     @Test
     public void testConnectDisconnect() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         connect();
         disconnect();
         close();

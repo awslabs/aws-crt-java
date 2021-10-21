@@ -13,6 +13,7 @@ import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
+import software.amazon.awssdk.crt.test.CrtTestFixture;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 
@@ -23,7 +24,7 @@ import org.junit.After;
 /**
  * Stub for getting Aws credentials from environment for running CI tests
  */
-public class AwsClientTestFixture {
+public class AwsClientTestFixture extends CrtTestFixture {
 
     @BeforeClass
     public static void enableLog() {

@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class Http2ClientConnection extends HttpClientConnection {
 
+    /* Error codes that may be present in HTTP/2 RST_STREAM and GOAWAY frames (RFC-7540 7). */
     public enum Http2ErrorCode {
         PROTOCOL_ERROR(1),
         INTERNAL_ERROR(2),

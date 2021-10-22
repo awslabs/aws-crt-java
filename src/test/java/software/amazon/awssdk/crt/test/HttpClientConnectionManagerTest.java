@@ -143,7 +143,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     }
 
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         URI uri = new URI(endpoint);
 
@@ -157,7 +157,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     }
 
     public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Callable<Void> fn = () -> {
             testParallelRequests(numThreads, numRequests);
             Thread.sleep(2000); // wait for async shutdowns to complete
@@ -190,7 +190,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testPendingAcquisitionsDuringShutdown() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         HttpClientConnection firstConnection = null;
         CompletableFuture<HttpClientConnection> firstAcquisition;
         CompletableFuture<HttpClientConnection> secondAcquisition;

@@ -110,7 +110,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testTlsContextOptionsAPI() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             for (TlsCipherPreference pref : TlsCipherPreference.values()) {
@@ -160,7 +160,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testMtls() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.initMtls(TEST_CERT, TEST_KEY);
             try (TlsContext tls = new TlsContext(options)) {
@@ -175,7 +175,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testMtlsFromPath() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
         String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
 
@@ -194,7 +194,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     // Test should fail to create TlsContext because the file paths are not valid
     @Test
     public void testMtlsFromBadPath() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
         String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
 
@@ -217,7 +217,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testOverridingTrustStore() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.overrideDefaultTrustStore(ROOT_CA1);
         } catch (Exception ex) {

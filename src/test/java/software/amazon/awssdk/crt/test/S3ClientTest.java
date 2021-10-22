@@ -72,7 +72,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3ClientCreateDestroy() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                 .withComputeContentMd5(true);
@@ -84,7 +84,7 @@ public class S3ClientTest extends CrtTestFixture {
     /* Test that a client can be created successfully with retry options. */
     @Test
     public void testS3ClientCreateDestroyRetryOptions() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
 
@@ -104,7 +104,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
 
@@ -120,7 +120,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3Get() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
@@ -186,7 +186,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3Put() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
@@ -343,7 +343,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void benchmarkS3Get() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
@@ -485,7 +485,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void benchmarkS3Put() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 

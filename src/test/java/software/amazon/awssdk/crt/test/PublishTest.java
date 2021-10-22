@@ -29,7 +29,7 @@ public class PublishTest extends MqttClientConnectionFixture {
 
     @Test
     public void testPublish() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         connect();
 
         try {

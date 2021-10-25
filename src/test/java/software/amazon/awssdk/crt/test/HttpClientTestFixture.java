@@ -17,4 +17,3 @@ public class HttpClientTestFixture extends CrtTestFixture {
         return new TlsContext(configureTlsContextOptions(tlsOpts, getContext().trustStore));
     }
 }
-

@@ -1,4 +1,11 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.http;
+
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public class Http2Stream extends HttpStream {
 
@@ -14,7 +21,7 @@ public class Http2Stream extends HttpStream {
      * @param http2_error aws_http2_error_code. Reason to reset the stream.
      */
     public void resetStream(final Http2ClientConnection.Http2ErrorCode errorCode) {
-
+        throw new CrtRuntimeException("Unimplemented");
     }
 
     /**

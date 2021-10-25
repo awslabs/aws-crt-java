@@ -559,6 +559,133 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     aws_http_connection_close(native_conn);
 }
 
+JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionGetVersion(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
+
+    (void)jni_class;
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.getVersion: Invalid aws_http_connection");
+        return 0;
+    }
+    return (jshort)aws_http_connection_get_version(native_conn);
+}
+
+struct s_aws_http2_ping_callback_data {
+    JavaVM *jvm;
+    jobject java_ping_result_future;
+};
+
+static void s_cleanup_ping_callback_data(struct s_aws_http2_ping_callback_data *callback_data) {
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    (*env)->DeleteGlobalRef(env, callback_data->java_ping_result_future);
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static void s_on_ping_completed(
+    struct aws_http_connection *http2_connection,
+    uint64_t round_trip_time_ns,
+    int error_code,
+    void *user_data) {
+    (void)http2_connection;
+    struct s_aws_http2_ping_callback_data *callback_data = user_data;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 2");
+    if (error_code) {
+        jint jni_error_code = error_code;
+        struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
+        jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
+        AWS_FATAL_ASSERT(jni_error_string);
+
+        jobject crt_exception = (*env)->NewObject(
+            env,
+            crt_runtime_exception_properties.crt_runtime_exception_class,
+            crt_runtime_exception_properties.constructor_method_id,
+            jni_error_code,
+            jni_error_string);
+        AWS_FATAL_ASSERT(crt_exception);
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_ping_result_future,
+            completable_future_properties.complete_exceptionally_method_id,
+            crt_exception);
+        aws_jni_check_and_clear_exception(env);
+        (*env)->DeleteLocalRef(env, jni_error_string);
+        (*env)->DeleteLocalRef(env, crt_exception);
+        goto done;
+    }
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 3");
+    (*env)->CallBooleanMethod(
+        env,
+        callback_data->java_ping_result_future,
+        completable_future_properties.complete_method_id,
+        (jlong)round_trip_time_ns);
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 4");
+
+done:
+    s_cleanup_ping_callback_data(callback_data);
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionSendPing(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jobject java_ping_result_future,
+    jbyteArray ping_data) {
+
+    (void)jni_class;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_http2_ping_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_ping_callback_data));
+    if (callback_data == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to allocated ping callback data");
+        return;
+    }
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid aws_http_connection");
+        goto error;
+    }
+
+    callback_data->java_ping_result_future = (*env)->NewGlobalRef(env, java_ping_result_future);
+    if (callback_data->java_ping_result_future == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionSendPing: failed to obtain ref to future");
+        goto error;
+    }
+    if (ping_data) {
+        struct aws_byte_cursor ping_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, ping_data);
+        if (aws_http2_connection_ping(native_conn, &ping_cur, s_on_ping_completed, callback_data)) {
+            aws_jni_throw_runtime_exception(env, "Failed to send ping");
+            goto error;
+        }
+
+        aws_jni_byte_cursor_from_jbyteArray_release(env, ping_data, ping_cur);
+    } else {
+        if (aws_http2_connection_ping(native_conn, NULL, s_on_ping_completed, callback_data)) {
+            aws_jni_throw_runtime_exception(env, "Failed to send ping");
+            goto error;
+        }
+    }
+    return;
+error:
+    s_cleanup_ping_callback_data(callback_data);
+    return;
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

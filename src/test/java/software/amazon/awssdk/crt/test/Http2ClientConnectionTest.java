@@ -59,7 +59,6 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
             shutdownComplete = connPool.getShutdownCompleteFuture();
             try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
                     TimeUnit.SECONDS);) {
-                Log.initLoggingToFile(Log.LogLevel.Trace, "tracelog.txt");
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
                 long time = conn.sendPing(null).get(5, TimeUnit.SECONDS);

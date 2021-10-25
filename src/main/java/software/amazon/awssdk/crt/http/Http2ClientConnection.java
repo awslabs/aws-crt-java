@@ -5,7 +5,6 @@
 
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,16 +20,25 @@ import java.util.concurrent.CompletableFuture;
  * threads.
  */
 public class Http2ClientConnection extends HttpClientConnection {
-    private AsyncCallback pingAck;
 
     /*
      * Error codes that may be present in HTTP/2 RST_STREAM and GOAWAY frames
      * (RFC-7540 7).
      */
     public enum Http2ErrorCode {
-        PROTOCOL_ERROR(1), INTERNAL_ERROR(2), FLOW_CONTROL_ERROR(3), SETTINGS_TIMEOUT(4), STREAM_CLOSED(5),
-        FRAME_SIZE_ERROR(6), REFUSED_STREAM(7), CANCEL(8), COMPRESSION_ERROR(9), CONNECT_ERROR(10),
-        ENHANCE_YOUR_CALM(11), INADEQUATE_SECURITY(12), HTTP_1_1_REQUIRED(13);
+        PROTOCOL_ERROR(1),
+        INTERNAL_ERROR(2),
+        FLOW_CONTROL_ERROR(3),
+        SETTINGS_TIMEOUT(4),
+        STREAM_CLOSED(5),
+        FRAME_SIZE_ERROR(6),
+        REFUSED_STREAM(7),
+        CANCEL(8),
+        COMPRESSION_ERROR(9),
+        CONNECT_ERROR(10),
+        ENHANCE_YOUR_CALM(11),
+        INADEQUATE_SECURITY(12),
+        HTTP_1_1_REQUIRED(13);
 
         private int errorCode;
 
@@ -74,7 +82,6 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public CompletableFuture<Long> sendPing(final byte[] pingData) {
         CompletableFuture<Long> completionFuture = new CompletableFuture<>();
-        pingAck = AsyncCallback.wrapFuture(completionFuture, null);
         http2ClientConnectionSendPing(getNativeHandle(), completionFuture, pingData);
         return completionFuture;
     }

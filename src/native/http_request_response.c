@@ -597,7 +597,6 @@ static void s_on_ping_completed(
     (void)http2_connection;
     struct s_aws_http2_ping_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 2");
     if (error_code) {
         jint jni_error_code = error_code;
         struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
@@ -621,13 +620,17 @@ static void s_on_ping_completed(
         (*env)->DeleteLocalRef(env, crt_exception);
         goto done;
     }
-    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 3");
+    /* Create a java.lang.long object to complete the future */
+    jobject java_round_trip_time_ns = NULL;
+    jclass cls = (*env)->FindClass(env, "java/lang/Long");
+    jmethodID longConstructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
+    java_round_trip_time_ns = (*env)->NewObject(env, cls, longConstructor, (jlong)round_trip_time_ns);
+
     (*env)->CallBooleanMethod(
         env,
         callback_data->java_ping_result_future,
         completable_future_properties.complete_method_id,
-        (jlong)round_trip_time_ns);
-    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Ping 4");
+        java_round_trip_time_ns);
 
 done:
     s_cleanup_ping_callback_data(callback_data);

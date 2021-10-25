@@ -6,6 +6,8 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.HashMap;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -32,9 +34,27 @@ public class HttpClientConnection extends CrtResource {
         HTTP_2(3);
 
         private int protocolVersion;
+        private static Map<Integer, AwsHTTPProtocolVersion> enumMapping = buildEnumMapping();
 
         AwsHTTPProtocolVersion(int value) {
             protocolVersion = value;
+        }
+
+        public static AwsHTTPProtocolVersion getEnumValueFromInteger(int value) {
+            AwsHTTPProtocolVersion enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Illegal signature type value in signing configuration");
+        }
+        private static Map<Integer, AwsHTTPProtocolVersion> buildEnumMapping() {
+            Map<Integer, AwsHTTPProtocolVersion> enumMapping = new HashMap<Integer, AwsHTTPProtocolVersion>();
+            enumMapping.put(HTTP_1_0.getValue(), HTTP_1_0);
+            enumMapping.put(HTTP_1_1.getValue(), HTTP_1_1);
+            enumMapping.put(HTTP_2.getValue(), HTTP_2);
+
+            return enumMapping;
         }
 
         public int getValue() {
@@ -96,6 +116,10 @@ public class HttpClientConnection extends CrtResource {
         httpClientConnectionShutdown(getNativeHandle());
     }
 
+    public AwsHTTPProtocolVersion getVersion() {
+        short version = httpClientConnectionGetVersion(getNativeHandle());
+        return AwsHTTPProtocolVersion.getEnumValueFromInteger((int)version);
+    };
 
     /** Called from Native when a new connection is acquired **/
     private static void onConnectionAcquired(CompletableFuture<HttpClientConnection> acquireFuture, long nativeConnectionBinding, int errorCode) {
@@ -105,7 +129,12 @@ public class HttpClientConnection extends CrtResource {
         }
 
         HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
-        acquireFuture.complete(conn);
+        if(conn.getVersion() == AwsHTTPProtocolVersion.HTTP_2) {
+            HttpClientConnection h2Conn = new Http2ClientConnection(nativeConnectionBinding);
+            acquireFuture.complete(h2Conn);
+        } else{
+            acquireFuture.complete(conn);
+        }
     }
 
     /*******************************************************************************
@@ -119,4 +148,5 @@ public class HttpClientConnection extends CrtResource {
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
 
     private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
+    private static native short httpClientConnectionGetVersion(long connectionBinding) throws CrtRuntimeException;
 }

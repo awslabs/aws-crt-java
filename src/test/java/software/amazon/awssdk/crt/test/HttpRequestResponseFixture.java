@@ -9,17 +9,10 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -88,46 +81,6 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(bodyBuffer);
         return byteArrayToHex(digest.digest());
-    }
-
-    protected HttpClientConnectionManager createHTTP2ConnectionPoolManager(URI uri) {
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                SocketOptions sockOpts = new SocketOptions();
-                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient()
-                        .withAlpnList("h2;http/1.1");
-                TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
-
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                    .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
-
-            return HttpClientConnectionManager.create(options);
-        }
-    }
-
-    protected HttpClientConnectionManager createHTTP1ConnectionPoolManager(URI uri) {
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext = createHttpClientTlsContext()) {
-
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                    .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
-
-            return HttpClientConnectionManager.create(options);
-        }
-    }
-
-    public HttpClientConnectionManager createConnectionPoolManager(URI uri,
-            HttpClientConnection.AwsHTTPProtocolVersion expectedVersion) {
-        if (expectedVersion == HttpClientConnection.AwsHTTPProtocolVersion.HTTP_2) {
-            return createHTTP2ConnectionPoolManager(uri);
-        } else {
-            return createHTTP1ConnectionPoolManager(uri);
-        }
-
     }
 
     public TestHttpResponse getResponse(URI uri, HttpRequest request, byte[] chunkedData,

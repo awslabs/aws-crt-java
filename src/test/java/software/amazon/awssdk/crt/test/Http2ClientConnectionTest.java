@@ -12,9 +12,11 @@ import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 
@@ -61,8 +63,65 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                     TimeUnit.SECONDS);) {
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                long time = conn.sendPing(null).get(5, TimeUnit.SECONDS);
+                long time = conn.sendPing("12345678".getBytes()).get(5, TimeUnit.SECONDS);
                 Assert.assertNotNull(time);
+                time = conn.sendPing(null).get(5, TimeUnit.SECONDS);
+                Assert.assertNotNull(time);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Assert.assertTrue(actuallyConnected);
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2ConnectionPingExceptionPingDataLength() throws Exception {
+        skipIfNetworkUnavailable();
+
+        CompletableFuture<Void> shutdownComplete = null;
+        boolean exception = false;
+        URI uri = new URI(HOST);
+
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                    TimeUnit.SECONDS);) {
+                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                long time = conn.sendPing("123".getBytes()).get(5, TimeUnit.SECONDS);
+                Assert.assertNotNull(time);
+            }
+        } catch (CrtRuntimeException e) {
+            exception = true;
+            Assert.assertTrue(e.getMessage().contains("AWS_ERROR_INVALID_ARGUMENT"));
+        }
+
+        Assert.assertTrue(exception);
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2ConnectionSendGoAway() throws Exception {
+        skipIfNetworkUnavailable();
+
+        CompletableFuture<Void> shutdownComplete = null;
+        boolean actuallyConnected = false;
+        URI uri = new URI(HOST);
+
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                    TimeUnit.SECONDS);) {
+                actuallyConnected = true;
+                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                conn.sendGoAway(Http2ErrorCode.INTERNAL_ERROR, false, null);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

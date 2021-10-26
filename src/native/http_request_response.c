@@ -644,7 +644,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jbyteArray ping_data) {
 
     (void)jni_class;
+    bool success = false;
     struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_byte_cursor *ping_cur_pointer = NULL;
+    struct aws_byte_cursor ping_cur;
+    AWS_ZERO_STRUCT(ping_cur);
     struct s_aws_http2_ping_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_ping_callback_data));
     if (callback_data == NULL) {
@@ -660,31 +664,31 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     if (!native_conn) {
         aws_jni_throw_runtime_exception(
             env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid aws_http_connection");
-        goto error;
+        goto done;
     }
 
     callback_data->java_ping_result_future = (*env)->NewGlobalRef(env, java_ping_result_future);
     if (callback_data->java_ping_result_future == NULL) {
         aws_jni_throw_runtime_exception(
             env, "Http2ClientConnection.http2ClientConnectionSendPing: failed to obtain ref to future");
-        goto error;
+        goto done;
     }
     if (ping_data) {
-        struct aws_byte_cursor ping_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, ping_data);
-        if (aws_http2_connection_ping(native_conn, &ping_cur, s_on_ping_completed, callback_data)) {
-            aws_jni_throw_runtime_exception(env, "Failed to send ping");
-            goto error;
-        }
-
-        aws_jni_byte_cursor_from_jbyteArray_release(env, ping_data, ping_cur);
-    } else {
-        if (aws_http2_connection_ping(native_conn, NULL, s_on_ping_completed, callback_data)) {
-            aws_jni_throw_runtime_exception(env, "Failed to send ping");
-            goto error;
-        }
+        ping_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, ping_data);
+        ping_cur_pointer = &ping_cur;
     }
-    return;
-error:
+    if (aws_http2_connection_ping(native_conn, ping_cur_pointer, s_on_ping_completed, callback_data)) {
+        aws_jni_throw_runtime_exception(env, "Failed to send ping");
+        goto done;
+    }
+    success = true;
+done:
+    if (ping_cur_pointer) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, ping_data, ping_cur);
+    }
+    if (success) {
+        return;
+    }
     s_cleanup_ping_callback_data(callback_data);
     return;
 }

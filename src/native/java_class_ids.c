@@ -328,6 +328,21 @@ static void s_cache_http_client_connection(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_client_connection_properties.on_connection_acquired_method_id);
 }
 
+struct java_http2_connection_setting_properties http2_connection_setting_properties;
+
+static void s_cache_http2_connection_setting(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http2ConnectionSetting");
+    AWS_FATAL_ASSERT(cls);
+    http2_connection_setting_properties.http2_connection_setting_class = (*env)->NewGlobalRef(env, cls);
+
+    http2_connection_setting_properties.id_field_id = (*env)->GetFieldID(
+        env, cls, "id", "Lsoftware/amazon/awssdk/crt/http/Http2ConnectionSetting/Http2ConnectionSettingID;");
+    AWS_FATAL_ASSERT(aws_signing_result_properties.signed_request_field_id);
+
+    http2_connection_setting_properties.value_field_id = (*env)->GetFieldID(env, cls, "value", "J");
+    AWS_FATAL_ASSERT(aws_signing_result_properties.value_field_id);
+}
+
 struct java_http_stream_properties http_stream_properties;
 
 static void s_cache_http_stream(JNIEnv *env) {

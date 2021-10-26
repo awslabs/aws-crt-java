@@ -8,6 +8,7 @@ package software.amazon.awssdk.crt.http;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 /**
  * This class wraps aws-c-http to provide the basic HTTP/2 request/response
@@ -65,8 +66,11 @@ public class Http2ClientConnection extends HttpClientConnection {
      * @return When this future completes without exception, the peer has
      *         acknowledged the settings and the change has been applied.
      */
-    public CompletableFuture<Void> changeSettings(final Http2ConnectionSetting settings[]) {
-        throw new CrtRuntimeException("Unimplemented");
+    public CompletableFuture<Void> changeSettings(final List<Http2ConnectionSetting> settings) {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+        http2ClientConnectionChangeSettings(getNativeHandle(), completionFuture,
+                Http2ConnectionSetting.marshallSettingsForJNI(settings));
+        return completionFuture;
     }
 
     /**
@@ -147,14 +151,9 @@ public class Http2ClientConnection extends HttpClientConnection {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    /*
-     * @TODO: Do we need the change settings? We should have the initial settings
-     * expose from connection manager... Any thing other than marshall the list to
-     * byte for the settings array.
-     */
-    // private static native void http2ClientConnectionChangeSettings(long
-    // connectionBinding,
-    // CompletableFuture<Void> future /* settings */ ) throws CrtRuntimeException;
+
+    private static native void http2ClientConnectionChangeSettings(long connectionBinding,
+            CompletableFuture<Void> future, long[] marshalledSettings) throws CrtRuntimeException;
 
     private static native void http2ClientConnectionSendPing(long connectionBinding, CompletableFuture<Long> future,
             byte[] pingData) throws CrtRuntimeException;

@@ -6,6 +6,7 @@
 package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
+
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
@@ -17,17 +18,17 @@ import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.io.Uri;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.nio.charset.StandardCharsets;
 import java.lang.String;
-import java.io.UnsupportedEncodingException;
 
 public class S3NativeClient implements AutoCloseable {
     private final S3Client s3Client;
@@ -151,6 +152,41 @@ public class S3NativeClient implements AutoCloseable {
             return queryParams + "&" + request.customQueryParameters();
         }
         return request.customQueryParameters();
+    }
+
+    private String getListObjectsV2RequestQueryParameters(final ListObjectsV2Request request) {
+        final Map<String, String> requestParams = new HashMap<>();
+
+        // list-type parameter indicates version 2 of the API, as described in
+        // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
+        requestParams.put("list-type", "2");
+
+        if (request.continuationToken() != null) {
+            requestParams.put("continuation-token", request.continuationToken());
+        }
+        if (request.delimiter() != null) {
+            requestParams.put("delimiter", request.delimiter());
+        }
+        if (request.fetchOwner() != null && request.fetchOwner()) {
+            requestParams.put("fetch-owner", "true");
+        }
+        if (request.maxKeys() != null) {
+            requestParams.put("max-keys", request.maxKeys().toString());
+        }
+        if (request.prefix() != null) {
+            requestParams.put("prefix", request.prefix());
+        }
+        if (request.startAfter() != null) {
+            requestParams.put("start-after", request.startAfter());
+        }
+        if (request.expectedBucketOwner() != null) {
+            requestParams.put("x-amz-expected-bucket-owner", request.expectedBucketOwner());
+        }
+        if (request.requestPayer() == RequestPayer.REQUESTER) {
+            requestParams.put("x-amz-request-payer", "requester");
+        }
+
+        return urlParamBuild(requestParams);
     }
 
     private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
@@ -330,6 +366,71 @@ public class S3NativeClient implements AutoCloseable {
             addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
+    }
+
+    public CompletableFuture<ListObjectsV2Output> listObjectsV2(final ListObjectsV2Request request) {
+        final CompletableFuture<ListObjectsV2Output> resultFuture = new CompletableFuture<>();
+        final S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            private ByteArrayOutputStream memoryStream = new ByteArrayOutputStream();
+            private Exception bufferException = null;
+
+            @Override
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                try {
+                    memoryStream.write(bodyBytesIn.array());
+                } catch (final IOException ex) {
+                    bufferException = ex;
+                }
+
+                return 0;
+            }
+
+            @Override
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                    CrtS3RuntimeException ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
+                    resultFuture.completeExceptionally(ex);
+                } else if (bufferException != null) {
+                    // TODO: convert exception?
+                    resultFuture.completeExceptionally(bufferException);
+                }  else {
+                    final ByteArrayInputStream stream = new ByteArrayInputStream(memoryStream.toByteArray());
+                    try {
+                        final ListObjectsV2Output listObjectsV2Output = parseListObjectsV2Output(stream);
+                        resultFuture.complete(listObjectsV2Output);
+                    } catch (Exception ex) {
+                        // TODO: convert exception?
+                        resultFuture.completeExceptionally(ex);
+                    }
+                }
+            }
+        };
+
+        List<HttpHeader> headers = new LinkedList<>();
+
+        // TODO: additional logic needed for *special* partitions
+        headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
+
+        String requestQueryParameters = getListObjectsV2RequestQueryParameters(request);
+        String encodedPath = getEncodedPath("", requestQueryParameters);
+
+        final HttpRequest httpRequest = new HttpRequest("GET", encodedPath, headers.toArray(new HttpHeader[0]), null);
+
+        final S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.DEFAULT).withHttpRequest(httpRequest)
+                .withResponseHandler(responseHandler);
+
+        try (final S3MetaRequest metaRequest = s3Client.makeMetaRequest(metaRequestOptions)) {
+            addCancelCheckToFuture(resultFuture, metaRequest);
+            return resultFuture;
+        }
+    }
+
+    private ListObjectsV2Output parseListObjectsV2Output(final InputStream stream) throws Exception {
+        final SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        final ListObjectsV2OutputParserHandler parseHandler = new ListObjectsV2OutputParserHandler();
+        parser.parse(stream, parseHandler);
+        return parseHandler.getOutput();
     }
 
     @Override

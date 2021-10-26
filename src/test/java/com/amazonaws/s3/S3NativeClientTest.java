@@ -15,19 +15,18 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import com.amazonaws.s3.model.*;
+import com.amazonaws.s3.model.Object;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import com.amazonaws.s3.model.GetObjectOutput;
-import com.amazonaws.s3.model.GetObjectRequest;
-import com.amazonaws.s3.model.PutObjectOutput;
-import com.amazonaws.s3.model.PutObjectRequest;
 import com.amazonaws.test.AwsClientTestFixture;
 
 import org.junit.Assume;
@@ -689,4 +688,124 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
                                 null));
     }
+
+    @Test
+    public void testListObjects() throws Exception {
+        skipIfNetworkUnavailable();
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+             final CredentialsProvider provider = getTestCredentialsProvider();
+             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                     100.)) {
+
+            final long contentLength = 1024l;
+            final long lengthWritten[] = { 0 };
+
+            // PutObject
+            nativeClient.putObject(
+                    PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
+                    buffer -> {
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
+                        }
+
+                        return lengthWritten[0] == contentLength;
+                    }).join();
+
+            // ListObjectsV2
+            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_KEY);
+
+            final ListObjectsV2Output listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
+                    .bucket(BUCKET)
+                    .prefix(PUT_OBJECT_KEY)
+                    .build()).get();
+
+            assertTrue("ListObjectsV2 must return at least 1 entry with prefix", listObjectsOutput.contents().size() > 0);
+            Object insertedObject = null;
+
+            for (Object object : listObjectsOutput.contents()) {
+                if (PUT_OBJECT_KEY.equals(object.key())) {
+                    insertedObject = object;
+                }
+            }
+            assertNotNull(insertedObject);
+            assertEquals(PUT_OBJECT_KEY, insertedObject.key());
+            assertEquals(contentLength, (long) insertedObject.size());
+        }
+    }
+
+    @Test
+    public void testListObjectsPagination() throws Exception {
+        skipIfNetworkUnavailable();
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+             final CredentialsProvider provider = getTestCredentialsProvider();
+             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                     100.)) {
+
+            // ListObjectsV2 without specifying maxItems (default = 1000)
+            ListObjectsV2Output listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
+                    .bucket(BUCKET)
+                    .build()).get();
+
+            int objectCountWithoutPagination = listObjectsOutput.contents().size();
+            assertTrue("at least 3 objects are required for this test", objectCountWithoutPagination > 2);
+
+            final int pageSize = 10;
+            int actualPageCount = 0;
+
+            // ListObjectsV2 without specifying maxItems (default = 1000)
+            listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
+                            .bucket(BUCKET)
+                            .maxKeys(pageSize)
+                            .build()).get();
+
+            assertEquals("first page must return "+ pageSize + " items", pageSize, listObjectsOutput.contents().size());
+            assertTrue(listObjectsOutput.isTruncated());
+            assertNotNull(listObjectsOutput.nextContinuationToken());
+
+            while (listObjectsOutput.isTruncated()) {
+                assertNotNull(listObjectsOutput.nextContinuationToken());
+                actualPageCount++;
+
+                listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
+                        .bucket(BUCKET)
+                        .maxKeys(pageSize)
+                        .continuationToken(listObjectsOutput.nextContinuationToken())
+                        .build()).get();
+            }
+
+            System.out.println("*** Actual page count: " + actualPageCount + ", expected: " + (objectCountWithoutPagination / pageSize));
+            assertTrue("Expected page count", actualPageCount >= (objectCountWithoutPagination / pageSize));
+        }
+    }
+
+    private void waitForPropagation(final S3NativeClient nativeClient, final String bucket, final String key) throws Exception {
+        final int maxRetries = 5;
+        final Duration intervalBetweenRetries = Duration.ofSeconds(5);
+
+        for (int i = 0; i < maxRetries; i++) {
+            final ListObjectsV2Output listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
+                    .bucket(BUCKET)
+                    .prefix(PUT_OBJECT_KEY)
+                    .build()).get();
+
+            Object insertedObject = null;
+
+            for (final Object object : listObjectsOutput.contents()) {
+                if (PUT_OBJECT_KEY.equals(object.key())) {
+                    // OK, found.
+                    return;
+                }
+            }
+        }
+
+        assertTrue("Propagation timed out for bucket " + bucket + ", key " + key, false);
+    }
+
 }

@@ -127,12 +127,11 @@ public class HttpClientConnection extends CrtResource {
             acquireFuture.completeExceptionally(new HttpException(errorCode));
             return;
         }
-
-        HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
-        if(conn.getVersion() == AwsHTTPProtocolVersion.HTTP_2) {
+        if(AwsHTTPProtocolVersion.getEnumValueFromInteger((int)httpClientConnectionGetVersion(nativeConnectionBinding)) == AwsHTTPProtocolVersion.HTTP_2) {
             HttpClientConnection h2Conn = new Http2ClientConnection(nativeConnectionBinding);
             acquireFuture.complete(h2Conn);
-        } else{
+        } else {
+            HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
             acquireFuture.complete(conn);
         }
     }

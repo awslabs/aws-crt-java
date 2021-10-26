@@ -753,13 +753,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     .bucket(BUCKET)
                     .build()).get();
 
-            int objectCountWithoutPagination = listObjectsOutput.contents().size();
-            assertTrue("at least 3 objects are required for this test", objectCountWithoutPagination > 2);
-
             final int pageSize = 10;
             int actualPageCount = 0;
 
-            // ListObjectsV2 without specifying maxItems (default = 1000)
+            int objectCountWithoutPagination = listObjectsOutput.contents().size();
+            assertTrue("at least " + (pageSize + 1) + " objects are required for this test", objectCountWithoutPagination > pageSize);
+
+            // get the first page
             listObjectsOutput = nativeClient.listObjectsV2(ListObjectsV2Request.builder()
                             .bucket(BUCKET)
                             .maxKeys(pageSize)
@@ -780,7 +780,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         .build()).get();
             }
 
-            System.out.println("*** Actual page count: " + actualPageCount + ", expected: " + (objectCountWithoutPagination / pageSize));
             assertTrue("Expected page count", actualPageCount >= (objectCountWithoutPagination / pageSize));
         }
     }
@@ -803,6 +802,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     return;
                 }
             }
+
+            Thread.sleep(intervalBetweenRetries.toMillis());
         }
 
         assertTrue("Propagation timed out for bucket " + bucket + ", key " + key, false);

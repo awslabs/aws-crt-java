@@ -170,6 +170,9 @@ public class S3NativeClient implements AutoCloseable {
         if (request.fetchOwner() != null && request.fetchOwner()) {
             requestParams.put("fetch-owner", "true");
         }
+        if (request.encodingType() != null) {
+            requestParams.put("encoding-type", request.encodingType().value());
+        }
         if (request.maxKeys() != null) {
             requestParams.put("max-keys", request.maxKeys().toString());
         }
@@ -178,12 +181,6 @@ public class S3NativeClient implements AutoCloseable {
         }
         if (request.startAfter() != null) {
             requestParams.put("start-after", request.startAfter());
-        }
-        if (request.expectedBucketOwner() != null) {
-            requestParams.put("x-amz-expected-bucket-owner", request.expectedBucketOwner());
-        }
-        if (request.requestPayer() == RequestPayer.REQUESTER) {
-            requestParams.put("x-amz-request-payer", "requester");
         }
 
         return urlParamBuild(requestParams);
@@ -391,7 +388,6 @@ public class S3NativeClient implements AutoCloseable {
                     CrtS3RuntimeException ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
                     resultFuture.completeExceptionally(ex);
                 } else if (bufferException != null) {
-                    // TODO: convert exception?
                     resultFuture.completeExceptionally(bufferException);
                 }  else {
                     final ByteArrayInputStream stream = new ByteArrayInputStream(memoryStream.toByteArray());
@@ -410,6 +406,7 @@ public class S3NativeClient implements AutoCloseable {
 
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
+        populateListObjectV2RequestHeaders(header -> headers.add(header), request);
 
         String requestQueryParameters = getListObjectsV2RequestQueryParameters(request);
         String encodedPath = getEncodedPath("", requestQueryParameters);
@@ -622,6 +619,17 @@ public class S3NativeClient implements AutoCloseable {
             builder.bucketKeyEnabled(Boolean.parseBoolean(header.getValue())); // need verification
         } else if ("x-amz-request-charged".equalsIgnoreCase(header.getName())) {
             builder.requestCharged(RequestCharged.fromValue(header.getValue()));
+        }
+    }
+
+    protected void populateListObjectV2RequestHeaders(final Consumer<HttpHeader> headerConsumer,
+                                                      final ListObjectsV2Request request) {
+        // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
+        if (request.expectedBucketOwner() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-expected-bucket-owner", request.expectedBucketOwner()));
+        }
+        if (request.requestPayer() != null) {
+            headerConsumer.accept(new HttpHeader("x-amz-request-payer", request.requestPayer().value()));
         }
     }
 }

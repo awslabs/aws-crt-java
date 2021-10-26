@@ -722,6 +722,26 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     return;
 }
 
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionUpdateConnectionWindow(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_connection,
+        jlong increment_size) {
+
+    (void)jni_class;
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionUpdateConnectionWindow: Invalid aws_http_connection");
+        return;
+    }
+    aws_http2_connection_update_window(native_conn, (uint32_t)increment_size);
+    return;
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

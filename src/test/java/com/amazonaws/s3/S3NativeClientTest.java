@@ -47,6 +47,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key",
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
+
+    private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
+            "filename _@_=_&_?_+_)_.txt");
+
     private static final String GET_OBJECT_VERSION = System.getProperty("crt.test_s3_get_object_version",
             "2Z_dpqRBdrGjax8dyIZ3XYnASOVkdY9J");
 
@@ -60,7 +64,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -95,8 +99,43 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     }
 
     @Test
+    public void testGetObjectSpecialCharacters() {
+        skipIfNetworkUnavailable();
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
+            final long length[] = { 0 };
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
+
+    @Test
     public void testGetObjectVersioned() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -134,7 +173,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectExceptionCatch() throws Throwable {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -179,7 +218,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -206,7 +245,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
@@ -317,7 +356,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testGetObjectCancelHelper(CancelTestData<GetObjectOutput> testData,
             CancelResponseDataConsumer dataConsumer) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -415,7 +454,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -477,7 +516,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testRetryOptions() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);

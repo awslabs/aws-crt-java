@@ -5,30 +5,25 @@
 
 package software.amazon.awssdk.crt.test;
 
+import com.sun.net.httpserver.HttpServer;
+import org.junit.Assume;
+import org.junit.Ignore;
+import org.junit.Test;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.auth.credentials.*;
+import software.amazon.awssdk.crt.io.*;
+
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-
-import org.junit.Assume;
-import org.junit.Test;
+import java.util.List;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
-import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CachedCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
-import software.amazon.awssdk.crt.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
 
 public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -73,10 +68,10 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyDefaultChain() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -91,10 +86,10 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testGetCredentialsDefaultChain() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -251,4 +246,124 @@ public class CredentialsProviderTest extends CrtTestFixture {
             Files.deleteIfExists(confPath);
         }
     }
-};
+
+
+    @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has been resolved
+    @Test
+    public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+        skipIfNetworkUnavailable();
+
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server.createContext("/", httpExchange -> {
+            String response = "{\"AccessKeyId\":\"ACCESS_KEY_ID\"," +
+                    "\"SecretAccessKey\":\"SECRET_ACCESS_KEY\"," +
+                    "\"Token\":\"TOKEN_TOKEN_TOKEN\"," +
+                    "\"Expiration\":\"3000-05-03T04:55:54Z\"}";
+            httpExchange.sendResponseHeaders(200, response.length());
+            List<String> hv = new ArrayList<String>();
+            hv.add("application/json");
+            httpExchange.getResponseHeaders().put("Content-Type", hv);
+            OutputStream os = httpExchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        });
+        server.start();
+
+        EcsCredentialsProvider unit = EcsCredentialsProvider.builder()
+                .withHost("127.0.0.1")
+                .withPathAndQuery("/")
+                .build();
+
+        CompletableFuture<Credentials> credentialsFuture = unit.getCredentials();
+
+        Credentials creds = credentialsFuture.get(8, TimeUnit.SECONDS);
+
+        assertNotNull(creds);
+        assertNotNull(creds.getAccessKeyId());
+        assertEquals("ACCESS_KEY_ID", new String(creds.getAccessKeyId()));
+        assertEquals("SECRET_ACCESS_KEY", new String(creds.getSecretAccessKey()));
+        assertEquals("TOKEN_TOKEN_TOKEN", new String(creds.getSessionToken()));
+
+        server.stop(0);
+        unit.close();
+    }
+
+    @Test
+    public void testCreateDestroyEcs_MissingCreds() {
+        EcsCredentialsProvider.Builder builder = EcsCredentialsProvider.builder();
+
+        try (EcsCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
+
+            try {
+                provider.getCredentials().join();
+                fail("Expected credential fetching to throw an exception since creds are missing from profile");
+            } catch (CompletionException e) {
+                assertNotNull(e.getCause());
+                Throwable innerException = e.getCause();
+
+                // Check that the right exception type caused the completion error in the future
+                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+                assertEquals(RuntimeException.class, innerException.getClass());
+            }
+        }
+    }
+
+    @Test
+    public void testCreateDestroyStsWebIdentity_InvalidEnv() {
+        skipIfNetworkUnavailable();
+        try (
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsContextOptions);
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StsWebIdentityCredentialsProvider unit = StsWebIdentityCredentialsProvider.builder()
+                        .withClientBootstrap(bootstrap)
+                        .withTlsContext(tlsCtx)
+                        .build()) {
+
+
+            fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
+        } catch (CrtRuntimeException e) {
+            // Check that the right exception type caused the completion error in the future
+            assertTrue(e.getMessage().startsWith("Failed to create STS web identity credentials provider"));
+        }
+    }
+
+    @Test
+    public void testCreateDestroySts_InvalidRole() {
+        skipIfNetworkUnavailable();
+        try (
+                EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                StaticCredentialsProvider staticCP = new StaticCredentialsProvider
+                        .StaticCredentialsProviderBuilder()
+                        .withAccessKeyId(ACCESS_KEY_ID.getBytes())
+                        .withSecretAccessKey(SECRET_ACCESS_KEY.getBytes())
+                        .withSessionToken(SESSION_TOKEN.getBytes())
+                        .build();
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsContextOptions);
+                StsCredentialsProvider unit = StsCredentialsProvider.builder()
+                        .withCredsProvider(staticCP)
+                        .withDurationSeconds(10)
+                        .withSessionName("test-session")
+                        .withRoleArn("invalid-role-arn")
+                        .withTlsContext(tlsContext)
+                        .withClientBootstrap(bootstrap)
+                        .build()) {
+            unit.getCredentials().join();
+            fail("Expected builder.build() call to throw exception due to invalid STS configuration.");
+        } catch (CompletionException e) {
+            assertNotNull(e.getCause());
+            Throwable innerException = e.getCause();
+
+            // Check that the right exception type caused the completion error in the future
+            assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+            assertEquals(RuntimeException.class, innerException.getClass());
+        }
+    }
+}

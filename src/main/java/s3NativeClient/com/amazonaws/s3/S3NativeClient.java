@@ -249,9 +249,7 @@ public class S3NativeClient implements AutoCloseable {
         };
 
         List<HttpHeader> headers = new LinkedList<>();
-
-        // TODO: additional logic needed for *special* partitions
-        headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
+        headers.add(getS3HostHeader(request.bucket()));
         populateGetObjectRequestHeaders(header -> headers.add(header), request);
 
         addCustomHeaders(headers, request.customHeaders());
@@ -268,6 +266,11 @@ public class S3NativeClient implements AutoCloseable {
             addCancelCheckToFuture(resultFuture, metaRequest);
             return resultFuture;
         }
+    }
+
+    private HttpHeader getS3HostHeader(final String bucket) {
+        // TODO:  additional logic needed for *special* partitions listed in https://docs.aws.amazon.com/general/latest/gr/s3.html
+        return new HttpHeader("Host", bucket + ".s3." + signingRegion + ".amazonaws.com");
     }
 
     public CompletableFuture<PutObjectOutput> putObject(PutObjectRequest request,
@@ -301,9 +304,7 @@ public class S3NativeClient implements AutoCloseable {
         };
 
         final List<HttpHeader> headers = new LinkedList<>();
-
-        // TODO: additional logic needed for *special* partitions
-        headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
+        headers.add(getS3HostHeader(request.bucket()));
         populatePutObjectRequestHeaders(header -> headers.add(header), request);
 
         addCustomHeaders(headers, request.customHeaders());
@@ -403,9 +404,7 @@ public class S3NativeClient implements AutoCloseable {
         };
 
         List<HttpHeader> headers = new LinkedList<>();
-
-        // TODO: additional logic needed for *special* partitions
-        headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
+        headers.add(getS3HostHeader(request.bucket()));
         populateListObjectV2RequestHeaders(header -> headers.add(header), request);
 
         String requestQueryParameters = getListObjectsV2RequestQueryParameters(request);

@@ -55,6 +55,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key",
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
+    private static final String PUT_OBJECT_WITH_METADATA_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_key", "file_with_metadata.upload");
 
     private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
             "filename _@_=_&_?_+_)_.txt");
@@ -721,7 +722,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_KEY)
+                            .key(PUT_OBJECT_WITH_METADATA_KEY)
                             .contentLength(contentLength)
                             .metadata(userMetadata)
                             .build(),
@@ -735,13 +736,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     }).join();
 
             // wait propagation
-            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_KEY, userMetadataKey);
+            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_WITH_METADATA_KEY, userMetadataKey);
 
             // get
             final long length[] = { 0 };
             final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_KEY)
+                            .key(PUT_OBJECT_WITH_METADATA_KEY)
                             .build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 

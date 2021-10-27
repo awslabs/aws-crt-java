@@ -29,6 +29,14 @@ public class Http2ConnectionSetting {
     private ID id;
     private long value;
 
+    public long getValue() {
+        return value;
+    }
+
+    public ID getId() {
+        return id;
+    }
+
     /**
      * HTTP/2 connection settings.
      *
@@ -43,7 +51,7 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * Marshals a list of settings into an array for Jni to deal with.
+     * @exclude Marshals a list of settings into an array for Jni to deal with.
      *
      * @param settings list of headers to write to the headers block
      * @return a long[] that with the [id, value, id, value, *]

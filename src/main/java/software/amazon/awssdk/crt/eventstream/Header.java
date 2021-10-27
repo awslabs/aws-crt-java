@@ -445,8 +445,9 @@ public class Header {
     }
 
     /**
-     * Marshals a list of headers into a usable headers block for an event-stream message.
-     * Used for sending headers across the JNI boundary more efficiently
+     * @exclude Marshals a list of headers into a usable headers block for an
+     *          event-stream message. Used for sending headers across the JNI
+     *          boundary more efficiently
      * @param headers list of headers to write to the headers block
      * @return a byte[] that matches the event-stream header-block format.
      */

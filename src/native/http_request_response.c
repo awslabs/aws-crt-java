@@ -618,7 +618,7 @@ static void s_on_ping_completed(
         callback_data->java_result_future,
         completable_future_properties.complete_method_id,
         java_round_trip_time_ns);
-
+    (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
 done:
     s_cleanup_http2_callback_data(callback_data);
 }

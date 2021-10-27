@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import com.amazonaws.s3.model.DeleteObjectOutput;
+import com.amazonaws.s3.model.DeleteObjectRequest;
+import com.amazonaws.s3.model.ListObjectsOutput;
+import com.amazonaws.s3.model.ListObjectsRequest;
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
@@ -712,6 +717,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             final Map<String, String> userMetadata = new HashMap<String, String>();
             userMetadata.put(userMetadataKey, userMetadataValue);
 
+            // put with metadata
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
@@ -728,6 +734,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         return lengthWritten[0] == contentLength;
                     }).join();
 
+            // wait propagation
+            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_KEY, userMetadataKey);
+
+            // get
             final long length[] = { 0 };
             final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
                             .bucket(BUCKET)
@@ -761,5 +771,49 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             // reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html
             assertEquals(userMetadataValue, getMetadata.get(userMetadataKey.toLowerCase()));
         }
+    }
+
+    private void waitForPropagation(final S3NativeClient nativeClient,
+                                    final String bucket,
+                                    final String key,
+                                    final String userMetadataKey) throws Exception {
+        final int maxRetries = 5;
+        final Duration intervalBetweenRetries = Duration.ofSeconds(5);
+
+        for (int i = 0; i < maxRetries; i++) {
+            final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).get();
+
+            assertNotNull(getObjectOutput);
+            final Map<String, String> getMetadata = getObjectOutput.metadata();
+
+            if (getMetadata != null && getMetadata.get(userMetadataKey.toLowerCase()) != null) {
+                return;
+            }
+            Thread.sleep(intervalBetweenRetries.toMillis());
+        }
+
+        assertTrue("Propagation timed out for bucket " + bucket + ", key " + key, false);
     }
 }

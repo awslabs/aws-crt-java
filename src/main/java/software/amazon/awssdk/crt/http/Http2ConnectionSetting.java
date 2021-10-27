@@ -33,19 +33,26 @@ public class Http2ConnectionSetting {
     private ID id;
     private long value;
 
+    public long getValue() {
+        return value;
+    }
+
+    public ID getId() {
+        return id;
+    }
+
     /**
      * HTTP/2 connection settings.
      *
      * value is limited from 0 to UINT32_MAX (RFC-7540 6.5.1)
      */
     public Http2ConnectionSetting(ID id, long value) {
-        if(value > 4294967296L || value < 0) {
+        if (value > 4294967296L || value < 0) {
             throw new IllegalArgumentException();
         }
         this.id = id;
         this.value = value;
     }
-
 
     /**
      * Marshals a list of settings into an array for Jni to deal with.

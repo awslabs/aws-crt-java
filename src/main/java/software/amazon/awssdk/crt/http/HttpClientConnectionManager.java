@@ -32,7 +32,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int port;
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
-    private final HttpClientConnection.AwsHTTPProtocolVersion expectedProtocolVersion;
+    private final HttpClientConnection.ProtocolVersion expectedProtocolVersion;
 
     public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
         return new HttpClientConnectionManager(options);

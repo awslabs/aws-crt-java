@@ -8,7 +8,10 @@ package software.amazon.awssdk.crt.http;
 import java.util.List;
 
 public class Http2ConnectionSetting {
-    public enum Http2ConnectionSettingID {
+    /**
+     * Predefined settings identifiers (RFC-7540 6.5.2).
+     */
+    public enum ID {
         HEADER_TABLE_SIZE(1),
         ENABLE_PUSH(2),
         MAX_CONCURRENT_STREAMS(3),
@@ -18,7 +21,7 @@ public class Http2ConnectionSetting {
 
         private int settingID;
 
-        Http2ConnectionSettingID(int value) {
+        ID(int value) {
             settingID = value;
         }
 
@@ -27,29 +30,25 @@ public class Http2ConnectionSetting {
         }
     }
 
-    public Http2ConnectionSettingID id;
-    public long value;
+    private ID id;
+    private long value;
 
-    public Http2ConnectionSetting(Http2ConnectionSettingID id, long value) {
+    /**
+     * HTTP/2 connection settings.
+     *
+     * value is limited from 0 to UINT32_MAX (RFC-7540 6.5.1)
+     */
+    public Http2ConnectionSetting(ID id, long value) {
+        if(value > 4294967296L || value < 0) {
+            throw new IllegalArgumentException();
+        }
         this.id = id;
         this.value = value;
     }
 
-    /**
-     * Turn the setting toa list of two long, which makes it much easier for Jni to
-     * deal with.
-     *
-     * @return a long[] that with the [id, value]
-     */
-    public long[] marshalForJni() {
-        long[] marshalled = new long[2];
-        marshalled[0] = (long) id.getValue();
-        marshalled[1] = value;
-        return marshalled;
-    }
 
     /**
-     * Marshals a list of settings into a list for Jni to deal with.
+     * Marshals a list of settings into an array for Jni to deal with.
      *
      * @param settings list of headers to write to the headers block
      * @return a long[] that with the [id, value, id, value, *]

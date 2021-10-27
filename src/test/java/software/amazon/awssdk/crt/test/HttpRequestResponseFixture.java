@@ -84,7 +84,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
     }
 
     public TestHttpResponse getResponse(URI uri, HttpRequest request, byte[] chunkedData,
-            HttpClientConnection.AwsHTTPProtocolVersion expectedVersion) throws Exception {
+            HttpClientConnection.ProtocolVersion expectedVersion) throws Exception {
         boolean actuallyConnected = false;
 
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();

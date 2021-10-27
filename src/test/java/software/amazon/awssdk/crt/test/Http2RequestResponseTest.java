@@ -63,7 +63,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
             numAttempts++;
             response = null;
             try {
-                response = getResponse(uri, request, null, HttpClientConnection.AwsHTTPProtocolVersion.HTTP_2);
+                response = getResponse(uri, request, null, HttpClientConnection.ProtocolVersion.HTTP_2);
 
             } catch (Exception ex) {
                 // do nothing just let it retry

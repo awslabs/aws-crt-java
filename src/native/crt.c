@@ -184,6 +184,18 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     return result;
 }
 
+jobject aws_jni_new_crt_exception_from_error_code(JNIEnv *env, int error_code) {
+    jint jni_error_code = error_code;
+
+    jobject crt_exception = (*env)->NewObject(
+        env,
+        crt_runtime_exception_properties.crt_runtime_exception_class,
+        crt_runtime_exception_properties.constructor_method_id,
+        jni_error_code);
+    AWS_FATAL_ASSERT(crt_exception);
+    return crt_exception;
+}
+
 void s_detach_jvm_from_thread(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
     JavaVM *jvm = user_data;

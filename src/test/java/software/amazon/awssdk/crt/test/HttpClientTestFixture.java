@@ -58,8 +58,8 @@ public class HttpClientTestFixture extends CrtTestFixture {
     }
 
     public HttpClientConnectionManager createConnectionPoolManager(URI uri,
-            HttpClientConnection.AwsHTTPProtocolVersion expectedVersion) {
-        if (expectedVersion == HttpClientConnection.AwsHTTPProtocolVersion.HTTP_2) {
+            HttpClientConnection.ProtocolVersion expectedVersion) {
+        if (expectedVersion == HttpClientConnection.ProtocolVersion.HTTP_2) {
             return createHTTP2ConnectionPoolManager(uri);
         } else {
             return createHTTP1ConnectionPoolManager(uri);

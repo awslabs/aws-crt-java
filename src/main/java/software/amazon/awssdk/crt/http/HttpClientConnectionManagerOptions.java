@@ -29,7 +29,7 @@ public class HttpClientConnectionManagerOptions {
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
-    private HttpClientConnection.AwsHTTPProtocolVersion expectedProtocolVersion = HttpClientConnection.AwsHTTPProtocolVersion.HTTP_1_1;
+    private HttpClientConnection.ProtocolVersion expectedProtocolVersion = HttpClientConnection.ProtocolVersion.HTTP_1_1;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -203,7 +203,7 @@ public class HttpClientConnectionManagerOptions {
      *
      * @return this
      */
-    public HttpClientConnectionManagerOptions withExpectedProtocolVersion(HttpClientConnection.AwsHTTPProtocolVersion expectedProtocolVersion) {
+    public HttpClientConnectionManagerOptions withExpectedProtocolVersion(HttpClientConnection.ProtocolVersion expectedProtocolVersion) {
         this.expectedProtocolVersion = expectedProtocolVersion;
         return this;
     }
@@ -211,7 +211,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return Return the expected HTTP protocol version.
      */
-    public HttpClientConnection.AwsHTTPProtocolVersion getExpectedProtocolVersion() {
+    public HttpClientConnection.ProtocolVersion getExpectedProtocolVersion() {
         return expectedProtocolVersion;
     }
 

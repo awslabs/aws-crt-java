@@ -26,19 +26,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      * (RFC-7540 7).
      */
     public enum Http2ErrorCode {
-        PROTOCOL_ERROR(1),
-        INTERNAL_ERROR(2),
-        FLOW_CONTROL_ERROR(3),
-        SETTINGS_TIMEOUT(4),
-        STREAM_CLOSED(5),
-        FRAME_SIZE_ERROR(6),
-        REFUSED_STREAM(7),
-        CANCEL(8),
-        COMPRESSION_ERROR(9),
-        CONNECT_ERROR(10),
-        ENHANCE_YOUR_CALM(11),
-        INADEQUATE_SECURITY(12),
-        HTTP_1_1_REQUIRED(13);
+        PROTOCOL_ERROR(1), INTERNAL_ERROR(2), FLOW_CONTROL_ERROR(3), SETTINGS_TIMEOUT(4), STREAM_CLOSED(5),
+        FRAME_SIZE_ERROR(6), REFUSED_STREAM(7), CANCEL(8), COMPRESSION_ERROR(9), CONNECT_ERROR(10),
+        ENHANCE_YOUR_CALM(11), INADEQUATE_SECURITY(12), HTTP_1_1_REQUIRED(13);
 
         private int errorCode;
 
@@ -70,7 +60,7 @@ public class Http2ClientConnection extends HttpClientConnection {
     }
 
     /**
-     * Send a PING frame Round-trip-time is calculated when PING ACK is received
+     * Send a PING frame. Round-trip-time is calculated when PING ACK is received
      * from peer.
      *
      * @param pingData Optional 8 Bytes data with the PING frame
@@ -82,6 +72,12 @@ public class Http2ClientConnection extends HttpClientConnection {
     public CompletableFuture<Long> sendPing(final byte[] pingData) {
         CompletableFuture<Long> completionFuture = new CompletableFuture<>();
         http2ClientConnectionSendPing(getNativeHandle(), completionFuture, pingData);
+        return completionFuture;
+    }
+
+    public CompletableFuture<Long> sendPing() {
+        CompletableFuture<Long> completionFuture = new CompletableFuture<>();
+        http2ClientConnectionSendPing(getNativeHandle(), completionFuture, null);
         return completionFuture;
     }
 
@@ -110,6 +106,10 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams,
             final byte[] debugData) {
+        throw new CrtRuntimeException("Unimplemented");
+    }
+
+    public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
         throw new CrtRuntimeException("Unimplemented");
     }
 

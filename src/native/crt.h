@@ -142,6 +142,13 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
+ * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws
+ * error code, which is the type of software/amazon/awssdk/crt/CrtRuntimeException.
+ * Reference of the jobject needed to be cleaned up after use.
+ ******************************************************************************/
+jobject aws_jni_new_crt_exception_from_error_code(JNIEnv *env, int error_code);
+
+/*******************************************************************************
  * aws_jni_get_thread_env - Gets the JNIEnv for the current thread from the VM,
  * attaching the env if necessary
  ******************************************************************************/

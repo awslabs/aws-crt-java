@@ -121,13 +121,12 @@ public class HttpRequest {
     }
 
     /**
-     * Requests are marshalled as follows:
+     * @exclude Requests are marshalled as follows:
      *
-     * each string field is:
-     * [4-bytes BE] [variable length bytes specified by the previous field]
+     *          each string field is: [4-bytes BE] [variable length bytes specified
+     *          by the previous field]
      *
-     * Each request is then:
-     * [method][path][header name-value pairs]
+     *          Each request is then: [method][path][header name-value pairs]
      * @return encoded blob of headers
      */
     public byte[] marshalForJni() {

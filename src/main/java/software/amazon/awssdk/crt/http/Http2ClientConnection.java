@@ -73,7 +73,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      * Send a PING frame. Round-trip-time is calculated when PING ACK is received
      * from peer.
      *
-     * @param pingData Optional 8 Bytes data with the PING frame
+     * @param pingData 8 Bytes data with the PING frame or null for not include data in ping
      *
      * @return When this future completes without exception, the peer has
      *         acknowledged the PING and future will be completed with the round
@@ -112,7 +112,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      *                         Last-Stream-ID will be set to the latest acknowledged
      *                         stream.
      * @param debugData        Optional debug data to send. Size must not exceed
-     *                         16KB.
+     *                         16KB. null is acceptable to not include debug data.
      */
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams,
             final byte[] debugData) {

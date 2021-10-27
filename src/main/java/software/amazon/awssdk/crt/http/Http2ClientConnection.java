@@ -74,7 +74,7 @@ public class Http2ClientConnection extends HttpClientConnection {
     }
 
     /**
-     * Send a PING frame Round-trip-time is calculated when PING ACK is received
+     * Send a PING frame. Round-trip-time is calculated when PING ACK is received
      * from peer.
      *
      * @param pingData Optional 8 Bytes data with the PING frame
@@ -86,6 +86,12 @@ public class Http2ClientConnection extends HttpClientConnection {
     public CompletableFuture<Long> sendPing(final byte[] pingData) {
         CompletableFuture<Long> completionFuture = new CompletableFuture<>();
         http2ClientConnectionSendPing(getNativeHandle(), completionFuture, pingData);
+        return completionFuture;
+    }
+
+    public CompletableFuture<Long> sendPing() {
+        CompletableFuture<Long> completionFuture = new CompletableFuture<>();
+        http2ClientConnectionSendPing(getNativeHandle(), completionFuture, null);
         return completionFuture;
     }
 
@@ -116,6 +122,10 @@ public class Http2ClientConnection extends HttpClientConnection {
             final byte[] debugData) {
         http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
                 debugData);
+    }
+
+    public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
+        throw new CrtRuntimeException("Unimplemented");
     }
 
     /**

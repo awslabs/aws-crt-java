@@ -583,8 +583,7 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     crt_runtime_exception_properties.crt_runtime_exception_class = (*env)->NewGlobalRef(env, cls);
 
-    crt_runtime_exception_properties.constructor_method_id =
-        (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;)V");
+    crt_runtime_exception_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.constructor_method_id);
 
     crt_runtime_exception_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");

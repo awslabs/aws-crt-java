@@ -14,7 +14,7 @@ public class Http2Stream extends HttpStream {
     }
 
     /**
-     * Reset the HTTP/2 stream
+     * Reset the HTTP/2 stream.
      * Note that if the stream closes before this async call is fully processed, the RST_STREAM frame will not be sent.
      *
      * @param http2_stream HTTP/2 stream.

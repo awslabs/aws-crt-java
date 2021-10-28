@@ -150,14 +150,6 @@ struct java_http_client_connection_properties {
 };
 extern struct java_http_client_connection_properties http_client_connection_properties;
 
-/* Http2ConnectionSetting */
-struct java_http2_connection_setting_properties {
-    jclass http2_connection_setting_class;
-    jfieldID id_field_id;
-    jfieldID value_field_id;
-};
-extern struct java_http2_connection_setting_properties http2_connection_setting_properties;
-
 /* HttpStream */
 struct java_http_stream_properties {
     jclass stream_class;

@@ -588,85 +588,93 @@ static void s_cleanup_http2_callback_data(struct s_aws_http2_callback_data *call
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
-// static void s_cleanup_http2_callback_data(struct s_aws_http2_ping_callback_data *callback_data) {
+static void s_on_settings_completed(struct aws_http_connection *http2_connection, int error_code, void *user_data) {
+    (void)http2_connection;
+    struct s_aws_http2_callback_data *callback_data = user_data;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (error_code) {
+        jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_result_future,
+            completable_future_properties.complete_exceptionally_method_id,
+            crt_exception);
+        aws_jni_check_and_clear_exception(env);
+        (*env)->DeleteLocalRef(env, crt_exception);
+        goto done;
+    }
+    (*env)->CallBooleanMethod(
+        env, callback_data->java_result_future, completable_future_properties.complete_method_id, NULL);
+done:
+    s_cleanup_http2_callback_data(callback_data);
+}
 
-//     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionChangeSettings(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jobject java_result_future,
+    jlongArray java_marshalled_settings) {
 
-//     (*env)->DeleteGlobalRef(env, callback_data->java_result_future);
+    (void)jni_class;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_http2_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_callback_data));
 
-//     aws_mem_release(aws_jni_get_allocator(), callback_data);
-// }
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
 
-// static void s_on_ping_completed(
-//     struct aws_http_connection *http2_connection,
-//     uint64_t round_trip_time_ns,
-//     int error_code,
-//     void *user_data) {
-//     (void)http2_connection;
-//     struct s_aws_http2_ping_callback_data *callback_data = user_data;
-//     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-//     if (error_code) {
-//         jint jni_error_code = error_code;
-//         struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
-//         jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
-//         AWS_FATAL_ASSERT(jni_error_string);
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
 
-//         jobject crt_exception = (*env)->NewObject(
-//             env,
-//             crt_runtime_exception_properties.crt_runtime_exception_class,
-//             crt_runtime_exception_properties.constructor_method_id,
-//             jni_error_code,
-//             jni_error_string);
-//         AWS_FATAL_ASSERT(crt_exception);
-//         (*env)->CallBooleanMethod(
-//             env,
-//             callback_data->java_result_future,
-//             completable_future_properties.complete_exceptionally_method_id,
-//             crt_exception);
-//         aws_jni_check_and_clear_exception(env);
-//         (*env)->DeleteLocalRef(env, jni_error_string);
-//         (*env)->DeleteLocalRef(env, crt_exception);
-//         goto done;
-//     }
-//     /* Create a java.lang.long object to complete the future */
-//     jobject java_round_trip_time_ns = NULL;
-//     jclass cls = (*env)->FindClass(env, "java/lang/Long");
-//     jmethodID longConstructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
-//     java_round_trip_time_ns = (*env)->NewObject(env, cls, longConstructor, (jlong)round_trip_time_ns);
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid aws_http_connection");
+        s_cleanup_http2_callback_data(callback_data);
+        return;
+    }
 
-//     (*env)->CallBooleanMethod(
-//         env,
-//         callback_data->java_result_future,
-//         completable_future_properties.complete_method_id,
-//         java_round_trip_time_ns);
+    callback_data->java_result_future = (*env)->NewGlobalRef(env, java_result_future);
+    if (callback_data->java_result_future == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to obtain ref to future");
+        s_cleanup_http2_callback_data(callback_data);
+        return;
+    }
 
-// done:
-//     s_cleanup_http2_callback_data(callback_data);
-// }
+    /* We marshalled each setting to two long integers, the long list will be number of settings times two */
+    const size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
+    if (len % 2) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to change settings");
+        s_cleanup_http2_callback_data(callback_data);
+        return;
+    }
+    const size_t settings_len = len / 2;
+    struct aws_http2_setting settings[settings_len];
 
-// JNIEXPORT void JNICALL
-// Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionChangeSettings(
-//     JNIEnv *env,
-//     jclass jni_class,
-//     jlong jni_connection,
-//     jobject java_change_settings_result_future,
-//     jlongArray java_marshalled_settings) {
+    jlong *marshalled_settings = (*env)->GetLongArrayElements(env, java_marshalled_settings, NULL);
+    for (size_t i = 0; i < settings_len; i++) {
+        jlong id = marshalled_settings[i * 2];
+        settings[i].id = id;
+        jlong value = marshalled_settings[i * 2 + 1];
+        settings[i].value = (uint32_t)value;
+    }
 
-//     (void)jni_class;
-//     struct aws_allocator *allocator = aws_jni_get_allocator();
-//     size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
-//     jlong *marshalled_settings = (*env)->GetLongArrayElements(env, java_marshalled_settings, NULL);
-//     for (int i = 0; i < len; i += 2) {
-//         jlong id = marshalled_settings[i];
-//         jlong value = marshalled_settings[i + 1];
-//     }
+    if (aws_http2_connection_change_settings(
+            native_conn, settings, settings_len, s_on_settings_completed, callback_data)) {
+        aws_jni_throw_runtime_exception(
+            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to change settings");
+        goto error;
+    }
 
-//     return;
-// error:
-//     (*env)->ReleaseByteArrayElements(env, java_marshalled_settings, (jbyte *)marshalled_settings, JNI_ABORT);
-//     s_cleanup_http2_callback_data(callback_data);
-//     return;
-// }
+    (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
+    return;
+error:
+    (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
+    s_cleanup_http2_callback_data(callback_data);
+    return;
+}
 
 static void s_on_ping_completed(
     struct aws_http_connection *http2_connection,

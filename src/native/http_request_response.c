@@ -664,7 +664,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     }
     success = true;
 done:
-    aws_mem_release(settings);
+    aws_mem_release(allocator, settings);
     (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
     if (!success) {
         s_cleanup_http2_callback_data(callback_data);

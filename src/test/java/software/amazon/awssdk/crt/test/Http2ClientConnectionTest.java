@@ -81,6 +81,35 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     }
 
     @Test
+    public void testHttp2ConnectionChangeSettingsEmpty() throws Exception {
+        /* empty settings is allowed to send */
+        skipIfNetworkUnavailable();
+
+        CompletableFuture<Void> shutdownComplete = null;
+        boolean actuallyConnected = false;
+        URI uri = new URI(HOST);
+
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                    TimeUnit.SECONDS);) {
+                actuallyConnected = true;
+                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
+                conn.changeSettings(settings);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Assert.assertTrue(actuallyConnected);
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
     public void testHttp2ConnectionPing() throws Exception {
         skipIfNetworkUnavailable();
 

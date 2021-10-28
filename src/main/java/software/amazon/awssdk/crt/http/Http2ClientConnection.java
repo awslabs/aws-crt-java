@@ -77,7 +77,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      * Send a PING frame. Round-trip-time is calculated when PING ACK is received
      * from peer.
      *
-     * @param pingData 8 Bytes data with the PING frame or null for not include data in ping
+     * @param pingData 8 Bytes data with the PING frame or null for not include data
+     *                 in ping
      *
      * @return When this future completes without exception, the peer has
      *         acknowledged the PING and future will be completed with the round
@@ -125,8 +126,7 @@ public class Http2ClientConnection extends HttpClientConnection {
     }
 
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
-        http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
-                null);
+        http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams, null);
     }
 
     /**
@@ -153,6 +153,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      *                       window
      */
     public void updateConnectionWindow(long incrementSize) {
+        if (incrementSize > 4294967296L || incrementSize < 0) {
+            throw new IllegalArgumentException();
+        }
         http2ClientConnectionUpdateConnectionWindow(getNativeHandle(), incrementSize);
     }
 

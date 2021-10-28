@@ -25,7 +25,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
     JNIEnv *env,
     jclass jni_class,
     jstring jni_filename,
-    jboolean jni_omit_initialize) {
+    jint jni_initialize_finalize_behavior) {
 
     (void)jni_class;
 
@@ -43,9 +43,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
         goto cleanup;
     }
 
-    if (jni_omit_initialize) {
-        options.initialize_finalize_behavior = AWS_PKCS11_LIB_OMIT_INITIALIZE;
-    }
+    options.initialize_finalize_behavior = jni_initialize_finalize_behavior;
 
     /* create aws_pkcs11_lib */
     pkcs11_lib = aws_pkcs11_lib_new(aws_jni_get_allocator(), &options);

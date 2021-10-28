@@ -125,7 +125,8 @@ public class Http2ClientConnection extends HttpClientConnection {
     }
 
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
-        throw new CrtRuntimeException("Unimplemented");
+        http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
+                null);
     }
 
     /**
@@ -152,7 +153,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      *                       window
      */
     public void updateConnectionWindow(long incrementSize) {
-        throw new CrtRuntimeException("Unimplemented");
+        http2ClientConnectionUpdateConnectionWindow(getNativeHandle(), incrementSize);
     }
 
     /**

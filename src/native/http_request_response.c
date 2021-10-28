@@ -646,8 +646,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     const size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
     AWS_ASSERT(len % 2 == 0);
     const size_t settings_len = len / 2;
-    struct aws_http2_setting settings[settings_len];
-
+    struct aws_http2_setting *settings = aws_mem_calloc(allocator, settings_len, sizeof(struct aws_http2_setting));
+    int success = false;
     jlong *marshalled_settings = (*env)->GetLongArrayElements(env, java_marshalled_settings, NULL);
     for (size_t i = 0; i < settings_len; i++) {
         jlong id = marshalled_settings[i * 2];
@@ -660,14 +660,15 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
             native_conn, settings, settings_len, s_on_settings_completed, callback_data)) {
         aws_jni_throw_runtime_exception(
             env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to change settings");
-        goto error;
+        goto done;
     }
-
+    success = true;
+done:
+    aws_mem_release(settings);
     (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
-    return;
-error:
-    (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
-    s_cleanup_http2_callback_data(callback_data);
+    if (!success) {
+        s_cleanup_http2_callback_data(callback_data);
+    }
     return;
 }
 

@@ -11,14 +11,15 @@ import org.junit.Assert;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.*;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.Http2ConnectionSetting;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
     protected final static String HOST = "https://httpbin.org";
@@ -37,6 +38,36 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Assert.assertTrue(actuallyConnected);
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2ConnectionChangeSettings() throws Exception {
+        skipIfNetworkUnavailable();
+
+        CompletableFuture<Void> shutdownComplete = null;
+        boolean actuallyConnected = false;
+        URI uri = new URI(HOST);
+
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                    TimeUnit.SECONDS);) {
+                actuallyConnected = true;
+                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
+                settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
+                settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
+                conn.changeSettings(settings);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -161,7 +161,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
             }
         } catch (CrtRuntimeException e) {
             exception = true;
-            Assert.assertTrue(e.getMessage().contains("AWS_ERROR_INVALID_ARGUMENT"));
+            Assert.assertEquals(e.errorName, "AWS_ERROR_INVALID_ARGUMENT");
         }
 
         Assert.assertTrue(exception);

@@ -879,6 +879,7 @@ JNIEXPORT void JNICALL
             env, "Http2ClientConnection.http2ClientConnectionUpdateConnectionWindow: Invalid aws_http_connection");
         return;
     }
+    /* We did range check in Java already. */
     aws_http2_connection_update_window(native_conn, (uint32_t)increment_size);
     return;
 }

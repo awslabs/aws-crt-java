@@ -22,8 +22,12 @@ import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
 
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
-    protected final static String HOST = "https://httpbin.org";
-    protected final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
+    /**
+     * @TODO: maybe use a echo server to verify the frames are sent properly??? We
+     *        have tests in C, not sure if it's worth to add it for java...
+     */
+    private final static String HOST = "https://httpbin.org";
+    private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
 
     @Test
     public void testHttp2ConnectionGetVersion() throws Exception {

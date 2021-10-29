@@ -158,6 +158,13 @@ struct java_http_stream_properties {
 };
 extern struct java_http_stream_properties http_stream_properties;
 
+/* Http2Stream */
+struct java_http2_stream_properties {
+    jclass stream_class;
+    jmethodID constructor;
+};
+extern struct java_http2_stream_properties http2_stream_properties;
+
 /* HttpStreamResponseHandler */
 struct java_http_stream_response_handler_native_adapter_properties {
     jmethodID onResponseHeaders;

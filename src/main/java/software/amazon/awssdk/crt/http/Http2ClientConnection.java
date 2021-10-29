@@ -10,6 +10,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
 
+import static software.amazon.awssdk.crt.CRT.awsLastError;
+
 /**
  * This class wraps aws-c-http to provide the basic HTTP/2 request/response
  * functionality via the AWS Common Runtime.
@@ -157,6 +159,33 @@ public class Http2ClientConnection extends HttpClientConnection {
             throw new IllegalArgumentException();
         }
         http2ClientConnectionUpdateConnectionWindow(getNativeHandle(), incrementSize);
+    }
+
+    /**
+     * Schedules an HttpRequest on the Native EventLoop for this
+     * HttpClientConnection.
+     *
+     * @param request       The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native
+     *                      EventLoop
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The Http2Stream that represents this Request/Response Pair. It can be
+     *         closed at any time during the request/response, but must be closed by
+     *         the user thread making this request when it's done.
+     */
+    @Override
+    public Http2Stream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
+            throws CrtRuntimeException {
+        if (isNull()) {
+            throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");
+        }
+
+        Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
+                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+        if (stream == null || stream.isNull()) {
+            throw new CrtRuntimeException(awsLastError());
+        }
+        return stream;
     }
 
     /**

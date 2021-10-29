@@ -4,15 +4,20 @@
  */
 package software.amazon.awssdk.crt.test;
 
+import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
+
 import org.junit.Assert;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.Http2Stream;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -67,6 +72,40 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
             return true;
         }
         return false;
+    }
+
+    protected HttpRequest getHttpRequest(String method, String endpoint, String path, String requestBody)
+            throws Exception {
+        URI uri = new URI(endpoint);
+
+        HttpHeader[] requestHeaders = null;
+
+        /* TODO: Http2 headers and request */
+        requestHeaders = new HttpHeader[] { new HttpHeader("host", uri.getHost()),
+                new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length)) };
+
+        HttpRequestBodyStream bodyStream = null;
+
+        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
+
+        bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                transferData(bodyBytesIn, bodyBytesOut);
+
+                return bodyBytesIn.remaining() == 0;
+            }
+
+            @Override
+            public boolean resetPosition() {
+                bodyBytesIn.position(0);
+
+                return true;
+            }
+        };
+
+        HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
+        return request;
     }
 
     public static String byteArrayToHex(byte[] input) {
@@ -127,12 +166,17 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                         stream.close();
                     }
                 };
-
-                HttpStream stream = conn.makeRequest(request, streamHandler);
-                stream.activate();
-
-                if (chunkedData != null) {
-                    stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
+                if (expectedVersion == HttpClientConnection.ProtocolVersion.HTTP_2) {
+                    try (Http2ClientConnection h2Connection = (Http2ClientConnection) conn) {
+                        Http2Stream h2Stream = h2Connection.makeRequest(request, streamHandler);
+                        h2Stream.activate();
+                    }
+                } else {
+                    HttpStream stream = conn.makeRequest(request, streamHandler);
+                    stream.activate();
+                    if (chunkedData != null) {
+                        stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
+                    }
                 }
                 // Give the request up to 60 seconds to complete, otherwise throw a
                 // TimeoutException

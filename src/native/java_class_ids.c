@@ -342,6 +342,17 @@ static void s_cache_http_stream(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_properties.close);
 }
 
+struct java_http2_stream_properties http2_stream_properties;
+
+static void s_cache_http2_stream(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http2Stream");
+    AWS_FATAL_ASSERT(cls);
+    http2_stream_properties.stream_class = (*env)->NewGlobalRef(env, cls);
+
+    http2_stream_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(http2_stream_properties.constructor);
+}
+
 struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
 static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
@@ -708,6 +719,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_client_connection_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);
+    s_cache_http2_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
     s_cache_event_stream_server_listener_properties(env);

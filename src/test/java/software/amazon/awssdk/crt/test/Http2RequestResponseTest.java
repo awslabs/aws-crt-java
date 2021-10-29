@@ -5,52 +5,34 @@
 
 package software.amazon.awssdk.crt.test;
 
-import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.Http2Stream;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.Http2ClientConnection;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
+import software.amazon.awssdk.crt.CrtResource;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
+    private final static String HOST = "https://httpbin.org";
+    private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
 
     public TestHttpResponse testHttp2Request(String method, String endpoint, String path, String requestBody,
             int expectedStatus) throws Exception {
         URI uri = new URI(endpoint);
-
-        HttpHeader[] requestHeaders = null;
-
-        /* TODO: Http2 headers and request */
-        requestHeaders = new HttpHeader[] { new HttpHeader("host", uri.getHost()),
-                new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length)) };
-
-        HttpRequestBodyStream bodyStream = null;
-
-        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
-
-        bodyStream = new HttpRequestBodyStream() {
-            @Override
-            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
-                transferData(bodyBytesIn, bodyBytesOut);
-
-                return bodyBytesIn.remaining() == 0;
-            }
-
-            @Override
-            public boolean resetPosition() {
-                bodyBytesIn.position(0);
-
-                return true;
-            }
-        };
-
-        HttpRequest request = new HttpRequest(method, path, requestHeaders, bodyStream);
+        HttpRequest request = getHttpRequest(method, endpoint, path, requestBody);
 
         TestHttpResponse response = null;
         int numAttempts = 0;
@@ -63,7 +45,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
             numAttempts++;
             response = null;
             try {
-                response = getResponse(uri, request, null, HttpClientConnection.ProtocolVersion.HTTP_2);
+                response = getResponse(uri, request, null, EXPECTED_VERSION);
 
             } catch (Exception ex) {
                 // do nothing just let it retry
@@ -92,43 +74,43 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     }
 
     @Test
-    public void testHttpGet() throws Exception {
+    public void testHttp2Get() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testHttp2Request("GET", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testHttp2Request("GET", "https://httpbin.org", "/get", EMPTY_BODY, 200);
-        testHttp2Request("GET", "https://httpbin.org", "/post", EMPTY_BODY, 405);
-        testHttp2Request("GET", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
+        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
     }
 
     @Test
-    public void testHttpPost() throws Exception {
+    public void testHttp2Post() throws Exception {
         skipIfNetworkUnavailable();
-        testHttp2Request("POST", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testHttp2Request("POST", "https://httpbin.org", "/get", EMPTY_BODY, 405);
-        testHttp2Request("POST", "https://httpbin.org", "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", "https://httpbin.org", "/put", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
+        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
     }
 
     @Test
-    public void testHttpPut() throws Exception {
+    public void testHttp2Put() throws Exception {
         skipIfNetworkUnavailable();
-        testHttp2Request("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, 405);
-        testHttp2Request("PUT", "https://httpbin.org", "/get", EMPTY_BODY, 405);
-        testHttp2Request("PUT", "https://httpbin.org", "/post", EMPTY_BODY, 405);
-        testHttp2Request("PUT", "https://httpbin.org", "/put", EMPTY_BODY, 200);
+        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
+        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
+        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
+        testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
     }
 
     @Test
-    public void testHttpResponseStatusCodes() throws Exception {
+    public void testHttp2ResponseStatusCodes() throws Exception {
         skipIfNetworkUnavailable();
-        testHttp2Request("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, 200);
-        testHttp2Request("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, 300);
-        testHttp2Request("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, 400);
-        testHttp2Request("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, 500);
+        testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
+        testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
+        testHttp2Request("GET", HOST, "/status/400", EMPTY_BODY, 400);
+        testHttp2Request("GET", HOST, "/status/500", EMPTY_BODY, 500);
     }
 
     @Test
-    public void testHttpDownload() throws Exception {
+    public void testHttp2Download() throws Exception {
         skipIfNetworkUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
@@ -138,5 +120,51 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         body.flip(); // Flip from Write mode to Read mode
 
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
+    }
+
+    @Test
+    public void testHttp2ResetStream() throws Exception {
+        /*
+         * Test that the binding works not the actual functionality. C part has the test
+         * for functionality
+         */
+        skipIfNetworkUnavailable();
+
+        CompletableFuture<Void> shutdownComplete = null;
+        boolean actuallyConnected = false;
+        URI uri = new URI(HOST);
+
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                    TimeUnit.SECONDS);) {
+                actuallyConnected = true;
+                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        Http2Stream h2Stream = (Http2Stream) stream;
+                        h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        stream.close();
+                    }
+                };
+                HttpRequest request = getHttpRequest("GET", HOST, "/get", EMPTY_BODY);
+                Http2Stream h2Stream = conn.makeRequest(request, streamHandler);
+                h2Stream.activate();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Assert.assertTrue(actuallyConnected);
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+
+        CrtResource.waitForNoResources();
     }
 }

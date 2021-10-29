@@ -646,7 +646,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     const size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
     AWS_ASSERT(len % 2 == 0);
     const size_t settings_len = len / 2;
-    struct aws_http2_setting *settings = aws_mem_calloc(allocator, settings_len, sizeof(struct aws_http2_setting));
+    struct aws_http2_setting *settings =
+        settings_len ? aws_mem_calloc(allocator, settings_len, sizeof(struct aws_http2_setting)) : NULL;
     int success = false;
     jlong *marshalled_settings = (*env)->GetLongArrayElements(env, java_marshalled_settings, NULL);
     for (size_t i = 0; i < settings_len; i++) {

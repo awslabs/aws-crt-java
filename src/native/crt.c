@@ -68,6 +68,24 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, runtime_exception, exception);
 }
 
+void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/NullPointerException"), buf);
+}
+
+void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/IllegalArgumentException"), buf);
+}
+
 bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     bool exception_pending = (*env)->ExceptionCheck(env);
     if (exception_pending) {
@@ -138,8 +156,18 @@ jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, si
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jstring str) {
-    return aws_byte_cursor_from_array(
-        (*env)->GetStringUTFChars(env, str, NULL), (size_t)(*env)->GetStringUTFLength(env, str));
+    if (str == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "string is null");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    const char *bytes = (*env)->GetStringUTFChars(env, str, NULL);
+    if (bytes == NULL) {
+        /* GetStringUTFChars() has thrown exception */
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    return aws_byte_cursor_from_array(bytes, (size_t)(*env)->GetStringUTFLength(env, str));
 }
 
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {

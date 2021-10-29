@@ -102,6 +102,16 @@ static void s_cache_predicate(JNIEnv *env) {
     AWS_FATAL_ASSERT(predicate_properties.test_method_id);
 }
 
+struct java_boxed_long_properties boxed_long_properties;
+
+static void s_cache_boxed_long(JNIEnv *env) {
+    jclass boxed_long_class = (*env)->FindClass(env, "java/lang/Long");
+    AWS_FATAL_ASSERT(boxed_long_class);
+
+    boxed_long_properties.long_value_method_id = (*env)->GetMethodID(env, boxed_long_class, "longValue", "()J");
+    AWS_FATAL_ASSERT(boxed_long_properties.long_value_method_id);
+}
+
 struct java_http_request_properties http_request_properties;
 
 static void s_cache_http_request(JNIEnv *env) {
@@ -303,6 +313,38 @@ static void s_cache_client_bootstrap(JNIEnv *env) {
 
     client_bootstrap_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(client_bootstrap_properties.onShutdownComplete);
+}
+
+struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_options_properties;
+
+static void s_cache_tls_context_pkcs11_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsContextPkcs11Options");
+    AWS_FATAL_ASSERT(cls);
+
+    tls_context_pkcs11_options_properties.pkcs11Lib =
+        (*env)->GetFieldID(env, cls, "pkcs11Lib", "Lsoftware/amazon/awssdk/crt/io/Pkcs11Lib;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.pkcs11Lib);
+
+    tls_context_pkcs11_options_properties.userPin = (*env)->GetFieldID(env, cls, "userPin", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.userPin);
+
+    tls_context_pkcs11_options_properties.slotId = (*env)->GetFieldID(env, cls, "slotId", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.slotId);
+
+    tls_context_pkcs11_options_properties.tokenLabel = (*env)->GetFieldID(env, cls, "tokenLabel", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.tokenLabel);
+
+    tls_context_pkcs11_options_properties.privateKeyObjectLabel =
+        (*env)->GetFieldID(env, cls, "privateKeyObjectLabel", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.privateKeyObjectLabel);
+
+    tls_context_pkcs11_options_properties.certificateFilePath =
+        (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.certificateFilePath);
+
+    tls_context_pkcs11_options_properties.certificateFileContents =
+        (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.certificateFileContents);
 }
 
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
@@ -704,6 +746,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
+    s_cache_boxed_long(env);
     s_cache_http_request(env);
     s_cache_crt_resource(env);
     s_cache_mqtt_connection(env);
@@ -716,6 +759,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_async_callback(env);
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
+    s_cache_tls_context_pkcs11_options(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);

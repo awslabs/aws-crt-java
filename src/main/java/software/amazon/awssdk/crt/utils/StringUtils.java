@@ -3,7 +3,7 @@ package software.amazon.awssdk.crt.utils;
 public class StringUtils {
     /**
      * Returns a new String composed of copies of the CharSequence elements joined together with a copy of the specified delimiter.
-     * Like `Strings.join()` but works on Android < 26.
+     * Like `Strings.join()` but works on Android before API 26.
      *
      * @param delimiter a sequence of characters that is used to separate each of the elements in the resulting String
      * @param elements an Iterable that will have its elements joined together

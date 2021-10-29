@@ -7,12 +7,16 @@ import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.is;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
+import software.amazon.awssdk.crt.io.TlsContextPkcs11Options;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.utils.PemUtils;
 
@@ -213,6 +217,26 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         }
 
         assertFalse(successfullyCreatedTlsContext);
+    }
+
+    @Test
+    public void testMtlsPkcs11() {
+        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        Pkcs11LibTest.assumeEnvironmentSetUpForPkcs11Tests();
+
+        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB);
+                TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
+                        .withUserPin(Pkcs11LibTest.TEST_PKCS11_PIN)
+                        .withTokenLabel(Pkcs11LibTest.TEST_PKCS11_TOKEN_LABEL)
+                        .withPrivateKeyObjectLabel(Pkcs11LibTest.TEST_PKCS11_PKEY_LABEL)
+                        .withCertificateFilePath(Pkcs11LibTest.TEST_PKCS11_CERT_FILE);
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
+                TlsContext tls = new TlsContext(tlsOptions)) {
+        }
+        catch (CrtRuntimeException ex) {
+            // This is expected to fail on platforms where we don't yet support mTLS with PKCS#11
+            assertEquals("AWS_ERROR_UNIMPLEMENTED", ex.errorName);
+        }
     }
 
     @Test

@@ -413,7 +413,7 @@ public final class TlsContextOptions extends CrtResource {
      * @return this
      */
     public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
-        addReferenceTo(pkcs11Options);
+        swapReferenceTo(this.pkcs11Options, pkcs11Options);
         this.pkcs11Options = pkcs11Options;
         return this;
     }

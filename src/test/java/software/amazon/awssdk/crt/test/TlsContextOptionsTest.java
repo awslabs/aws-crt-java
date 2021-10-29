@@ -219,7 +219,6 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         assertFalse(successfullyCreatedTlsContext);
     }
 
-    @Ignore // TODO: figure out how to test this
     @Test
     public void testMtlsPkcs11() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
@@ -227,17 +226,15 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB);
                 TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
-                        .withUserPin("1234")
-                        .withSlotId(1)
-                        .withTokenLabel("my-token")
-                        .withPrivateKeyObjectLabel("my-key")
-                        .withCertificateFileContents("asdf")
-                        .withCertificateFilePath("qwer");
+                        .withUserPin(Pkcs11LibTest.TEST_PKCS11_PIN)
+                        .withTokenLabel(Pkcs11LibTest.TEST_PKCS11_TOKEN_LABEL)
+                        .withPrivateKeyObjectLabel(Pkcs11LibTest.TEST_PKCS11_PKEY_LABEL)
+                        .withCertificateFilePath(Pkcs11LibTest.TEST_PKCS11_CERT_FILE);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
                 TlsContext tls = new TlsContext(tlsOptions)) {
-
         }
         catch (CrtRuntimeException ex) {
+            // This is expected to fail on platforms where we don't yet support mTLS with PKCS#11
             assertEquals("AWS_ERROR_UNIMPLEMENTED", ex.errorName);
         }
     }

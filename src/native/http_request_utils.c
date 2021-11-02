@@ -263,6 +263,31 @@ static inline int s_unmarshal_http_request(struct aws_http_message *message, str
     return AWS_OP_SUCCESS;
 }
 
+static inline int s_unmarshal_http_headers(struct aws_http_headers *headers, struct aws_byte_cursor *request_blob) {
+    uint32_t field_len = 0;
+    while (request_blob->len) {
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor header_name = aws_byte_cursor_advance(request_blob, field_len);
+
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor header_value = aws_byte_cursor_advance(request_blob, field_len);
+
+        struct aws_http_header header = {
+            .name = header_name,
+            .value = header_value,
+        };
+
+        aws_http_headers_add_header(headers, &header);
+    }
+    return AWS_OP_SUCCESS;
+}
+
 int aws_apply_java_http_request_changes_to_native_request(
     JNIEnv *env,
     jbyteArray marshalled_request,
@@ -344,6 +369,36 @@ on_error:
     /* Don't need to destroy input stream since it's the last thing created */
     aws_http_message_destroy(request);
 
+    return NULL;
+}
+
+struct aws_http_message *aws_http_headers_new_from_java_http_headers(JNIEnv *env, jbyteArray marshalled_headers) {
+    const char *exception_message = NULL;
+    struct aws_http_headers *headers = aws_http_headers_new(aws_jni_get_allocator());
+    if (headers == NULL) {
+        aws_jni_throw_runtime_exception(env, "aws_http_headers_new_from_java_http_headers: Unable to allocate request");
+        return NULL;
+    }
+    const size_t marshalled_headers_length = (*env)->GetArrayLength(env, marshalled_headers);
+
+    jbyte *marshalled_headers_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_headers, NULL);
+    struct aws_byte_cursor marshalled_cur =
+        aws_byte_cursor_from_array((uint8_t *)marshalled_headers_data, marshalled_headers_length);
+    int result = s_unmarshal_http_headers(headers, &marshalled_cur);
+    (*env)->ReleasePrimitiveArrayCritical(env, marshalled_headers, marshalled_headers_data, 0);
+
+    if (result) {
+        exception_message = "aws_http_headers_new_from_java_http_headers: Invalid marshalled request data.";
+        goto on_error;
+    }
+
+    return headers;
+
+on_error:
+    if (exception_message) {
+        aws_jni_throw_runtime_exception(env, exception_message);
+    }
+    aws_http_headers_destroy(headers);
     return NULL;
 }
 

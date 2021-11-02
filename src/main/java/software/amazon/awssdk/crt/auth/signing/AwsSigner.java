@@ -5,10 +5,12 @@
 package software.amazon.awssdk.crt.auth.signing;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.HttpHeader;
 
 /**
  * Static class for a variety of AWS signing APIs.
@@ -17,8 +19,9 @@ public class AwsSigner {
 
     /**
      * Signs an http request according to the supplied signing configuration
+     * 
      * @param request http request to sign
-     * @param config signing configuration
+     * @param config  signing configuration
      * @return future which will contain the signed request
      */
     static public CompletableFuture<HttpRequest> signRequest(HttpRequest request, AwsSigningConfig config) {
@@ -38,14 +41,17 @@ public class AwsSigner {
 
     /**
      * Signs a body chunk according to the supplied signing configuration
-     * @param chunkBody stream of bytes that make up the chunk
-     * @param previousSignature the signature of the previous component of the request: either the request itself for
-     *                          the first chunk, or the previous chunk otherwise
-     * @param config signing configuration
-     * @return future which will contain the signature of the chunk.  The signature *MUST* be written directly into
-     * the chunk metadata.
+     * 
+     * @param chunkBody         stream of bytes that make up the chunk
+     * @param previousSignature the signature of the previous component of the
+     *                          request: either the request itself for the first
+     *                          chunk, or the previous chunk otherwise
+     * @param config            signing configuration
+     * @return future which will contain the signature of the chunk. The signature
+     *         *MUST* be written directly into the chunk metadata.
      */
-    static public CompletableFuture<byte[]> signChunk(HttpRequestBodyStream chunkBody, byte[] previousSignature, AwsSigningConfig config) {
+    static public CompletableFuture<byte[]> signChunk(HttpRequestBodyStream chunkBody, byte[] previousSignature,
+            AwsSigningConfig config) {
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>();
 
         CompletableFuture<AwsSigningResult> result = sign(chunkBody, previousSignature, config);
@@ -62,10 +68,11 @@ public class AwsSigner {
 
     /**
      * Signs an http request according to the supplied signing configuration
+     * 
      * @param request http request to sign
-     * @param config signing configuration
-     * @return future which will contain a signing result, which provides easier access to all signing-related
-     * result properties
+     * @param config  signing configuration
+     * @return future which will contain a signing result, which provides easier
+     *         access to all signing-related result properties
      */
     static public CompletableFuture<AwsSigningResult> sign(HttpRequest request, AwsSigningConfig config) {
         CompletableFuture<AwsSigningResult> future = new CompletableFuture<AwsSigningResult>();
@@ -81,14 +88,17 @@ public class AwsSigner {
 
     /**
      * Signs a body chunk according to the supplied signing configuration
-     * @param chunkBody stream of bytes that make up the chunk
-     * @param previousSignature the signature of the previous component of the request: either the request itself for
-     *                          the first chunk, or the previous chunk otherwise
-     * @param config signing configuration
-     * @return future which will contain a signing result, which provides easier access to all signing-related
-     * result properties
+     * 
+     * @param chunkBody         stream of bytes that make up the chunk
+     * @param previousSignature the signature of the previous component of the
+     *                          request: either the request itself for the first
+     *                          chunk, or the previous chunk otherwise
+     * @param config            signing configuration
+     * @return future which will contain a signing result, which provides easier
+     *         access to all signing-related result properties
      */
-    static public CompletableFuture<AwsSigningResult> sign(HttpRequestBodyStream chunkBody, byte[] previousSignature, AwsSigningConfig config) {
+    static public CompletableFuture<AwsSigningResult> sign(HttpRequestBodyStream chunkBody, byte[] previousSignature,
+            AwsSigningConfig config) {
         CompletableFuture<AwsSigningResult> future = new CompletableFuture<AwsSigningResult>();
 
         try {
@@ -100,18 +110,38 @@ public class AwsSigner {
         return future;
     }
 
+    /**
+     * Signs a body chunk according to the supplied signing configuration
+     * 
+     * @param chunkBody         stream of bytes that make up the chunk
+     * @param previousSignature the signature of the previous component of the
+     *                          request: either the request itself for the first
+     *                          chunk, or the previous chunk otherwise
+     * @param config            signing configuration
+     * @return future which will contain a signing result, which provides easier
+     *         access to all signing-related result properties
+     */
+    static public CompletableFuture<AwsSigningResult> sign(List<HttpHeader> headers, byte[] previousSignature,
+            AwsSigningConfig config) {
+        CompletableFuture<AwsSigningResult> future = new CompletableFuture<AwsSigningResult>();
+
+        try {
+            awsSignerSignTrailingHeaders(HttpHeader.marshalHeadersForJni(headers), previousSignature, config, future);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native void awsSignerSignRequest(
-        HttpRequest request,
-        byte[] marshalledRequest,
-        AwsSigningConfig config,
-        CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
+    private static native void awsSignerSignRequest(HttpRequest request, byte[] marshalledRequest,
+            AwsSigningConfig config, CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
 
-    private static native void awsSignerSignChunk(
-        HttpRequestBodyStream chunk,
-        byte[] previousSignature,
-        AwsSigningConfig config,
-        CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
+    private static native void awsSignerSignChunk(HttpRequestBodyStream chunk, byte[] previousSignature,
+            AwsSigningConfig config, CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
+
+    private static native void awsSignerSignTrailingHeaders(byte[] headers, byte[] previousSignature,
+            AwsSigningConfig config, CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
 }

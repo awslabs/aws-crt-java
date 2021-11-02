@@ -12,20 +12,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HttpHeader {
+    private final static int BUFFER_INT_SIZE = 4;
     private final static Charset UTF8 = StandardCharsets.UTF_8;
-    private byte[] name;  /* Not final, Native will manually set name after calling empty Constructor. */
+    private byte[] name; /* Not final, Native will manually set name after calling empty Constructor. */
     private byte[] value; /* Not final, Native will manually set value after calling empty Constructor. */
 
-    /** Called by Native to create a new HttpHeader. This is so that Native doesn't have to worry about UTF8
-     * encoding/decoding issues. The user thread will deal with them when they call getName() or getValue() **/
-    private HttpHeader() {}
+    /**
+     * Called by Native to create a new HttpHeader. This is so that Native doesn't
+     * have to worry about UTF8 encoding/decoding issues. The user thread will deal
+     * with them when they call getName() or getValue()
+     **/
+    private HttpHeader() {
+    }
 
-    public HttpHeader(String name, String value){
+    public HttpHeader(String name, String value) {
         this.name = name.getBytes(UTF8);
         this.value = value.getBytes(UTF8);
     }
 
-    public HttpHeader(byte[] name, byte[] value){
+    public HttpHeader(byte[] name, byte[] value) {
         this.name = name;
         this.value = value;
     }
@@ -57,15 +62,17 @@ public class HttpHeader {
         return getName() + ":" + getValue();
     }
 
-    /** Each header is marshalled as
-     * [4-bytes BE name length] [variable length name value] [4-bytes BE value length] [variable length value value]
+    /**
+     * Each header is marshalled as [4-bytes BE name length] [variable length name
+     * value] [4-bytes BE value length] [variable length value value]
+     * 
      * @param headersBlob Blob of encoded headers
      * @return array of decoded headers
      */
     public static List<HttpHeader> loadHeadersListFromMarshalledHeadersBlob(ByteBuffer headersBlob) {
         List<HttpHeader> headers = new ArrayList<>(16);
 
-        while(headersBlob.hasRemaining()) {
+        while (headersBlob.hasRemaining()) {
             int nameLen = headersBlob.getInt();
 
             // we want to protect against 0 length header names, 0 length values are fine.
@@ -82,6 +89,41 @@ public class HttpHeader {
         }
 
         return headers;
+    }
+
+    /**
+     * Lists of headers are marshalled as follows:
+     *
+     * each string field is: [4-bytes BE] [variable length bytes specified by the
+     * previous field]
+     *
+     * [header name-value pairs]
+     * 
+     * @return encoded blob of headers
+     */
+
+    public static byte[] marshalHeadersForJni(List<HttpHeader> headers) {
+        int size = 0;
+        size += (BUFFER_INT_SIZE * 2) * headers.size();
+
+        for (HttpHeader header : headers) {
+            if (header.getNameBytes().length > 0) {
+                size += header.getNameBytes().length + header.getValueBytes().length;
+            }
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        ;
+        for (HttpHeader header : headers) {
+            if (header.getNameBytes().length > 0) {
+                buffer.putInt(header.getNameBytes().length);
+                buffer.put(header.getNameBytes());
+                buffer.putInt(header.getValueBytes().length);
+                buffer.put(header.getValueBytes());
+            }
+        }
+
+        return buffer.array();
     }
 
     /**

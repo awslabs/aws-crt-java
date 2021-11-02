@@ -30,6 +30,8 @@ import java.lang.String;
 import java.io.UnsupportedEncodingException;
 
 public class S3NativeClient implements AutoCloseable {
+    private static final String USER_METADATA_PREFIX = "x-amz-meta-";
+
     private final S3Client s3Client;
     private final String signingRegion;
 
@@ -183,6 +185,8 @@ public class S3NativeClient implements AutoCloseable {
                                 e));
                     }
                 }
+
+                populateGetObjectOutputUserMetadata(resultBuilder, headers);
                 dataHandler.onResponseHeaders(statusCode, headers);
                 getObjectOutput = resultBuilder.build();
                 dataHandler.onResponse(getObjectOutput);
@@ -403,6 +407,24 @@ public class S3NativeClient implements AutoCloseable {
         }
     }
 
+    protected void populateGetObjectOutputUserMetadata(final GetObjectOutput.Builder builder, final HttpHeader[] headers) {
+
+        final Map<String, String> metadata = new HashMap<>();
+
+        for (final HttpHeader header : headers) {
+            if (header.getName().startsWith(USER_METADATA_PREFIX)) {
+                // removes prefix
+                final String metadataKey = header.getName().replaceFirst(USER_METADATA_PREFIX, "");
+                metadata.put(metadataKey, header.getValue());
+            }
+        }
+
+        if (metadata.size() > 0) {
+            // only sets metadata field if there is some metadata header
+            builder.metadata(metadata);
+        }
+    }
+
     protected void populatePutObjectRequestHeaders(final Consumer<HttpHeader> headerConsumer,
             final PutObjectRequest request) {
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
@@ -499,7 +521,23 @@ public class S3NativeClient implements AutoCloseable {
         if (request.expectedBucketOwner() != null) {
             headerConsumer.accept(new HttpHeader("x-amz-expected-bucket-owner", request.expectedBucketOwner()));
         }
+        populatePutObjectUserMetadataHeaders(headerConsumer, request);
     }
+
+    protected void populatePutObjectUserMetadataHeaders(final Consumer<HttpHeader> headerConsumer,
+                                                        final PutObjectRequest request) {
+
+        final Map<String, String> metadata = request.metadata();
+        if (metadata == null) {
+            return; // no metadata to set
+        }
+
+        for (Map.Entry<String, String> entry : metadata.entrySet()) {
+            final String headerName = USER_METADATA_PREFIX + entry.getKey();
+            headerConsumer.accept(new HttpHeader(headerName, entry.getValue()));
+        }
+    }
+
 
     protected void populatePutObjectOutputHeader(final PutObjectOutput.Builder builder, final HttpHeader header) {
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html

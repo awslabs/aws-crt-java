@@ -28,7 +28,7 @@ public class CrtRuntimeException extends RuntimeException {
         super(msg);
 
         Matcher matcher = crtExFormat.matcher(msg);
-        if (matcher.matches()) {
+        if (matcher.find()) {
             errorName = matcher.group(1);
             errorCode = Integer.parseInt(matcher.group(2));
         } else {

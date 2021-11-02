@@ -517,7 +517,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     callback_data->java_signing_result_future = (*env)->NewGlobalRef(env, java_signing_result_future);
     AWS_FATAL_ASSERT(callback_data->java_signing_result_future != NULL);
 
-    callback_data->trailing_headers = aws_http_headers_new_from_java_http_headers(env, java_headers);
+    callback_data->trailing_headers = aws_http_headers_new_from_java_http_headers(env, marshalled_headers);
     if (callback_data->trailing_headers == NULL) {
         aws_jni_throw_runtime_exception(env, "Error building headers");
         goto on_error;

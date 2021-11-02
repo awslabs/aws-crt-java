@@ -372,7 +372,7 @@ on_error:
     return NULL;
 }
 
-struct aws_http_message *aws_http_headers_new_from_java_http_headers(JNIEnv *env, jbyteArray marshalled_headers) {
+struct aws_http_headers *aws_http_headers_new_from_java_http_headers(JNIEnv *env, jbyteArray marshalled_headers) {
     const char *exception_message = NULL;
     struct aws_http_headers *headers = aws_http_headers_new(aws_jni_get_allocator());
     if (headers == NULL) {
@@ -398,7 +398,7 @@ on_error:
     if (exception_message) {
         aws_jni_throw_runtime_exception(env, exception_message);
     }
-    aws_http_headers_destroy(headers);
+    aws_http_headers_release(headers);
     return NULL;
 }
 

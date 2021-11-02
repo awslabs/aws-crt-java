@@ -184,11 +184,22 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         /**
          * Example Json Response Body from httpbin.org:
          *
-         * { "args": {}, "data": "This is a sample to prove that http downloads and
-         * uploads work. It doesn't really matter what's in here, we mainly just need to
-         * verify the downloads and uploads work.", "files": {}, "form": {}, "headers":
-         * { "Content-Length": "166", "Host": "httpbin.org" }, "json": null, "method":
-         * "PUT", "origin": "1.2.3.4, 5.6.7.8", "url": "https://httpbin.org/anything" }
+         * {
+         *  "args": {},
+         *  "data": "This is a sample to prove that http downloads and
+         *   uploads work. It doesn't really matter what's in here, we mainly just need to
+         *   verify the downloads and uploads work.",
+         *  "files": {},
+         *  "form": {},
+         *  "headers": {
+         *      "Content-Length": "166",
+         *      "Host": "httpbin.org"
+         *  },
+         *  "json": null,
+         *  "method": "PUT",
+         *  "origin": "1.2.3.4, 5.6.7.8",
+         *  "url": "https://httpbin.org/anything"
+         * }
          *
          */
 

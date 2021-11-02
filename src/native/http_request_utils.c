@@ -214,6 +214,14 @@ int aws_marshal_http_headers_to_dynamic_buffer(
     return AWS_OP_SUCCESS;
 }
 
+static inline enum aws_http_version s_unmarshal_http_request_to_get_version(struct aws_byte_cursor *request_blob) {
+    uint32_t version = 0;
+    if (!aws_byte_cursor_read_be32(request_blob, &version)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    return version;
+}
+
 static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
 
@@ -282,7 +290,12 @@ int aws_apply_java_http_request_changes_to_native_request(
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
 
-    result = s_unmarshal_http_request(message, &marshalled_cur);
+    enum aws_http_version version = s_unmarshal_http_request_to_get_version(&marshalled_cur);
+    if (version != aws_http_message_get_protocol_version(message)) {
+        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    } else {
+        result = s_unmarshal_http_request(message, &marshalled_cur);
+    }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
     if (jni_body_stream) {
@@ -305,17 +318,22 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jbyteArray marshalled_request,
     jobject jni_body_stream) {
     const char *exception_message = NULL;
-    struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
-    if (request == NULL) {
-        aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
-        return NULL;
-    }
     const size_t marshalled_request_length = (*env)->GetArrayLength(env, marshalled_request);
 
     jbyte *marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
-    int result = s_unmarshal_http_request(request, &marshalled_cur);
+    enum aws_http_version version = s_unmarshal_http_request_to_get_version(&marshalled_cur);
+    struct aws_http_message *request = version == AWS_HTTP_VERSION_2
+                                           ? aws_http2_message_new_request(aws_jni_get_allocator())
+                                           : aws_http_message_new_request(aws_jni_get_allocator());
+
+    int result = AWS_OP_SUCCESS;
+    if (version != aws_http_message_get_protocol_version(request)) {
+        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    } else {
+        result = s_unmarshal_http_request(request, &marshalled_cur);
+    }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
     if (result) {
@@ -358,10 +376,11 @@ static inline int s_marshall_http_request(const struct aws_http_message *message
 
     AWS_FATAL_ASSERT(!aws_http_message_get_request_path(message, &path));
 
-    if (aws_byte_buf_reserve_relative(request_buf, sizeof(int) + sizeof(int) + method.len + path.len)) {
+    if (aws_byte_buf_reserve_relative(request_buf, sizeof(int) + sizeof(int) + sizeof(int) + method.len + path.len)) {
         return AWS_OP_ERR;
     }
 
+    aws_byte_buf_write_be32(request_buf, (uint32_t)aws_http_message_get_protocol_version(message));
     aws_byte_buf_write_be32(request_buf, (uint32_t)method.len);
     aws_byte_buf_write_from_whole_cursor(request_buf, method);
     aws_byte_buf_write_be32(request_buf, (uint32_t)path.len);

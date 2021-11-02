@@ -81,8 +81,8 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         HttpHeader[] requestHeaders = null;
 
         /* TODO: Http2 headers and request */
-        requestHeaders = new HttpHeader[] { new HttpHeader("host", uri.getHost()),
-                new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length)) };
+        requestHeaders = new HttpHeader[] { new HttpHeader("Host", uri.getHost()),
+                new HttpHeader("Content-Length", Integer.toString(requestBody.getBytes(UTF8).length)) };
 
         HttpRequestBodyStream bodyStream = null;
 

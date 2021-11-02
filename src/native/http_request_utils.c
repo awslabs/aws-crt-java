@@ -224,29 +224,29 @@ static inline enum aws_http_version s_unmarshal_http_request_to_get_version(stru
 
 static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
+    if (aws_http_message_get_protocol_version(message) != AWS_HTTP_VERSION_2) {
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
 
-    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
+
+        int result = aws_http_message_set_request_method(message, method);
+        if (result != AWS_OP_SUCCESS) {
+            return AWS_OP_ERR;
+        }
+
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
+
+        result = aws_http_message_set_request_path(message, path);
+        if (result != AWS_OP_SUCCESS) {
+            return AWS_OP_ERR;
+        }
     }
-
-    struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
-
-    int result = aws_http_message_set_request_method(message, method);
-    if (result != AWS_OP_SUCCESS) {
-        return AWS_OP_ERR;
-    }
-
-    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
-
-    struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
-
-    result = aws_http_message_set_request_path(message, path);
-    if (result != AWS_OP_SUCCESS) {
-        return AWS_OP_ERR;
-    }
-
     while (request_blob->len) {
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);

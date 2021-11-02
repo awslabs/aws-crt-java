@@ -29,19 +29,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      * (RFC-7540 7).
      */
     public enum Http2ErrorCode {
-        PROTOCOL_ERROR(1),
-        INTERNAL_ERROR(2),
-        FLOW_CONTROL_ERROR(3),
-        SETTINGS_TIMEOUT(4),
-        STREAM_CLOSED(5),
-        FRAME_SIZE_ERROR(6),
-        REFUSED_STREAM(7),
-        CANCEL(8),
-        COMPRESSION_ERROR(9),
-        CONNECT_ERROR(10),
-        ENHANCE_YOUR_CALM(11),
-        INADEQUATE_SECURITY(12),
-        HTTP_1_1_REQUIRED(13);
+        PROTOCOL_ERROR(1), INTERNAL_ERROR(2), FLOW_CONTROL_ERROR(3), SETTINGS_TIMEOUT(4), STREAM_CLOSED(5),
+        FRAME_SIZE_ERROR(6), REFUSED_STREAM(7), CANCEL(8), COMPRESSION_ERROR(9), CONNECT_ERROR(10),
+        ENHANCE_YOUR_CALM(11), INADEQUATE_SECURITY(12), HTTP_1_1_REQUIRED(13);
 
         private int errorCode;
 
@@ -163,7 +153,8 @@ public class Http2ClientConnection extends HttpClientConnection {
 
     /**
      * Schedules an HttpRequest on the Native EventLoop for this
-     * HttpClientConnection.
+     * HttpClientConnection. The HTTP/1.1 request will be transformed to HTTP/2
+     * request under the hood.
      *
      * @param request       The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native
@@ -174,7 +165,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      *         the user thread making this request when it's done.
      */
     @Override
-    public Http2Stream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
+    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamResponseHandler streamHandler)
             throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");

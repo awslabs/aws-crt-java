@@ -1,10 +1,10 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import software.amazon.awssdk.crt.http.HttpClientConnection.ProtocolVersion;
-import java.util.Arrays;
 import java.nio.charset.Charset;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -18,6 +18,9 @@ public class HttpRequestBase {
     protected String method;
     protected String encodedPath;
 
+    /**
+     * Only used for create request from native side.
+     */
     protected HttpRequestBase() {
     }
 
@@ -25,7 +28,9 @@ public class HttpRequestBase {
         if (headers == null) {
             throw new IllegalArgumentException("Headers can be empty, but can't be null");
         }
-        this.headers = Arrays.asList(headers);
+        method = "";
+        encodedPath = "";
+        this.headers = new ArrayList<HttpHeader>(Arrays.asList(headers));
         this.bodyStream = bodyStream;
     }
 

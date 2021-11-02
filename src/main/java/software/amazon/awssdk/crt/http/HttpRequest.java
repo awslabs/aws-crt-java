@@ -4,6 +4,7 @@
  */
 
 package software.amazon.awssdk.crt.http;
+
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.nio.ByteBuffer;
@@ -25,22 +26,25 @@ public class HttpRequest {
 
     /**
      *
-     * @param method http verb to use
+     * @param method      http verb to use
      * @param encodedPath path of the http request
      */
     public HttpRequest(String method, String encodedPath) {
-        this(method, encodedPath, new HttpHeader[]{}, null);
+        this(method, encodedPath, new HttpHeader[] {}, null);
     }
 
     /**
      *
-     * @param method http verb to use
+     * @param method      http verb to use
      * @param encodedPath path of the http request
-     * @param headers set of http request headers to include
-     * @param bodyStream (optional) interface to an object that will stream out the request body
+     * @param headers     set of http request headers to include
+     * @param bodyStream  (optional) interface to an object that will stream out the
+     *                    request body
      */
     public HttpRequest(String method, String encodedPath, HttpHeader[] headers, HttpRequestBodyStream bodyStream) {
-        if (headers == null) { throw new IllegalArgumentException("Headers can be empty, but can't be null"); }
+        if (headers == null) {
+            throw new IllegalArgumentException("Headers can be empty, but can't be null");
+        }
         this.method = method;
         this.encodedPath = encodedPath;
         this.headers = Arrays.asList(headers);
@@ -48,18 +52,16 @@ public class HttpRequest {
     }
 
     /**
-     * Package private. Used by JNI to convert native http representation to a Java object, because accessing this
-     * struct from JNI is too slow.
+     * Package private. Used by JNI to convert native http representation to a Java
+     * object, because accessing this struct from JNI is too slow.
      *
-     *  Requests are marshalled as follows:
+     * Requests are marshalled as follows:
      *
-     *  each string field is:
-     *  [4-bytes BE] [variable length bytes specified by the previous field]
-     *  Each request is then:
-     *  [method][path][header name-value pairs]
+     * each string field is: [4-bytes BE] [variable length bytes specified by the
+     * previous field] Each request is then: [method][path][header name-value pairs]
      *
      * @param marshalledRequest serialized http request to be parsed.
-     * @param bodyStream body stream for the http request.
+     * @param bodyStream        body stream for the http request.
      */
     HttpRequest(ByteBuffer marshalledRequest, HttpRequestBodyStream bodyStream) {
         if (marshalledRequest.remaining() < BUFFER_INT_SIZE * 2) {
@@ -70,7 +72,7 @@ public class HttpRequest {
         byte[] methodBlob = new byte[methodLength];
         marshalledRequest.get(methodBlob);
         this.method = new String(methodBlob, UTF8);
-        if  (marshalledRequest.remaining() < BUFFER_INT_SIZE) {
+        if (marshalledRequest.remaining() < BUFFER_INT_SIZE) {
             throw new CrtRuntimeException("Invalid marshalled request object.");
         }
 
@@ -123,22 +125,21 @@ public class HttpRequest {
     /**
      * Requests are marshalled as follows:
      *
-     * each string field is:
-     * [4-bytes BE] [variable length bytes specified by the previous field]
+     * each string field is: [4-bytes BE] [variable length bytes specified by the
+     * previous field]
      *
-     * Each request is then:
-     * [method][path][header name-value pairs]
+     * Each request is then: [method][path][header name-value pairs]
+     * 
      * @return encoded blob of headers
      */
     public byte[] marshalForJni() {
         int size = 0;
         size += BUFFER_INT_SIZE + method.length();
         size += BUFFER_INT_SIZE + encodedPath.length();
-        size += (BUFFER_INT_SIZE * 2) * headers.size();
 
-        for(HttpHeader header : headers) {
+        for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
-                size += header.getNameBytes().length + header.getValueBytes().length;
+                size += header.getNameBytes().length + header.getValueBytes().length + (BUFFER_INT_SIZE * 2);
             }
         }
 
@@ -148,7 +149,7 @@ public class HttpRequest {
         buffer.putInt(encodedPath.length());
         buffer.put(encodedPath.getBytes(UTF8));
 
-        for(HttpHeader header : headers) {
+        for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
                 buffer.putInt(header.getNameBytes().length);
                 buffer.put(header.getNameBytes());

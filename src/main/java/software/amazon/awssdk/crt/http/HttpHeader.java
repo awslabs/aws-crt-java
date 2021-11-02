@@ -104,16 +104,14 @@ public class HttpHeader {
 
     public static byte[] marshalHeadersForJni(List<HttpHeader> headers) {
         int size = 0;
-        size += (BUFFER_INT_SIZE * 2) * headers.size();
 
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
-                size += header.getNameBytes().length + header.getValueBytes().length;
+                size += header.getNameBytes().length + header.getValueBytes().length + (BUFFER_INT_SIZE * 2);
             }
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
-        ;
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
                 buffer.putInt(header.getNameBytes().length);

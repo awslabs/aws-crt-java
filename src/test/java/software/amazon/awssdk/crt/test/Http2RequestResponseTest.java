@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
@@ -19,6 +20,8 @@ import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -139,6 +142,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
             try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
                     TimeUnit.SECONDS);) {
                 actuallyConnected = true;
+                CompletableFuture<Void> streamComplete = new CompletableFuture<>();
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
                 HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
                     @Override
@@ -151,11 +155,17 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                     @Override
                     public void onResponseComplete(HttpStream stream, int errorCode) {
                         stream.close();
+                        if (errorCode != 0) {
+                            streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
+                        } else {
+                            streamComplete.complete(null);
+                        }
                     }
                 };
                 HttpRequest request = getHttpRequest("GET", HOST, "/get", EMPTY_BODY);
                 Http2Stream h2Stream = conn.makeRequest(request, streamHandler);
                 h2Stream.activate();
+                streamComplete.get();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -167,4 +177,5 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
         CrtResource.waitForNoResources();
     }
+
 }

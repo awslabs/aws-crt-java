@@ -645,16 +645,32 @@ JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnecti
 }
 struct s_aws_http2_callback_data {
     JavaVM *jvm;
-    jobject java_result_future;
+    jobject async_callback;
 };
 
 static void s_cleanup_http2_callback_data(struct s_aws_http2_callback_data *callback_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    (*env)->DeleteGlobalRef(env, callback_data->java_result_future);
-
+    if (callback_data->async_callback) {
+        (*env)->DeleteGlobalRef(env, callback_data->async_callback);
+    }
     aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static struct s_aws_http2_callback_data *s_new_http2_callback_data(
+    JNIEnv *env,
+    struct aws_allocator *allocator,
+    jobject async_callback) {
+    struct s_aws_http2_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_callback_data));
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+    callback_data->async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
+    AWS_FATAL_ASSERT(callback_data->async_callback != NULL);
+
+    return callback_data;
 }
 
 static void s_on_settings_completed(struct aws_http_connection *http2_connection, int error_code, void *user_data) {
@@ -663,18 +679,12 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (error_code) {
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
-        (*env)->CallBooleanMethod(
-            env,
-            callback_data->java_result_future,
-            completable_future_properties.complete_exceptionally_method_id,
-            crt_exception);
-        aws_jni_check_and_clear_exception(env);
+        (*env)->CallVoidMethod(env, callback_data->async_callback, async_callback_properties.on_failure, crt_exception);
         (*env)->DeleteLocalRef(env, crt_exception);
-        goto done;
+    } else {
+        (*env)->CallVoidMethod(env, callback_data->async_callback, async_callback_properties.on_success);
     }
-    (*env)->CallBooleanMethod(
-        env, callback_data->java_result_future, completable_future_properties.complete_method_id, NULL);
-done:
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data);
 }
 
@@ -682,34 +692,26 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
-    jobject java_result_future,
+    jobject java_async_callback,
     jlongArray java_marshalled_settings) {
 
     (void)jni_class;
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct s_aws_http2_callback_data *callback_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_callback_data));
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
 
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_null_pointer_exception(
             env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid aws_http_connection");
-        s_cleanup_http2_callback_data(callback_data);
         return;
     }
-
-    callback_data->java_result_future = (*env)->NewGlobalRef(env, java_result_future);
-    if (callback_data->java_result_future == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to obtain ref to future");
-        s_cleanup_http2_callback_data(callback_data);
+    if (!java_async_callback) {
+        aws_jni_throw_null_pointer_exception(
+            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid async callback");
         return;
     }
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
 
     /* We marshalled each setting to two long integers, the long list will be number of settings times two */
     const size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
@@ -752,64 +754,49 @@ static void s_on_ping_completed(
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (error_code) {
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
-        (*env)->CallBooleanMethod(
-            env,
-            callback_data->java_result_future,
-            completable_future_properties.complete_exceptionally_method_id,
-            crt_exception);
-        aws_jni_check_and_clear_exception(env);
+        (*env)->CallVoidMethod(env, callback_data->async_callback, async_callback_properties.on_failure, crt_exception);
         (*env)->DeleteLocalRef(env, crt_exception);
-        goto done;
+    } else {
+        jobject java_round_trip_time_ns = (*env)->NewObject(
+            env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)round_trip_time_ns);
+        (*env)->CallVoidMethod(
+            env,
+            callback_data->async_callback,
+            async_callback_properties.on_success_with_object,
+            java_round_trip_time_ns);
+        (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
     }
-    /* Create a java.lang.long object to complete the future */
-    jobject java_round_trip_time_ns = NULL;
-    jclass cls = (*env)->FindClass(env, "java/lang/Long");
-    jmethodID longConstructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
-    java_round_trip_time_ns = (*env)->NewObject(env, cls, longConstructor, (jlong)round_trip_time_ns);
-
-    (*env)->CallBooleanMethod(
-        env,
-        callback_data->java_result_future,
-        completable_future_properties.complete_method_id,
-        java_round_trip_time_ns);
-    (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
-done:
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data);
 }
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionSendPing(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
-    jobject java_result_future,
+    jobject java_async_callback,
     jbyteArray ping_data) {
 
     (void)jni_class;
-    bool success = false;
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_byte_cursor *ping_cur_pointer = NULL;
-    struct aws_byte_cursor ping_cur;
-    AWS_ZERO_STRUCT(ping_cur);
-    struct s_aws_http2_callback_data *callback_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_callback_data));
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
-
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
         aws_jni_throw_runtime_exception(
             env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid aws_http_connection");
-        goto done;
+        return;
     }
+    if (!java_async_callback) {
+        aws_jni_throw_null_pointer_exception(
+            env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid async callback");
+        return;
+    }
+    bool success = false;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_byte_cursor *ping_cur_pointer = NULL;
+    struct aws_byte_cursor ping_cur;
+    AWS_ZERO_STRUCT(ping_cur);
+    struct s_aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
 
-    callback_data->java_result_future = (*env)->NewGlobalRef(env, java_result_future);
-    if (callback_data->java_result_future == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "Http2ClientConnection.http2ClientConnectionSendPing: failed to obtain ref to future");
-        goto done;
-    }
     if (ping_data) {
         ping_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, ping_data);
         ping_cur_pointer = &ping_cur;
@@ -823,10 +810,9 @@ done:
     if (ping_cur_pointer) {
         aws_jni_byte_cursor_from_jbyteArray_release(env, ping_data, ping_cur);
     }
-    if (success) {
-        return;
+    if (!success) {
+        s_cleanup_http2_callback_data(callback_data);
     }
-    s_cleanup_http2_callback_data(callback_data);
     return;
 }
 

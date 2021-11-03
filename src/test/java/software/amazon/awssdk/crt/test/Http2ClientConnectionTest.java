@@ -10,6 +10,7 @@ import org.junit.Assert;
 
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 
@@ -159,9 +160,16 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                 long time = conn.sendPing("123".getBytes()).get(5, TimeUnit.SECONDS);
                 Assert.assertNotNull(time);
             }
-        } catch (CrtRuntimeException e) {
-            exception = true;
-            Assert.assertEquals(e.errorName, "AWS_ERROR_INVALID_ARGUMENT");
+        } catch (ExecutionException e) {
+            try {
+                throw e.getCause();
+            } catch (CrtRuntimeException causeException) {
+                exception = true;
+                Assert.assertEquals(causeException.errorName, "AWS_ERROR_INVALID_ARGUMENT");
+            } catch (Throwable throwable) {
+                /* Unexpected exception */
+                throwable.printStackTrace();
+            }
         }
 
         Assert.assertTrue(exception);

@@ -131,18 +131,12 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                         stream.close();
                     }
                 };
-                if (expectedVersion == HttpClientConnection.ProtocolVersion.HTTP_2) {
-                    try (Http2ClientConnection h2Connection = (Http2ClientConnection) conn) {
-                        Http2Stream h2Stream = h2Connection.makeRequest((Http2Request) request, streamHandler);
-                        h2Stream.activate();
-                    }
-                } else {
-                    HttpStream stream = conn.makeRequest((HttpRequest) request, streamHandler);
-                    stream.activate();
-                    if (chunkedData != null) {
-                        stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
-                    }
+                HttpStream stream = conn.makeRequest(request, streamHandler);
+                stream.activate();
+                if (chunkedData != null) {
+                    stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
                 }
+
                 // Give the request up to 60 seconds to complete, otherwise throw a
                 // TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);

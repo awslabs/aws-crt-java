@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.http;
 
+import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
@@ -29,19 +30,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      * (RFC-7540 7).
      */
     public enum Http2ErrorCode {
-        PROTOCOL_ERROR(1),
-        INTERNAL_ERROR(2),
-        FLOW_CONTROL_ERROR(3),
-        SETTINGS_TIMEOUT(4),
-        STREAM_CLOSED(5),
-        FRAME_SIZE_ERROR(6),
-        REFUSED_STREAM(7),
-        CANCEL(8),
-        COMPRESSION_ERROR(9),
-        CONNECT_ERROR(10),
-        ENHANCE_YOUR_CALM(11),
-        INADEQUATE_SECURITY(12),
-        HTTP_1_1_REQUIRED(13);
+        PROTOCOL_ERROR(1), INTERNAL_ERROR(2), FLOW_CONTROL_ERROR(3), SETTINGS_TIMEOUT(4), STREAM_CLOSED(5),
+        FRAME_SIZE_ERROR(6), REFUSED_STREAM(7), CANCEL(8), COMPRESSION_ERROR(9), CONNECT_ERROR(10),
+        ENHANCE_YOUR_CALM(11), INADEQUATE_SECURITY(12), HTTP_1_1_REQUIRED(13);
 
         private int errorCode;
 
@@ -69,10 +60,20 @@ public class Http2ClientConnection extends HttpClientConnection {
      *         acknowledged the settings and the change has been applied.
      */
     public CompletableFuture<Void> changeSettings(final List<Http2ConnectionSetting> settings) {
-        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
-        http2ClientConnectionChangeSettings(getNativeHandle(), completionFuture,
-                Http2ConnectionSetting.marshallSettingsForJNI(settings));
-        return completionFuture;
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (isNull()) {
+            future.completeExceptionally(
+                    new IllegalStateException("Http2ClientConnection has been closed, can't change settings on it."));
+            return future;
+        }
+        AsyncCallback changeSettingsCompleted = AsyncCallback.wrapFuture(future, null);
+        try {
+            http2ClientConnectionChangeSettings(getNativeHandle(), changeSettingsCompleted,
+                    Http2ConnectionSetting.marshallSettingsForJNI(settings));
+        } catch (CrtRuntimeException ex) {
+            future.completeExceptionally(ex);
+        }
+        return future;
     }
 
     /**
@@ -88,14 +89,22 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public CompletableFuture<Long> sendPing(final byte[] pingData) {
         CompletableFuture<Long> completionFuture = new CompletableFuture<>();
-        http2ClientConnectionSendPing(getNativeHandle(), completionFuture, pingData);
+        if (isNull()) {
+            completionFuture.completeExceptionally(
+                    new IllegalStateException("Http2ClientConnection has been closed, can't send ping on it."));
+            return completionFuture;
+        }
+        AsyncCallback pingCompleted = AsyncCallback.wrapFuture(completionFuture, 0L);
+        try {
+            http2ClientConnectionSendPing(getNativeHandle(), pingCompleted, pingData);
+        } catch (CrtRuntimeException ex) {
+            completionFuture.completeExceptionally(ex);
+        }
         return completionFuture;
     }
 
     public CompletableFuture<Long> sendPing() {
-        CompletableFuture<Long> completionFuture = new CompletableFuture<>();
-        http2ClientConnectionSendPing(getNativeHandle(), completionFuture, null);
-        return completionFuture;
+        return this.sendPing(null);
     }
 
     /**
@@ -128,7 +137,7 @@ public class Http2ClientConnection extends HttpClientConnection {
     }
 
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
-        http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams, null);
+        this.sendGoAway(Http2ErrorCode, allowMoreStreams, null);
     }
 
     /**
@@ -156,7 +165,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public void updateConnectionWindow(long incrementSize) {
         if (incrementSize > 4294967296L || incrementSize < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("increment size cannot exceed 4294967296");
         }
         http2ClientConnectionUpdateConnectionWindow(getNativeHandle(), incrementSize);
     }
@@ -183,9 +192,6 @@ public class Http2ClientConnection extends HttpClientConnection {
 
         Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
                 request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError());
-        }
         return stream;
     }
 
@@ -196,10 +202,14 @@ public class Http2ClientConnection extends HttpClientConnection {
      * Native methods
      ******************************************************************************/
 
-    private static native void http2ClientConnectionChangeSettings(long connectionBinding,
-            CompletableFuture<Void> future, long[] marshalledSettings) throws CrtRuntimeException;
+    private static native Http2Stream http2ClientConnectionMakeRequest(long connectionBinding, byte[] marshalledRequest,
+            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler)
+            throws CrtRuntimeException;
 
-    private static native void http2ClientConnectionSendPing(long connectionBinding, CompletableFuture<Long> future,
+    private static native void http2ClientConnectionChangeSettings(long connectionBinding,
+            AsyncCallback completedCallback, long[] marshalledSettings) throws CrtRuntimeException;
+
+    private static native void http2ClientConnectionSendPing(long connectionBinding, AsyncCallback completedCallback,
             byte[] pingData) throws CrtRuntimeException;
 
     private static native void http2ClientConnectionSendGoAway(long connectionBinding, long h2ErrorCode,

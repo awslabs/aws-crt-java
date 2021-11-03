@@ -225,6 +225,7 @@ static inline enum aws_http_version s_unmarshal_http_request_to_get_version(stru
 static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
     if (aws_http_message_get_protocol_version(message) != AWS_HTTP_VERSION_2) {
+        /* HTTP/1 puts method and path first, but those are just headers in HTTP/2 */
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
@@ -298,16 +299,17 @@ int aws_apply_java_http_request_changes_to_native_request(
     }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
+    if (result) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpRequest.applyChangesToNativeRequest: %s\n", aws_error_debug_str(aws_last_error()));
+        return result;
+    }
+
     if (jni_body_stream) {
         struct aws_input_stream *body_stream =
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
 
         aws_http_message_set_body_stream(message, body_stream);
-    }
-
-    if (result) {
-        aws_jni_throw_runtime_exception(
-            env, "HttpRequest.applyChangesToNativeRequest: %s\n", aws_error_debug_str(aws_last_error()));
     }
 
     return result;

@@ -225,7 +225,7 @@ static inline enum aws_http_version s_unmarshal_http_request_to_get_version(stru
 static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
     if (aws_http_message_get_protocol_version(message) != AWS_HTTP_VERSION_2) {
-        /* HTTP/1 puts method and path first, but those are just headers in HTTP/2 */
+        /* HTTP/1 puts method and path first, but those are empty in HTTP/2 */
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
@@ -246,6 +246,14 @@ static inline int s_unmarshal_http_request(struct aws_http_message *message, str
         result = aws_http_message_set_request_path(message, path);
         if (result != AWS_OP_SUCCESS) {
             return AWS_OP_ERR;
+        }
+    } else {
+        /* Read empty method and path from the marshalled request */
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len) || field_len) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len) || field_len) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
     }
     while (request_blob->len) {

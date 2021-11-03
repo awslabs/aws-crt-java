@@ -14,7 +14,6 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.http.Http2Stream;
 
 import static software.amazon.awssdk.crt.CRT.awsLastError;
 
@@ -76,18 +75,15 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler) throws CrtRuntimeException {
+    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
+            throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        HttpStream stream = getVersion() == ProtocolVersion.HTTP_2
-                ? http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(), request.getBodyStream(),
-                        new HttpStreamResponseHandlerNativeAdapter(streamHandler))
-                : httpClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(), request.getBodyStream(),
-                        new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError());
-        }
+        HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
 
         return stream;
     }
@@ -144,11 +140,6 @@ public class HttpClientConnection extends CrtResource {
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
-
-    protected static native Http2Stream http2ClientConnectionMakeRequest(long connectionBinding,
-                                                                       byte[] marshalledRequest,
-                                                                       HttpRequestBodyStream bodyStream,
-                                                                       HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
 
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
 

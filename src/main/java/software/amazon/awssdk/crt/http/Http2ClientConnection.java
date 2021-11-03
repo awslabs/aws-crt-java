@@ -191,9 +191,6 @@ public class Http2ClientConnection extends HttpClientConnection {
 
         Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
                 request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError());
-        }
         return stream;
     }
 
@@ -203,6 +200,10 @@ public class Http2ClientConnection extends HttpClientConnection {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
+
+    private static native Http2Stream http2ClientConnectionMakeRequest(long connectionBinding, byte[] marshalledRequest,
+            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler)
+            throws CrtRuntimeException;
 
     private static native void http2ClientConnectionChangeSettings(long connectionBinding,
             AsyncCallback completedCallback, long[] marshalledSettings) throws CrtRuntimeException;

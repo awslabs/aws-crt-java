@@ -51,6 +51,9 @@ static jobject s_java_http_stream_from_native_new(JNIEnv *env, void *opaque, enu
         default:
             aws_raise_error(AWS_ERROR_UNIMPLEMENTED);
     }
+    if (!stream) {
+        aws_jni_throw_runtime_exception(env, "Failed to create Java stream from native stream");
+    }
     return stream;
 }
 
@@ -300,12 +303,12 @@ static jobject s_make_request_general(
     struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
+        aws_jni_throw_null_pointer_exception(env, "HttpClientConnection.MakeRequest: Invalid aws_http_connection");
         return (jobject)NULL;
     }
 
     if (!jni_http_response_callback_handler) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "HttpClientConnection.MakeRequest: Invalid jni_http_response_callback_handler");
         return (jobject)NULL;
     }
@@ -362,6 +365,7 @@ static jobject s_make_request_general(
           callback_data will clean itself up when stream completes. */
         aws_http_connection_close(native_conn);
         aws_http_stream_release(callback_data->native_stream);
+        /* Java exception has already been raised. */
         return NULL;
     }
 
@@ -385,7 +389,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         AWS_HTTP_VERSION_1_1);
 }
 
-JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_http2ClientConnectionMakeRequest(
+JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionMakeRequest(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -600,7 +604,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {
-        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        aws_jni_throw_null_pointer_exception(env, "Http2Stream is null.");
         return;
     }
 
@@ -706,7 +710,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
         return;
     }
     if (!java_async_callback) {
-        aws_jni_throw_null_pointer_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid async callback");
         return;
     }
@@ -781,12 +785,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     struct aws_http_connection *native_conn = connection_binding->connection;
 
     if (!native_conn) {
-        aws_jni_throw_runtime_exception(
+        aws_jni_throw_null_pointer_exception(
             env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid aws_http_connection");
         return;
     }
     if (!java_async_callback) {
-        aws_jni_throw_null_pointer_exception(
+        aws_jni_throw_illegal_argument_exception(
             env, "Http2ClientConnection.http2ClientConnectionSendPing: Invalid async callback");
         return;
     }

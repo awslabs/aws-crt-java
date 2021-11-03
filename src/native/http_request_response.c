@@ -647,12 +647,12 @@ JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnecti
     }
     return (jshort)aws_http_connection_get_version(native_conn);
 }
-struct s_aws_http2_callback_data {
+struct aws_http2_callback_data {
     JavaVM *jvm;
     jobject async_callback;
 };
 
-static void s_cleanup_http2_callback_data(struct s_aws_http2_callback_data *callback_data) {
+static void s_cleanup_http2_callback_data(struct aws_http2_callback_data *callback_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
@@ -662,12 +662,12 @@ static void s_cleanup_http2_callback_data(struct s_aws_http2_callback_data *call
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
-static struct s_aws_http2_callback_data *s_new_http2_callback_data(
+static struct aws_http2_callback_data *s_new_http2_callback_data(
     JNIEnv *env,
     struct aws_allocator *allocator,
     jobject async_callback) {
-    struct s_aws_http2_callback_data *callback_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_http2_callback_data));
+    struct aws_http2_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_callback_data));
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -679,7 +679,7 @@ static struct s_aws_http2_callback_data *s_new_http2_callback_data(
 
 static void s_on_settings_completed(struct aws_http_connection *http2_connection, int error_code, void *user_data) {
     (void)http2_connection;
-    struct s_aws_http2_callback_data *callback_data = user_data;
+    struct aws_http2_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (error_code) {
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
@@ -715,7 +715,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
         return;
     }
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct s_aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
+    struct aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
 
     /* We marshalled each setting to two long integers, the long list will be number of settings times two */
     const size_t len = (*env)->GetArrayLength(env, java_marshalled_settings);
@@ -754,7 +754,7 @@ static void s_on_ping_completed(
     int error_code,
     void *user_data) {
     (void)http2_connection;
-    struct s_aws_http2_callback_data *callback_data = user_data;
+    struct aws_http2_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (error_code) {
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
@@ -799,7 +799,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     struct aws_byte_cursor *ping_cur_pointer = NULL;
     struct aws_byte_cursor ping_cur;
     AWS_ZERO_STRUCT(ping_cur);
-    struct s_aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
+    struct aws_http2_callback_data *callback_data = s_new_http2_callback_data(env, allocator, java_async_callback);
 
     if (ping_data) {
         ping_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, ping_data);

@@ -22,15 +22,32 @@ public class AwsSigningConfig extends CrtResource {
      * What version of the AWS signing process should we use.
      */
     public enum AwsSigningAlgorithm {
+
+        /** Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets */
         SIGV4(0),
+
+        /** AWS Sigv4a signing, based on ECDSA signatures */
         SIGV4_ASYMMETRIC(1);
 
+        /**
+         * Constructs a Java enum value from the associated native enum value
+         * @param nativeValue native enum value
+         */
         AwsSigningAlgorithm(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Trivial Java Enum value to native enum value conversion function
+         * @return integer associated with this enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSigningAlgorithm getEnumValueFromInteger(int value) {
             AwsSigningAlgorithm enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -80,12 +97,25 @@ public class AwsSigningConfig extends CrtResource {
          */
         HTTP_REQUEST_EVENT(3);
 
+        /**
+         * Constructs a Java enum value from a native enum value as an integer
+         * @param nativeValue native enum value
+         */
         AwsSignatureType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Gets the native enum value as an integer that is associated with this Java enum value
+         * @return this value's associated native enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSignatureType getEnumValueFromInteger(int value) {
             AwsSignatureType enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -126,15 +156,31 @@ public class AwsSigningConfig extends CrtResource {
      * Controls if signing adds a header containing the canonical request's body value
      */
     public enum AwsSignedBodyHeaderType {
+        /** Do not add any signing information about the body to the signed request */
         NONE(0),
+
+        /** Add the 'X-Amz-Content-Sha256' header to the signed request */
         X_AMZ_CONTENT_SHA256(1);
 
+        /**
+         * Constructs a Java enum value from a native enum value as an integer
+         * @param nativeValue native enum value
+         */
         AwsSignedBodyHeaderType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Gets the native enum value as an integer that is associated with this Java enum value
+         * @return this value's associated native enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSignedBodyHeaderType getEnumValueFromInteger(int value) {
             AwsSignedBodyHeaderType enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -172,8 +218,15 @@ public class AwsSigningConfig extends CrtResource {
     private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
     private long expirationInSeconds = 0;
 
+    /**
+     * Default constructor
+     */
     public AwsSigningConfig() {}
 
+    /**
+     * Creates a new signing configuration from this one.
+     * @return a clone of this signing configuration
+     */
     public AwsSigningConfig clone() {
         try (AwsSigningConfig clone = new AwsSigningConfig()) {
 

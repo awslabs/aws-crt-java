@@ -51,19 +51,19 @@ public class ClientConnection extends CrtResource {
      * flushing to the underlying transport.
      * @param headers List of event-stream headers. Can be null.
      * @param payload Payload to send for the message. Can be null.
-     * @param messsageType Message type for the rpc message.
+     * @param messageType Message type for the rpc message.
      * @param messageFlags Union of message flags from MessageFlags.getByteValue()
      * @return completable future for synchronizing on the message flushing to the underlying transport.
      */
     public CompletableFuture<Void> sendProtocolMessage(final List<Header> headers, final byte[] payload,
-                                                       final MessageType messsageType, int messageFlags) {
+                                                       final MessageType messageType, int messageFlags) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
 
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
-        sendProtocolMessage(headers, payload, messsageType, messageFlags, errorCode -> {
+        sendProtocolMessage(headers, payload, messageType, messageFlags, errorCode -> {
             if (errorCode == 0) {
                 messageFlush.complete(null);
             } else {
@@ -80,19 +80,19 @@ public class ClientConnection extends CrtResource {
      *
      * @param headers List of event-stream headers. Can be null.
      * @param payload Payload to send for the message. Can be null.
-     * @param messsageType Message type for the rpc message.
+     * @param messageType Message type for the rpc message.
      * @param messageFlags Union of message flags from MessageFlags.getByteValue()
      * @param callback will be invoked upon the message flushing to the underlying transport
      */
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
-                                    final MessageType messsageType, int messageFlags, MessageFlushCallback callback) {
+                                    final MessageType messageType, int messageFlags, MessageFlushCallback callback) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
 
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);
+        int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
         if (result != 0) {
             int errorCode = CRT.awsLastError();

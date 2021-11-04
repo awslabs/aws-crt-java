@@ -12,7 +12,7 @@ import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.http.Http2Stream;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
@@ -32,10 +32,44 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     private final static String HOST = "https://httpbin.org";
     private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
 
+    private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
+            throws Exception {
+        URI uri = new URI(endpoint);
+
+        HttpHeader[] requestHeaders = null;
+
+        requestHeaders = new HttpHeader[] { new HttpHeader(":method", method), new HttpHeader(":path", path),
+                new HttpHeader(":scheme", uri.getScheme()), new HttpHeader(":authority", uri.getHost()),
+                new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length)), };
+
+        HttpRequestBodyStream bodyStream = null;
+
+        final ByteBuffer bodyBytesIn = ByteBuffer.wrap(requestBody.getBytes(UTF8));
+
+        bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                transferData(bodyBytesIn, bodyBytesOut);
+
+                return bodyBytesIn.remaining() == 0;
+            }
+
+            @Override
+            public boolean resetPosition() {
+                bodyBytesIn.position(0);
+
+                return true;
+            }
+        };
+
+        Http2Request request = new Http2Request(requestHeaders, bodyStream);
+        return request;
+    }
+
     public TestHttpResponse testHttp2Request(String method, String endpoint, String path, String requestBody,
             int expectedStatus) throws Exception {
         URI uri = new URI(endpoint);
-        HttpRequest request = getHttpRequest(method, endpoint, path, requestBody);
+        Http2Request request = getHttp2Request(method, endpoint, path, requestBody);
 
         TestHttpResponse response = null;
         int numAttempts = 0;
@@ -162,7 +196,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                         }
                     }
                 };
-                HttpRequest request = getHttpRequest("GET", HOST, "/get", EMPTY_BODY);
+                Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
                 Http2Stream h2Stream = conn.makeRequest(request, streamHandler);
                 h2Stream.activate();
                 streamComplete.get();

@@ -107,6 +107,10 @@ struct java_boxed_long_properties boxed_long_properties;
 static void s_cache_boxed_long(JNIEnv *env) {
     jclass boxed_long_class = (*env)->FindClass(env, "java/lang/Long");
     AWS_FATAL_ASSERT(boxed_long_class);
+    boxed_long_properties.long_class = (*env)->NewGlobalRef(env, boxed_long_class);
+
+    boxed_long_properties.constructor = (*env)->GetMethodID(env, boxed_long_class, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(boxed_long_properties.constructor);
 
     boxed_long_properties.long_value_method_id = (*env)->GetMethodID(env, boxed_long_class, "longValue", "()J");
     AWS_FATAL_ASSERT(boxed_long_properties.long_value_method_id);
@@ -287,6 +291,10 @@ struct java_async_callback_properties async_callback_properties;
 static void s_cache_async_callback(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/AsyncCallback");
     AWS_FATAL_ASSERT(cls);
+
+    async_callback_properties.on_success_with_object =
+        (*env)->GetMethodID(env, cls, "onSuccess", "(Ljava/lang/Object;)V");
+    AWS_FATAL_ASSERT(async_callback_properties.on_success_with_object);
 
     async_callback_properties.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
     AWS_FATAL_ASSERT(async_callback_properties.on_success);

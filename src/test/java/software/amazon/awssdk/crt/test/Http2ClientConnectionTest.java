@@ -10,6 +10,7 @@ import org.junit.Assert;
 
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 
@@ -22,10 +23,7 @@ import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
 
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
-    /**
-     * @TODO: maybe use a echo server to verify the frames are sent properly??? We
-     *        have tests in C, not sure if it's worth to add it for java...
-     */
+
     private final static String HOST = "https://httpbin.org";
     private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
 
@@ -159,9 +157,16 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                 long time = conn.sendPing("123".getBytes()).get(5, TimeUnit.SECONDS);
                 Assert.assertNotNull(time);
             }
-        } catch (CrtRuntimeException e) {
-            exception = true;
-            Assert.assertEquals(e.errorName, "AWS_ERROR_INVALID_ARGUMENT");
+        } catch (ExecutionException e) {
+            try {
+                throw e.getCause();
+            } catch (CrtRuntimeException causeException) {
+                exception = true;
+                Assert.assertEquals(causeException.errorName, "AWS_ERROR_INVALID_ARGUMENT");
+            } catch (Throwable throwable) {
+                /* Unexpected exception */
+                throwable.printStackTrace();
+            }
         }
 
         Assert.assertTrue(exception);

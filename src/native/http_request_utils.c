@@ -213,7 +213,20 @@ int aws_marshal_http_headers_to_dynamic_buffer(
 
     return AWS_OP_SUCCESS;
 }
-
+/**
+ * Unmarshal the request from java.
+ *
+ * Version is as int: [4-bytes BE]
+ *
+ * Each string field is: [4-bytes BE] [variable length bytes specified
+ *          by the previous field]
+ *
+ * Each request is like: [version][method][path][header name-value
+ *          pairs]
+ *
+ * s_unmarshal_http_request_to_get_version to get the version field, which is a 4 byte int.
+ * s_unmarshal_http_request_without_version to get the whole request without version field.
+ */
 static inline enum aws_http_version s_unmarshal_http_request_to_get_version(struct aws_byte_cursor *request_blob) {
     uint32_t version = 0;
     if (!aws_byte_cursor_read_be32(request_blob, &version)) {
@@ -222,7 +235,9 @@ static inline enum aws_http_version s_unmarshal_http_request_to_get_version(stru
     return version;
 }
 
-static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
+static inline int s_unmarshal_http_request_without_version(
+    struct aws_http_message *message,
+    struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
     if (aws_http_message_get_protocol_version(message) != AWS_HTTP_VERSION_2) {
         /* HTTP/1 puts method and path first, but those are empty in HTTP/2 */
@@ -303,7 +318,7 @@ int aws_apply_java_http_request_changes_to_native_request(
     if (version != aws_http_message_get_protocol_version(message)) {
         result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     } else {
-        result = s_unmarshal_http_request(message, &marshalled_cur);
+        result = s_unmarshal_http_request_without_version(message, &marshalled_cur);
     }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
@@ -342,7 +357,7 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     if (version != aws_http_message_get_protocol_version(request)) {
         result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     } else {
-        result = s_unmarshal_http_request(request, &marshalled_cur);
+        result = s_unmarshal_http_request_without_version(request, &marshalled_cur);
     }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 

@@ -22,16 +22,11 @@ class AWSCrtJavaTest(Builder.Action):
         home_dir = os.path.expanduser("~")
         print(source_path)
         actions.append(
-            ['java',
-             '-classpath',
-             '{source}/target/test-classes:{source}/target/classes:{home}/.m2/repository/commons-cli/commons-cli/1.4/commons-cli-1.4.jar'.format(
-                 source=source_path, home=home_dir),
-             'software.amazon.awssdk.crt.test.Elasticurl',
-             '-v',
-             'ERROR',
-             '--http2',
-             '-o',
-             'elastigirl_h2.png',
-             'https://d1cz66xoahf9cl.cloudfront.net/elastigirl.png'])
+            ["mvn",
+             "-e",
+             "exec:java",
+             "-Dexec.classpathScope=\"test\"",
+             "-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"",
+             "-Dexec.args=\"-v ERROR --http2 -i -o elastigril_h2.png https://d1cz66xoahf9cl.cloudfront.net/elastigirl.png\""])
 
         return Builder.Script(actions, name='aws-crt-java-test')

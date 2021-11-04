@@ -7,13 +7,27 @@ package software.amazon.awssdk.crt.io;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
+/**
+ * Java wrapper around the native CRT host resolver, responsible for performing async dns lookups
+ */
 public class HostResolver extends CrtResource {
     private final static int DEFAULT_MAX_ENTRIES = 8;
 
+    /**
+     *
+     * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
+     * @throws CrtRuntimeException
+     */
     public HostResolver(EventLoopGroup elg) throws CrtRuntimeException {
         this(elg, DEFAULT_MAX_ENTRIES);
     }
 
+    /**
+     *
+     * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
+     * @param maxEntries maximum size of the name -> address mapping cache
+     * @throws CrtRuntimeException
+     */
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
         acquireNativeHandle(hostResolverNew(elg.getNativeHandle(), maxEntries));
         addReferenceTo(elg);

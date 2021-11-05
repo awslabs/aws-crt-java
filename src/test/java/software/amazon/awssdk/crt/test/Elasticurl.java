@@ -157,11 +157,11 @@ public class Elasticurl {
         }
         /* initial headers */
         HttpHeader[] headers = new HttpHeader[] {};
-        HttpRequestBase request = requiredVersion == HttpVersion.HTTP2 ? new Http2Request(headers, payloadStream)
+        HttpRequestBase request = requiredVersion == HttpVersion.HTTP_2 ? new Http2Request(headers, payloadStream)
                 : new HttpRequest(method, pathAndQuery, headers, payloadStream);
 
         /* Version specific headers */
-        if (requiredVersion == HttpVersion.HTTP2) {
+        if (requiredVersion == HttpVersion.HTTP_2) {
             request.addHeader(new HttpHeader(":method", method));
             request.addHeader(new HttpHeader(":scheme", uri.getScheme()));
             request.addHeader(new HttpHeader(":authority", uri.getAuthority()));
@@ -226,9 +226,9 @@ public class Elasticurl {
 
         HttpVersion requiredVersion = HttpVersion.UNKNOWN;
         if (cli.hasOption("http1_1")) {
-            requiredVersion = HttpVersion.HTTP1_1;
+            requiredVersion = HttpVersion.HTTP_1_1;
         } else if (cli.hasOption("http2")) {
-            requiredVersion = HttpVersion.HTTP2;
+            requiredVersion = HttpVersion.HTTP_2;
         }
 
         TlsContextOptions tlsOpts = null;
@@ -256,9 +256,9 @@ public class Elasticurl {
 
                 String[] alpn = cli.getOptionValues("alpn");
                 if (alpn == null) {
-                    if (requiredVersion == HttpVersion.HTTP1_1) {
+                    if (requiredVersion == HttpVersion.HTTP_1_1) {
                         alpn = new String[] { "http/1.1" };
-                    } else if (requiredVersion == HttpVersion.HTTP2) {
+                    } else if (requiredVersion == HttpVersion.HTTP_2) {
                         alpn = new String[] { "h2" };
                     } else {
                         alpn = new String[] { "h2", "http/1.1" };

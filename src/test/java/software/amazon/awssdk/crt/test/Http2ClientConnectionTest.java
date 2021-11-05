@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.*;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.Http2ConnectionSetting;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;

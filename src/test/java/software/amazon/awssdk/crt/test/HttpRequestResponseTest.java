@@ -76,9 +76,9 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
             try {
                 if (useChunkedEncoding) {
                     response = getResponse(uri, request, requestBody.getBytes(UTF8),
-                            HttpClientConnection.ProtocolVersion.HTTP_1_1);
+                            HttpVersion.HTTP_1_1);
                 } else {
-                    response = getResponse(uri, request, null, HttpClientConnection.ProtocolVersion.HTTP_1_1);
+                    response = getResponse(uri, request, null, HttpVersion.HTTP_1_1);
                 }
             } catch (Exception ex) {
                 // do nothing just let it retry
@@ -247,7 +247,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
-                HttpClientConnection.ProtocolVersion.HTTP_1_1)) {
+                HttpVersion.HTTP_1_1)) {
             shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {

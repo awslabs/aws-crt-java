@@ -5,7 +5,7 @@
 
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.http.HttpClientConnection.ProtocolVersion;
+import software.amazon.awssdk.crt.http.HttpVersion;
 
 /**
  * Represents a single Client Request to be sent on a HTTP connection
@@ -28,7 +28,7 @@ public class Http2Request extends HttpRequestBase {
      */
     public Http2Request(HttpHeader[] headers, HttpRequestBodyStream bodyStream) {
         super(headers, bodyStream);
-        this.version = ProtocolVersion.HTTP_2;
+        this.version = HttpVersion.HTTP_2;
     }
 
 }

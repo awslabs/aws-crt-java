@@ -5,9 +5,9 @@
 
 package software.amazon.awssdk.crt.test;
 
-import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
+import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -58,8 +58,8 @@ public class HttpClientTestFixture extends CrtTestFixture {
     }
 
     public HttpClientConnectionManager createConnectionPoolManager(URI uri,
-            HttpClientConnection.ProtocolVersion expectedVersion) {
-        if (expectedVersion == HttpClientConnection.ProtocolVersion.HTTP_2) {
+            HttpVersion expectedVersion) {
+        if (expectedVersion == HttpVersion.HTTP_2) {
             return createHTTP2ConnectionPoolManager(uri);
         } else {
             return createHTTP1ConnectionPoolManager(uri);

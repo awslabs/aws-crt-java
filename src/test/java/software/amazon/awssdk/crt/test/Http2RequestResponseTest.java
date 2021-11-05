@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
+import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     private final static String HOST = "https://httpbin.org";
-    private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
+    private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {

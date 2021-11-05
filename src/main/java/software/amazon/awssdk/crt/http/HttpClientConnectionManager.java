@@ -32,7 +32,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int port;
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
-    private final HttpClientConnection.ProtocolVersion expectedProtocolVersion;
+    private final HttpVersion expectedHttpVersion;
 
     public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
         return new HttpClientConnectionManager(options);
@@ -77,7 +77,7 @@ public class HttpClientConnectionManager extends CrtResource {
         this.uri = uri;
         this.port = port;
         this.maxConnections = maxConnections;
-        this.expectedProtocolVersion = options.getExpectedProtocolVersion();
+        this.expectedHttpVersion = options.getExpectedHttpVersion();
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -124,7 +124,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
                                             monitoringFailureIntervalInSeconds,
-                                            expectedProtocolVersion.getValue()));
+                                            expectedHttpVersion.getValue()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);

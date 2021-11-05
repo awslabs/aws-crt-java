@@ -29,7 +29,7 @@ public class HttpClientConnectionManagerOptions {
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
-    private HttpClientConnection.ProtocolVersion expectedProtocolVersion = HttpClientConnection.ProtocolVersion.HTTP_1_1;
+    private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
 
     public HttpClientConnectionManagerOptions() {
     }
@@ -203,16 +203,16 @@ public class HttpClientConnectionManagerOptions {
      *
      * @return this
      */
-    public HttpClientConnectionManagerOptions withExpectedProtocolVersion(HttpClientConnection.ProtocolVersion expectedProtocolVersion) {
-        this.expectedProtocolVersion = expectedProtocolVersion;
+    public HttpClientConnectionManagerOptions withExpectedHttpVersion(HttpVersion expectedHttpVersion) {
+        this.expectedHttpVersion = expectedHttpVersion;
         return this;
     }
 
     /**
      * @return Return the expected HTTP protocol version.
      */
-    public HttpClientConnection.ProtocolVersion getExpectedProtocolVersion() {
-        return expectedProtocolVersion;
+    public HttpVersion getExpectedHttpVersion() {
+        return expectedHttpVersion;
     }
 
     /**

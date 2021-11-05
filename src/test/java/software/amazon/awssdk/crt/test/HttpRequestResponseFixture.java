@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBase;
@@ -88,7 +89,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
     }
 
     public TestHttpResponse getResponse(URI uri, HttpRequestBase request, byte[] chunkedData,
-            HttpClientConnection.ProtocolVersion expectedVersion) throws Exception {
+            HttpVersion expectedVersion) throws Exception {
         boolean actuallyConnected = false;
 
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();

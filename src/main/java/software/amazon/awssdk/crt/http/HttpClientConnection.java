@@ -6,14 +6,10 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.Map;
-import java.util.HashMap;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
 
 import static software.amazon.awssdk.crt.CRT.awsLastError;
 
@@ -28,42 +24,6 @@ import static software.amazon.awssdk.crt.CRT.awsLastError;
  * threads.
  */
 public class HttpClientConnection extends CrtResource {
-    /**
-     * HTTP protocol version.
-     */
-    public enum ProtocolVersion {
-        HTTP_1_0(1), HTTP_1_1(2), HTTP_2(3);
-
-        private int protocolVersion;
-        private static Map<Integer, ProtocolVersion> enumMapping = buildEnumMapping();
-
-        ProtocolVersion(int value) {
-            protocolVersion = value;
-        }
-
-        public static ProtocolVersion getEnumValueFromInteger(int value) {
-            ProtocolVersion enumValue = enumMapping.get(value);
-            if (enumValue != null) {
-                return enumValue;
-            }
-
-            throw new RuntimeException("Illegal signature type value in signing configuration");
-        }
-
-        private static Map<Integer, ProtocolVersion> buildEnumMapping() {
-            Map<Integer, ProtocolVersion> enumMapping = new HashMap<Integer, ProtocolVersion>();
-            enumMapping.put(HTTP_1_0.getValue(), HTTP_1_0);
-            enumMapping.put(HTTP_1_1.getValue(), HTTP_1_1);
-            enumMapping.put(HTTP_2.getValue(), HTTP_2);
-
-            return enumMapping;
-        }
-
-        public int getValue() {
-            return protocolVersion;
-        }
-    }
-
     protected HttpClientConnection(long connectionBinding) {
         acquireNativeHandle(connectionBinding);
     }
@@ -121,9 +81,9 @@ public class HttpClientConnection extends CrtResource {
         httpClientConnectionShutdown(getNativeHandle());
     }
 
-    public ProtocolVersion getVersion() {
+    public HttpVersion getVersion() {
         short version = httpClientConnectionGetVersion(getNativeHandle());
-        return ProtocolVersion.getEnumValueFromInteger((int) version);
+        return HttpVersion.getEnumValueFromInteger((int) version);
     };
 
     /** Called from Native when a new connection is acquired **/
@@ -133,8 +93,8 @@ public class HttpClientConnection extends CrtResource {
             acquireFuture.completeExceptionally(new HttpException(errorCode));
             return;
         }
-        if (ProtocolVersion.getEnumValueFromInteger(
-                (int) httpClientConnectionGetVersion(nativeConnectionBinding)) == ProtocolVersion.HTTP_2) {
+        if (HttpVersion.getEnumValueFromInteger(
+                (int) httpClientConnectionGetVersion(nativeConnectionBinding)) == HttpVersion.HTTP_2) {
             HttpClientConnection h2Conn = new Http2ClientConnection(nativeConnectionBinding);
             acquireFuture.complete(h2Conn);
         } else {

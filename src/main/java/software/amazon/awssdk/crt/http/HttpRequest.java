@@ -6,7 +6,7 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpClientConnection.ProtocolVersion;
+import software.amazon.awssdk.crt.http.HttpVersion;
 
 import java.nio.ByteBuffer;
 
@@ -54,7 +54,7 @@ public class HttpRequest extends HttpRequestBase {
         if (marshalledRequest.remaining() < BUFFER_INT_SIZE * 3) {
             throw new CrtRuntimeException("Invalid marshalled request object.");
         }
-        this.version = ProtocolVersion.getEnumValueFromInteger(marshalledRequest.getInt());
+        this.version = HttpVersion.getEnumValueFromInteger(marshalledRequest.getInt());
 
         int methodLength = marshalledRequest.getInt();
         byte[] methodBlob = new byte[methodLength];

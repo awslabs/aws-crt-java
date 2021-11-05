@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
-import software.amazon.awssdk.crt.http.HttpClientConnection.ProtocolVersion;
+import software.amazon.awssdk.crt.http.HttpVersion;
 import java.nio.charset.Charset;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -14,7 +14,7 @@ public class HttpRequestBase {
     protected final static int BUFFER_INT_SIZE = 4;
     protected List<HttpHeader> headers;
     protected HttpRequestBodyStream bodyStream;
-    protected ProtocolVersion version = ProtocolVersion.HTTP_1_1;
+    protected HttpVersion version = HttpVersion.HTTP_1_1;
     protected String method;
     protected String encodedPath;
 

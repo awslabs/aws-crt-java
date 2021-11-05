@@ -25,7 +25,7 @@ import software.amazon.awssdk.crt.CrtResource;
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     private final static String HOST = "https://httpbin.org";
-    private final static HttpClientConnection.ProtocolVersion EXPECTED_VERSION = HttpClientConnection.ProtocolVersion.HTTP_2;
+    private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     @Test
     public void testHttp2ConnectionGetVersion() throws Exception {

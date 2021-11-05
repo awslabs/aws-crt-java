@@ -88,7 +88,9 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     if (callback_data->chunk_body_stream != NULL) {
         aws_input_stream_destroy(callback_data->chunk_body_stream);
     }
-
+    if (callback_data->trailing_headers != NULL) {
+        aws_http_headers_release(callback_data->trailing_headers);
+    }
     aws_string_destroy(callback_data->region);
     aws_string_destroy(callback_data->service);
     aws_string_destroy(callback_data->signed_body_value);

@@ -19,6 +19,6 @@ class AWSCrtJavaTest(Builder.Action):
         python = sys.executable
         actions.append(
             [python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                python, '.builder/integration-testing/java_elasticurl_runner.py'])
+                python, 'integration-testing/java_elasticurl_runner.py'])
 
         return Builder.Script(actions, name='aws-crt-java-test')

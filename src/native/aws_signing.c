@@ -233,7 +233,7 @@ done:
     s_cleanup_callback_data(callback_data);
 }
 
-static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
@@ -248,6 +248,14 @@ static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int 
 done:
 
     s_cleanup_callback_data(callback_data);
+}
+
+static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+    s_aws_chunk_like_signing_complete(result, error_code, userdata);
+}
+
+static void s_aws_trailing_headers_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+    s_aws_chunk_like_signing_complete(result, error_code, userdata);
 }
 
 static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
@@ -513,10 +521,10 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    /* is something like this required for the headers as well ? */
     callback_data->java_signing_result_future = (*env)->NewGlobalRef(env, java_signing_result_future);
     AWS_FATAL_ASSERT(callback_data->java_signing_result_future != NULL);
 
+    /* is a global reference necessary here? */
     callback_data->trailing_headers = aws_http_headers_new_from_java_http_headers(env, marshalled_headers);
     if (callback_data->trailing_headers == NULL) {
         aws_jni_throw_runtime_exception(env, "Error building headers");
@@ -547,7 +555,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             allocator,
             callback_data->original_message_signable,
             (struct aws_signing_config_base *)&signing_config,
-            s_aws_chunk_signing_complete,
+            s_aws_trailing_headers_signing_complete,
             callback_data)) {
         aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for Chunk");
         goto on_error;

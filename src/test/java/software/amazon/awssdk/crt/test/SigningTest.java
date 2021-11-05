@@ -589,128 +589,111 @@ public class SigningTest extends CrtTestFixture {
         return stsBuilder.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    // @Test
-    // public void testTrailingHeadersSigv4Signing() throws Exception {
+    @Test
+    public void testTrailingHeadersSigv4Signing() throws Exception {
 
-    // HttpRequest request = createChunkedTestRequest();
+        HttpRequest request = createChunkedTestRequest();
 
-    // CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request,
-    // createChunkedRequestSigningConfig());
-    // HttpRequest signedRequest = result.get();
-    // assertNotNull(signedRequest);
+        CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, createChunkedRequestSigningConfig());
+        HttpRequest signedRequest = result.get();
+        assertNotNull(signedRequest);
 
-    // assertTrue(hasHeaderWithValue(signedRequest, "Authorization",
-    // EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER));
+        assertTrue(hasHeaderWithValue(signedRequest, "Authorization", EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER));
 
-    // /*
-    // * If the authorization header is equal then certainly we can assume the
-    // * signature value
-    // */
-    // byte[] signature = EXPECTED_REQUEST_SIGNATURE;
+        /*
+         * If the authorization header is equal then certainly we can assume the
+         * signature value
+         */
+        byte[] signature = EXPECTED_REQUEST_SIGNATURE;
 
-    // HttpRequestBodyStream chunk1 = createChunk1Stream();
-    // CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1,
-    // signature,
-    // createChunkSigningConfig());
+        HttpRequestBodyStream chunk1 = createChunk1Stream();
+        CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1, signature,
+                createChunkSigningConfig());
 
-    // signature = chunk1Result.get().getSignature();
-    // assertTrue(Arrays.equals(signature, EXPECTED_FIRST_CHUNK_SIGNATURE));
+        signature = chunk1Result.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_FIRST_CHUNK_SIGNATURE));
 
-    // HttpRequestBodyStream chunk2 = createChunk2Stream();
-    // CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2,
-    // signature,
-    // createChunkSigningConfig());
+        HttpRequestBodyStream chunk2 = createChunk2Stream();
+        CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2, signature,
+                createChunkSigningConfig());
 
-    // signature = chunk2Result.get().getSignature();
-    // assertTrue(Arrays.equals(signature, EXPECTED_SECOND_CHUNK_SIGNATURE));
+        signature = chunk2Result.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_SECOND_CHUNK_SIGNATURE));
 
-    // CompletableFuture<AwsSigningResult> finalChunkResult =
-    // AwsSigner.sign((HttpRequestBodyStream) null, signature,
-    // createChunkSigningConfig());
-    // signature = finalChunkResult.get().getSignature();
-    // assertTrue(Arrays.equals(signature, EXPECTED_FINAL_CHUNK_SIGNATURE));
+        CompletableFuture<AwsSigningResult> finalChunkResult = AwsSigner.sign((HttpRequestBodyStream) null, signature,
+                createChunkSigningConfig());
+        signature = finalChunkResult.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_FINAL_CHUNK_SIGNATURE));
 
-    // List<HttpHeader> trailingHeaders = createTrailingHeaders();
-    // AwsSigningConfig trailingHeadersSigningConfig =
-    // createTrailingHeadersSigningConfig();
-    // CompletableFuture<AwsSigningResult> trailingHeadersResult =
-    // AwsSigner.sign(trailingHeaders, signature,
-    // trailingHeadersSigningConfig);
-    // signature = trailingHeadersResult.get().getSignature();
-    // assertTrue(Arrays.equals(signature, EXPECTED_TRAILING_HEADERS_SIGNATURE));
+        // List<HttpHeader> trailingHeaders = createTrailingHeaders();
+        // AwsSigningConfig trailingHeadersSigningConfig =
+        // createTrailingHeadersSigningConfig();
+        // CompletableFuture<AwsSigningResult> trailingHeadersResult =
+        // AwsSigner.sign(trailingHeaders, signature,
+        // trailingHeadersSigningConfig);
+        // signature = trailingHeadersResult.get().getSignature();
+        // assertTrue(Arrays.equals(signature, EXPECTED_TRAILING_HEADERS_SIGNATURE));
 
-    // }
+    }
 
-    // @Test
-    // public void testTrailingHeadersSigv4aSigning() throws Exception {
+    @Test
+    public void testTrailingHeadersSigv4aSigning() throws Exception {
 
-    // HttpRequest request = createChunkedTestRequest();
-    // AwsSigningConfig chunkedRequestSigningConfig =
-    // createChunkedRequestSigningConfig();
-    // chunkedRequestSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-    // chunkedRequestSigningConfig
-    // .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD);
+        HttpRequest request = createChunkedTestRequest();
+        AwsSigningConfig chunkedRequestSigningConfig = createChunkedRequestSigningConfig();
+        chunkedRequestSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
+        chunkedRequestSigningConfig
+                .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD);
 
-    // CompletableFuture<AwsSigningResult> result = AwsSigner.sign(request,
-    // chunkedRequestSigningConfig);
-    // HttpRequest signedRequest = result.get().getSignedRequest();
-    // assertNotNull(signedRequest);
+        CompletableFuture<AwsSigningResult> result = AwsSigner.sign(request, chunkedRequestSigningConfig);
+        HttpRequest signedRequest = result.get().getSignedRequest();
+        assertNotNull(signedRequest);
 
-    // byte[] requestSignature = result.get().getSignature();
-    // assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request,
-    // CHUNKED_SIGV4A_CANONICAL_REQUEST,
-    // chunkedRequestSigningConfig, requestSignature, CHUNKED_SIGV4A_TEST_ECC_PUB_X,
-    // CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
+        byte[] requestSignature = result.get().getSignature();
+        assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_SIGV4A_CANONICAL_REQUEST,
+                chunkedRequestSigningConfig, requestSignature, CHUNKED_SIGV4A_TEST_ECC_PUB_X,
+                CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
 
-    // HttpRequestBodyStream chunk1 = createChunk1Stream();
-    // AwsSigningConfig chunkSigningConfig = createChunkSigningConfig();
-    // chunkSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
+        HttpRequestBodyStream chunk1 = createChunk1Stream();
+        AwsSigningConfig chunkSigningConfig = createChunkSigningConfig();
+        chunkSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
 
-    // CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1,
-    // requestSignature, chunkSigningConfig);
+        CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1, requestSignature, chunkSigningConfig);
 
-    // byte[] chunk1StringToSign = buildChunkStringToSign(requestSignature,
-    // CHUNK1_STS_POST_SIGNATURE);
-    // assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk1StringToSign,
-    // chunk1Result.get().getSignature(),
-    // CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
+        byte[] chunk1StringToSign = buildChunkStringToSign(requestSignature, CHUNK1_STS_POST_SIGNATURE);
+        assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk1StringToSign, chunk1Result.get().getSignature(),
+                CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
 
-    // HttpRequestBodyStream chunk2 = createChunk2Stream();
-    // CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2,
-    // chunk1Result.get().getSignature(),
-    // chunkSigningConfig);
+        HttpRequestBodyStream chunk2 = createChunk2Stream();
+        CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2, chunk1Result.get().getSignature(),
+                chunkSigningConfig);
 
-    // byte[] chunk2StringToSign =
-    // buildChunkStringToSign(chunk1Result.get().getSignature(),
-    // CHUNK2_STS_POST_SIGNATURE);
-    // assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk2StringToSign,
-    // chunk2Result.get().getSignature(),
-    // CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
+        byte[] chunk2StringToSign = buildChunkStringToSign(chunk1Result.get().getSignature(),
+                CHUNK2_STS_POST_SIGNATURE);
+        assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk2StringToSign, chunk2Result.get().getSignature(),
+                CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
 
-    // CompletableFuture<AwsSigningResult> chunk3Result =
-    // AwsSigner.sign((HttpRequestBodyStream) null,
-    // chunk2Result.get().getSignature(), chunkSigningConfig);
+        CompletableFuture<AwsSigningResult> chunk3Result = AwsSigner.sign((HttpRequestBodyStream) null,
+                chunk2Result.get().getSignature(), chunkSigningConfig);
 
-    // byte[] chunk3StringToSign =
-    // buildChunkStringToSign(chunk2Result.get().getSignature(),
-    // CHUNK3_STS_POST_SIGNATURE);
-    // assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk3StringToSign,
-    // chunk3Result.get().getSignature(),
-    // CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
+        byte[] chunk3StringToSign = buildChunkStringToSign(chunk2Result.get().getSignature(),
+                CHUNK3_STS_POST_SIGNATURE);
+        assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk3StringToSign, chunk3Result.get().getSignature(),
+                CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
 
-    // List<HttpHeader> trailingHeaders = createTrailingHeaders();
-    // AwsSigningConfig trailingHeadersSigningConfig =
-    // createTrailingHeadersSigningConfig();
-    // trailingHeadersSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-    // CompletableFuture<AwsSigningResult> trailingHeadersResult =
-    // AwsSigner.sign(trailingHeaders,
-    // chunk3Result.get().getSignature(), trailingHeadersSigningConfig);
-    // byte[] trailingHeadersStringToSign =
-    // buildTrailingHeadersStringToSign(chunk3Result.get().getSignature(),
-    // TRAILING_HEADERS_STS_POST_SIGNATURE);
-    // assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(trailingHeadersStringToSign,
-    // trailingHeadersResult.get().getSignature(), CHUNKED_SIGV4A_TEST_ECC_PUB_X,
-    // CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
+        // List<HttpHeader> trailingHeaders = createTrailingHeaders();
+        // AwsSigningConfig trailingHeadersSigningConfig =
+        // createTrailingHeadersSigningConfig();
+        // trailingHeadersSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
+        // CompletableFuture<AwsSigningResult> trailingHeadersResult =
+        // AwsSigner.sign(trailingHeaders,
+        // chunk3Result.get().getSignature(), trailingHeadersSigningConfig);
+        // byte[] trailingHeadersStringToSign =
+        // buildTrailingHeadersStringToSign(chunk3Result.get().getSignature(),
+        // TRAILING_HEADERS_STS_POST_SIGNATURE);
+        // assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(trailingHeadersStringToSign,
+        // trailingHeadersResult.get().getSignature(), CHUNKED_SIGV4A_TEST_ECC_PUB_X,
+        // CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
 
-    // }
+    }
 };

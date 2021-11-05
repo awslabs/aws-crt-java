@@ -19,6 +19,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.http.HttpVersion;
@@ -319,7 +320,11 @@ public class Elasticurl {
 
                             @Override
                             public void onResponseComplete(HttpStream stream, int errorCode) {
-                                reqCompleted.complete(null);
+                                if (errorCode!=0) {
+                                    reqCompleted.completeExceptionally(new CrtRuntimeException(errorCode));
+                                } else{
+                                    reqCompleted.complete(null);
+                                }
                                 stream.close();
                             }
                         };

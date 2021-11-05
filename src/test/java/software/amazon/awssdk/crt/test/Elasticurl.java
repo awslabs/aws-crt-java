@@ -121,7 +121,10 @@ public class Elasticurl {
         if (method == null) {
             method = "GET";
         }
-        String pathAndQuery = uri.getQuery() == null ? uri.getPath() + "?" + uri.getQuery() : uri.getPath();
+        String pathAndQuery = uri.getQuery() == null ? uri.getPath() : uri.getPath() + "?" + uri.getQuery();
+        if (pathAndQuery.length() == 0) {
+            pathAndQuery = "/";
+        }
 
         /* body */
         ByteBuffer tmpPayload = null;
@@ -176,7 +179,7 @@ public class Elasticurl {
         if (customizedHeaders != null) {
             for (String header : customizedHeaders) {
                 String[] pair = header.split(":");
-                request.addHeader(new HttpHeader(pair[0], pair[1]));
+                request.addHeader(new HttpHeader(pair[0].trim(), pair[1].trim()));
             }
         }
         return request;

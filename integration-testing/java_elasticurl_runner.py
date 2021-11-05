@@ -4,17 +4,22 @@ from subprocess import Popen, PIPE
 
 TIMEOUT = 100
 # Runner for elasticurl integration tests
+
 elasticurl_args = sys.argv[1:]
+for index, arg in enumerate(elasticurl_args):
+    if " " in arg:
+        elasticurl_args[index] = "\\\"{}\\\"".format(arg)
+    if arg[0] == "\"" and arg[-1] == "\"":
+        elasticurl_args[index] = "\\\"{}\\\"".format(arg[1:-1])
+
 
 mvn_args = " ".join(elasticurl_args)
+
 
 java_command = ['mvn', '-e', 'exec:java', '-Dexec.classpathScope=\"test\"',
                 '-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"', '-Dexec.args=\"{}\"'.format(mvn_args)]
 
-print(java_command)
-
 command_string = " ".join(java_command)
-print(command_string)
 
 
 def run_command(args_str):

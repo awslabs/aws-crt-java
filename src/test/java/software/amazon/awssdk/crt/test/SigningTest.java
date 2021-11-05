@@ -455,6 +455,8 @@ public class SigningTest extends CrtTestFixture {
             .getBytes(StandardCharsets.UTF_8);
     private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = "b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9"
             .getBytes(StandardCharsets.UTF_8);
+    private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = "17b7a1e28961dba05b733dbdbe8ea230d8bed5ea507bc8af6f76349207c05315"
+            .getBytes(StandardCharsets.UTF_8);
 
     @Test
     public void testChunkedSigv4Signing() throws Exception {
@@ -585,6 +587,51 @@ public class SigningTest extends CrtTestFixture {
         stsBuilder.append(stsPostSignature);
 
         return stsBuilder.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testTrailingHeadersSigv4Signing() throws Exception {
+
+        HttpRequest request = createChunkedTestRequest();
+
+        CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, createChunkedRequestSigningConfig());
+        HttpRequest signedRequest = result.get();
+        assertNotNull(signedRequest);
+
+        assertTrue(hasHeaderWithValue(signedRequest, "Authorization", EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER));
+
+        /*
+         * If the authorization header is equal then certainly we can assume the
+         * signature value
+         */
+        byte[] signature = EXPECTED_REQUEST_SIGNATURE;
+
+        HttpRequestBodyStream chunk1 = createChunk1Stream();
+        CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1, signature,
+                createChunkSigningConfig());
+
+        signature = chunk1Result.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_FIRST_CHUNK_SIGNATURE));
+
+        HttpRequestBodyStream chunk2 = createChunk2Stream();
+        CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2, signature,
+                createChunkSigningConfig());
+
+        signature = chunk2Result.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_SECOND_CHUNK_SIGNATURE));
+
+        CompletableFuture<AwsSigningResult> finalChunkResult = AwsSigner.sign((HttpRequestBodyStream) null, signature,
+                createChunkSigningConfig());
+        signature = finalChunkResult.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_FINAL_CHUNK_SIGNATURE));
+
+        List<HttpHeader> trailingHeaders = createTrailingHeaders();
+        AwsSigningConfig trailingHeadersSigningConfig = createTrailingHeadersSigningConfig();
+        CompletableFuture<AwsSigningResult> trailingHeadersResult = AwsSigner.sign(trailingHeaders, signature,
+                trailingHeadersSigningConfig);
+        signature = trailingHeadersResult.get().getSignature();
+        assertTrue(Arrays.equals(signature, EXPECTED_TRAILING_HEADERS_SIGNATURE));
+
     }
 
     @Test

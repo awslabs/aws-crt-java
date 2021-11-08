@@ -142,6 +142,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public class <span class="typeNameLabel">HostResolver</span>
 extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt">CrtResource</a></pre>
+<div class="block">Java wrapper around the native CRT host resolver, responsible for performing async dns lookups</div>
 </li>
 </ul>
 </div>
@@ -259,6 +260,8 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <pre>public&nbsp;HostResolver&#8203;(<a href="EventLoopGroup.html" title="class in software.amazon.awssdk.crt.io">EventLoopGroup</a>&nbsp;elg)
              throws <a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></pre>
 <dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>elg</code> - event loop group to pass to the host resolver.  Not currently used but still mandatory.</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></code></dd>
 </dl>
@@ -274,6 +277,9 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
                     int&nbsp;maxEntries)
              throws <a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></pre>
 <dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>elg</code> - event loop group to pass to the host resolver.  Not currently used but still mandatory.</dd>
+<dd><code>maxEntries</code> - maximum size of the name -> address mapping cache</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></code></dd>
 </dl>

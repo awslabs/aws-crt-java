@@ -187,17 +187,23 @@ extends java.lang.Object</pre>
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addHeader(java.lang.String,java.lang.String)">addHeader</a></span>&#8203;(java.lang.String&nbsp;headerName,
          java.lang.String&nbsp;headerValue)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Adds a header to this request's header set</div>
+</td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addHeader(software.amazon.awssdk.crt.http.HttpHeader)">addHeader</a></span>&#8203;(<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>&nbsp;header)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Adds a header to this request's header set</div>
+</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addHeaders(software.amazon.awssdk.crt.http.HttpHeader%5B%5D)">addHeaders</a></span>&#8203;(<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>[]&nbsp;headers)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Add multiple headers to this request's header set</div>
+</td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a></code></td>
@@ -240,7 +246,9 @@ extends java.lang.Object</pre>
 <tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setEncodedPath(java.lang.String)">setEncodedPath</a></span>&#8203;(java.lang.String&nbsp;encodedPath)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Sets the request's encoded path</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -317,6 +325,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getMethod</h4>
 <pre class="methodSignature">public&nbsp;java.lang.String&nbsp;getMethod()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the HTTP method of this request</dd>
+</dl>
 </li>
 </ul>
 <a id="getEncodedPath()">
@@ -326,6 +338,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getEncodedPath</h4>
 <pre class="methodSignature">public&nbsp;java.lang.String&nbsp;getEncodedPath()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the encoded path of this request</dd>
+</dl>
 </li>
 </ul>
 <a id="setEncodedPath(java.lang.String)">
@@ -335,6 +351,11 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>setEncodedPath</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;setEncodedPath&#8203;(java.lang.String&nbsp;encodedPath)</pre>
+<div class="block">Sets the request's encoded path</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>encodedPath</code> - the new encoded path</dd>
+</dl>
 </li>
 </ul>
 <a id="getHeaders()">
@@ -344,6 +365,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getHeaders</h4>
 <pre class="methodSignature">public&nbsp;java.util.List&lt;<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>&gt;&nbsp;getHeaders()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>A list of the headers for this request</dd>
+</dl>
 </li>
 </ul>
 <a id="getHeadersAsArray()">
@@ -353,6 +378,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getHeadersAsArray</h4>
 <pre class="methodSignature">public&nbsp;<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>[]&nbsp;getHeadersAsArray()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>An array of the headers for this request</dd>
+</dl>
 </li>
 </ul>
 <a id="addHeader(software.amazon.awssdk.crt.http.HttpHeader)">
@@ -362,6 +391,11 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>addHeader</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;addHeader&#8203;(<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>&nbsp;header)</pre>
+<div class="block">Adds a header to this request's header set</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>header</code> - a new header to add to the header set</dd>
+</dl>
 </li>
 </ul>
 <a id="addHeader(java.lang.String,java.lang.String)">
@@ -372,6 +406,12 @@ extends java.lang.Object</pre>
 <h4>addHeader</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;addHeader&#8203;(java.lang.String&nbsp;headerName,
                       java.lang.String&nbsp;headerValue)</pre>
+<div class="block">Adds a header to this request's header set</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>headerName</code> - name of the header to add</dd>
+<dd><code>headerValue</code> - value of the header to add</dd>
+</dl>
 </li>
 </ul>
 <a id="addHeaders(software.amazon.awssdk.crt.http.HttpHeader[])">
@@ -381,6 +421,11 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>addHeaders</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;addHeaders&#8203;(<a href="HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>[]&nbsp;headers)</pre>
+<div class="block">Add multiple headers to this request's header set</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>headers</code> - array of headers to add</dd>
+</dl>
 </li>
 </ul>
 <a id="getBodyStream()">
@@ -390,6 +435,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getBodyStream</h4>
 <pre class="methodSignature">public&nbsp;<a href="HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a>&nbsp;getBodyStream()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the body stream associated with this request</dd>
+</dl>
 </li>
 </ul>
 <a id="marshalForJni()">

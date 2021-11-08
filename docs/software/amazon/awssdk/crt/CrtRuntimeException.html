@@ -211,7 +211,9 @@ extends java.lang.RuntimeException</pre>
 </tr>
 <tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(int)">CrtRuntimeException</a></span>&#8203;(int&nbsp;errorCode)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Constructor for Crt exceptions due to native errors</div>
+</td>
 </tr>
 <tr class="rowColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(int,java.lang.String)">CrtRuntimeException</a></span>&#8203;(int&nbsp;errorCode,
@@ -224,7 +226,9 @@ extends java.lang.RuntimeException</pre>
 </tr>
 <tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String)">CrtRuntimeException</a></span>&#8203;(java.lang.String&nbsp;msg)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Constructor for CRT exceptions not due to native errors</div>
+</td>
 </tr>
 </table>
 </li>
@@ -315,6 +319,11 @@ extends java.lang.RuntimeException</pre>
 <li class="blockList">
 <h4>CrtRuntimeException</h4>
 <pre>public&nbsp;CrtRuntimeException&#8203;(java.lang.String&nbsp;msg)</pre>
+<div class="block">Constructor for CRT exceptions not due to native errors</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>msg</code> - exception message</dd>
+</dl>
 </li>
 </ul>
 <a id="&lt;init&gt;(int,java.lang.String)">
@@ -338,6 +347,11 @@ public&nbsp;CrtRuntimeException&#8203;(int&nbsp;errorCode,
 <li class="blockList">
 <h4>CrtRuntimeException</h4>
 <pre>public&nbsp;CrtRuntimeException&#8203;(int&nbsp;errorCode)</pre>
+<div class="block">Constructor for Crt exceptions due to native errors</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>errorCode</code> - native error code detailing the reason for the exception</dd>
+</dl>
 </li>
 </ul>
 </li>

@@ -133,6 +133,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public class <span class="typeNameLabel">ExponentialBackoffRetryOptions</span>
 extends java.lang.Object</pre>
+<div class="block">Configuration options for the exponential backoff retry strategy for http requests</div>
 </li>
 </ul>
 </div>
@@ -156,7 +157,11 @@ extends java.lang.Object</pre>
 <tr class="altColor">
 <td class="colFirst"><code>static class&nbsp;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">What kind of jitter or randomization to apply to the backoff time interval
+
+ https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/</div>
+</td>
 </tr>
 </table>
 </li>
@@ -177,7 +182,9 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">ExponentialBackoffRetryOptions</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Default constructor</div>
+</td>
 </tr>
 </table>
 </li>
@@ -220,22 +227,30 @@ extends java.lang.Object</pre>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withBackoffScaleFactorMS(long)">withBackoffScaleFactorMS</a></span>&#8203;(long&nbsp;backoffScaleFactorMS)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Configures the initial (base) unscaled backoff interval in milliseconds</div>
+</td>
 </tr>
 <tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withEventLoopGroup(software.amazon.awssdk.crt.io.EventLoopGroup)">withEventLoopGroup</a></span>&#8203;(<a href="EventLoopGroup.html" title="class in software.amazon.awssdk.crt.io">EventLoopGroup</a>&nbsp;eventLoopGroup)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Configure the event loop group to use to schedule the backoff/retry tasks</div>
+</td>
 </tr>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withJitterMode(software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode)">withJitterMode</a></span>&#8203;(<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a>&nbsp;jitterMode)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Configure the type of jitter to apply to the backoff interval calculations</div>
+</td>
 </tr>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withMaxRetries(long)">withMaxRetries</a></span>&#8203;(long&nbsp;maxRetries)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Configure the maximum number of retries to make while using a strategy sourced from these options</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -268,6 +283,7 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>ExponentialBackoffRetryOptions</h4>
 <pre>public&nbsp;ExponentialBackoffRetryOptions()</pre>
+<div class="block">Default constructor</div>
 </li>
 </ul>
 </li>
@@ -287,6 +303,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withEventLoopGroup</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;withEventLoopGroup&#8203;(<a href="EventLoopGroup.html" title="class in software.amazon.awssdk.crt.io">EventLoopGroup</a>&nbsp;eventLoopGroup)</pre>
+<div class="block">Configure the event loop group to use to schedule the backoff/retry tasks</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>eventLoopGroup</code> - event loop group to use</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getEventLoopGroup()">
@@ -296,6 +319,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getEventLoopGroup</h4>
 <pre class="methodSignature">public&nbsp;<a href="EventLoopGroup.html" title="class in software.amazon.awssdk.crt.io">EventLoopGroup</a>&nbsp;getEventLoopGroup()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The event loop group currently configured to do backoff/retry</dd>
+</dl>
 </li>
 </ul>
 <a id="withMaxRetries(long)">
@@ -305,6 +332,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withMaxRetries</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;withMaxRetries&#8203;(long&nbsp;maxRetries)</pre>
+<div class="block">Configure the maximum number of retries to make while using a strategy sourced from these options</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>maxRetries</code> - maximum number of retries</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getMaxRetries()">
@@ -314,6 +348,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getMaxRetries</h4>
 <pre class="methodSignature">public&nbsp;long&nbsp;getMaxRetries()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the maximum number of retries to make while using a strategy sourced from these options</dd>
+</dl>
 </li>
 </ul>
 <a id="withBackoffScaleFactorMS(long)">
@@ -323,6 +361,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withBackoffScaleFactorMS</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;withBackoffScaleFactorMS&#8203;(long&nbsp;backoffScaleFactorMS)</pre>
+<div class="block">Configures the initial (base) unscaled backoff interval in milliseconds</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>backoffScaleFactorMS</code> - the initial (base) unscaled backoff interval in milliseconds</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getBackoffScaleFactorMS()">
@@ -332,6 +377,11 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getBackoffScaleFactorMS</h4>
 <pre class="methodSignature">public&nbsp;long&nbsp;getBackoffScaleFactorMS()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the initial (base) unscaled backoff interval in milliseconds while using a strategy sourced from
+ these options</dd>
+</dl>
 </li>
 </ul>
 <a id="withJitterMode(software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode)">
@@ -341,6 +391,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withJitterMode</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;withJitterMode&#8203;(<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a>&nbsp;jitterMode)</pre>
+<div class="block">Configure the type of jitter to apply to the backoff interval calculations</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>jitterMode</code> - the type of jitter to apply to the backoff interval calculations</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getJitterMode()">
@@ -350,6 +407,11 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getJitterMode</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a>&nbsp;getJitterMode()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the type of jitter to apply to the backoff interval calculations while using a strategy sourced
+ from these options</dd>
+</dl>
 </li>
 </ul>
 </li>

@@ -18,11 +18,12 @@ public class S3Client extends CrtResource {
 
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private final String region;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
-
-        acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8),
+        region = options.getRegion();
+        acquireNativeHandle(s3ClientNew(this, region.getBytes(UTF8),
                 options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
@@ -62,7 +63,7 @@ public class S3Client extends CrtResource {
         if (options.getCredentialsProvider() != null) {
             credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
         }
-        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
+        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
                 options.getMetaRequestType().getNativeValue(), httpRequestBytes,
                 options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
                 responseHandlerNativeAdapter);
@@ -108,7 +109,7 @@ public class S3Client extends CrtResource {
 
     private static native void s3ClientDestroy(long client);
 
-    private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, int metaRequestType,
-            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream, long signingConfig,
-            S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
+    private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
+            int metaRequestType, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
 }

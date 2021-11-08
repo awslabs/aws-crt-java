@@ -340,6 +340,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jclass jni_class,
     jlong jni_s3_client,
     jobject java_s3_meta_request_jobject,
+    jbyteArray jni_region,
     jint meta_request_type,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
@@ -352,7 +353,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     struct aws_signing_config_aws *signing_config = NULL;
     if (credentials_provider) {
+        struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
         aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     }
 
     struct s3_client_make_meta_request_callback_data *callback_data =

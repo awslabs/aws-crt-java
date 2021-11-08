@@ -28,9 +28,10 @@ args = shlex.split(command_string)
 
 
 def run_command(args):
+    print(args)
     # gather all stderr and stdout to a single string that we print only if things go wrong
     process = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     timedout = False
     try:
         output = process.communicate(timeout=TIMEOUT)[0]

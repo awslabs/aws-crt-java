@@ -343,11 +343,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jint meta_request_type,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
+    jlong jni_credentials_provider,
     jobject java_response_handler_jobject) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
+    struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
+    struct aws_signing_config_aws *signing_config = NULL;
+    if (credentials_provider) {
+        aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
+    }
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
@@ -375,6 +381,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .type = meta_request_type,
         .message = request_message,
         .user_data = callback_data,
+        .signing_config = signing_config,
         .headers_callback = s_on_s3_meta_request_headers_callback,
         .body_callback = s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,

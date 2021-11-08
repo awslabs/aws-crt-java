@@ -26,8 +26,8 @@ public class S3Client extends CrtResource {
                 options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
-                options.getThroughputTargetGbps(), options.getMaxConnections(),
-                options.getStandardRetryOptions(), options.getComputeContentMd5()));
+                options.getThroughputTargetGbps(), options.getMaxConnections(), options.getStandardRetryOptions(),
+                options.getComputeContentMd5()));
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
@@ -58,13 +58,19 @@ public class S3Client extends CrtResource {
                 options.getResponseHandler());
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
-
+        long credentialsProviderNativeHandle = 0;
+        if (options.getCredentialsProvider() != null) {
+            credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
+        }
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
                 options.getMetaRequestType().getNativeValue(), httpRequestBytes,
-                options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
+                options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
+                responseHandlerNativeAdapter);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-
+        if (credentialsProviderNativeHandle != 0) {
+            metaRequest.addReferenceTo(options.getCredentialsProvider());
+        }
         return metaRequest;
     }
 
@@ -103,6 +109,6 @@ public class S3Client extends CrtResource {
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, int metaRequestType,
-            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream, long signingConfig,
             S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
 }

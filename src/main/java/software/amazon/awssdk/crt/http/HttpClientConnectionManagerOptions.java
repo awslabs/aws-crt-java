@@ -30,6 +30,9 @@ public class HttpClientConnectionManagerOptions {
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
 
+    /**
+     * Default constructor
+     */
     public HttpClientConnectionManagerOptions() {
     }
 

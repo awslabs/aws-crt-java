@@ -142,6 +142,10 @@ public final class TlsContextOptions extends CrtResource {
         }
     }
 
+    /**
+     * Sets the tls cipher preferences to use in contexts using this configuration
+     * @param cipherPref cipher preferences to use
+     */
     public void setCipherPreference(TlsCipherPreference cipherPref) {
         if(!isCipherPreferenceSupported(cipherPref)) {
             throw new IllegalArgumentException("TlsCipherPreference is not supported on this platform: " + cipherPref.name());

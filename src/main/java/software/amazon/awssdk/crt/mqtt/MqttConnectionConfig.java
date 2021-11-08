@@ -12,6 +12,9 @@ import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 
+/**
+ * Encapsulates all per-mqtt-connection configuration
+ */
 public final class MqttConnectionConfig extends CrtResource {
     /* connection */
     private String endpoint;

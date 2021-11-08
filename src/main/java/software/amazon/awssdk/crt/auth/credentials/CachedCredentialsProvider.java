@@ -15,6 +15,9 @@ public class CachedCredentialsProvider extends CredentialsProvider {
         private int cachingDurationInSeconds;
         private CredentialsProvider cachedProvider;
 
+        /**
+         * Default constructor
+         */
         public CachedCredentialsProviderBuilder() {}
 
         /**

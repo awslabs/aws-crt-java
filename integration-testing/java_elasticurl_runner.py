@@ -19,19 +19,15 @@ mvn_args = " ".join(elasticurl_args)
 
 java_command = ['mvn', '-e', 'exec:java', '-Dexec.classpathScope=\"test\"',
                 '-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"', '-Dexec.args=\"{}\"'.format(mvn_args)]
-
+print(java_command)
 command_string = " ".join(java_command)
+# args = shlex.split(command_line)
 
-args = shlex.split(command_string)
 
-
-def run_command(args):
+def run_command(args_str):
     # gather all stderr and stdout to a single string that we print only if things go wrong
-    args_str = subprocess.list2cmdline(args)
-    print(args)
-    print(args_str)
     process = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        args_str, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     timedout = False
     try:
         output = process.communicate(timeout=TIMEOUT)[0]
@@ -52,4 +48,4 @@ def run_command(args):
                     code=process.returncode, cmd=args_str))
 
 
-run_command(args)
+run_command(command_string)

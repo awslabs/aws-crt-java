@@ -23,6 +23,7 @@ java_command = ['mvn', '-e', 'exec:java', '-Dexec.classpathScope=\"test\"',
 command_string = " ".join(java_command)
 
 # args = shlex.split(command_string)
+print("command to run:"+command_string)
 
 
 def run_command(args_str):

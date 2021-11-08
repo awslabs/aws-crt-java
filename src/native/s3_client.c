@@ -352,9 +352,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     struct aws_signing_config_aws *signing_config = NULL;
+    bool success = false;
     if (credentials_provider) {
         struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
-        aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
+        signing_config = aws_mem_calloc(allocator, 1, sizeof(struct aws_signing_config_aws));
+        aws_s3_init_default_signing_config(&signing_config, region, credentials_provider);
         aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     }
 
@@ -395,14 +397,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");
-        goto error_cleanup;
+        goto done;
     }
 
-    aws_http_message_release(request_message);
-    return (jlong)meta_request;
+    success = true;
 
-error_cleanup:
+done:
+    if (signing_config) {
+        aws_mem_release(allocator, signing_config);
+    }
     aws_http_message_release(request_message);
+    if (success) {
+        return (jlong)meta_request;
+    }
     s_s3_meta_request_callback_cleanup(env, callback_data);
     return (jlong)0;
 }

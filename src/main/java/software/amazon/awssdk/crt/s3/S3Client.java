@@ -70,6 +70,10 @@ public class S3Client extends CrtResource {
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
+            /*
+             * Keep the java object alive until the meta Request shut down and release all
+             * the resources it's pointing to
+             */
             metaRequest.addReferenceTo(options.getCredentialsProvider());
         }
         return metaRequest;

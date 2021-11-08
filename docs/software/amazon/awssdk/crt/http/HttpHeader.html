@@ -133,6 +133,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public class <span class="typeNameLabel">HttpHeader</span>
 extends java.lang.Object</pre>
+<div class="block">A wrapper class for http header key-value pairs</div>
 </li>
 </ul>
 </div>
@@ -250,6 +251,11 @@ extends java.lang.Object</pre>
 <h4>HttpHeader</h4>
 <pre>public&nbsp;HttpHeader&#8203;(java.lang.String&nbsp;name,
                   java.lang.String&nbsp;value)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>name</code> - header name</dd>
+<dd><code>value</code> - header value</dd>
+</dl>
 </li>
 </ul>
 <a id="&lt;init&gt;(byte[],byte[])">
@@ -260,6 +266,11 @@ extends java.lang.Object</pre>
 <h4>HttpHeader</h4>
 <pre>public&nbsp;HttpHeader&#8203;(byte[]&nbsp;name,
                   byte[]&nbsp;value)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>name</code> - header name</dd>
+<dd><code>value</code> - header value</dd>
+</dl>
 </li>
 </ul>
 </li>
@@ -279,6 +290,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getName</h4>
 <pre class="methodSignature">public&nbsp;java.lang.String&nbsp;getName()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the name of the header, converted to a UTF-8 string</dd>
+</dl>
 </li>
 </ul>
 <a id="getNameBytes()">
@@ -288,6 +303,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getNameBytes</h4>
 <pre class="methodSignature">public&nbsp;byte[]&nbsp;getNameBytes()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the name of the header, in raw bytes</dd>
+</dl>
 </li>
 </ul>
 <a id="getValue()">
@@ -297,6 +316,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getValue</h4>
 <pre class="methodSignature">public&nbsp;java.lang.String&nbsp;getValue()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the value of the header, converted to a UTF-8 string</dd>
+</dl>
 </li>
 </ul>
 <a id="getValueBytes()">
@@ -306,6 +329,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getValueBytes</h4>
 <pre class="methodSignature">public&nbsp;byte[]&nbsp;getValueBytes()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the value of the header, in raw bytes</dd>
+</dl>
 </li>
 </ul>
 <a id="toString()">

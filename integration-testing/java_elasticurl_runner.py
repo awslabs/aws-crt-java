@@ -2,7 +2,7 @@ import sys
 import os
 import subprocess
 import shlex
-from subprocess import Popen, PIPE
+import subprocess
 
 TIMEOUT = 100
 # Runner for elasticurl integration tests
@@ -24,14 +24,13 @@ print(java_command)
 if os.name == 'nt':
     java_command[0] = 'mvn.cmd'
 command_string = " ".join(java_command)
-args = shlex.split(command_string)
 
 
-def run_command(args):
-    print(args)
+def run_command(args_str):
+    print(args_str)
     # gather all stderr and stdout to a single string that we print only if things go wrong
     process = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        args_str, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     timedout = False
     try:
         output = process.communicate(timeout=TIMEOUT)[0]
@@ -40,7 +39,6 @@ def run_command(args):
         process.kill()
         output = process.communicate()[0]
     finally:
-        args_str = subprocess.list2cmdline(args)
         if process.returncode != 0 or timedout:
             print(args_str)
             for line in output.splitlines():
@@ -53,4 +51,4 @@ def run_command(args):
                     code=process.returncode, cmd=args_str))
 
 
-run_command(args)
+run_command(command_string)

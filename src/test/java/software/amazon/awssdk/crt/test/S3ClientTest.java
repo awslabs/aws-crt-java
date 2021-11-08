@@ -4,7 +4,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
@@ -162,6 +164,53 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+    }
+
+    @Test
+    public void testS3OverrideRequestCredentials() {
+        skipIfNetworkUnavailable();
+        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        boolean expectedException = false;
+        byte[] madeUpCredentials = "I am a madeup credentials".getBytes();
+        StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
+                .withAccessKeyId(madeUpCredentials).withSecretAccessKey(madeUpCredentials);
+        try (S3Client client = createS3Client(clientOptions);
+                CredentialsProvider emptyCredentialsProvider = builder.build()) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + errorCode);
+                    if (errorCode != 0) {
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(errorCode));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler).withCredentialsProvider(emptyCredentialsProvider);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            expectedException = true;
+            /*
+             * Maybe better to have a cause of the max retries exceed to be more informative
+             */
+            Assert.assertTrue(ex.getMessage().contains("AWS_IO_MAX_RETRIES_EXCEEDED"));
+        }
+        Assert.assertTrue(expectedException);
     }
 
     private byte[] createTestPayload() {

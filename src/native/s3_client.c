@@ -356,7 +356,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     if (credentials_provider) {
         struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
         signing_config = aws_mem_calloc(allocator, 1, sizeof(struct aws_signing_config_aws));
-        aws_s3_init_default_signing_config(&signing_config, region, credentials_provider);
+        aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
         aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     }
 

@@ -190,7 +190,9 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>static <a href="HttpClientConnectionManager.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManager</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#create(software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions)">create</a></span>&#8203;(<a href="HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a>&nbsp;options)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Factory function for HttpClientConnectionManager instances</div>
+</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>int</code></td>
@@ -257,6 +259,13 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <li class="blockList">
 <h4>create</h4>
 <pre class="methodSignature">public static&nbsp;<a href="HttpClientConnectionManager.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManager</a>&nbsp;create&#8203;(<a href="HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a>&nbsp;options)</pre>
+<div class="block">Factory function for HttpClientConnectionManager instances</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>options</code> - configuration options</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new instance of an HttpClientConnectionManager</dd>
+</dl>
 </li>
 </ul>
 <a id="acquireConnection()">
@@ -316,6 +325,10 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <li class="blockList">
 <h4>getWindowSize</h4>
 <pre class="methodSignature">public&nbsp;int&nbsp;getWindowSize()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>size of the per-connection streaming read window for response handling</dd>
+</dl>
 </li>
 </ul>
 <a id="getUri()">
@@ -325,6 +338,10 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <li class="blockList">
 <h4>getUri</h4>
 <pre class="methodSignature">public&nbsp;java.net.URI&nbsp;getUri()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>uri the connection manager is making connections to</dd>
+</dl>
 </li>
 </ul>
 </li>

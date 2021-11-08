@@ -146,6 +146,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public static enum <span class="typeNameLabel">ExponentialBackoffRetryOptions.JitterMode</span>
 extends java.lang.Enum&lt;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a>&gt;</pre>
+<div class="block">What kind of jitter or randomization to apply to the backoff time interval
+
+ https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/</div>
 </li>
 </ul>
 </div>
@@ -167,19 +170,29 @@ extends java.lang.Enum&lt;<a href="ExponentialBackoffRetryOptions.JitterMode.htm
 </tr>
 <tr class="altColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#Decorrelated">Decorrelated</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Backoff is taken randomly from the interval between the base backoff interval and a scaling (>1) of the
+ current backoff value</div>
+</td>
 </tr>
 <tr class="rowColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#Default">Default</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Maps to Full</div>
+</td>
 </tr>
 <tr class="altColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#Full">Full</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Choose an actual backoff interval between [0, MaxCurrentBackoff] where MaxCurrentBackoff is the standard
+ exponential backoff value</div>
+</td>
 </tr>
 <tr class="rowColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#None">None</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Do not apply any jitter or randomization to the backoff interval</div>
+</td>
 </tr>
 </table>
 </li>
@@ -252,6 +265,7 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>Default</h4>
 <pre>public static final&nbsp;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a> Default</pre>
+<div class="block">Maps to Full</div>
 </li>
 </ul>
 <a id="None">
@@ -261,6 +275,7 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>None</h4>
 <pre>public static final&nbsp;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a> None</pre>
+<div class="block">Do not apply any jitter or randomization to the backoff interval</div>
 </li>
 </ul>
 <a id="Full">
@@ -270,6 +285,8 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>Full</h4>
 <pre>public static final&nbsp;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a> Full</pre>
+<div class="block">Choose an actual backoff interval between [0, MaxCurrentBackoff] where MaxCurrentBackoff is the standard
+ exponential backoff value</div>
 </li>
 </ul>
 <a id="Decorrelated">
@@ -279,6 +296,8 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>Decorrelated</h4>
 <pre>public static final&nbsp;<a href="ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a> Decorrelated</pre>
+<div class="block">Backoff is taken randomly from the interval between the base backoff interval and a scaling (>1) of the
+ current backoff value</div>
 </li>
 </ul>
 </li>

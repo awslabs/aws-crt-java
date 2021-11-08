@@ -208,7 +208,7 @@ public class S3ClientTest extends CrtTestFixture {
             /*
              * Maybe better to have a cause of the max retries exceed to be more informative
              */
-            if (!ex.getMessage().contains("AWS_IO_MAX_RETRIES_EXCEEDED")) {
+            if (!(ex.getCause() instanceof CrtS3RuntimeException)) {
                 Assert.fail(ex.getMessage());
             }
         }

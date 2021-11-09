@@ -18,16 +18,24 @@ import static org.mockito.Mockito.when;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import com.amazonaws.s3.model.DeleteObjectOutput;
+import com.amazonaws.s3.model.DeleteObjectRequest;
+import com.amazonaws.s3.model.ListObjectsOutput;
+import com.amazonaws.s3.model.ListObjectsRequest;
 import com.amazonaws.s3.model.GetObjectOutput;
 import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
+
 import com.amazonaws.test.AwsClientTestFixture;
 
 import org.junit.Assume;
@@ -41,14 +49,20 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 
-import javax.annotation.processing.Completion;
-
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
     private static final String GET_OBJECT_KEY = System.getProperty("crt.test_s3_get_object_key",
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
+    private static final String PUT_OBJECT_WITH_METADATA_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_key", "file_with_metadata.upload");
+
+    private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
+            "filename _@_=_&_?_+_)_.txt");
+
+    private static final String GET_OBJECT_VERSION = System.getProperty("crt.test_s3_get_object_version",
+            "2Z_dpqRBdrGjax8dyIZ3XYnASOVkdY9J");
+
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
 
@@ -59,7 +73,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -94,8 +108,81 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     }
 
     @Test
+    public void testGetObjectSpecialCharacters() {
+        skipIfNetworkUnavailable();
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
+            final long length[] = { 0 };
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
+
+    @Test
+    public void testGetObjectVersioned() {
+        skipIfNetworkUnavailable();
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
+            final long length[] = { 0 };
+            nativeClient.getObject(
+                    GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                            assertEquals(response.versionId(), GET_OBJECT_VERSION);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
+
+    @Test
     public void testGetObjectExceptionCatch() throws Throwable {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -140,7 +227,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -167,7 +254,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
@@ -278,7 +365,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testGetObjectCancelHelper(CancelTestData<GetObjectOutput> testData,
             CancelResponseDataConsumer dataConsumer) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -376,7 +463,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -438,7 +525,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testRetryOptions() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -610,5 +697,124 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
                                 .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
                                 null));
+    }
+
+    @Test
+    public void testPutObjectWithUserDefinedMetadata() throws Exception {
+        skipIfNetworkUnavailable();
+
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
+
+            final long contentLength = 1024l;
+            final long lengthWritten[] = { 0 };
+            final String userMetadataKey = "CustomKey1";
+            final String userMetadataValue = "SampleValue";
+
+            final Map<String, String> userMetadata = new HashMap<String, String>();
+            userMetadata.put(userMetadataKey, userMetadataValue);
+
+            // put with metadata
+            nativeClient.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(BUCKET)
+                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .contentLength(contentLength)
+                            .metadata(userMetadata)
+                            .build(),
+                    buffer -> {
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
+                        }
+
+                        return lengthWritten[0] == contentLength;
+                    }).join();
+
+            // wait propagation
+            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_WITH_METADATA_KEY, userMetadataKey);
+
+            // get
+            final long length[] = { 0 };
+            final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
+                            .bucket(BUCKET)
+                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).get();
+
+            assertNotNull(getObjectOutput);
+            final Map<String, String> getMetadata = getObjectOutput.metadata();
+            assertNotNull(getMetadata);
+            // Amazon S3 stores user-defined metadata keys in lowercase.
+            // reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html
+            assertEquals(userMetadataValue, getMetadata.get(userMetadataKey.toLowerCase()));
+        }
+    }
+
+    private void waitForPropagation(final S3NativeClient nativeClient,
+                                    final String bucket,
+                                    final String key,
+                                    final String userMetadataKey) throws Exception {
+        final int maxRetries = 5;
+        final Duration intervalBetweenRetries = Duration.ofSeconds(5);
+
+        for (int i = 0; i < maxRetries; i++) {
+            final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
+
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
+
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                        }
+
+                        @Override
+                        public void onFinished() {
+                        }
+
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).get();
+
+            assertNotNull(getObjectOutput);
+            final Map<String, String> getMetadata = getObjectOutput.metadata();
+
+            if (getMetadata != null && getMetadata.get(userMetadataKey.toLowerCase()) != null) {
+                return;
+            }
+            Thread.sleep(intervalBetweenRetries.toMillis());
+        }
+
+        assertTrue("Propagation timed out for bucket " + bucket + ", key " + key, false);
     }
 }

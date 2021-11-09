@@ -5,11 +5,10 @@
 package software.amazon.awssdk.crt;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the
@@ -51,6 +50,10 @@ public final class CRT {
         }
     }
 
+    /**
+     * Exception thrown when we can't detect what platform we're running on and thus can't figure out
+     * the native library name/path to load.
+     */
     public static class UnknownPlatformException extends RuntimeException {
         UnknownPlatformException(String message) {
             super(message);
@@ -73,6 +76,10 @@ public final class CRT {
         }
     }
 
+    /**
+     * @return a string describing the detected platform the CRT is executing on
+     * @throws UnknownPlatformException
+     */
     public static String getOSIdentifier() throws UnknownPlatformException {
         if (isAndroid()) {
             return "android";
@@ -96,6 +103,10 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
+    /**
+     * @return a string describing the detected architecture the CRT is executing on
+     * @throws UnknownPlatformException
+     */
     public static String getArchIdentifier() throws UnknownPlatformException {
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
@@ -122,27 +133,27 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
-    private static void loadLibraryFromJar() {
+    private static void extractAndLoadLibrary(String path) {
         try {
             // Check java.io.tmpdir
-            String tmpdir = System.getProperty("java.io.tmpdir");
-            Path tmpdirPath;
+            String tmpdirPath;
+            File tmpdirFile;
             try {
-                tmpdirPath = Paths.get(tmpdir).toAbsolutePath().normalize();
-                File tmpdirFile = tmpdirPath.toFile();
+                tmpdirFile = new File(path).getAbsoluteFile();
+                tmpdirPath = tmpdirFile.getAbsolutePath();
                 if (tmpdirFile.exists()) {
                     if (!tmpdirFile.isDirectory()) {
-                        throw new NotDirectoryException(tmpdirPath.toString());
+                        throw new IOException("not a directory: " + tmpdirPath);
                     }
                 } else {
-                    Files.createDirectories(tmpdirPath);
+                    tmpdirFile.mkdirs();
                 }
 
                 if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                    throw new AccessDeniedException(tmpdirPath.toString());
+                    throw new IOException("access denied: " + tmpdirPath);
                 }
             } catch (Exception ex) {
-                String msg = "java.io.tmpdir=\"" + tmpdir + "\": Invalid directory";
+                String msg = "Invalid directory: " + path;
                 throw new IOException(msg, ex);
             }
 
@@ -150,19 +161,29 @@ public final class CRT {
             String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
-            Path libTempPath = Files.createTempFile(tmpdirPath, prefix, libraryName);
+
+            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
 
             // open a stream to read the shared lib contents from this JAR
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
                 }
+
+                if (tempSharedLib.exists()) {
+                    tempSharedLib.delete();
+                }
+
                 // Copy from jar stream to temp file
-                Files.deleteIfExists(libTempPath);
-                Files.copy(in, libTempPath);
+                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
+                    int read;
+                    byte [] bytes = new byte[1024];
+                    while ((read = in.read(bytes)) != -1){
+                        out.write(bytes, 0, read);
+                    }
+                }
             }
 
-            File tempSharedLib = libTempPath.toFile();
             if (!tempSharedLib.setExecutable(true)) {
                 throw new CrtRuntimeException("Unable to make shared library executable");
             }
@@ -177,17 +198,51 @@ public final class CRT {
             tempSharedLib.deleteOnExit();
 
             // load the shared lib from the temp path
-            System.load(libTempPath.toString());
+            System.load(tempSharedLib.getAbsolutePath());
         } catch (CrtRuntimeException crtex) {
-            System.err.println("Unable to initialize AWS CRT: " + crtex.toString());
+            System.err.println("Unable to initialize AWS CRT: " + crtex);
             crtex.printStackTrace();
+            throw crtex;
         } catch (UnknownPlatformException upe) {
-            System.err.println("Unable to determine platform for AWS CRT: " + upe.toString());
+            System.err.println("Unable to determine platform for AWS CRT: " + upe);
             upe.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to determine platform for AWS CRT");
+            rex.initCause(upe);
+            throw rex;
         } catch (Exception ex) {
-            System.err.println("Unable to unpack AWS CRT lib: " + ex.toString());
+            System.err.println("Unable to unpack AWS CRT lib: " + ex);
             ex.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
+            rex.initCause(ex);
+            throw rex;
         }
+    }
+
+    private static void loadLibraryFromJar() {
+        // By default, just try java.io.tmpdir
+        List<String> pathsToTry = new LinkedList<>();
+        pathsToTry.add(System.getProperty("java.io.tmpdir"));
+
+        // If aws.crt.lib.dir is specified, try that first
+        String overrideLibDir = System.getProperty("aws.crt.lib.dir");
+        if (overrideLibDir != null) {
+            pathsToTry.add(0, overrideLibDir);
+        }
+
+        List<Exception> exceptions = new LinkedList<>();
+        for (String path : pathsToTry) {
+            try {
+                extractAndLoadLibrary(path);
+                return;
+            } catch (CrtRuntimeException ex) {
+                exceptions.add(ex);
+            }
+        }
+
+        // Aggregate the exceptions in order and throw a single failure exception
+        StringBuilder failureMessage = new StringBuilder();
+        exceptions.stream().map(Exception::toString).forEach(failureMessage::append);
+        throw new CrtRuntimeException(failureMessage.toString());
     }
 
     private static CrtPlatform findPlatformImpl() {

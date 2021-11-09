@@ -7,7 +7,16 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-8-jdk-headless maven -y -f
+      - sudo apt-get install openjdk-11-jdk-headless maven wget unzip -y -f
+      # install android sdk
+      - wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+      - export ANDROID_SDK_ROOT=$CODEBUILD_SRC_DIR/android-sdk
+      - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+      - unzip commandlinetools-linux-7583922_latest.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+      # This weird path needed for cmd tool to work
+      - mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+      # install android build tools
+      - echo y | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-30" "ndk;21.4.7075529"
 
   pre_build:
     commands:
@@ -26,6 +35,7 @@ phases:
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
@@ -37,6 +47,8 @@ phases:
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
       - cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt
+      # deploy android
+      - bash ./codebuild/cd/deploy-snapshot-android.sh
   post_build:
     commands:
 
@@ -46,7 +58,8 @@ artifacts:
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.jar
     - $CODEBUILD_SRC_DIR/aws-crt-java/target/aws-crt-*.asc
     - /tmp/repositoryId.txt
+    - /tmp/android_repositoryId.txt
 
 cache:
   paths:
-    - '/root/.m2/**/*'
+    - "/root/.m2/**/*"

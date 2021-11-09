@@ -38,17 +38,21 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         HttpConnectionTestResponse resp = new HttpConnectionTestResponse();
         HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
         options.withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
-
-        try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
-            resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                resp.actuallyConnected = true;
+        int retryCounts = 3;
+        for (int iter = 0; iter < retryCounts; iter++) {
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    resp.actuallyConnected = true;
+                }
+                break;
+            } catch (Exception e) {
+                if (iter == retryCounts - 1) {
+                    resp.exceptionThrown = true;
+                    resp.exception = e;
+                }
             }
-        } catch (Exception e) {
-            resp.exceptionThrown = true;
-            resp.exception = e;
         }
-
         return resp;
     }
 
@@ -91,7 +95,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpConnection() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
@@ -112,7 +116,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testStaticDefaults() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);

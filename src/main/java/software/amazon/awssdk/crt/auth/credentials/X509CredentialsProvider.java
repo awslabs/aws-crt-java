@@ -31,6 +31,9 @@ public class X509CredentialsProvider extends CredentialsProvider {
         private ClientBootstrap clientBootstrap;
         private HttpProxyOptions proxyOptions;
 
+        /**
+         * Default constructor
+         */
         public X509CredentialsProviderBuilder() {}
 
         /**
@@ -116,6 +119,10 @@ public class X509CredentialsProvider extends CredentialsProvider {
         HttpProxyOptions getProxyOptions() { return proxyOptions; }
 
 
+        /**
+         * Creates a new X509 credentials provider, based on this builder's configuration
+         * @return a new X509 credentials provider
+         */
         public X509CredentialsProvider build() {
             return new X509CredentialsProvider(this);
         }

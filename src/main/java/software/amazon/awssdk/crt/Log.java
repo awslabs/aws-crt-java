@@ -171,7 +171,7 @@ public class Log {
         }
     }
 
-    /*
+    /**
      * Initializes logging to go to stdout
      * @param level the filter level to apply to log calls
      */
@@ -179,7 +179,7 @@ public class Log {
         initLoggingToStdout(level.getValue());
     }
 
-    /*
+    /**
      * Initializes logging to go to stderr
      * @param level the filter level to apply to log calls
      */
@@ -187,7 +187,7 @@ public class Log {
         initLoggingToStderr(level.getValue());
     }
 
-    /*
+    /**
      * Initializes logging to go to a file
      * @param level the filter level to apply to log calls
      * @param filename name of the file to direct logging to

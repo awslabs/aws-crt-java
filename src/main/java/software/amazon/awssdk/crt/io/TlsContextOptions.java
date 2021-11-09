@@ -11,6 +11,7 @@ import java.util.List;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.PemUtils;
+import software.amazon.awssdk.crt.utils.StringUtils;
 
 /**
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
@@ -54,7 +55,7 @@ public final class TlsContextOptions extends CrtResource {
      * Sets the minimum acceptable TLS version that the {@link TlsContext} will
      * allow. Not compatible with setCipherPreference() API.
      *
-     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS 
+     * Select from TlsVersions, a good default is TlsVersions.TLS_VER_SYS_DEFAULTS
      * as this will update if the OS TLS is updated
      */
     public TlsVersions minTlsVersion = TlsVersions.TLS_VER_SYS_DEFAULTS;
@@ -87,12 +88,13 @@ public final class TlsContextOptions extends CrtResource {
     private String caDir;
     private String pkcs12Path;
     private String pkcs12Password;
+    private TlsContextPkcs11Options pkcs11Options;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
      */
     private TlsContextOptions() {
-        
+
     }
 
     @Override
@@ -105,7 +107,7 @@ public final class TlsContextOptions extends CrtResource {
             acquireNativeHandle(tlsContextOptionsNew(
                 minTlsVersion.getValue(),
                 tlsCipherPreference.getValue(),
-                alpnList.size() > 0 ? String.join(";", alpnList) : null,
+                alpnList.size() > 0 ? StringUtils.join(";", alpnList) : null,
                 certificate,
                 privateKey,
                 certificatePath,
@@ -115,7 +117,8 @@ public final class TlsContextOptions extends CrtResource {
                 caDir,
                 verifyPeer,
                 pkcs12Path,
-                pkcs12Password
+                pkcs12Password,
+                pkcs11Options
             ));
         }
         return super.getNativeHandle();
@@ -139,6 +142,10 @@ public final class TlsContextOptions extends CrtResource {
         }
     }
 
+    /**
+     * Sets the tls cipher preferences to use in contexts using this configuration
+     * @param cipherPref cipher preferences to use
+     */
     public void setCipherPreference(TlsCipherPreference cipherPref) {
         if(!isCipherPreferenceSupported(cipherPref)) {
             throw new IllegalArgumentException("TlsCipherPreference is not supported on this platform: " + cipherPref.name());
@@ -164,7 +171,7 @@ public final class TlsContextOptions extends CrtResource {
     /**
      * Sets the certificate/key pair that identifies this TLS host. Must be in
      * PEM format.
-     * 
+     *
      * @param certificate PEM armored certificate
      * @param privateKey  PEM armored private key
      * @throws IllegalArgumentException If the certificate or privateKey are not in PEM format or if they contain chains
@@ -224,7 +231,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper function to provide a TlsContext-local trust store
-     * 
+     *
      * @param caRoot Buffer containing the root certificate chain. Must be in PEM format.
      * @throws IllegalArgumentException if the CA Root PEM file is malformed
      */
@@ -249,7 +256,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates a default set of TLS options for the current platform
-     * 
+     *
      * @return A default configured set of options for a TLS server connection
      */
     public static TlsContextOptions createDefaultServer() {
@@ -273,7 +280,7 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates TLS options using a certificate and private key
-     * 
+     *
      * @param certificate String containing a PEM format certificate
      * @param privateKey  String containing a PEM format private key
      * @return A set of options for setting up an MTLS connection
@@ -296,6 +303,18 @@ public final class TlsContextOptions extends CrtResource {
     public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         TlsContextOptions options = new TlsContextOptions();
         options.initMtlsPkcs12(pkcs12Path, pkcs12Password);
+        options.verifyPeer = true;
+        return options;
+    }
+
+    /**
+     * Unix platforms only - Helper which creates TLS options using a PKCS#11 library for private key operations.
+     * @param pkcs11Options PKCS#11 options
+     * @return A set of options for creating a PKCS#11 TLS connection
+     */
+    public static TlsContextOptions createWithMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsPkcs11(pkcs11Options);
         options.verifyPeer = true;
         return options;
     }
@@ -393,6 +412,17 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Unix platforms only, specifies mTLS using a PKCS#11 library for private key operations.
+     * @param pkcs11Options PKCS#11 options
+     * @return this
+     */
+    public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
+        swapReferenceTo(this.pkcs11Options, pkcs11Options);
+        this.pkcs11Options = pkcs11Options;
+        return this;
+    }
+
+    /**
      * Sets whether or not TLS will validate the certificate from the peer. On clients,
      * this is enabled by default. On servers, this is disabled by default.
      * @param verify true to verify peers, false to ignore certs
@@ -428,7 +458,8 @@ public final class TlsContextOptions extends CrtResource {
                 String caDir,
                 boolean verifyPeer,
                 String pkcs12Path,
-                String pkcs12Password
+                String pkcs12Password,
+                TlsContextPkcs11Options pkcs11Options
             );
 
     private static native void tlsContextOptionsDestroy(long elg);

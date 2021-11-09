@@ -6,7 +6,7 @@
 package software.amazon.awssdk.crt.http;
 
 /**
- * Type of header block
+ * Type of header block.  Syncs with the native enum aws_http_header_block
  */
 public enum HttpHeaderBlock {
     
@@ -22,6 +22,9 @@ public enum HttpHeaderBlock {
         blockType = value;
     }
 
+    /**
+     * @return the native enum value associated with this Java enum value
+     */
     public int getValue() {
         return blockType;
     }

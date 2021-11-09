@@ -14,6 +14,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
+import software.amazon.awssdk.crt.io.Uri;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
@@ -24,8 +25,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.nio.charset.StandardCharsets;
+import java.lang.String;
+import java.io.UnsupportedEncodingException;
 
 public class S3NativeClient implements AutoCloseable {
+    private static final String USER_METADATA_PREFIX = "x-amz-meta-";
+
     private final S3Client s3Client;
     private final String signingRegion;
 
@@ -87,7 +93,7 @@ public class S3NativeClient implements AutoCloseable {
     }
 
     private String getEncodedPath(String key, String customQueryParameters) {
-        String encodedPath = "/" + key;
+        String encodedPath = Uri.appendEncodingUriPath("/", key);
 
         if (customQueryParameters == null) {
             return encodedPath;
@@ -101,6 +107,52 @@ public class S3NativeClient implements AutoCloseable {
 
         encodedPath += "?" + trimmedCustomQueryParameters;
         return encodedPath;
+    }
+
+    private String urlParamBuild(Map<?, ?> map) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (sb.length() > 0) {
+                sb.append("&");
+            }
+            sb.append(String.format("%s=%s", Uri.encodeUriParam(entry.getKey().toString()),
+                    Uri.encodeUriParam(entry.getValue().toString())));
+        }
+        return sb.toString();
+    }
+
+    private String getGetObjectRequestQueryParameters(GetObjectRequest request) {
+        final Map<String, String> requestParams = new HashMap<>();
+        if (request.partNumber() != null) {
+            requestParams.put("partNumber", Integer.toString(request.partNumber()));
+        }
+        if (request.responseCacheControl() != null) {
+            requestParams.put("response-cache-control", request.responseCacheControl());
+        }
+        if (request.responseContentDisposition() != null) {
+            requestParams.put("response-content-disposition", request.responseContentDisposition());
+        }
+        if (request.responseContentEncoding() != null) {
+            requestParams.put("response-content-encoding", request.responseContentEncoding());
+        }
+        if (request.responseContentLanguage() != null) {
+            requestParams.put("response-content-language", request.responseContentLanguage());
+        }
+        if (request.responseContentType() != null) {
+            requestParams.put("response-content-type", request.responseContentType());
+        }
+        if (request.responseExpires() != null) {
+            requestParams.put("response-expires",
+                    DateTimeFormatter.RFC_1123_DATE_TIME.format(request.responseExpires()));
+        }
+        if (request.versionId() != null) {
+            requestParams.put("versionId", request.versionId());
+        }
+        String queryParams = urlParamBuild(requestParams);
+        if (!queryParams.trim().equals("")) {
+            return queryParams + "&" + request.customQueryParameters();
+        }
+        return request.customQueryParameters();
     }
 
     private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
@@ -133,6 +185,8 @@ public class S3NativeClient implements AutoCloseable {
                                 e));
                     }
                 }
+
+                populateGetObjectOutputUserMetadata(resultBuilder, headers);
                 dataHandler.onResponseHeaders(statusCode, headers);
                 getObjectOutput = resultBuilder.build();
                 dataHandler.onResponse(getObjectOutput);
@@ -170,14 +224,10 @@ public class S3NativeClient implements AutoCloseable {
         // TODO: additional logic needed for *special* partitions
         headers.add(new HttpHeader("Host", request.bucket() + ".s3." + signingRegion + ".amazonaws.com"));
         populateGetObjectRequestHeaders(header -> headers.add(header), request);
-        final Map<String, String> requestParams = new HashMap<>();
-        if (request.partNumber() != null) {
-            requestParams.put("PartNumber", Integer.toString(request.partNumber()));
-        }
 
         addCustomHeaders(headers, request.customHeaders());
-
-        String encodedPath = getEncodedPath(request.key(), request.customQueryParameters());
+        String getObjectRequestQueryParameters = getGetObjectRequestQueryParameters(request);
+        String encodedPath = getEncodedPath(request.key(), getObjectRequestQueryParameters);
 
         HttpRequest httpRequest = new HttpRequest("GET", encodedPath, headers.toArray(new HttpHeader[0]), null);
 
@@ -299,7 +349,7 @@ public class S3NativeClient implements AutoCloseable {
         if (request.ifMatch() != null) {
             headerConsumer.accept(new HttpHeader("If-Match", request.ifMatch()));
         }
-        if (request.ifMatch() != null) {
+        if (request.ifModifiedSince() != null) {
             headerConsumer.accept(new HttpHeader("If-Modified-Since",
                     DateTimeFormatter.RFC_1123_DATE_TIME.format(request.ifModifiedSince())));
         }
@@ -354,6 +404,24 @@ public class S3NativeClient implements AutoCloseable {
             builder.contentLength(Long.parseLong(header.getValue()));
         } else {
             // unhandled header is not necessarily bad, but potentially logged
+        }
+    }
+
+    protected void populateGetObjectOutputUserMetadata(final GetObjectOutput.Builder builder, final HttpHeader[] headers) {
+
+        final Map<String, String> metadata = new HashMap<>();
+
+        for (final HttpHeader header : headers) {
+            if (header.getName().startsWith(USER_METADATA_PREFIX)) {
+                // removes prefix
+                final String metadataKey = header.getName().replaceFirst(USER_METADATA_PREFIX, "");
+                metadata.put(metadataKey, header.getValue());
+            }
+        }
+
+        if (metadata.size() > 0) {
+            // only sets metadata field if there is some metadata header
+            builder.metadata(metadata);
         }
     }
 
@@ -453,7 +521,23 @@ public class S3NativeClient implements AutoCloseable {
         if (request.expectedBucketOwner() != null) {
             headerConsumer.accept(new HttpHeader("x-amz-expected-bucket-owner", request.expectedBucketOwner()));
         }
+        populatePutObjectUserMetadataHeaders(headerConsumer, request);
     }
+
+    protected void populatePutObjectUserMetadataHeaders(final Consumer<HttpHeader> headerConsumer,
+                                                        final PutObjectRequest request) {
+
+        final Map<String, String> metadata = request.metadata();
+        if (metadata == null) {
+            return; // no metadata to set
+        }
+
+        for (Map.Entry<String, String> entry : metadata.entrySet()) {
+            final String headerName = USER_METADATA_PREFIX + entry.getKey();
+            headerConsumer.accept(new HttpHeader(headerName, entry.getValue()));
+        }
+    }
+
 
     protected void populatePutObjectOutputHeader(final PutObjectOutput.Builder builder, final HttpHeader header) {
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html

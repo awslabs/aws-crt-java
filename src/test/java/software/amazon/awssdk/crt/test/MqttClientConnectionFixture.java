@@ -60,7 +60,11 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     String caRoot = null;
     String iotEndpoint = null;
 
-    protected void modifyConnectionConfiguration(MqttConnectionConfig config) {}
+    Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
+
+    protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
+        this.connectionConfigTransformer = connectionConfigTransformer;
+    }
 
     private boolean findCredentials() {
         CrtTestContext ctx = getContext();
@@ -184,7 +188,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
 
-                modifyConnectionConfiguration(config);
+                if (connectionConfigTransformer != null) {
+                    connectionConfigTransformer.accept(config);
+                }
 
                 connection = new MqttClientConnection(config);
                 if (anyMessageHandler != null) {

@@ -50,6 +50,10 @@ public final class CRT {
         }
     }
 
+    /**
+     * Exception thrown when we can't detect what platform we're running on and thus can't figure out
+     * the native library name/path to load.
+     */
     public static class UnknownPlatformException extends RuntimeException {
         UnknownPlatformException(String message) {
             super(message);
@@ -72,6 +76,10 @@ public final class CRT {
         }
     }
 
+    /**
+     * @return a string describing the detected platform the CRT is executing on
+     * @throws UnknownPlatformException
+     */
     public static String getOSIdentifier() throws UnknownPlatformException {
         if (isAndroid()) {
             return "android";
@@ -95,6 +103,10 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
+    /**
+     * @return a string describing the detected architecture the CRT is executing on
+     * @throws UnknownPlatformException
+     */
     public static String getArchIdentifier() throws UnknownPlatformException {
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));

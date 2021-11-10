@@ -85,39 +85,71 @@ public class HttpRequest {
         this.bodyStream = bodyStream;
     }
 
+    /**
+     * @return the HTTP method of this request
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * @return the encoded path of this request
+     */
     public String getEncodedPath() {
         return encodedPath;
     }
 
+    /**
+     * Sets the request's encoded path
+     * @param encodedPath the new encoded path
+     */
     public void setEncodedPath(final String encodedPath) {
         this.encodedPath = encodedPath;
     }
 
+    /**
+     * @return A list of the headers for this request
+     */
     public List<HttpHeader> getHeaders() {
         return headers;
     }
 
+    /**
+     * @return An array of the headers for this request
+     */
     public HttpHeader[] getHeadersAsArray() {
         return headers.toArray(new HttpHeader[] {});
     }
 
+    /**
+     * Adds a header to this request's header set
+     * @param header a new header to add to the header set
+     */
     public void addHeader(final HttpHeader header) {
         headers.add(header);
     }
 
+    /**
+     * Adds a header to this request's header set
+     * @param headerName name of the header to add
+     * @param headerValue value of the header to add
+     */
     public void addHeader(final String headerName, final String headerValue) {
         headers.add(new HttpHeader(headerName, headerValue));
     }
 
+    /**
+     * Add multiple headers to this request's header set
+     * @param headers array of headers to add
+     */
     public void addHeaders(final HttpHeader[] headers) {
         Collections.addAll(this.headers, headers);
 
     }
 
+    /**
+     * @return the body stream associated with this request
+     */
     public HttpRequestBodyStream getBodyStream() {
         return bodyStream;
     }

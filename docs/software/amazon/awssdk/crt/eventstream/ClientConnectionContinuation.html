@@ -185,7 +185,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#activate(java.lang.String,java.util.List,byte%5B%5D,software.amazon.awssdk.crt.eventstream.MessageType,int)">activate</a></span>&#8203;(java.lang.String&nbsp;operationName,
         java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
         byte[]&nbsp;payload,
-        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
         int&nbsp;messageFlags)</code></th>
 <td class="colLast">
 <div class="block">Sends the initial message on a continuation, and begins the message flow for a stream.</div>
@@ -196,7 +196,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#activate(java.lang.String,java.util.List,byte%5B%5D,software.amazon.awssdk.crt.eventstream.MessageType,int,software.amazon.awssdk.crt.eventstream.MessageFlushCallback)">activate</a></span>&#8203;(java.lang.String&nbsp;operationName,
         java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
         byte[]&nbsp;payload,
-        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
         int&nbsp;messageFlags,
         <a href="MessageFlushCallback.html" title="interface in software.amazon.awssdk.crt.eventstream">MessageFlushCallback</a>&nbsp;callback)</code></th>
 <td class="colLast">
@@ -207,7 +207,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <td class="colFirst"><code>java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sendMessage(java.util.List,byte%5B%5D,software.amazon.awssdk.crt.eventstream.MessageType,int)">sendMessage</a></span>&#8203;(java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
            byte[]&nbsp;payload,
-           <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+           <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
            int&nbsp;messageFlags)</code></th>
 <td class="colLast">
 <div class="block">Sends message on the continuation</div>
@@ -217,7 +217,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sendMessage(java.util.List,byte%5B%5D,software.amazon.awssdk.crt.eventstream.MessageType,int,software.amazon.awssdk.crt.eventstream.MessageFlushCallback)">sendMessage</a></span>&#8203;(java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
            byte[]&nbsp;payload,
-           <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+           <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
            int&nbsp;messageFlags,
            <a href="MessageFlushCallback.html" title="interface in software.amazon.awssdk.crt.eventstream">MessageFlushCallback</a>&nbsp;callback)</code></th>
 <td class="colLast">
@@ -264,7 +264,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <pre class="methodSignature">public&nbsp;void&nbsp;activate&#8203;(java.lang.String&nbsp;operationName,
                      java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
                      byte[]&nbsp;payload,
-                     <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+                     <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
                      int&nbsp;messageFlags,
                      <a href="MessageFlushCallback.html" title="interface in software.amazon.awssdk.crt.eventstream">MessageFlushCallback</a>&nbsp;callback)</pre>
 <div class="block">Initiates a new client stream. Sends new message for the new stream.</div>
@@ -273,7 +273,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <dd><code>operationName</code> - name for the operation to be invoked by the peer endpoint.</dd>
 <dd><code>headers</code> - headers for the event-stream message, may be null or empty.</dd>
 <dd><code>payload</code> - payload for the event-stream message, may be null or empty.</dd>
-<dd><code>messsageType</code> - messageType for the message. Must be ApplicationMessage or ApplicationError</dd>
+<dd><code>messageType</code> - messageType for the message. Must be ApplicationMessage or ApplicationError</dd>
 <dd><code>messageFlags</code> - union of flags for MessageFlags.getByteValue()</dd>
 <dd><code>callback</code> - callback to be invoked upon the message being flushed to the underlying transport.</dd>
 </dl>
@@ -288,7 +288,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <pre class="methodSignature">public&nbsp;java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt;&nbsp;activate&#8203;(java.lang.String&nbsp;operationName,
                                                                        java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
                                                                        byte[]&nbsp;payload,
-                                                                       <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+                                                                       <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
                                                                        int&nbsp;messageFlags)</pre>
 <div class="block">Sends the initial message on a continuation, and begins the message flow for a stream.</div>
 <dl>
@@ -296,7 +296,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <dd><code>operationName</code> - name of the operation to invoke on the server.</dd>
 <dd><code>headers</code> - list of additional event stream headers to include on the message.</dd>
 <dd><code>payload</code> - payload for the message</dd>
-<dd><code>messsageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
+<dd><code>messageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
 <dd><code>messageFlags</code> - message flags for the message.</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Completeable future for syncing with the connection completing or failing.</dd>
@@ -311,7 +311,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <h4>sendMessage</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;sendMessage&#8203;(java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
                         byte[]&nbsp;payload,
-                        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+                        <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
                         int&nbsp;messageFlags,
                         <a href="MessageFlushCallback.html" title="interface in software.amazon.awssdk.crt.eventstream">MessageFlushCallback</a>&nbsp;callback)</pre>
 <div class="block">Sends message on the continuation</div>
@@ -319,7 +319,7 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>headers</code> - list of additional event stream headers to include on the message.</dd>
 <dd><code>payload</code> - payload for the message</dd>
-<dd><code>messsageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
+<dd><code>messageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
 <dd><code>messageFlags</code> - message flags for the message, use TerminateStream to cause this message
                      to close the continuation after sending.</dd>
 <dd><code>callback</code> - completion callback to be invoked when the message is synced to the underlying
@@ -335,14 +335,14 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <h4>sendMessage</h4>
 <pre class="methodSignature">public&nbsp;java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt;&nbsp;sendMessage&#8203;(java.util.List&lt;<a href="Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a>&gt;&nbsp;headers,
                                                                           byte[]&nbsp;payload,
-                                                                          <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messsageType,
+                                                                          <a href="MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a>&nbsp;messageType,
                                                                           int&nbsp;messageFlags)</pre>
 <div class="block">Sends message on the continuation</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>headers</code> - list of additional event stream headers to include on the message.</dd>
 <dd><code>payload</code> - payload for the message</dd>
-<dd><code>messsageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
+<dd><code>messageType</code> - message type. Must be either ApplicationMessage or ApplicationError</dd>
 <dd><code>messageFlags</code> - message flags for the message, use TerminateStream to cause this message
                      to close the continuation after sending.</dd>
 <dt><span class="returnLabel">Returns:</span></dt>

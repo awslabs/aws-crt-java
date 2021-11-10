@@ -7,6 +7,9 @@ package software.amazon.awssdk.crt.io;
 import java.nio.charset.StandardCharsets;
 import software.amazon.awssdk.crt.CRT;
 
+/**
+ * Wrapper around an http URI
+ */
 public class Uri {
     static {
         new CRT();

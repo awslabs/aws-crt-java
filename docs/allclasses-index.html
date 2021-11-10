@@ -112,7 +112,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/AsyncCallback.html" title="interface in software.amazon.awssdk.crt">AsyncCallback</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Async io completion abstraction used by the native mqtt layer.</div>
+</th>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigner.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigner</a></td>
@@ -154,7 +156,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <tr id="i7" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningUtils.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningUtils</a></td>
 <th class="colLast" scope="row">
-<div class="block">Utility functions for verifying sigv4a signatures</div>
+<div class="block">Internal utility/testing functions for verifying sigv4a signatures.</div>
 </th>
 </tr>
 <tr id="i8" class="altColor">
@@ -215,11 +217,15 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i17" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/checksums/CRC32.html" title="class in software.amazon.awssdk.crt.checksums">CRC32</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">CRT implementation of the Java Checksum interface for making CRC32 checksum calculations</div>
+</th>
 </tr>
 <tr id="i18" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/checksums/CRC32C.html" title="class in software.amazon.awssdk.crt.checksums">CRC32C</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">CRT implementation of the Java Checksum interface for making Crc32c checksum calculations</div>
+</th>
 </tr>
 <tr id="i19" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/credentials/Credentials.html" title="class in software.amazon.awssdk.crt.auth.credentials">Credentials</a></td>
@@ -242,7 +248,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i22" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/CRT.UnknownPlatformException.html" title="class in software.amazon.awssdk.crt">CRT.UnknownPlatformException</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Exception thrown when we can't detect what platform we're running on and thus can't figure out
+ the native library name/path to load.</div>
+</th>
 </tr>
 <tr id="i23" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/CrtPlatform.html" title="class in software.amazon.awssdk.crt">CrtPlatform</a></td>
@@ -294,7 +303,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <tr id="i31" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/credentials/DelegateCredentialsProvider.DelegateCredentialsProviderBuilder.html" title="class in software.amazon.awssdk.crt.auth.credentials">DelegateCredentialsProvider.DelegateCredentialsProviderBuilder</a></td>
 <th class="colLast" scope="row">
-<div class="block">A simple builder class for a static credentials provider and its options</div>
+<div class="block">A simple builder class for a delegate credentials provider and its options</div>
 </th>
 </tr>
 <tr id="i32" class="altColor">
@@ -305,7 +314,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i33" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/cal/EccKeyPair.AwsEccCurve.html" title="enum in software.amazon.awssdk.crt.cal">EccKeyPair.AwsEccCurve</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Enum for supported ECC curves
+ Needs to stay in sync with aws_ecc_curve_name</div>
+</th>
 </tr>
 <tr id="i34" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/credentials/EcsCredentialsProvider.html" title="class in software.amazon.awssdk.crt.auth.credentials">EcsCredentialsProvider</a></td>
@@ -329,11 +341,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i37" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Configuration options for the exponential backoff retry strategy for http requests</div>
+</th>
 </tr>
 <tr id="i38" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">What kind of jitter or randomization to apply to the backoff time interval
+
+ https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/</div>
+</th>
 </tr>
 <tr id="i39" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a></td>
@@ -343,11 +361,16 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i40" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/HeaderType.html" title="enum in software.amazon.awssdk.crt.eventstream">HeaderType</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Java mirror of the native aws_event_stream_header_value_type enum, specifying properties of
+ the type of a header's value</div>
+</th>
 </tr>
 <tr id="i41" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/HostResolver.html" title="class in software.amazon.awssdk.crt.io">HostResolver</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Java wrapper around the native CRT host resolver, responsible for performing async dns lookups</div>
+</th>
 </tr>
 <tr id="i42" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/http/HttpClientConnection.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnection</a></td>
@@ -376,12 +399,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i46" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/http/HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">A wrapper class for http header key-value pairs</div>
+</th>
 </tr>
 <tr id="i47" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/http/HttpHeaderBlock.html" title="enum in software.amazon.awssdk.crt.http">HttpHeaderBlock</a></td>
 <th class="colLast" scope="row">
-<div class="block">Type of header block</div>
+<div class="block">Type of header block.</div>
 </th>
 </tr>
 <tr id="i48" class="altColor">
@@ -430,7 +455,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i55" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/http/HttpStream.HttpStreamWriteChunkCompletionCallback.html" title="interface in software.amazon.awssdk.crt.http">HttpStream.HttpStreamWriteChunkCompletionCallback</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Completion interface for writing chunks to an http stream</div>
+</th>
 </tr>
 <tr id="i56" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/http/HttpStreamResponseHandler.html" title="interface in software.amazon.awssdk.crt.http">HttpStreamResponseHandler</a></td>
@@ -464,7 +491,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i61" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/MessageFlags.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageFlags</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Java mirror of the native aws_event_stream_rpc_message_flag enum, specifying rpc message-related flags</div>
+</th>
 </tr>
 <tr id="i62" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/MessageFlushCallback.html" title="interface in software.amazon.awssdk.crt.eventstream">MessageFlushCallback</a></td>
@@ -474,7 +503,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i63" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Java mirror of the native aws_event_stream_rpc_message_type enum, specifying the type of rpc message</div>
+</th>
 </tr>
 <tr id="i64" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/mqtt/MqttClient.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClient</a></td>
@@ -503,7 +534,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i67" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/mqtt/MqttConnectionConfig.html" title="class in software.amazon.awssdk.crt.mqtt">MqttConnectionConfig</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Encapsulates all per-mqtt-connection configuration</div>
+</th>
 </tr>
 <tr id="i68" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/mqtt/MqttException.html" title="class in software.amazon.awssdk.crt.mqtt">MqttException</a></td>
@@ -527,11 +560,15 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i71" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/utils/PackageInfo.html" title="class in software.amazon.awssdk.crt.utils">PackageInfo</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Class that wraps version and package introspection</div>
+</th>
 </tr>
 <tr id="i72" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/utils/PackageInfo.Version.html" title="class in software.amazon.awssdk.crt.utils">PackageInfo.Version</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Class representing the introspected semantic version of the CRT library</div>
+</th>
 </tr>
 <tr id="i73" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/utils/PemUtils.html" title="class in software.amazon.awssdk.crt.utils">PemUtils</a></td>
@@ -603,7 +640,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i86" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/ServerBootstrap.html" title="class in software.amazon.awssdk.crt.io">ServerBootstrap</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">This class wraps the aws_server_bootstrap from aws-c-io to provide
+ a server context for all protocol stacks in the AWS Common Runtime.</div>
+</th>
 </tr>
 <tr id="i87" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/eventstream/ServerConnection.html" title="class in software.amazon.awssdk.crt.eventstream">ServerConnection</a></td>
@@ -669,7 +709,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i97" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Top-level configuration for http retries.</div>
+</th>
 </tr>
 <tr id="i98" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/auth/credentials/StaticCredentialsProvider.html" title="class in software.amazon.awssdk.crt.auth.credentials">StaticCredentialsProvider</a></td>
@@ -714,7 +756,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i105" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/SystemInfo.html" title="class in software.amazon.awssdk.crt">SystemInfo</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Utility class for querying system hardware properties</div>
+</th>
 </tr>
 <tr id="i106" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/SystemInfo.CpuInfo.html" title="class in software.amazon.awssdk.crt">SystemInfo.CpuInfo</a></td>
@@ -752,7 +796,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </tr>
 <tr id="i112" class="altColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/io/Uri.html" title="class in software.amazon.awssdk.crt.io">Uri</a></td>
-<th class="colLast" scope="row">&nbsp;</th>
+<th class="colLast" scope="row">
+<div class="block">Wrapper around an http URI</div>
+</th>
 </tr>
 <tr id="i113" class="rowColor">
 <td class="colFirst"><a href="software/amazon/awssdk/crt/mqtt/WebsocketHandshakeTransformArgs.html" title="class in software.amazon.awssdk.crt.mqtt">WebsocketHandshakeTransformArgs</a></td>

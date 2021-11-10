@@ -11,6 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A wrapper class for http header key-value pairs
+ */
 public class HttpHeader {
     private final static int BUFFER_INT_SIZE = 4;
     private final static Charset UTF8 = StandardCharsets.UTF_8;
@@ -25,16 +28,30 @@ public class HttpHeader {
     private HttpHeader() {
     }
 
+    /**
+     *
+     * @param name  header name
+     * @param value header value
+     */
     public HttpHeader(String name, String value) {
         this.name = name.getBytes(UTF8);
         this.value = value.getBytes(UTF8);
     }
 
+    /**
+     *
+     * @param name  header name
+     * @param value header value
+     */
     public HttpHeader(byte[] name, byte[] value) {
         this.name = name;
         this.value = value;
     }
 
+    /**
+     *
+     * @return the name of the header, converted to a UTF-8 string
+     */
     public String getName() {
         if (name == null) {
             return "";
@@ -42,10 +59,18 @@ public class HttpHeader {
         return new String(name, UTF8);
     }
 
+    /**
+     *
+     * @return the name of the header, in raw bytes
+     */
     public byte[] getNameBytes() {
         return name;
     }
 
+    /**
+     *
+     * @return the value of the header, converted to a UTF-8 string
+     */
     public String getValue() {
         if (value == null) {
             return "";
@@ -53,6 +78,10 @@ public class HttpHeader {
         return new String(value, UTF8);
     }
 
+    /**
+     *
+     * @return the value of the header, in raw bytes
+     */
     public byte[] getValueBytes() {
         return value;
     }

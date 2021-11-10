@@ -167,7 +167,9 @@ implements java.lang.AutoCloseable</pre>
 <tr class="altColor">
 <td class="colFirst"><code>class&nbsp;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="CrtResource.ResourceInstance.html" title="class in software.amazon.awssdk.crt">CrtResource.ResourceInstance</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Debug/diagnostic data about a CrtResource object</div>
+</td>
 </tr>
 </table>
 </li>
@@ -188,7 +190,9 @@ implements java.lang.AutoCloseable</pre>
 </tr>
 <tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">CrtResource</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Default constructor</div>
+</td>
 </tr>
 </table>
 </li>
@@ -230,12 +234,16 @@ implements java.lang.AutoCloseable</pre>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>static void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#collectNativeResource(java.util.function.Consumer)">collectNativeResource</a></span>&#8203;(java.util.function.Consumer&lt;<a href="CrtResource.ResourceInstance.html" title="class in software.amazon.awssdk.crt">CrtResource.ResourceInstance</a>&gt;&nbsp;fn)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Applies a generic diagnostic-gathering functor to all CRTResource objects</div>
+</td>
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code>static void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#collectNativeResources(java.util.function.Consumer)">collectNativeResources</a></span>&#8203;(java.util.function.Consumer&lt;java.lang.String&gt;&nbsp;fn)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Applies a resource description consuming functor to all CRTResource objects</div>
+</td>
 </tr>
 <tr id="i5" class="rowColor">
 <td class="colFirst"><code>void</code></td>
@@ -254,7 +262,9 @@ implements java.lang.AutoCloseable</pre>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getResourceLogDescription()">getResourceLogDescription</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Gets a debug/diagnostic string describing this resource and its reference state</div>
+</td>
 </tr>
 <tr id="i8" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
@@ -280,7 +290,9 @@ implements java.lang.AutoCloseable</pre>
 <tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setDescription(java.lang.String)">setDescription</a></span>&#8203;(java.lang.String&nbsp;description)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Sets a custom logging description for this resource</div>
+</td>
 </tr>
 <tr id="i12" class="altColor">
 <td class="colFirst"><code>static void</code></td>
@@ -320,6 +332,7 @@ implements java.lang.AutoCloseable</pre>
 <li class="blockList">
 <h4>CrtResource</h4>
 <pre>public&nbsp;CrtResource()</pre>
+<div class="block">Default constructor</div>
 </li>
 </ul>
 </li>
@@ -430,6 +443,11 @@ implements java.lang.AutoCloseable</pre>
 <li class="blockList">
 <h4>setDescription</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;setDescription&#8203;(java.lang.String&nbsp;description)</pre>
+<div class="block">Sets a custom logging description for this resource</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>description</code> - custom resource description</dd>
+</dl>
 </li>
 </ul>
 <a id="getResourceLogDescription()">
@@ -439,6 +457,11 @@ implements java.lang.AutoCloseable</pre>
 <li class="blockList">
 <h4>getResourceLogDescription</h4>
 <pre class="methodSignature">public&nbsp;java.lang.String&nbsp;getResourceLogDescription()</pre>
+<div class="block">Gets a debug/diagnostic string describing this resource and its reference state</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>resource diagnostic string</dd>
+</dl>
 </li>
 </ul>
 <a id="collectNativeResources(java.util.function.Consumer)">
@@ -448,6 +471,11 @@ implements java.lang.AutoCloseable</pre>
 <li class="blockList">
 <h4>collectNativeResources</h4>
 <pre class="methodSignature">public static&nbsp;void&nbsp;collectNativeResources&#8203;(java.util.function.Consumer&lt;java.lang.String&gt;&nbsp;fn)</pre>
+<div class="block">Applies a resource description consuming functor to all CRTResource objects</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>fn</code> - function to apply to each resource description</dd>
+</dl>
 </li>
 </ul>
 <a id="collectNativeResource(java.util.function.Consumer)">
@@ -457,6 +485,11 @@ implements java.lang.AutoCloseable</pre>
 <li class="blockList">
 <h4>collectNativeResource</h4>
 <pre class="methodSignature">public static&nbsp;void&nbsp;collectNativeResource&#8203;(java.util.function.Consumer&lt;<a href="CrtResource.ResourceInstance.html" title="class in software.amazon.awssdk.crt">CrtResource.ResourceInstance</a>&gt;&nbsp;fn)</pre>
+<div class="block">Applies a generic diagnostic-gathering functor to all CRTResource objects</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>fn</code> - function to apply to each outstanding Crt resource</dd>
+</dl>
 </li>
 </ul>
 <a id="logNativeResources()">

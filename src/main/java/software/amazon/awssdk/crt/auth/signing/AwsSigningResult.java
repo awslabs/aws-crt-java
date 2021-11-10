@@ -10,6 +10,9 @@ public class AwsSigningResult {
     private HttpRequest signedRequest;
     private byte[] signature;
 
+    /**
+     * Default constructor
+     */
     public AwsSigningResult() {}
 
     /**

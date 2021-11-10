@@ -7,6 +7,11 @@ package software.amazon.awssdk.crt;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Async io completion abstraction used by the native mqtt layer.  We moved to using futures directly but
+ * that might have been a mistake and we should consider moving back to this for our other async
+ * operations that cross the managed <-> native boundary
+ */
 public interface AsyncCallback {
 
     static <T> AsyncCallback wrapFuture(CompletableFuture<T> future, T value) {

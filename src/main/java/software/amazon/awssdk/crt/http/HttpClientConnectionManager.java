@@ -33,6 +33,12 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
+    /**
+     * Factory function for HttpClientConnectionManager instances
+     *
+     * @param options configuration options
+     * @return a new instance of an HttpClientConnectionManager
+     */
     public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
         return new HttpClientConnectionManager(options);
     }
@@ -197,10 +203,16 @@ public class HttpClientConnectionManager extends CrtResource {
         return maxConnections;
     }
 
+    /**
+     * @return size of the per-connection streaming read window for response handling
+     */
     public int getWindowSize() {
         return windowSize;
     }
 
+    /**
+     * @return uri the connection manager is making connections to
+     */
     public URI getUri() {
         return uri;
     }

@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public class HttpStream extends CrtResource {
 
+    /**
+     * Completion interface for writing chunks to an http stream
+     */
     public interface HttpStreamWriteChunkCompletionCallback {
         void onChunkCompleted(int errorCode);
     }

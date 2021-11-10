@@ -95,7 +95,12 @@ public class AwsSigningConfig extends CrtResource {
          *
          * This option is not yet supported.
          */
-        HTTP_REQUEST_EVENT(3);
+        HTTP_REQUEST_EVENT(3),
+
+        /**
+         * Compute a signature for a payloads trailing headers.
+         */
+        HTTP_REQUEST_TRAILING_HEADERS(6);
 
         /**
          * Constructs a Java enum value from a native enum value as an integer
@@ -131,6 +136,7 @@ public class AwsSigningConfig extends CrtResource {
             enumMapping.put(HTTP_REQUEST_VIA_QUERY_PARAMS.getNativeValue(), HTTP_REQUEST_VIA_QUERY_PARAMS);
             enumMapping.put(HTTP_REQUEST_CHUNK.getNativeValue(), HTTP_REQUEST_CHUNK);
             enumMapping.put(HTTP_REQUEST_EVENT.getNativeValue(), HTTP_REQUEST_EVENT);
+            enumMapping.put(HTTP_REQUEST_TRAILING_HEADERS.getNativeValue(), HTTP_REQUEST_TRAILING_HEADERS);
 
             return enumMapping;
         }

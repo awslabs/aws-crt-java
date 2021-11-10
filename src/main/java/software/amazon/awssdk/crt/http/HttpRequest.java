@@ -166,21 +166,20 @@ public class HttpRequest {
         int size = 0;
         size += BUFFER_INT_SIZE + method.length();
         size += BUFFER_INT_SIZE + encodedPath.length();
-        size += (BUFFER_INT_SIZE * 2) * headers.size();
-
-        for(HttpHeader header : headers) {
+    
+        for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
-                size += header.getNameBytes().length + header.getValueBytes().length;
+                size += header.getNameBytes().length + header.getValueBytes().length + (BUFFER_INT_SIZE * 2);
             }
         }
-
+    
         ByteBuffer buffer = ByteBuffer.allocate(size);
         buffer.putInt(method.length());
         buffer.put(method.getBytes(UTF8));
         buffer.putInt(encodedPath.length());
         buffer.put(encodedPath.getBytes(UTF8));
-
-        for(HttpHeader header : headers) {
+    
+        for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
                 buffer.putInt(header.getNameBytes().length);
                 buffer.put(header.getNameBytes());
@@ -188,7 +187,7 @@ public class HttpRequest {
                 buffer.put(header.getValueBytes());
             }
         }
-
+    
         return buffer.array();
     }
 }

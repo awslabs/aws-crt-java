@@ -373,7 +373,6 @@ on_error:
 }
 
 struct aws_http_headers *aws_http_headers_new_from_java_http_headers(JNIEnv *env, jbyteArray marshalled_headers) {
-    const char *exception_message = NULL;
     struct aws_http_headers *headers = aws_http_headers_new(aws_jni_get_allocator());
     if (headers == NULL) {
         aws_jni_throw_runtime_exception(env, "aws_http_headers_new_from_java_http_headers: Unable to allocate headers");
@@ -388,16 +387,14 @@ struct aws_http_headers *aws_http_headers_new_from_java_http_headers(JNIEnv *env
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_headers, marshalled_headers_data, 0);
 
     if (result) {
-        exception_message = "aws_http_headers_new_from_java_http_headers: Invalid marshalled headers data.";
+        aws_jni_throw_runtime_exception(
+            env, "aws_http_headers_new_from_java_http_headers: Invalid marshalled headers data.");
         goto on_error;
     }
 
     return headers;
 
 on_error:
-    if (exception_message) {
-        aws_jni_throw_runtime_exception(env, exception_message);
-    }
     aws_http_headers_release(headers);
     return NULL;
 }

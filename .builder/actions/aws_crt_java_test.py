@@ -11,7 +11,8 @@ class AWSCrtJavaTest(Builder.Action):
         actions = []
 
         mvn_test = "mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 \
-            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"
+            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true \
+            -Daws.crt.aws_trace_log_per_test=true"
 
         if sys.platform == "linux":
             mvn_test = "catchsegv " + mvn_test

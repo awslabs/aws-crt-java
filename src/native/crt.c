@@ -256,6 +256,7 @@ static void s_jni_atexit_common(void) {
 }
 
 static void s_jni_atexit_strict(void) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
     s_jni_atexit_common();
 
     if (s_allocator) {
@@ -277,6 +278,7 @@ static void s_jni_atexit_strict(void) {
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
 
 static void s_jni_atexit_gentle(void) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_gentle invoked");
 
     /* If not doing strict shutdown, wait only a short time before shutting down */
     aws_thread_set_managed_join_timeout_ns(

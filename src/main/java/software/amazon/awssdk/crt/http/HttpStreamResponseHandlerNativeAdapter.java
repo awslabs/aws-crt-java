@@ -7,6 +7,9 @@ package software.amazon.awssdk.crt.http;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Response handler implementation used by the native http layer
+ */
 class HttpStreamResponseHandlerNativeAdapter {
     private HttpStreamResponseHandler responseHandler;
 

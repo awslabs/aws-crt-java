@@ -24,6 +24,10 @@ public class CrtRuntimeException extends RuntimeException {
 
     private final static Pattern crtExFormat = Pattern.compile("aws_last_error: (.+)\\(([-0-9]+)\\),");
 
+    /**
+     * Constructor for CRT exceptions not due to native errors
+     * @param msg exception message
+     */
     public CrtRuntimeException(String msg) {
         super(msg);
 
@@ -47,6 +51,10 @@ public class CrtRuntimeException extends RuntimeException {
         this.errorName = errorName;
     }
 
+    /**
+     * Constructor for Crt exceptions due to native errors
+     * @param errorCode native error code detailing the reason for the exception
+     */
     public CrtRuntimeException(int errorCode) {
         super(CRT.awsErrorString(errorCode));
         this.errorCode = errorCode;

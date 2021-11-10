@@ -133,6 +133,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public class <span class="typeNameLabel">StandardRetryOptions</span>
 extends java.lang.Object</pre>
+<div class="block">Top-level configuration for http retries.</div>
 </li>
 </ul>
 </div>
@@ -187,12 +188,16 @@ extends java.lang.Object</pre>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withBackoffRetryOptions(software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions)">withBackoffRetryOptions</a></span>&#8203;(<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;backoffRetryOptions)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Sets the exponential backoff configuration</div>
+</td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withInitialBucketCapacity(long)">withInitialBucketCapacity</a></span>&#8203;(long&nbsp;initialBucketCapacity)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Sets the initial capacity of the token bucket in the standard retry strategy</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -244,6 +249,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withBackoffRetryOptions</h4>
 <pre class="methodSignature">public&nbsp;<a href="StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a>&nbsp;withBackoffRetryOptions&#8203;(<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;backoffRetryOptions)</pre>
+<div class="block">Sets the exponential backoff configuration</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>backoffRetryOptions</code> - exponential backoff configuration</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getBackoffRetryOptions()">
@@ -253,6 +265,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getBackoffRetryOptions</h4>
 <pre class="methodSignature">public&nbsp;<a href="ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a>&nbsp;getBackoffRetryOptions()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>current exponential backoff retry options</dd>
+</dl>
 </li>
 </ul>
 <a id="withInitialBucketCapacity(long)">
@@ -262,6 +278,13 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>withInitialBucketCapacity</h4>
 <pre class="methodSignature">public&nbsp;<a href="StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a>&nbsp;withInitialBucketCapacity&#8203;(long&nbsp;initialBucketCapacity)</pre>
+<div class="block">Sets the initial capacity of the token bucket in the standard retry strategy</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>initialBucketCapacity</code> - initial token bucket capacity</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this options object</dd>
+</dl>
 </li>
 </ul>
 <a id="getInitialBucketCapacity()">
@@ -271,6 +294,10 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>getInitialBucketCapacity</h4>
 <pre class="methodSignature">public&nbsp;long&nbsp;getInitialBucketCapacity()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>current initial bucket capacity</dd>
+</dl>
 </li>
 </ul>
 </li>

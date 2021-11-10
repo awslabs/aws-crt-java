@@ -14,6 +14,10 @@ import software.amazon.awssdk.crt.CRT;
 public class HttpException extends RuntimeException {
     private int errorCode;
 
+    /**
+     * Constructs a new HttpException
+     * @param errorCode native error code representing the error source/reason
+     */
     public HttpException(int errorCode) {
         super(CRT.awsErrorString(errorCode));
         this.errorCode = errorCode;

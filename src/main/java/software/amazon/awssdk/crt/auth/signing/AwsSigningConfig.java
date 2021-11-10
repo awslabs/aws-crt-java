@@ -77,16 +77,16 @@ public class AwsSigningConfig extends CrtResource {
         HTTP_REQUEST_CHUNK(2),
 
         /**
-         * Compute a signature for a payloads trailing headers.
-         */
-        HTTP_REQUEST_TRAILING_HEADERS(3),
-
-        /**
          * Compute a signature for an event stream event.
          *
          * This option is not yet supported.
          */
-        HTTP_REQUEST_EVENT(4);
+        HTTP_REQUEST_EVENT(3),
+
+        /**
+         * Compute a signature for a payloads trailing headers.
+         */
+        HTTP_REQUEST_TRAILING_HEADERS(6);
 
         AwsSignatureType(int nativeValue) {
             this.nativeValue = nativeValue;

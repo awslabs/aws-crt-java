@@ -113,7 +113,7 @@ public class AwsSigner {
     /**
      * Signs a body chunk according to the supplied signing configuration
      * 
-     * @param chunkBody         stream of bytes that make up the chunk
+     * @param headers           list of headers to be sent in the trailer.
      * @param previousSignature the signature of the previous component of the
      *                          request: either the request itself for the first
      *                          chunk, or the previous chunk otherwise

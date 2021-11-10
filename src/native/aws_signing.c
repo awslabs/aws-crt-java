@@ -547,7 +547,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     callback_data->original_message_signable = aws_signable_new_trailing_headers(
         allocator, callback_data->trailing_headers, callback_data->previous_signature);
     if (callback_data->original_message_signable == NULL) {
-        aws_jni_throw_runtime_exception(env, "Failed to create signable from chunk data");
+        aws_jni_throw_runtime_exception(env, "Failed to create signable from trailing headers data");
         goto on_error;
     }
 
@@ -558,7 +558,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             (struct aws_signing_config_base *)&signing_config,
             s_aws_trailing_headers_signing_complete,
             callback_data)) {
-        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for Chunk");
+        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for trailing headers");
         goto on_error;
     }
 

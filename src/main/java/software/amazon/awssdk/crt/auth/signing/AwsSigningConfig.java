@@ -13,8 +13,8 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
- * A class representing configuration related to signing something "signable"
- * (an http request, a body chunk, a stream event) via an AWS signing process.
+ * A class representing configuration related to signing something "signable" (an http request, a body chunk, a
+ * stream event) via an AWS signing process.
  */
 public class AwsSigningConfig extends CrtResource {
 
@@ -23,9 +23,7 @@ public class AwsSigningConfig extends CrtResource {
      */
     public enum AwsSigningAlgorithm {
 
-        /**
-         * Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets
-         */
+        /** Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets */
         SIGV4(0),
 
         /** AWS Sigv4a signing, based on ECDSA signatures */
@@ -33,7 +31,6 @@ public class AwsSigningConfig extends CrtResource {
 
         /**
          * Constructs a Java enum value from the associated native enum value
-         * 
          * @param nativeValue native enum value
          */
         AwsSigningAlgorithm(int nativeValue) {
@@ -42,16 +39,12 @@ public class AwsSigningConfig extends CrtResource {
 
         /**
          * Trivial Java Enum value to native enum value conversion function
-         * 
          * @return integer associated with this enum value
          */
-        public int getNativeValue() {
-            return nativeValue;
-        }
+        public int getNativeValue() { return nativeValue; }
 
         /**
          * Creates a Java enum value from a native enum value as an integer
-         * 
          * @param value native enum value
          * @return the corresponding Java enum value
          */
@@ -83,14 +76,12 @@ public class AwsSigningConfig extends CrtResource {
     public enum AwsSignatureType {
 
         /**
-         * A signature for a full http request should be computed, with header updates
-         * applied to the signing result.
+         * A signature for a full http request should be computed, with header updates applied to the signing result.
          */
         HTTP_REQUEST_VIA_HEADERS(0),
 
         /**
-         * A signature for a full http request should be computed, with query param
-         * updates applied to the signing result.
+         * A signature for a full http request should be computed, with query param updates applied to the signing result.
          */
         HTTP_REQUEST_VIA_QUERY_PARAMS(1),
 
@@ -113,7 +104,6 @@ public class AwsSigningConfig extends CrtResource {
 
         /**
          * Constructs a Java enum value from a native enum value as an integer
-         * 
          * @param nativeValue native enum value
          */
         AwsSignatureType(int nativeValue) {
@@ -121,18 +111,13 @@ public class AwsSigningConfig extends CrtResource {
         }
 
         /**
-         * Gets the native enum value as an integer that is associated with this Java
-         * enum value
-         * 
+         * Gets the native enum value as an integer that is associated with this Java enum value
          * @return this value's associated native enum value
          */
-        public int getNativeValue() {
-            return nativeValue;
-        }
+        public int getNativeValue() { return nativeValue; }
 
         /**
          * Creates a Java enum value from a native enum value as an integer
-         * 
          * @param value native enum value
          * @return the corresponding Java enum value
          */
@@ -150,8 +135,8 @@ public class AwsSigningConfig extends CrtResource {
             enumMapping.put(HTTP_REQUEST_VIA_HEADERS.getNativeValue(), HTTP_REQUEST_VIA_HEADERS);
             enumMapping.put(HTTP_REQUEST_VIA_QUERY_PARAMS.getNativeValue(), HTTP_REQUEST_VIA_QUERY_PARAMS);
             enumMapping.put(HTTP_REQUEST_CHUNK.getNativeValue(), HTTP_REQUEST_CHUNK);
-            enumMapping.put(HTTP_REQUEST_TRAILING_HEADERS.getNativeValue(), HTTP_REQUEST_TRAILING_HEADERS);
             enumMapping.put(HTTP_REQUEST_EVENT.getNativeValue(), HTTP_REQUEST_EVENT);
+            enumMapping.put(HTTP_REQUEST_TRAILING_HEADERS.getNativeValue(), HTTP_REQUEST_TRAILING_HEADERS);
 
             return enumMapping;
         }
@@ -162,9 +147,8 @@ public class AwsSigningConfig extends CrtResource {
     }
 
     /**
-     * A set of string constants for various canonical request payload values. If
-     * signed body header type is not NONE then the value will also be reflected in
-     * X-Amz-Content-Sha256
+     * A set of string constants for various canonical request payload values.  If signed body header type is not NONE
+     * then the value will also be reflected in X-Amz-Content-Sha256
      */
     public class AwsSignedBodyValue {
         public static final String EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
@@ -175,8 +159,7 @@ public class AwsSigningConfig extends CrtResource {
     }
 
     /**
-     * Controls if signing adds a header containing the canonical request's body
-     * value
+     * Controls if signing adds a header containing the canonical request's body value
      */
     public enum AwsSignedBodyHeaderType {
         /** Do not add any signing information about the body to the signed request */
@@ -187,7 +170,6 @@ public class AwsSigningConfig extends CrtResource {
 
         /**
          * Constructs a Java enum value from a native enum value as an integer
-         * 
          * @param nativeValue native enum value
          */
         AwsSignedBodyHeaderType(int nativeValue) {
@@ -195,18 +177,13 @@ public class AwsSigningConfig extends CrtResource {
         }
 
         /**
-         * Gets the native enum value as an integer that is associated with this Java
-         * enum value
-         * 
+         * Gets the native enum value as an integer that is associated with this Java enum value
          * @return this value's associated native enum value
          */
-        public int getNativeValue() {
-            return nativeValue;
-        }
+        public int getNativeValue() { return nativeValue; }
 
         /**
          * Creates a Java enum value from a native enum value as an integer
-         * 
          * @param value native enum value
          * @return the corresponding Java enum value
          */
@@ -250,12 +227,10 @@ public class AwsSigningConfig extends CrtResource {
     /**
      * Default constructor
      */
-    public AwsSigningConfig() {
-    }
+    public AwsSigningConfig() {}
 
     /**
      * Creates a new signing configuration from this one.
-     * 
      * @return a clone of this signing configuration
      */
     public AwsSigningConfig clone() {
@@ -283,38 +258,27 @@ public class AwsSigningConfig extends CrtResource {
     }
 
     /**
-     * Required override method that must begin the release process of the acquired
-     * native handle
+     * Required override method that must begin the release process of the acquired native handle
      */
     @Override
-    protected void releaseNativeHandle() {
-    }
+    protected void releaseNativeHandle() {}
 
     /**
-     * Override that determines whether a resource releases its dependencies at the
-     * same time the native handle is released or if it waits. Resources with
-     * asynchronous shutdown processes should override this with false, and
-     * establish a callback from native code that invokes releaseReferences() when
-     * the asynchronous shutdown process has completed. See
-     * HttpClientConnectionManager for an example.
+     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
+     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
-    }
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Sets what version of the AWS signing process should be used
-     * 
      * @param algorithm desired version of the AWS signing process
      */
-    public void setAlgorithm(AwsSigningAlgorithm algorithm) {
-        this.algorithm = algorithm.getNativeValue();
-    }
+    public void setAlgorithm(AwsSigningAlgorithm algorithm) { this.algorithm = algorithm.getNativeValue(); }
 
     /**
      * Gets what version of the AWS signing procecss will be used
-     * 
      * @return what version of the AWS signing procecss will be used
      */
     public AwsSigningAlgorithm getAlgorithm() {
@@ -323,16 +287,12 @@ public class AwsSigningConfig extends CrtResource {
 
     /**
      * Sets what sort of signature should be computed
-     * 
      * @param signatureType what kind of signature to compute
      */
-    public void setSignatureType(AwsSignatureType signatureType) {
-        this.signatureType = signatureType.getNativeValue();
-    }
+    public void setSignatureType(AwsSignatureType signatureType) { this.signatureType = signatureType.getNativeValue(); }
 
     /**
      * Gets what kind of signature will be computed
-     * 
      * @return what kind of signature will be computed
      */
     public AwsSignatureType getSignatureType() {
@@ -340,72 +300,46 @@ public class AwsSigningConfig extends CrtResource {
     }
 
     /**
-     * Sets what to use for region when signing. Depending on the algorithm, this
-     * may not be an actual region name and so no validation is done on this
-     * parameter. In sigv4a, this value is used for the "region-set" concept.
-     * 
+     * Sets what to use for region when signing.  Depending on the algorithm, this may not be an actual region name
+     * and so no validation is done on this parameter.  In sigv4a, this value is used for the "region-set" concept.
      * @param region region value to use when signing
      */
-    public void setRegion(String region) {
-        this.region = region;
-    }
+    public void setRegion(String region) { this.region = region; }
 
     /**
      * Gets what will be used for the region or region-set concept during signing.
-     * 
      * @return what will be used for the region or region-set concept during signing
      */
-    public String getRegion() {
-        return region;
-    }
+    public String getRegion() { return region; }
 
     /**
      * Sets what service signing name to use.
-     * 
-     * @param service signing name of the service that this signing calculation
-     *                should use
+     * @param service signing name of the service that this signing calculation should use
      */
-    public void setService(String service) {
-        this.service = service;
-    }
+    public void setService(String service) { this.service = service; }
 
     /**
      * Gets what service signing name will be used
-     * 
      * @return what service signing name will be used
      */
-    public String getService() {
-        return service;
-    }
+    public String getService() { return service; }
 
     /**
-     * Sets the point in time that signing should be relative to. Not Instant for
-     * Android API level support reasons. Additionally, for http requests,
-     * X-Amz-Date will be added to the request using this time point.
-     * 
-     * @param time point in time, as milliseconds since epoch, that signing should
-     *             be relative to
+     * Sets the point in time that signing should be relative to.  Not Instant for Android API level support reasons.
+     * Additionally, for http requests, X-Amz-Date will be added to the request using this time point.
+     * @param time point in time, as milliseconds since epoch, that signing should be relative to
      */
-    public void setTime(long time) {
-        this.time = time;
-    }
+    public void setTime(long time) { this.time = time; }
 
     /**
-     * Gets the point in time (in milliseconds since epoch) that signing will be
-     * done relative to
-     * 
-     * @return the point in time (in milliseconds since epoch) that signing will be
-     *         done relative to
+     * Gets the point in time (in milliseconds since epoch) that signing will be done relative to
+     * @return the point in time (in milliseconds since epoch) that signing will be done relative to
      */
-    public long getTime() {
-        return this.time;
-    }
+    public long getTime() { return this.time; }
 
     /**
      * Sets the provider to use to source credentials from before signing.
-     * 
-     * @param credentialsProvider provider to retrieve credentials from prior to
-     *                            signing
+     * @param credentialsProvider provider to retrieve credentials from prior to signing
      */
     public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         swapReferenceTo(this.credentialsProvider, credentialsProvider);
@@ -414,135 +348,88 @@ public class AwsSigningConfig extends CrtResource {
 
     /**
      * Gets the provider to source credentials from before signing
-     * 
      * @return the provider to source credentials from before signing
      */
-    public CredentialsProvider getCredentialsProvider() {
-        return credentialsProvider;
-    }
+    public CredentialsProvider getCredentialsProvider() { return credentialsProvider; }
 
     /**
-     * Sets the credentials to use for signing. Overrides the provider setting if
-     * non-null.
-     * 
+     * Sets the credentials to use for signing.  Overrides the provider setting if non-null.
      * @param credentials credentials to use for signing
      */
-    public void setCredentials(Credentials credentials) {
-        this.credentials = credentials;
-    }
+    public void setCredentials(Credentials credentials) { this.credentials = credentials; }
 
     /**
      * Gets the credentials to use for signing.
-     * 
      * @return credentials to use for signing
      */
-    public Credentials getCredentials() {
-        return credentials;
-    }
+    public Credentials getCredentials() { return credentials; }
 
     /**
-     * Sets a header-name signing predicate filter. Headers that do not pass the
-     * filter will not be signed.
-     * 
+     * Sets a header-name signing predicate filter.  Headers that do not pass the filter will not be signed.
      * @param shouldSignHeader header-name signing predicate filter
      */
-    public void setShouldSignHeader(Predicate<String> shouldSignHeader) {
-        this.shouldSignHeader = shouldSignHeader;
-    }
+    public void setShouldSignHeader(Predicate<String> shouldSignHeader) { this.shouldSignHeader = shouldSignHeader; }
 
     /**
      * Gets the header-name signing predicate filter to use
-     * 
      * @return the header-name signing predicate filter to use
      */
-    public Predicate<String> getShouldSignHeader() {
-        return shouldSignHeader;
-    }
+    public Predicate<String> getShouldSignHeader() { return shouldSignHeader; }
 
     /**
-     * Sets whether or not signing should uri encode urls as part of canonical
-     * request construction. We assume the uri will be encoded once in preparation
-     * for transmission. Certain services do not decode before checking signature,
-     * requiring us to actually double-encode the uri in the canonical request in
-     * order to pass a signature check.
-     * 
-     * @param useDoubleUriEncode should signing uri encode urls in the canonical
-     *                           request
+     * Sets whether or not signing should uri encode urls as part of canonical request construction.
+     * We assume the uri will be encoded once in preparation for transmission.  Certain services
+     * do not decode before checking signature, requiring us to actually double-encode the uri in the canonical
+     * request in order to pass a signature check.
+     * @param useDoubleUriEncode should signing uri encode urls in the canonical request
      */
-    public void setUseDoubleUriEncode(boolean useDoubleUriEncode) {
-        this.useDoubleUriEncode = useDoubleUriEncode;
-    }
+    public void setUseDoubleUriEncode(boolean useDoubleUriEncode) { this.useDoubleUriEncode = useDoubleUriEncode; }
 
     /**
-     * Gets whether or not signing will uri encode urls during canonical request
-     * construction
-     * 
-     * @return whether or not signing will uri encode urls during canonical request
-     *         construction
+     * Gets whether or not signing will uri encode urls during canonical request construction
+     * @return whether or not signing will uri encode urls during canonical request construction
      */
-    public boolean getUseDoubleUriEncode() {
-        return useDoubleUriEncode;
-    }
+    public boolean getUseDoubleUriEncode() { return useDoubleUriEncode; }
 
     /**
-     * Sets whether or not the uri path should be normalized during canonical
-     * request construction
-     * 
-     * @param shouldNormalizeUriPath whether or not the uri path should be
-     *                               normalized during canonical request
-     *                               construction
+     * Sets whether or not the uri path should be normalized during canonical request construction
+     * @param shouldNormalizeUriPath whether or not the uri path should be normalized during canonical request construction
      */
-    public void setShouldNormalizeUriPath(boolean shouldNormalizeUriPath) {
-        this.shouldNormalizeUriPath = shouldNormalizeUriPath;
-    }
+    public void setShouldNormalizeUriPath(boolean shouldNormalizeUriPath) { this.shouldNormalizeUriPath = shouldNormalizeUriPath; }
 
     /**
-     * Gets whether or not the uri path should be normalized during canonical
-     * request construction
-     * 
-     * @return whether or not the uri path should be normalized during canonical
-     *         request construction
+     * Gets whether or not the uri path should be normalized during canonical request construction
+     * @return whether or not the uri path should be normalized during canonical request construction
      */
-    public boolean getShouldNormalizeUriPath() {
-        return shouldNormalizeUriPath;
-    }
+    public boolean getShouldNormalizeUriPath() { return shouldNormalizeUriPath; }
 
     /**
-     * Sets whether or not X-Amz-Session-Token should be added to the canonical
-     * request when signing with session credentials.
+     * Sets whether or not X-Amz-Session-Token should be added to the canonical request when signing with session
+     * credentials.
      *
-     * "X-Amz-Security-Token" is added during signing, as a header or query param,
-     * when credentials have a session token. If false (the default), this parameter
-     * is included in the canonical request. If true, this parameter is still added,
-     * but omitted from the canonical request.
+     * "X-Amz-Security-Token" is added during signing, as a header or
+     * query param, when credentials have a session token.
+     * If false (the default), this parameter is included in the canonical request.
+     * If true, this parameter is still added, but omitted from the canonical request.
      *
-     * @param omitSessionToken whether or not X-Amz-Session-Token should be added to
-     *                         the canonical request when signing with session
+     * @param omitSessionToken whether or not X-Amz-Session-Token should be added to the canonical request when signing with session
      *                         credentials
      */
-    public void setOmitSessionToken(boolean omitSessionToken) {
-        this.omitSessionToken = omitSessionToken;
-    }
+    public void setOmitSessionToken(boolean omitSessionToken) { this.omitSessionToken = omitSessionToken; }
 
     /**
-     * Gets whether or not X-Amz-Session-Token should be added to the canonical
-     * request when signing with session credentials.
-     * 
-     * @return whether or not X-Amz-Session-Token should be added to the canonical
-     *         request when signing with session credentials
+     * Gets whether or not X-Amz-Session-Token should be added to the canonical request when signing with session
+     * credentials.
+     * @return whether or not X-Amz-Session-Token should be added to the canonical request when signing with session
+     * credentials
      */
-    public boolean getOmitSessionToken() {
-        return omitSessionToken;
-    }
+    public boolean getOmitSessionToken() { return omitSessionToken; }
 
     /**
-     * Sets the payload hash override value to use in canonical request
-     * construction. If the signed body header type is not set to null, then the
-     * designated header will also take on this value. If this value is NULL, then
-     * the signer will compute the SHA256 of the body stream and use that instead.
-     * 
-     * @param signedBodyValue payload hash override value to use in canonical
-     *                        request construction
+     * Sets the payload hash override value to use in canonical request construction.  If the signed body header type is
+     * not set to null, then the designated header will also take on this value.  If this value is NULL, then the signer
+     * will compute the SHA256 of the body stream and use that instead.
+     * @param signedBodyValue payload hash override value to use in canonical request construction
      */
     public void setSignedBodyValue(String signedBodyValue) {
         if (signedBodyValue != null && signedBodyValue.isEmpty()) {
@@ -553,54 +440,35 @@ public class AwsSigningConfig extends CrtResource {
 
     /**
      * Gets the payload hash override to use in canonical request construction.
-     * 
      * @return the payload hash override to use in canonical request construction
      */
-    public String getSignedBodyValue() {
-        return signedBodyValue;
-    }
+    public String getSignedBodyValue() { return signedBodyValue; }
 
     /**
-     * Sets what signed body header should hold the payload hash (or override
-     * value).
-     * 
-     * @param signedBodyHeader what signed body header should hold the payload hash
-     *                         (or override value)
+     * Sets what signed body header should hold the payload hash (or override value).
+     * @param signedBodyHeader what signed body header should hold the payload hash (or override value)
      */
-    public void setSignedBodyHeader(AwsSignedBodyHeaderType signedBodyHeader) {
-        this.signedBodyHeader = signedBodyHeader.getNativeValue();
-    }
+    public void setSignedBodyHeader(AwsSignedBodyHeaderType signedBodyHeader) { this.signedBodyHeader = signedBodyHeader.getNativeValue(); }
 
     /**
-     * Gets what signed body header should hold the payload hash (or override
-     * value).
-     * 
-     * @return what signed body header should hold the payload hash (or override
-     *         value)
+     * Gets what signed body header should hold the payload hash (or override value).
+     * @return what signed body header should hold the payload hash (or override value)
      */
-    public AwsSignedBodyHeaderType getSignedBodyHeader() {
-        return AwsSignedBodyHeaderType.getEnumValueFromInteger(signedBodyHeader);
-    }
+    public AwsSignedBodyHeaderType getSignedBodyHeader() { return AwsSignedBodyHeaderType.getEnumValueFromInteger(signedBodyHeader); }
 
     /**
-     * Sets the expiration time in seconds when using query param signing
-     * (pre-signed url). The appropriate query param will be added to the URL when
-     * building the canonical and signed requests.
-     * 
-     * @param expirationInSeconds time in seconds that a pre-signed url will be
-     *                            valid for
+     * Sets the expiration time in seconds when using query param signing (pre-signed url).  The appropriate query param
+     * will be added to the URL when building the canonical and signed requests.
+     * @param expirationInSeconds time in seconds that a pre-signed url will be valid for
      */
-    public void setExpirationInSeconds(long expirationInSeconds) {
-        this.expirationInSeconds = expirationInSeconds;
-    }
+    public void setExpirationInSeconds(long expirationInSeconds) { this.expirationInSeconds = expirationInSeconds; }
 
     /**
-     * Gets the expiration time in seconds to use when signing to make a pre-signed
-     * url.
-     * 
+     * Gets the expiration time in seconds to use when signing to make a pre-signed url.
      * @return the expiration time in seconds for a pre-signed url
      */
-    public long getExpirationInSeconds() {
-        return expirationInSeconds;
-    }
+    public long getExpirationInSeconds() { return expirationInSeconds; }
 }
+
+
+

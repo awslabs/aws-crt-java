@@ -162,7 +162,6 @@
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
-                                        <argument>-DENABLE_SANITIZERS=ON</argument>
                                         <argument>-Wno-unused-variables</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>

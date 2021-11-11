@@ -1,0 +1,10 @@
+[ERROR] [2021-11-10T21:16:15Z] [00007f2699701700] [AuthCredentialsProvider] - static: Profile credentials provider could not load a profile at default.
+[ERROR] [2021-11-10T21:16:16Z] [00007f2699701700] [http-connection] - static: Invalid connection options, empty host name.
+[ERROR] [2021-11-10T21:16:16Z] [00007f2699701700] [connection-manager] - id=0x7f2691378890: http connection creation failed with error code 34(An invalid argument was passed to a function.)
+[ERROR] [2021-11-10T21:16:16Z] [00007f2699701700] [AuthCredentialsProvider] - Failed to parse document as Json document.
+[ERROR] [2021-11-10T21:16:16Z] [00007f2699701700] [AuthCredentialsProvider] - Failed to resolve role arn during sts web identity provider initialization.
+[ERROR] [2021-11-10T21:17:01Z] [00007f91a101f700] [AuthCredentialsProvider] - static: Profile credentials provider could not load a profile at default.
+[ERROR] [2021-11-10T21:17:03Z] [00007f91a101f700] [http-connection] - static: Invalid connection options, empty host name.
+[ERROR] [2021-11-10T21:17:03Z] [00007f91a101f700] [connection-manager] - id=0x7f91993e9630: http connection creation failed with error code 34(An invalid argument was passed to a function.)
+[ERROR] [2021-11-10T21:17:03Z] [00007f91a101f700] [AuthCredentialsProvider] - Failed to parse document as Json document.
+[ERROR] [2021-11-10T21:17:03Z] [00007f91a101f700] [AuthCredentialsProvider] - Failed to resolve role arn during sts web identity provider initialization.

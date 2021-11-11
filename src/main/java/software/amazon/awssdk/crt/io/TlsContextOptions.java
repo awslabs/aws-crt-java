@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.io;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -89,6 +90,7 @@ public final class TlsContextOptions extends CrtResource {
     private String pkcs12Path;
     private String pkcs12Password;
     private TlsContextPkcs11Options pkcs11Options;
+    private TlsContextCustomKeyOperationOptions customKeyOperations;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
@@ -118,7 +120,10 @@ public final class TlsContextOptions extends CrtResource {
                 verifyPeer,
                 pkcs12Path,
                 pkcs12Password,
-                pkcs11Options
+                pkcs11Options,
+                customKeyOperations == null ? null : customKeyOperations.getOperationHandler(),
+                customKeyOperations == null ? null : customKeyOperations.getCertificateFilePath(),
+                customKeyOperations == null ? null : customKeyOperations.getCertificateFileContents()
             ));
         }
         return super.getNativeHandle();
@@ -315,6 +320,16 @@ public final class TlsContextOptions extends CrtResource {
         return options;
     }
 
+    /**
+     * Unix platforms only - TODO document
+     */
+    public static TlsContextOptions createWithMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions custom) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsCustomKeyOperations(custom);
+        options.verifyPeer = true;
+        return options;
+    }
+
     /*******************************************************************************
      * .with() methods
      ******************************************************************************/
@@ -419,6 +434,14 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Unix platforms only, TODO document.
+     */
+    public TlsContextOptions withMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions customKeyOperations) {
+        this.customKeyOperations = customKeyOperations;
+        return this;
+    }
+
+    /**
      * Sets whether or not TLS will validate the certificate from the peer. On clients,
      * this is enabled by default. On servers, this is disabled by default.
      * @param verify true to verify peers, false to ignore certs
@@ -455,7 +478,10 @@ public final class TlsContextOptions extends CrtResource {
                 boolean verifyPeer,
                 String pkcs12Path,
                 String pkcs12Password,
-                TlsContextPkcs11Options pkcs11Options
+                TlsContextPkcs11Options pkcs11Options,
+                TlsKeyOperationHandler customKeyOperationHandler,
+                String customKeyOperationCertificateFilePath,
+                String customKeyOperationCertificateFileContents
             );
 
     private static native void tlsContextOptionsDestroy(long elg);

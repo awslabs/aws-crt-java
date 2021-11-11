@@ -88,3 +88,5 @@ target/
 
 # configuration pulled from Secrets Manager
 settings.xml
+
+bin/

@@ -9,7 +9,14 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
+
+/* TODO: move this to its own file */
+struct custom_key_op_handler {
+    JavaVM *jvm;
+    jobject jni_handler;
+};
 
 /* Have to wrap the native struct so we can manage string lifetime */
 struct jni_tls_ctx_options {
@@ -28,6 +35,9 @@ struct jni_tls_ctx_options {
     struct aws_string *ca_root;
 
     struct aws_tls_ctx_pkcs11_options *pkcs11_options;
+
+    /* TODO: we are leaking this memory. need callback when handler no longer used */
+    struct custom_key_op_handler *custom_key_op_handler;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -41,6 +51,59 @@ struct jni_tls_ctx_options {
 #        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #    endif
 #endif
+
+static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operation *operation, void *user_data) {
+    struct custom_key_op_handler *op_handler = user_data;
+    JNIEnv *env = aws_jni_get_thread_env(op_handler->jvm);
+
+    jbyteArray jni_input_data = NULL;
+    jobject jni_operation = NULL;
+    bool success = false;
+
+    /* Create DirectByteBuffer */
+    struct aws_byte_cursor input_data = aws_tls_key_operation_get_input(operation);
+    jni_input_data = aws_jni_byte_array_from_cursor(env, &input_data);
+    if (jni_input_data == NULL) {
+        aws_jni_check_and_clear_exception(env);
+        goto clean_up;
+    }
+
+    /* Create TlsKeyOperation */
+    jni_operation = (*env)->NewObject(
+        env,
+        tls_key_operation_properties.cls,
+        tls_key_operation_properties.constructor,
+        operation,
+        jni_input_data,
+        aws_tls_key_operation_get_type(operation),
+        aws_tls_key_operation_get_signature_algorithm(operation),
+        aws_tls_key_operation_get_digest_algorithm(operation));
+    if (jni_operation == NULL) {
+        aws_jni_check_and_clear_exception(env);
+        goto clean_up;
+    }
+
+    /* Invoke TlsKeyOperationHandler.performOperation() */
+    (*env)->CallVoidMethod(
+        env, op_handler->jni_handler, tls_key_operation_handler_properties.performOperation, jni_operation);
+
+    /* TODO: it's ambiguous what to do if the callback throws an exception.
+     * is this a good argument for aws_tls_key_operation having both set_output AND release()
+     * instead of just complete()? then we could safely allow for multiple calls to complete/complete_with_error. */
+    aws_jni_check_and_clear_exception(env);
+    success = true;
+
+clean_up:
+    if (jni_input_data) {
+        (*env)->DeleteLocalRef(env, jni_input_data);
+    }
+    if (jni_operation) {
+        (*env)->DeleteLocalRef(env, jni_operation);
+    }
+    if (!success) {
+        aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_UNKNOWN);
+    }
+}
 
 static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     if (tls == NULL) {
@@ -83,7 +146,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jboolean jni_verify_peer,
     jstring jni_pkcs12_path,
     jstring jni_pkcs12_password,
-    jobject jni_pkcs11_options) {
+    jobject jni_pkcs11_options,
+    jobject jni_custom_key_op_handler,
+    jstring jni_custom_key_op_cert_path,
+    jstring jni_custom_key_op_cert_contents) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -140,6 +206,47 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
         if (aws_tls_ctx_options_init_client_mtls_with_pkcs11(&tls->options, allocator, tls->pkcs11_options)) {
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failed");
+            goto on_error;
+        }
+    } else if (jni_custom_key_op_handler) {
+        struct aws_tls_ctx_custom_key_operation_options custom_options;
+        AWS_ZERO_STRUCT(custom_options);
+
+        tls->custom_key_op_handler = aws_mem_calloc(allocator, 1, sizeof(struct custom_key_op_handler));
+
+        if ((*env)->GetJavaVM(env, &tls->custom_key_op_handler->jvm) != 0) {
+            aws_jni_throw_runtime_exception(env, "failed to get JVM");
+            goto on_error;
+        }
+
+        tls->custom_key_op_handler->jni_handler = (*env)->NewGlobalRef(env, jni_custom_key_op_handler);
+        if (!tls->custom_key_op_handler->jni_handler) {
+            goto on_error;
+        }
+        custom_options.user_data = tls->custom_key_op_handler;
+        custom_options.on_key_operation = s_custom_key_op_handler_perform_operation;
+
+        if (jni_custom_key_op_cert_path) {
+            tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
+            if (!tls->certificate_path) {
+                aws_jni_throw_runtime_exception(env, "failed to get certificate path string");
+                goto on_error;
+            }
+            custom_options.cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
+        }
+        if (jni_custom_key_op_cert_contents) {
+            tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
+            if (!tls->certificate) {
+                aws_jni_throw_runtime_exception(env, "failed to get certificate contents string");
+                goto on_error;
+            }
+            custom_options.cert_file_contents = aws_byte_cursor_from_string(tls->certificate);
+        }
+
+        if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
+                &tls->options, allocator, &custom_options)) {
+            aws_jni_throw_runtime_exception(
+                env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
             goto on_error;
         }
     }

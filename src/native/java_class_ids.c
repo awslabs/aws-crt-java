@@ -347,6 +347,27 @@ static void s_cache_tls_context_pkcs11_options(JNIEnv *env) {
     AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.certificateFileContents);
 }
 
+struct java_tls_key_operation_properties tls_key_operation_properties;
+
+static void s_cache_tls_key_operation(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperation");
+    AWS_FATAL_ASSERT(cls);
+    tls_key_operation_properties.cls = cls;
+
+    tls_key_operation_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J[BIII)V");
+    AWS_FATAL_ASSERT(tls_key_operation_properties.constructor);
+}
+
+struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
+static void s_cache_tls_key_operation_handler(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperationHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    tls_key_operation_handler_properties.performOperation =
+        (*env)->GetMethodID(env, cls, "performOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
+    AWS_FATAL_ASSERT(tls_key_operation_handler_properties.performOperation);
+}
+
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
 static void s_cache_http_client_connection_manager(JNIEnv *env) {
@@ -750,6 +771,8 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_tls_context_pkcs11_options(env);
+    s_cache_tls_key_operation(env);
+    s_cache_tls_key_operation_handler(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);

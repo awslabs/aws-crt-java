@@ -33,6 +33,7 @@ public enum HttpVersion {
 
     private static Map<Integer, HttpVersion> buildEnumMapping() {
         Map<Integer, HttpVersion> enumMapping = new HashMap<Integer, HttpVersion>();
+        enumMapping.put(UNKNOWN.getValue(), UNKNOWN);
         enumMapping.put(HTTP_1_0.getValue(), HTTP_1_0);
         enumMapping.put(HTTP_1_1.getValue(), HTTP_1_1);
         enumMapping.put(HTTP_2.getValue(), HTTP_2);

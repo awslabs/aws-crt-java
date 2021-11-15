@@ -88,7 +88,7 @@ public class Elasticurl {
         cliOpts.addOption(null, "http1_1", false, "HTTP/1.1 connection required.");
         cliOpts.addOption(null, "http2", false, "HTTP/2 connection required.");
         cliOpts.addOption(Option.builder("v").longOpt("verbose").hasArg().argName("str")
-                .desc("logging level (ERROR|INFO|DEBUG|TRACE) default is none.").build());
+                .desc("logging level (ERROR|WARN|INFO|DEBUG|TRACE) default is none.").build());
 
         CommandLineParser cliParser = new DefaultParser();
         CommandLine cli = null;
@@ -194,6 +194,8 @@ public class Elasticurl {
             LogLevel logLevel = LogLevel.None;
             if (verbose.equals("ERROR")) {
                 logLevel = LogLevel.Error;
+            } else if (verbose.equals("WARN")) {
+                logLevel = LogLevel.Warn;
             } else if (verbose.equals("INFO")) {
                 logLevel = LogLevel.Info;
             } else if (verbose.equals("DEBUG")) {

@@ -2,7 +2,6 @@ import sys
 import os
 import subprocess
 import shlex
-import subprocess
 
 TIMEOUT = 100
 # Runner for elasticurl integration tests
@@ -11,8 +10,9 @@ mvn_args = " ".join(map(shlex.quote, sys.argv[1:]))
 
 java_command = ['mvn', '-e', 'exec:java', '-Dexec.classpathScope=\"test\"',
                 '-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"', '-Dexec.args=\"{}\"'.format(mvn_args)]
-print(java_command)
+
 if os.name == 'nt':
+    # Windows uses mvn.cmd instead
     java_command[0] = 'mvn.cmd'
 command_string = " ".join(java_command)
 
@@ -31,7 +31,6 @@ def run_command(args_str):
         output = process.communicate()[0]
     finally:
         if process.returncode != 0 or timedout:
-            print(args_str)
             for line in output.splitlines():
                 print(line.decode())
             if timedout:

@@ -284,12 +284,6 @@
             <version>1.4</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.19</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <build>
         <resources>

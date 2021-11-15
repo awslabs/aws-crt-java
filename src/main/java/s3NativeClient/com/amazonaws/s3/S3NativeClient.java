@@ -429,7 +429,7 @@ public class S3NativeClient implements AutoCloseable {
             final PutObjectRequest request) {
         // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
         if (request.aCL() != null) {
-            headerConsumer.accept(new HttpHeader("x-amz-acl", request.aCL().name()));
+            headerConsumer.accept(new HttpHeader("x-amz-acl", request.aCL().toString()));
         }
         if (request.cacheControl() != null) {
             headerConsumer.accept(new HttpHeader("Cache-Control", request.cacheControl()));

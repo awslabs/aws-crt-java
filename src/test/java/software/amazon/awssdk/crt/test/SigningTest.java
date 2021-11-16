@@ -440,6 +440,23 @@ public class SigningTest extends CrtTestFixture {
         return new HttpRequest("PUT", uri.getPath(), requestHeaders, null);
     }
 
+    private HttpRequest createChunkedTrailerTestRequest() throws Exception {
+
+        URI uri = new URI("https://s3.amazonaws.com/examplebucket/chunkObject.txt");
+
+        HttpHeader[] requestHeaders =
+                new HttpHeader[]{
+                        new HttpHeader("Host", uri.getHost()),
+                        new HttpHeader("x-amz-storage-class", "REDUCED_REDUNDANCY"),
+                        new HttpHeader("Content-Encoding", "aws-chunked"),
+                        new HttpHeader("x-amz-decoded-content-length", "66560"),
+                        new HttpHeader("Content-Length", "66824"),
+                        new HttpHeader("x-amz-trailer", "first,second,third")
+                };
+
+        return new HttpRequest("PUT", uri.getPath(), requestHeaders, null);
+    }
+
     private HttpRequestBodyStream createChunk1Stream() {
         StringBuilder chunkBody = new StringBuilder();
         for (int i = 0; i < CHUNK1_SIZE; ++i) {
@@ -472,7 +489,7 @@ public class SigningTest extends CrtTestFixture {
     private static byte[] EXPECTED_FIRST_CHUNK_SIGNATURE = "ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648".getBytes(StandardCharsets.UTF_8);
     private static byte[] EXPECTED_SECOND_CHUNK_SIGNATURE = "0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497".getBytes(StandardCharsets.UTF_8);
     private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = "b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9".getBytes(StandardCharsets.UTF_8);
-    private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = "17b7a1e28961dba05b733dbdbe8ea230d8bed5ea507bc8af6f76349207c05315".getBytes(StandardCharsets.UTF_8);
+    private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = "0248ea7d40ea8edfeb417c5aab802f40ccf25c1f301f4f24d9032dea49bea897".getBytes(StandardCharsets.UTF_8);
 
     @Test
     public void testChunkedSigv4Signing() throws Exception {
@@ -521,6 +538,22 @@ public class SigningTest extends CrtTestFixture {
             "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class\n" +
             "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD";
 
+    private static String CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST = "PUT\n" +
+            "/examplebucket/chunkObject.txt\n" +
+            "\n" +
+            "content-encoding:aws-chunked\n" +
+            "content-length:66824\n" +
+            "host:s3.amazonaws.com\n" +
+            "x-amz-content-sha256:STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER\n" +
+            "x-amz-date:20130524T000000Z\n" +
+            "x-amz-decoded-content-length:66560\n" +
+            "x-amz-region-set:us-east-1\n" +
+            "x-amz-storage-class:REDUCED_REDUNDANCY\n" +
+            "x-amz-trailer:first,second,third\n" +
+            "\n" +
+            "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class;x-amz-trailer\n" +
+            "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER";
+
     private static String CHUNK_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-PAYLOAD\n" +
         "20130524T000000Z\n" +
         "20130524/s3/aws4_request\n";
@@ -537,7 +570,7 @@ public class SigningTest extends CrtTestFixture {
     private static String TRAILING_HEADERS_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-TRAILER\n" + "20130524T000000Z\n" + 
         "20130524/s3/aws4_request\n";
 
-    private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n1daafddca5ec34b1c188a833ab90906c0f3130db0b08b2d199e4add63864e775";
+    private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n5b4a086380541fa6563b4c1ac31944b8a16d9f9b23ffb3eaf8fb05dab863a691";
 
     private byte[] buildChunkStringToSign(byte[] previousSignature, String stsPostSignature) {
         StringBuilder stsBuilder = new StringBuilder();
@@ -653,18 +686,18 @@ public class SigningTest extends CrtTestFixture {
         @Test
         public void testTrailingHeadersSigv4aSigning() throws Exception {
         
-        HttpRequest request = createChunkedTestRequest();
+        HttpRequest request = createChunkedTrailerTestRequest();
         AwsSigningConfig chunkedRequestSigningConfig = createChunkedRequestSigningConfig();
         chunkedRequestSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
         chunkedRequestSigningConfig
-            .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD);
+            .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER);
         
         CompletableFuture<AwsSigningResult> result = AwsSigner.sign(request, chunkedRequestSigningConfig);
         HttpRequest signedRequest = result.get().getSignedRequest();
         assertNotNull(signedRequest);
         
         byte[] requestSignature = result.get().getSignature();
-        assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_SIGV4A_CANONICAL_REQUEST,
+        assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST,
             chunkedRequestSigningConfig, requestSignature, CHUNKED_SIGV4A_TEST_ECC_PUB_X,
             CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
         

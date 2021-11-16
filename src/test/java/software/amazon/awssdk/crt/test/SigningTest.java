@@ -440,6 +440,23 @@ public class SigningTest extends CrtTestFixture {
         return new HttpRequest("PUT", uri.getPath(), requestHeaders, null);
     }
 
+    private HttpRequest createChunkedTrailerTestRequest() throws Exception {
+
+        URI uri = new URI("https://s3.amazonaws.com/examplebucket/chunkObject.txt");
+
+        HttpHeader[] requestHeaders =
+                new HttpHeader[]{
+                        new HttpHeader("Host", uri.getHost()),
+                        new HttpHeader("x-amz-storage-class", "REDUCED_REDUNDANCY"),
+                        new HttpHeader("Content-Encoding", "aws-chunked"),
+                        new HttpHeader("x-amz-decoded-content-length", "66560"),
+                        new HttpHeader("Content-Length", "66824"),
+                        new HttpHeader("x-amz-trailer", "first,second,third")
+                };
+
+        return new HttpRequest("PUT", uri.getPath(), requestHeaders, null);
+    }
+
     private HttpRequestBodyStream createChunk1Stream() {
         StringBuilder chunkBody = new StringBuilder();
         for (int i = 0; i < CHUNK1_SIZE; ++i) {
@@ -520,6 +537,22 @@ public class SigningTest extends CrtTestFixture {
             "\n" +
             "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class\n" +
             "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD";
+
+    private static String CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST = "PUT\n" +
+            "/examplebucket/chunkObject.txt\n" +
+            "\n" +
+            "content-encoding:aws-chunked\n" +
+            "content-length:66824\n" +
+            "host:s3.amazonaws.com\n" +
+            "x-amz-content-sha256:STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER\n" +
+            "x-amz-date:20130524T000000Z\n" +
+            "x-amz-decoded-content-length:66560\n" +
+            "x-amz-region-set:us-east-1\n" +
+            "x-amz-storage-class:REDUCED_REDUNDANCY\n" +
+            "x-amz-trailer:first,second,third\n" +
+            "\n" +
+            "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class;x-amz-trailer\n" +
+            "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER";
 
     private static String CHUNK_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-PAYLOAD\n" +
         "20130524T000000Z\n" +
@@ -657,14 +690,14 @@ public class SigningTest extends CrtTestFixture {
         AwsSigningConfig chunkedRequestSigningConfig = createChunkedRequestSigningConfig();
         chunkedRequestSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
         chunkedRequestSigningConfig
-            .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD);
+            .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER);
         
         CompletableFuture<AwsSigningResult> result = AwsSigner.sign(request, chunkedRequestSigningConfig);
         HttpRequest signedRequest = result.get().getSignedRequest();
         assertNotNull(signedRequest);
         
         byte[] requestSignature = result.get().getSignature();
-        assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_SIGV4A_CANONICAL_REQUEST,
+        assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST,
             chunkedRequestSigningConfig, requestSignature, CHUNKED_SIGV4A_TEST_ECC_PUB_X,
             CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
         

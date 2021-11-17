@@ -2,6 +2,7 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,12 +13,14 @@ public class S3MetaRequestOptions {
         DEFAULT(0),
         GET_OBJECT(1),
         PUT_OBJECT(2);
-        
+
         MetaRequestType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
-        public int getNativeValue() { return nativeValue; }
+        public int getNativeValue() {
+            return nativeValue;
+        }
 
         public static MetaRequestType getEnumValueFromInteger(int value) {
             MetaRequestType enumValue = enumMapping.get(value);
@@ -44,6 +47,7 @@ public class S3MetaRequestOptions {
     private MetaRequestType metaRequestType;
     private HttpRequest httpRequest;
     private S3MetaRequestResponseHandler responseHandler;
+    private CredentialsProvider credentialsProvider;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -71,4 +75,14 @@ public class S3MetaRequestOptions {
     public S3MetaRequestResponseHandler getResponseHandler() {
         return responseHandler;
     }
+
+    public S3MetaRequestOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
+        this.credentialsProvider = credentialsProvider;
+        return this;
+    }
+
+    public CredentialsProvider getCredentialsProvider() {
+        return credentialsProvider;
+    }
+
 }

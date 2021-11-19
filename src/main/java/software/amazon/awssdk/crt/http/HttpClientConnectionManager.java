@@ -69,11 +69,14 @@ public class HttpClientConnectionManager extends CrtResource {
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
-        int port = uri.getPort();
-        /* Pick a default port based on the scheme if one wasn't set in the URI */
+        int port = options.getPort();
         if (port == -1) {
-            if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
-            if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            port = uri.getPort();
+            /* Pick a default port based on the scheme if one wasn't set */
+            if (port == -1) {
+                if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
+                if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            }
         }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();

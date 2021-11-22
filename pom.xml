@@ -33,7 +33,7 @@
 
     <properties>
         <cmake.command>cmake</cmake.command>
-        <cmake.buildtype>RelWithDebInfo</cmake.buildtype>
+        <cmake.buildtype>Debug</cmake.buildtype>
         <cmake.buildconfig>${cmake.buildtype}</cmake.buildconfig>
         <cmake.binaries>target/cmake-build</cmake.binaries>
         <maven.compiler.source>1.8</maven.compiler.source>

@@ -90,3 +90,4 @@ target/
 settings.xml
 
 bin/
+log.txt

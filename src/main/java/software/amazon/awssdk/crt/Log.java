@@ -150,6 +150,9 @@ public class Log {
             level = LogLevel.valueOf(levelString);
         }
 
+        destination = LogDestination.Stderr; /* DO NOT MERGE TO MAIN */
+        level = LogLevel.Debug; /* DO NOT MERGE TO MAIN */
+
         switch(destination) {
             case Stdout:
                 initLoggingToStdout(level.getValue());

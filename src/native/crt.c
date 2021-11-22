@@ -175,8 +175,18 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
-    size_t len = (*env)->GetArrayLength(env, array);
+    if (array == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "byte[] is null");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
     jbyte *bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    if (bytes == NULL) {
+        /* GetByteArrayElements() has thrown exception */
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetArrayLength(env, array);
     return aws_byte_cursor_from_array(bytes, len);
 }
 

@@ -127,6 +127,9 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
  * bytes extracted from the supplied jbyteArray.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
+ *
+ * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
+ * and a java exception is being thrown.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
 

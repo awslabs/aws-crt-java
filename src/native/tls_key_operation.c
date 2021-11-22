@@ -32,6 +32,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     struct aws_tls_key_operation *operation = (struct aws_tls_key_operation *)jni_operation;
 
     struct aws_byte_cursor output_data = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_output_data);
+    if (output_data.ptr == NULL) {
+        /* TODO: log about error */
+        aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_INVALID_ARGUMENT);
+        return;
+    }
 
     aws_tls_key_operation_complete(operation, output_data);
 

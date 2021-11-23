@@ -74,11 +74,11 @@ static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operati
         env,
         tls_key_operation_properties.cls,
         tls_key_operation_properties.constructor,
-        operation,
+        (jlong)operation,
         jni_input_data,
-        aws_tls_key_operation_get_type(operation),
-        aws_tls_key_operation_get_signature_algorithm(operation),
-        aws_tls_key_operation_get_digest_algorithm(operation));
+        (jint)aws_tls_key_operation_get_type(operation),
+        (jint)aws_tls_key_operation_get_signature_algorithm(operation),
+        (jint)aws_tls_key_operation_get_digest_algorithm(operation));
     if (jni_operation == NULL) {
         aws_jni_check_and_clear_exception(env);
         goto clean_up;

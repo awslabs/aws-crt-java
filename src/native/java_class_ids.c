@@ -352,7 +352,7 @@ struct java_tls_key_operation_properties tls_key_operation_properties;
 static void s_cache_tls_key_operation(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperation");
     AWS_FATAL_ASSERT(cls);
-    tls_key_operation_properties.cls = cls;
+    tls_key_operation_properties.cls = (*env)->NewGlobalRef(env, cls);
 
     tls_key_operation_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J[BIII)V");
     AWS_FATAL_ASSERT(tls_key_operation_properties.constructor);

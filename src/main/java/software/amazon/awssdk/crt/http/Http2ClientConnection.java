@@ -26,19 +26,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      * (RFC-7540 7).
      */
     public enum Http2ErrorCode {
-        PROTOCOL_ERROR(1),
-        INTERNAL_ERROR(2),
-        FLOW_CONTROL_ERROR(3),
-        SETTINGS_TIMEOUT(4),
-        STREAM_CLOSED(5),
-        FRAME_SIZE_ERROR(6),
-        REFUSED_STREAM(7),
-        CANCEL(8),
-        COMPRESSION_ERROR(9),
-        CONNECT_ERROR(10),
-        ENHANCE_YOUR_CALM(11),
-        INADEQUATE_SECURITY(12),
-        HTTP_1_1_REQUIRED(13);
+        PROTOCOL_ERROR(1), INTERNAL_ERROR(2), FLOW_CONTROL_ERROR(3), SETTINGS_TIMEOUT(4), STREAM_CLOSED(5),
+        FRAME_SIZE_ERROR(6), REFUSED_STREAM(7), CANCEL(8), COMPRESSION_ERROR(9), CONNECT_ERROR(10),
+        ENHANCE_YOUR_CALM(11), INADEQUATE_SECURITY(12), HTTP_1_1_REQUIRED(13);
 
         private int errorCode;
 
@@ -65,7 +55,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      * @return When this future completes without exception, the peer has
      *         acknowledged the settings and the change has been applied.
      */
-    public CompletableFuture<Void> changeSettings(final Http2ConnectionSetting settings[]) {
+    public CompletableFuture<Void> updateSettings(final Http2ConnectionSetting settings[]) {
         throw new CrtRuntimeException("Unimplemented");
     }
 
@@ -73,7 +63,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      * Send a PING frame. Round-trip-time is calculated when PING ACK is received
      * from peer.
      *
-     * @param pingData 8 Bytes data with the PING frame or null for not include data in ping
+     * @param pingData 8 Bytes data with the PING frame or null for not include data
+     *                 in ping
      *
      * @return When this future completes without exception, the peer has
      *         acknowledged the PING and future will be completed with the round

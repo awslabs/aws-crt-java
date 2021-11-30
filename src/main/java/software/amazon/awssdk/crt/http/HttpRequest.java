@@ -165,7 +165,9 @@ public class HttpRequest {
     public byte[] marshalForJni() {
         int size = 0;
         size += BUFFER_INT_SIZE + method.length();
-        size += BUFFER_INT_SIZE + encodedPath.length();
+
+        byte[] pathBytes = encodedPath.getBytes(UTF8);
+        size += BUFFER_INT_SIZE + pathBytes.length;
     
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
@@ -176,8 +178,8 @@ public class HttpRequest {
         ByteBuffer buffer = ByteBuffer.allocate(size);
         buffer.putInt(method.length());
         buffer.put(method.getBytes(UTF8));
-        buffer.putInt(encodedPath.length());
-        buffer.put(encodedPath.getBytes(UTF8));
+        buffer.putInt(pathBytes.length);
+        buffer.put(pathBytes);
     
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {

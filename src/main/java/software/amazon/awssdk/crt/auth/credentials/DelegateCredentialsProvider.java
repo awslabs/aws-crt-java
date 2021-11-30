@@ -7,15 +7,23 @@ package software.amazon.awssdk.crt.auth.credentials;
 public class DelegateCredentialsProvider extends CredentialsProvider {
 
     /**
-     * A simple builder class for a static credentials provider and its options
+     * A simple builder class for a delegate credentials provider and its options
      */
     static public class DelegateCredentialsProviderBuilder {
 
         private DelegateCredentialsHandler handler;
 
+        /**
+         * Default constructor
+         */
         public DelegateCredentialsProviderBuilder() {
         }
 
+        /**
+         * Sets the delegate this provider should use for sourcing credentials
+         * @param handler credentials-sourcing delegate
+         * @return this builder object
+         */
         public DelegateCredentialsProviderBuilder withHandler(DelegateCredentialsHandler handler) {
             this.handler = handler;
 
@@ -26,6 +34,10 @@ public class DelegateCredentialsProvider extends CredentialsProvider {
             return handler;
         }
 
+        /**
+         * Builds a new delegate credentials provider using the builder's configuration
+         * @return a new delegate credentials provider
+         */
         public DelegateCredentialsProvider build() {
             return new DelegateCredentialsProvider(this);
         }

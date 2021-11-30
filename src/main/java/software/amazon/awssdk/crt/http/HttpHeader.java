@@ -11,7 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A wrapper class for http header key-value pairs
+ */
 public class HttpHeader {
+    private final static int BUFFER_INT_SIZE = 4;
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private byte[] name;  /* Not final, Native will manually set name after calling empty Constructor. */
     private byte[] value; /* Not final, Native will manually set value after calling empty Constructor. */
@@ -20,16 +24,30 @@ public class HttpHeader {
      * encoding/decoding issues. The user thread will deal with them when they call getName() or getValue() **/
     private HttpHeader() {}
 
+    /**
+     *
+     * @param name header name
+     * @param value header value
+     */
     public HttpHeader(String name, String value){
         this.name = name.getBytes(UTF8);
         this.value = value.getBytes(UTF8);
     }
 
+    /**
+     *
+     * @param name header name
+     * @param value header value
+     */
     public HttpHeader(byte[] name, byte[] value){
         this.name = name;
         this.value = value;
     }
 
+    /**
+     *
+     * @return the name of the header, converted to a UTF-8 string
+     */
     public String getName() {
         if (name == null) {
             return "";
@@ -37,10 +55,18 @@ public class HttpHeader {
         return new String(name, UTF8);
     }
 
+    /**
+     *
+     * @return the name of the header, in raw bytes
+     */
     public byte[] getNameBytes() {
         return name;
     }
 
+    /**
+     *
+     * @return the value of the header, converted to a UTF-8 string
+     */
     public String getValue() {
         if (value == null) {
             return "";
@@ -48,6 +74,10 @@ public class HttpHeader {
         return new String(value, UTF8);
     }
 
+    /**
+     *
+     * @return the value of the header, in raw bytes
+     */
     public byte[] getValueBytes() {
         return value;
     }
@@ -83,6 +113,40 @@ public class HttpHeader {
 
         return headers;
     }
+
+    /**
+     * Lists of headers are marshalled as follows:
+     *
+     * each string field is: [4-bytes BE] [variable length bytes specified by the
+     * previous field]
+     *
+     * [header name-value pairs]
+     * 
+     * @return encoded blob of headers
+     */
+
+    public static byte[] marshalHeadersForJni(List<HttpHeader> headers) {
+        int size = 0;
+
+        for (HttpHeader header : headers) {
+            if (header.getNameBytes().length > 0) {
+                size += header.getNameBytes().length + header.getValueBytes().length + (BUFFER_INT_SIZE * 2);
+            }
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        for (HttpHeader header : headers) {
+            if (header.getNameBytes().length > 0) {
+                buffer.putInt(header.getNameBytes().length);
+                buffer.put(header.getNameBytes());
+                buffer.putInt(header.getValueBytes().length);
+                buffer.put(header.getValueBytes());
+            }
+        }
+
+        return buffer.array();
+    }
+
 
     /**
      * @param headersBlob encoded headers blob

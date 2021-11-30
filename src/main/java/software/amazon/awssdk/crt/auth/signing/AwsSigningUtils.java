@@ -17,7 +17,7 @@ package software.amazon.awssdk.crt.auth.signing;
 import software.amazon.awssdk.crt.http.HttpRequest;
 
 /**
- * Utility functions for verifying sigv4a signatures
+ * Internal utility/testing functions for verifying sigv4a signatures.
  */
 public class AwsSigningUtils {
 

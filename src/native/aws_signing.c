@@ -40,6 +40,7 @@ struct s_aws_sign_request_callback_data {
     jobject java_original_chunk_body;
     jobject java_sign_header_predicate;
     jbyteArray java_previous_signature;
+    struct aws_http_headers *trailing_headers;
     struct aws_input_stream *chunk_body_stream;
     struct aws_http_message *native_request;
     struct aws_signable *original_message_signable;
@@ -87,7 +88,9 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     if (callback_data->chunk_body_stream != NULL) {
         aws_input_stream_destroy(callback_data->chunk_body_stream);
     }
-
+    if (callback_data->trailing_headers != NULL) {
+        aws_http_headers_release(callback_data->trailing_headers);
+    }
     aws_string_destroy(callback_data->region);
     aws_string_destroy(callback_data->service);
     aws_string_destroy(callback_data->signed_body_value);
@@ -220,7 +223,7 @@ done:
     s_cleanup_callback_data(callback_data);
 }
 
-static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
@@ -235,6 +238,14 @@ static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int 
 done:
 
     s_cleanup_callback_data(callback_data);
+}
+
+static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+    s_aws_chunk_like_signing_complete(result, error_code, userdata);
+}
+
+static void s_aws_trailing_headers_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+    s_aws_chunk_like_signing_complete(result, error_code, userdata);
 }
 
 static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
@@ -468,6 +479,73 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             s_aws_chunk_signing_complete,
             callback_data)) {
         aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for Chunk");
+        goto on_error;
+    }
+
+    return;
+
+on_error:
+
+    s_cleanup_callback_data(callback_data);
+
+    (*env)->ExceptionClear(env);
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSignTrailingHeaders(
+    JNIEnv *env,
+    jclass jni_class,
+    jbyteArray marshalled_headers,
+    jbyteArray java_previous_signature,
+    jobject java_signing_config,
+    jobject java_signing_result_future) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_aws_sign_request_callback_data *callback_data =
+        aws_mem_calloc(allocator, 1, sizeof(struct s_aws_sign_request_callback_data));
+    /* we no longer worry about allocation failures */
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    callback_data->java_signing_result_future = (*env)->NewGlobalRef(env, java_signing_result_future);
+    AWS_FATAL_ASSERT(callback_data->java_signing_result_future != NULL);
+
+    callback_data->trailing_headers = aws_http_headers_new_from_java_http_headers(env, marshalled_headers);
+    if (callback_data->trailing_headers == NULL) {
+        goto on_error;
+    }
+
+    /* Build a native aws_signing_config_aws object */
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+
+    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+        aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
+        goto on_error;
+    }
+
+    callback_data->java_previous_signature = (*env)->NewGlobalRef(env, java_previous_signature);
+    callback_data->previous_signature = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_previous_signature);
+
+    callback_data->original_message_signable = aws_signable_new_trailing_headers(
+        allocator, callback_data->trailing_headers, callback_data->previous_signature);
+    if (callback_data->original_message_signable == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to create signable from trailing headers data");
+        goto on_error;
+    }
+
+    /* Sign the native request */
+    if (aws_sign_request_aws(
+            allocator,
+            callback_data->original_message_signable,
+            (struct aws_signing_config_base *)&signing_config,
+            s_aws_trailing_headers_signing_complete,
+            callback_data)) {
+        aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for trailing headers");
         goto on_error;
     }
 

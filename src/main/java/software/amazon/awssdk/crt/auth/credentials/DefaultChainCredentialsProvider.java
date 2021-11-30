@@ -4,8 +4,6 @@
  */
 package software.amazon.awssdk.crt.auth.credentials;
 
-import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 
 /**
@@ -21,16 +19,28 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
 
         private ClientBootstrap clientBootstrap;
 
+        /**
+         * Default constructor
+         */
         public DefaultChainCredentialsProviderBuilder() {}
 
+        /**
+         * Sets what client bootstrap to use when establishing network connections for credentials sourcing
+         * @param clientBootstrap client bootstrap to use for network connection establishment
+         * @return this builder object
+         */
         public DefaultChainCredentialsProviderBuilder withClientBootstrap(ClientBootstrap clientBootstrap) {
             this.clientBootstrap = clientBootstrap;
 
             return this;
         }
 
-        public ClientBootstrap getClientBootstrap() { return clientBootstrap; }
+        ClientBootstrap getClientBootstrap() { return clientBootstrap; }
 
+        /**
+         * Creates a new default credentials chain provider based on the builder's configuration
+         * @return a new default credentials chain provider based on the builder's configuration
+         */
         public DefaultChainCredentialsProvider build() {
             return new DefaultChainCredentialsProvider(this);
         }

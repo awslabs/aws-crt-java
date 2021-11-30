@@ -8,7 +8,6 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -25,7 +24,6 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -445,4 +443,9 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
+    @Test
+    public void testMarshallJniUtf8Path() throws Exception {
+        HttpRequest request = new HttpRequest("GET", "/?ሴ=bar");
+        request.marshalForJni();
+    }
 }

@@ -39,10 +39,18 @@ public enum QualityOfService {
         qos = value;
     }
 
+    /**
+     * @return the native enum integer value associated with this Java enum value
+     */
     public int getValue() {
         return qos;
     }
 
+    /**
+     * Creates a Java QualityOfService enum value from a native integer value
+     * @param value native integer value for quality of service
+     * @return a new QualityOfService value
+     */
     public static QualityOfService getEnumValueFromInteger(int value) {
         QualityOfService enumValue = enumMapping.get(value);
         if (enumValue != null) {

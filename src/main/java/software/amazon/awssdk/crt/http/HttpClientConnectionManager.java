@@ -34,6 +34,12 @@ public class HttpClientConnectionManager extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final HttpClientConnection.ProtocolVersion expectedProtocolVersion;
 
+    /**
+     * Factory function for HttpClientConnectionManager instances
+     *
+     * @param options configuration options
+     * @return a new instance of an HttpClientConnectionManager
+     */
     public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
         return new HttpClientConnectionManager(options);
     }
@@ -64,11 +70,14 @@ public class HttpClientConnectionManager extends CrtResource {
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
-        int port = uri.getPort();
-        /* Pick a default port based on the scheme if one wasn't set in the URI */
+        int port = options.getPort();
         if (port == -1) {
-            if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
-            if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            port = uri.getPort();
+            /* Pick a default port based on the scheme if one wasn't set */
+            if (port == -1) {
+                if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
+                if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            }
         }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
@@ -200,10 +209,16 @@ public class HttpClientConnectionManager extends CrtResource {
         return maxConnections;
     }
 
+    /**
+     * @return size of the per-connection streaming read window for response handling
+     */
     public int getWindowSize() {
         return windowSize;
     }
 
+    /**
+     * @return uri the connection manager is making connections to
+     */
     public URI getUri() {
         return uri;
     }

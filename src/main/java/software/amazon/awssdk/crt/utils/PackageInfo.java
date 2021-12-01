@@ -8,7 +8,14 @@ package software.amazon.awssdk.crt.utils;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtPlatform;
 
+/**
+ * Class that wraps version and package introspection
+ */
 public final class PackageInfo {
+
+    /**
+     * Class representing the introspected semantic version of the CRT library
+     */
     public static class Version {
         private final String version;
         public final int major;
@@ -48,9 +55,15 @@ public final class PackageInfo {
             return 0;
         }
     }
-    
+
+    /**
+     * the introspected semantic version of the CRT library instance
+     */
     public Version version;
 
+    /**
+     * Default constructor
+     */
     public PackageInfo() {
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {

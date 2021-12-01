@@ -4,7 +4,6 @@
  */
 package software.amazon.awssdk.crt.auth.credentials;
 
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
@@ -16,7 +15,10 @@ public class CredentialsProvider extends CrtResource {
 
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
-    public CredentialsProvider() {}
+    /**
+     * Default constructor
+     */
+    protected CredentialsProvider() {}
 
     /**
      * Request credentials from the provider
@@ -75,6 +77,11 @@ public class CredentialsProvider extends CrtResource {
         this.shutdownComplete.complete(null);
     }
 
+    /**
+     * returns the future that completes when all of this object's native resources have shut down or released
+     * properly.
+     * @return
+     */
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /*******************************************************************************

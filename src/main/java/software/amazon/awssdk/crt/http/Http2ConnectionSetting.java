@@ -49,4 +49,24 @@ public class Http2ConnectionSetting {
         this.id = id;
         this.value = value;
     }
+
+    /**
+     * @exclude Marshals a list of settings into an array for Jni to deal with.
+     *
+     * @param settings list of headers to write to the headers block
+     * @return a long[] that with the [id, value, id, value, *]
+     */
+    public static long[] marshallSettingsForJNI(final List<Http2ConnectionSetting> settings) {
+        /* Each setting is two long */
+        int totalLength = settings.size();
+
+        long marshalledSettings[] = new long[totalLength * 2];
+
+        for (int i = 0; i < totalLength; i++) {
+            marshalledSettings[i * 2] = settings.get(i).id.getValue();
+            marshalledSettings[i * 2 + 1] = settings.get(i).value;
+        }
+
+        return marshalledSettings;
+    }
 }

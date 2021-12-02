@@ -23,7 +23,7 @@ public class HttpClientConnectionManagerOptions {
     private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
-    private int port;
+    private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
     private boolean manualWindowManagement = false;
@@ -31,6 +31,9 @@ public class HttpClientConnectionManagerOptions {
     private long maxConnectionIdleInMilliseconds = 0;
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
 
+    /**
+     * Default constructor
+     */
     public HttpClientConnectionManagerOptions() {
     }
 
@@ -137,7 +140,8 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * @return the port to connect to for connections in the connection pool
+     * @return the port to connect to for connections in the connection pool.
+     *         Returns -1 if none has been explicitly set.
      */
     public int getPort() { return port; }
 

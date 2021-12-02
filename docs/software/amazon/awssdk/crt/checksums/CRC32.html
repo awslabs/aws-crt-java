@@ -138,6 +138,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <pre>public class <span class="typeNameLabel">CRC32</span>
 extends java.lang.Object
 implements java.util.zip.Checksum, java.lang.Cloneable</pre>
+<div class="block">CRT implementation of the Java Checksum interface for making CRC32 checksum calculations</div>
 </li>
 </ul>
 </div>
@@ -159,7 +160,9 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 </tr>
 <tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">CRC32</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Default constructor</div>
+</td>
 </tr>
 </table>
 </li>
@@ -187,29 +190,39 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getValue()">getValue</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Returns the current checksum value.</div>
+</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#reset()">reset</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Resets the checksum to its initial value.</div>
+</td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#update(byte%5B%5D)">update</a></span>&#8203;(byte[]&nbsp;b)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Updates the current checksum with the specified array of bytes.</div>
+</td>
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#update(byte%5B%5D,int,int)">update</a></span>&#8203;(byte[]&nbsp;b,
       int&nbsp;off,
       int&nbsp;len)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Updates the current checksum with the specified array of bytes.</div>
+</td>
 </tr>
 <tr id="i5" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#update(int)">update</a></span>&#8203;(int&nbsp;b)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Updates the current checksum with the specified byte.</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -249,6 +262,7 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <li class="blockList">
 <h4>CRC32</h4>
 <pre>public&nbsp;CRC32()</pre>
+<div class="block">Default constructor</div>
 </li>
 </ul>
 </li>
@@ -277,9 +291,12 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <li class="blockList">
 <h4>getValue</h4>
 <pre class="methodSignature">public&nbsp;long&nbsp;getValue()</pre>
+<div class="block">Returns the current checksum value.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>getValue</code>&nbsp;in interface&nbsp;<code>java.util.zip.Checksum</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the current checksum value.</dd>
 </dl>
 </li>
 </ul>
@@ -290,6 +307,7 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <li class="blockList">
 <h4>reset</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;reset()</pre>
+<div class="block">Resets the checksum to its initial value.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>reset</code>&nbsp;in interface&nbsp;<code>java.util.zip.Checksum</code></dd>
@@ -305,9 +323,14 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <pre class="methodSignature">public&nbsp;void&nbsp;update&#8203;(byte[]&nbsp;b,
                    int&nbsp;off,
                    int&nbsp;len)</pre>
+<div class="block">Updates the current checksum with the specified array of bytes.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>update</code>&nbsp;in interface&nbsp;<code>java.util.zip.Checksum</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>b</code> - the byte array to update the checksum with</dd>
+<dd><code>off</code> - the starting offset within b of the data to use</dd>
+<dd><code>len</code> - the number of bytes to use in the update</dd>
 </dl>
 </li>
 </ul>
@@ -318,9 +341,12 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <li class="blockList">
 <h4>update</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;update&#8203;(byte[]&nbsp;b)</pre>
+<div class="block">Updates the current checksum with the specified array of bytes.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>update</code>&nbsp;in interface&nbsp;<code>java.util.zip.Checksum</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>b</code> - the byte array to update the checksum with</dd>
 </dl>
 </li>
 </ul>
@@ -331,9 +357,12 @@ implements java.util.zip.Checksum, java.lang.Cloneable</pre>
 <li class="blockList">
 <h4>update</h4>
 <pre class="methodSignature">public&nbsp;void&nbsp;update&#8203;(int&nbsp;b)</pre>
+<div class="block">Updates the current checksum with the specified byte.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>update</code>&nbsp;in interface&nbsp;<code>java.util.zip.Checksum</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>b</code> - the byte to update the checksum with</dd>
 </dl>
 </li>
 </ul>

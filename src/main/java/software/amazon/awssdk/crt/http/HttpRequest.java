@@ -73,14 +73,25 @@ public class HttpRequest extends HttpRequestBase {
         this.bodyStream = bodyStream;
     }
 
+    /**
+     * @return the HTTP method of this request
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * @return the encoded path of this request
+     */
     public String getEncodedPath() {
         return encodedPath;
     }
 
+    /**
+     * Sets the request's encoded path
+     * 
+     * @param encodedPath the new encoded path
+     */
     public void setEncodedPath(final String encodedPath) {
         this.encodedPath = encodedPath;
     }

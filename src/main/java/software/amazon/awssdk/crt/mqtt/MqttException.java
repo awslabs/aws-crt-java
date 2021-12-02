@@ -13,11 +13,17 @@ import software.amazon.awssdk.crt.CRT;
 public class MqttException extends RuntimeException {
     private int errorCode;
 
+    /**
+     * @param msg mqtt exception message
+     */
     public MqttException(String msg) {
         super(msg);
         this.errorCode = -1;
     }
 
+    /**
+     * @param errorCode native CRT error code indicating the reason for the exception
+     */
     public MqttException(int errorCode) {
         super(CRT.awsErrorString(errorCode));
         this.errorCode = errorCode;

@@ -34,16 +34,16 @@ public class ServerConnectionContinuation extends CrtResource {
      * Sends message on the continuation
      * @param headers list of additional event stream headers to include on the message.
      * @param payload payload for the message
-     * @param messsageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageType message type. Must be either ApplicationMessage or ApplicationError
      * @param messageFlags message flags for the message, use TerminateStream to cause this message
      *                     to close the continuation after sending.
      * @return Future for syncing when the message is flushed to the transport or fails.
      */
     public CompletableFuture<Void> sendMessage(final List<Header> headers, final byte[] payload,
-                                                       final MessageType messsageType, int messageFlags) {
+                                                       final MessageType messageType, int messageFlags) {
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
-        sendMessage(headers, payload, messsageType, messageFlags, errorCode -> {
+        sendMessage(headers, payload, messageType, messageFlags, errorCode -> {
             if (errorCode == 0) {
                 messageFlush.complete(null);
             } else {

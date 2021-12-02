@@ -5,9 +5,11 @@
 package software.amazon.awssdk.crt.auth.signing;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 
 /**
@@ -100,6 +102,29 @@ public class AwsSigner {
         return future;
     }
 
+    /**
+     * Signs a body chunk according to the supplied signing configuration
+     * 
+     * @param headers           list of headers to be sent in the trailer.
+     * @param previousSignature the signature of the previous component of the
+     *                          request: either the request itself for the first
+     *                          chunk, or the previous chunk otherwise
+     * @param config            signing configuration
+     * @return future which will contain a signing result, which provides easier
+     *         access to all signing-related result properties
+     */
+    static public CompletableFuture<AwsSigningResult> sign(List<HttpHeader> headers, byte[] previousSignature,
+            AwsSigningConfig config) {
+        CompletableFuture<AwsSigningResult> future = new CompletableFuture<AwsSigningResult>();
+
+        try {
+            awsSignerSignTrailingHeaders(HttpHeader.marshalHeadersForJni(headers), previousSignature, config, future);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -111,6 +136,12 @@ public class AwsSigner {
 
     private static native void awsSignerSignChunk(
         HttpRequestBodyStream chunk,
+        byte[] previousSignature,
+        AwsSigningConfig config,
+        CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;
+
+    private static native void awsSignerSignTrailingHeaders(
+        byte[] headers,
         byte[] previousSignature,
         AwsSigningConfig config,
         CompletableFuture<AwsSigningResult> future) throws CrtRuntimeException;

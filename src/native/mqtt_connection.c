@@ -769,8 +769,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
         return 0;
     }
 
-    if (!jni_payload) {
-        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_publish: Invalid/null payload");
+    if (!jni_topic) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_publish: Invalid/null topic");
         return 0;
     }
 
@@ -781,7 +781,12 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     }
 
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
-    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
+
+    struct aws_byte_cursor payload;
+    AWS_ZERO_STRUCT(payload);
+    if (jni_payload != NULL) {
+        payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
+    }
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
@@ -789,7 +794,10 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     uint16_t msg_id = aws_mqtt_client_connection_publish(
         connection->client_connection, &topic, qos, retain, &payload, s_on_op_complete, pub_ack);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
+
+    if (jni_payload != NULL) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
+    }
 
     if (msg_id == 0) {
         aws_jni_throw_runtime_exception(
@@ -819,18 +827,31 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnec
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_will: Invalid connection");
-        return 0;
+        return false;
     }
 
+    if (jni_topic == NULL) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_will: Topic must be non-null");
+        return false;
+    }
     struct aws_byte_cursor topic = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic);
-    struct aws_byte_cursor payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
+
+    struct aws_byte_cursor payload;
+    AWS_ZERO_STRUCT(payload);
+    if (jni_payload != NULL) {
+        payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_payload);
+    }
 
     enum aws_mqtt_qos qos = jni_qos;
     bool retain = jni_retain != 0;
 
     int result = aws_mqtt_client_connection_set_will(connection->client_connection, &topic, qos, retain, &payload);
     aws_jni_byte_cursor_from_jstring_release(env, jni_topic, topic);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
+
+    if (jni_payload != NULL) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_payload, payload);
+    }
+
     return (result == AWS_OP_SUCCESS);
 }
 

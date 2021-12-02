@@ -168,11 +168,15 @@ extends java.lang.Enum&lt;<a href="AwsSigningConfig.AwsSigningAlgorithm.html" ti
 </tr>
 <tr class="altColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#SIGV4">SIGV4</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets</div>
+</td>
 </tr>
 <tr class="rowColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#SIGV4_ASYMMETRIC">SIGV4_ASYMMETRIC</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">AWS Sigv4a signing, based on ECDSA signatures</div>
+</td>
 </tr>
 </table>
 </li>
@@ -195,12 +199,16 @@ extends java.lang.Enum&lt;<a href="AwsSigningConfig.AwsSigningAlgorithm.html" ti
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>static <a href="AwsSigningConfig.AwsSigningAlgorithm.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSigningAlgorithm</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getEnumValueFromInteger(int)">getEnumValueFromInteger</a></span>&#8203;(int&nbsp;value)</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Creates a Java enum value from a native enum value as an integer</div>
+</td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getNativeValue()">getNativeValue</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">Trivial Java Enum value to native enum value conversion function</div>
+</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>static <a href="AwsSigningConfig.AwsSigningAlgorithm.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSigningAlgorithm</a></code></td>
@@ -255,6 +263,7 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>SIGV4</h4>
 <pre>public static final&nbsp;<a href="AwsSigningConfig.AwsSigningAlgorithm.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSigningAlgorithm</a> SIGV4</pre>
+<div class="block">Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets</div>
 </li>
 </ul>
 <a id="SIGV4_ASYMMETRIC">
@@ -264,6 +273,7 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>SIGV4_ASYMMETRIC</h4>
 <pre>public static final&nbsp;<a href="AwsSigningConfig.AwsSigningAlgorithm.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSigningAlgorithm</a> SIGV4_ASYMMETRIC</pre>
+<div class="block">AWS Sigv4a signing, based on ECDSA signatures</div>
 </li>
 </ul>
 </li>
@@ -325,6 +335,11 @@ not permitted.)</div>
 <li class="blockList">
 <h4>getNativeValue</h4>
 <pre class="methodSignature">public&nbsp;int&nbsp;getNativeValue()</pre>
+<div class="block">Trivial Java Enum value to native enum value conversion function</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>integer associated with this enum value</dd>
+</dl>
 </li>
 </ul>
 <a id="getEnumValueFromInteger(int)">
@@ -334,6 +349,13 @@ not permitted.)</div>
 <li class="blockList">
 <h4>getEnumValueFromInteger</h4>
 <pre class="methodSignature">public static&nbsp;<a href="AwsSigningConfig.AwsSigningAlgorithm.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSigningAlgorithm</a>&nbsp;getEnumValueFromInteger&#8203;(int&nbsp;value)</pre>
+<div class="block">Creates a Java enum value from a native enum value as an integer</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>value</code> - native enum value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the corresponding Java enum value</dd>
+</dl>
 </li>
 </ul>
 </li>

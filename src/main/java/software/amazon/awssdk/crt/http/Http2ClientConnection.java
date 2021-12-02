@@ -11,8 +11,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
 
-import static software.amazon.awssdk.crt.CRT.awsLastError;
-
 /**
  * This class wraps aws-c-http to provide the basic HTTP/2 request/response
  * functionality via the AWS Common Runtime.
@@ -59,16 +57,16 @@ public class Http2ClientConnection extends HttpClientConnection {
      * @return When this future completes without exception, the peer has
      *         acknowledged the settings and the change has been applied.
      */
-    public CompletableFuture<Void> changeSettings(final List<Http2ConnectionSetting> settings) {
+    public CompletableFuture<Void> updateSettings(final List<Http2ConnectionSetting> settings) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         if (isNull()) {
             future.completeExceptionally(
                     new IllegalStateException("Http2ClientConnection has been closed, can't change settings on it."));
             return future;
         }
-        AsyncCallback changeSettingsCompleted = AsyncCallback.wrapFuture(future, null);
+        AsyncCallback updateSettingsCompleted = AsyncCallback.wrapFuture(future, null);
         try {
-            http2ClientConnectionChangeSettings(getNativeHandle(), changeSettingsCompleted,
+            http2ClientConnectionUpdateSettings(getNativeHandle(), updateSettingsCompleted,
                     Http2ConnectionSetting.marshallSettingsForJNI(settings));
         } catch (CrtRuntimeException ex) {
             future.completeExceptionally(ex);
@@ -206,7 +204,7 @@ public class Http2ClientConnection extends HttpClientConnection {
             HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler)
             throws CrtRuntimeException;
 
-    private static native void http2ClientConnectionChangeSettings(long connectionBinding,
+    private static native void http2ClientConnectionUpdateSettings(long connectionBinding,
             AsyncCallback completedCallback, long[] marshalledSettings) throws CrtRuntimeException;
 
     private static native void http2ClientConnectionSendPing(long connectionBinding, AsyncCallback completedCallback,

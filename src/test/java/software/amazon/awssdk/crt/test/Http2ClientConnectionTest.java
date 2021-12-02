@@ -54,7 +54,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     }
 
     @Test
-    public void testHttp2ConnectionChangeSettings() throws Exception {
+    public void testHttp2ConnectionUpdateSettings() throws Exception {
         skipIfNetworkUnavailable();
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -70,7 +70,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                 List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
                 settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
                 settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
-                conn.changeSettings(settings);
+                conn.updateSettings(settings).get(5, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -84,7 +84,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     }
 
     @Test
-    public void testHttp2ConnectionChangeSettingsEmpty() throws Exception {
+    public void testHttp2ConnectionUpdateSettingsEmpty() throws Exception {
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
 
@@ -99,7 +99,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
                 List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
-                conn.changeSettings(settings);
+                conn.updateSettings(settings).get(5, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

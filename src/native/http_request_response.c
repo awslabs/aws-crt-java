@@ -692,7 +692,7 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
     s_cleanup_http2_callback_data(callback_data);
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionChangeSettings(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionUpdateSettings(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection,
@@ -706,12 +706,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
 
     if (!native_conn) {
         aws_jni_throw_null_pointer_exception(
-            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid aws_http_connection");
+            env, "Http2ClientConnection.http2ClientConnectionUpdateSettings: Invalid aws_http_connection");
         return;
     }
     if (!java_async_callback) {
         aws_jni_throw_illegal_argument_exception(
-            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: Invalid async callback");
+            env, "Http2ClientConnection.http2ClientConnectionUpdateSettings: Invalid async callback");
         return;
     }
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -735,7 +735,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     if (aws_http2_connection_change_settings(
             native_conn, settings, settings_len, s_on_settings_completed, callback_data)) {
         aws_jni_throw_runtime_exception(
-            env, "Http2ClientConnection.http2ClientConnectionChangeSettings: failed to change settings");
+            env, "Http2ClientConnection.http2ClientConnectionUpdateSettings: failed to change settings");
         goto done;
     }
     success = true;

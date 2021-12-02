@@ -221,8 +221,8 @@ public class Elasticurl {
         URI uri = new URI(cli.getArgs()[0]);
         boolean useTls = true;
         int port = 443;
-        if (uri.getScheme() == "http") {
-            useTls = true;
+        if (uri.getScheme().equals("http")) {
+            useTls = false;
             port = 80;
         }
 

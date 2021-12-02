@@ -50,12 +50,12 @@ public class HttpRequestBase {
         int size = 0;
         size += BUFFER_INT_SIZE; /* version */
         size += BUFFER_INT_SIZE + method.length();
-        size += BUFFER_INT_SIZE + encodedPath.length();
-        size += (BUFFER_INT_SIZE * 2) * headers.size();
+        byte[] pathBytes = encodedPath.getBytes(UTF8);
+        size += BUFFER_INT_SIZE + pathBytes.length;
 
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {
-                size += header.getNameBytes().length + header.getValueBytes().length;
+                size += header.getNameBytes().length + header.getValueBytes().length + (BUFFER_INT_SIZE * 2);
             }
         }
 
@@ -63,8 +63,8 @@ public class HttpRequestBase {
         buffer.putInt(version.getValue());
         buffer.putInt(method.length());
         buffer.put(method.getBytes(UTF8));
-        buffer.putInt(encodedPath.length());
-        buffer.put(encodedPath.getBytes(UTF8));
+        buffer.putInt(pathBytes.length);
+        buffer.put(pathBytes);
 
         for (HttpHeader header : headers) {
             if (header.getNameBytes().length > 0) {

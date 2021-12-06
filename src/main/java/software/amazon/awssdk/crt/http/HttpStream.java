@@ -19,12 +19,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public class HttpStream extends CrtResource {
 
-    /**
-     * Completion interface for writing chunks to an http stream
-     */
-    public interface HttpStreamWriteChunkCompletionCallback {
-        void onChunkCompleted(int errorCode);
-    }
 
     /* Native code will call this constructor during HttpClientConnection.makeRequest() */
     protected HttpStream(long ptr) {
@@ -48,6 +42,9 @@ public class HttpStream extends CrtResource {
         }
     }
 
+    /*******************************************************************************
+     * Shared method
+     ******************************************************************************/
     /**
      * Opens the Sliding Read/Write Window by the number of bytes passed as an argument for this HttpStream.
      *
@@ -64,6 +61,37 @@ public class HttpStream extends CrtResource {
         if (!isNull()) {
             httpStreamIncrementWindow(getNativeHandle(), windowSize);
         }
+    }
+
+    /**
+     * Activates the client stream.
+     */
+    public void activate() {
+        if (!isNull()) {
+            httpStreamActivate(getNativeHandle(), this);
+        }
+    }
+
+    /**
+     * Retrieves the Http Response Status Code
+     * @return The Http Response Status Code
+     */
+    public int getResponseStatusCode() {
+        if (!isNull()) {
+            return httpStreamGetResponseStatusCode(getNativeHandle());
+        }
+        throw new IllegalStateException("Can't get Status Code on Closed Stream");
+    }
+
+    /*******************************************************************************
+     * HTTP/1.1 Only
+     ******************************************************************************/
+
+    /**
+     * Completion interface for writing chunks to an http stream
+     */
+    public interface HttpStreamWriteChunkCompletionCallback {
+        void onChunkCompleted(int errorCode);
     }
 
     /**
@@ -117,25 +145,9 @@ public class HttpStream extends CrtResource {
         return completionFuture;
     }
 
-    /**
-     * Activates the client stream.
-     */
-    public void activate() {
-        if (!isNull()) {
-            httpStreamActivate(getNativeHandle(), this);
-        }
-    }
-
-    /**
-     * Retrieves the Http Response Status Code
-     * @return The Http Response Status Code
-     */
-    public int getResponseStatusCode() {
-        if (!isNull()) {
-            return httpStreamGetResponseStatusCode(getNativeHandle());
-        }
-        throw new IllegalStateException("Can't get Status Code on Closed Stream");
-    }
+    /*******************************************************************************
+     * Native methods
+     ******************************************************************************/
 
     private static native void httpStreamRelease(long http_stream);
     private static native void httpStreamIncrementWindow(long http_stream, int window_size);

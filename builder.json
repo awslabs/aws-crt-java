@@ -9,7 +9,7 @@
     "test_steps": [
        "aws-crt-java-test"
     ],
-    "imports": [
+    "+imports": [
         "JDK8"
     ],
     "build_dir": "target/cmake-build",

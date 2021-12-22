@@ -741,9 +741,11 @@ static void s_cache_directory_traversal_handler(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     directory_traversal_handler_properties.directory_traversal_handler_class = (*env)->NewGlobalRef(env, cls);
 
-    directory_traversal_handler_properties.on_directory_entry_method_id =
-        (*env)->GetMethodID(env, directory_traversal_handler_properties.directory_traversal_handler_class,
-        "onDirectoryEntry", "(Ljava/lang/String;Ljava/lang/String;ZZZJ)Z");
+    directory_traversal_handler_properties.on_directory_entry_method_id = (*env)->GetMethodID(
+        env,
+        directory_traversal_handler_properties.directory_traversal_handler_class,
+        "onDirectoryEntry",
+        "(Ljava/lang/String;Ljava/lang/String;ZZZJ)Z");
 }
 
 void cache_java_class_ids(JNIEnv *env) {

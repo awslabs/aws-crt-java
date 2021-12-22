@@ -5,8 +5,8 @@
 #include "crt.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
-#include <aws/common/string.h>
 #include <aws/common/file.h>
+#include <aws/common/string.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -30,22 +30,23 @@ struct directory_traversal_callback_ctx {
 static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *user_data) {
 
     struct directory_traversal_callback_ctx *ctx = user_data;
-    JNIEnv* env = ctx->env;
+    JNIEnv *env = ctx->env;
 
     jstring path = aws_jni_string_from_cursor(env, &entry->path);
     jstring relativePath = aws_jni_string_from_cursor(env, &entry->relative_path);
 
-    jboolean callback_result = (*env)->CallBooleanMethod(env,
+    jboolean callback_result = (*env)->CallBooleanMethod(
+        env,
         ctx->handler,
         directory_traversal_handler_properties.on_directory_entry_method_id,
         path,
         relativePath,
-        (jboolean) entry->file_type & AWS_FILE_TYPE_DIRECTORY,
-        (jboolean) entry->file_type & AWS_FILE_TYPE_SYM_LINK,
-        (jboolean) entry->file_type & AWS_FILE_TYPE_FILE,
-        (jlong) entry->file_size);
+        (jboolean)entry->file_type & AWS_FILE_TYPE_DIRECTORY,
+        (jboolean)entry->file_type & AWS_FILE_TYPE_SYM_LINK,
+        (jboolean)entry->file_type & AWS_FILE_TYPE_FILE,
+        (jlong)entry->file_size);
 
-    return (bool) callback_result;
+    return (bool)callback_result;
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_traverse(
@@ -65,10 +66,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_tra
 
     struct directory_traversal_callback_ctx ctx = {
         .env = env,
-        .handler = handler
+        .handler = handler,
     };
 
-    if (aws_directory_traverse(allocator, path_str, (bool) recursive, s_on_directory_entry, &ctx)) {
+    if (aws_directory_traverse(allocator, path_str, (bool)recursive, s_on_directory_entry, &ctx)) {
         /* TODO: throw exception */
     }
 

@@ -335,6 +335,13 @@ struct java_aws_standard_retry_options_properties {
 };
 extern struct java_aws_standard_retry_options_properties standard_retry_options_properties;
 
+/* DirectoryTraversalHandler */
+struct java_aws_directory_traversal_handler_properties {
+    jclass directory_traversal_handler_class;
+    jmethodID on_directory_entry_method_id;
+};
+extern struct java_aws_directory_traversal_handler_properties directory_traversal_handler_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

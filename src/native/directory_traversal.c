@@ -49,7 +49,7 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
     return (bool)callback_result;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_traverse(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crtTraverse(
     JNIEnv *env,
     jclass jni_class,
     jstring path,
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_tra
     };
 
     if (aws_directory_traverse(allocator, path_str, (bool)recursive, s_on_directory_entry, &ctx)) {
-        /* TODO: throw exception */
+        aws_jni_throw_runtime_exception(env, "Directory traversal failed");
     }
 
     aws_string_destroy(path_str);

@@ -170,20 +170,62 @@ public class DirectoryTraversalTest extends CrtTestFixture {
             // traverse dir using CRT
             Set<String> entries = new HashSet<>();
 
-            DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
+            try {
+                DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
+                    @Override
+                    public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
+                        entries.add(path);
+                        assertTrue(isDirectory);
+                        assertTrue(!isSymLink);
+                        assertTrue(!isFile);
+
+                        return false;
+                    }
+                });
+
+                assertTrue("Cancellation should have caused an exception", false);
+            } catch (final RuntimeException ex) {
+                // should return only one entry, because the callback returned false asking the traversal to be cancelled.
+                assertEquals(1, entries.size());
+            }
+        }
+    }
+
+    @Test
+    public void testTraverseDirectoryError() throws Exception {
+
+        Set<String> entries = new HashSet<>();
+
+        try {
+
+            DirectoryTraversal.traverse("-", false, new DirectoryTraversalHandler() {
                 @Override
                 public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
                     entries.add(path);
-                    assertTrue(isDirectory);
-                    assertTrue(!isSymLink);
-                    assertTrue(!isFile);
-
-                    return false;
+                    return true;
                 }
             });
-
-            // should return only one entry, because the callback returned false asking the traversal to be cancelled.
-            assertEquals(1, entries.size());
+            assertTrue("Cancellation should have caused an exception", false);
+        } catch (final RuntimeException ex) {
+            assertEquals(0, entries.size());
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTraverseDirectoryNullPath() {
+
+        DirectoryTraversal.traverse(null, false, new DirectoryTraversalHandler() {
+            @Override
+            public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
+                return true;
+            }
+        });
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTraverseDirectoryNullHandler() {
+
+        DirectoryTraversal.traverse("-", false, null);
+    }
+
 }

@@ -6,7 +6,7 @@ package software.amazon.awssdk.crt.io;
 public final class DirectoryTraversal {
 
     /**
-     * Traverse a directory starting at path.
+     * Traverse a directory starting at the path provided.
      * If you want the traversal to recurse the entire directory, pass recursive as true. Passing false for this parameter
      * will only iterate the contents of the directory, but will not descend into any directories it encounters.
      *
@@ -19,10 +19,10 @@ public final class DirectoryTraversal {
      */
     public static void traverse(final String path, boolean recursive, final DirectoryTraversalHandler handler) {
         if (path == null) {
-            throw new IllegalArgumentException("path can't be null");
+            throw new IllegalArgumentException("path must not be null");
         }
         if (handler == null) {
-            throw new IllegalArgumentException("handler can'' be null");
+            throw new IllegalArgumentException("handler must not be null");
         }
 
         crtTraverse(path, recursive, handler);

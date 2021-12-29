@@ -196,9 +196,10 @@ if (NOT ANDROID)
         set(JAVA_AWT_LIBRARY NotNeeded)
         set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     endif()
-    set(JAVA_HOME $ENV{CMAKE_JAVA_HOME}) # required because gradle sets JAVA_HOME to the JRE path
+    file(TO_CMAKE_PATH "$ENV{CMAKE_JAVA_HOME}" CMAKE_JAVA_HOME)
+    set(JAVA_HOME CMAKE_JAVA_HOME) # required because gradle sets JAVA_HOME to the JRE path
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
-    message(STATUS "CMAKE_JAVA_HOME=$ENV{CMAKE_JAVA_HOME}")
+    message(STATUS "CMAKE_JAVA_HOME=$CMAKE_JAVA_HOME")
     find_package(JNI REQUIRED)
     target_include_directories(${PROJECT_NAME} PRIVATE ${JNI_INCLUDE_DIRS})
 endif()

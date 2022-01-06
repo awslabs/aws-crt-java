@@ -13,7 +13,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Contains all the configuration options for a HttpConnectionPoolManager instance
  */
 public class HttpClientConnectionManagerOptions {
-    public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
 
@@ -21,7 +20,6 @@ public class HttpClientConnectionManagerOptions {
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
     private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
-    private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
     private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
@@ -97,22 +95,6 @@ public class HttpClientConnectionManagerOptions {
      * @return the IO channel window size to use for connections in the connection pool
      */
     public int getWindowSize() { return windowSize; }
-
-    /**
-     * Sets the IO buffer size to use for connections in the connection pool
-     * @param bufferSize Size of I/O buffer per connection
-     * @return this
-     */
-    public HttpClientConnectionManagerOptions withBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
-        return this;
-    }
-
-    /**
-     * @return the IO buffer size to use for connections in the connection pool
-     */
-    public int getBufferSize() { return bufferSize; }
-
 
     /**
      * Sets the URI to use for connections in the connection pool

@@ -64,9 +64,6 @@ public class HttpClientConnectionManager extends CrtResource {
         int windowSize = options.getWindowSize();
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
 
-        int bufferSize = options.getBufferSize();
-        if (bufferSize <= 0) { throw new  IllegalArgumentException("Buffer Size must be greater than zero."); }
-
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 

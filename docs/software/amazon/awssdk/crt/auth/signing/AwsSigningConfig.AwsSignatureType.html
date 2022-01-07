@@ -179,12 +179,18 @@ extends java.lang.Enum&lt;<a href="AwsSigningConfig.AwsSignatureType.html" title
 </td>
 </tr>
 <tr class="altColor">
+<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#HTTP_REQUEST_TRAILING_HEADERS">HTTP_REQUEST_TRAILING_HEADERS</a></span></code></th>
+<td class="colLast">
+<div class="block">Compute a signature for a payloads trailing headers.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#HTTP_REQUEST_VIA_HEADERS">HTTP_REQUEST_VIA_HEADERS</a></span></code></th>
 <td class="colLast">
 <div class="block">A signature for a full http request should be computed, with header updates applied to the signing result.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#HTTP_REQUEST_VIA_QUERY_PARAMS">HTTP_REQUEST_VIA_QUERY_PARAMS</a></span></code></th>
 <td class="colLast">
 <div class="block">A signature for a full http request should be computed, with query param updates applied to the signing result.</div>
@@ -301,13 +307,23 @@ the order they are declared.</div>
 <a id="HTTP_REQUEST_EVENT">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>HTTP_REQUEST_EVENT</h4>
 <pre>public static final&nbsp;<a href="AwsSigningConfig.AwsSignatureType.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignatureType</a> HTTP_REQUEST_EVENT</pre>
 <div class="block">Compute a signature for an event stream event.
 
  This option is not yet supported.</div>
+</li>
+</ul>
+<a id="HTTP_REQUEST_TRAILING_HEADERS">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>HTTP_REQUEST_TRAILING_HEADERS</h4>
+<pre>public static final&nbsp;<a href="AwsSigningConfig.AwsSignatureType.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignatureType</a> HTTP_REQUEST_TRAILING_HEADERS</pre>
+<div class="block">Compute a signature for a payloads trailing headers.</div>
 </li>
 </ul>
 </li>

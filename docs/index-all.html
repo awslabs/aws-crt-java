@@ -920,6 +920,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#getCredentialsProvider()">getCredentialsProvider()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#getCredentialsProvider()">getCredentialsProvider()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttMessage.html#getDup()">getDup()</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttMessage.html" title="class in software.amazon.awssdk.crt.mqtt">MqttMessage</a></dt>
 <dd>
 <div class="block">Gets the DUP flag.</div>
@@ -1391,6 +1393,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Compute a signature for an event stream event.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignatureType.html#HTTP_REQUEST_TRAILING_HEADERS">HTTP_REQUEST_TRAILING_HEADERS</a></span> - software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignatureType.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignatureType</a></dt>
+<dd>
+<div class="block">Compute a signature for a payloads trailing headers.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignatureType.html#HTTP_REQUEST_VIA_HEADERS">HTTP_REQUEST_VIA_HEADERS</a></span> - software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignatureType.html" title="enum in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignatureType</a></dt>
 <dd>
 <div class="block">A signature for a full http request should be computed, with header updates applied to the signing result.</div>
@@ -1719,6 +1725,15 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 
  Each request is then:
  [method][path][header name-value pairs]</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpHeader.html#marshalHeadersForJni(java.util.List)">marshalHeadersForJni(List&lt;HttpHeader&gt;)</a></span> - Static method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a></dt>
+<dd>
+<div class="block">Lists of headers are marshalled as follows:
+
+ each string field is: [4-bytes BE] [variable length bytes specified by the
+ previous field]
+
+ [header name-value pairs]</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/Header.html#marshallHeadersForJNI(java.util.List)">marshallHeadersForJNI(List&lt;Header&gt;)</a></span> - Static method in class software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/Header.html" title="class in software.amazon.awssdk.crt.eventstream">Header</a></dt>
 <dd>
@@ -2390,6 +2405,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Shuts down the underlying http connection.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigner.html#sign(java.util.List,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign(List&lt;HttpHeader&gt;, byte[], AwsSigningConfig)</a></span> - Static method in class software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigner.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigner</a></dt>
+<dd>
+<div class="block">Signs a body chunk according to the supplied signing configuration</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigner.html#sign(software.amazon.awssdk.crt.http.HttpRequestBodyStream,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign(HttpRequestBodyStream, byte[], AwsSigningConfig)</a></span> - Static method in class software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigner.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigner</a></dt>
 <dd>
 <div class="block">Signs a body chunk according to the supplied signing configuration</div>
@@ -2484,6 +2503,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Corresponds to SOCK_STREAM in Berkeley sockets (TCP)</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html#STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD">STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD</a></span> - Static variable in class software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignedBodyValue</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html#STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER">STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER</a></span> - Static variable in class software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignedBodyValue</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html#STREAMING_AWS4_HMAC_SHA256_EVENTS">STREAMING_AWS4_HMAC_SHA256_EVENTS</a></span> - Static variable in class software.amazon.awssdk.crt.auth.signing.<a href="software/amazon/awssdk/crt/auth/signing/AwsSigningConfig.AwsSignedBodyValue.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig.AwsSignedBodyValue</a></dt>
 <dd>&nbsp;</dd>
@@ -3022,6 +3043,8 @@ the order they are declared.</div>
 <div class="block">Sets the name of the credentials file to use.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#withCredentialsProvider(software.amazon.awssdk.crt.auth.credentials.CredentialsProvider)">withCredentialsProvider(CredentialsProvider)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#withCredentialsProvider(software.amazon.awssdk.crt.auth.credentials.CredentialsProvider)">withCredentialsProvider(CredentialsProvider)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/StsCredentialsProvider.Builder.html#withCredsProvider(software.amazon.awssdk.crt.auth.credentials.CredentialsProvider)">withCredsProvider(CredentialsProvider)</a></span> - Method in interface software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/StsCredentialsProvider.Builder.html" title="interface in software.amazon.awssdk.crt.auth.credentials">StsCredentialsProvider.Builder</a></dt>
 <dd>

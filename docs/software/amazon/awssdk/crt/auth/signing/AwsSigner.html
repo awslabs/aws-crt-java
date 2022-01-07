@@ -26,7 +26,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":9,"i2":9,"i3":9};
+var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -177,7 +177,7 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>static java.util.concurrent.CompletableFuture&lt;<a href="AwsSigningResult.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningResult</a>&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sign(software.amazon.awssdk.crt.http.HttpRequestBodyStream,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign</a></span>&#8203;(<a href="../../http/HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a>&nbsp;chunkBody,
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sign(java.util.List,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign</a></span>&#8203;(java.util.List&lt;<a href="../../http/HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>&gt;&nbsp;headers,
     byte[]&nbsp;previousSignature,
     <a href="AwsSigningConfig.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig</a>&nbsp;config)</code></th>
 <td class="colLast">
@@ -186,13 +186,22 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>static java.util.concurrent.CompletableFuture&lt;<a href="AwsSigningResult.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningResult</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sign(software.amazon.awssdk.crt.http.HttpRequestBodyStream,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign</a></span>&#8203;(<a href="../../http/HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a>&nbsp;chunkBody,
+    byte[]&nbsp;previousSignature,
+    <a href="AwsSigningConfig.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig</a>&nbsp;config)</code></th>
+<td class="colLast">
+<div class="block">Signs a body chunk according to the supplied signing configuration</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>static java.util.concurrent.CompletableFuture&lt;<a href="AwsSigningResult.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningResult</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sign(software.amazon.awssdk.crt.http.HttpRequest,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">sign</a></span>&#8203;(<a href="../../http/HttpRequest.html" title="class in software.amazon.awssdk.crt.http">HttpRequest</a>&nbsp;request,
     <a href="AwsSigningConfig.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig</a>&nbsp;config)</code></th>
 <td class="colLast">
 <div class="block">Signs an http request according to the supplied signing configuration</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>static java.util.concurrent.CompletableFuture&lt;byte[]&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#signChunk(software.amazon.awssdk.crt.http.HttpRequestBodyStream,byte%5B%5D,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">signChunk</a></span>&#8203;(<a href="../../http/HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a>&nbsp;chunkBody,
          byte[]&nbsp;previousSignature,
@@ -201,7 +210,7 @@ extends java.lang.Object</pre>
 <div class="block">Signs a body chunk according to the supplied signing configuration</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>static java.util.concurrent.CompletableFuture&lt;<a href="../../http/HttpRequest.html" title="class in software.amazon.awssdk.crt.http">HttpRequest</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#signRequest(software.amazon.awssdk.crt.http.HttpRequest,software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">signRequest</a></span>&#8203;(<a href="../../http/HttpRequest.html" title="class in software.amazon.awssdk.crt.http">HttpRequest</a>&nbsp;request,
            <a href="AwsSigningConfig.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig</a>&nbsp;config)</code></th>
@@ -314,7 +323,7 @@ extends java.lang.Object</pre>
 <a id="sign(software.amazon.awssdk.crt.http.HttpRequestBodyStream,byte[],software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>sign</h4>
 <pre class="methodSignature">public static&nbsp;java.util.concurrent.CompletableFuture&lt;<a href="AwsSigningResult.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningResult</a>&gt;&nbsp;sign&#8203;(<a href="../../http/HttpRequestBodyStream.html" title="interface in software.amazon.awssdk.crt.http">HttpRequestBodyStream</a>&nbsp;chunkBody,
@@ -330,6 +339,29 @@ extends java.lang.Object</pre>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>future which will contain a signing result, which provides easier access to all signing-related
  result properties</dd>
+</dl>
+</li>
+</ul>
+<a id="sign(java.util.List,byte[],software.amazon.awssdk.crt.auth.signing.AwsSigningConfig)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>sign</h4>
+<pre class="methodSignature">public static&nbsp;java.util.concurrent.CompletableFuture&lt;<a href="AwsSigningResult.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningResult</a>&gt;&nbsp;sign&#8203;(java.util.List&lt;<a href="../../http/HttpHeader.html" title="class in software.amazon.awssdk.crt.http">HttpHeader</a>&gt;&nbsp;headers,
+                                                                            byte[]&nbsp;previousSignature,
+                                                                            <a href="AwsSigningConfig.html" title="class in software.amazon.awssdk.crt.auth.signing">AwsSigningConfig</a>&nbsp;config)</pre>
+<div class="block">Signs a body chunk according to the supplied signing configuration</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>headers</code> - list of headers to be sent in the trailer.</dd>
+<dd><code>previousSignature</code> - the signature of the previous component of the
+                          request: either the request itself for the first
+                          chunk, or the previous chunk otherwise</dd>
+<dd><code>config</code> - signing configuration</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>future which will contain a signing result, which provides easier
+         access to all signing-related result properties</dd>
 </dl>
 </li>
 </ul>

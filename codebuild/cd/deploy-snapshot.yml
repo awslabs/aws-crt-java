@@ -36,6 +36,8 @@ phases:
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      # Use the password from secret manager to update the settings
+      - sed -i 's/password-to-replace/'"$ST_PASSWORD"'/g' $HOME/.m2/settings.xml
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java

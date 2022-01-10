@@ -760,23 +760,18 @@ static void s_cache_directory_entry(JNIEnv *env) {
     directory_entry_properties.directory_entry_constructor_method_id =
         (*env)->GetMethodID(env, directory_entry_properties.directory_entry_class, "<init>", "()V");
 
-    directory_entry_properties.path_field_id =
-        (*env)->GetFieldID(env, cls, "path", "Ljava/lang/String;");
+    directory_entry_properties.path_field_id = (*env)->GetFieldID(env, cls, "path", "Ljava/lang/String;");
 
     directory_entry_properties.relative_path_field_id =
         (*env)->GetFieldID(env, cls, "relativePath", "Ljava/lang/String;");
 
-    directory_entry_properties.is_directory_field_id =
-        (*env)->GetFieldID(env, cls, "isDirectory", "Z");
+    directory_entry_properties.is_directory_field_id = (*env)->GetFieldID(env, cls, "isDirectory", "Z");
 
-    directory_entry_properties.is_symlink_field_id =
-        (*env)->GetFieldID(env, cls, "isSymLink", "Z");
+    directory_entry_properties.is_symlink_field_id = (*env)->GetFieldID(env, cls, "isSymLink", "Z");
 
-    directory_entry_properties.is_file_field_id =
-        (*env)->GetFieldID(env, cls, "isFile", "Z");
+    directory_entry_properties.is_file_field_id = (*env)->GetFieldID(env, cls, "isFile", "Z");
 
-    directory_entry_properties.file_size_field_id =
-        (*env)->GetFieldID(env, cls, "fileSize", "J");
+    directory_entry_properties.file_size_field_id = (*env)->GetFieldID(env, cls, "fileSize", "J");
 }
 
 void cache_java_class_ids(JNIEnv *env) {

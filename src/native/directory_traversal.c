@@ -32,7 +32,10 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
     struct directory_traversal_callback_ctx *ctx = user_data;
     JNIEnv *env = ctx->env;
 
-    jobject directory_entry_object = (*env)->NewObject(env, directory_entry_properties.directory_entry_class, directory_entry_properties.directory_entry_constructor_method_id);
+    jobject directory_entry_object = (*env)->NewObject(
+        env,
+        directory_entry_properties.directory_entry_class,
+        directory_entry_properties.directory_entry_constructor_method_id);
     if ((*env)->ExceptionCheck(env) || directory_entry_object == NULL) {
         return false;
     }
@@ -41,17 +44,28 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
     jstring relativePath = aws_jni_string_from_cursor(env, &entry->relative_path);
 
     (*env)->SetObjectField(env, directory_entry_object, directory_entry_properties.path_field_id, path);
-    (*env)->SetObjectField(env, directory_entry_object, directory_entry_properties.relative_path_field_id, relativePath);
-    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_directory_field_id, (entry->file_type & AWS_FILE_TYPE_DIRECTORY) != 0);
-    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_symlink_field_id, (entry->file_type & AWS_FILE_TYPE_SYM_LINK) != 0);
-    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_file_field_id, (entry->file_type & AWS_FILE_TYPE_FILE) != 0);
-    (*env)->SetLongField(env, directory_entry_object, directory_entry_properties.file_size_field_id, (jlong) entry->file_size);
+    (*env)->SetObjectField(
+        env, directory_entry_object, directory_entry_properties.relative_path_field_id, relativePath);
+    (*env)->SetBooleanField(
+        env,
+        directory_entry_object,
+        directory_entry_properties.is_directory_field_id,
+        (entry->file_type & AWS_FILE_TYPE_DIRECTORY) != 0);
+    (*env)->SetBooleanField(
+        env,
+        directory_entry_object,
+        directory_entry_properties.is_symlink_field_id,
+        (entry->file_type & AWS_FILE_TYPE_SYM_LINK) != 0);
+    (*env)->SetBooleanField(
+        env,
+        directory_entry_object,
+        directory_entry_properties.is_file_field_id,
+        (entry->file_type & AWS_FILE_TYPE_FILE) != 0);
+    (*env)->SetLongField(
+        env, directory_entry_object, directory_entry_properties.file_size_field_id, (jlong)entry->file_size);
 
     jboolean callback_result = (*env)->CallBooleanMethod(
-        env,
-        ctx->handler,
-        directory_traversal_handler_properties.on_directory_entry_method_id,
-        directory_entry_object);
+        env, ctx->handler, directory_traversal_handler_properties.on_directory_entry_method_id, directory_entry_object);
 
     /* clean-up */
     (*env)->DeleteLocalRef(env, directory_entry_object);

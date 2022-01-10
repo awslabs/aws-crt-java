@@ -93,11 +93,3 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crt
 
     aws_string_destroy(path_str);
 }
-
-#if UINTPTR_MAX == 0xffffffff
-#    if defined(_MSC_VER)
-#        pragma warning(pop)
-#    else
-#        pragma GCC diagnostic pop
-#    endif
-#endif

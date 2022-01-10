@@ -15,6 +15,8 @@ struct directory_traversal_callback_ctx {
 static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *user_data) {
 
     struct directory_traversal_callback_ctx *ctx = user_data;
+
+    /* this callback is synchronous, therefore no need to use aws_jni_get_thread_env() */
     JNIEnv *env = ctx->env;
 
     jobject directory_entry_object = (*env)->NewObject(

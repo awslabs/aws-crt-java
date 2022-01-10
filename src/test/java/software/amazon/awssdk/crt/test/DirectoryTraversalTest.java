@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import software.amazon.awssdk.crt.io.DirectoryEntry;
 import software.amazon.awssdk.crt.io.DirectoryTraversal;
 import software.amazon.awssdk.crt.io.DirectoryTraversalHandler;
 
@@ -107,11 +108,11 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
             DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
                 @Override
-                public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
-                    entries.add(path);
-                    assertTrue(isDirectory);
-                    assertTrue(!isSymLink);
-                    assertTrue(!isFile);
+                public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                    entries.add(directoryEntry.getPath());
+                    assertTrue(directoryEntry.isDirectory());
+                    assertTrue(!directoryEntry.isSymLink());
+                    assertTrue(!directoryEntry.isFile());
 
                     return true;
                 }
@@ -137,14 +138,14 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
             DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), true, new DirectoryTraversalHandler() {
                 @Override
-                public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
-                    if (isDirectory) {
-                        directoryEntries.add(path);
-                        assertTrue(!isFile);
+                public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                    if (directoryEntry.isDirectory()) {
+                        directoryEntries.add(directoryEntry.getPath());
+                        assertTrue(!directoryEntry.isFile());
                     } else {
-                        fileEntries.add(path);
-                        assertTrue(isFile);
-                        assertEquals(FILE_CONTENT.length(), fileSize);
+                        fileEntries.add(directoryEntry.getPath());
+                        assertTrue(directoryEntry.isFile());
+                        assertEquals(FILE_CONTENT.length(), directoryEntry.getFileSize());
                     }
 
                     return true;
@@ -173,11 +174,11 @@ public class DirectoryTraversalTest extends CrtTestFixture {
             try {
                 DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
                     @Override
-                    public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
-                        entries.add(path);
-                        assertTrue(isDirectory);
-                        assertTrue(!isSymLink);
-                        assertTrue(!isFile);
+                    public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                        entries.add(directoryEntry.getPath());
+                        assertTrue(directoryEntry.isDirectory());
+                        assertTrue(!directoryEntry.isSymLink());
+                        assertTrue(!directoryEntry.isFile());
 
                         return false;
                     }
@@ -200,8 +201,8 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
             DirectoryTraversal.traverse("-", false, new DirectoryTraversalHandler() {
                 @Override
-                public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
-                    entries.add(path);
+                public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                    entries.add(directoryEntry.getPath());
                     return true;
                 }
             });
@@ -216,7 +217,7 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
         DirectoryTraversal.traverse(null, false, new DirectoryTraversalHandler() {
             @Override
-            public boolean onDirectoryEntry(String path, String relativePath, boolean isDirectory, boolean isSymLink, boolean isFile, long fileSize) {
+            public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
                 return true;
             }
         });
@@ -227,5 +228,4 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
         DirectoryTraversal.traverse("-", false, null);
     }
-
 }

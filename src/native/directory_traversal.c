@@ -32,19 +32,37 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
     struct directory_traversal_callback_ctx *ctx = user_data;
     JNIEnv *env = ctx->env;
 
+    jobject directory_entry_object = (*env)->NewObject(env, directory_entry_properties.directory_entry_class, directory_entry_properties.directory_entry_constructor_method_id);
+    if ((*env)->ExceptionCheck(env) || directory_entry_object == NULL) {
+        return false;
+    }
+
     jstring path = aws_jni_string_from_cursor(env, &entry->path);
     jstring relativePath = aws_jni_string_from_cursor(env, &entry->relative_path);
+
+    (*env)->SetObjectField(env, directory_entry_object, directory_entry_properties.path_field_id, path);
+    (*env)->SetObjectField(env, directory_entry_object, directory_entry_properties.relative_path_field_id, relativePath);
+    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_directory_field_id, (entry->file_type & AWS_FILE_TYPE_DIRECTORY) != 0);
+    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_symlink_field_id, (entry->file_type & AWS_FILE_TYPE_SYM_LINK) != 0);
+    (*env)->SetBooleanField(env, directory_entry_object, directory_entry_properties.is_file_field_id, (entry->file_type & AWS_FILE_TYPE_FILE) != 0);
+    (*env)->SetLongField(env, directory_entry_object, directory_entry_properties.file_size_field_id, (jlong) entry->file_size);
 
     jboolean callback_result = (*env)->CallBooleanMethod(
         env,
         ctx->handler,
         directory_traversal_handler_properties.on_directory_entry_method_id,
-        path,
-        relativePath,
-        (jboolean)entry->file_type & AWS_FILE_TYPE_DIRECTORY,
-        (jboolean)entry->file_type & AWS_FILE_TYPE_SYM_LINK,
-        (jboolean)entry->file_type & AWS_FILE_TYPE_FILE,
-        (jlong)entry->file_size);
+        directory_entry_object);
+
+    /* clean-up */
+    (*env)->DeleteLocalRef(env, directory_entry_object);
+
+    if (path != NULL) {
+        (*env)->DeleteLocalRef(env, path);
+    }
+
+    if (relativePath != NULL) {
+        (*env)->DeleteLocalRef(env, relativePath);
+    }
 
     return (bool)callback_result;
 }
@@ -60,7 +78,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crt
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     const char *path_c_str = (*env)->GetStringUTFChars(env, path, NULL);
-
     struct aws_string *path_str = aws_string_new_from_c_str(allocator, path_c_str);
     (*env)->ReleaseStringUTFChars(env, path, path_c_str);
 

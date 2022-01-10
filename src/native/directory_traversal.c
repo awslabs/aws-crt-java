@@ -27,6 +27,7 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
         return false;
     }
 
+    /* aws_jni_string_from_cursor() does not return NULL */
     jstring path = aws_jni_string_from_cursor(env, &entry->path);
     jstring relativePath = aws_jni_string_from_cursor(env, &entry->relative_path);
 

@@ -4,23 +4,8 @@
  */
 #include "crt.h"
 #include "java_class_ids.h"
-#include "retry_utils.h"
 #include <aws/common/file.h>
 #include <aws/common/string.h>
-#include <jni.h>
-
-/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
-#if UINTPTR_MAX == 0xffffffff
-#    if defined(_MSC_VER)
-#        pragma warning(push)
-#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
-#        pragma warning(disable : 4221)
-#    else
-#        pragma GCC diagnostic push
-#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
-#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
-#    endif
-#endif
 
 struct directory_traversal_callback_ctx {
     JNIEnv *env;

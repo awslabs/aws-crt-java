@@ -22,7 +22,7 @@ if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
 fi
 
 # Pry the builder version this CRT is using out of ci.yml
-BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s\(.*\)/\1/')
+BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
 echo "Using builder version ${BUILDER_VERSION}"
 
 aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder

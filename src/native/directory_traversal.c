@@ -23,7 +23,7 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
         env,
         directory_entry_properties.directory_entry_class,
         directory_entry_properties.directory_entry_constructor_method_id);
-    if ((*env)->ExceptionCheck(env) || directory_entry_object == NULL) {
+    if (aws_jni_check_and_clear_exception(env) || directory_entry_object == NULL) {
         return false;
     }
 
@@ -54,6 +54,13 @@ static bool s_on_directory_entry(const struct aws_directory_entry *entry, void *
 
     jboolean callback_result = (*env)->CallBooleanMethod(
         env, ctx->handler, directory_traversal_handler_properties.on_directory_entry_method_id, directory_entry_object);
+
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* If an exception is thrown by the user callback, the traversal is cancelled.
+           Cancelling the iteration either via the user callback returning false or throwing, results
+           in DirectoryTraversal.traverse() throwing an exception to notify user about incomplete results. */
+        callback_result = JNI_FALSE;
+    }
 
     /* clean-up */
     (*env)->DeleteLocalRef(env, directory_entry_object);

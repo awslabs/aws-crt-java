@@ -228,4 +228,23 @@ public class DirectoryTraversalTest extends CrtTestFixture {
 
         DirectoryTraversal.traverse("-", false, null);
     }
+
+    @Test(expected = RuntimeException.class)
+    public void testTraverseDirectoryCallbackThrowingException() throws Exception {
+
+        try (final DirectoryStructureHelper directoryStructure = new DirectoryStructureHelper()) {
+            // traverse dir using CRT
+            Set<String> entries = new HashSet<>();
+
+            DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
+                @Override
+                public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                    throw new RuntimeException("THROWN BY TEST CALLBACK");
+                }
+            });
+
+            // exception thrown by DirectoryTraversal.traverse() is expected,
+            // in order to notify user about incomplete results due to traversal cancellation.
+        }
+    }
 }

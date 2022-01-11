@@ -2,7 +2,11 @@ package software.amazon.awssdk.crt.io;
 
 /**
  * This class wraps the directory traversal implementation provided by the CRT.
+ *
+ * @deprecated It is currently an EXPERIMENTAL feature meant for internal use only. It may be changed incompatibly
+ * or removed in a future version.
  */
+@Deprecated()
 public final class DirectoryTraversal {
 
     /**

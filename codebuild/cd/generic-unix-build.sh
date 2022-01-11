@@ -21,7 +21,12 @@ if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
     LIB_PATH=target/cmake-build/aws-crt-java/lib
 fi
 
-python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
+# Pry the builder version this CRT is using out of ci.yml
+BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s\(.*\)/\1/')
+echo "Using builder version ${BUILDER_VERSION}"
+
+aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
+
 chmod a+x builder
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 

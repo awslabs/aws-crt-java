@@ -36,6 +36,11 @@ public class Http2StreamManagerOptions {
     }
 
     /**
+     * TODO:
+     * finalize with and get functions and documentations.
+     */
+
+    /**
      * Sets the client bootstrap instance to use to create the pool's connections
      *
      * @param clientBootstrap ClientBootstrap to use

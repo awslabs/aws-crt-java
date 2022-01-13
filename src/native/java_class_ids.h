@@ -335,6 +335,26 @@ struct java_aws_standard_retry_options_properties {
 };
 extern struct java_aws_standard_retry_options_properties standard_retry_options_properties;
 
+/* DirectoryTraversalHandler */
+struct java_aws_directory_traversal_handler_properties {
+    jclass directory_traversal_handler_class;
+    jmethodID on_directory_entry_method_id;
+};
+extern struct java_aws_directory_traversal_handler_properties directory_traversal_handler_properties;
+
+/* DirectoryEntry */
+struct java_aws_directory_entry_properties {
+    jclass directory_entry_class;
+    jmethodID directory_entry_constructor_method_id;
+    jfieldID path_field_id;
+    jfieldID relative_path_field_id;
+    jfieldID is_directory_field_id;
+    jfieldID is_symlink_field_id;
+    jfieldID is_file_field_id;
+    jfieldID file_size_field_id;
+};
+extern struct java_aws_directory_entry_properties directory_entry_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

@@ -83,6 +83,7 @@ jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_
 
 /*******************************************************************************
  * aws_jni_string_from_cursor - Creates a Java String from a cursor.
+ * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
  ******************************************************************************/
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
 

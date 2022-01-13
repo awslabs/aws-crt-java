@@ -86,7 +86,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crt
 
     struct aws_string *path_str = aws_jni_new_string_from_jstring(env, path);
     if (path_str == NULL) {
-        aws_jni_throw_runtime_exception(env, "failed to get certificate string");
+        aws_jni_throw_runtime_exception(env, "failed to get path string");
         return;
     }
 
@@ -97,7 +97,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crt
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     if (aws_directory_traverse(allocator, path_str, (bool)recursive, s_on_directory_entry, &ctx)) {
-        aws_jni_throw_runtime_exception(env, "Directory traversal failed");
+        /* If there's already a Java exception being thrown from the callback, then we don't need to throw another */
+        if (!(*env)->ExceptionCheck(env)) {
+            aws_jni_throw_runtime_exception(env, "Directory traversal failed");
+        }
     }
 
     aws_string_destroy(path_str);

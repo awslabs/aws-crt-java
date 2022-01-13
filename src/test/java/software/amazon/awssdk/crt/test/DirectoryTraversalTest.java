@@ -16,8 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class DirectoryTraversalTest extends CrtTestFixture {
 
@@ -229,22 +228,28 @@ public class DirectoryTraversalTest extends CrtTestFixture {
         DirectoryTraversal.traverse("-", false, null);
     }
 
-    @Test(expected = RuntimeException.class)
     public void testTraverseDirectoryCallbackThrowingException() throws Exception {
+
+        final String exceptionMessage = "THROWN BY TEST CALLBACK";
 
         try (final DirectoryStructureHelper directoryStructure = new DirectoryStructureHelper()) {
             // traverse dir using CRT
             Set<String> entries = new HashSet<>();
 
-            DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
-                @Override
-                public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
-                    throw new RuntimeException("THROWN BY TEST CALLBACK");
-                }
-            });
+            try {
+                DirectoryTraversal.traverse(directoryStructure.getRootDirectory(), false, new DirectoryTraversalHandler() {
+                    @Override
+                    public boolean onDirectoryEntry(final DirectoryEntry directoryEntry) {
+                        throw new RuntimeException(exceptionMessage);
+                    }
+                });
 
-            // exception thrown by DirectoryTraversal.traverse() is expected,
-            // in order to notify user about incomplete results due to traversal cancellation.
+                fail("Exception is expected to propagate through callback");
+            } catch (final RuntimeException ex) {
+                // exception thrown by DirectoryTraversal.traverse() is expected,
+                // in order to notify user about incomplete results due to traversal cancellation.
+                assertEquals(exceptionMessage, ex.getMessage());
+            }
         }
     }
 }

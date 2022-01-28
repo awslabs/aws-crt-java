@@ -240,7 +240,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
-static void s_jni_atexit_common(void) {
+static void s_jni_atexit_strict(void) {
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
@@ -253,12 +253,6 @@ static void s_jni_atexit_common(void) {
     }
 
     aws_jni_cleanup_logging();
-}
-
-static void s_jni_atexit_strict(void) {
-    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
-    s_jni_atexit_common();
-
     if (s_allocator) {
         if (g_memory_tracing) {
             s_allocator = aws_mem_tracer_destroy(s_allocator);
@@ -278,7 +272,6 @@ static void s_jni_atexit_strict(void) {
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
 
 static void s_jni_atexit_gentle(void) {
-    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_gentle invoked");
 
     /* If not doing strict shutdown, wait only a short time before shutting down */
     aws_thread_set_managed_join_timeout_ns(
@@ -286,7 +279,7 @@ static void s_jni_atexit_gentle(void) {
 
     if (aws_thread_join_all_managed() == AWS_OP_SUCCESS) {
         /* a successful managed join means it should be safe to do a full, strict clean up */
-        s_jni_atexit_common();
+        s_jni_atexit_strict();
     } else {
         /*
          * We didn't successfully join all our threads so it's not really safe to clean up the libraries.
@@ -306,11 +299,6 @@ static void s_jni_atexit_gentle(void) {
             }
         }
     }
-}
-
-static void (*jni_atexit)(void) = s_jni_atexit_gentle;
-void jni_on_unload(void) {
-    jni_atexit();
 }
 
 #define KB_256 (256 * 1024)
@@ -357,7 +345,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
-        jni_atexit = s_jni_atexit_strict;
+        atexit(s_jni_atexit_strict);
+    } else {
+        atexit(s_jni_atexit_gentle);
     }
 }
 
@@ -404,9 +394,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
 
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
     struct aws_string *string = aws_string_new_from_array(aws_jni_get_allocator(), native_data->ptr, native_data->len);
-    if (string == NULL) {
-        return NULL;
-    }
+    AWS_FATAL_ASSERT(string != NULL);
 
     jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
     aws_string_destroy(string);

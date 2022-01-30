@@ -6,6 +6,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include "aws/io/uri.h"
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -344,7 +345,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
-    jobject java_response_handler_jobject) {
+    jobject java_response_handler_jobject,
+    jbyteArray jni_endpoint) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -356,6 +358,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     if (credentials_provider) {
         signing_config = aws_mem_calloc(allocator, 1, sizeof(struct aws_signing_config_aws));
         aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
+    }
+
+    struct aws_uri endpoint;
+    AWS_ZERO_STRUCT(endpoint);
+    if (jni_endpoint != NULL) {
+        struct aws_byte_cursor endpoint_str = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
+        AWS_FATAL_ASSERT(aws_uri_init_parse(&endpoint, allocator, &endpoint_str) == AWS_OP_SUCCESS);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint_str);
     }
 
     struct s3_client_make_meta_request_callback_data *callback_data =
@@ -388,7 +398,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .headers_callback = s_on_s3_meta_request_headers_callback,
         .body_callback = s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
-        .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback};
+        .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
+        .endpoint = jni_endpoint != NULL ? &endpoint : NULL};
 
     struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 
@@ -406,6 +417,7 @@ done:
         aws_mem_release(allocator, signing_config);
     }
     aws_http_message_release(request_message);
+    aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;
     }

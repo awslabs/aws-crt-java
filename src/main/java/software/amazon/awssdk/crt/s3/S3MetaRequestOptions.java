@@ -1,9 +1,9 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +48,7 @@ public class S3MetaRequestOptions {
     private HttpRequest httpRequest;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
+    private URI endpoint;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -85,4 +86,12 @@ public class S3MetaRequestOptions {
         return credentialsProvider;
     }
 
+    public S3MetaRequestOptions withEndpoint(URI endpoint) {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    public URI getEndpoint() {
+        return endpoint;
+    }
 }

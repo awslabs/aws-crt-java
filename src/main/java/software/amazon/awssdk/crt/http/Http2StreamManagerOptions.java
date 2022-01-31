@@ -24,7 +24,7 @@ public class Http2StreamManagerOptions {
     private HttpMonitoringOptions monitoringOptions;
     private HttpProxyOptions proxyOptions;
 
-    private int idealConcurrentStreamsPerConnection = DEFAULT_MAX;
+    private int idealConcurrentStreamsPerConnection = 100;
     private int maxConcurrentStreamsPerConnection = DEFAULT_MAX;
 
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
@@ -34,11 +34,6 @@ public class Http2StreamManagerOptions {
      */
     public Http2StreamManagerOptions() {
     }
-
-    /**
-     * TODO:
-     * finalize with and get functions and documentations.
-     */
 
     /**
      * Sets the client bootstrap instance to use to create the pool's connections

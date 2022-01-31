@@ -7,6 +7,7 @@
 
 #include "crt.h"
 #include "http_connection_manager.h"
+#include "http_request_response.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
@@ -34,7 +35,7 @@
 #    endif
 #endif
 
-static jobject s_java_http_stream_from_native_new(JNIEnv *env, void *opaque, enum aws_http_version version) {
+jobject aws_java_http_stream_from_native_new(JNIEnv *env, void *opaque, int version) {
     jlong jni_native_ptr = (jlong)opaque;
     AWS_ASSERT(jni_native_ptr);
     jobject stream = NULL;
@@ -57,42 +58,24 @@ static jobject s_java_http_stream_from_native_new(JNIEnv *env, void *opaque, enu
     return stream;
 }
 
-static void s_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream) {
+void aws_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream) {
     /* Delete our reference to the HttpStream Object from the JVM. */
     (*env)->DeleteGlobalRef(env, jHttpStream);
 }
 
 /*******************************************************************************
- * http_stream_callback_data - carries around data needed by the various http request
+ * http_stream_binding - carries around data needed by the various http request
  * callbacks.
  ******************************************************************************/
-struct http_stream_callback_data {
-    JavaVM *jvm;
 
-    // TEMP: Until Java API changes to match "H1B" native HTTP API,
-    // create aws_http_message and aws_input_stream under the hood.
-    struct aws_http_message *native_request;
-
-    jobject java_http_response_stream_handler;
-    jobject java_http_stream;
-    struct aws_http_stream *native_stream;
-    struct aws_byte_buf headers_buf;
-    int response_status;
-
-    /*
-     * Unactivated streams must have their callback data destroyed at release time
-     */
-    struct aws_atomic_var activated;
-};
-
-static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callback_data *callback) {
+void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *callback) {
 
     if (callback == NULL) {
         return;
     }
 
     if (callback->java_http_stream) {
-        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
+        aws_java_http_stream_from_native_delete(env, callback->java_http_stream);
     }
 
     if (callback->java_http_response_stream_handler != NULL) {
@@ -113,10 +96,10 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
 }
 
 // If error occurs, A Java exception is thrown and NULL is returned.
-static struct http_stream_callback_data *http_stream_callback_alloc(JNIEnv *env, jobject java_callback_handler) {
+struct http_stream_binding *aws_http_stream_binding_alloc(JNIEnv *env, jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct http_stream_callback_data *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_callback_data));
+    struct http_stream_binding *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_binding));
     AWS_FATAL_ASSERT(callback);
 
     // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
@@ -141,7 +124,7 @@ static int s_on_incoming_headers_fn(
     void *user_data) {
     (void)block_type;
 
-    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
     int resp_status = -1;
     int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
     if (err_code != AWS_OP_SUCCESS) {
@@ -166,7 +149,7 @@ static int s_on_incoming_header_block_done_fn(
     void *user_data) {
     (void)stream;
 
-    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     jint jni_block_type = block_type;
@@ -207,7 +190,7 @@ static int s_on_incoming_header_block_done_fn(
 }
 
 static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
-    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
 
     size_t total_window_increment = 0;
 
@@ -244,7 +227,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
 static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
 
-    struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     /* Don't invoke Java callbacks if Java HttpStream failed to completely setup */
@@ -261,7 +244,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
-    http_stream_callback_destroy(env, callback);
+    aws_http_stream_binding_destroy(env, callback);
 }
 
 jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_headers *headers) {
@@ -313,8 +296,7 @@ static jobject s_make_request_general(
         return (jobject)NULL;
     }
 
-    struct http_stream_callback_data *callback_data =
-        http_stream_callback_alloc(env, jni_http_response_callback_handler);
+    struct http_stream_binding *callback_data = aws_http_stream_binding_alloc(env, jni_http_response_callback_handler);
     if (!callback_data) {
         /* Exception already thrown */
         return (jobject)NULL;
@@ -324,7 +306,7 @@ static jobject s_make_request_general(
         aws_http_request_new_from_java_http_request(env, marshalled_request, jni_http_request_body_stream);
     if (callback_data->native_request == NULL) {
         /* Exception already thrown */
-        http_stream_callback_destroy(env, callback_data);
+        aws_http_stream_binding_destroy(env, callback_data);
         return (jobject)NULL;
     }
 
@@ -349,7 +331,7 @@ static jobject s_make_request_general(
             (void *)native_conn,
             (void *)callback_data->native_stream);
 
-        jHttpStream = s_java_http_stream_from_native_new(env, callback_data, version);
+        jHttpStream = aws_java_http_stream_from_native_new(env, callback_data, version);
     }
 
     /* Check for errors that might have occurred while holding the lock. */
@@ -357,7 +339,7 @@ static jobject s_make_request_general(
         /* Failed to create native aws_http_stream. Clean up callback_data. */
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
-        http_stream_callback_destroy(env, callback_data);
+        aws_http_stream_binding_destroy(env, callback_data);
         return NULL;
     } else if (!jHttpStream) {
         /* Failed to create java HttpStream, but did create native aws_http_stream.
@@ -407,7 +389,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnec
 }
 
 struct http_stream_chunked_callback_data {
-    struct http_stream_callback_data *stream_cb_data;
+    struct http_stream_binding *stream_cb_data;
     struct aws_byte_buf chunk_data;
     struct aws_input_stream *chunk_stream;
     jobject completion_callback;
@@ -447,7 +429,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jobject completion_callback) {
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     struct http_stream_chunked_callback_data *chunked_callback_data =
@@ -495,7 +477,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jobject j_http_stream) {
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {
@@ -524,7 +506,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {
@@ -536,7 +518,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
     size_t not_activated = 0;
     if (aws_atomic_compare_exchange_int(&cb_data->activated, &not_activated, 1)) {
-        http_stream_callback_destroy(env, cb_data);
+        aws_http_stream_binding_destroy(env, cb_data);
     }
 }
 
@@ -547,7 +529,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {
@@ -574,7 +556,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {
@@ -600,7 +582,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
 
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {

@@ -750,6 +750,48 @@ static void s_cache_standard_retry_options(JNIEnv *env) {
     AWS_FATAL_ASSERT(standard_retry_options_properties.initial_bucket_capacity_field_id);
 }
 
+struct java_aws_directory_traversal_handler_properties directory_traversal_handler_properties;
+
+static void s_cache_directory_traversal_handler(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/DirectoryTraversalHandler");
+    AWS_FATAL_ASSERT(cls);
+    directory_traversal_handler_properties.directory_traversal_handler_class = (*env)->NewGlobalRef(env, cls);
+
+    directory_traversal_handler_properties.on_directory_entry_method_id = (*env)->GetMethodID(
+        env,
+        directory_traversal_handler_properties.directory_traversal_handler_class,
+        "onDirectoryEntry",
+        "(Lsoftware/amazon/awssdk/crt/io/DirectoryEntry;)Z");
+}
+
+struct java_aws_directory_entry_properties directory_entry_properties;
+
+static void s_cache_directory_entry(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/DirectoryEntry");
+    AWS_FATAL_ASSERT(cls);
+    directory_entry_properties.directory_entry_class = (*env)->NewGlobalRef(env, cls);
+
+    directory_entry_properties.directory_entry_constructor_method_id =
+        (*env)->GetMethodID(env, directory_entry_properties.directory_entry_class, "<init>", "()V");
+
+    directory_entry_properties.path_field_id = (*env)->GetFieldID(env, cls, "path", "Ljava/lang/String;");
+
+    directory_entry_properties.relative_path_field_id =
+        (*env)->GetFieldID(env, cls, "relativePath", "Ljava/lang/String;");
+
+    directory_entry_properties.is_directory_field_id = (*env)->GetFieldID(env, cls, "isDirectory", "Z");
+
+    directory_entry_properties.is_symlink_field_id = (*env)->GetFieldID(env, cls, "isSymLink", "Z");
+
+    directory_entry_properties.is_file_field_id = (*env)->GetFieldID(env, cls, "isFile", "Z");
+
+    directory_entry_properties.file_size_field_id = (*env)->GetFieldID(env, cls, "fileSize", "J");
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -793,4 +835,6 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_exponential_backoff_retry_options(env);
     s_cache_standard_retry_options(env);
+    s_cache_directory_traversal_handler(env);
+    s_cache_directory_entry(env);
 }

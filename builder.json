@@ -9,15 +9,17 @@
     "test_steps": [
        "aws-crt-java-test"
     ],
-    "imports": [
+    "+imports": [
         "JDK8"
     ],
     "build_dir": "target/cmake-build",
     "build_env": {
-        "JAVA_HOME": "{java_home}"
+        "JAVA_HOME": "{java_home}",
+        "OVERRIDE_JAVA_HOME": "{java_home}"
     },
     "test_env": {
-        "JAVA_HOME": "{java_home}"
+        "JAVA_HOME": "{java_home}",
+        "OVERRIDE_JAVA_HOME": "{java_home}"
     },
     "hosts": {
         "ubuntu": {
@@ -33,14 +35,13 @@
     },
     "targets": {
         "linux": {
+            "_comment": "set up SoftHSM2 for PKCS#11 tests (see: ./builder/actions/pkcs11_test_setup.py)",
+            "+pre_build_steps": ["pkcs11-test-setup"],
             "!build_steps": [
                 "{source_dir}/gradlew :s3-native-client:build -x test",
                 "mvn -P continuous-integration -B compile"
             ],
-            "_comment": "Set up SoftHSM2 for PKCS#11 tests (see ./builder/actions/pks11_test_setup.py)",
-            "packages": ["softhsm"],
             "!test_steps": [
-                "pkcs11-test-setup",
                 "aws-crt-java-test"
             ],
             "architectures": {

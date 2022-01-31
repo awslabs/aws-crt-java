@@ -11,18 +11,37 @@ import re
 class Pkcs11TestSetup(Builder.Action):
     """
     Set up this machine for running the PKCS#11 tests.
-    If SoftHSM2 is not installed, the tests are skipped.
+    If SoftHSM2 cannot be installed, the tests are skipped.
 
-    This action should be run in the 'test_steps' stage.
+    This action should be run in the 'pre_build_steps' or 'build_steps' stage.
     """
 
     def run(self, env):
         self.env = env
 
+        # total hack: don't run PKCS#11 tests when building all C libs with -DBUILD_SHARED_LIBS=ON.
+        # here's what happens:  libsofthsm2.so loads the system libcrypto.so and
+        # s2n loads the aws-lc's libcrypto.so and really strange things start happening.
+        # this wouldn't happen in the real world, just in our tests, so just bail out
+        if any('BUILD_SHARED_LIBS=ON' in arg for arg in env.args.args):
+            print("WARNING: PKCS#11 tests disabled when BUILD_SHARED_LIBS=ON due to weird libcrypto.so behavior")
+            return
+
+        # try to install softhsm
+        try:
+            softhsm_install_acion = Builder.InstallPackages(['softhsm'])
+            softhsm_install_acion.run(env)
+        except:
+            print("WARNING: softhsm could not be installed. PKCS#11 tests are disabled")
+            return
+
         softhsm_lib = self._find_softhsm_lib()
         if softhsm_lib is None:
             print("WARNING: libsofthsm2.so not found. PKCS#11 tests are disabled")
             return
+
+        # set cmake flag so PKCS#11 tests are enabled
+        env.project.config['cmake_args'].append('-DENABLE_PKCS11_TESTS=ON')
 
         # put SoftHSM config file and token directory under the build dir.
         softhsm2_dir = os.path.join(env.build_dir, 'softhsm2')
@@ -33,43 +52,15 @@ class Pkcs11TestSetup(Builder.Action):
         with open(conf_path, 'w') as conf_file:
             conf_file.write(f"directories.tokendir = {token_dir}\n")
 
-        # create a token
-        self._exec_softhsm2_util(
-            '--init-token',
-            '--free', # use any free slot
-            '--label', 'my-test-token',
-            '--pin', '0000',
-            '--so-pin', '0000')
+        # print SoftHSM version
+        self._exec_softhsm2_util('--version')
 
-        # we need to figure out which slot the new token is in because:
-        # 1) old versions of softhsm2-util make you pass --slot <number>
-        #    (instead of accepting --token <name> like newer versions)
-        # 2) newer versions of softhsm2-util reassign new tokens to crazy
-        #    slot numbers (instead of simply using 0 like older versions)
-        slot = self._get_token_slots()[0]
-
-        # add private key to token
-        resources_dir = '../../crt/aws-c-io/tests/resources'
-        this_dir = os.path.dirname(__file__)
-        resources_dir = os.path.realpath(os.path.join(this_dir, resources_dir))
-        self._exec_softhsm2_util(
-            '--import', os.path.join(resources_dir, 'unittests.p8'),
-            '--slot', str(slot),
-            '--label', 'my-test-key',
-            '--id', 'BEEFCAFE', # ID is hex
-            '--pin', '0000')
-
-        # for logging's sake, print the new state of things
-        self._exec_softhsm2_util('--show-slots', '--pin', '0000')
+        # sanity check SoftHSM is working
+        self._exec_softhsm2_util('--show-slots')
 
         # set env vars for tests
         self._setenv('TEST_PKCS11_LIB', softhsm_lib)
-        self._setenv('TEST_PKCS11_TOKEN_LABEL', 'my-test-token')
-        self._setenv('TEST_PKCS11_PIN', '0000')
-        self._setenv('TEST_PKCS11_PKEY_LABEL', 'my-test-key')
-        self._setenv('TEST_PKCS11_CERT_FILE', os.path.join(resources_dir, 'unittests.crt'))
-        self._setenv('TEST_PKCS11_CA_FILE', os.path.join(resources_dir, 'unittests.crt'))
-
+        self._setenv('TEST_PKCS11_TOKEN_DIR', token_dir)
 
     def _find_softhsm_lib(self):
         """Return path to SoftHSM2 shared lib, or None if not found"""
@@ -106,54 +97,10 @@ class Pkcs11TestSetup(Builder.Action):
 
         return result
 
-
-    def _get_token_slots(self):
-        """Return array of IDs for slots with initialized tokens"""
-        token_slot_ids = []
-
-        output = self._exec_softhsm2_util('--show-slots', quiet=True).output
-
-        # --- output looks like ---
-        #Available slots:
-        #Slot 0
-        #    Slot info:
-        #        ...
-        #        Token present:    yes
-        #    Token info:
-        #        ...
-        #        Initialized:      yes
-        current_slot = None
-        current_info_block = None
-        for line in output.splitlines():
-            # check for start of "Slot <ID>" block
-            m = re.match(r"Slot ([0-9]+)", line)
-            if m:
-                current_slot = int(m.group(1))
-                current_info_block = None
-                continue
-
-            if current_slot is None:
-                continue
-
-            # check for start of next indented block, like "Token info"
-            m = re.match(r"    ([^ ].*)", line)
-            if m:
-                current_info_block = m.group(1)
-                continue
-
-            if current_info_block is None:
-                continue
-
-            # if we're in token block, check for "Initialized: yes"
-            if "Token info" in current_info_block:
-                if re.match(r" *Initialized: *yes", line):
-                    token_slot_ids.append(current_slot)
-
-        return token_slot_ids
-
-
     def _setenv(self, var, value):
         """
         Set environment variable now,
+        and ensure the environment variable is set again when tests run
         """
         self.env.shell.setenv(var, value)
+        self.env.project.config['test_env'][var] = value

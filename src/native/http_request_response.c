@@ -116,7 +116,7 @@ struct http_stream_binding *aws_http_stream_binding_alloc(JNIEnv *env, jobject j
     return callback;
 }
 
-static int s_on_incoming_headers_fn(
+int aws_java_http_stream_on_incoming_headers_fn(
     struct aws_http_stream *stream,
     enum aws_http_header_block block_type,
     const struct aws_http_header *header_array,
@@ -143,7 +143,7 @@ static int s_on_incoming_headers_fn(
     return AWS_OP_SUCCESS;
 }
 
-static int s_on_incoming_header_block_done_fn(
+int aws_java_http_stream_on_incoming_header_block_done_fn(
     struct aws_http_stream *stream,
     enum aws_http_header_block block_type,
     void *user_data) {
@@ -189,7 +189,10 @@ static int s_on_incoming_header_block_done_fn(
     return AWS_OP_SUCCESS;
 }
 
-static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
+int aws_java_http_stream_on_incoming_body_fn(
+    struct aws_http_stream *stream,
+    const struct aws_byte_cursor *data,
+    void *user_data) {
     struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
 
     size_t total_window_increment = 0;
@@ -225,7 +228,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
     return AWS_OP_SUCCESS;
 }
 
-static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
+void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
 
     struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
@@ -314,10 +317,10 @@ static jobject s_make_request_general(
         .self_size = sizeof(request_options),
         .request = callback_data->native_request,
         /* Set Callbacks */
-        .on_response_headers = s_on_incoming_headers_fn,
-        .on_response_header_block_done = s_on_incoming_header_block_done_fn,
-        .on_response_body = s_on_incoming_body_fn,
-        .on_complete = s_on_stream_complete_fn,
+        .on_response_headers = aws_java_http_stream_on_incoming_headers_fn,
+        .on_response_header_block_done = aws_java_http_stream_on_incoming_header_block_done_fn,
+        .on_response_body = aws_java_http_stream_on_incoming_body_fn,
+        .on_complete = aws_java_http_stream_on_stream_complete_fn,
         .user_data = callback_data,
     };
 

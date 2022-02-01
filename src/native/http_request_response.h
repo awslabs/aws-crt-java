@@ -40,4 +40,21 @@ void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *ca
 // If error occurs, A Java exception is thrown and NULL is returned.
 struct http_stream_binding *aws_http_stream_binding_alloc(JNIEnv *env, jobject java_callback_handler);
 
+/* Default callbacks using binding */
+int aws_java_http_stream_on_incoming_headers_fn(
+    struct aws_http_stream *stream,
+    enum aws_http_header_block block_type,
+    const struct aws_http_header *header_array,
+    size_t num_headers,
+    void *user_data);
+int aws_java_http_stream_on_incoming_header_block_done_fn(
+    struct aws_http_stream *stream,
+    enum aws_http_header_block block_type,
+    void *user_data);
+int aws_java_http_stream_on_incoming_body_fn(
+    struct aws_http_stream *stream,
+    const struct aws_byte_cursor *data,
+    void *user_data);
+void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data);
+
 #endif /* AWS_JNI_CRT_HTTP_REQUEST_RESPONSE_H */

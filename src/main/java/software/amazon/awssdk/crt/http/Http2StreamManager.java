@@ -4,6 +4,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.util.concurrent.CompletableFuture;
@@ -177,21 +178,24 @@ public class Http2StreamManager extends CrtResource {
      * @throws CrtRuntimeException
      */
     public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
-            HttpStreamResponseHandler streamHandler)
-            throws CrtRuntimeException {
+            HttpStreamResponseHandler streamHandler) {
+        CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
+        AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {
-            throw new IllegalStateException(
-                    "Http2StreamManager has been closed, can't acquire new streams");
+            completionFuture.completeExceptionally(new IllegalStateException(
+                    "Http2StreamManager has been closed, can't acquire new streams"));
+            return completionFuture;
         }
-
-        CompletableFuture<Http2Stream> streamRequest = new CompletableFuture<>();
-
-        http2StreamManagerAcquireStream(this.getNativeHandle(),
-                request.marshalForJni(),
-                request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler),
-                streamRequest);
-        return streamRequest;
+        try {
+            http2StreamManagerAcquireStream(this.getNativeHandle(),
+                    request.marshalForJni(),
+                    request.getBodyStream(),
+                    new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                    acquireStreamCompleted);
+        } catch (CrtRuntimeException ex) {
+            completionFuture.completeExceptionally(ex);
+        }
+        return completionFuture;
     }
 
     /**
@@ -266,5 +270,5 @@ public class Http2StreamManager extends CrtResource {
             byte[] marshalledRequest,
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
-            CompletableFuture<Http2Stream> acquireFuture) throws CrtRuntimeException;
+            AsyncCallback completedCallback) throws CrtRuntimeException;
 }

@@ -106,7 +106,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   windows-vc14:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         arch: [x86, x64]

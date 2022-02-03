@@ -6,6 +6,7 @@
 #ifndef AWS_JNI_CRT_HTTP_REQUEST_RESPONSE_H
 #define AWS_JNI_CRT_HTTP_REQUEST_RESPONSE_H
 
+#include <aws/http/request_response.h>
 #include <jni.h>
 
 struct aws_http_message;

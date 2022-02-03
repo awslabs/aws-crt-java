@@ -4,7 +4,9 @@
  */
 
 #include "crt.h"
+#include "http_connection_manager.h"
 #include "http_request_response.h"
+#include "http_request_utils.h"
 #include "java_class_ids.h"
 
 #include <jni.h>
@@ -45,6 +47,37 @@ struct aws_http2_stream_manager_binding {
     struct aws_http2_stream_manager *stream_manager;
 };
 
+static void s_destroy_manager_binding(struct aws_http2_stream_manager_binding *binding) {
+    if (binding == NULL) {
+        return;
+    }
+
+    JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+    if (binding->java_http2_stream_manager != NULL) {
+        (*env)->DeleteWeakGlobalRef(env, binding->java_http2_stream_manager);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), binding);
+}
+
+static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
+
+    struct aws_http2_stream_manager_binding *binding = (struct aws_http2_stream_manager_binding *)user_data;
+    JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Stream Manager Shutdown Complete");
+    jobject java_http2_stream_manager = (*env)->NewLocalRef(env, binding->java_http2_stream_manager);
+    if (java_http2_stream_manager != NULL) {
+        (*env)->CallVoidMethod(env, java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
+
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+        (*env)->DeleteLocalRef(env, java_http2_stream_manager);
+    }
+
+    // We're done with this wrapper, free it.
+    s_destroy_manager_binding(binding);
+}
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_http2StreamManagerNew(
     JNIEnv *env,
     jclass jni_class,
@@ -66,16 +99,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
     jint jni_max_conns,
-    jint ideal_concurrent_streams_per_connection,
-    jint max_concurrent_streams_per_connection) {
+    jint jni_ideal_concurrent_streams_per_connection,
+    jint jni_max_concurrent_streams_per_connection) {
 
     (void)jni_class;
-    (void)jni_expected_protocol_version;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
-    struct http_connection_manager_binding *binding = NULL;
+    struct aws_http2_stream_manager_binding *binding = NULL;
 
     if (!client_bootstrap) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
@@ -117,15 +149,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
     }
 
-    binding = aws_mem_calloc(allocator, 1, sizeof(struct http_connection_manager_binding));
+    binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));
     AWS_FATAL_ASSERT(binding);
-    binding->java_http_conn_manager = (*env)->NewWeakGlobalRef(env, conn_manager_jobject);
+    binding->java_http2_stream_manager = (*env)->NewWeakGlobalRef(env, stream_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    struct aws_http_connection_manager_options manager_options;
+    struct aws_http2_stream_manager_options manager_options;
     AWS_ZERO_STRUCT(manager_options);
 
     manager_options.bootstrap = client_bootstrap;
@@ -134,13 +166,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     manager_options.tls_connection_options = NULL;
     manager_options.host = endpoint;
     manager_options.port = port;
-    manager_options.max_connections = (size_t)jni_max_conns;
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
     manager_options.shutdown_complete_user_data = binding;
     manager_options.monitoring_options = NULL;
     /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
     manager_options.enable_read_back_pressure = jni_manual_window_management;
-    manager_options.max_connection_idle_in_milliseconds = jni_max_connection_idle_in_milliseconds;
+
+    manager_options.max_connections = (size_t)jni_max_conns;
+    manager_options.ideal_concurrent_streams_per_connection = (size_t)jni_ideal_concurrent_streams_per_connection;
+    manager_options.max_concurrent_streams_per_connection = (size_t)jni_max_concurrent_streams_per_connection;
 
     if (use_tls) {
         manager_options.tls_connection_options = &tls_conn_options;
@@ -179,10 +213,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         manager_options.proxy_options = &proxy_options;
     }
 
-    binding->manager = aws_http_connection_manager_new(allocator, &manager_options);
-    if (binding->manager == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "Failed to create connection manager: %s", aws_error_str(aws_last_error()));
+    binding->stream_manager = aws_http2_stream_manager_new(allocator, &manager_options);
+    if (binding->stream_manager == NULL) {
+        aws_jni_throw_runtime_exception(env, "Failed to create stream manager: %s", aws_error_str(aws_last_error()));
     }
 
     aws_http_proxy_options_jni_clean_up(
@@ -195,7 +228,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
 cleanup:
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
 
-    if (binding->manager == NULL) {
+    if (binding->stream_manager == NULL) {
         s_destroy_manager_binding(binding);
         binding = NULL;
     }
@@ -216,8 +249,8 @@ static void s_cleanup_sm_acquire_stream_callback_data(struct aws_sm_acquire_stre
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    if (callback_data->async_callback) {
-        (*env)->DeleteGlobalRef(env, callback_data->async_callback);
+    if (callback_data->java_async_callback) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_async_callback);
     }
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -232,35 +265,36 @@ static struct aws_sm_acquire_stream_callback_data *s_new_sm_acquire_stream_callb
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
-    callback_data->async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
-    AWS_FATAL_ASSERT(callback_data->async_callback != NULL);
+    callback_data->java_async_callback = async_callback ? (*env)->NewGlobalRef(env, async_callback) : NULL;
+    AWS_FATAL_ASSERT(callback_data->java_async_callback != NULL);
     callback_data->stream_binding = stream_binding;
 
     return callback_data;
 }
 
-static void s_on_stream_acquired((struct aws_http_stream *stream, int error_code, void *user_data){
+static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code, void *user_data) {
     struct aws_sm_acquire_stream_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (error_code) {
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
-        (*env)->CallVoidMethod(env, callback_data->async_callback, async_callback_properties.on_failure, crt_exception);
+        (*env)->CallVoidMethod(
+            env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
         (*env)->DeleteLocalRef(env, crt_exception);
         aws_http_stream_binding_destroy(env, callback_data->stream_binding);
     } else {
         /* TODO: finalize */
         callback_data->stream_binding->native_stream = stream;
-        jobject java_round_trip_time_ns = (*env)->NewObject(
-            env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)round_trip_time_ns);
-        (*env)->CallVoidMethod(
-            env,
-            callback_data->async_callback,
-            async_callback_properties.on_success_with_object,
-            java_round_trip_time_ns);
-        (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
+        // jobject java_round_trip_time_ns = (*env)->NewObject(
+        //     env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)round_trip_time_ns);
+        // (*env)->CallVoidMethod(
+        //     env,
+        //     callback_data->java_async_callback,
+        //     async_callback_properties.on_success_with_object,
+        //     java_round_trip_time_ns);
+        // (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
     }
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-    s_cleanup_http2_callback_data(callback_data);
+    s_cleanup_sm_acquire_stream_callback_data(callback_data);
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_http2StreamManagerAcquireStream(
@@ -302,14 +336,13 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_sm_acquire_stream_callback_data *callback_data =
-        s_new_sm_acquire_stream_callback_data(env, allocator, java_async_callback);
+        s_new_sm_acquire_stream_callback_data(env, allocator, stream_binding, java_async_callback);
 
-    struct aws_http2_stream_manager_acquire_stream_options acquire_options =
-        {
-            .options = &request_options,
-            .callback = s_on_stream_acquired,
-            .user_data = callback_data,
-        }
+    struct aws_http2_stream_manager_acquire_stream_options acquire_options = {
+        .options = &request_options,
+        .callback = s_on_stream_acquired,
+        .user_data = callback_data,
+    };
 
-    aws_http2_stream_manager_acquire_stream(sm_binding->stream_manager, acquire_options);
+    aws_http2_stream_manager_acquire_stream(sm_binding->stream_manager, &acquire_options);
 }

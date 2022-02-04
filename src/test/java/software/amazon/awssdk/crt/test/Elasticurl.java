@@ -333,7 +333,7 @@ public class Elasticurl {
                                 stream.close();
                             }
                         };
-                        HttpRequestBase request = buildHttpRequest(cli, requiredVersion, uri);
+                        HttpRequestBase request = buildHttpRequest(cli, conn.getVersion(), uri);
                         HttpStream stream = conn.makeRequest(request, streamHandler);
                         stream.activate();
 

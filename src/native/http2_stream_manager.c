@@ -65,7 +65,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     struct aws_http2_stream_manager_binding *binding = (struct aws_http2_stream_manager_binding *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
 
-    AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Stream Manager Shutdown Complete");
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Java Stream Manager Shutdown Complete");
     jobject java_http2_stream_manager = (*env)->NewLocalRef(env, binding->java_http2_stream_manager);
     if (java_http2_stream_manager != NULL) {
         (*env)->CallVoidMethod(env, java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
@@ -147,6 +147,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     if (use_tls) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
+        /* Make sure we use h2 alpn list to create HTTP/2 connection. */
+        aws_tls_connection_options_set_alpn_list(&tls_conn_options, allocator, "h2");
     }
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));
@@ -282,16 +284,26 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
         (*env)->DeleteLocalRef(env, crt_exception);
         aws_http_stream_binding_destroy(env, callback_data->stream_binding);
     } else {
-        /* TODO: finalize */
         callback_data->stream_binding->native_stream = stream;
-        // jobject java_round_trip_time_ns = (*env)->NewObject(
-        //     env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)round_trip_time_ns);
-        // (*env)->CallVoidMethod(
-        //     env,
-        //     callback_data->java_async_callback,
-        //     async_callback_properties.on_success_with_object,
-        //     java_round_trip_time_ns);
-        // (*env)->DeleteLocalRef(env, java_round_trip_time_ns);
+        jobject j_http_stream =
+            aws_java_http_stream_from_native_new(env, callback_data->stream_binding, AWS_HTTP_VERSION_2);
+        if (!j_http_stream) {
+            jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, aws_last_error());
+            (*env)->CallVoidMethod(
+                env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
+            (*env)->DeleteLocalRef(env, crt_exception);
+            aws_http_stream_binding_destroy(env, callback_data->stream_binding);
+        } else {
+            /* Stream is activated once we acquired from the Stream Manager */
+            aws_atomic_store_int(&callback_data->stream_binding->activated, 1);
+            callback_data->stream_binding->java_http_stream = (*env)->NewGlobalRef(env, j_http_stream);
+            (*env)->CallVoidMethod(
+                env,
+                callback_data->java_async_callback,
+                async_callback_properties.on_success_with_object,
+                callback_data->stream_binding->java_http_stream);
+            (*env)->DeleteLocalRef(env, j_http_stream);
+        }
     }
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_sm_acquire_stream_callback_data(callback_data);
@@ -307,8 +319,23 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     jobject java_async_callback) {
     (void)jni_class;
     struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
+    struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
 
-    /* TODO: check for null */
+    if (!stream_manager) {
+        aws_jni_throw_runtime_exception(env, "Stream Manager can't be null");
+        return;
+    }
+
+    if (!jni_http_response_callback_handler) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "Http2StreamManager.acquireStream: Invalid jni_http_response_callback_handler");
+        return;
+    }
+    if (!java_async_callback) {
+        aws_jni_throw_illegal_argument_exception(env, "Http2StreamManager.acquireStream: Invalid async callback");
+        return;
+    }
+
     struct http_stream_binding *stream_binding = aws_http_stream_binding_alloc(env, jni_http_response_callback_handler);
     if (!stream_binding) {
         /* Exception already thrown */
@@ -345,4 +372,22 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     };
 
     aws_http2_stream_manager_acquire_stream(sm_binding->stream_manager, &acquire_options);
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_http2StreamManagerRelease(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_stream_manager) {
+    (void)jni_class;
+
+    struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
+    struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
+
+    if (!stream_manager) {
+        aws_jni_throw_runtime_exception(env, "Stream Manager can't be null");
+        return;
+    }
+
+    AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Releasing StreamManager: id: %p", (void *)stream_manager);
+    aws_http2_stream_manager_release(stream_manager);
 }

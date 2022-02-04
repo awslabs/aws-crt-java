@@ -181,7 +181,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
     @Test
     public void testSanitizer() throws Exception {
-        Log.initLoggingToStderr(Log.LogLevel.Trace);
         URI uri = new URI(endpoint);
         try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS)) {
         }
@@ -192,7 +191,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
     @Test
     public void testSerialRequests() throws Exception {
-        Log.initLoggingToStderr(Log.LogLevel.Trace);
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 

@@ -22,4 +22,8 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     void onResponseHeaders(final int statusCode, final ByteBuffer headersBlob) {
         responseHandler.onResponseHeaders(statusCode, HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob));
     }
+
+    void onProgress(final S3MetaRequestProgress progress) {
+        responseHandler.onProgress(progress);
+    }
 }

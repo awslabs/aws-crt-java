@@ -68,12 +68,7 @@ public final class CRT {
     }
 
     private static boolean isAndroid() {
-        try {
-            Class.forName("android.os.Build");
-            return true;
-        } catch (ClassNotFoundException ex) {
-            return false;
-        }
+        return "The Android Project".equals(System.getProperty("java.specification.vendor"));
     }
 
     /**

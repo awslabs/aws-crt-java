@@ -272,6 +272,7 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseBody;
     jmethodID onFinished;
     jmethodID onResponseHeaders;
+    jmethodID onProgress;
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
@@ -364,6 +365,15 @@ struct java_aws_directory_entry_properties {
     jfieldID file_size_field_id;
 };
 extern struct java_aws_directory_entry_properties directory_entry_properties;
+
+/* S3MetaRequestProgress */
+struct java_aws_s3_meta_request_progress {
+    jclass s3_meta_request_progress_class;
+    jmethodID s3_meta_request_progress_constructor_method_id;
+    jfieldID bytes_transferred_field_id;
+    jfieldID content_length_field_id;
+};
+extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

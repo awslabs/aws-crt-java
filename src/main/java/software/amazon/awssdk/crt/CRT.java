@@ -67,18 +67,11 @@ public final class CRT {
         return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
     }
 
-    private static boolean isAndroid() {
-        return "The Android Project".equals(System.getProperty("java.specification.vendor"));
-    }
-
     /**
      * @return a string describing the detected platform the CRT is executing on
      * @throws UnknownPlatformException
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
-        if (isAndroid()) {
-            return "android";
-        }
 
         CrtPlatform platform = getPlatformImpl();
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));

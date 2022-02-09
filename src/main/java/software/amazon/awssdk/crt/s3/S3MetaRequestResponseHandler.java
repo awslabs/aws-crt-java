@@ -41,4 +41,13 @@ public interface S3MetaRequestResponseHandler {
      */
     default void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
     }
+
+    /**
+     * Invoked to report progress of the meta request execution.
+     * Currently, the progress callback is invoked only for the CopyObject meta request type.
+     * TODO: support this callback for all types of meta requests
+     * @param progress information about the progress of the meta request execution
+     */
+    default void onProgress(final S3MetaRequestProgress progress) {
+    }
 }

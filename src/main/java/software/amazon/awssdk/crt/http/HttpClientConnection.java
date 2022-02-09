@@ -91,10 +91,16 @@ public class HttpClientConnection extends CrtResource {
         if (HttpVersion.getEnumValueFromInteger(
                 (int) httpClientConnectionGetVersion(nativeConnectionBinding)) == HttpVersion.HTTP_2) {
             HttpClientConnection h2Conn = new Http2ClientConnection(nativeConnectionBinding);
-            acquireFuture.complete(h2Conn);
+            if (!acquireFuture.complete(h2Conn)) {
+                // future was already completed/cancelled, return it immediately to the pool to not leak it
+                h2Conn.close();
+            }
         } else {
             HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
-            acquireFuture.complete(conn);
+            if (!acquireFuture.complete(conn)) {
+                // future was already completed/cancelled, return it immediately to the pool to not leak it
+                conn.close();
+            }
         }
     }
 

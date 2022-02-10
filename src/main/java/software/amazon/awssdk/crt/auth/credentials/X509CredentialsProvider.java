@@ -48,6 +48,16 @@ public class X509CredentialsProvider extends CredentialsProvider {
             return this;
         }
 
+        /**
+         * Sets the client bootstrap (host resolver and event loop group) to use when making the connections
+         * required by this provider to a default client bootstrap.
+         * @return The current builder
+         */
+        public X509CredentialsProviderBuilder withClientBootstrap() {
+            this.clientBootstrap = new ClientBootstrap();
+            return this;
+        }
+
         ClientBootstrap getClientBootstrap() { return clientBootstrap; }
 
         /**

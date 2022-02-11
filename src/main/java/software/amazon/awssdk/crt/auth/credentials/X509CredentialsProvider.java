@@ -50,11 +50,16 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         /**
          * Sets the client bootstrap (host resolver and event loop group) to use when making the connections
-         * required by this provider to a default client bootstrap.
+         * required by this provider to the static default client bootstrap.
+         * 
+         * Note: If you are calling this manually, you will need to release the static ClientBootstrap using
+         * "ClientBootstrap.releaseStaticDefault()" when you are done using the MQTT client to free the static
+         * Client Bootstrap from memory.
+         * 
          * @return The current builder
          */
         public X509CredentialsProviderBuilder withClientBootstrap() {
-            this.clientBootstrap = new ClientBootstrap();
+            this.clientBootstrap = ClientBootstrap.getOrCreateStaticDefault();
             return this;
         }
 

@@ -82,10 +82,10 @@ public final class ClientBootstrap extends CrtResource {
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     /**
-     * Closes the static default event loop group, if it exists.  Primarily intended for tests that use the static
-     * default event loop group, before they call waitForNoResources().
+     * Releases the static ClientBootstrap, if it exists.  Primarily intended for tests that use the static
+     * default ClientBootstrap, before they call waitForNoResources().
      */
-    public static void closeStaticDefault() {
+    public static void releaseStaticDefault() {
         synchronized (EventLoopGroup.class) {
             if (staticDefaultClientBootstrap != null) {
                 staticDefaultClientBootstrap.releaseNativeHandle();

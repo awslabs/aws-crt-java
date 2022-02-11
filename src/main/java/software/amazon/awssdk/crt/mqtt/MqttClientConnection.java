@@ -11,6 +11,9 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
@@ -118,6 +121,18 @@ public class MqttClientConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         mqttClientConnectionDestroy(getNativeHandle());
+        
+        if (config != null) {
+            if (config.getCleanStaticDefaultClientBootstrap() == true) {
+                ClientBootstrap.releaseStaticDefault();
+            }
+            if (config.getCleanStaticDefaultEventLoopGroup() == true) {
+                EventLoopGroup.closeStaticDefault();
+            }
+            if (config.getCleanStaticDefaultHostResolver() == true) {
+                HostResolver.closeStaticDefault();
+            }
+        }
     }
 
     /**

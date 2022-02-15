@@ -102,18 +102,15 @@ public final class CRT {
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
-            return (getOSIdentifier() == "android") ? "x86" : "x86_32";
+            return "x86_32";
         } else if (arch.startsWith("armeabi")) {
-            if (getOSIdentifier() == "android") {
-                return "armeabi-v7a";
-            }
             if (arch.contains("v7")) {
                 return "armv7";
             } else {
                 return "armv6";
             }
         } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
-            return (getOSIdentifier() == "android") ? "arm64-v8a" : "armv8";
+            return "armv8";
         } else if (arch.equals("arm")) {
             return "armv6";
         }

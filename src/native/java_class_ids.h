@@ -262,6 +262,7 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseBody;
     jmethodID onFinished;
     jmethodID onResponseHeaders;
+    jmethodID onProgress;
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
@@ -334,6 +335,35 @@ struct java_aws_standard_retry_options_properties {
     jfieldID initial_bucket_capacity_field_id;
 };
 extern struct java_aws_standard_retry_options_properties standard_retry_options_properties;
+
+/* DirectoryTraversalHandler */
+struct java_aws_directory_traversal_handler_properties {
+    jclass directory_traversal_handler_class;
+    jmethodID on_directory_entry_method_id;
+};
+extern struct java_aws_directory_traversal_handler_properties directory_traversal_handler_properties;
+
+/* DirectoryEntry */
+struct java_aws_directory_entry_properties {
+    jclass directory_entry_class;
+    jmethodID directory_entry_constructor_method_id;
+    jfieldID path_field_id;
+    jfieldID relative_path_field_id;
+    jfieldID is_directory_field_id;
+    jfieldID is_symlink_field_id;
+    jfieldID is_file_field_id;
+    jfieldID file_size_field_id;
+};
+extern struct java_aws_directory_entry_properties directory_entry_properties;
+
+/* S3MetaRequestProgress */
+struct java_aws_s3_meta_request_progress {
+    jclass s3_meta_request_progress_class;
+    jmethodID s3_meta_request_progress_constructor_method_id;
+    jfieldID bytes_transferred_field_id;
+    jfieldID content_length_field_id;
+};
+extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

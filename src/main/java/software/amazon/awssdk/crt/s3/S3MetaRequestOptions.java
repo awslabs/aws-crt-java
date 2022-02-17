@@ -9,10 +9,38 @@ import java.util.Map;
 
 public class S3MetaRequestOptions {
 
+    /**
+     * A Meta Request represents a group of generated requests that are being done on behalf of the
+     * original request. For example, one large GetObject request can be transformed into a series
+     * of ranged GetObject requests that are executed in parallel to improve throughput.
+     *
+     * The MetaRequestType is a hint of transformation to be applied.
+     */
     public enum MetaRequestType {
+        /**
+         * The Default meta request type sends any request to S3 as-is (with no transformation). For example,
+         * it can be used to pass a CreateBucket request.
+         */
         DEFAULT(0),
+
+        /**
+         * The GetObject request will be split into a series of ranged GetObject requests that are
+         * executed in parallel to improve throughput, when possible.
+         */
         GET_OBJECT(1),
-        PUT_OBJECT(2);
+
+        /**
+         * The PutObject request will be split into MultiPart uploads that are executed in parallel
+         * to improve throughput, when possible.
+         */
+        PUT_OBJECT(2),
+
+        /**
+         * The CopyObject meta request performs a multi-part copy using multiple S3 UploadPartCopy requests
+         * in parallel, or bypasses a CopyObject request to S3 if the object size is not large enough for
+         * a multipart upload.
+         */
+        COPY_OBJECT(3);
 
         MetaRequestType(int nativeValue) {
             this.nativeValue = nativeValue;
@@ -36,6 +64,7 @@ public class S3MetaRequestOptions {
             enumMapping.put(DEFAULT.getNativeValue(), DEFAULT);
             enumMapping.put(GET_OBJECT.getNativeValue(), GET_OBJECT);
             enumMapping.put(PUT_OBJECT.getNativeValue(), PUT_OBJECT);
+            enumMapping.put(COPY_OBJECT.getNativeValue(), COPY_OBJECT);
             return enumMapping;
         }
 

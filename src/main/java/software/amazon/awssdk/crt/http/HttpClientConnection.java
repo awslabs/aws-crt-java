@@ -87,7 +87,10 @@ public class HttpClientConnection extends CrtResource {
         }
 
         HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
-        acquireFuture.complete(conn);
+        if (!acquireFuture.complete(conn)) {
+            // future was already completed/cancelled, return it immediately to the pool to not leak it
+            conn.close();
+        }
     }
 
     /*******************************************************************************

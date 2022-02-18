@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -38,6 +39,10 @@ public class S3ClientTest extends CrtTestFixture {
     static final String ENDPOINT = System.getenv("ENDPOINT") == null ?
             "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("ENDPOINT");
     static final String REGION = System.getenv("REGION") == null ? "us-west-2" : System.getenv("REGION");
+
+    static final String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
+    static final String COPY_SOURCE_KEY = "crt-canary-obj.txt";
+    static final String X_AMZ_COPY_SOURCE_HEADER = "x-amz-copy-source";
 
     public S3ClientTest() {
     }
@@ -342,6 +347,70 @@ public class S3ClientTest extends CrtTestFixture {
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testS3Copy() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            final AtomicLong totalBytesTransferred = new AtomicLong();
+            final AtomicLong contentLength = new AtomicLong();
+            final AtomicInteger progressInvocationCount = new AtomicInteger();
+
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + errorCode);
+                    if (errorCode != 0) {
+                        System.out.println("Test failed with error payload: " + new String(errorPayload, StandardCharsets.UTF_8));
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(errorCode));
+                }
+
+                @Override
+                public void onProgress(S3MetaRequestProgress progress) {
+                    progressInvocationCount.incrementAndGet();
+                    contentLength.set(progress.getContentLength());
+                    totalBytesTransferred.addAndGet(progress.getBytesTransferred());
+                }
+            };
+
+            // x-amz-copy-source-header is composed of {source_bucket}/{source_key}
+            final String copySource = COPY_SOURCE_BUCKET + "/" + COPY_SOURCE_KEY;
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
+                    new HttpHeader(X_AMZ_COPY_SOURCE_HEADER, copySource) };
+
+            HttpRequest httpRequest = new HttpRequest("PUT", "/copy_object_test_5GB.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.COPY_OBJECT).withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Assert.assertTrue(progressInvocationCount.get() > 0);
+                Assert.assertTrue(contentLength.get() > 0);
+                Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());

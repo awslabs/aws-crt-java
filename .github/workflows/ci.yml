@@ -7,7 +7,7 @@ on:
       - '!main'
 
 env:
-  BUILDER_VERSION: v0.9.4
+  BUILDER_VERSION: v0.9.10
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -20,7 +20,7 @@ env:
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # latest
     strategy:
       matrix:
         image:
@@ -48,7 +48,7 @@ jobs:
           target/surefire-reports/*stream
 
   linux-compiler-compat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # latest
     strategy:
       matrix:
         compiler:
@@ -82,7 +82,7 @@ jobs:
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # latest
     strategy:
       matrix:
         arch: [armv6, armv7, arm64]
@@ -94,7 +94,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022 # latest
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
@@ -106,7 +106,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   windows-vc14:
-    runs-on: windows-latest
+    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
     strategy:
       matrix:
         arch: [x86, x64]
@@ -123,7 +123,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   osx:
-    runs-on: macos-latest
+    runs-on: macos-11 # latest
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
@@ -138,7 +138,7 @@ jobs:
   android:
     name: Android
     # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-20.04 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -149,7 +149,7 @@ jobs:
           ./gradlew :android:crt:build
 
   check-submodules:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # latest
     steps:
     - name: Checkout Source
       uses: actions/checkout@v2

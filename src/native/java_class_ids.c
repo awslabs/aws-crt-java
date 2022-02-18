@@ -586,6 +586,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
         (*env)->GetMethodID(env, cls, "onResponseHeaders", "(ILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
+
+    s3_meta_request_response_handler_native_adapter_properties.onProgress =
+        (*env)->GetMethodID(env, cls, "onProgress", "(Lsoftware/amazon/awssdk/crt/s3/S3MetaRequestProgress;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -732,6 +736,65 @@ static void s_cache_standard_retry_options(JNIEnv *env) {
     AWS_FATAL_ASSERT(standard_retry_options_properties.initial_bucket_capacity_field_id);
 }
 
+struct java_aws_directory_traversal_handler_properties directory_traversal_handler_properties;
+
+static void s_cache_directory_traversal_handler(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/DirectoryTraversalHandler");
+    AWS_FATAL_ASSERT(cls);
+    directory_traversal_handler_properties.directory_traversal_handler_class = (*env)->NewGlobalRef(env, cls);
+
+    directory_traversal_handler_properties.on_directory_entry_method_id = (*env)->GetMethodID(
+        env,
+        directory_traversal_handler_properties.directory_traversal_handler_class,
+        "onDirectoryEntry",
+        "(Lsoftware/amazon/awssdk/crt/io/DirectoryEntry;)Z");
+}
+
+struct java_aws_directory_entry_properties directory_entry_properties;
+
+static void s_cache_directory_entry(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/DirectoryEntry");
+    AWS_FATAL_ASSERT(cls);
+    directory_entry_properties.directory_entry_class = (*env)->NewGlobalRef(env, cls);
+
+    directory_entry_properties.directory_entry_constructor_method_id =
+        (*env)->GetMethodID(env, directory_entry_properties.directory_entry_class, "<init>", "()V");
+
+    directory_entry_properties.path_field_id = (*env)->GetFieldID(env, cls, "path", "Ljava/lang/String;");
+
+    directory_entry_properties.relative_path_field_id =
+        (*env)->GetFieldID(env, cls, "relativePath", "Ljava/lang/String;");
+
+    directory_entry_properties.is_directory_field_id = (*env)->GetFieldID(env, cls, "isDirectory", "Z");
+
+    directory_entry_properties.is_symlink_field_id = (*env)->GetFieldID(env, cls, "isSymLink", "Z");
+
+    directory_entry_properties.is_file_field_id = (*env)->GetFieldID(env, cls, "isFile", "Z");
+
+    directory_entry_properties.file_size_field_id = (*env)->GetFieldID(env, cls, "fileSize", "J");
+}
+
+struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
+
+static void s_cache_s3_meta_request_progress(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3MetaRequestProgress");
+    AWS_FATAL_ASSERT(cls);
+    s3_meta_request_progress_properties.s3_meta_request_progress_class = (*env)->NewGlobalRef(env, cls);
+
+    s3_meta_request_progress_properties.s3_meta_request_progress_constructor_method_id =
+        (*env)->GetMethodID(env, s3_meta_request_progress_properties.s3_meta_request_progress_class, "<init>", "()V");
+
+    s3_meta_request_progress_properties.bytes_transferred_field_id =
+        (*env)->GetFieldID(env, cls, "bytesTransferred", "J");
+    s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -774,4 +837,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_header(env);
     s_cache_exponential_backoff_retry_options(env);
     s_cache_standard_retry_options(env);
+    s_cache_directory_traversal_handler(env);
+    s_cache_directory_entry(env);
+    s_cache_s3_meta_request_progress(env);
 }

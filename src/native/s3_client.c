@@ -2,11 +2,11 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#include "aws/io/uri.h"
 #include "crt.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
-#include "aws/io/uri.h"
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -324,6 +324,52 @@ static void s_on_s3_meta_request_finish_callback(
     }
 }
 
+static void s_on_s3_meta_request_progress_callback(
+    struct aws_s3_meta_request *meta_request,
+    const struct aws_s3_meta_request_progress *progress,
+    void *user_data) {
+
+    (void)meta_request;
+
+    struct s3_client_make_meta_request_callback_data *callback_data =
+        (struct s3_client_make_meta_request_callback_data *)user_data;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    jobject progress_object = (*env)->NewObject(
+        env,
+        s3_meta_request_progress_properties.s3_meta_request_progress_class,
+        s3_meta_request_progress_properties.s3_meta_request_progress_constructor_method_id);
+    if ((*env)->ExceptionCheck(env) || progress_object == NULL) {
+        /* progress object constructor failed, nothing to do */
+        return;
+    }
+
+    (*env)->SetLongField(
+        env,
+        progress_object,
+        s3_meta_request_progress_properties.bytes_transferred_field_id,
+        progress->bytes_transferred);
+    (*env)->SetLongField(
+        env, progress_object, s3_meta_request_progress_properties.content_length_field_id, progress->content_length);
+
+    if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
+
+        (*env)->CallVoidMethod(
+            env,
+            callback_data->java_s3_meta_request_response_handler_native_adapter,
+            s3_meta_request_response_handler_native_adapter_properties.onProgress,
+            progress_object);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_META_REQUEST,
+                "id=%p: Ignored Exception from S3MetaRequest.onProgress callback",
+                (void *)meta_request);
+        }
+        (*env)->DeleteLocalRef(env, progress_object);
+    }
+}
+
 static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
@@ -398,8 +444,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .headers_callback = s_on_s3_meta_request_headers_callback,
         .body_callback = s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
+        .progress_callback = s_on_s3_meta_request_progress_callback,
         .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
-        .endpoint = jni_endpoint != NULL ? &endpoint : NULL};
+        .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
+    };
 
     struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 

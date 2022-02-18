@@ -9,7 +9,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * Contains all the configuration options for a Http2StreamManager
  * instance
  */
-public class Http2StreamManagerOptions {
+public class HttpStreamManagerOptions {
     public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
@@ -32,7 +32,7 @@ public class Http2StreamManagerOptions {
     /**
      * Default constructor
      */
-    public Http2StreamManagerOptions() {
+    public HttpStreamManagerOptions() {
     }
 
     /**
@@ -41,7 +41,7 @@ public class Http2StreamManagerOptions {
      * @param clientBootstrap ClientBootstrap to use
      * @return this
      */
-    public Http2StreamManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
+    public HttpStreamManagerOptions withClientBootstrap(ClientBootstrap clientBootstrap) {
         this.clientBootstrap = clientBootstrap;
         return this;
     }
@@ -62,7 +62,7 @@ public class Http2StreamManagerOptions {
      *                      manager
      * @return this
      */
-    public Http2StreamManagerOptions withSocketOptions(SocketOptions socketOptions) {
+    public HttpStreamManagerOptions withSocketOptions(SocketOptions socketOptions) {
         this.socketOptions = socketOptions;
         return this;
     }
@@ -80,7 +80,7 @@ public class Http2StreamManagerOptions {
      * @param tlsContext The TlsContext to use
      * @return this
      */
-    public Http2StreamManagerOptions withTlsContext(TlsContext tlsContext) {
+    public HttpStreamManagerOptions withTlsContext(TlsContext tlsContext) {
         this.tlsContext = tlsContext;
         return this;
     }
@@ -98,7 +98,7 @@ public class Http2StreamManagerOptions {
      * @param windowSize The initial window size to use for each connection
      * @return this
      */
-    public Http2StreamManagerOptions withWindowSize(int windowSize) {
+    public HttpStreamManagerOptions withWindowSize(int windowSize) {
         this.windowSize = windowSize;
         return this;
     }
@@ -111,20 +111,52 @@ public class Http2StreamManagerOptions {
         return windowSize;
     }
 
-    public Http2StreamManagerOptions withIdealConcurrentStreamsPerConnection(int idealConcurrentStreamsPerConnection) {
+    /**
+     * For HTTP/2 stream manager only.
+     *
+     * The ideal number of concurrent streams for a connection. Stream manager will
+     * try to create a new connection if one connection reaches this number. But, if
+     * the max connections reaches, manager will reuse connections to create the
+     * acquired steams as much as possible.
+     *
+     * @param idealConcurrentStreamsPerConnection The ideal number of concurrent
+     *                                            streams for a connection
+     * @return this
+     */
+    public HttpStreamManagerOptions withIdealConcurrentStreamsPerConnection(int idealConcurrentStreamsPerConnection) {
         this.idealConcurrentStreamsPerConnection = idealConcurrentStreamsPerConnection;
         return this;
     }
 
+    /**
+     * @return The ideal number of concurrent streams for a connection used for
+     *         manager
+     */
     public int getIdealConcurrentStreamsPerConnection() {
         return idealConcurrentStreamsPerConnection;
     }
 
-    public Http2StreamManagerOptions withMaxConcurrentStreamsPerConnection(int maxConcurrentStreamsPerConnection) {
+    /**
+     * Default is no limit, which will use the limit from the server. 0 will be
+     * considered as using the default value.
+     * The real number of concurrent streams per connection will be controlled by
+     * the minimal value of the setting from other end and the value here.
+     *
+     * @param maxConcurrentStreamsPerConnection The max number of concurrent
+     *                                          streams for a connection
+     * @return
+     */
+    public HttpStreamManagerOptions withMaxConcurrentStreamsPerConnection(int maxConcurrentStreamsPerConnection) {
         this.maxConcurrentStreamsPerConnection = maxConcurrentStreamsPerConnection;
         return this;
     }
 
+    /**
+     * @return The max number of concurrent streams for a connection set for
+     *         manager.
+     *         It could be different than the real limits, which is the minimal set
+     *         for manager and the settings from the other side.
+     */
     public int getMaxConcurrentStreamsPerConnection() {
         return maxConcurrentStreamsPerConnection;
     }
@@ -135,7 +167,7 @@ public class Http2StreamManagerOptions {
      * @param uri The endpoint URI to connect to
      * @return this
      */
-    public Http2StreamManagerOptions withUri(URI uri) {
+    public HttpStreamManagerOptions withUri(URI uri) {
         this.uri = uri;
         return this;
     }
@@ -153,7 +185,7 @@ public class Http2StreamManagerOptions {
      * @param port The port to connect to
      * @return this
      */
-    public Http2StreamManagerOptions withPort(int port) {
+    public HttpStreamManagerOptions withPort(int port) {
         this.port = port;
         return this;
     }
@@ -166,7 +198,15 @@ public class Http2StreamManagerOptions {
         return port;
     }
 
-    public Http2StreamManagerOptions withMaxConnections(int maxConnections) {
+    /**
+     * The max number of connections will be open at same time. If all the
+     * connections are full, manager will wait until available to vender more
+     * streams
+     *
+     * @param maxConnections
+     * @return
+     */
+    public HttpStreamManagerOptions withMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
         return this;
     }
@@ -178,7 +218,7 @@ public class Http2StreamManagerOptions {
         return maxConnections;
     }
 
-    public Http2StreamManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
+    public HttpStreamManagerOptions withProxyOptions(HttpProxyOptions proxyOptions) {
         this.proxyOptions = proxyOptions;
         return this;
     }
@@ -194,7 +234,7 @@ public class Http2StreamManagerOptions {
         return manualWindowManagement;
     }
 
-    public Http2StreamManagerOptions withManualWindowManagement(boolean manualWindowManagement) {
+    public HttpStreamManagerOptions withManualWindowManagement(boolean manualWindowManagement) {
         this.manualWindowManagement = manualWindowManagement;
         return this;
     }
@@ -206,7 +246,7 @@ public class Http2StreamManagerOptions {
      *                          null to disable monitoring
      * @return this
      */
-    public Http2StreamManagerOptions withMonitoringOptions(HttpMonitoringOptions monitoringOptions) {
+    public HttpStreamManagerOptions withMonitoringOptions(HttpMonitoringOptions monitoringOptions) {
         this.monitoringOptions = monitoringOptions;
         return this;
     }

@@ -147,8 +147,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     if (use_tls) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
-        /* Make sure we use h2 alpn list to create HTTP/2 connection. */
-        aws_tls_connection_options_set_alpn_list(&tls_conn_options, allocator, "h2");
     }
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));

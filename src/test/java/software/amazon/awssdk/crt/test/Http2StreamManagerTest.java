@@ -19,7 +19,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.Http2StreamManager;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.Http2Stream;
-import software.amazon.awssdk.crt.http.Http2StreamManagerOptions;
+import software.amazon.awssdk.crt.http.HttpStreamManagerOptions;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
@@ -33,6 +33,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.Log;
 
 public class Http2StreamManagerTest extends HttpClientTestFixture {
@@ -48,13 +49,14 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     private final String EMPTY_BODY = "";
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
+
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext = createHttpClientTlsContext()) {
-
-            Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
+            HttpStreamManagerOptions options = new HttpStreamManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
                     .withTlsContext(tlsContext)
@@ -108,7 +110,11 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
                     @Override
                     public void onResponseComplete(HttpStream stream, int errorCode) {
-                        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                        if (errorCode != CRT.AWS_CRT_SUCCESS
+                                || stream.getResponseStatusCode() != EXPECTED_HTTP_STATUS) {
+                            Log.log(Log.LogLevel.Error, Log.LogSubject.HttpConnectionManager,
+                                    String.format("Response completed with error: error_code=%s, response status=%d",
+                                            CRT.awsErrorName(errorCode), stream.getResponseStatusCode()));
                             numErrorCode.incrementAndGet();
                         }
                         stream.close();

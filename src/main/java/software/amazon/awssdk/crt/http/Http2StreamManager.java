@@ -11,6 +11,10 @@ import java.util.concurrent.CompletableFuture;
 import java.net.URI;
 import java.nio.charset.Charset;
 
+/**
+ * Manages a Pool of HTTP/2 Streams. Creates and manages HTTP/2 connections
+ * under the hood.
+ */
 public class Http2StreamManager extends CrtResource {
 
     private static final String HTTP = "http";
@@ -33,11 +37,11 @@ public class Http2StreamManager extends CrtResource {
      * @param options configuration options
      * @return a new instance of an Http2StreamManager
      */
-    public static Http2StreamManager create(Http2StreamManagerOptions options) {
+    public static Http2StreamManager create(HttpStreamManagerOptions options) {
         return new Http2StreamManager(options);
     }
 
-    private Http2StreamManager(Http2StreamManagerOptions options) {
+    private Http2StreamManager(HttpStreamManagerOptions options) {
         URI uri = options.getUri();
         if (uri == null) {
             throw new IllegalArgumentException("URI must not be null");
@@ -178,6 +182,16 @@ public class Http2StreamManager extends CrtResource {
      * @throws CrtRuntimeException
      */
     public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
+            HttpStreamResponseHandler streamHandler) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler);
+    }
+
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
+            HttpStreamResponseHandler streamHandler) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler);
+    }
+
+    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
             HttpStreamResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);

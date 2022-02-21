@@ -165,7 +165,11 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
                 @Override
                 public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                    response.bodyBuffer.put(bodyBytesIn);
+                    try {
+                        response.bodyBuffer.put(bodyBytesIn);
+                    } catch (Exception e) {
+                        Assert.assertNull(e);
+                    }
                     int amountRead = bodyBytesIn.length;
 
                     // Slide the window open by the number of bytes just read

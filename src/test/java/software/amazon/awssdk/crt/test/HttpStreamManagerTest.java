@@ -187,8 +187,6 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
             throw new RuntimeException(e);
         }
 
-        CrtResource.waitForNoResources();
-
         return response;
 
     }

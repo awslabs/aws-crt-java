@@ -2,7 +2,6 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include "aws/io/uri.h"
 #include "crt.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
@@ -12,6 +11,7 @@
 #include <aws/io/retry_strategy.h>
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
+#include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
 #include <jni.h>
 
@@ -406,14 +406,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
     }
 
-    struct aws_uri endpoint;
-    AWS_ZERO_STRUCT(endpoint);
-    if (jni_endpoint != NULL) {
-        struct aws_byte_cursor endpoint_str = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
-        AWS_FATAL_ASSERT(aws_uri_init_parse(&endpoint, allocator, &endpoint_str) == AWS_OP_SUCCESS);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint_str);
-    }
-
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
     AWS_FATAL_ASSERT(callback_data);
@@ -436,6 +428,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
     callback_data->input_stream = aws_http_message_get_body_stream(request_message);
+
+    struct aws_uri endpoint;
+    AWS_ZERO_STRUCT(endpoint);
+    if (jni_endpoint != NULL) {
+        struct aws_byte_cursor endpoint_str = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
+        int uri_parse = aws_uri_init_parse(&endpoint, allocator, &endpoint_str);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint_str);
+        if (uri_parse) {
+            aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_make_meta_request: failed to parse endpoint");
+            goto done;
+        }
+    }
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .message = request_message,

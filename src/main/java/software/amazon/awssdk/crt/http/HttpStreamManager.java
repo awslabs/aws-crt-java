@@ -8,6 +8,7 @@ package software.amazon.awssdk.crt.http;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages a pool for either HTTP/1.1 or HTTP/2 connection.
@@ -51,7 +52,8 @@ public class HttpStreamManager implements AutoCloseable {
     private HttpStreamManager(HttpStreamManagerOptions options) {
         HttpClientConnectionManagerOptions connManagerOptions = getConnManagerOptFromStreamManagerOpt(options);
         this.connectionManager = HttpClientConnectionManager.create(connManagerOptions);
-        try (HttpClientConnection conn = this.connectionManager.acquireConnection().get()) {
+        /* Take a block call */
+        try (HttpClientConnection conn = this.connectionManager.acquireConnection().get(30, TimeUnit.SECONDS)) {
             if (conn.getVersion() == HttpVersion.HTTP_2) {
                 /*
                  * Create Http2StreamManager and clean up connection manager later as we don't
@@ -67,6 +69,9 @@ public class HttpStreamManager implements AutoCloseable {
                 this.shutdownComplete = this.connectionManager.getShutdownCompleteFuture();
             }
         } catch (Exception ex) {
+            /**
+             * Not failing the initialization, but all the acquiring new streams will fail
+             */
             this.initException = ex;
         }
     }

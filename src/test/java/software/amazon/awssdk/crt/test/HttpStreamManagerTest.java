@@ -201,6 +201,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
             shutdownComplete = streamManager.getShutdownCompleteFuture();
+            Assert.assertEquals(streamManager.getHttpVersion(), HttpVersion.HTTP_1_1);
         }
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
@@ -214,6 +215,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
             shutdownComplete = streamManager.getShutdownCompleteFuture();
+            Assert.assertEquals(streamManager.getHttpVersion(), HttpVersion.HTTP_2);
         }
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
@@ -246,8 +248,6 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
             HttpRequest request = createHttp1Request("GET", endpoint, path, EMPTY_BODY);
             TestHttpResponse response = this.getResponseFromManager(streamManager, request);
             Assert.assertEquals(response.statusCode, EXPECTED_HTTP_STATUS);
-        } catch (ExecutionException e) {
-            Assert.assertNull(e);
         }
 
         shutdownComplete.get(60, TimeUnit.SECONDS);

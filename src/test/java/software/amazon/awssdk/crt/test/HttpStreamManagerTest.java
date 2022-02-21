@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
 
 import javax.management.RuntimeErrorException;
 
@@ -34,6 +36,7 @@ import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpRequestBase;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpVersion;
@@ -48,7 +51,7 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
 
-public class HttpStreamManagerTest extends HttpClientTestFixture {
+public class HttpStreamManagerTest extends HttpRequestResponseFixture {
     private final static String endpoint = "https://httpbin.org";
     private final static String path = "/anything";
     private final String EMPTY_BODY = "";
@@ -138,12 +141,67 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
         return new HttpRequest(method, path, requestHeaders, payloadStream);
     }
 
+    private TestHttpResponse getResponseFromManager(HttpStreamManager streamManager, HttpRequestBase request)
+            throws Exception {
+
+        final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+
+        final TestHttpResponse response = new TestHttpResponse();
+
+        try {
+            HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    response.statusCode = responseStatusCode;
+                    Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
+                    response.headers.addAll(Arrays.asList(nextHeaders));
+                }
+
+                @Override
+                public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                    response.blockType = blockType;
+                }
+
+                @Override
+                public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                    response.bodyBuffer.put(bodyBytesIn);
+                    int amountRead = bodyBytesIn.length;
+
+                    // Slide the window open by the number of bytes just read
+                    return amountRead;
+                }
+
+                @Override
+                public void onResponseComplete(HttpStream stream, int errorCode) {
+                    response.onCompleteErrorCode = errorCode;
+                    reqCompleted.complete(null);
+                    stream.close();
+                }
+            };
+            streamManager.acquireStream(request, streamHandler).get(60, TimeUnit.SECONDS);
+            // Give the request up to 60 seconds to complete, otherwise throw a
+            // TimeoutException
+            reqCompleted.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        CrtResource.waitForNoResources();
+
+        return response;
+
+    }
+
     @Test
     public void testSanitizerHTTP1() throws Exception {
         URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
         }
 
+        shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -151,9 +209,12 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testSanitizerHTTP2() throws Exception {
         URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
         }
 
+        shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -161,24 +222,15 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testSingleHTTP2Requests() throws Exception {
         URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
             Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
-
-            streamManager.acquireStream(request, new HttpStreamResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
-                    Assert.assertEquals(responseStatusCode, EXPECTED_HTTP_STATUS);
-                }
-
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    Assert.assertEquals(errorCode, CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                }
-            }).get();
+            TestHttpResponse response = this.getResponseFromManager(streamManager, request);
+            Assert.assertEquals(response.statusCode, EXPECTED_HTTP_STATUS);
         }
 
+        shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -187,30 +239,17 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
     public void testSingleHTTP1Request() throws Throwable {
         Log.initLoggingToStderr(LogLevel.Trace);
         URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
-            /*
-             * http2 request which will have :method headers that is not allowed for
-             * HTTP/1.1
-             */
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
             HttpRequest request = createHttp1Request("GET", endpoint, path, EMPTY_BODY);
-
-            streamManager.acquireStream(request, new HttpStreamResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
-                    Assert.assertEquals(responseStatusCode, EXPECTED_HTTP_STATUS);
-                }
-
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    Assert.assertEquals(errorCode, CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                }
-            }).get();
+            TestHttpResponse response = this.getResponseFromManager(streamManager, request);
+            Assert.assertEquals(response.statusCode, EXPECTED_HTTP_STATUS);
         } catch (ExecutionException e) {
             Assert.assertNull(e);
         }
 
+        shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -223,26 +262,16 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testSingleHTTP1RequestsFailure() throws Throwable {
         URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
             /*
              * http2 request which will have :method headers that is not allowed for
              * HTTP/1.1
              */
             Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
-
-            streamManager.acquireStream(request, new HttpStreamResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
-                    Assert.assertEquals(responseStatusCode, EXPECTED_HTTP_STATUS);
-                }
-
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    Assert.assertEquals(errorCode, CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                }
-            }).get();
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+            TestHttpResponse response = this.getResponseFromManager(streamManager, request);
+            Assert.assertEquals(response.statusCode, EXPECTED_HTTP_STATUS);
         } catch (ExecutionException e) {
             try {
                 throw e.getCause();
@@ -254,6 +283,7 @@ public class HttpStreamManagerTest extends HttpClientTestFixture {
             }
         }
 
+        shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }

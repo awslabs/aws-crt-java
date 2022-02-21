@@ -20,6 +20,7 @@ public class HttpStreamManager implements AutoCloseable {
     private HttpClientConnectionManager connectionManager = null;
     private Http2StreamManager h2StreamManager = null;
     private Exception initException = null;
+    private CompletableFuture<Void> shutdownComplete = null;
 
     /**
      * Factory function for HttpStreamManager instances
@@ -60,8 +61,10 @@ public class HttpStreamManager implements AutoCloseable {
                 this.connectionManager.releaseConnection(conn);
                 this.connectionManager.close();
                 this.connectionManager = null;
+                this.shutdownComplete = this.h2StreamManager.getShutdownCompleteFuture();
             } else {
                 this.connectionManager.releaseConnection(conn);
+                this.shutdownComplete = this.connectionManager.getShutdownCompleteFuture();
             }
         } catch (Exception ex) {
             this.initException = ex;
@@ -98,7 +101,7 @@ public class HttpStreamManager implements AutoCloseable {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    private CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
+    public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamResponseHandler streamHandler) {
         CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
 
@@ -165,11 +168,12 @@ public class HttpStreamManager implements AutoCloseable {
         return completionFuture;
     }
 
+    public CompletableFuture<Void> getShutdownCompleteFuture() {
+        return shutdownComplete;
+    }
+
     @Override
     public void close() {
-        /**
-         * TODO: is this async? Should we wait for the underlying structure cleaned up?
-         */
         if (this.connectionManager != null) {
             this.connectionManager.close();
         }

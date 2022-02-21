@@ -188,7 +188,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
             // TimeoutException
             reqCompleted.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw e;
         }
 
         return response;

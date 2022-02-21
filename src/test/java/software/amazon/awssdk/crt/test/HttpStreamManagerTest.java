@@ -235,7 +235,6 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSingleHTTP1Request() throws Throwable {
-        Log.initLoggingToStderr(LogLevel.Trace);
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {

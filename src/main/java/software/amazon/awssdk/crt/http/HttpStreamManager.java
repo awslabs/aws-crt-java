@@ -93,14 +93,16 @@ public class HttpStreamManager implements AutoCloseable {
         if (this.h2StreamManager != null && this.connectionManager != null) {
             try (HttpClientConnection conn = this.connectionManager.acquireConnection().get(30, TimeUnit.SECONDS)) {
                 if (conn.getVersion() == HttpVersion.HTTP_2) {
-                    /*
-                     * Create Http2StreamManager and clean up connection manager later as we don't
-                     * need it anymore
+                    /**
+                     * The connection is HTTP/2, close the connectionManager, which made for HTTP/1
                      */
                     this.connectionManager.releaseConnection(conn);
                     this.connectionManager.close();
                     this.connectionManager = null;
                 } else {
+                    /**
+                     * The connection is HTTP/1, close the h2StreamManager, which made for HTTP/2
+                     */
                     this.connectionManager.releaseConnection(conn);
                     this.h2StreamManager.close();
                     this.h2StreamManager = null;
@@ -127,6 +129,10 @@ public class HttpStreamManager implements AutoCloseable {
             HttpStreamResponseHandler streamHandler) {
         CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
         try {
+            /*
+             * Try get version first. If we haven't decided the version yet, this will help
+             * us to decide the version we are running on
+             */
             this.getHttpVersion();
         } catch (Exception e) {
             completionFuture.completeExceptionally(e);

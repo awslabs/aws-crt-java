@@ -399,6 +399,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     struct aws_signing_config_aws *signing_config = NULL;
+    struct aws_s3_meta_request *meta_request = NULL;
     bool success = false;
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
     if (credentials_provider) {
@@ -454,7 +455,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
     };
 
-    struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
+    meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 
     if (!meta_request) {
         aws_jni_throw_runtime_exception(

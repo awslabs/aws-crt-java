@@ -9,6 +9,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages a pool for either HTTP/1.1 or HTTP/2 connection.
@@ -20,8 +21,9 @@ public class HttpStreamManager implements AutoCloseable {
 
     private HttpClientConnectionManager connectionManager = null;
     private Http2StreamManager h2StreamManager = null;
-    private Exception initException = null;
     private CompletableFuture<Void> shutdownComplete = null;
+    private AtomicLong shutdownNum = new AtomicLong(0);
+    private Throwable shutdownCompleteException = null;
 
     /**
      * Factory function for HttpStreamManager instances
@@ -52,34 +54,59 @@ public class HttpStreamManager implements AutoCloseable {
     private HttpStreamManager(HttpStreamManagerOptions options) {
         HttpClientConnectionManagerOptions connManagerOptions = getConnManagerOptFromStreamManagerOpt(options);
         this.connectionManager = HttpClientConnectionManager.create(connManagerOptions);
-        /* Take a block call */
-        try (HttpClientConnection conn = this.connectionManager.acquireConnection().get(30, TimeUnit.SECONDS)) {
-            if (conn.getVersion() == HttpVersion.HTTP_2) {
-                /*
-                 * Create Http2StreamManager and clean up connection manager later as we don't
-                 * need it anymore
-                 */
-                this.h2StreamManager = Http2StreamManager.create(options);
-                this.connectionManager.releaseConnection(conn);
-                this.connectionManager.close();
-                this.connectionManager = null;
-                this.shutdownComplete = this.h2StreamManager.getShutdownCompleteFuture();
-            } else {
-                this.connectionManager.releaseConnection(conn);
-                this.shutdownComplete = this.connectionManager.getShutdownCompleteFuture();
+        this.h2StreamManager = Http2StreamManager.create(options);
+        this.shutdownComplete = new CompletableFuture<Void>();
+        this.connectionManager.getShutdownCompleteFuture().whenComplete((v, throwable) -> {
+            if (throwable != null) {
+                this.shutdownCompleteException = throwable;
             }
-        } catch (Exception ex) {
-            /**
-             * Not failing the initialization, but all the acquiring new streams will fail
-             */
-            this.initException = ex;
-        }
+            long shutdownNum = this.shutdownNum.addAndGet(1);
+            if (shutdownNum == 2) {
+                /* both connectionManager and the h2StreamManager has been shutdown. */
+                if (this.shutdownCompleteException != null) {
+                    this.shutdownComplete.completeExceptionally(this.shutdownCompleteException);
+                } else {
+                    this.shutdownComplete.complete(null);
+                }
+            }
+        });
+        this.h2StreamManager.getShutdownCompleteFuture().whenComplete((v, throwable) -> {
+            if (throwable != null) {
+                this.shutdownCompleteException = throwable;
+            }
+            long shutdownNum = this.shutdownNum.addAndGet(1);
+            if (shutdownNum == 2) {
+                /* both connectionManager and the h2StreamManager has been shutdown. */
+                if (this.shutdownCompleteException != null) {
+                    this.shutdownComplete.completeExceptionally(this.shutdownCompleteException);
+                } else {
+                    this.shutdownComplete.complete(null);
+                }
+            }
+        });
     }
 
     /**
      * Get the protocol version the manager runs on.
      */
-    public HttpVersion getHttpVersion() {
+    public HttpVersion getHttpVersion() throws Exception {
+        if (this.h2StreamManager != null && this.connectionManager != null) {
+            try (HttpClientConnection conn = this.connectionManager.acquireConnection().get(30, TimeUnit.SECONDS)) {
+                if (conn.getVersion() == HttpVersion.HTTP_2) {
+                    /*
+                     * Create Http2StreamManager and clean up connection manager later as we don't
+                     * need it anymore
+                     */
+                    this.connectionManager.releaseConnection(conn);
+                    this.connectionManager.close();
+                    this.connectionManager = null;
+                } else {
+                    this.connectionManager.releaseConnection(conn);
+                    this.h2StreamManager.close();
+                    this.h2StreamManager = null;
+                }
+            }
+        }
         if (this.h2StreamManager != null) {
             return HttpVersion.HTTP_2;
         }
@@ -96,22 +123,13 @@ public class HttpStreamManager implements AutoCloseable {
      *         acquired.
      * @throws CrtRuntimeException
      */
-    public CompletableFuture<HttpStream> acquireStream(Http2Request request,
-            HttpStreamResponseHandler streamHandler) {
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
-    }
-
-    public CompletableFuture<HttpStream> acquireStream(HttpRequest request,
-            HttpStreamResponseHandler streamHandler) {
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
-    }
-
     public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamResponseHandler streamHandler) {
         CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
-
-        if (this.initException != null) {
-            completionFuture.completeExceptionally(this.initException);
+        try {
+            this.getHttpVersion();
+        } catch (Exception e) {
+            completionFuture.completeExceptionally(e);
             return completionFuture;
         }
         if (this.h2StreamManager != null) {

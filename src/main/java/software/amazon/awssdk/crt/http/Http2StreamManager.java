@@ -181,16 +181,6 @@ public class Http2StreamManager extends CrtResource {
      *         acquired.
      * @throws CrtRuntimeException
      */
-    public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
-            HttpStreamResponseHandler streamHandler) {
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
-    }
-
-    public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
-            HttpStreamResponseHandler streamHandler) {
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
-    }
-
     public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
             HttpStreamResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();

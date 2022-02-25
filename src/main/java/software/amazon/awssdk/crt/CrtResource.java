@@ -4,6 +4,7 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
@@ -420,8 +421,9 @@ public abstract class CrtResource implements AutoCloseable {
      * a period of waiting.
      */
     public static void waitForNoResources() {
-        EventLoopGroup.closeStaticDefault();
-        HostResolver.closeStaticDefault();
+        ClientBootstrap.closeDefault();
+        EventLoopGroup.closeDefault();
+        HostResolver.closeDefault();
 
         if (debugNativeObjects) {
             lock.lock();

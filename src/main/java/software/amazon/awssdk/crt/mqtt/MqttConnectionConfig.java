@@ -44,11 +44,6 @@ public final class MqttConnectionConfig extends CrtResource {
     private HttpProxyOptions proxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
-    /* static defaults (for auto cleanup) */
-    private boolean cleanStaticDefaultClientBootstrap = false;
-    private boolean cleanStaticDefaultEventLoopGroup = false;
-    private boolean cleanStaticDefaultHostResolver = false;
-
     public MqttConnectionConfig() {}
 
 
@@ -518,57 +513,6 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Sets whether the MQTT connection will automatically clean the resources for the static default ClientBootstrap
-     * when clearing its own resources.
-     * @param useStaticBootstrap whether to clean the static ClientBootstrap
-     */
-    public void setCleanStaticDefaultClientBootstrap(boolean useStaticBootstrap) {
-        this.cleanStaticDefaultClientBootstrap = useStaticBootstrap;
-    }
-
-    /**
-     * Returns whether the MQTT connection will automatically clean the resources for the static default ClientBootstrap
-     * @return whether to clean the static ClientBootstrap
-     */
-    public boolean getCleanStaticDefaultClientBootstrap() {
-        return cleanStaticDefaultClientBootstrap;
-    }
-
-    /**
-     * Sets whether the MQTT connection will automatically clean the resources for the static default EventLoopGroup
-     * when clearing its own resources.
-     * @param useStaticEventLoopGroup whether to clean the static EventLoopGroup
-     */
-    public void setCleanStaticDefaultEventLoopGroup(boolean useStaticEventLoopGroup) {
-        this.cleanStaticDefaultEventLoopGroup = useStaticEventLoopGroup;
-    }
-
-    /**
-     * Returns whether the MQTT connection will automatically clean the resources for the static default EventLoopGroup
-     * @return whether to clean the static EventLoopGroup
-     */
-    public boolean getCleanStaticDefaultEventLoopGroup() {
-        return cleanStaticDefaultEventLoopGroup;
-    }
-
-    /**
-     * Sets whether the MQTT connection will automatically clean the resources for the static default HostResolver
-     * when clearing its own resources.
-     * @param useStaticHostResolver whether to clean the static HostResolver
-     */
-    public void setCleanStaticDefaultHostResolver(boolean useStaticHostResolver) {
-        this.cleanStaticDefaultHostResolver = useStaticHostResolver;
-    }
-
-    /**
-     * Returns whether the MQTT connection will automatically clean the resources for the static default HostResolver
-     * @return whether to clean the static HostResolver
-     */
-    public boolean getCleanStaticDefaultHostResolver() {
-        return cleanStaticDefaultHostResolver;
-    }
-
-    /**
      * Creates a (shallow) clone of this config object
      *
      * @return shallow clone of this config object
@@ -594,10 +538,6 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setUseWebsockets(getUseWebsockets());
             clone.setHttpProxyOptions(getHttpProxyOptions());
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
-
-            clone.setCleanStaticDefaultClientBootstrap(getCleanStaticDefaultClientBootstrap());
-            clone.setCleanStaticDefaultEventLoopGroup(getCleanStaticDefaultEventLoopGroup());
-            clone.setCleanStaticDefaultHostResolver(getCleanStaticDefaultHostResolver());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();

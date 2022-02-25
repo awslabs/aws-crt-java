@@ -69,10 +69,21 @@ public class HostResolver extends CrtResource {
     }
 
     /**
+     * Sets the static default ClientBootstrap, if it has not been created already.
+     */
+    public static void setDefault(HostResolver resolver) {
+        synchronized (HostResolver.class) {
+            if (staticDefaultResolver == null) {
+                staticDefaultResolver = resolver;
+            }
+        }
+    }
+
+    /**
      * Closes the static default host resolver, if it exists.  Primarily intended for tests that use the static
      * default resolver, before they call waitForNoResources().
      */
-    public static void closeStaticDefault() {
+    public static void closeDefault() {
         synchronized (HostResolver.class) {
             if (staticDefaultResolver != null) {
                 staticDefaultResolver.close();
@@ -82,14 +93,24 @@ public class HostResolver extends CrtResource {
     }
 
     /**
-     * Gets the static default host resolver, creating it if necessary
+     * Gets the static default HostResolver, creating it if necessary.
+     *
+     * This default will be used when a HostResolver is not explicitly passed but is needed
+     * to allow the process to function. An example of this would be in the MQTT connection creation workflow.
+     *
+     * The HostResolver will be set to have a maximum of 8 entries by default. You can
+     * manually adjust the maximum number of entries being used by creating a HostResolver and passing it
+     * through the SetDefaultEventLoopGroup function.
+     *
+     * The default HostResolver will be automatically managed and released when it's
+     * resources are being freed, not requiring any manual memory management.
      * @return the static default host resolver
      */
-    static HostResolver getOrCreateStaticDefault() {
+    static HostResolver getOrCreateDefault() {
         HostResolver resolver = null;
         synchronized (HostResolver.class) {
             if (staticDefaultResolver == null) {
-                staticDefaultResolver = new HostResolver(EventLoopGroup.getOrCreateStaticDefault(), staticDefaultMaxEntries);
+                staticDefaultResolver = new HostResolver(EventLoopGroup.getOrCreateDefault(), staticDefaultMaxEntries);
             }
 
             resolver = staticDefaultResolver;
@@ -100,6 +121,22 @@ public class HostResolver extends CrtResource {
 
     private static int staticDefaultMaxEntries = DEFAULT_MAX_ENTRIES;
     private static HostResolver staticDefaultResolver;
+
+    /**
+     * DEPRECATED
+     */
+    public static void closeStaticDefault()
+    {
+        closeDefault();
+    }
+
+    /**
+     * DEPRECATED
+     */
+    public static HostResolver getOrCreateStaticDefault()
+    {
+        return getOrCreateDefault();
+    }
 
     /*******************************************************************************
      * native methods

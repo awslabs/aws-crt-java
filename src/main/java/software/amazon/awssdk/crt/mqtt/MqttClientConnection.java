@@ -121,18 +121,6 @@ public class MqttClientConnection extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         mqttClientConnectionDestroy(getNativeHandle());
-        
-        if (config != null) {
-            if (config.getCleanStaticDefaultClientBootstrap() == true) {
-                ClientBootstrap.releaseStaticDefault();
-            }
-            if (config.getCleanStaticDefaultEventLoopGroup() == true) {
-                EventLoopGroup.closeStaticDefault();
-            }
-            if (config.getCleanStaticDefaultHostResolver() == true) {
-                HostResolver.closeStaticDefault();
-            }
-        }
     }
 
     /**

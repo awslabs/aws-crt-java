@@ -89,10 +89,10 @@ public final class EventLoopGroup extends CrtResource {
     }
 
     /**
-     * Closes the static default event loop group, if it exists.  Primarily intended for tests that use the static
-     * default event loop group, before they call waitForNoResources().
+     * Closes the static EventLoopGroup, if it exists.  Primarily intended for tests that use the static
+     * default EventLoopGroup, before they call waitForNoResources().
      */
-    public static void closeStaticDefault() {
+    public static void closeDefault() {
         synchronized (EventLoopGroup.class) {
             if (staticDefaultEventLoopGroup != null) {
                 staticDefaultEventLoopGroup.close();
@@ -102,10 +102,31 @@ public final class EventLoopGroup extends CrtResource {
     }
 
     /**
-     * Gets the static default event loop group, creating it if necessary
+     * Sets the static default EventLoopGroup, if it has not been created already.
+     */
+    public static void setDefault(EventLoopGroup group) {
+        synchronized (EventLoopGroup.class) {
+            if (staticDefaultEventLoopGroup == null) {
+                staticDefaultEventLoopGroup = group;
+            }
+        }
+    }
+
+    /**
+     * Gets the static default EventLoopGroup, creating it if necessary.
+     *
+     * This default will be used when a EventLoopGroup is not explicitly passed but is needed
+     * to allow the process to function. An example of this would be in the MQTT connection creation workflow.
+     *
+     * The EventLoopGroup will automatically pick a default number of threads based on the system. You can
+     * manually adjust the number of threads being used by creating a EventLoopGroup and passing it through
+     * the SetDefaultEventLoopGroup function.
+     *
+     * The default EventLoopGroup will be automatically managed and released by the API handle when it's
+     * resources are being freed, not requiring any manual memory management.
      * @return the static default event loop group
      */
-    static EventLoopGroup getOrCreateStaticDefault() {
+    static EventLoopGroup getOrCreateDefault() {
         EventLoopGroup elg = null;
         synchronized (EventLoopGroup.class) {
             if (staticDefaultEventLoopGroup == null) {
@@ -120,6 +141,22 @@ public final class EventLoopGroup extends CrtResource {
 
     private static int staticDefaultNumThreads = Math.max(1, Runtime.getRuntime().availableProcessors());
     private static EventLoopGroup staticDefaultEventLoopGroup;
+
+    /**
+     * DEPRECATED
+     */
+    public static void closeStaticDefault()
+    {
+        closeDefault();
+    }
+
+    /**
+     * DEPRECATED
+     */
+    public static EventLoopGroup getOrCreateStaticDefault()
+    {
+        return getOrCreateDefault();
+    }
 
     /*******************************************************************************
      * native methods

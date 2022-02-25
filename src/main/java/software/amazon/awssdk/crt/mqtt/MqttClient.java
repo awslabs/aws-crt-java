@@ -37,7 +37,7 @@ public class MqttClient extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient() throws CrtRuntimeException {
-        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateDefault();
+        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateStaticDefault();
         acquireNativeHandle(mqttClientNew(defaultBootstrap.getNativeHandle()));
         addReferenceTo(defaultBootstrap);
     }
@@ -62,7 +62,7 @@ public class MqttClient extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
      */
     public MqttClient(TlsContext context) throws CrtRuntimeException {
-        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateDefault();
+        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateStaticDefault();
         acquireNativeHandle(mqttClientNew(defaultBootstrap.getNativeHandle()));
         addReferenceTo(defaultBootstrap);
         addReferenceTo(context);

@@ -22,10 +22,10 @@ public final class ClientBootstrap extends CrtResource {
      * Most applications will only ever need one instance of this.
      */
     private ClientBootstrap() throws CrtRuntimeException {
-        acquireNativeHandle(clientBootstrapNew(this, EventLoopGroup.getOrCreateDefault().getNativeHandle(), HostResolver.getOrCreateDefault().getNativeHandle()));
+        acquireNativeHandle(clientBootstrapNew(this, EventLoopGroup.getOrCreateStaticDefault().getNativeHandle(), HostResolver.getOrCreateStaticDefault().getNativeHandle()));
         // Order is likely important here
-        addReferenceTo(HostResolver.getOrCreateDefault());
-        addReferenceTo(EventLoopGroup.getOrCreateDefault());
+        addReferenceTo(HostResolver.getOrCreateStaticDefault());
+        addReferenceTo(EventLoopGroup.getOrCreateStaticDefault());
     }
 
     /**
@@ -37,11 +37,11 @@ public final class ClientBootstrap extends CrtResource {
      */
     public ClientBootstrap(EventLoopGroup elg, HostResolver hr) throws CrtRuntimeException {
         if (elg == null) {
-            elg = EventLoopGroup.getOrCreateDefault();
+            elg = EventLoopGroup.getOrCreateStaticDefault();
         }
 
         if (hr == null) {
-            hr = HostResolver.getOrCreateDefault();
+            hr = HostResolver.getOrCreateStaticDefault();
         }
 
         acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
@@ -85,23 +85,12 @@ public final class ClientBootstrap extends CrtResource {
      * Closes the static ClientBootstrap, if it exists.  Primarily intended for tests that use the static
      * default ClientBootstrap, before they call waitForNoResources().
      */
-    public static void closeDefault() {
+    public static void closeStaticDefault() {
         synchronized (ClientBootstrap.class) {
             if (staticDefaultClientBootstrap != null) {
                 staticDefaultClientBootstrap.releaseNativeHandle();
             }
             staticDefaultClientBootstrap = null;
-        }
-    }
-
-    /**
-     * Sets the static default ClientBootstrap, if it has not been created already.
-     */
-    public static void setDefault(ClientBootstrap bootstrap) {
-        synchronized (ClientBootstrap.class) {
-            if (staticDefaultClientBootstrap == null) {
-                staticDefaultClientBootstrap = bootstrap;
-            }
         }
     }
 
@@ -115,7 +104,7 @@ public final class ClientBootstrap extends CrtResource {
      * resources are being freed, not requiring any manual memory management.
      * @return the static default ClientBootstrap
      */
-    public static ClientBootstrap getOrCreateDefault() {
+    public static ClientBootstrap getOrCreateStaticDefault() {
         ClientBootstrap client = null;
         synchronized (ClientBootstrap.class) {
             if (staticDefaultClientBootstrap == null) {
@@ -128,22 +117,6 @@ public final class ClientBootstrap extends CrtResource {
         return client;
     }
     private static ClientBootstrap staticDefaultClientBootstrap;
-
-    /**
-     * DEPRECATED
-     */
-    public static void closeStaticDefault()
-    {
-        closeDefault();
-    }
-
-    /**
-     * DEPRECATED
-     */
-    public static ClientBootstrap getOrCreateStaticDefault()
-    {
-        return getOrCreateDefault();
-    }
 
     /*******************************************************************************
      * native methods

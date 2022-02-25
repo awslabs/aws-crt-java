@@ -140,7 +140,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
 
         ClientBootstrap clientBootstrap = builder.getClientBootstrap();
         if (clientBootstrap == null) {
-            clientBootstrap = ClientBootstrap.getOrCreateDefault();
+            clientBootstrap = ClientBootstrap.getOrCreateStaticDefault();
         }
 
         TlsContext tlsContext = builder.getTlsContext();

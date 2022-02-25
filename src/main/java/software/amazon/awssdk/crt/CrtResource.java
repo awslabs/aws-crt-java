@@ -421,9 +421,9 @@ public abstract class CrtResource implements AutoCloseable {
      * a period of waiting.
      */
     public static void waitForNoResources() {
-        ClientBootstrap.closeDefault();
-        EventLoopGroup.closeDefault();
-        HostResolver.closeDefault();
+        ClientBootstrap.closeStaticDefault();
+        EventLoopGroup.closeStaticDefault();
+        HostResolver.closeStaticDefault();
 
         if (debugNativeObjects) {
             lock.lock();

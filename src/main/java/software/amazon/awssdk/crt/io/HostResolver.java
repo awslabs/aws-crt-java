@@ -82,7 +82,15 @@ public class HostResolver extends CrtResource {
     }
 
     /**
-     * Gets the static default host resolver, creating it if necessary
+     * Gets the static default HostResolver, creating it if necessary.
+     *
+     * This default will be used when a HostResolver is not explicitly passed but is needed
+     * to allow the process to function. An example of this would be in the MQTT connection creation workflow.
+     *
+     * The HostResolver will be set to have a maximum of 8 entries by default.
+     *
+     * The default HostResolver will be automatically managed and released when it's
+     * resources are being freed, not requiring any manual memory management.
      * @return the static default host resolver
      */
     static HostResolver getOrCreateStaticDefault() {

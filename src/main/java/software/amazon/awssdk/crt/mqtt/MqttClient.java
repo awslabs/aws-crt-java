@@ -32,6 +32,17 @@ public class MqttClient extends CrtResource {
     }
 
     /**
+     * Creates an MqttClient with no TLS from the default static {@link ClientBootstrap}
+     * 
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
+     */
+    public MqttClient() throws CrtRuntimeException {
+        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateStaticDefault();
+        acquireNativeHandle(mqttClientNew(defaultBootstrap.getNativeHandle()));
+        addReferenceTo(defaultBootstrap);
+    }
+
+    /**
      * Creates an MqttClient from the provided {@link ClientBootstrap} and {@link TlsContext}
      * @param clientBootstrap The ClientBootstrap to use
      * @param context the tls context to use
@@ -40,6 +51,20 @@ public class MqttClient extends CrtResource {
     public MqttClient(ClientBootstrap clientBootstrap, TlsContext context) throws CrtRuntimeException {
         acquireNativeHandle(mqttClientNew(clientBootstrap.getNativeHandle()));
         addReferenceTo(clientBootstrap);
+        addReferenceTo(context);
+        this.tlsContext = context;
+    }
+
+    /**
+     * Creates an MqttClient with a default static {@link ClientBootstrap} and provided {@link TlsContext}
+     * 
+     * @param context the tls context to use
+     * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT client structure
+     */
+    public MqttClient(TlsContext context) throws CrtRuntimeException {
+        ClientBootstrap defaultBootstrap = ClientBootstrap.getOrCreateStaticDefault();
+        acquireNativeHandle(mqttClientNew(defaultBootstrap.getNativeHandle()));
+        addReferenceTo(defaultBootstrap);
         addReferenceTo(context);
         this.tlsContext = context;
     }

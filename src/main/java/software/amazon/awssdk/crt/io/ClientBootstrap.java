@@ -22,7 +22,9 @@ public final class ClientBootstrap extends CrtResource {
      * Most applications will only ever need one instance of this.
      */
     private ClientBootstrap() throws CrtRuntimeException {
-        acquireNativeHandle(clientBootstrapNew(this, EventLoopGroup.getOrCreateStaticDefault().getNativeHandle(), HostResolver.getOrCreateStaticDefault().getNativeHandle()));
+        EventLoopGroup elg = EventLoopGroup.getOrCreateStaticDefault();
+        HostResolver hr = HostResolver.getOrCreateStaticDefault();
+        acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
         // Order is likely important here
         addReferenceTo(HostResolver.getOrCreateStaticDefault());
         addReferenceTo(EventLoopGroup.getOrCreateStaticDefault());

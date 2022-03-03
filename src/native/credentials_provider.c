@@ -530,6 +530,7 @@ static int s_credentials_provider_delegate_get_credentials(
         callback_data->jni_delegate_credential_handler,
         credentials_handler_properties.on_handler_get_credentials_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         goto fetch_credentials_failed;
     }
 

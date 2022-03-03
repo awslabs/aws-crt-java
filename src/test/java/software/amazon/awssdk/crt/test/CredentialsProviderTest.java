@@ -7,7 +7,6 @@ package software.amazon.awssdk.crt.test;
 
 import com.sun.net.httpserver.HttpServer;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;

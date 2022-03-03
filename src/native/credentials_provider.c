@@ -645,6 +645,17 @@ struct aws_credentials_provider_get_credentials_callback_data {
     jobject java_credentials_future;
 };
 
+static void s_callback_data_clean_up(struct aws_credentials_provider_get_credentials_callback_data *callback_data) {
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
+    (*env)->DeleteGlobalRef(env, callback_data->java_credentials_future);
+
+    aws_credentials_provider_release(callback_data->provider);
+
+    // We're done with this callback data, free it.
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
 static void s_on_get_credentials_callback(struct aws_credentials *credentials, int error_code, void *user_data) {
     (void)error_code;
 
@@ -699,14 +710,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         }
         (*env)->DeleteLocalRef(env, java_credentials);
     }
-
-    (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
-    (*env)->DeleteGlobalRef(env, callback_data->java_credentials_future);
-
-    aws_credentials_provider_release(callback_data->provider);
-
-    // We're done with this callback data, free it.
-    aws_mem_release(aws_jni_get_allocator(), callback_data);
+    s_callback_data_clean_up(callback_data);
 }
 
 JNIEXPORT
@@ -744,7 +748,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
 
     if (aws_credentials_provider_get_credentials(provider, s_on_get_credentials_callback, callback_data)) {
         aws_jni_throw_runtime_exception(env, "CrtCredentialsProvider.credentialsProviderGetCredentials: call failure");
-        aws_credentials_provider_release(provider);
+        /* callback will not be invoked on failure, clean up the resource here. */
+        s_callback_data_clean_up(callback_data);
     }
 }
 

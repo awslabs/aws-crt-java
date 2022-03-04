@@ -413,7 +413,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
             (struct aws_signing_config_base *)&signing_config,
             s_aws_request_signing_complete,
             callback_data)) {
-        AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "sign failed");
         aws_jni_throw_runtime_exception(env, "Failed to initiate signing process for HttpRequest");
         goto on_error;
     }

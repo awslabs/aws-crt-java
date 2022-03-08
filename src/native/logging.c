@@ -44,7 +44,8 @@ static bool s_initialized_logger = false;
 extern int g_memory_tracing;
 
 static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_options *options) {
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
+    struct aws_allocator *allocator = aws_default_allocator();
 
     if (g_memory_tracing == 0) {
         if (aws_logger_init_standard(&s_logger, allocator, options)) {

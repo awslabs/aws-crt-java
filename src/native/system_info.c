@@ -33,7 +33,7 @@ jobjectArray JNICALL
 
     size_t cpu_count = aws_get_cpu_count_for_group(groupIdx);
 
-    struct aws_cpu_info *cpu_info = aws_mem_calloc(aws_jni_get_allocator(), cpu_count, sizeof(struct aws_cpu_info));
+    struct aws_cpu_info *cpu_info = aws_mem_calloc(aws_default_allocator(), cpu_count, sizeof(struct aws_cpu_info));
     AWS_FATAL_ASSERT(cpu_info && "allocation failed in Java_software_amazon_awssdk_crt_SystemInfo_getCpuIdsForGroup");
 
     aws_get_cpu_ids_for_group(groupIdx, cpu_info, cpu_count);
@@ -52,7 +52,7 @@ jobjectArray JNICALL
         (*env)->DeleteLocalRef(env, cpu_info_obj);
     }
 
-    aws_mem_release(aws_jni_get_allocator(), cpu_info);
+    aws_mem_release(aws_default_allocator(), cpu_info);
 
     return cpu_info_array;
 }

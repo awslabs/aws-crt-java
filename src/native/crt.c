@@ -240,12 +240,19 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
+static struct aws_allocator *crt_libs_allocator = NULL;
+
 static void s_jni_atexit_strict(void) {
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
     aws_http_library_clean_up();
     aws_mqtt_library_clean_up();
+
+    if (crt_libs_allocator != NULL && !aws_small_block_allocator_bytes_active(crt_libs_allocator)) {
+        aws_small_block_allocator_destroy(crt_libs_allocator);
+        crt_libs_allocator = NULL;
+    }
 
     if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
@@ -256,8 +263,9 @@ static void s_jni_atexit_strict(void) {
 
     if (g_memory_tracing) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
-        aws_mem_tracer_destroy(tracer_allocator);
+        s_allocator = aws_mem_tracer_destroy(tracer_allocator);
     }
+
     s_allocator = NULL;
 }
 
@@ -326,12 +334,15 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
         g_memory_tracing = 1;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mqtt_library_init(allocator);
-    aws_http_library_init(allocator);
-    aws_auth_library_init(allocator);
-    aws_event_stream_library_init(allocator);
-    aws_s3_library_init(allocator);
+    /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
+    if (crt_libs_allocator == NULL) {
+        crt_libs_allocator = aws_small_block_allocator_new(aws_default_allocator(), true);
+    }
+    aws_mqtt_library_init(crt_libs_allocator);
+    aws_http_library_init(crt_libs_allocator);
+    aws_auth_library_init(crt_libs_allocator);
+    aws_event_stream_library_init(crt_libs_allocator);
+    aws_s3_library_init(crt_libs_allocator);
 
     cache_java_class_ids(env);
 

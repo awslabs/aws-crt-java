@@ -12,7 +12,7 @@ phases:
       - git submodule update --init --recursive
       - git clone https://github.com/aws/aws-sdk-java-v2.git
       # change the version from SDK to local SNAPSHOT version
-      - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' pom.xml
+      - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' aws-sdk-java-v2/pom.xml
   pre_build:
     commands:
       - export CC=gcc-7
@@ -25,7 +25,7 @@ phases:
       - mvn clean install -pl :bom-internal
       - mvn clean install -pl :aws-crt-client,:s3-transfer-manager,:stability-tests -P quick --am
       - mvn clean install -pl :aws-crt-client,:s3-transfer-manager
-      - mvn clean install -P stability-tests -pl :stability-tests
+      # - mvn clean install -P stability-tests -pl :stability-tests
       - mvn clean install -P integration-tests -pl :aws-crt-client,:s3-transfer-manager
   post_build:
     commands:

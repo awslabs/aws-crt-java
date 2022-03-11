@@ -20,6 +20,7 @@ phases:
       - git clone https://github.com/aws/aws-sdk-java-v2.git
       - cd aws-sdk-java-v2/
       - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' pom.xml
+      - mvn clean install -pl :build-tools
       - mvn clean install -pl :bom-internal
       - mvn clean install -pl :aws-crt-client,:s3-transfer-manager,:stability-tests -P quick --am
       - mvn clean install -pl :aws-crt-client,:s3-transfer-manager

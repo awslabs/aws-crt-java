@@ -2,6 +2,8 @@ version: 0.2
 #this build spec assumes the ubuntu aws/codebuild/java:openjdk-8 image
 phases:
   install:
+    runtime-versions:
+      java: "openjdk8"
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test

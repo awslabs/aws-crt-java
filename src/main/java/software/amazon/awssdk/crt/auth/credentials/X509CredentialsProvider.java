@@ -139,6 +139,10 @@ public class X509CredentialsProvider extends CredentialsProvider {
         }
 
         ClientBootstrap clientBootstrap = builder.getClientBootstrap();
+        if (clientBootstrap == null) {
+            clientBootstrap = ClientBootstrap.getOrCreateStaticDefault();
+        }
+
         TlsContext tlsContext = builder.getTlsContext();
         if (clientBootstrap == null || tlsContext == null) {
             throw new IllegalArgumentException("X509CredentialsProvider - clientBootstrap and tlsContext must be non null");

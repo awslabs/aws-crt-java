@@ -9,17 +9,18 @@ phases:
       - add-apt-repository ppa:ubuntu-toolchain-r/test
       - apt-get update -y
       - apt-get install gcc-7 cmake ninja-build -y
+      - git submodule update --init --recursive
+      - git clone https://github.com/aws/aws-sdk-java-v2.git
+      # change the version from SDK to local SNAPSHOT version
+      - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' pom.xml
   pre_build:
     commands:
       - export CC=gcc-7
   build:
     commands:
       - echo Build started on `date`
-      - git submodule update --init --recursive
       - mvn install -DskipTests
-      - git clone https://github.com/aws/aws-sdk-java-v2.git
       - cd aws-sdk-java-v2/
-      - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' pom.xml
       - mvn clean install -pl :build-tools
       - mvn clean install -pl :bom-internal
       - mvn clean install -pl :aws-crt-client,:s3-transfer-manager,:stability-tests -P quick --am

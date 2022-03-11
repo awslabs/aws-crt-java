@@ -5,6 +5,7 @@ phases:
     runtime-versions:
       java: "corretto8"
     commands:
+      - apt install sudo
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y

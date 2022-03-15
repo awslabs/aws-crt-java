@@ -10,7 +10,7 @@ phases:
       - apt-get update -y
       - apt-get install gcc-7 cmake ninja-build -y
       - git submodule update --init --recursive
-      - git clone -b zoewang/create-crtTestsProfile https://github.com/aws/aws-sdk-java-v2.git
+      - git clone https://github.com/aws/aws-sdk-java-v2.git
       # change the version from SDK to local SNAPSHOT version
       - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' aws-sdk-java-v2/pom.xml
       # check if it works

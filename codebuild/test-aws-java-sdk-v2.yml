@@ -10,7 +10,7 @@ phases:
       - apt-get update -y
       - apt-get install gcc-7 cmake ninja-build -y
       - git submodule update --init --recursive
-      - git clone https://github.com/aws/aws-sdk-java-v2.git
+      - git clone -b zoewang/create-crtTestsProfile https://github.com/aws/aws-sdk-java-v2.git
       # change the version from SDK to local SNAPSHOT version
       - sed -i 's/<awscrt.version>.*<\/awscrt.version>/<awscrt.version>1.0.0-SNAPSHOT<\/awscrt.version>/g' aws-sdk-java-v2/pom.xml
       # check if it works
@@ -23,12 +23,7 @@ phases:
       - echo Build started on `date`
       - mvn install -DskipTests
       - cd aws-sdk-java-v2/
-      - mvn clean install -pl :build-tools
-      - mvn clean install -pl :bom-internal
-      - mvn clean install -pl :aws-crt-client,:s3-transfer-manager,:stability-tests -P quick --am
-      - mvn clean install -pl :aws-crt-client,:s3-transfer-manager
-      - mvn clean install -P stability-tests -pl :stability-tests
-      - mvn clean install -P integration-tests -pl :aws-crt-client,:s3-transfer-manager
+      - mvn clean install -P crt-tests
   post_build:
     commands:
       - echo Build completed on `date`

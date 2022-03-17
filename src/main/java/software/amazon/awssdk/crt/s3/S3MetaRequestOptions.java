@@ -74,6 +74,7 @@ public class S3MetaRequestOptions {
     }
 
     private MetaRequestType metaRequestType;
+    private S3ChecksumAlgorithm checksumAlgorithm;
     private HttpRequest httpRequest;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
@@ -86,6 +87,15 @@ public class S3MetaRequestOptions {
 
     public MetaRequestType getMetaRequestType() {
         return metaRequestType;
+    }
+
+    public S3MetaRequestOptions withChecksumAlgorithm(S3ChecksumAlgorithm checksumAlgorithm) {
+        this.checksumAlgorithm = checksumAlgorithm;
+        return this;
+    }
+
+    public S3ChecksumAlgorithm getChecksumAlgorithm() {
+        return checksumAlgorithm;
     }
 
     public S3MetaRequestOptions withHttpRequest(HttpRequest httpRequest) {

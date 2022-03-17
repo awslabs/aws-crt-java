@@ -312,7 +312,9 @@ static void s_on_s3_meta_request_finish_callback(
             s3_meta_request_response_handler_native_adapter_properties.onFinished,
             meta_request_result->error_code,
             meta_request_result->response_status,
-            jni_payload);
+            jni_payload,
+            meta_request_result->validation_algorithm,
+            meta_request_result->did_validate);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(

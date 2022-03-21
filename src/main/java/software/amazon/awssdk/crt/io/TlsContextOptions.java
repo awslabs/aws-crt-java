@@ -89,6 +89,7 @@ public final class TlsContextOptions extends CrtResource {
     private String pkcs12Path;
     private String pkcs12Password;
     private TlsContextPkcs11Options pkcs11Options;
+    private String windowsCertStorePath;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
@@ -118,7 +119,8 @@ public final class TlsContextOptions extends CrtResource {
                 verifyPeer,
                 pkcs12Path,
                 pkcs12Password,
-                pkcs11Options
+                pkcs11Options,
+                windowsCertStorePath
             ));
         }
         return super.getNativeHandle();
@@ -319,6 +321,23 @@ public final class TlsContextOptions extends CrtResource {
         return options;
     }
 
+    /**
+     * Windows platforms only - Helper which creates mTLS options using a
+     * certificate in a Windows certificate store.
+     *
+     * @param certificatePath Path to certificate in a Windows certificate store.
+     *                        The path must use backslashes and end with the
+     *                        certificate's thumbprint. Example:
+     *                        {@code CurrentUser\MY\A11F8A9B5DF5B98BA3508FBCA575D09570E0D2C6}
+     * @return A set of options for setting up an mTLS connection
+     */
+    public static TlsContextOptions createWithMtlsWindowsCertStorePath(String certificatePath) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsWindowsCertStorePath(certificatePath);
+        options.verifyPeer = true;
+        return options;
+    }
+
     /*******************************************************************************
      * .with() methods
      ******************************************************************************/
@@ -423,6 +442,21 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Windows platforms only, specifies mTLS using a certificate in a Windows
+     * certificate store.
+     *
+     * @param certificatePath Path to certificate in a Windows certificate store.
+     *                        The path must use backslashes and end with the
+     *                        certificate's thumbprint. Example:
+     *                        {@code CurrentUser\MY\A11F8A9B5DF5B98BA3508FBCA575D09570E0D2C6}
+     * @return this
+     */
+    public TlsContextOptions withMtlsWindowsCertStorePath(String certificatePath) {
+        this.windowsCertStorePath = certificatePath;
+        return this;
+    }
+
+    /**
      * Sets whether or not TLS will validate the certificate from the peer. On clients,
      * this is enabled by default. On servers, this is disabled by default.
      * @param verify true to verify peers, false to ignore certs
@@ -459,7 +493,8 @@ public final class TlsContextOptions extends CrtResource {
                 boolean verifyPeer,
                 String pkcs12Path,
                 String pkcs12Password,
-                TlsContextPkcs11Options pkcs11Options
+                TlsContextPkcs11Options pkcs11Options,
+                String windowsCertStorePath
             );
 
     private static native void tlsContextOptionsDestroy(long elg);

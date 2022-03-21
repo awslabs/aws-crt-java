@@ -75,6 +75,7 @@ public class S3MetaRequestOptions {
 
     private MetaRequestType metaRequestType;
     private S3ChecksumAlgorithm checksumAlgorithm;
+    private boolean validateChecksum;
     private HttpRequest httpRequest;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;

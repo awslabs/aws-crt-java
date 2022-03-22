@@ -388,6 +388,12 @@
                         <endpoint>${crt.test.endpoint}</endpoint>
                         <rootca>${crt.test.rootca}</rootca>
                     </systemPropertyVariables>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>software.amazon.awssdk.crt.test.FailFastListener</value>
+                        </property>
+                    </properties>
                     <shutdown>kill</shutdown>
                     <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
                     <runOrder>alphabetical</runOrder>

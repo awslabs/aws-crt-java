@@ -145,7 +145,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Sets the tls cipher preferences to use in contexts using this configuration
+     * Sets the TLS cipher preferences to use in contexts using this configuration
      * @param cipherPref cipher preferences to use
      */
     public void setCipherPreference(TlsCipherPreference cipherPref) {
@@ -161,7 +161,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Sets the path to the certificate that identifies this TLS host. Must be in PEM format.
+     * Sets the path to the certificate that identifies this mutual TLS (mTLS) host. Must be in PEM format.
      * @param certificatePath Path to PEM format certificate
      * @param privateKeyPath Path to PEM format private key
      */
@@ -171,7 +171,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Sets the certificate/key pair that identifies this TLS host. Must be in
+     * Sets the certificate/key pair that identifies this mutual TLS (mTLS) host. Must be in
      * PEM format.
      *
      * @param certificate PEM armored certificate
@@ -187,7 +187,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * OSX only - Initializes MTLS with PKCS12 file and password
+     * Apple platforms only - Initializes mutual TLS (mTLS) with PKCS12 file and password
      * @param pkcs12Path Path to PKCS12 file
      * @param pkcs12Password PKCS12 password
      */
@@ -195,7 +195,7 @@ public final class TlsContextOptions extends CrtResource {
         if (this.certificate != null || this.privateKey != null || this.certificatePath != null
                 || this.privateKeyPath != null) {
             throw new IllegalArgumentException(
-                    "PKCS#12 and MTLS via certificate/private key pair are mutually exclusive");
+                    "PKCS#12 and mTLS via certificate/private key pair are mutually exclusive");
         }
         this.pkcs12Path = pkcs12Path;
         this.pkcs12Password = pkcs12Password;
@@ -268,10 +268,10 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Helper which creates TLS options using a certificate and private key
+     * Helper which creates mutual TLS (mTLS) options using a certificate and private key
      * @param certificatePath Path to a PEM format certificate
      * @param privateKeyPath Path to a PEM format private key
-     * @return A set of options for setting up an MTLS connection
+     * @return A set of options for setting up an mTLS connection
      */
     public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) {
         TlsContextOptions options = new TlsContextOptions();
@@ -281,11 +281,11 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Helper which creates TLS options using a certificate and private key
+     * Helper which creates mutual TLS (mTLS) options using a certificate and private key
      *
      * @param certificate String containing a PEM format certificate
      * @param privateKey  String containing a PEM format private key
-     * @return A set of options for setting up an MTLS connection
+     * @return A set of options for setting up an mTLS connection
      * @throws IllegalArgumentException If either PEM fails to parse
      */
     public static TlsContextOptions createWithMtls(String certificate, String privateKey)
@@ -297,10 +297,10 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * OSX only - Helper which creates TLS options using PKCS12
+     * Apple platforms only - Helper which creates mutual TLS (mTLS) options using PKCS12
      * @param pkcs12Path The path to a PKCS12 file @see #setPkcs12Path(String)
      * @param pkcs12Password The PKCS12 password @see #setPkcs12Password(String)
-     * @return A set of options for creating a PKCS12 TLS connection
+     * @return A set of options for creating a PKCS12 mTLS connection
      */
     public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
         TlsContextOptions options = new TlsContextOptions();
@@ -310,9 +310,9 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Unix platforms only - Helper which creates TLS options using a PKCS#11 library for private key operations.
+     * Unix platforms only - Helper which creates mutual TLS (mTLS) options using a PKCS#11 library for private key operations.
      * @param pkcs11Options PKCS#11 options
-     * @return A set of options for creating a PKCS#11 TLS connection
+     * @return A set of options for creating a PKCS#11 mTLS connection
      */
     public static TlsContextOptions createWithMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
         TlsContextOptions options = new TlsContextOptions();
@@ -322,7 +322,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Windows platforms only - Helper which creates mTLS options using a
+     * Windows platforms only - Helper which creates mutual TLS (mTLS) options using a
      * certificate in a Windows certificate store.
      *
      * @param certificatePath Path to certificate in a Windows certificate store.
@@ -420,7 +420,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Apple platforms only, specifies mTLS using PKCS#12
+     * Apple platforms only, specifies mutual TLS (mTLS) using PKCS#12
      * @param pkcs12Path Path to PKCS#12 certificate, in PEM format
      * @param pkcs12Password PKCS#12 password
      * @return this
@@ -431,7 +431,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Unix platforms only, specifies mTLS using a PKCS#11 library for private key operations.
+     * Unix platforms only, specifies mutual TLS (mTLS) using a PKCS#11 library for private key operations.
      * @param pkcs11Options PKCS#11 options
      * @return this
      */
@@ -442,7 +442,7 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Windows platforms only, specifies mTLS using a certificate in a Windows
+     * Windows platforms only, specifies mutual TLS (mTLS) using a certificate in a Windows
      * certificate store.
      *
      * @param certificatePath Path to certificate in a Windows certificate store.

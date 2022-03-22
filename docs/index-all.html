@@ -417,9 +417,13 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Closes the connection with shutdownError</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/ClientBootstrap.html#closeStaticDefault()">closeStaticDefault()</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io">ClientBootstrap</a></dt>
+<dd>
+<div class="block">Closes the static ClientBootstrap, if it exists.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/EventLoopGroup.html#closeStaticDefault()">closeStaticDefault()</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/EventLoopGroup.html" title="class in software.amazon.awssdk.crt.io">EventLoopGroup</a></dt>
 <dd>
-<div class="block">Closes the static default event loop group, if it exists.</div>
+<div class="block">Closes the static EventLoopGroup, if it exists.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/HostResolver.html#closeStaticDefault()">closeStaticDefault()</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/HostResolver.html" title="class in software.amazon.awssdk.crt.io">HostResolver</a></dt>
 <dd>
@@ -462,6 +466,12 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/SocketOptions.html#connectTimeoutMs">connectTimeoutMs</a></span> - Variable in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/SocketOptions.html" title="class in software.amazon.awssdk.crt.io">SocketOptions</a></dt>
 <dd>
 <div class="block">Sets the number of milliseconds before a connection will be considered timed out</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html#COPY_OBJECT">COPY_OBJECT</a></span> - software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a></dt>
+<dd>
+<div class="block">The CopyObject meta request performs a multi-part copy using multiple S3 UploadPartCopy requests
+ in parallel, or bypasses a CopyObject request to S3 if the object size is not large enough for
+ a multipart upload.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/SystemInfo.CpuInfo.html#cpuId">cpuId</a></span> - Variable in class software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/SystemInfo.CpuInfo.html" title="class in software.amazon.awssdk.crt">SystemInfo.CpuInfo</a></dt>
 <dd>
@@ -549,19 +559,24 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#createWithMtls(java.lang.String,java.lang.String)">createWithMtls(String, String)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Helper which creates TLS options using a certificate and private key</div>
+<div class="block">Helper which creates mutual TLS (mTLS) options using a certificate and private key</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#createWithMtlsFromPath(java.lang.String,java.lang.String)">createWithMtlsFromPath(String, String)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Helper which creates TLS options using a certificate and private key</div>
+<div class="block">Helper which creates mutual TLS (mTLS) options using a certificate and private key</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#createWithMtlsPkcs11(software.amazon.awssdk.crt.io.TlsContextPkcs11Options)">createWithMtlsPkcs11(TlsContextPkcs11Options)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Unix platforms only - Helper which creates TLS options using a PKCS#11 library for private key operations.</div>
+<div class="block">Unix platforms only - Helper which creates mutual TLS (mTLS) options using a PKCS#11 library for private key operations.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#createWithMtlsPkcs12(java.lang.String,java.lang.String)">createWithMtlsPkcs12(String, String)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">OSX only - Helper which creates TLS options using PKCS12</div>
+<div class="block">Apple platforms only - Helper which creates mutual TLS (mTLS) options using PKCS12</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#createWithMtlsWindowsCertStorePath(java.lang.String)">createWithMtlsWindowsCertStorePath(String)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
+<dd>
+<div class="block">Windows platforms only - Helper which creates mutual TLS (mTLS) options using a
+ certificate in a Windows certificate store.</div>
 </dd>
 <dt><a href="software/amazon/awssdk/crt/auth/credentials/Credentials.html" title="class in software.amazon.awssdk.crt.auth.credentials"><span class="typeNameLink">Credentials</span></a> - Class in <a href="software/amazon/awssdk/crt/auth/credentials/package-summary.html">software.amazon.awssdk.crt.auth.credentials</a></dt>
 <dd>
@@ -647,8 +662,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.JitterMode.html#Decorrelated">Decorrelated</a></span> - software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.JitterMode.html" title="enum in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions.JitterMode</a></dt>
 <dd>
-<div class="block">Backoff is taken randomly from the interval between the base backoff interval and a scaling (>1) of the
- current backoff value</div>
+<div class="block">Backoff is taken randomly from the interval between the base backoff
+ interval and a scaling (greater than 1) of the current backoff value</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/CrtResource.html#decRef()">decRef()</a></span> - Method in class software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/CrtResource.html" title="class in software.amazon.awssdk.crt">CrtResource</a></dt>
 <dd>
@@ -663,7 +678,9 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Default behavior that accommodates most use cases.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html#DEFAULT">DEFAULT</a></span> - software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">The Default meta request type sends any request to S3 as-is (with no transformation).</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html#DEFAULT_MAX_BUFFER_SIZE">DEFAULT_MAX_BUFFER_SIZE</a></span> - Static variable in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html#DEFAULT_MAX_CONNECTIONS">DEFAULT_MAX_CONNECTIONS</a></span> - Static variable in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a></dt>
@@ -703,6 +720,27 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/SocketOptions.SocketType.html#DGRAM">DGRAM</a></span> - software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/SocketOptions.SocketType.html" title="enum in software.amazon.awssdk.crt.io">SocketOptions.SocketType</a></dt>
 <dd>
 <div class="block">Corresponds to SOCK_DGRAM in Berkeley sockets (UDP)</div>
+</dd>
+<dt><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io"><span class="typeNameLink">DirectoryEntry</span></a> - Class in <a href="software/amazon/awssdk/crt/io/package-summary.html">software.amazon.awssdk.crt.io</a></dt>
+<dd>
+<div class="block">Supplied during calls to DirectoryTraversal.traverse() as each entry is encountered.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#%3Cinit%3E()">DirectoryEntry()</a></span> - Constructor for class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="software/amazon/awssdk/crt/io/DirectoryTraversal.html" title="class in software.amazon.awssdk.crt.io"><span class="typeNameLink">DirectoryTraversal</span></a> - Class in <a href="software/amazon/awssdk/crt/io/package-summary.html">software.amazon.awssdk.crt.io</a></dt>
+<dd>
+<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
+<div class="deprecationComment">It is currently an EXPERIMENTAL feature meant for internal use only. It may be changed incompatibly
+ or removed in a future version.</div>
+</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryTraversal.html#%3Cinit%3E()">DirectoryTraversal()</a></span> - Constructor for class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryTraversal.html" title="class in software.amazon.awssdk.crt.io">DirectoryTraversal</a></dt>
+<dd>
+<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span></div>
+&nbsp;</dd>
+<dt><a href="software/amazon/awssdk/crt/io/DirectoryTraversalHandler.html" title="interface in software.amazon.awssdk.crt.io"><span class="typeNameLink">DirectoryTraversalHandler</span></a> - Interface in <a href="software/amazon/awssdk/crt/io/package-summary.html">software.amazon.awssdk.crt.io</a></dt>
+<dd>
+<div class="block">Handler invoked during calls to DirectoryTraversal.traverse() as each entry is encountered.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClientConnection.html#disconnect()">disconnect()</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClientConnection.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClientConnection</a></dt>
 <dd>
@@ -824,7 +862,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <h2 class="title">G</h2>
 <dl>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html#GET_OBJECT">GET_OBJECT</a></span> - software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">The GetObject request will be split into a series of ranged GetObject requests that are
+ executed in parallel to improve throughput, when possible.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/Credentials.html#getAccessKeyId()">getAccessKeyId()</a></span> - Method in class software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/Credentials.html" title="class in software.amazon.awssdk.crt.auth.credentials">Credentials</a></dt>
 <dd>
 <div class="block">gets the access key id of the credentials</div>
@@ -861,6 +902,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html#getBufferSize()">getBufferSize()</a></span> - Method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html#getBytesTransferred()">getBytesTransferred()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestProgress</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/MessageFlags.html#getByteValue()">getByteValue()</a></span> - Method in enum software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/MessageFlags.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageFlags</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttConnectionConfig.html#getCleanSession()">getCleanSession()</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttConnectionConfig.html" title="class in software.amazon.awssdk.crt.mqtt">MqttConnectionConfig</a></dt>
@@ -890,6 +933,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/ClientConnectionHandler.html#getConnectionClosedFuture()">getConnectionClosedFuture()</a></span> - Method in class software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/ClientConnectionHandler.html" title="class in software.amazon.awssdk.crt.eventstream">ClientConnectionHandler</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpProxyOptions.html#getConnectionType()">getConnectionType()</a></span> - Method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpProxyOptions.html" title="class in software.amazon.awssdk.crt.http">HttpProxyOptions</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html#getContentLength()">getContentLength()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestProgress</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/ClientConnectionContinuationHandler.html#getContinuationClosedFuture()">getContinuationClosedFuture()</a></span> - Method in class software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/ClientConnectionContinuationHandler.html" title="class in software.amazon.awssdk.crt.eventstream">ClientConnectionContinuationHandler</a></dt>
 <dd>&nbsp;</dd>
@@ -934,6 +979,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#getEndpoint()">getEndpoint()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#getEndpoint()">getEndpoint()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/HeaderType.html#getEnumIntValue()">getEnumIntValue()</a></span> - Method in enum software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/HeaderType.html" title="enum in software.amazon.awssdk.crt.eventstream">HeaderType</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/MessageType.html#getEnumValue()">getEnumValue()</a></span> - Method in enum software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/MessageType.html" title="enum in software.amazon.awssdk.crt.eventstream">MessageType</a></dt>
@@ -966,6 +1013,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Gets the expiration time in seconds to use when signing to make a pre-signed url.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#getFileSize()">getFileSize()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpRequest.html#getHeaders()">getHeaders()</a></span> - Method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpRequest.html" title="class in software.amazon.awssdk.crt.http">HttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpRequest.html#getHeadersAsArray()">getHeadersAsArray()</a></span> - Method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpRequest.html" title="class in software.amazon.awssdk.crt.http">HttpRequest</a></dt>
@@ -1090,6 +1139,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Gets whether or not X-Amz-Session-Token should be added to the canonical request when signing with session
  credentials.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/ClientBootstrap.html#getOrCreateStaticDefault()">getOrCreateStaticDefault()</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io">ClientBootstrap</a></dt>
+<dd>
+<div class="block">This default will be used when a ClientBootstrap is not explicitly passed but is needed
+ to allow the process to function.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/CRT.html#getOSIdentifier()">getOSIdentifier()</a></span> - Static method in class software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/CRT.html" title="class in software.amazon.awssdk.crt">CRT</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/CrtPlatform.html#getOSIdentifier()">getOSIdentifier()</a></span> - Method in class software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/CrtPlatform.html" title="class in software.amazon.awssdk.crt">CrtPlatform</a></dt>
@@ -1100,6 +1154,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Queries the password to use as part of the CONNECT attempt</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#getPath()">getPath()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttMessage.html#getPayload()">getPayload()</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttMessage.html" title="class in software.amazon.awssdk.crt.mqtt">MqttMessage</a></dt>
 <dd>
 <div class="block">Gets the message payload</div>
@@ -1139,6 +1195,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Gets what will be used for the region or region-set concept during signing.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#getRegion()">getRegion()</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#getRelativePath()">getRelativePath()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/CrtResource.html#getResourceLogDescription()">getResourceLogDescription()</a></span> - Method in class software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/CrtResource.html" title="class in software.amazon.awssdk.crt">CrtResource</a></dt>
 <dd>
@@ -1541,15 +1599,15 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#initMtls(java.lang.String,java.lang.String)">initMtls(String, String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Sets the certificate/key pair that identifies this TLS host.</div>
+<div class="block">Sets the certificate/key pair that identifies this mutual TLS (mTLS) host.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#initMtlsFromPath(java.lang.String,java.lang.String)">initMtlsFromPath(String, String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Sets the path to the certificate that identifies this TLS host.</div>
+<div class="block">Sets the path to the certificate that identifies this mutual TLS (mTLS) host.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#initMtlsPkcs12(java.lang.String,java.lang.String)">initMtlsPkcs12(String, String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">OSX only - Initializes MTLS with PKCS12 file and password</div>
+<div class="block">Apple platforms only - Initializes mutual TLS (mTLS) with PKCS12 file and password</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/HeaderType.html#Int16">Int16</a></span> - software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/HeaderType.html" title="enum in software.amazon.awssdk.crt.eventstream">HeaderType</a></dt>
 <dd>&nbsp;</dd>
@@ -1601,6 +1659,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/ServerConnection.html#isConnectionOpen()">isConnectionOpen()</a></span> - Method in class software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/ServerConnection.html" title="class in software.amazon.awssdk.crt.eventstream">ServerConnection</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#isDirectory()">isDirectory()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#isFile()">isFile()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html#isManualWindowManagement()">isManualWindowManagement()</a></span> - Method in class software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpClientConnectionManagerOptions.html" title="class in software.amazon.awssdk.crt.http">HttpClientConnectionManagerOptions</a></dt>
 <dd>
 <div class="block">If set to true, then the TCP read back pressure mechanism will be enabled.</div>
@@ -1619,6 +1681,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">If true, the Cpu is suspected of being virtual.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#isSymLink()">isSymLink()</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/eventstream/HeaderType.html#isVariableLength()">isVariableLength()</a></span> - Method in enum software.amazon.awssdk.crt.eventstream.<a href="software/amazon/awssdk/crt/eventstream/HeaderType.html" title="enum in software.amazon.awssdk.crt.eventstream">HeaderType</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -1775,6 +1839,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/Log.LogSubject.html#MqttClient">MqttClient</a></span> - software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/Log.LogSubject.html" title="enum in software.amazon.awssdk.crt">Log.LogSubject</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClient.html#%3Cinit%3E()">MqttClient()</a></span> - Constructor for class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClient.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClient</a></dt>
+<dd>
+<div class="block">Creates an MqttClient with no TLS from the default static <a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a></div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClient.html#%3Cinit%3E(software.amazon.awssdk.crt.io.ClientBootstrap)">MqttClient(ClientBootstrap)</a></span> - Constructor for class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClient.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClient</a></dt>
 <dd>
 <div class="block">Creates an MqttClient with no TLS from the provided <a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a></div>
@@ -1782,6 +1850,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClient.html#%3Cinit%3E(software.amazon.awssdk.crt.io.ClientBootstrap,software.amazon.awssdk.crt.io.TlsContext)">MqttClient(ClientBootstrap, TlsContext)</a></span> - Constructor for class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClient.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClient</a></dt>
 <dd>
 <div class="block">Creates an MqttClient from the provided <a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a> and <a href="software/amazon/awssdk/crt/io/TlsContext.html" title="class in software.amazon.awssdk.crt.io"><code>TlsContext</code></a></div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClient.html#%3Cinit%3E(software.amazon.awssdk.crt.io.TlsContext)">MqttClient(TlsContext)</a></span> - Constructor for class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClient.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClient</a></dt>
+<dd>
+<div class="block">Creates an MqttClient with a default static <a href="software/amazon/awssdk/crt/io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a> and provided <a href="software/amazon/awssdk/crt/io/TlsContext.html" title="class in software.amazon.awssdk.crt.io"><code>TlsContext</code></a></div>
 </dd>
 <dt><a href="software/amazon/awssdk/crt/mqtt/MqttClientConnection.html" title="class in software.amazon.awssdk.crt.mqtt"><span class="typeNameLink">MqttClientConnection</span></a> - Class in <a href="software/amazon/awssdk/crt/mqtt/package-summary.html">software.amazon.awssdk.crt.mqtt</a></dt>
 <dd>
@@ -1898,16 +1970,28 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">called on first successful connect, and whenever a reconnect succeeds</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryTraversalHandler.html#onDirectoryEntry(software.amazon.awssdk.crt.io.DirectoryEntry)">onDirectoryEntry(DirectoryEntry)</a></span> - Method in interface software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryTraversalHandler.html" title="interface in software.amazon.awssdk.crt.io">DirectoryTraversalHandler</a></dt>
+<dd>
+<div class="block">Invoked during calls to DirectoryTraversal.traverse() as each entry is encountered.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/AsyncCallback.html#onFailure(java.lang.Throwable)">onFailure(Throwable)</a></span> - Method in interface software.amazon.awssdk.crt.<a href="software/amazon/awssdk/crt/AsyncCallback.html" title="interface in software.amazon.awssdk.crt">AsyncCallback</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html#onFinished(int,int,byte%5B%5D)">onFinished(int, int, byte[])</a></span> - Method in interface software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html" title="interface in software.amazon.awssdk.crt.s3">S3MetaRequestResponseHandler</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Invoked when the entire meta request execution is complete.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttClientConnection.html#onMessage(java.util.function.Consumer)">onMessage(Consumer&lt;MqttMessage&gt;)</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttClientConnection.html" title="class in software.amazon.awssdk.crt.mqtt">MqttClientConnection</a></dt>
 <dd>
 <div class="block">Sets a handler to be invoked whenever a message arrives, subscription or not</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html#onProgress(software.amazon.awssdk.crt.s3.S3MetaRequestProgress)">onProgress(S3MetaRequestProgress)</a></span> - Method in interface software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html" title="interface in software.amazon.awssdk.crt.s3">S3MetaRequestResponseHandler</a></dt>
+<dd>
+<div class="block">Invoked to report progress of the meta request execution.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html#onResponseBody(java.nio.ByteBuffer,long,long)">onResponseBody(ByteBuffer, long, long)</a></span> - Method in interface software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html" title="interface in software.amazon.awssdk.crt.s3">S3MetaRequestResponseHandler</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Invoked to provide the request body as it is received.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpStreamResponseHandler.html#onResponseBody(software.amazon.awssdk.crt.http.HttpStream,byte%5B%5D)">onResponseBody(HttpStream, byte[])</a></span> - Method in interface software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpStreamResponseHandler.html" title="interface in software.amazon.awssdk.crt.http">HttpStreamResponseHandler</a></dt>
 <dd>
 <div class="block">Called when new Response Body bytes have been received.</div>
@@ -1917,7 +2001,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Called from Native when the Response has completed.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html#onResponseHeaders(int,software.amazon.awssdk.crt.http.HttpHeader%5B%5D)">onResponseHeaders(int, HttpHeader[])</a></span> - Method in interface software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html" title="interface in software.amazon.awssdk.crt.s3">S3MetaRequestResponseHandler</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Invoked to provide response headers received during execution of the meta request, both for
+ success and error HTTP status codes.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpStreamResponseHandler.html#onResponseHeaders(software.amazon.awssdk.crt.http.HttpStream,int,int,software.amazon.awssdk.crt.http.HttpHeader%5B%5D)">onResponseHeaders(HttpStream, int, int, HttpHeader[])</a></span> - Method in interface software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpStreamResponseHandler.html" title="interface in software.amazon.awssdk.crt.http">HttpStreamResponseHandler</a></dt>
 <dd>
 <div class="block">Called from Native when new Http Headers have been received.</div>
@@ -2019,7 +2106,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html#PUT_OBJECT">PUT_OBJECT</a></span> - software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">The PutObject request will be split into MultiPart uploads that are executed in parallel
+ to improve throughput, when possible.</div>
+</dd>
 </dl>
 <a id="I:Q">
 <!--   -->
@@ -2087,9 +2177,20 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#%3Cinit%3E()">S3MetaRequestOptions()</a></span> - Constructor for class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3"><span class="typeNameLink">S3MetaRequestOptions.MetaRequestType</span></a> - Enum in <a href="software/amazon/awssdk/crt/s3/package-summary.html">software.amazon.awssdk.crt.s3</a></dt>
+<dd>
+<div class="block">A Meta Request represents a group of generated requests that are being done on behalf of the
+ original request.</div>
+</dd>
+<dt><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3"><span class="typeNameLink">S3MetaRequestProgress</span></a> - Class in <a href="software/amazon/awssdk/crt/s3/package-summary.html">software.amazon.awssdk.crt.s3</a></dt>
+<dd>
+<div class="block">Information about the meta request progress.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html#%3Cinit%3E()">S3MetaRequestProgress()</a></span> - Constructor for class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestProgress</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="software/amazon/awssdk/crt/s3/S3MetaRequestResponseHandler.html" title="interface in software.amazon.awssdk.crt.s3"><span class="typeNameLink">S3MetaRequestResponseHandler</span></a> - Interface in <a href="software/amazon/awssdk/crt/s3/package-summary.html">software.amazon.awssdk.crt.s3</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Interface called by native code to provide S3MetaRequest responses.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/utils/PemUtils.html#safeSanityCheck(java.lang.String,int,java.lang.String)">safeSanityCheck(String, int, String)</a></span> - Static method in class software.amazon.awssdk.crt.utils.<a href="software/amazon/awssdk/crt/utils/PemUtils.html" title="class in software.amazon.awssdk.crt.utils">PemUtils</a></dt>
 <dd>
 <div class="block">Returns false if there is a problem with a PEM instead of throwing an
@@ -2206,7 +2307,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#setCipherPreference(software.amazon.awssdk.crt.io.TlsCipherPreference)">setCipherPreference(TlsCipherPreference)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Sets the tls cipher preferences to use in contexts using this configuration</div>
+<div class="block">Sets the TLS cipher preferences to use in contexts using this configuration</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/mqtt/MqttConnectionConfig.html#setCleanSession(boolean)">setCleanSession(boolean)</a></span> - Method in class software.amazon.awssdk.crt.mqtt.<a href="software/amazon/awssdk/crt/mqtt/MqttConnectionConfig.html" title="class in software.amazon.awssdk.crt.mqtt">MqttConnectionConfig</a></dt>
 <dd>
@@ -2675,6 +2776,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Transfers as much data as possible from an input ByteBuffer to an output ByteBuffer</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryTraversal.html#traverse(java.lang.String,boolean,software.amazon.awssdk.crt.io.DirectoryTraversalHandler)">traverse(String, boolean, DirectoryTraversalHandler)</a></span> - Static method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryTraversal.html" title="class in software.amazon.awssdk.crt.io">DirectoryTraversal</a></dt>
+<dd>
+<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span></div>
+<div class="block">Traverse a directory starting at the path provided.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/http/HttpProxyOptions.HttpProxyConnectionType.html#Tunneling">Tunneling</a></span> - software.amazon.awssdk.crt.http.<a href="software/amazon/awssdk/crt/http/HttpProxyOptions.HttpProxyConnectionType.html" title="enum in software.amazon.awssdk.crt.http">HttpProxyOptions.HttpProxyConnectionType</a></dt>
 <dd>
 <div class="block">Establish a tunneling-based connection through the proxy.</div>
@@ -2965,6 +3071,8 @@ the order they are declared.</div>
 <dd>
 <div class="block">Sets the IO buffer size to use for connections in the connection pool</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html#withBytesTransferred(long)">withBytesTransferred(long)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestProgress</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/CachedCredentialsProvider.CachedCredentialsProviderBuilder.html#withCachedProvider(software.amazon.awssdk.crt.auth.credentials.CredentialsProvider)">withCachedProvider(CredentialsProvider)</a></span> - Method in class software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/CachedCredentialsProvider.CachedCredentialsProviderBuilder.html" title="class in software.amazon.awssdk.crt.auth.credentials">CachedCredentialsProvider.CachedCredentialsProviderBuilder</a></dt>
 <dd>
 <div class="block">Sets the credentials provider to cache results from</div>
@@ -3034,6 +3142,8 @@ the order they are declared.</div>
 <dd>
 <div class="block">Sets the name of the config file to use.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html#withContentLength(long)">withContentLength(long)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestProgress.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestProgress</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/StaticCredentialsProvider.StaticCredentialsProviderBuilder.html#withCredentials(software.amazon.awssdk.crt.auth.credentials.Credentials)">withCredentials(Credentials)</a></span> - Method in class software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/StaticCredentialsProvider.StaticCredentialsProviderBuilder.html" title="class in software.amazon.awssdk.crt.auth.credentials">StaticCredentialsProvider.StaticCredentialsProviderBuilder</a></dt>
 <dd>
 <div class="block">sets the entire credential set to use within the static credentials provider.</div>
@@ -3058,9 +3168,15 @@ the order they are declared.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#withEndpoint(java.lang.String)">withEndpoint(String)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#withEndpoint(java.net.URI)">withEndpoint(URI)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.html#withEventLoopGroup(software.amazon.awssdk.crt.io.EventLoopGroup)">withEventLoopGroup(EventLoopGroup)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></dt>
 <dd>
 <div class="block">Configure the event loop group to use to schedule the backoff/retry tasks</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withFileSize(long)">withFileSize(long)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the file size corresponding to this entry</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/DelegateCredentialsProvider.DelegateCredentialsProviderBuilder.html#withHandler(software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler)">withHandler(DelegateCredentialsHandler)</a></span> - Method in class software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/DelegateCredentialsProvider.DelegateCredentialsProviderBuilder.html" title="class in software.amazon.awssdk.crt.auth.credentials">DelegateCredentialsProvider.DelegateCredentialsProviderBuilder</a></dt>
 <dd>
@@ -3075,6 +3191,18 @@ the order they are declared.</div>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/StandardRetryOptions.html#withInitialBucketCapacity(long)">withInitialBucketCapacity(long)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/StandardRetryOptions.html" title="class in software.amazon.awssdk.crt.io">StandardRetryOptions</a></dt>
 <dd>
 <div class="block">Sets the initial capacity of the token bucket in the standard retry strategy</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withIsDirectory(boolean)">withIsDirectory(boolean)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the isDirectory flag, meaning this entry corresponds to a directory</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withIsFile(boolean)">withIsFile(boolean)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the isFile flag, meaning this entry corresponds to a file</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withIsSymLink(boolean)">withIsSymLink(boolean)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the isSymLink flag, meaning this entry corresponds to a symbolic link</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.html#withJitterMode(software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode)">withJitterMode(ExponentialBackoffRetryOptions.JitterMode)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions.html" title="class in software.amazon.awssdk.crt.io">ExponentialBackoffRetryOptions</a></dt>
 <dd>
@@ -3119,14 +3247,23 @@ the order they are declared.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#withMtlsPkcs11(software.amazon.awssdk.crt.io.TlsContextPkcs11Options)">withMtlsPkcs11(TlsContextPkcs11Options)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Unix platforms only, specifies mTLS using a PKCS#11 library for private key operations.</div>
+<div class="block">Unix platforms only, specifies mutual TLS (mTLS) using a PKCS#11 library for private key operations.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#withMtlsPkcs12(java.lang.String,java.lang.String)">withMtlsPkcs12(String, String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
 <dd>
-<div class="block">Apple platforms only, specifies mTLS using PKCS#12</div>
+<div class="block">Apple platforms only, specifies mutual TLS (mTLS) using PKCS#12</div>
+</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/TlsContextOptions.html#withMtlsWindowsCertStorePath(java.lang.String)">withMtlsWindowsCertStorePath(String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/TlsContextOptions.html" title="class in software.amazon.awssdk.crt.io">TlsContextOptions</a></dt>
+<dd>
+<div class="block">Windows platforms only, specifies mutual TLS (mTLS) using a certificate in a Windows
+ certificate store.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#withPartSize(long)">withPartSize(long)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withPath(java.lang.String)">withPath(String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the absolute path of this entry</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/EcsCredentialsProvider.Builder.html#withPathAndQuery(java.lang.String)">withPathAndQuery(String)</a></span> - Method in interface software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/EcsCredentialsProvider.Builder.html" title="interface in software.amazon.awssdk.crt.auth.credentials">EcsCredentialsProvider.Builder</a></dt>
 <dd>
 <div class="block">The URL path and query used to connect to the credential service.</div>
@@ -3154,6 +3291,10 @@ the order they are declared.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html#withRegion(java.lang.String)">withRegion(String)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3ClientOptions.html" title="class in software.amazon.awssdk.crt.s3">S3ClientOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/io/DirectoryEntry.html#withRelativePath(java.lang.String)">withRelativePath(String)</a></span> - Method in class software.amazon.awssdk.crt.io.<a href="software/amazon/awssdk/crt/io/DirectoryEntry.html" title="class in software.amazon.awssdk.crt.io">DirectoryEntry</a></dt>
+<dd>
+<div class="block">Sets the path relative to the current working directory</div>
+</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html#withResponseHandler(software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandler)">withResponseHandler(S3MetaRequestResponseHandler)</a></span> - Method in class software.amazon.awssdk.crt.s3.<a href="software/amazon/awssdk/crt/s3/S3MetaRequestOptions.html" title="class in software.amazon.awssdk.crt.s3">S3MetaRequestOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="software/amazon/awssdk/crt/auth/credentials/X509CredentialsProvider.X509CredentialsProviderBuilder.html#withRoleAlias(java.lang.String)">withRoleAlias(String)</a></span> - Method in class software.amazon.awssdk.crt.auth.credentials.<a href="software/amazon/awssdk/crt/auth/credentials/X509CredentialsProvider.X509CredentialsProviderBuilder.html" title="class in software.amazon.awssdk.crt.auth.credentials">X509CredentialsProvider.X509CredentialsProviderBuilder</a></dt>

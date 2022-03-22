@@ -146,6 +146,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <hr>
 <pre>public static enum <span class="typeNameLabel">S3MetaRequestOptions.MetaRequestType</span>
 extends java.lang.Enum&lt;<a href="S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a>&gt;</pre>
+<div class="block">A Meta Request represents a group of generated requests that are being done on behalf of the
+ original request. For example, one large GetObject request can be transformed into a series
+ of ranged GetObject requests that are executed in parallel to improve throughput.
+
+ The MetaRequestType is a hint of transformation to be applied.</div>
 </li>
 </ul>
 </div>
@@ -166,16 +171,32 @@ extends java.lang.Enum&lt;<a href="S3MetaRequestOptions.MetaRequestType.html" ti
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
-<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#DEFAULT">DEFAULT</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#COPY_OBJECT">COPY_OBJECT</a></span></code></th>
+<td class="colLast">
+<div class="block">The CopyObject meta request performs a multi-part copy using multiple S3 UploadPartCopy requests
+ in parallel, or bypasses a CopyObject request to S3 if the object size is not large enough for
+ a multipart upload.</div>
+</td>
 </tr>
 <tr class="rowColor">
-<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#GET_OBJECT">GET_OBJECT</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#DEFAULT">DEFAULT</a></span></code></th>
+<td class="colLast">
+<div class="block">The Default meta request type sends any request to S3 as-is (with no transformation).</div>
+</td>
 </tr>
 <tr class="altColor">
+<th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#GET_OBJECT">GET_OBJECT</a></span></code></th>
+<td class="colLast">
+<div class="block">The GetObject request will be split into a series of ranged GetObject requests that are
+ executed in parallel to improve throughput, when possible.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <th class="colFirst" scope="row"><code><span class="memberNameLink"><a href="#PUT_OBJECT">PUT_OBJECT</a></span></code></th>
-<td class="colLast">&nbsp;</td>
+<td class="colLast">
+<div class="block">The PutObject request will be split into MultiPart uploads that are executed in parallel
+ to improve throughput, when possible.</div>
+</td>
 </tr>
 </table>
 </li>
@@ -258,6 +279,8 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>DEFAULT</h4>
 <pre>public static final&nbsp;<a href="S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a> DEFAULT</pre>
+<div class="block">The Default meta request type sends any request to S3 as-is (with no transformation). For example,
+ it can be used to pass a CreateBucket request.</div>
 </li>
 </ul>
 <a id="GET_OBJECT">
@@ -267,15 +290,31 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>GET_OBJECT</h4>
 <pre>public static final&nbsp;<a href="S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a> GET_OBJECT</pre>
+<div class="block">The GetObject request will be split into a series of ranged GetObject requests that are
+ executed in parallel to improve throughput, when possible.</div>
 </li>
 </ul>
 <a id="PUT_OBJECT">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>PUT_OBJECT</h4>
 <pre>public static final&nbsp;<a href="S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a> PUT_OBJECT</pre>
+<div class="block">The PutObject request will be split into MultiPart uploads that are executed in parallel
+ to improve throughput, when possible.</div>
+</li>
+</ul>
+<a id="COPY_OBJECT">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>COPY_OBJECT</h4>
+<pre>public static final&nbsp;<a href="S3MetaRequestOptions.MetaRequestType.html" title="enum in software.amazon.awssdk.crt.s3">S3MetaRequestOptions.MetaRequestType</a> COPY_OBJECT</pre>
+<div class="block">The CopyObject meta request performs a multi-part copy using multiple S3 UploadPartCopy requests
+ in parallel, or bypasses a CopyObject request to S3 if the object size is not large enough for
+ a multipart upload.</div>
 </li>
 </ul>
 </li>

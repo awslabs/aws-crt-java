@@ -10,6 +10,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    kotlin("jvm") version "1.6.10"
 }
 
 repositories {

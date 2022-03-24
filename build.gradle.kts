@@ -11,6 +11,8 @@ plugins {
     `java-library`
     `maven-publish`
     kotlin("jvm") version "1.6.10"
+
+    id("org.graalvm.buildtools.native") version "0.9.9"
 }
 
 repositories {
@@ -115,6 +117,26 @@ publishing {
             val releasesRepo = uri("https://aws.oss.sonatype.org/")
             val snapshotRepo = uri("https://aws.oss.sonatype.org/content/repositories/snapshots")
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotRepo else releasesRepo
+        }
+    }
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            imageName.set("app")
+            mainClass.set("software.amazon.awssdk.crt.App")
+            fallback.set(false)
+            sharedLibrary.set(false)
+            useFatJar.set(true)
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(17))
+                vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+            })
+            buildArgs.add("-H:ClassInitialization=org.slf4j:build_time")
+            buildArgs.add("-H:EnableURLProtocols=https,http")
+            // Prevents warning: Warning: class initialization of class io.netty.util.internal.logging.Log4JLogger failed with exception java.lang.NoClassDefFoundError: org/apache/log4j/Priority
+            buildArgs.add("--initialize-at-run-time=io.netty.util.internal.logging.Log4JLogger")
         }
     }
 }

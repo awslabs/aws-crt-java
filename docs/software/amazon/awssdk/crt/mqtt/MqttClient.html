@@ -184,16 +184,28 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr class="altColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">MqttClient</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Creates an MqttClient with no TLS from the default static <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a></div>
+</td>
+</tr>
+<tr class="rowColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(software.amazon.awssdk.crt.io.ClientBootstrap)">MqttClient</a></span>&#8203;(<a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io">ClientBootstrap</a>&nbsp;clientBootstrap)</code></th>
 <td class="colLast">
 <div class="block">Creates an MqttClient with no TLS from the provided <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a></div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(software.amazon.awssdk.crt.io.ClientBootstrap,software.amazon.awssdk.crt.io.TlsContext)">MqttClient</a></span>&#8203;(<a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io">ClientBootstrap</a>&nbsp;clientBootstrap,
           <a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io">TlsContext</a>&nbsp;context)</code></th>
 <td class="colLast">
 <div class="block">Creates an MqttClient from the provided <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a> and <a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io"><code>TlsContext</code></a></div>
+</td>
+</tr>
+<tr class="rowColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(software.amazon.awssdk.crt.io.TlsContext)">MqttClient</a></span>&#8203;(<a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io">TlsContext</a>&nbsp;context)</code></th>
+<td class="colLast">
+<div class="block">Creates an MqttClient with a default static <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a> and provided <a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io"><code>TlsContext</code></a></div>
 </td>
 </tr>
 </table>
@@ -267,10 +279,25 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 </dl>
 </li>
 </ul>
+<a id="&lt;init&gt;()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>MqttClient</h4>
+<pre>public&nbsp;MqttClient()
+           throws <a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></pre>
+<div class="block">Creates an MqttClient with no TLS from the default static <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a></div>
+<dl>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></code> - If the system is unable to allocate space for a native MQTT client structure</dd>
+</dl>
+</li>
+</ul>
 <a id="&lt;init&gt;(software.amazon.awssdk.crt.io.ClientBootstrap,software.amazon.awssdk.crt.io.TlsContext)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>MqttClient</h4>
 <pre>public&nbsp;MqttClient&#8203;(<a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io">ClientBootstrap</a>&nbsp;clientBootstrap,
@@ -280,6 +307,23 @@ extends <a href="../CrtResource.html" title="class in software.amazon.awssdk.crt
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>clientBootstrap</code> - The ClientBootstrap to use</dd>
+<dd><code>context</code> - the tls context to use</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></code> - If the system is unable to allocate space for a native MQTT client structure</dd>
+</dl>
+</li>
+</ul>
+<a id="&lt;init&gt;(software.amazon.awssdk.crt.io.TlsContext)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>MqttClient</h4>
+<pre>public&nbsp;MqttClient&#8203;(<a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io">TlsContext</a>&nbsp;context)
+           throws <a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></pre>
+<div class="block">Creates an MqttClient with a default static <a href="../io/ClientBootstrap.html" title="class in software.amazon.awssdk.crt.io"><code>ClientBootstrap</code></a> and provided <a href="../io/TlsContext.html" title="class in software.amazon.awssdk.crt.io"><code>TlsContext</code></a></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>context</code> - the tls context to use</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../CrtRuntimeException.html" title="class in software.amazon.awssdk.crt">CrtRuntimeException</a></code> - If the system is unable to allocate space for a native MQTT client structure</dd>

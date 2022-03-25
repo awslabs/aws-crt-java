@@ -402,21 +402,16 @@ public class S3ClientTest extends CrtTestFixture {
 
             HttpRequest httpRequest = new HttpRequest("PUT", "/copy_object_test_5GB.txt", headers, null);
 
-            // TEST: To catch memory leak, we send the request 50 times 
-            for(int i = 0; i < 50; i ++)
-            {
-                S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                        .withMetaRequestType(MetaRequestType.COPY_OBJECT).withHttpRequest(httpRequest)
-                        .withResponseHandler(responseHandler);
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.COPY_OBJECT).withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
 
-                try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                    Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
-                    Assert.assertTrue(progressInvocationCount.get() > 0);
-                    Assert.assertTrue(contentLength.get() > 0);
-                    Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
-                } 
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Assert.assertTrue(progressInvocationCount.get() > 0);
+                Assert.assertTrue(contentLength.get() > 0);
+                Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
             }
-            
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }

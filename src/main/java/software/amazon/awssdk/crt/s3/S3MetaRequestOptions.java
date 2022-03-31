@@ -99,6 +99,15 @@ public class S3MetaRequestOptions {
         return checksumAlgorithm;
     }
 
+    public S3MetaRequestOptions withValidateChecksum(boolean validateChecksum) {
+        this.validateChecksum = validateChecksum;
+        return this;
+    }
+
+    public boolean getValidateChecksum() {
+        return validateChecksum;
+    }
+
     public S3MetaRequestOptions withHttpRequest(HttpRequest httpRequest) {
         this.httpRequest = httpRequest;
         return this;

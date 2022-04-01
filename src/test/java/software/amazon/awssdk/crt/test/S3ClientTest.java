@@ -86,17 +86,26 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() {
         skipIfNetworkUnavailable();
 
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                 .withComputeContentMd5(true);
         try (S3Client client = createS3Client(clientOptions)) {
 
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     /* Test that a client can be created successfully with retry options. */
     @Test
     public void testS3ClientCreateDestroyRetryOptions() {
         skipIfNetworkUnavailable();
+
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory Retry Options >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
 
@@ -108,6 +117,9 @@ public class S3ClientTest extends CrtTestFixture {
 
             }
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     /*
@@ -117,6 +129,9 @@ public class S3ClientTest extends CrtTestFixture {
     @Test
     public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
         skipIfNetworkUnavailable();
+
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory Retry Options Unspecified >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
 
@@ -128,12 +143,18 @@ public class S3ClientTest extends CrtTestFixture {
 
             }
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     @Test
     public void testS3Get() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Get >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -174,12 +195,18 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     @Test
     public void testS3GetWithEndpoint() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Get With Endpoint >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -221,6 +248,9 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (Exception ex /*InterruptedException | ExecutionException ex*/) {
             Assert.fail(ex.getMessage());
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     @Test
@@ -270,6 +300,9 @@ public class S3ClientTest extends CrtTestFixture {
             }
         }
         Assert.assertTrue(expectedException);
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     private byte[] createTestPayload() {
@@ -296,6 +329,9 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3Put() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Put >>>>>>>>>>");
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -354,6 +390,9 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     // TWISTEDTWIGLEG MARKER - this is the test that is causing the issue

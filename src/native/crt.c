@@ -272,7 +272,7 @@ static void s_jni_atexit_strict(void) {
         }
 
         // See what the reserved size is
-        fprintf(stdout, "Reserved bytes: %lu", aws_small_block_allocator_bytes_reserved(s_allocator));
+        fprintf(stdout, "Reserved bytes: %u", aws_small_block_allocator_bytes_reserved(s_allocator));
 
         aws_small_block_allocator_destroy(s_allocator);
         s_allocator = NULL;

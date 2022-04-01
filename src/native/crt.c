@@ -260,6 +260,7 @@ static void s_jni_atexit_strict(void) {
     s_jni_atexit_common();
 
     if (s_allocator) {
+
         if (g_memory_tracing) {
             s_allocator = aws_mem_tracer_destroy(s_allocator);
         }
@@ -268,7 +269,6 @@ static void s_jni_atexit_strict(void) {
          * so leave the allocators in place to avoid this
          */
         if (aws_small_block_allocator_bytes_active(s_allocator)) {
-            fprintf(stdout, "\n\n\t\tBYTES ACTIVE - SOMETHING IS LEAKING!!!\n\n");
             return;
         }
 

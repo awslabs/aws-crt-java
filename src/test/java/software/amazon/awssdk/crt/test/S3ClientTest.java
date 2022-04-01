@@ -3,6 +3,8 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -218,6 +220,9 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (Exception ex /*InterruptedException | ExecutionException ex*/) {
             Assert.fail(ex.getMessage());
         }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
     }
 
     @Test

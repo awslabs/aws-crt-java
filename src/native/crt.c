@@ -29,7 +29,7 @@
 #include "logging.h"
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
-int g_memory_tracing = 1;
+int g_memory_tracing = 0;
 static struct aws_allocator *s_init_allocator(void) {
     struct aws_allocator *sba_allocator = aws_small_block_allocator_new(aws_default_allocator(), true);
     if (g_memory_tracing) {

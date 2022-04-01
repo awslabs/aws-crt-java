@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -361,6 +362,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Copy >>>>>>>>>>");
         Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);

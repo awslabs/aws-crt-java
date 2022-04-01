@@ -222,6 +222,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
 
         // Dump stack trace here
+        // Bump - CI didn't fail and Linux CI got stuck....
         CRT.dumpNativeMemory();
     }
 

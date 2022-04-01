@@ -395,7 +395,6 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            /*
             // x-amz-copy-source-header is composed of {source_bucket}/{source_key}
             final String copySource = COPY_SOURCE_BUCKET + "/" + COPY_SOURCE_KEY;
 
@@ -414,13 +413,9 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertTrue(contentLength.get() > 0);
                 Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
             }
-            */
 
-        } /*catch (InterruptedException | ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
-        }*/
-        finally {
-            Assert.assertTrue(true);
         }
     }
 

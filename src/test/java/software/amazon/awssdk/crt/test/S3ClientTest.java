@@ -220,10 +220,6 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (Exception ex /*InterruptedException | ExecutionException ex*/) {
             Assert.fail(ex.getMessage());
         }
-
-        // Dump stack trace here
-        // Bump - CI didn't fail and Linux CI got stuck....
-        CRT.dumpNativeMemory();
     }
 
     @Test
@@ -365,6 +361,8 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
+        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -423,6 +421,10 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+
+        // Dump stack trace here
+        // Bump - CI didn't fail and Linux CI got stuck....
+        CRT.dumpNativeMemory();
     }
 
     static class TransferStats {

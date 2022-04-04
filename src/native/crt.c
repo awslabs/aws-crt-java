@@ -280,6 +280,8 @@ static void s_jni_atexit_strict(void) {
     }
 }
 
+// BUMP for CI
+
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
 
 static void s_jni_atexit_gentle(void) {

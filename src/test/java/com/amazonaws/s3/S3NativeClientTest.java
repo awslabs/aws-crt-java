@@ -49,6 +49,9 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 
+import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.Log;
+
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
@@ -304,6 +307,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
+        }
+
+        // Dump stack trace here
+        CRT.dumpNativeMemory();
+        // TEST - adding a delay to see if GC race is here
+        try
+        {
+            Thread.sleep(1000);
+        }
+        catch (Exception e)
+        {
+            Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
     }
 

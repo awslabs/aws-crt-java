@@ -24,6 +24,8 @@
 
 #include <stdio.h>
 
+#include <aws/common/hash_table.h>
+
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"
@@ -260,9 +262,6 @@ static void s_jni_atexit_strict(void) {
     s_jni_atexit_common();
 
     if (s_allocator) {
-
-        // Get the number of allocations (might fix the byte leaking???)
-        size_t num_allocs = aws_hash_table_get_entry_count(&s_allocator->impl->allocs);
 
         if (g_memory_tracing) {
             s_allocator = aws_mem_tracer_destroy(s_allocator);

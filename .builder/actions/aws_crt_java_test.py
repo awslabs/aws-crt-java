@@ -16,6 +16,5 @@ class AWSCrtJavaTest(Builder.Action):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")
-        os.system("cat trace.txt")
 
         return Builder.Script(actions, name='aws-crt-java-test')

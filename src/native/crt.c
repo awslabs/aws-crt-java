@@ -261,6 +261,9 @@ static void s_jni_atexit_strict(void) {
 
     if (s_allocator) {
 
+        // Get the number of allocations (might fix the byte leaking???)
+        size_t num_allocs = aws_hash_table_get_entry_count(&s_allocator->impl->allocs);
+
         if (g_memory_tracing) {
             s_allocator = aws_mem_tracer_destroy(s_allocator);
         }

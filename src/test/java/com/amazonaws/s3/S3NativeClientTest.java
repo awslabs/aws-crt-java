@@ -51,6 +51,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogSubject;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");

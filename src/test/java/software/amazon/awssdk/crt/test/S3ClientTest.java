@@ -87,7 +87,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                 .withComputeContentMd5(true);
@@ -105,7 +105,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory Retry Options >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
 
@@ -131,7 +131,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Create and Destory Retry Options Unspecified >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
 
@@ -154,7 +154,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Get >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -206,7 +206,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Client Get With Endpoint >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -256,7 +256,7 @@ public class S3ClientTest extends CrtTestFixture {
     @Test
     public void testS3OverrideRequestCredentials() {
         skipIfNetworkUnavailable();
-        Log.initLoggingToFile(Log.LogLevel.Error, "log.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
         Assume.assumeTrue(hasAwsCredentials());
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
@@ -331,7 +331,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Put >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -402,7 +402,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Copy >>>>>>>>>>");
-        Log.initLoggingToFile(Log.LogLevel.Trace, "trace.txt");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {

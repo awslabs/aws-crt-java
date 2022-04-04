@@ -536,18 +536,13 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertTrue(contentLength.get() > 0);
                 Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
             }
-
-            // TEST - close the client when finished with it.
-            // BUMP
-            client.close();
-
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
 
         // Dump stack trace here
-        Log.initLoggingToStdout(Log.LogLevel.Trace);
-        CRT.dumpNativeMemory();
+        //Log.initLoggingToStdout(Log.LogLevel.Trace);
+        //CRT.dumpNativeMemory();
         /*
         // Sleep for a second
         try

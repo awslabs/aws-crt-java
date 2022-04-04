@@ -327,6 +327,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
         */
+
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
+        CRT.dumpNativeMemory();
     }
 
     private class CancelTestData<T> {

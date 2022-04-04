@@ -12,15 +12,15 @@ This library is licensed under the Apache 2.0 License.
 Requirements:
 * Clang 3.9+ or GCC 4.4+
 * cmake 3.1+
-* Java: Any JDK8 or above, ensure JAVA_HOME is set
+* Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 
 Building:
-1) apt-get install cmake3 maven openjdk-8-jdk-headless -y
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `apt-get install cmake3 maven openjdk-8-jdk-headless -y`
+2) `git clone --recurse-submodules https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
 ### OSX
 Requirements:
@@ -28,11 +28,11 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure JAVA_HOME is set
 * Maven
-1) brew install maven cmake3 (if you have homebrew installed, otherwise install these manually)
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `brew install maven cmake3` (if you have homebrew installed, otherwise install these manually)
+2) `git clone --recurse-submodules https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
 ### Windows
 Requirements:
@@ -40,11 +40,11 @@ Requirements:
 * CMake 3.1
 * Java: Any JDK8 or above, ensure JAVA_HOME is set
 * Maven
-1) choco install maven (if you have chocolatey installed), otherwise install maven and the JDK manually
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `choco install maven` (if you have chocolatey installed), otherwise install maven and the JDK manually
+2) `git clone --recurse-submodules https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
 NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
 CMake can find Visual Studio.
@@ -100,7 +100,7 @@ These can be set persistently via Maven settings (usually in ~/.m2/settings.xml)
         </properties>
     </profile>
   </profiles>
-</settings>% 
+</settings>%
 ```
 
 ## IDEs

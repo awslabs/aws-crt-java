@@ -33,21 +33,11 @@
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 2;
 static struct aws_allocator *s_init_allocator(void) {
-    /*
     struct aws_allocator *sba_allocator = aws_small_block_allocator_new(aws_default_allocator(), true);
     if (g_memory_tracing) {
-        return aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
+        sba_allocator = aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
     }
     return sba_allocator;
-    */
-
-    // JUST A TEST (Make sure the failure's we are seeing are due to the SBA - not the test itself)
-    if (g_memory_tracing) {
-        struct aws_allocator *allocator = aws_default_allocator();
-        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
-        return allocator;
-    }
-    return aws_default_allocator();
 }
 
 static struct aws_allocator *s_allocator = NULL;
@@ -271,29 +261,23 @@ static void s_jni_atexit_strict(void) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
     s_jni_atexit_common();
 
-    // if (s_allocator) {
+    if (s_allocator) {
 
-    //     if (g_memory_tracing) {
-    //         s_allocator = aws_mem_tracer_destroy(s_allocator);
-    //     }
-    //     /*
-    //      * If there are outstanding leaks, something is likely to crash on shutdown
-    //      * so leave the allocators in place to avoid this
-    //      */
-    //     if (aws_small_block_allocator_bytes_active(s_allocator)) {
-    //         return;
-    //     }
+        if (g_memory_tracing) {
+            struct aws_allocator *trace_allocator = aws_jni_get_allocator();
+            aws_mem_tracer_destroy(trace_allocator);
+        }
+        /*
+         * If there are outstanding leaks, something is likely to crash on shutdown
+         * so leave the allocators in place to avoid this
+         */
+        if (aws_small_block_allocator_bytes_active(s_allocator) > 0) {
+            return;
+        }
 
-    //     aws_small_block_allocator_destroy(s_allocator);
-    //     s_allocator = NULL;
-    // }
-
-    // JUST A TEST (Make sure the failure's we are seeing are due to the SBA - not the test itself)
-    if (g_memory_tracing) {
-        struct aws_allocator *trace_allocator = aws_jni_get_allocator();
-        aws_mem_tracer_destroy(trace_allocator);
+        aws_small_block_allocator_destroy(s_allocator);
+        s_allocator = NULL;
     }
-    s_allocator = NULL;
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1

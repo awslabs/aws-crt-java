@@ -328,6 +328,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
         */
 
+        // Bump again
         Log.initLoggingToStdout(Log.LogLevel.Trace);
         CRT.dumpNativeMemory();
     }

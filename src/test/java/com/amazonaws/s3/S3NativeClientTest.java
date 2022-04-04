@@ -317,7 +317,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         /*
         // Dump stack trace here
         CRT.dumpNativeMemory();
-        */
         // TEST - adding a delay to see if GC race is here
         try
         {
@@ -327,6 +326,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         {
             Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
+        */
     }
 
     private class CancelTestData<T> {

@@ -290,8 +290,7 @@ static void s_jni_atexit_gentle(void) {
 
     if (aws_thread_join_all_managed() == AWS_OP_SUCCESS) {
         /* a successful managed join means it should be safe to do a full, strict clean up */
-        //s_jni_atexit_common();
-        s_jni_atexit_strict();
+        s_jni_atexit_common();
     } else {
         /*
          * We didn't successfully join all our threads so it's not really safe to clean up the libraries.
@@ -364,8 +363,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     if (jni_strict_shutdown) {
         jni_atexit = s_jni_atexit_strict;
     }
-    // TEST - always use strict
-    jni_atexit = s_jni_atexit_strict;
 }
 
 JNIEXPORT

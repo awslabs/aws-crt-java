@@ -260,8 +260,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testConcurrentRequests() {
         skipIfNetworkUnavailable();
 
-        Log.initLoggingToStdout(Log.LogLevel.Trace);
-        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Concurrent Requests >>>>>>>>>>");
+        //Log.initLoggingToStdout(Log.LogLevel.Trace);
+        //Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Concurrent Requests >>>>>>>>>>");
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -314,6 +314,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             allFutures.join();
         }
 
+        /*
         // Dump stack trace here
         CRT.dumpNativeMemory();
         // TEST - adding a delay to see if GC race is here
@@ -325,6 +326,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         {
             Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
+        */
     }
 
     private class CancelTestData<T> {

@@ -259,6 +259,10 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @Test
     public void testConcurrentRequests() {
         skipIfNetworkUnavailable();
+
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Concurrent Requests >>>>>>>>>>");
+
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);

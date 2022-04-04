@@ -479,8 +479,8 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        //Log.initLoggingToStdout(Log.LogLevel.Trace);
-        //Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Copy >>>>>>>>>>");
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
+        Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Copy >>>>>>>>>>");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -541,7 +541,6 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.fail(ex.getMessage());
         }
 
-        /*
         // Dump stack trace here
         CRT.dumpNativeMemory();
         // Sleep for a second
@@ -553,7 +552,6 @@ public class S3ClientTest extends CrtTestFixture {
         {
             Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
-        */
     }
 
     static class TransferStats {

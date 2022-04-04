@@ -538,6 +538,7 @@ public class S3ClientTest extends CrtTestFixture {
             }
 
             // TEST - close the client when finished with it.
+            // BUMP
             client.close();
 
         } catch (InterruptedException | ExecutionException ex) {

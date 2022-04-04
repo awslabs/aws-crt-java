@@ -544,6 +544,7 @@ public class S3ClientTest extends CrtTestFixture {
         /*
         // Dump stack trace here
         CRT.dumpNativeMemory();
+        */
         // Sleep for a second
         try
         {
@@ -553,7 +554,6 @@ public class S3ClientTest extends CrtTestFixture {
         {
             Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         }
-        */
     }
 
     static class TransferStats {

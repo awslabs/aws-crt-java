@@ -537,6 +537,9 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
             }
 
+            // TEST - close the client when finished with it.
+            client.close();
+
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }

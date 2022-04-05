@@ -299,6 +299,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                     }
                                 }));
 
+                /*
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
@@ -308,12 +309,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                             return lengthWritten[0] == contentLength;
                         }));
+                */
             }
-            /*
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
-            */
         }
 
         // // Dump stack trace here

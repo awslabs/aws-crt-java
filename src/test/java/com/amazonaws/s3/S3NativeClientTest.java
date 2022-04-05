@@ -256,7 +256,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    /*
     @Test
     public void testConcurrentRequests() {
         skipIfNetworkUnavailable();
@@ -276,6 +275,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             final long length[] = { 0 };
             List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
             final int concurrentNum = 20;
+            /*
             for (int i = 0; i < concurrentNum; i++) {
                 futures.add(
                         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
@@ -313,6 +313,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
+            */
         }
 
         // // Dump stack trace here
@@ -327,7 +328,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         //     Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
         // }
     }
-    */
 
     private class CancelTestData<T> {
         public int ExpectedPartCount;

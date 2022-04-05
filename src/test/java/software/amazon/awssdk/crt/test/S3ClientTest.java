@@ -373,12 +373,7 @@ public class S3ClientTest extends CrtTestFixture {
                 @Override
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     // Is this where the crash is????
-                    // BUMP - see if this fixes the segmentation fault at least...
                     //Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
-
-                    byte[] bytes = new byte[bodyBytesIn.remaining()];
-                    bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
 

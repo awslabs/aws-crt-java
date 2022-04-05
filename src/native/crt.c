@@ -257,36 +257,6 @@ static void s_jni_atexit_common(void) {
     aws_jni_cleanup_logging();
 }
 
-static void s_jni_atexit_strict(void) {
-    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
-    s_jni_atexit_common();
-
-    if (s_allocator) {
-
-        if (g_memory_tracing) {
-            struct aws_allocator *trace_allocator = aws_jni_get_allocator();
-            aws_mem_tracer_destroy(trace_allocator);
-            trace_allocator = NULL;
-        }
-        /*
-         * If there are outstanding leaks, something is likely to crash on shutdown
-         * so leave the allocators in place to avoid this
-         */
-        if (aws_small_block_allocator_bytes_active(s_allocator) > 0) {
-            return;
-        }
-
-        // aws_small_block_allocator_destroy(s_allocator);
-
-        // TEST
-        struct aws_allocator *tmp = aws_jni_get_allocator();
-        aws_small_block_allocator_destroy(tmp);
-        tmp = NULL;
-
-        s_allocator = NULL;
-    }
-}
-
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
 
 static void s_jni_atexit_gentle(void) {
@@ -326,6 +296,31 @@ void jni_on_unload(void) {
 }
 
 #define KB_256 (256 * 1024)
+
+static void s_jni_atexit_strict(void) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
+    s_jni_atexit_common();
+
+    if (s_allocator) {
+
+        if (g_memory_tracing) {
+            struct aws_allocator *trace_allocator = aws_jni_get_allocator();
+            aws_mem_tracer_destroy(trace_allocator);
+            trace_allocator = NULL;
+        }
+        /*
+         * If there are outstanding leaks, something is likely to crash on shutdown
+         * so leave the allocators in place to avoid this
+         */
+        if (aws_small_block_allocator_bytes_active(s_allocator) > 0) {
+            return;
+        }
+
+        aws_small_block_allocator_destroy(s_allocator);
+        s_allocator = NULL;
+        jni_atexit = NULL; // TEST
+    }
+}
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT

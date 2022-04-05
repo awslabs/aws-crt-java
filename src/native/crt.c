@@ -276,7 +276,7 @@ static void s_jni_atexit_strict(void) {
             return;
         }
 
-        //aws_small_block_allocator_destroy(s_allocator);
+        // aws_small_block_allocator_destroy(s_allocator);
 
         // TEST
         struct aws_allocator *tmp = aws_jni_get_allocator();

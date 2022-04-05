@@ -256,6 +256,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
+    /*
     @Test
     public void testConcurrentRequests() {
         skipIfNetworkUnavailable();
@@ -314,20 +315,19 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             allFutures.join();
         }
 
-        /*
-        // Dump stack trace here
-        CRT.dumpNativeMemory();
-        // TEST - adding a delay to see if GC race is here
-        try
-        {
-            Thread.sleep(1000);
-        }
-        catch (Exception e)
-        {
-            Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
-        }
-        */
+        // // Dump stack trace here
+        // CRT.dumpNativeMemory();
+        // // TEST - adding a delay to see if GC race is here
+        // try
+        // {
+        //     Thread.sleep(1000);
+        // }
+        // catch (Exception e)
+        // {
+        //     Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
+        // }
     }
+    */
 
     private class CancelTestData<T> {
         public int ExpectedPartCount;

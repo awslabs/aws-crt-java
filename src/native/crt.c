@@ -100,9 +100,7 @@ jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
 
     if (size == 1) {
-    AWS_LOGF_DEBUG(
-            AWS_LS_COMMON_GENERAL,
-            ">>>> Made array of size 1! Could be single byte!"));
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Made array of size 1! Could be single byte!");
     }
 
     return jArray;
@@ -112,9 +110,7 @@ bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
 
     if (amount == 1) {
-    AWS_LOGF_DEBUG(
-            AWS_LS_COMMON_GENERAL,
-            ">>>> Copied array of size 1! Could be single byte!"));
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Copied array of size 1! Could be single byte!");
     }
 
     return aws_jni_check_and_clear_exception(env);
@@ -168,9 +164,7 @@ jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, si
     }
 
     if (capacity == 1) {
-    AWS_LOGF_DEBUG(
-            AWS_LS_COMMON_GENERAL,
-            ">>>> Direct Byte Buffer from raw pointer! Could be single byte!"));
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Direct Byte Buffer from raw pointer! Could be single byte!");
     }
 
     return jByteBuf;

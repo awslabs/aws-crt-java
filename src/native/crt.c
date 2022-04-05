@@ -318,7 +318,7 @@ static void s_jni_atexit_strict(void) {
 
         aws_small_block_allocator_destroy(s_allocator);
         s_allocator = NULL;
-        jni_atexit = NULL; // TEST
+        jni_atexit = NULL; // TEST - BUMP
     }
 }
 

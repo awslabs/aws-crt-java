@@ -299,7 +299,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                     }
                                 }));
 
-                /* // Bump to see if Segfault on Linux is a one off issue or occurs again
+                // Issue with single byte seems to be here!
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
@@ -309,7 +309,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                             return lengthWritten[0] == contentLength;
                         }));
-                */
             }
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));

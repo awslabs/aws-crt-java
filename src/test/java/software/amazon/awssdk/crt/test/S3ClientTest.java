@@ -356,7 +356,6 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     // TWISTEDTWIGLEG MARKER - this is the test that is causing the issue
-    /*
     @Test
     public void testS3Copy() {
         skipIfNetworkUnavailable();
@@ -373,7 +372,8 @@ public class S3ClientTest extends CrtTestFixture {
 
                 @Override
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                    // Is this where the crash is????
+                    //Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
                     return 0;
                 }
 
@@ -420,7 +420,6 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.fail(ex.getMessage());
         }
     }
-    */
 
     static class TransferStats {
         static final double GBPS = 1000 * 1000 * 1000;

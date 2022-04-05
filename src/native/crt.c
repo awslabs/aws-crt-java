@@ -269,7 +269,6 @@ static void s_jni_atexit_strict(void) {
     aws_small_block_allocator_destroy(allocator);
     allocator = NULL;
     s_allocator = NULL;
-
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1

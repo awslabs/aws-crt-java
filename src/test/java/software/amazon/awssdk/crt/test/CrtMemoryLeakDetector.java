@@ -56,8 +56,6 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     public static void nativeMemoryLeakCheck() throws Exception {
         String output = "";
 
-        getJvmMemoryInUse(); // I doubt this will help - but maybe it's memory being held in the JVM?
-
         long nativeMemory = getNativeMemoryInUse();
         if (nativeMemory > 0) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");

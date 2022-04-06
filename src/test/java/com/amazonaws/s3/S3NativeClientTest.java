@@ -303,10 +303,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
-                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring! - BUMP AGAIN to rerun CI - want to make extra sure it's fixed
-                                //++lengthWritten[0];
-                                // Doubt this fixes it, but...
-                                lengthWritten[0] = lengthWritten[0] + 1; // BUMP 2
+                                // See if the 1 byte issues goes away if we do not put anything into buffer
+                                //buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring!
+                                ++lengthWritten[0];
                             }
 
                             return lengthWritten[0] == contentLength;

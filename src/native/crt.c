@@ -98,21 +98,11 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
 
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
-
-    if (size == 1) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Made array of size 1! Could be single byte!");
-    }
-
     return jArray;
 }
 
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount) {
     (*env)->SetByteArrayRegion(env, dst, 0, (jsize)amount, (jbyte *)src);
-
-    if (amount == 1) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Copied array of size 1! Could be single byte!");
-    }
-
     return aws_jni_check_and_clear_exception(env);
 }
 

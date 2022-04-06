@@ -56,7 +56,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     public static void nativeMemoryLeakCheck() throws Exception {
         String output = "";
 
-        // Sleep for a second
+        // Sleep for a second - RUN 2
         Thread.sleep(1000);
 
         long nativeMemory = getNativeMemoryInUse();

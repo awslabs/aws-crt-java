@@ -26,13 +26,9 @@
 
 #include <aws/common/hash_table.h>
 
-#include <aws/common/mutex.h>
-
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"
-
-static struct aws_mutex s_allocator_mutex;
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 2;
@@ -41,7 +37,6 @@ static struct aws_allocator *s_init_allocator(void) {
     if (g_memory_tracing) {
         sba_allocator = aws_mem_tracer_new(sba_allocator, NULL, (enum aws_mem_trace_level)g_memory_tracing, 8);
     }
-    aws_mutex_init(&s_allocator_mutex);
     return sba_allocator;
 }
 
@@ -207,7 +202,6 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mutex_lock(&s_allocator_mutex);
     const char *str_chars = (*env)->GetStringUTFChars(env, str, NULL);
     if (!str_chars) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -215,7 +209,6 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     }
     struct aws_string *result = aws_string_new_from_c_str(allocator, str_chars);
     (*env)->ReleaseStringUTFChars(env, str, str_chars);
-    aws_mutex_unlock(&s_allocator_mutex);
     return result;
 }
 
@@ -259,7 +252,6 @@ static void s_jni_atexit_common(void) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_dump(tracer_allocator);
     }
-    //aws_mutex_clean_up(&s_allocator_mutex);
     aws_jni_cleanup_logging();
 }
 
@@ -333,12 +325,7 @@ static void s_jni_atexit_gentle(void) {
 
 static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
-    aws_mutex_lock(&s_allocator_mutex);
-
     jni_atexit();
-
-    aws_mutex_unlock(&s_allocator_mutex);
-    aws_mutex_clean_up(&s_allocator_mutex);
 }
 
 #define KB_256 (256 * 1024)
@@ -416,9 +403,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     (void)jni_crt_class;
     jlong allocated = 0;
     if (g_memory_tracing) {
-        aws_mutex_lock(&s_allocator_mutex);
-        allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator()); // PLACEHOLDER
-        aws_mutex_unlock(&s_allocator_mutex);
+        allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
     }
     return allocated;
 }
@@ -428,9 +413,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     (void)env;
     (void)jni_crt_class;
     if (g_memory_tracing > 1) {
-        aws_mutex_lock(&s_allocator_mutex);
         aws_mem_tracer_dump(aws_jni_get_allocator());
-        aws_mutex_unlock(&s_allocator_mutex);
     }
 }
 

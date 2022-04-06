@@ -327,6 +327,7 @@ static void s_jni_atexit_gentle(void) {
 static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
     // TODO - try sleeping the current thread to give time for memory to be freed????
+    // Last bump attempt - if the issue doesn't present itself with this bump, will assume that trying to print allocations causes issue to go away...
     jni_atexit();
 }
 

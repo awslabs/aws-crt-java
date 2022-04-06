@@ -30,6 +30,13 @@
 #include "java_class_ids.h"
 #include "logging.h"
 
+// JUST A TEST
+#ifdef _WIN32
+#    include <Windows.h>
+#else
+#    include <unistd.h>
+#endif
+
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 2;
 static struct aws_allocator *s_init_allocator(void) {
@@ -326,8 +333,7 @@ static void s_jni_atexit_gentle(void) {
 
 static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
-    // TODO - try sleeping the current thread to give time for memory to be freed????
-    // Last bump attempt - if the issue doesn't present itself with this bump, will assume that trying to print allocations causes issue to go away...
+    sleep(1);
     jni_atexit();
 }
 

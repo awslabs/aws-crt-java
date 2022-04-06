@@ -8,11 +8,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
+import software.amazon.awssdk.crt.Log.LogSubject;
+
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+import junit.framework.TestCase;
 
 /**
  * Checks that the CRT doesn't have any major memory leaks. Probably won't
@@ -53,8 +60,23 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         return estimatedMemInUse;
     }
 
+    // Skip checking for memory leaks if tests fail
+    public static boolean didTestsFail = false;
+    @Rule
+    public TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+            didTestsFail = true;
+        }
+    };
+
     public static void nativeMemoryLeakCheck() throws Exception {
         String output = "";
+
+        if (didTestsFail) {
+            Log.log(LogLevel.Debug, LogSubject.CommonGeneral, "Skipping testing native memory due to test failure...");
+            return;
+        }
 
         long nativeMemory = getNativeMemoryInUse();
         if (nativeMemory > 0) {

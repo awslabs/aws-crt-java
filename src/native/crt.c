@@ -152,11 +152,6 @@ jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, si
         aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)capacity);
         aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
     }
-
-    if (capacity == 1) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, ">>>> Direct Byte Buffer from raw pointer! Could be single byte!");
-    }
-
     return jByteBuf;
 }
 

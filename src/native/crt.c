@@ -30,13 +30,6 @@
 #include "java_class_ids.h"
 #include "logging.h"
 
-// JUST A TEST
-#ifdef _WIN32
-#    include <Windows.h>
-#else
-#    include <unistd.h>
-#endif
-
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 2;
 static struct aws_allocator *s_init_allocator(void) {
@@ -333,7 +326,6 @@ static void s_jni_atexit_gentle(void) {
 
 static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
-    sleep(1);
     jni_atexit();
 }
 

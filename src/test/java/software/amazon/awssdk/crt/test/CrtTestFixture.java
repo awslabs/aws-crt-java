@@ -21,9 +21,11 @@ import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvid
 import java.io.File;
 
 import org.junit.Before;
-
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.util.Optional;
 
@@ -49,6 +51,16 @@ public class CrtTestFixture {
         }
     }
 
+    // Skip checking for memory leaks if tests fail
+    public static boolean didTestsFail = false;
+    @Rule
+    public TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+            didTestsFail = true;
+        }
+    };
+
     @After
     public void tearDown() {
         CrtPlatform platform = CRT.getPlatformImpl();
@@ -66,7 +78,9 @@ public class CrtTestFixture {
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                if (didTestsFail == false) {
+                    CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }

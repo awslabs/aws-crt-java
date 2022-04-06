@@ -20,6 +20,9 @@ import java.io.File;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.After;
+import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 /**
  * Stub for getting Aws credentials from environment for running CI tests
@@ -33,12 +36,22 @@ public class AwsClientTestFixture extends CrtTestFixture {
 
     @Before
     public void traceLogForSingleTest() {
-        if  (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
+        if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             File logsFile = new File("log.txt");
             logsFile.delete();
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
     }
+
+    // Skip checking for memory leaks if tests fail
+    public static boolean didTestsFail = false;
+    @Rule
+    public TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+            didTestsFail = true;
+        }
+    };
 
     @After
     public void tearDown() {
@@ -46,7 +59,9 @@ public class AwsClientTestFixture extends CrtTestFixture {
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                if (didTestsFail == false) {
+                    CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }

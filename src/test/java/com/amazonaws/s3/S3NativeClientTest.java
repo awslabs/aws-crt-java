@@ -306,7 +306,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring! - BUMP AGAIN to rerun CI - want to make extra sure it's fixed
                                 //++lengthWritten[0];
                                 // Doubt this fixes it, but...
-                                lengthWritten[0] = lengthWritten[0] + 1; // BUMP
+                                lengthWritten[0] = lengthWritten[0] + 1; // BUMP 2
                             }
 
                             return lengthWritten[0] == contentLength;

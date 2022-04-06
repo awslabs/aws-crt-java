@@ -326,6 +326,7 @@ static void s_jni_atexit_gentle(void) {
 
 static void (*jni_atexit)(void) = s_jni_atexit_gentle;
 void jni_on_unload(void) {
+    // TODO - try sleeping the current thread to give time for memory to be freed????
     jni_atexit();
 }
 

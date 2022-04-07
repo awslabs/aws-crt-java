@@ -32,7 +32,7 @@ import java.util.Optional;
 public class CrtTestFixture {
 
     private CrtTestContext context;
-    public static boolean didTestsFail = false;
+    public static boolean didTestFail = false;
 
     public final CrtTestContext getContext() {
         return context;
@@ -52,7 +52,7 @@ public class CrtTestFixture {
         }
 
         // Reset before each run.
-        didTestsFail = false;
+        didTestFail = false;
     }
 
     // Skip checking for memory leaks if tests fail
@@ -61,7 +61,7 @@ public class CrtTestFixture {
         @Override
         protected void failed(Throwable e, Description description) {
             //System.out.println("Test Failed!");
-            didTestsFail = true;
+            didTestFail = true;
         }
 
         @Override
@@ -87,7 +87,7 @@ public class CrtTestFixture {
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                if (didTestsFail == false) {
+                if (didTestFail == false) {
                     CrtMemoryLeakDetector.nativeMemoryLeakCheck();
                 }
                 else

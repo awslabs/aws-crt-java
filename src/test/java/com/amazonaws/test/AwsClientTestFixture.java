@@ -49,7 +49,7 @@ public class AwsClientTestFixture extends CrtTestFixture {
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                if (CrtTestFixture.didTestsFail == false) {
+                if (CrtTestFixture.didTestFail == false) {
                     CrtMemoryLeakDetector.nativeMemoryLeakCheck();
                 }
             } catch (Exception e) {

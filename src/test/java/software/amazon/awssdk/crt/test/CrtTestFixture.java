@@ -23,12 +23,19 @@ import java.io.File;
 import org.junit.Before;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.util.Optional;
 
 public class CrtTestFixture {
 
     private CrtTestContext context;
+
+    // If true, the test is assumed to have failed and it will not check for native
+    // memory leaks
+    public static boolean didTestFail = false;
 
     public final CrtTestContext getContext() {
         return context;
@@ -46,7 +53,19 @@ public class CrtTestFixture {
         if (platform != null) {
             platform.testSetup(context);
         }
+
+        // Reset before each run.
+        didTestFail = false;
     }
+
+    // Skip checking for memory leaks if test fails
+    @Rule(order = Integer.MIN_VALUE)
+    public TestWatcher watcher = new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+            didTestFail = true;
+        }
+    };
 
     @After
     public void tearDown() {
@@ -65,7 +84,11 @@ public class CrtTestFixture {
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                if (didTestFail == false) {
+                    CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                } else {
+                    System.out.println("Skipped native memory test...");
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }

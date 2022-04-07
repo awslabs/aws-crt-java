@@ -388,6 +388,7 @@ public class S3ClientTest extends CrtTestFixture {
                         System.out.println("Test failed with error payload: " + new String(errorPayload, StandardCharsets.UTF_8));
                         onFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
+                        Assert.fail("Test failed with error payload: " + new String(errorPayload, StandardCharsets.UTF_8));
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(errorCode));

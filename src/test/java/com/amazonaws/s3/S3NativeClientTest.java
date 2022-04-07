@@ -38,6 +38,9 @@ import com.amazonaws.s3.model.PutObjectRequest;
 
 import com.amazonaws.test.AwsClientTestFixture;
 
+import software.amazon.awssdk.crt.CrtResource;
+
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -260,9 +263,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testConcurrentRequests() {
         skipIfNetworkUnavailable();
 
-        //Log.initLoggingToStdout(Log.LogLevel.Trace);
-        //Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, ">>>>>>>>>> START OF Test S3 Concurrent Requests >>>>>>>>>>");
-
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
@@ -314,18 +314,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
         }
-
-        // // Dump stack trace here
-        // CRT.dumpNativeMemory();
-        // // TEST - adding a delay to see if GC race is here
-        // try
-        // {
-        //     Thread.sleep(1000);
-        // }
-        // catch (Exception e)
-        // {
-        //     Log.log(Log.LogLevel.Debug, LogSubject.CommonGeneral, "Exception occured while trying to sleep for a second!");
-        // }
+        catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+        // TEST - wait for resources to be finished before ending test.
+        CrtResource.waitForNoResources();
     }
 
     private class CancelTestData<T> {

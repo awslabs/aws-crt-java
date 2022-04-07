@@ -63,8 +63,8 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     public static void nativeMemoryLeakCheck() throws Exception {
         String output = "";
 
-        if (didTestsFail) {
-            Log.log(LogLevel.Debug, LogSubject.CommonGeneral, "Skipping testing native memory due to test failure...");
+        if (CrtTestFixture.didTestsFail == true) {
+            Log.log(LogLevel.Debug, LogSubject.CommonGeneral, "Skipping testing native memory due to test failure... (in leak detection)");
             return;
         }
 

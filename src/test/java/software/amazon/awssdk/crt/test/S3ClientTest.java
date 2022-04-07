@@ -363,7 +363,7 @@ public class S3ClientTest extends CrtTestFixture {
         /**
          * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test.
+         * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
          */
         CrtMemoryLeakDetector.didTestsFail = true;
 

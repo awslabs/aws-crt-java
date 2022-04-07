@@ -98,6 +98,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -119,7 +120,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -133,6 +138,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -154,7 +160,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -169,6 +179,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(
                     GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
@@ -192,7 +203,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -207,6 +222,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            // The only place we are using .join() instead of .get() - since it catches the exception using .join()
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 
@@ -261,18 +277,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
-            /*
-            nativeClient.putObject(
-                    PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
-                    buffer -> {
-                        while (buffer.hasRemaining()) {
-                            buffer.put((byte) 42);
-                            ++lengthWritten[0];
-                        }
-
-                        return lengthWritten[0] == contentLength;
-                    }).join();
-            */
 
             try {
                 CompletableFuture<PutObjectOutput> output = nativeClient.putObject(
@@ -286,13 +290,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         return lengthWritten[0] == contentLength;
                     });
                 output.exceptionally(ex -> {
-                    System.out.println("Exception occured: " + ex.getMessage());
+                    System.out.println("Exception: " + ex.getMessage());
                     CrtMemoryLeakDetector.didTestFail = true;
                     return null;
                 });
                 output.get();
             } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception occured: " + ex.getMessage());
+                System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
 
@@ -306,7 +310,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
          * to work, so we have to just disable it entirely for this test.
          */
-        CrtMemoryLeakDetector.didTestFail = true;
+        //CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();
 
@@ -357,9 +361,15 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                             return lengthWritten[0] == contentLength;
                         }));
             }
-            CompletableFuture<?> allFutures = CompletableFuture
-                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
-            allFutures.join();
+
+            try {
+                CompletableFuture<?> allFutures = CompletableFuture
+                        .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+                allFutures.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
         catch (Exception e) {
             Assert.fail(e.getMessage());

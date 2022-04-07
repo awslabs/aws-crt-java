@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
 
+import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
+
 public class S3ClientTest extends CrtTestFixture {
 
     static final String ENDPOINT = System.getenv("ENDPOINT") == null ?
@@ -360,6 +362,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3Copy() {
         // To force a test fail:
         //Assert.fail("Example failure");
+        CrtMemoryLeakDetector.didTestsFail = true;
 
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

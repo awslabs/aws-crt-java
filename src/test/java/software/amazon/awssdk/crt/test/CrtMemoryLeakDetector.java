@@ -87,6 +87,11 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         List<Long> nativeSamples = new ArrayList<>();
         numIterations = Math.max(2, numIterations); // There need to be at least 2 iterations to get deltas
 
+        if (CrtTestFixture.didTestsFail == true) {
+            Log.log(LogLevel.Debug, LogSubject.CommonGeneral, "Skipping leak check due to test failure...");
+            return;
+        }
+
         getJvmMemoryInUse(); // force a few GCs to get a good baseline
 
         for (int i = 0; i < numIterations; i++) {

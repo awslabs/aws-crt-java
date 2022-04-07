@@ -56,6 +56,8 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogSubject;
 
+import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
+
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
     private static final String REGION = System.getProperty("crt.test_s3_region", "us-west-2");
@@ -261,6 +263,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
+        CrtMemoryLeakDetector.didTestsFail = true;
+
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -317,8 +321,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         catch (Exception e) {
             Assert.fail(e.getMessage());
         }
-        // TEST - wait for resources to be finished before ending test.
-        CrtResource.waitForNoResources();
     }
 
     private class CancelTestData<T> {

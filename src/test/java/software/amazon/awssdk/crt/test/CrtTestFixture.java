@@ -32,6 +32,7 @@ import java.util.Optional;
 public class CrtTestFixture {
 
     private CrtTestContext context;
+    public static boolean didTestsFail = false;
 
     public final CrtTestContext getContext() {
         return context;
@@ -49,10 +50,12 @@ public class CrtTestFixture {
         if (platform != null) {
             platform.testSetup(context);
         }
+
+        // TEST
+        didTestsFail = false;
     }
 
     // Skip checking for memory leaks if tests fail
-    public static boolean didTestsFail = false;
     @Rule(order = Integer.MIN_VALUE)
     public TestWatcher watcher = new TestWatcher() {
         @Override

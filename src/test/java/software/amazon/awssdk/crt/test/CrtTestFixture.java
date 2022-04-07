@@ -51,7 +51,7 @@ public class CrtTestFixture {
             platform.testSetup(context);
         }
 
-        // TEST
+        // Reset before each run.
         didTestsFail = false;
     }
 
@@ -62,14 +62,58 @@ public class CrtTestFixture {
         protected void failed(Throwable e, Description description) {
             System.out.println("Test Failed!");
             didTestsFail = true;
+
+            // ============
+            CrtPlatform platform = CRT.getPlatformImpl();
+            if (platform != null) {
+                platform.testTearDown(context);
+            }
+
+            context = null;
+
+            EventLoopGroup.closeStaticDefault();
+            HostResolver.closeStaticDefault();
+            ClientBootstrap.closeStaticDefault();
+            CrtResource.waitForNoResources();
+            // ============
         }
 
         @Override
         protected void succeeded(Description description) {
             System.out.println("Test Passed!");
+
+            // ============
+            CrtPlatform platform = CRT.getPlatformImpl();
+            if (platform != null) {
+                platform.testTearDown(context);
+            }
+
+            context = null;
+
+            EventLoopGroup.closeStaticDefault();
+            HostResolver.closeStaticDefault();
+            ClientBootstrap.closeStaticDefault();
+
+            CrtResource.waitForNoResources();
+            if (CRT.getOSIdentifier() != "android") {
+                try {
+                    Runtime.getRuntime().gc();
+                    if (didTestsFail == false) {
+                        CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                    }
+                    else
+                    {
+                        System.out.println("Skipped native memory test...");
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Memory leak from native resource detected!");
+                }
+            }
+            // ============
         }
     };
 
+    /*
     @After
     public void tearDown() {
         CrtPlatform platform = CRT.getPlatformImpl();
@@ -99,6 +143,7 @@ public class CrtTestFixture {
             }
         }
     }
+    */
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {
         try (TlsContextOptions tlsOpts = configureTlsContextOptions(TlsContextOptions.createDefaultClient(),

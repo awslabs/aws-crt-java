@@ -60,16 +60,6 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         return estimatedMemInUse;
     }
 
-    // Skip checking for memory leaks if tests fail
-    public static boolean didTestsFail = false;
-    @Rule
-    public TestWatcher watcher = new TestWatcher() {
-        @Override
-        protected void failed(Throwable e, Description description) {
-            didTestsFail = true;
-        }
-    };
-
     public static void nativeMemoryLeakCheck() throws Exception {
         String output = "";
 

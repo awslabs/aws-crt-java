@@ -43,25 +43,13 @@ public class AwsClientTestFixture extends CrtTestFixture {
         }
     }
 
-    // Skip checking for memory leaks if tests fail
-    public static boolean didTestsFail = false;
-    @Rule
-    public TestWatcher watcher = new TestWatcher() {
-        @Override
-        protected void failed(Throwable e, Description description) {
-            didTestsFail = true;
-        }
-    };
-
     @After
     public void tearDown() {
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
-                if (didTestsFail == false) {
-                    CrtMemoryLeakDetector.nativeMemoryLeakCheck();
-                }
+                CrtMemoryLeakDetector.nativeMemoryLeakCheck();
             } catch (Exception e) {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }

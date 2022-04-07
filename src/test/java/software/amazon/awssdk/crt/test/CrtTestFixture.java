@@ -53,11 +53,17 @@ public class CrtTestFixture {
 
     // Skip checking for memory leaks if tests fail
     public static boolean didTestsFail = false;
-    @Rule
+    @Rule(order = Integer.MIN_VALUE)
     public TestWatcher watcher = new TestWatcher() {
         @Override
         protected void failed(Throwable e, Description description) {
+            System.out.println("Test Failed!");
             didTestsFail = true;
+        }
+
+        @Override
+        protected void succeeded(Description description) {
+            System.out.println("Test Passed!");
         }
     };
 
@@ -80,6 +86,10 @@ public class CrtTestFixture {
                 Runtime.getRuntime().gc();
                 if (didTestsFail == false) {
                     CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                }
+                else
+                {
+                    System.out.println("Skipped native memory test...");
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Memory leak from native resource detected!");

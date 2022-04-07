@@ -40,6 +40,7 @@ sourceSets {
     }
     test {
         java {
+            testLogging.showStandardStreams = true
             setSrcDirs(listOf("src/test/java"))
         }
     }

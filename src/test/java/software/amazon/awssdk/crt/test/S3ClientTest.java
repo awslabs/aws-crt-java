@@ -358,6 +358,9 @@ public class S3ClientTest extends CrtTestFixture {
     // TWISTEDTWIGLEG MARKER - this is the test that is causing the issue
     @Test
     public void testS3Copy() {
+        // To force a test fail:
+        //Assert.fail("Example failure");
+
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 

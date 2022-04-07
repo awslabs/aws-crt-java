@@ -259,13 +259,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
-        /**
-         * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
-         * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test.
-         */
-        //CrtMemoryLeakDetector.didTestFail = true;
-
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -305,13 +298,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
-        /**
-         * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
-         * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test.
-         */
-        //CrtMemoryLeakDetector.didTestFail = true;
-
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -354,7 +340,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
-                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring! BUMP 3 (not counting segfault as a failure for memory leak just yet)
+                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring!
                                 ++lengthWritten[0];
                             }
 

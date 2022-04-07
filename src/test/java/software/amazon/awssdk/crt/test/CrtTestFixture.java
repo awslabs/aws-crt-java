@@ -60,60 +60,45 @@ public class CrtTestFixture {
     public TestWatcher watcher = new TestWatcher() {
         @Override
         protected void failed(Throwable e, Description description) {
-            System.out.println("Test Failed!");
+            //System.out.println("Test Failed!");
             didTestsFail = true;
-
-            // ============
-            // Teardown
-            CrtPlatform platform = CRT.getPlatformImpl();
-            if (platform != null) {
-                platform.testTearDown(context);
-            }
-
-            context = null;
-
-            EventLoopGroup.closeStaticDefault();
-            HostResolver.closeStaticDefault();
-            ClientBootstrap.closeStaticDefault();
-            CrtResource.waitForNoResources();
-            // ============
         }
 
         @Override
         protected void succeeded(Description description) {
-            System.out.println("Test Passed!");
-
-            // ============
-            // Teardown
-            CrtPlatform platform = CRT.getPlatformImpl();
-            if (platform != null) {
-                platform.testTearDown(context);
-            }
-
-            context = null;
-
-            EventLoopGroup.closeStaticDefault();
-            HostResolver.closeStaticDefault();
-            ClientBootstrap.closeStaticDefault();
-
-            CrtResource.waitForNoResources();
-            if (CRT.getOSIdentifier() != "android") {
-                try {
-                    Runtime.getRuntime().gc();
-                    if (didTestsFail == false) {
-                        CrtMemoryLeakDetector.nativeMemoryLeakCheck();
-                    }
-                    else
-                    {
-                        System.out.println("Skipped native memory test...");
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException("Memory leak from native resource detected!");
-                }
-            }
-            // ============
+            //System.out.println("Test Passed!");
         }
     };
+
+    @After
+    public void tearDown() {
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            platform.testTearDown(context);
+        }
+
+        context = null;
+
+        EventLoopGroup.closeStaticDefault();
+        HostResolver.closeStaticDefault();
+        ClientBootstrap.closeStaticDefault();
+
+        CrtResource.waitForNoResources();
+        if (CRT.getOSIdentifier() != "android") {
+            try {
+                Runtime.getRuntime().gc();
+                if (didTestsFail == false) {
+                    CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                }
+                else
+                {
+                    System.out.println("Skipped native memory test...");
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Memory leak from native resource detected!");
+            }
+        }
+    }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {
         try (TlsContextOptions tlsOpts = configureTlsContextOptions(TlsContextOptions.createDefaultClient(),

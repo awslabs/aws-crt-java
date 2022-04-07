@@ -36,6 +36,13 @@ import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 
+import com.amazonaws.s3.model.*;
+
+import java.lang.Exception;
+import java.lang.InterruptedException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import com.amazonaws.test.AwsClientTestFixture;
 
 import software.amazon.awssdk.crt.CrtResource;
@@ -241,7 +248,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
          * to work, so we have to just disable it entirely for this test.
          */
-        CrtMemoryLeakDetector.didTestFail = true;
+        //CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();
 
@@ -254,6 +261,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
+            /*
             nativeClient.putObject(
                     PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
                     buffer -> {
@@ -264,6 +272,29 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                         return lengthWritten[0] == contentLength;
                     }).join();
+            */
+
+            try {
+                CompletableFuture<PutObjectOutput> output = nativeClient.putObject(
+                    PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
+                    buffer -> {
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
+                        }
+
+                        return lengthWritten[0] == contentLength;
+                    });
+                output.exceptionally(ex -> {
+                    System.out.println("Exception occured: " + ex.getMessage());
+                    CrtMemoryLeakDetector.didTestFail = true;
+                    return null;
+                });
+                output.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception occured: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
 
         }
     }

@@ -268,7 +268,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
          * to work, so we have to just disable it entirely for this test.
          */
-        CrtMemoryLeakDetector.didTestsFail = true;
+        CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();
 

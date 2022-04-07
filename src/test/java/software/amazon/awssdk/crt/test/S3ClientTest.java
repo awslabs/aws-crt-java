@@ -365,6 +365,7 @@ public class S3ClientTest extends CrtTestFixture {
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
          * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
          */
+        // BUMP
         CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();

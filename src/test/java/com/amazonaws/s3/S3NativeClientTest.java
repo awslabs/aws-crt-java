@@ -263,7 +263,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testConcurrentRequests() {
-        CrtMemoryLeakDetector.didTestsFail = true;
+        //CrtMemoryLeakDetector.didTestsFail = true;
 
         skipIfNetworkUnavailable();
 
@@ -317,6 +317,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             CompletableFuture<?> allFutures = CompletableFuture
                     .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
             allFutures.join();
+        }
+        catch (CompletionException e) {
+            CrtMemoryLeakDetector.didTestsFail = true; // The test failed, so skip the native memory test
+            try {
+                throw e.getCause();
+            } catch (CrtS3RuntimeException causeException) {
+                /**
+                 * Assert the exceptions are set correctly.
+                 */
+                assertTrue(causeException.errorName.equals("AWS_ERROR_S3_INVALID_RESPONSE_STATUS"));
+                assertTrue(causeException.getStatusCode() == 404);
+            }
         }
         catch (Exception e) {
             Assert.fail(e.getMessage());

@@ -620,7 +620,7 @@ public class S3ClientTest extends CrtTestFixture {
                 double totalGbps = 0;
                 for (CompletableFuture<TransferStats> request : requestFutures) {
                     try {
-                        request.join();
+                        request.get();
                         totalGbps += request.get().avgGbps();
                     } catch (CompletionException | InterruptedException | ExecutionException ex) {
                         System.out.println(ex.toString());

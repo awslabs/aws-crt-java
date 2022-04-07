@@ -38,6 +38,11 @@ import com.amazonaws.s3.model.PutObjectRequest;
 
 import com.amazonaws.test.AwsClientTestFixture;
 
+import java.lang.Exception;
+import java.lang.InterruptedException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -84,6 +89,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -105,7 +111,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -119,6 +129,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -140,7 +151,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -155,6 +170,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long length[] = { 0 };
             nativeClient.getObject(
                     GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
@@ -178,7 +194,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -193,6 +213,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 
@@ -211,7 +232,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         } catch (CompletionException e) {
             try {
                 throw e.getCause();
@@ -229,13 +254,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testPutObject() {
-        /**
-         * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
-         * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test.
-         */
-        CrtMemoryLeakDetector.didTestFail = true;
-
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -245,6 +263,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
+            try {
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
             nativeClient.putObject(
@@ -256,20 +275,17 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
 
                         return lengthWritten[0] == contentLength;
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
 
         }
     }
 
     @Test
     public void testConcurrentRequests() {
-        /**
-         * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
-         * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
-         */
-        CrtMemoryLeakDetector.didTestFail = true;
-
         skipIfNetworkUnavailable();
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
@@ -317,9 +333,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                             return lengthWritten[0] == contentLength;
                         }));
             }
-            CompletableFuture<?> allFutures = CompletableFuture
-                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
-            allFutures.join();
+            try {
+                CompletableFuture<?> allFutures = CompletableFuture
+                        .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+                allFutures.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
         }
     }
 
@@ -735,6 +756,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             userMetadata.put(userMetadataKey, userMetadataValue);
 
             // put with metadata
+            try {
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
@@ -749,7 +771,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
 
                         return lengthWritten[0] == contentLength;
-                    }).join();
+                    }).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Exception: " + ex.getMessage());
+                CrtMemoryLeakDetector.didTestFail = true;
+            }
 
             // wait propagation
             waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_WITH_METADATA_KEY, userMetadataKey);

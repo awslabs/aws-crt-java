@@ -12,7 +12,7 @@ class AWSCrtJavaTest(Builder.Action):
 
         if os.system("mvn -B test -DredirectTestOutputToFile=true -DforkCount=0 \
             -DrerunFailingTestsCount=5 -DskipAfterFailureCount=1 \
-            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.aws_trace_log_per_test"):
+            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.log.level=Trace"):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

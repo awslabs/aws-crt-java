@@ -125,6 +125,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -165,6 +166,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -208,6 +210,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -292,6 +295,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
 
         }
     }
@@ -356,6 +360,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
         catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -438,6 +443,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             } catch (CancellationException e) {
                 cancelException = e;
             }
+            nativeClient.close();
 
             FinishCancelTest(testData, cancelException);
         }
@@ -541,6 +547,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             } catch (CancellationException e) {
                 cancelException = e;
             }
+            nativeClient.close();
 
             FinishCancelTest(testData, cancelException);
         }

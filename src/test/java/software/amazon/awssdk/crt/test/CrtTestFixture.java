@@ -51,7 +51,7 @@ public class CrtTestFixture {
             platform.testSetup(context);
         }
 
-        // Reset before each run. BUMP TO Rerun CI
+        // Reset before each run.
         didTestFail = false;
     }
 
@@ -60,13 +60,7 @@ public class CrtTestFixture {
     public TestWatcher watcher = new TestWatcher() {
         @Override
         protected void failed(Throwable e, Description description) {
-            //System.out.println("Test Failed!");
             didTestFail = true;
-        }
-
-        @Override
-        protected void succeeded(Description description) {
-            //System.out.println("Test Passed!");
         }
     };
 

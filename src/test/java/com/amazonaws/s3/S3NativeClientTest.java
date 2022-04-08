@@ -222,7 +222,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            // The only place we are using .join() instead of .get() - since it catches the exception using .join()
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 
@@ -272,7 +271,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             final long lengthWritten[] = { 0 };
 
             try {
-                CompletableFuture<PutObjectOutput> output = nativeClient.putObject(
+                nativeClient.putObject(
                     PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
                     buffer -> {
                         while (buffer.hasRemaining()) {
@@ -281,13 +280,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
 
                         return lengthWritten[0] == contentLength;
-                    });
-                output.exceptionally(ex -> {
-                    System.out.println("Exception: " + ex.getMessage());
-                    CrtMemoryLeakDetector.didTestFail = true;
-                    return null;
-                });
-                output.get();
+                    }).get();
             } catch (InterruptedException | ExecutionException ex) {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
@@ -336,11 +329,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                     }
                                 }));
 
-                // Issue with single byte seems to be here!
+                // Issue with single byte seem to be here for this test.
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
-                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring! BUMP
+                                buffer.put((byte) 65); // This itself does not seem to be the issue - ignore!
                                 ++lengthWritten[0];
                             }
 

@@ -365,7 +365,7 @@ public class S3ClientTest extends CrtTestFixture {
          * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
          * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
          */
-        // BUMP
+        // Leave this for now - will look for 256 byte leak after 1 byte leak
         CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();
@@ -382,7 +382,7 @@ public class S3ClientTest extends CrtTestFixture {
 
                 @Override
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    // Is this where the crash is????
+                    // Commented out as it seems to sometimes cause segmentation fault???
                     //Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
                     return 0;
                 }

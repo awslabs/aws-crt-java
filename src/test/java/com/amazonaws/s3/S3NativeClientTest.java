@@ -125,6 +125,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -165,6 +166,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -208,6 +210,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
     }
 
@@ -292,6 +295,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
 
         }
     }
@@ -340,7 +344,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
                         .contentLength(contentLength).build(), buffer -> {
                             while (buffer.hasRemaining()) {
-                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring!
+                                buffer.put((byte) 65); // A single byte! This is likely where the allocation issue is occuring! BUMP
                                 ++lengthWritten[0];
                             }
 
@@ -356,6 +360,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;
             }
+            nativeClient.close();
         }
         catch (Exception e) {
             Assert.fail(e.getMessage());
@@ -440,6 +445,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             }
 
             FinishCancelTest(testData, cancelException);
+            nativeClient.close();
         }
     }
 
@@ -541,6 +547,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             } catch (CancellationException e) {
                 cancelException = e;
             }
+            nativeClient.close();
 
             FinishCancelTest(testData, cancelException);
         }
@@ -648,6 +655,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         S3MetaRequestOptions getObjectOptions = options.get(0);
         validateCustomHeaders(getObjectOptions.getHttpRequest().getHeaders(), customHeaders);
         reset(mockInternalClient);
+        request.close();
     }
 
     /*
@@ -714,6 +722,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             assertTrue(httpRequest.getEncodedPath().equals("/" + key + "?" + customQueryParameters));
         }
         reset(mockInternalClient);
+        request.close();
     }
 
     /*

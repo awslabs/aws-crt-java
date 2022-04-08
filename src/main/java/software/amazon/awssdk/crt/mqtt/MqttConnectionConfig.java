@@ -245,11 +245,16 @@ public final class MqttConnectionConfig extends CrtResource {
      * Configures the minimum and maximum reconnect timeouts.
      *
      * The time between reconnect attempts will start at min and multiply by 2 until max is reached.
+     * Default value for min is 1, for max 128.
      *
      * @param minTimeoutSecs The timeout to start with
      * @param maxTimeoutSecs The highest allowable wait time between reconnect attempts
      */
     public void setReconnectTimeoutSecs(long minTimeoutSecs, long maxTimeoutSecs) {
+        if (minTimeoutSecs == 0 || maxTimeoutSecs == 0) {
+            throw new IllegalArgumentException(
+                    "0 is not support for reconnect Timeout, default value for min is 1 and for max is 128");
+        }
         this.minReconnectTimeoutSecs = minTimeoutSecs;
         this.maxReconnectTimeoutSecs = maxTimeoutSecs;
     }

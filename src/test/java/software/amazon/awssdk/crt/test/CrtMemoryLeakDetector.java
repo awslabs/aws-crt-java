@@ -61,7 +61,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     }
 
     public static void nativeMemoryLeakCheck() throws Exception {
-        // Skip if the test failed - BUMP
+        // Skip if the test failed - BUMP 2
         if (CrtTestFixture.didTestFail == true) {
             return;
         }

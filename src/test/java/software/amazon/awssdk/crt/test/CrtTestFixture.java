@@ -51,7 +51,7 @@ public class CrtTestFixture {
             platform.testSetup(context);
         }
 
-        // Reset before each run.
+        // Reset before each run. BUMP TO Rerun CI
         didTestFail = false;
     }
 

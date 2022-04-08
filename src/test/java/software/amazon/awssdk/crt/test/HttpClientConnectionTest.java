@@ -97,21 +97,33 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
     public void testHttpConnection() throws Exception {
         skipIfNetworkUnavailable();
         // S3
-        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+        try {
+            testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+            testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+            testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
+            testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+            testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+        } catch (Exception e) {
+            Assert.fail("Exception thrown trying to connect to S3!");
+        }
 
         // KMS
-        testConnectionWithAllCiphers(new URI("https://kms.us-east-1.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
+        try {
+            testConnectionWithAllCiphers(new URI("https://kms.us-east-1.amazonaws.com:443"), true, null);
+            testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
+            testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
+            testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
+        } catch (Exception e) {
+            Assert.fail("Exception thrown trying to connect to KMS!");
+        }
 
         // BadSSL
-        testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
-        testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+        try {
+            testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
+            testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+        } catch (Exception e) {
+            Assert.fail("Exception thrown trying to connect to BadSSL!");
+        }
     }
 
     @Test

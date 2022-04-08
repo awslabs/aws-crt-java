@@ -539,6 +539,8 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setHttpProxyOptions(getHttpProxyOptions());
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
+            clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
+
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();
             return clone;

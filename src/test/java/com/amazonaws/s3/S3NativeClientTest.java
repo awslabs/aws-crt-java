@@ -443,9 +443,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             } catch (CancellationException e) {
                 cancelException = e;
             }
+            nativeClient.close();
 
             FinishCancelTest(testData, cancelException);
-            nativeClient.close();
         }
     }
 

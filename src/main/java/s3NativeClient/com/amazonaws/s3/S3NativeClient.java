@@ -339,6 +339,10 @@ public class S3NativeClient implements AutoCloseable {
     @Override
     public void close() {
         if (s3Client != null) {
+
+            // TEST - wait for shutdown
+            s3Client.getShutdownCompleteFuture().join();
+
             s3Client.close();
         }
     }

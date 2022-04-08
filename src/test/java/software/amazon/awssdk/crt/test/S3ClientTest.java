@@ -428,7 +428,6 @@ public class S3ClientTest extends CrtTestFixture {
             }
 
             // TEST: Wait for shutdown
-            client.close();
             client.getShutdownCompleteFuture().join();
 
         } catch (InterruptedException | ExecutionException ex) {

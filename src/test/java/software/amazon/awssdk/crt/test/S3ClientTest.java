@@ -366,12 +366,18 @@ public class S3ClientTest extends CrtTestFixture {
          * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
          */
         // Leave this for now - will look for 256 byte leak after 1 byte leak
-        CrtMemoryLeakDetector.didTestFail = true;
+        //CrtMemoryLeakDetector.didTestFail = true;
 
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        // TEST: add credentials provider to see if that fixes 256 byte issue
+        DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
+        builder.withClientBootstrap(ClientBootstrap.getOrCreateStaticDefault());
+        DefaultChainCredentialsProvider provider = builder.build();
+
+        //S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION).withCredentialsProvider(provider);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             final AtomicLong totalBytesTransferred = new AtomicLong();

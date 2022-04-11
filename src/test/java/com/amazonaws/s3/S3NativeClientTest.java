@@ -170,6 +170,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     @Test
     public void testGetObjectVersioned() {
+
+        System.out.println("\n>>>> Test Get Object Versions Start!");
+
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -209,10 +212,15 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 CrtMemoryLeakDetector.didTestFail = true;
             }
         }
+
+        System.out.println("\n>>>> Test Get Object Versions Finish!");
     }
 
     @Test
     public void testGetObjectExceptionCatch() throws Throwable {
+
+        System.out.println("\n>>>> Test Object Exception Start!");
+
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -254,10 +262,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 assertTrue(causeException.getStatusCode() == 404);
             }
         }
+
+        System.out.println("\n>>>> Test Object Exception Finish!");
     }
 
     @Test
     public void testPutObject() {
+        System.out.println("\n>>>> Test Put Object Start!");
+
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -287,10 +299,15 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             }
 
         }
+
+        System.out.println("\n>>>> Test Put Object Finish!");
     }
 
     @Test
     public void testConcurrentRequests() {
+
+        System.out.println("\n>>>> Test Concurrent Requests Start!");
+
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
@@ -353,6 +370,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         catch (Exception e) {
             Assert.fail(e.getMessage());
         }
+
+        System.out.println("\n>>>> Test Concurrent Requests Finish!");
     }
 
     private class CancelTestData<T> {

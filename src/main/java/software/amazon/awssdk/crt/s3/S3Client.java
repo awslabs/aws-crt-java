@@ -80,7 +80,7 @@ public class S3Client extends CrtResource {
             metaRequest.addReferenceTo(options.getCredentialsProvider());
         }
 
-        // TEST - BUMP 2
+        // TEST - BUMP 3-ish
         metaRequest.addReferenceTo(this);
 
         return metaRequest;

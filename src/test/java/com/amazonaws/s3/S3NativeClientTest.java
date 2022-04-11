@@ -362,6 +362,15 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 CompletableFuture<?> allFutures = CompletableFuture
                         .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
                 allFutures.get();
+
+                // TEST - close everything!
+                nativeClient.close();
+                provider.close();
+                clientBootstrap.close();
+                resolver.close();
+                elGroup.close();
+
+
             } catch (InterruptedException | ExecutionException ex) {
                 System.out.println("Exception: " + ex.getMessage());
                 CrtMemoryLeakDetector.didTestFail = true;

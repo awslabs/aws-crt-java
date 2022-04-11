@@ -87,7 +87,11 @@ public class AwsClientTestFixture extends CrtTestFixture {
         if (awsSessionToken != null && !awsSessionToken.equals("")) {
             builder.withSessionToken(awsSessionToken.getBytes(StandardCharsets.UTF_8));
         }
-        return builder.build();
 
+        CredentialsProvider return_value = builder.build();
+        builder = null;
+        return return_value;
+
+        //return builder.build();
     }
 }

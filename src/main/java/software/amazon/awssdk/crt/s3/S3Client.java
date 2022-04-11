@@ -38,6 +38,8 @@ public class S3Client extends CrtResource {
     private void onShutdownComplete() {
         releaseReferences();
 
+        System.out.println("\n>>>> Showndown complete called!");
+
         this.shutdownComplete.complete(null);
     }
 

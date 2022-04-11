@@ -339,7 +339,9 @@ public class S3NativeClient implements AutoCloseable {
     @Override
     public void close() {
         if (s3Client != null) {
+            System.out.println("\n>>>> Before Native client close called!");
             s3Client.close();
+            System.out.println("\n>>>> After Native client close called!");
         }
     }
 

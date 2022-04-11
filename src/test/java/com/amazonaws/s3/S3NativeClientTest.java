@@ -363,13 +363,12 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
                 allFutures.get();
 
-                // TEST - close everything!
+                // TEST - close everything! BUMP 2
                 nativeClient.close();
                 provider.close();
                 clientBootstrap.close();
                 resolver.close();
                 elGroup.close();
-
 
             } catch (InterruptedException | ExecutionException ex) {
                 System.out.println("Exception: " + ex.getMessage());

@@ -144,6 +144,9 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     }
 
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
+
+        System.out.println("\n>>>> Test Parallel Requests Start!");
+
         skipIfNetworkUnavailable();
 
         URI uri = new URI(endpoint);
@@ -155,9 +158,14 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
+
+        System.out.println("\n>>>> Test Parallel Requests Finish!");
     }
 
     public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
+
+        System.out.println("\n>>>> Test Parallel Requests With Leak Check Start!");
+
         skipIfNetworkUnavailable();
         Callable<Void> fn = () -> {
             testParallelRequests(numThreads, numRequests);
@@ -177,20 +185,27 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             fixedGrowth = Math.max(fixedGrowth, 8192);
             CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
         }
+
+        System.out.println("\n>>>> Test Parallel Requests With Leak Check Finish!");
     }
 
     @Test
     public void testSerialRequests() throws Exception {
+        System.out.println("\n>>>> Test Serial Requests Start!");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+        System.out.println("\n>>>> Test Serial Requests Finish!");
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        System.out.println("\n>>>> Test Max Parallel Requests Start!");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+        System.out.println("\n>>>> Test Max Parallel Requests Finish!");
     }
 
     @Test
     public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        System.out.println("\n>>>> Test Pending Acquisition Start!");
         skipIfNetworkUnavailable();
         HttpClientConnection firstConnection = null;
         CompletableFuture<HttpClientConnection> firstAcquisition;
@@ -205,10 +220,13 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
 
         firstConnection.close();
+        System.out.println("\n>>>> Test Pending Acquisition Finish!");
     }
 
     @Test
     public void testCancelAcquire() throws Exception {
+        System.out.println("\n>>>> Test Cancel Aquire Start!");
+
         // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
         skipIfNetworkUnavailable();
 
@@ -229,5 +247,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
             conn.close();
         }
+
+        System.out.println("\n>>>> Test Cancel Aquire Finish!");
     }
 }

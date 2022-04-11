@@ -84,7 +84,7 @@ public class S3Client extends CrtResource {
             metaRequest.addReferenceTo(options.getCredentialsProvider());
         }
 
-        // TEST - BUMP 1 (added TLS reference)
+        // TEST - doesn't fix the issue but does not seem to hurt. Will leave for now...
         metaRequest.addReferenceTo(this);
 
         return metaRequest;

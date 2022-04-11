@@ -84,6 +84,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
         List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
 
+        System.out.println("\n>>>> Before Test Parallel connections loop!");
         for (int i = 0; i < numRequests; i++) {
 
             Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
@@ -127,11 +128,14 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                         });
             });
         }
+        System.out.println("\n>>>> After Test Parallel connections loop!");
 
         // Wait for all Requests to complete
+        System.out.println("\n>>>> Before Waiting for requests in loop!");
         for (CompletableFuture f : requestCompleteFutures) {
             f.join();
         }
+        System.out.println("\n>>>> After Waiting for requests in loop!");
 
         final int requiredSuccesses = (int) Math.floor(numRequests * 0.95);
         final int allowedFailures = numRequests - requiredSuccesses;
@@ -151,10 +155,15 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         URI uri = new URI(endpoint);
 
+        System.out.println("\n>>>> Before Connection pool creation!");
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, numThreads, NUM_CONNECTIONS)) {
+            System.out.println("\n>>>> Before HttpRequest creation!");
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+            System.out.println("\n>>>> After HttpRequest creation!");
             testParallelConnections(connectionPool, request, 1, numRequests);
+            System.out.println("\n>>>> After Test Parallel connections!");
         }
+        System.out.println("\n>>>> After Connection pool creation!");
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();

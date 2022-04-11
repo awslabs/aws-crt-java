@@ -33,6 +33,10 @@ public class S3Client extends CrtResource {
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
+
+        if (tlsCtx != null) {
+            addReferenceTo(options.getTlsContext());
+        }
     }
 
     private void onShutdownComplete() {
@@ -80,7 +84,7 @@ public class S3Client extends CrtResource {
             metaRequest.addReferenceTo(options.getCredentialsProvider());
         }
 
-        // TEST - BUMP 7
+        // TEST - BUMP 1 (added TLS reference)
         metaRequest.addReferenceTo(this);
 
         return metaRequest;

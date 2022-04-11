@@ -52,7 +52,7 @@
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=Debug",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
@@ -64,7 +64,7 @@
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=Debug",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
@@ -76,7 +76,7 @@
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=Debug",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
@@ -101,7 +101,7 @@
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=Debug",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
@@ -113,7 +113,7 @@
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=Debug",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]

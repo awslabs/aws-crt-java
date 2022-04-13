@@ -84,9 +84,6 @@ public class S3Client extends CrtResource {
             metaRequest.addReferenceTo(options.getCredentialsProvider());
         }
 
-        // TEST - doesn't fix the issue but does not seem to hurt. Will leave for now...
-        metaRequest.addReferenceTo(this);
-
         return metaRequest;
     }
 
@@ -106,8 +103,10 @@ public class S3Client extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        if (!isNull()) {
-            s3ClientDestroy(getNativeHandle());
+        synchronized(this) {
+            if (!isNull()) {
+                s3ClientDestroy(getNativeHandle());
+            }
         }
     }
 

@@ -36,8 +36,6 @@ import com.amazonaws.s3.model.GetObjectRequest;
 import com.amazonaws.s3.model.PutObjectOutput;
 import com.amazonaws.s3.model.PutObjectRequest;
 
-import com.amazonaws.s3.model.*;
-
 import java.lang.Exception;
 import java.lang.InterruptedException;
 import java.util.concurrent.ExecutionException;
@@ -317,6 +315,8 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         10.)) {
 
+            System.out.println("Starting Concurrent test...");
+
             final long lengthWritten[] = { 0 };
             final long contentLength = 1024l;
             final long length[] = { 0 };
@@ -330,6 +330,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                     @Override
                                     public void onResponse(GetObjectOutput response) {
                                         assertNotNull(response);
+                                        //System.out.println("Response: " + response.toString());
                                     }
 
                                     @Override
@@ -343,6 +344,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
                                     @Override
                                     public void onException(final CrtRuntimeException e) {
+                                        //System.out.println("Exception from PutObject: " + e.getMessage());
                                     }
                                 }));
 
@@ -353,22 +355,26 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 buffer.put((byte) 65); // This itself does not seem to be the issue - ignore!
                                 ++lengthWritten[0];
                             }
+                            //System.out.println("Print a payload out");
 
                             return lengthWritten[0] == contentLength;
                         }));
             }
 
             try {
+                System.out.println("Running futures...");
                 CompletableFuture<?> allFutures = CompletableFuture
                         .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
                 allFutures.get();
 
-                // TEST - close everything! BUMP 2
+                // TEST - close everything!
+                /*
                 nativeClient.close();
                 provider.close();
                 clientBootstrap.close();
                 resolver.close();
                 elGroup.close();
+                */
 
             } catch (InterruptedException | ExecutionException ex) {
                 System.out.println("Exception: " + ex.getMessage());
@@ -650,6 +656,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      * Runs the given test lambda for custom headers, passing it the appropriate
      * arguments, then validating the output.
      */
+    /*
     private void customHeadersTestCase(CustomHeadersTestLambda customHeadersLambda, HttpHeader[] customHeaders) {
         final S3Client mockInternalClient = mock(S3Client.class);
         final S3MetaRequest request = new S3MetaRequest();
@@ -670,11 +677,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         reset(mockInternalClient);
         request.close();
     }
+    */
 
     /*
      * Using the customHeadersTestCase function, executes a series of test cases
      * using the given test lambda.
      */
+    /*
     private void testCustomHeaders(CustomHeadersTestLambda customHeadersLambda) {
         customHeadersTestCase(customHeadersLambda, null);
         customHeadersTestCase(customHeadersLambda, new HttpHeader[] {});
@@ -697,6 +706,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         testCustomHeaders((nativeClient, customHeaders) -> nativeClient.putObject(PutObjectRequest.builder()
                 .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L).customHeaders(customHeaders).build(), null));
     }
+    */
 
     /*
      * Interface for an anonymous function to generate a specific type of request
@@ -710,10 +720,14 @@ public class S3NativeClientTest extends AwsClientTestFixture {
      * Runs the given test lambda for custom query parameters, passing it the
      * appropriate arguments, then validating the output.
      */
+    /*
     public void customQueryParametersTestCase(CustomQueryParametersTestLambda customQueryParametersTestLambda,
             String key, String customQueryParameters) {
+        System.out.println("Before internal client");
         final S3Client mockInternalClient = mock(S3Client.class);
+        System.out.println("Before request");
         final S3MetaRequest request = new S3MetaRequest();
+        System.out.println("Before Make Meta Request");
         when(mockInternalClient.makeMetaRequest(any(S3MetaRequestOptions.class))).thenReturn(request);
 
         final S3NativeClient nativeClient = new S3NativeClient(REGION, mockInternalClient);
@@ -737,11 +751,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         reset(mockInternalClient);
         request.close();
     }
+    */
 
     /*
      * Using the customQueryParametersTestCase function, executes a series of tests
      * using the given test lambda.
      */
+    /*
     private void testCustomQueryParameters(CustomQueryParametersTestLambda customQueryParametersTestLambda) {
         String key = "test_key";
 
@@ -773,6 +789,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
                                 null));
     }
+    */
 
     @Test
     public void testPutObjectWithUserDefinedMetadata() throws Exception {

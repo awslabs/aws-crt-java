@@ -103,10 +103,8 @@ public class S3Client extends CrtResource {
      */
     @Override
     protected void releaseNativeHandle() {
-        synchronized(this) {
-            if (!isNull()) {
-                s3ClientDestroy(getNativeHandle());
-            }
+        if (!isNull()) {
+            s3ClientDestroy(getNativeHandle());
         }
     }
 

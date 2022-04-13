@@ -242,6 +242,10 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 static void s_jni_atexit_common(void) {
+
+    // Wait a second - hopefully resolves race conditions? Is more a bandage than a fix, but would help confirm a race condition if this fixes the issue
+    aws_thread_current_sleep(aws_timestamp_convert(1, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();

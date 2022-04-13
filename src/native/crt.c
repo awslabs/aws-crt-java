@@ -242,10 +242,6 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 }
 
 static void s_jni_atexit_common(void) {
-
-    // Wait a second - hopefully resolves race conditions? Is more a bandage than a fix, but would help confirm a race condition if this fixes the issue
-    aws_thread_current_sleep(aws_timestamp_convert(1, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
-
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
@@ -388,7 +384,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     (void)jni_crt_class;
     jlong allocated = 0;
     if (g_memory_tracing) {
-        allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
+        //allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
+        if (s_allocator != NULL) {
+            allocated = (jlong)aws_mem_tracer_bytes(s_allocator);
+        }
     }
     return allocated;
 }

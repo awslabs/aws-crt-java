@@ -245,6 +245,7 @@ public final class MqttConnectionConfig extends CrtResource {
      * Configures the minimum and maximum reconnect timeouts.
      *
      * The time between reconnect attempts will start at min and multiply by 2 until max is reached.
+     * Default value for min is 1, for max 128. Set either one to zero will use the default setting.
      *
      * @param minTimeoutSecs The timeout to start with
      * @param maxTimeoutSecs The highest allowable wait time between reconnect attempts
@@ -539,6 +540,8 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setHttpProxyOptions(getHttpProxyOptions());
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
+            clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
+                
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();
             return clone;

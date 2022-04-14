@@ -235,8 +235,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
             /* Result in crash, but log the return code first. */
-            AWS_LOGF_ERROR(
-                AWS_LS_COMMON_GENERAL, "AttachCurrentThreadAsDaemon returned error, error code is %d", result);
+            AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "AttachCurrentThreadAsDaemon failed, error code is %d", result);
             AWS_FATAL_ASSERT(result == JNI_OK);
         }
         /* This should only happen in event loop threads, the JVM main thread attachment is

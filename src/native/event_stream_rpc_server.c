@@ -179,6 +179,7 @@ static int s_on_incoming_stream_fn(
 
     jobject java_continuation = NULL;
     jobject java_continuation_handler = NULL;
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     struct continuation_callback_data *continuation_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct continuation_callback_data));
@@ -188,7 +189,6 @@ static int s_on_incoming_stream_fn(
     }
 
     continuation_callback_data->jvm = callback_data->jvm;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     java_continuation = (*env)->NewObject(
         env,

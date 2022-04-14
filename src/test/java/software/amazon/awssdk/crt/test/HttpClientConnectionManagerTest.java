@@ -1,12 +1,16 @@
 package software.amazon.awssdk.crt.test;
 
+import static org.junit.Assert.assertTrue;
+
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,7 +137,11 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         // Wait for all Requests to complete
         System.out.println("\n>>>> Before Waiting for requests in loop!");
         for (CompletableFuture f : requestCompleteFutures) {
-            f.join();
+            try {
+                f.join();
+            } catch (CancellationException | CompletionException ex) {
+                assertTrue("Exception occured: " + ex.getMessage(), false);
+            }
         }
         System.out.println("\n>>>> After Waiting for requests in loop!");
 

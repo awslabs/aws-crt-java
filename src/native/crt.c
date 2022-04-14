@@ -231,7 +231,7 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 #else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
 #endif
-        /* Ran out of memory, don't log in this case */
+        /* Ran out of memory, crash instead of handling it for safety */
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
             /* Result in crash, but log the return code first. */

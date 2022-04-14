@@ -231,8 +231,14 @@ JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
 #else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
 #endif
-        (void)result;
-        AWS_FATAL_ASSERT(result == JNI_OK);
+        /* Ran out of memory, crash instead of handling it for safety */
+        AWS_FATAL_ASSERT(result != JNI_ENOMEM);
+        if (result != JNI_OK) {
+            /* Result in crash, but log the return code first. */
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_GENERAL, "AttachCurrentThreadAsDaemon returned error, error code is %d", result);
+            AWS_FATAL_ASSERT(result == JNI_OK);
+        }
         /* This should only happen in event loop threads, the JVM main thread attachment is
          * managed by the JVM, so we only need to clean up event loop thread attachments */
         AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));

@@ -384,7 +384,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     (void)jni_crt_class;
     jlong allocated = 0;
     if (g_memory_tracing) {
-        allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
+        if (s_allocator != NULL) {
+            allocated = (jlong)aws_mem_tracer_bytes(s_allocator);
+        }
     }
     return allocated;
 }
@@ -394,7 +396,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     (void)env;
     (void)jni_crt_class;
     if (g_memory_tracing > 1) {
-        aws_mem_tracer_dump(aws_jni_get_allocator());
+        if (s_allocator != NULL) {
+            aws_mem_tracer_dump(s_allocator);
+        }
     }
 }
 

@@ -385,7 +385,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     jlong allocated = 0;
     if (g_memory_tracing) {
         if (s_allocator != NULL) {
-            allocated = (jlong)aws_mem_tracer_bytes(s_allocator); // BUMP 14 (3 for checking segfault)
+            allocated = (jlong)aws_mem_tracer_bytes(s_allocator); // BUMP 15 (4 for checking segfault)
         }
     }
     return allocated;

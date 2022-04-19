@@ -26,7 +26,7 @@ public class S3MetaRequestProgress {
 
     /**
      * @param contentLength length of the entire meta request operation
-     * @return
+     * @return this progress object
      */
     public S3MetaRequestProgress withContentLength(long contentLength) {
         this.contentLength = contentLength;

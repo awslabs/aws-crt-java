@@ -88,3 +88,6 @@ target/
 
 # configuration pulled from Secrets Manager
 settings.xml
+
+# docs are updated automatically by .github/workflows/docs.yml
+docs/

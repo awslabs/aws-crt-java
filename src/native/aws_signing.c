@@ -410,8 +410,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT
@@ -487,8 +485,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT
@@ -554,8 +550,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT

@@ -15,7 +15,7 @@
 package software.amazon.awssdk.crt.cal;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * If there's a compelling reason, we can add accessors and conversions to/from Java's KeyPair.
  */
-public final class EccKeyPair extends CrtResource {
+public final class EccKeyPair extends CleanableCrtResource {
 
     /**
      * Enum for supported ECC curves
@@ -86,24 +86,7 @@ public final class EccKeyPair extends CrtResource {
      * @param nativeHandle handle to the native ecc key pair object
      */
     private EccKeyPair(long nativeHandle) {
-        acquireNativeHandle(nativeHandle);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Releases the instance's reference to the underlying native key pair
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            eccKeyPairRelease(getNativeHandle());
-        }
+        acquireNativeHandle(nativeHandle, EccKeyPair::eccKeyPairRelease);
     }
 
     /**

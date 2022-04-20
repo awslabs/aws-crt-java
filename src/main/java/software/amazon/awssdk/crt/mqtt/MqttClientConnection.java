@@ -6,14 +6,12 @@
 package software.amazon.awssdk.crt.mqtt;
 
 import software.amazon.awssdk.crt.AsyncCallback;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -25,7 +23,7 @@ import java.util.function.Consumer;
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
-public class MqttClientConnection extends CrtResource {
+public class MqttClientConnection extends CleanableCrtResource {
 
     private MqttConnectionConfig config;
 
@@ -71,7 +69,7 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
+            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this), MqttClientConnection::mqttClientConnectionDestroy);
 
             if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
@@ -105,30 +103,11 @@ public class MqttClientConnection extends CrtResource {
                         options.getAuthorizationPassword());
             }
 
-            addReferenceTo(config);
             this.config = config;
 
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
-    }
-
-    /**
-     * Frees native resources associated with this connection.
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        mqttClientConnectionDestroy(getNativeHandle());
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the
-     * native handle is released or if it waits. Resources that wait are responsible
-     * for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return false;
     }
 
     // Called from native when the connection is established the first time

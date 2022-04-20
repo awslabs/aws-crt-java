@@ -1,7 +1,12 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.eventstream;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.List;
@@ -11,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
  * Wrapper around event-stream-rpc-server-connection. Note this class is AutoClosable.
  * By default the ServerConnectionHandler::onClosed callback calls close().
  */
-public class ServerConnection extends CrtResource {
+public class ServerConnection extends CleanableCrtResource {
     CompletableFuture<Integer> closedFuture = new CompletableFuture<>();
 
     /**
@@ -20,7 +25,7 @@ public class ServerConnection extends CrtResource {
     ServerConnection(long connectionPtr) {
         // tell c-land we're acquiring
         acquire(connectionPtr);
-        acquireNativeHandle(connectionPtr);
+        acquireNativeHandle(connectionPtr, ServerConnection::release);
     }
 
     /**
@@ -104,18 +109,6 @@ public class ServerConnection extends CrtResource {
      */
     public CompletableFuture<Integer> getClosedFuture() {
         return closedFuture;
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            release(getNativeHandle());
-        }
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
     }
 
     private static native void acquire(long connectionPtr);

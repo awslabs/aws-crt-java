@@ -1,9 +1,11 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.eventstream.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.ServerBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 
@@ -30,7 +32,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        HostResolver hr = new HostResolver(elGroup);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
         final ServerConnection[] serverConnections = {null};
@@ -80,24 +83,24 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             }
         });
 
-        connectFuture.get(1, TimeUnit.SECONDS);
+        connectFuture.get();
         assertNotNull(clientConnectionArray[0]);
-        serverConnectionAccepted.get(1, TimeUnit.SECONDS);
+        serverConnectionAccepted.get();
         assertNotNull(serverConnections[0]);
         clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+        clientConnectionArray[0].getClosedFuture().get();
+        serverConnections[0].getClosedFuture().get();
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
         assertTrue(clientConnected[0]);
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
+        hr.close();
         clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
+
+        CleanableCrtResource.debugWaitForNoResources();
     }
 
     @Test

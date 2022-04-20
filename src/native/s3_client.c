@@ -30,15 +30,49 @@
 
 struct s3_client_callback_data {
     JavaVM *jvm;
-    jobject java_s3_client;
+    jobject java_shutdown_complete_callback;
 };
+
+static void s_destroy_s3_client_callback_data(JNIEnv *env, struct s3_client_callback_data *callback_data) {
+    if (callback_data == NULL) {
+        return;
+    }
+
+    // We're done with this callback data, free it.
+    if (callback_data->java_shutdown_complete_callback != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_shutdown_complete_callback);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
 
 struct s3_client_make_meta_request_callback_data {
     JavaVM *jvm;
-    jobject java_s3_meta_request;
+    jobject java_shutdown_complete_callback;
     jobject java_s3_meta_request_response_handler_native_adapter;
     struct aws_input_stream *input_stream;
 };
+
+static void s_destroy_s3_meta_request_callback_data(JNIEnv *env, struct s3_client_make_meta_request_callback_data *callback_data) {
+    if (callback_data == NULL) {
+        return;
+    }
+
+    // We're done with this callback data, free it.
+    if (callback_data->java_shutdown_complete_callback != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_shutdown_complete_callback);
+    }
+
+    if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
+    }
+
+    if (callback_data->input_stream != NULL) {
+        aws_input_stream_destroy(callback_data->input_stream);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
 static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data);
@@ -46,7 +80,7 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data);
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject s3_client_jobject,
+    jobject java_shutdown_complete_callback,
     jbyteArray jni_region,
     jbyteArray jni_endpoint,
     jlong jni_client_bootstrap,
@@ -100,7 +134,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct s3_client_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_callback_data));
     AWS_FATAL_ASSERT(callback_data);
-    callback_data->java_s3_client = (*env)->NewGlobalRef(env, s3_client_jobject);
+    callback_data->java_shutdown_complete_callback = (*env)->NewGlobalRef(env, java_shutdown_complete_callback);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     (void)jvmresult;
@@ -146,6 +180,10 @@ clean_up:
 
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
+    if (client == NULL) {
+        s_destroy_s3_client_callback_data(env, callback_data);
+    }
+
     return (jlong)client;
 }
 
@@ -166,20 +204,18 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
 
     AWS_LOGF_DEBUG(AWS_LS_S3_CLIENT, "S3 Client Shutdown Complete");
-    if (callback->java_s3_client != NULL) {
-        (*env)->CallVoidMethod(env, callback->java_s3_client, s3_client_properties.onShutdownComplete);
+    if (callback->java_shutdown_complete_callback != NULL) {
+        (*env)->CallBoolMethod(env, callback->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Ignored Exception from S3Client.onShutdownCompete callback",
-                (void *)callback->java_s3_client);
+                (void *)callback->java_shutdown_complete_callback);
         }
     }
 
-    // We're done with this callback data, free it.
-    (*env)->DeleteGlobalRef(env, callback->java_s3_client);
-    aws_mem_release(aws_jni_get_allocator(), user_data);
+    s_destroy_s3_client_callback_data(env, callback);
 }
 
 static int s_on_s3_meta_request_body_callback(
@@ -371,22 +407,11 @@ static void s_on_s3_meta_request_progress_callback(
     (*env)->DeleteLocalRef(env, progress_object);
 }
 
-static void s_s3_meta_request_callback_cleanup(
-    JNIEnv *env,
-    struct s3_client_make_meta_request_callback_data *callback_data) {
-    if (callback_data) {
-        aws_input_stream_destroy(callback_data->input_stream);
-        (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
-        (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
-        aws_mem_release(aws_jni_get_allocator(), callback_data);
-    }
-}
-
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMakeMetaRequest(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_s3_client,
-    jobject java_s3_meta_request_jobject,
+    jobject java_shutdown_complete_callback,
     jbyteArray jni_region,
     jint meta_request_type,
     jbyteArray jni_marshalled_message_data,
@@ -416,8 +441,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    callback_data->java_s3_meta_request = (*env)->NewGlobalRef(env, java_s3_meta_request_jobject);
-    AWS_FATAL_ASSERT(callback_data->java_s3_meta_request != NULL);
+    callback_data->java_shutdown_complete_callback = (*env)->NewGlobalRef(env, java_shutdown_complete_callback);
+    AWS_FATAL_ASSERT(callback_data->java_shutdown_complete_callback != NULL);
 
     callback_data->java_s3_meta_request_response_handler_native_adapter =
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
@@ -476,7 +501,8 @@ done:
     if (success) {
         return (jlong)meta_request;
     }
-    s_s3_meta_request_callback_cleanup(env, callback_data);
+
+    s_destroy_s3_meta_request_callback_data(env, callback_data);
     return (jlong)0;
 }
 
@@ -485,8 +511,8 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    if (callback_data->java_s3_meta_request != NULL) {
-        (*env)->CallVoidMethod(env, callback_data->java_s3_meta_request, s3_meta_request_properties.onShutdownComplete);
+    if (callback_data->java_shutdown_complete_callback != NULL) {
+        (*env)->CallBoolMethod(env, callback_data->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -497,7 +523,7 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     }
 
     // We're done with this callback data, free it.
-    s_s3_meta_request_callback_cleanup(env, callback_data);
+    s_destroy_s3_meta_request_callback_data(env, callback_data);
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestDestroy(

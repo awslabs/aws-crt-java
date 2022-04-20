@@ -1,7 +1,12 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.eventstream;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
@@ -14,14 +19,14 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Wrapper around an event stream rpc client initiated connection.
  */
-public class ClientConnection extends CrtResource {
+public class ClientConnection extends CleanableCrtResource {
     CompletableFuture<Integer> closeFuture = new CompletableFuture<>();
 
     /**
      * Only for internal usage. This is invoked from JNI to create a new java wrapper for the connection.
      */
     ClientConnection(long clientConnection) {
-        acquireNativeHandle(clientConnection);
+        acquireNativeHandle(clientConnection, ClientConnection::releaseClientConnection);
         acquireClientConnection(clientConnection);
     }
 
@@ -182,18 +187,6 @@ public class ClientConnection extends CrtResource {
      */
     public CompletableFuture<Integer> getClosedFuture() {
         return closeFuture;
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            releaseClientConnection(getNativeHandle());
-        }
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
     }
 
     private static native int clientConnect(byte[] hostName, short port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);

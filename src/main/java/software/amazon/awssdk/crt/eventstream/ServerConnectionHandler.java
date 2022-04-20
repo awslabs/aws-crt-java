@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.eventstream;
 
 import java.nio.ByteBuffer;
@@ -76,7 +81,6 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
         if (connection.isConnectionOpen()) {
             connection.closeConnection(0);
         }
-        connection.decRef();
         connection = null;
     }
 }

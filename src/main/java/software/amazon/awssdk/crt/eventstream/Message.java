@@ -1,6 +1,11 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.eventstream;
 
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -9,14 +14,14 @@ import java.util.List;
  * Wrapper around an instance of aws-event-stream-message. It's auto closable, so be sure
  * to call close when finished with the object.
  */
-public class Message extends CrtResource {
+public class Message extends CleanableCrtResource {
     /**
      * Creates a message using headers and payload.
      * @param headers list of headers to include in the message's header block. Can be null.
      * @param payload payload body to include in the message's payload block. Can be null.
      */
     public Message(List<Header> headers, byte[] payload) {
-        acquireNativeHandle(messageNew(Header.marshallHeadersForJNI(headers), payload));
+        acquireNativeHandle(messageNew(Header.marshallHeadersForJNI(headers), payload), Message::messageDelete);
     }
 
     /**
@@ -26,18 +31,6 @@ public class Message extends CrtResource {
      */
     public ByteBuffer getMessageBuffer() {
         return messageBuffer(getNativeHandle());
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            messageDelete(getNativeHandle());
-        }
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
     }
 
     private static native long messageNew(byte[] serializedHeaders, byte[] payload);

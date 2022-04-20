@@ -32,7 +32,7 @@
 
 struct connection_callback_data {
     JavaVM *jvm;
-    jobject java_connection_handler;
+    jweak java_weak_connection_handler;
 };
 
 static void s_destroy_connection_callback_data(struct connection_callback_data *callback_data) {
@@ -42,8 +42,8 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    if (callback_data->java_connection_handler) {
-        (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
+    if (callback_data->java_weak_connection_handler) {
+        (*env)->DeleteWeakGlobalRef(env, callback_data->java_weak_connection_handler);
     }
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -57,19 +57,24 @@ static void s_on_connection_setup(
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_connection_handler,
-        event_stream_client_connection_handler_properties.onSetup,
-        (jlong)connection,
-        error_code);
+    jobject java_weak_connection_handler = (*env)->NewLocalRef(env, callback_data->java_weak_connection_handler);
+    if (java_weak_connection_handler) {
+        (*env)->CallVoidMethod(
+            env,
+            java_weak_connection_handler,
+            event_stream_client_connection_handler_properties.onSetup,
+            (jlong)connection,
+            error_code);
 
-    if (aws_jni_check_and_clear_exception(env) && !error_code) {
-        aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_UNKNOWN);
-    }
+        if (aws_jni_check_and_clear_exception(env) && !error_code) {
+            aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_UNKNOWN);
+        }
 
-    if (error_code) {
-        s_destroy_connection_callback_data(callback_data);
+        if (error_code) {
+            s_destroy_connection_callback_data(callback_data);
+        }
+
+        (*env)->DeleteLocalRef(env, java_weak_connection_handler);
     }
 }
 
@@ -82,12 +87,13 @@ static void s_on_connection_shutdown(
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_connection_handler,
-        event_stream_client_connection_handler_properties.onClosed,
-        error_code);
-    aws_jni_check_and_clear_exception(env);
+    jobject java_weak_connection_handler = (*env)->NewLocalRef(env, callback_data->java_weak_connection_handler);
+    if (java_weak_connection_handler) {
+        (*env)->CallVoidMethod(
+            env, java_weak_connection_handler, event_stream_client_connection_handler_properties.onClosed, error_code);
+        aws_jni_check_and_clear_exception(env);
+        (*env)->DeleteLocalRef(env, java_weak_connection_handler);
+    }
 
     s_destroy_connection_callback_data(callback_data);
 }
@@ -106,14 +112,19 @@ static void s_connection_protocol_message(
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_connection_handler,
-        event_stream_client_connection_handler_properties.onProtocolMessage,
-        headers_array,
-        payload_byte_array,
-        (jint)message_args->message_type,
-        (jint)message_args->message_flags);
+    jobject java_weak_connection_handler = (*env)->NewLocalRef(env, callback_data->java_weak_connection_handler);
+    if (java_weak_connection_handler) {
+        (*env)->CallVoidMethod(
+            env,
+            java_weak_connection_handler,
+            event_stream_client_connection_handler_properties.onProtocolMessage,
+            headers_array,
+            payload_byte_array,
+            (jint)message_args->message_type,
+            (jint)message_args->message_flags);
+
+        (*env)->DeleteLocalRef(env, java_weak_connection_handler);
+    }
 
     (*env)->DeleteLocalRef(env, payload_byte_array);
     (*env)->DeleteLocalRef(env, headers_array);
@@ -169,9 +180,9 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_client
         goto error;
     }
 
-    callback_data->java_connection_handler = (*env)->NewGlobalRef(env, jni_client_connection_handler);
-    if (!callback_data->java_connection_handler) {
-        aws_jni_throw_runtime_exception(env, "ClientConnection.clientConnect: Unable to create global ref");
+    callback_data->java_weak_connection_handler = (*env)->NewWeakGlobalRef(env, jni_client_connection_handler);
+    if (!callback_data->java_weak_connection_handler) {
+        aws_jni_throw_runtime_exception(env, "ClientConnection.clientConnect: Unable to create global weak ref");
         goto error;
     }
 
@@ -271,6 +282,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_releas
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
+    aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_SUCCESS);
     aws_event_stream_rpc_client_connection_release(connection);
 }
 
@@ -365,8 +377,7 @@ clean_up:
 
 struct continuation_callback_data {
     JavaVM *jvm;
-    jobject java_continuation;
-    jobject java_continuation_handler;
+    jweak weak_java_continuation_handler;
 };
 
 static void s_client_continuation_data_destroy(JNIEnv *env, struct continuation_callback_data *callback_data) {
@@ -374,12 +385,8 @@ static void s_client_continuation_data_destroy(JNIEnv *env, struct continuation_
         return;
     }
 
-    if (callback_data->java_continuation_handler) {
-        (*env)->DeleteGlobalRef(env, callback_data->java_continuation_handler);
-    }
-
-    if (callback_data->java_continuation) {
-        (*env)->DeleteGlobalRef(env, callback_data->java_continuation);
+    if (callback_data->weak_java_continuation_handler) {
+        (*env)->DeleteWeakGlobalRef(env, callback_data->weak_java_continuation_handler);
     }
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -400,14 +407,19 @@ static void s_stream_continuation(
     struct aws_byte_cursor payload_cur = aws_byte_cursor_from_buf(message_args->payload);
     jbyteArray payload_byte_array = aws_jni_byte_array_from_cursor(env, &payload_cur);
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_continuation_handler,
-        event_stream_client_continuation_handler_properties.onContinuationMessage,
-        headers_array,
-        payload_byte_array,
-        (jint)message_args->message_type,
-        (jint)message_args->message_flags);
+    jobject java_weak_continuation_handler = (*env)->NewLocalRef(env, callback_data->weak_java_continuation_handler);
+    if (java_weak_continuation_handler) {
+        (*env)->CallVoidMethod(
+            env,
+            java_weak_continuation_handler,
+            event_stream_client_continuation_handler_properties.onContinuationMessage,
+            headers_array,
+            payload_byte_array,
+            (jint)message_args->message_type,
+            (jint)message_args->message_flags);
+
+        (*env)->DeleteLocalRef(env, java_weak_continuation_handler);
+    }
 
     (*env)->DeleteLocalRef(env, payload_byte_array);
     (*env)->DeleteLocalRef(env, headers_array);
@@ -422,10 +434,16 @@ static void s_stream_continuation_closed(
     struct continuation_callback_data *continuation_callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
 
-    (*env)->CallVoidMethod(
-        env,
-        continuation_callback_data->java_continuation_handler,
-        event_stream_client_continuation_handler_properties.onContinuationClosed);
+    jobject java_weak_continuation_handler =
+        (*env)->NewLocalRef(env, continuation_callback_data->weak_java_continuation_handler);
+    if (java_weak_continuation_handler) {
+        (*env)->CallVoidMethod(
+            env,
+            java_weak_continuation_handler,
+            event_stream_client_continuation_handler_properties.onContinuationClosed);
+
+        (*env)->DeleteLocalRef(env, java_weak_continuation_handler);
+    }
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
     s_client_continuation_data_destroy(env, continuation_callback_data);
@@ -456,8 +474,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_newCl
         goto error;
     }
 
-    continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, continuation_handler);
-    if (!continuation_callback_data->java_continuation_handler) {
+    continuation_callback_data->weak_java_continuation_handler = (*env)->NewWeakGlobalRef(env, continuation_handler);
+    if (!continuation_callback_data->weak_java_continuation_handler) {
         aws_jni_throw_runtime_exception(env, "ClientConnection.newClientStream: Unable to create reference");
         goto error;
     }
@@ -496,24 +514,14 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    (void)continuation;
 
     struct aws_event_stream_rpc_client_continuation_token *continuation_token =
         (struct aws_event_stream_rpc_client_continuation_token *)jni_continuation_ptr;
 
-    struct continuation_callback_data *continuation_callback_data =
-        aws_event_stream_rpc_client_continuation_get_user_data(continuation_token);
-
     struct message_flush_callback_args *callback_data = NULL;
 
     int ret_val = AWS_OP_ERR;
-
-    continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, continuation);
-
-    if (!continuation_callback_data->java_continuation) {
-        aws_jni_throw_runtime_exception(
-            env, "ClientConnectionContinuation.activateContinuation: Unable to create reference");
-        goto clean_up;
-    }
 
     struct aws_event_stream_rpc_marshalled_message marshalled_message;
     if (aws_event_stream_rpc_marshall_message_args_init(

@@ -5,7 +5,7 @@
 package software.amazon.awssdk.crt.io;
 
 import java.util.concurrent.CompletableFuture;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 
@@ -13,7 +13,7 @@ import software.amazon.awssdk.crt.Log;
  * This class wraps the aws_client_bootstrap from aws-c-io to provide
  * a client context for all protocol stacks in the AWS Common Runtime.
  */
-public final class ClientBootstrap extends CrtResource {
+public final class ClientBootstrap extends CleanableCrtResource {
 
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
@@ -24,10 +24,7 @@ public final class ClientBootstrap extends CrtResource {
     private ClientBootstrap() throws CrtRuntimeException {
         EventLoopGroup elg = EventLoopGroup.getOrCreateStaticDefault();
         HostResolver hr = HostResolver.getOrCreateStaticDefault();
-        acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
-        // Order is likely important here
-        addReferenceTo(HostResolver.getOrCreateStaticDefault());
-        addReferenceTo(EventLoopGroup.getOrCreateStaticDefault());
+        acquireNativeHandle(clientBootstrapNew(shutdownComplete, elg.getNativeHandle(), hr.getNativeHandle()), ClientBootstrap::clientBootstrapDestroy);
     }
 
     /**
@@ -46,39 +43,7 @@ public final class ClientBootstrap extends CrtResource {
             hr = HostResolver.getOrCreateStaticDefault();
         }
 
-        acquireNativeHandle(clientBootstrapNew(this, elg.getNativeHandle(), hr.getNativeHandle()));
-
-        // Order is likely important here
-        addReferenceTo(hr);
-        addReferenceTo(elg);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
-
-    /**
-     * Cleans up the client bootstrap's associated native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            clientBootstrapDestroy(getNativeHandle());
-        }
-    }
-
-    /**
-     * Called from Native when the asynchronous cleanup process needed for client bootstrap has completed.
-     */
-    private void onShutdownComplete() {
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.IoChannelBootstrap, "ClientBootstrap.onShutdownComplete");
-
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
+        acquireNativeHandle(clientBootstrapNew(shutdownComplete, elg.getNativeHandle(), hr.getNativeHandle()), ClientBootstrap::clientBootstrapDestroy);
     }
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
@@ -89,9 +54,6 @@ public final class ClientBootstrap extends CrtResource {
      */
     public static void closeStaticDefault() {
         synchronized (ClientBootstrap.class) {
-            if (staticDefaultClientBootstrap != null) {
-                staticDefaultClientBootstrap.releaseNativeHandle();
-            }
             staticDefaultClientBootstrap = null;
         }
     }
@@ -123,6 +85,6 @@ public final class ClientBootstrap extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long clientBootstrapNew(ClientBootstrap bootstrap, long elg, long hr) throws CrtRuntimeException;
+    private static native long clientBootstrapNew(CompletableFuture<Void> shutdownCallback, long elg, long hr) throws CrtRuntimeException;
     private static native void clientBootstrapDestroy(long bootstrap);
 };

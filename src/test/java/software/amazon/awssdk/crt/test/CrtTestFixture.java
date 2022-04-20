@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtResource;

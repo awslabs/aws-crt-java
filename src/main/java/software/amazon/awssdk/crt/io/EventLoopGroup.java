@@ -5,7 +5,7 @@
 package software.amazon.awssdk.crt.io;
 
 import java.util.concurrent.CompletableFuture;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 
@@ -14,7 +14,7 @@ import software.amazon.awssdk.crt.Log;
  * access to an event loop for the MQTT protocol stack in the AWS Common
  * Runtime.
  */
-public final class EventLoopGroup extends CrtResource {
+public final class EventLoopGroup extends CleanableCrtResource {
 
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
@@ -24,7 +24,7 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNew(this, numThreads));
+        acquireNativeHandle(eventLoopGroupNew(shutdownComplete, numThreads), EventLoopGroup::eventLoopGroupDestroy);
     }
 
     /**
@@ -35,40 +35,10 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int cpuGroup, int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNewPinnedToCpuGroup(this, cpuGroup, numThreads));
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
-
-    /**
-     * Stops the event loop group's tasks and frees all resources associated with the the group. This should be called
-     * after all other clients/connections and other resources are cleaned up, or else they will not clean up completely.
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            eventLoopGroupDestroy(getNativeHandle());
-        }
-    }
-
-    /**
-     * Called from Native when the asynchronous cleanup process needed for event loop groups has completed.
-     */
-    private void onCleanupComplete() {
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.IoEventLoop, "EventLoopGroup.onCleanupComplete");
-
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
+        acquireNativeHandle(eventLoopGroupNewPinnedToCpuGroup(shutdownComplete, cpuGroup, numThreads), EventLoopGroup::eventLoopGroupDestroy);
     }
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
-
 
     /*
      * Static interface for access to a default, lazily-created event loop group for users who don't
@@ -94,9 +64,6 @@ public final class EventLoopGroup extends CrtResource {
      */
     public static void closeStaticDefault() {
         synchronized (EventLoopGroup.class) {
-            if (staticDefaultEventLoopGroup != null) {
-                staticDefaultEventLoopGroup.close();
-            }
             staticDefaultEventLoopGroup = null;
         }
     }
@@ -132,8 +99,8 @@ public final class EventLoopGroup extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long eventLoopGroupNew(EventLoopGroup thisObj, int numThreads) throws CrtRuntimeException;
-    private static native long eventLoopGroupNewPinnedToCpuGroup(EventLoopGroup thisObj, int cpuGroup, int numThreads) throws CrtRuntimeException;
+    private static native long eventLoopGroupNew(CompletableFuture<Void> shutdownCallback, int numThreads) throws CrtRuntimeException;
+    private static native long eventLoopGroupNewPinnedToCpuGroup(CompletableFuture<Void> shutdownCallback, int cpuGroup, int numThreads) throws CrtRuntimeException;
 
     private static native void eventLoopGroupDestroy(long elg);
 };

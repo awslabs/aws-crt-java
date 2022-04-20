@@ -343,9 +343,8 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
     if (mqtt_connection != NULL) {
         (*env)->CallVoidMethod(env, mqtt_connection, crt_resource_properties.release_references);
 
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
         aws_jni_check_and_clear_exception(env);
+        (*env)->DeleteLocalRef(env, mqtt_connection);
     }
 
     s_mqtt_connection_destroy(env, jni_connection);
@@ -389,6 +388,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         return;
     }
 
+    struct mqtt_jni_async_callback *connect_callback = NULL;
+
     struct aws_byte_cursor client_id;
     AWS_ZERO_STRUCT(client_id);
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
@@ -401,7 +402,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         goto cleanup;
     }
 
-    struct mqtt_jni_async_callback *connect_callback = mqtt_jni_async_callback_new(connection, NULL);
+    connect_callback = mqtt_jni_async_callback_new(connection, NULL);
     if (connect_callback == NULL) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_connect: Failed to create async callback");
         goto cleanup;
@@ -521,8 +522,10 @@ static void s_deliver_ack_failure(struct mqtt_jni_async_callback *callback, int 
         JNIEnv *env = aws_jni_get_thread_env(callback->connection->jvm);
         jobject jni_reason = s_new_mqtt_exception(env, error_code);
         (*env)->CallVoidMethod(env, callback->async_callback, async_callback_properties.on_failure, jni_reason);
-        (*env)->DeleteLocalRef(env, jni_reason);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+        if (jni_reason != NULL) {
+            (*env)->DeleteLocalRef(env, jni_reason);
+        }
     }
 }
 
@@ -933,6 +936,8 @@ static void s_ws_handshake_transform(
     JNIEnv *env = aws_jni_get_thread_env(connection->jvm);
     struct aws_allocator *alloc = aws_jni_get_allocator();
 
+    jobject java_http_request = NULL;
+
     struct mqtt_jni_ws_handshake *ws_handshake = aws_mem_calloc(alloc, 1, sizeof(struct mqtt_jni_ws_handshake));
     if (!ws_handshake) {
         goto error;
@@ -945,22 +950,23 @@ static void s_ws_handshake_transform(
     ws_handshake->complete_fn = complete_fn;
     ws_handshake->http_request = request;
 
-    jobject java_http_request = aws_java_http_request_from_native(env, request, NULL);
+    java_http_request = aws_java_http_request_from_native(env, request, NULL);
     if (!java_http_request) {
         aws_raise_error(AWS_ERROR_UNKNOWN); /* TODO: given java exception, choose appropriate aws error code */
         goto error;
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
-        (*env)->CallVoidMethod(
-            env, mqtt_connection, mqtt_connection_properties.on_websocket_handshake, java_http_request, ws_handshake);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
-        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    if (mqtt_connection == NULL) {
+        goto error;
     }
 
+    (*env)->CallVoidMethod(
+        env, mqtt_connection, mqtt_connection_properties.on_websocket_handshake, java_http_request, ws_handshake);
+
+    (*env)->DeleteLocalRef(env, mqtt_connection);
+
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     (*env)->DeleteLocalRef(env, java_http_request);
 
     return;
@@ -969,7 +975,12 @@ error:;
 
     int error_code = aws_last_error();
     s_ws_handshake_destroy(ws_handshake);
+
     complete_fn(request, error_code, complete_ctx);
+
+    if (java_http_request != NULL) {
+        (*env)->DeleteLocalRef(env, java_http_request);
+    }
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionUseWebsockets(

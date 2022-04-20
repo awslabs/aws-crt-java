@@ -4,14 +4,14 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 /**
  * This class wraps the aws_tls_context from aws-c-io to provide
  * access to TLS configuration contexts in the AWS Common Runtime.
  */
-public class TlsContext extends CrtResource {
+public class TlsContext extends CleanableCrtResource {
 
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
@@ -21,7 +21,7 @@ public class TlsContext extends CrtResource {
      * to allocate space for a native tls context
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
-        acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+        acquireNativeHandle(tlsContextNew(options.getNativeHandle()), TlsContext::tlsContextDestroy);
     }
 
     /**
@@ -30,24 +30,7 @@ public class TlsContext extends CrtResource {
      */
     public TlsContext() throws CrtRuntimeException  {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-        }
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees all native resources associated with the context. This object is unusable after close is called.
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            tlsContextDestroy(getNativeHandle());
+            acquireNativeHandle(tlsContextNew(options.getNativeHandle()), TlsContext::tlsContextDestroy);
         }
     }
 

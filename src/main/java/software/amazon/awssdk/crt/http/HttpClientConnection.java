@@ -8,10 +8,8 @@ package software.amazon.awssdk.crt.http;
 import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
 
 import static software.amazon.awssdk.crt.CRT.awsLastError;
 
@@ -22,10 +20,10 @@ import static software.amazon.awssdk.crt.CRT.awsLastError;
  *
  * This class is not thread safe and should not be called from different threads.
  */
-public class HttpClientConnection extends CrtResource {
+public class HttpClientConnection extends CleanableCrtResource {
 
     protected HttpClientConnection(long connectionBinding) {
-        acquireNativeHandle(connectionBinding);
+        acquireNativeHandle(connectionBinding, HttpClientConnection::httpClientConnectionReleaseManaged);
     }
 
     /**
@@ -51,23 +49,6 @@ public class HttpClientConnection extends CrtResource {
         }
 
         return stream;
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Releases this HttpClientConnection back into the Connection Pool, and allows another Request to acquire this connection.
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()){
-            httpClientConnectionReleaseManaged(getNativeHandle());
-        }
     }
 
     /**

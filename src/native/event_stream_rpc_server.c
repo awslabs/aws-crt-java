@@ -32,7 +32,7 @@
 
 struct shutdown_callback_data {
     JavaVM *jvm;
-    jweak java_server_listener;
+    jobject java_shutdown_complete_callback;
     jobject java_listener_handler;
 };
 
@@ -42,8 +42,8 @@ static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callba
         return;
     }
 
-    if (callback_data->java_server_listener) {
-        (*env)->DeleteWeakGlobalRef(env, callback_data->java_server_listener);
+    if (callback_data->java_shutdown_complete_callback) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_shutdown_complete_callback);
     }
 
     if (callback_data->java_listener_handler) {
@@ -56,7 +56,7 @@ static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callba
 struct connection_callback_data {
     JavaVM *jvm;
     jobject java_server_connection;
-    jweak java_listener_handler;
+    jobject java_listener_handler;
     jobject java_connection_handler;
 };
 
@@ -89,11 +89,9 @@ static void s_server_listener_shutdown_complete(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
-    if (java_server_listener) {
-        (*env)->CallVoidMethod(env, java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
+    if (callback_data->java_shutdown_complete_callback) {
+        (*env)->CallBoolMethod(env, callback_data->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
         aws_jni_check_and_clear_exception(env);
-        (*env)->DeleteLocalRef(env, java_server_listener);
     }
 
     s_shutdown_callback_data_destroy(env, callback_data);
@@ -397,7 +395,7 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverListenerNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject jni_server_listener,
+    jobject java_shutdown_complete_callback,
     jbyteArray jni_host_name,
     jshort port,
     jlong jni_socket_options,
@@ -443,7 +441,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
         goto error;
     }
 
-    callback_data->java_server_listener = (*env)->NewWeakGlobalRef(env, jni_server_listener);
+    callback_data->java_shutdown_complete_callback = (*env)->NewGlobalRef(env, java_shutdown_complete_callback);
     if (!callback_data->java_server_listener) {
         aws_jni_throw_runtime_exception(env, "ServerListener.server_listener_new: Unable to create global weak ref");
         goto error;

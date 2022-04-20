@@ -5,7 +5,7 @@
 
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 
 /**
  * Handle to a loaded PKCS#11 library.
@@ -13,7 +13,7 @@ import software.amazon.awssdk.crt.CrtResource;
  * For most use cases, a single instance of Pkcs11Lib should be used for the
  * lifetime of your application.
  */
-public class Pkcs11Lib extends CrtResource {
+public class Pkcs11Lib extends CleanableCrtResource {
 
     /**
      * Controls how Pkcs11Lib calls {@code C_Initialize()} and {@code C_Finalize()}
@@ -76,19 +76,7 @@ public class Pkcs11Lib extends CrtResource {
      *                                   PKCS#11 library.
      */
     public Pkcs11Lib(String path, InitializeFinalizeBehavior initializeFinalizeBehavior) {
-        acquireNativeHandle(pkcs11LibNew(path, initializeFinalizeBehavior.nativeValue));
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            pkcs11LibRelease(getNativeHandle());
-        }
+        acquireNativeHandle(pkcs11LibNew(path, initializeFinalizeBehavior.nativeValue), Pkcs11Lib::pkcs11LibRelease);
     }
 
     /*******************************************************************************

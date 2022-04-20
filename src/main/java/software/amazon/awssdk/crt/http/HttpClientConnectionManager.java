@@ -6,12 +6,8 @@ package software.amazon.awssdk.crt.http;
 
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -20,7 +16,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 /**
  * Manages a Pool of Http Connections
  */
-public class HttpClientConnectionManager extends CrtResource {
+public class HttpClientConnectionManager extends CleanableCrtResource {
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
     private static final int DEFAULT_HTTP_PORT = 80;
@@ -112,7 +108,7 @@ public class HttpClientConnectionManager extends CrtResource {
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
 
-        acquireNativeHandle(httpClientConnectionManagerNew(this,
+        acquireNativeHandle(httpClientConnectionManagerNew(shutdownComplete,
                                             clientBootstrap.getNativeHandle(),
                                             socketOptions.getNativeHandle(),
                                             useTls ? tlsContext.getNativeHandle() : 0,
@@ -130,13 +126,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
-                                            monitoringFailureIntervalInSeconds));
+                                            monitoringFailureIntervalInSeconds), HttpClientConnectionManager::httpClientConnectionManagerRelease);
 
-        /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
-         addReferenceTo(clientBootstrap);
-         if (useTls) {
-             addReferenceTo(tlsContext);
-         }
     }
 
     /**
@@ -160,37 +151,6 @@ public class HttpClientConnectionManager extends CrtResource {
      */
     public void releaseConnection(HttpClientConnection conn) {
         conn.close();
-    }
-
-    /**
-     * Called from Native when all Connections in this Connection Pool have finished shutting down and it is safe to
-     * begin releasing Native Resources that HttpClientConnectionManager depends on.
-     */
-    private void onShutdownComplete() {
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
-
-    /**
-     * Closes this Connection Pool and any pending Connection Acquisitions
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            /*
-             * Release our Native pointer and schedule tasks on the Native Event Loop to start sending HTTP/TLS/TCP
-             * connection shutdown messages to peers for any open Connections.
-             */
-            httpClientConnectionManagerRelease(getNativeHandle());
-        }
     }
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
@@ -224,7 +184,7 @@ public class HttpClientConnectionManager extends CrtResource {
      * Native methods
      ******************************************************************************/
 
-    private static native long httpClientConnectionManagerNew(HttpClientConnectionManager thisObj,
+    private static native long httpClientConnectionManagerNew(CompletableFuture<Void> shutdownCompleteCallback,
                                                         long client_bootstrap,
                                                         long socketOptions,
                                                         long tlsContext,

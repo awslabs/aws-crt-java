@@ -6,7 +6,7 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * Can be used to update the Window size, or to abort the stream early in the middle of sending/receiving Http Bodies.
  */
-public class HttpStream extends CrtResource {
+public class HttpStream extends CleanableCrtResource {
 
     /**
      * Completion interface for writing chunks to an http stream
@@ -28,24 +28,7 @@ public class HttpStream extends CrtResource {
 
     /* Native code will call this constructor during HttpClientConnection.makeRequest() */
     protected HttpStream(long ptr) {
-        acquireNativeHandle(ptr);
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Cleans up the stream's associated native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            httpStreamRelease(getNativeHandle());
-        }
+        acquireNativeHandle(ptr, HttpStream::httpStreamRelease);
     }
 
     /**

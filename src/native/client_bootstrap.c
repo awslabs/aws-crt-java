@@ -28,7 +28,7 @@
 
 struct shutdown_callback_data {
     JavaVM *jvm;
-    jweak java_client_bootstrap;
+    jobject java_shutdown_complete_future;
 };
 
 static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callback_data *callback_data) {
@@ -36,8 +36,8 @@ static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callba
         return;
     }
 
-    if (callback_data->java_client_bootstrap) {
-        (*env)->DeleteWeakGlobalRef(env, callback_data->java_client_bootstrap);
+    if (callback_data->java_shutdown_complete_future) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_shutdown_complete_future);
     }
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -48,11 +48,9 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject java_client_bootstrap = (*env)->NewLocalRef(env, callback_data->java_client_bootstrap);
-    if (java_client_bootstrap) {
+    if (callback_data->java_shutdown_complete_future != NULL) {
         // Tell the Java ClientBootstrap that cleanup is done.  This lets it release its references.
-        (*env)->CallVoidMethod(env, java_client_bootstrap, client_bootstrap_properties.onShutdownComplete);
-        (*env)->DeleteLocalRef(env, java_client_bootstrap);
+        (*env)->CallBoolMethod(env, callback_data->java_shutdown_complete_future, completable_future_properties.complete_method_id, null);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
@@ -63,7 +61,7 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject jni_bootstrap,
+    jobject java_shutdown_complete_future,
     jlong jni_elg,
     jlong jni_hr) {
     (void)jni_class;
@@ -94,9 +92,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
         goto error;
     }
 
-    callback_data->java_client_bootstrap = (*env)->NewWeakGlobalRef(env, jni_bootstrap);
-    if (!callback_data->java_client_bootstrap) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global weak ref");
+    callback_data->java_shutdown_complete_future = (*env)->NewGlobalRef(env, java_shutdown_complete_future);
+    if (!callback_data->java_shutdown_complete_future) {
+        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global ref to shutdown callback");
         goto error;
     }
 
@@ -117,6 +115,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     return (jlong)bootstrap;
 
 error:
+
     s_shutdown_callback_data_destroy(env, callback_data);
     return (jlong)NULL;
 }

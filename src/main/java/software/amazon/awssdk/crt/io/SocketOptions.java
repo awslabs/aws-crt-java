@@ -4,14 +4,13 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 
 /**
  * This class wraps the aws_socket_options from aws-c-io to provide
  * access to TCP/UDP socket configuration in the AWS Common Runtime.
  */
-public final class SocketOptions extends CrtResource {
+public final class SocketOptions extends CleanableCrtResource {
 
     /**
      * Socket communications domain
@@ -97,33 +96,19 @@ public final class SocketOptions extends CrtResource {
 
     @Override
     public long getNativeHandle() {
-        if (super.getNativeHandle() == 0) {
-            acquireNativeHandle(socketOptionsNew(
-                domain.getValue(),
-                type.getValue(),
-                connectTimeoutMs,
-                keepAliveIntervalSecs,
-                keepAliveTimeoutSecs
-            ));   
+        synchronized (this) {
+            if (super.getNativeHandle() == 0) {
+                acquireNativeHandle(socketOptionsNew(
+                        domain.getValue(),
+                        type.getValue(),
+                        connectTimeoutMs,
+                        keepAliveIntervalSecs,
+                        keepAliveTimeoutSecs
+                        ),
+                        SocketOptions::socketOptionsDestroy);
+            }
         }
         return super.getNativeHandle();
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees the native resources for this set of socket options
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            socketOptionsDestroy(getNativeHandle());
-        }
     }
 
     /*******************************************************************************

@@ -42,7 +42,7 @@
  */
 struct http_connection_manager_binding {
     JavaVM *jvm;
-    jweak java_http_conn_manager;
+    jobject java_shutdown_complete_callback;
     struct aws_http_connection_manager *manager;
 };
 
@@ -53,7 +53,7 @@ static void s_destroy_manager_binding(struct http_connection_manager_binding *bi
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (binding->java_http_conn_manager != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, binding->java_http_conn_manager);
+        (*env)->DeleteGlobalRef(env, binding->java_shutdown_complete_callback);
     }
 
     aws_mem_release(aws_jni_get_allocator(), binding);
@@ -65,13 +65,11 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
-    jobject java_http_conn_manager = (*env)->NewLocalRef(env, binding->java_http_conn_manager);
-    if (java_http_conn_manager != NULL) {
-        (*env)->CallVoidMethod(
-            env, java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
+    if (binding->java_shutdown_complete_callback != NULL) {
+        (*env)->CallBoolMethod(
+            env, binding->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
 
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-        (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
     // We're done with this wrapper, free it.
@@ -142,7 +140,7 @@ void aws_http_proxy_options_jni_clean_up(
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject conn_manager_jobject,
+    jobject java_shutdown_complete_callback,
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
@@ -211,7 +209,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct http_connection_manager_binding));
     AWS_FATAL_ASSERT(binding);
-    binding->java_http_conn_manager = (*env)->NewWeakGlobalRef(env, conn_manager_jobject);
+    binding->java_shutdown_complete_callback = (*env)->NewGlobalRef(env, java_shutdown_complete_callback);
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;

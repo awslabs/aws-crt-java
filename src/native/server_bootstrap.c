@@ -30,11 +30,8 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_ServerBootstrap_serverBootstrapNew(
     JNIEnv *env,
     jclass jni_class,
-    jobject jni_bootstrap,
     jlong jni_elg) {
     (void)jni_class;
-    /* we're going to need this at some point. Keep it here until we do. */
-    (void)jni_bootstrap;
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
 
     if (!elg) {

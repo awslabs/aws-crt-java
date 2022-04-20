@@ -5,11 +5,9 @@
 package software.amazon.awssdk.crt.io;
 
 import java.util.ArrayList;
-import java.util.IllegalFormatException;
 import java.util.List;
 
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.utils.PemUtils;
 import software.amazon.awssdk.crt.utils.StringUtils;
 
@@ -17,7 +15,7 @@ import software.amazon.awssdk.crt.utils.StringUtils;
  * This class wraps the aws_tls_connection_options from aws-c-io to provide
  * access to TLS configuration contexts in the AWS Common Runtime.
  */
-public final class TlsContextOptions extends CrtResource {
+public final class TlsContextOptions extends CleanableCrtResource {
 
     public enum TlsVersions {
         /**
@@ -121,27 +119,9 @@ public final class TlsContextOptions extends CrtResource {
                 pkcs12Password,
                 pkcs11Options,
                 windowsCertStorePath
-            ));
+            ), TlsContextOptions::tlsContextOptionsDestroy);
         }
         return super.getNativeHandle();
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
-
-    /**
-     * Frees the native resources associated with this instance
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        // It is perfectly acceptable for this to have never created a native resource
-        if (!isNull()) {
-            tlsContextOptionsDestroy(getNativeHandle());
-        }
     }
 
     /**
@@ -436,7 +416,6 @@ public final class TlsContextOptions extends CrtResource {
      * @return this
      */
     public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
-        swapReferenceTo(this.pkcs11Options, pkcs11Options);
         this.pkcs11Options = pkcs11Options;
         return this;
     }

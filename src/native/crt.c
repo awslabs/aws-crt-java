@@ -419,6 +419,29 @@ void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDe
 }
 
 JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CleanableCrtResource_waitForGlobalResourceDestruction(
+    JNIEnv *env,
+    jclass jni_crt_resource_class,
+    jint timeout_in_seconds) {
+    (void)env;
+    (void)jni_crt_resource_class;
+
+    aws_thread_set_managed_join_timeout_ns(
+        aws_timestamp_convert(timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+    aws_thread_join_all_managed();
+
+    if (g_memory_tracing) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_GENERAL,
+            "At shutdown, %u bytes remaining",
+            (uint32_t)aws_mem_tracer_bytes(aws_jni_get_allocator()));
+        if (g_memory_tracing > 1) {
+            aws_mem_tracer_dump(aws_jni_get_allocator());
+        }
+    }
+}
+
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_nativeCheckJniExceptionContract(
     JNIEnv *env,
     jclass jni_crt_class,

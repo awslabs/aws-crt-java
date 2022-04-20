@@ -29,8 +29,22 @@
 
 struct event_loop_group_cleanup_callback_data {
     JavaVM *jvm;
-    jobject java_event_loop_group;
+    jobject java_shutdown_completion_callback;
 };
+
+static void s_destroy_elg_callback_data(struct event_loop_group_cleanup_callback_data *callback_data) {
+    if (callback_data == NULL) {
+        return;
+    }
+
+    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    if (callback_data->java_shutdown_completion_callback) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_shutdown_completion_callback);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
 
 static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     struct event_loop_group_cleanup_callback_data *callback_data = user_data;
@@ -49,15 +63,13 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
     env = temp_env;
 #endif
-    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    // Remove the ref that was probably keeping the Java event loop group alive.
-    (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
+    if (callback_data->java_shutdown_completion_callback != NULL) {
+        (*env)->CallBoolMethod(env, callback_data->java_shutdown_completion_callback, completable_future_properties.complete_method_id, NULL);
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    }
 
-    // We're done with this callback data, free it.
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, callback_data);
+    s_destroy_elg_callback_data(callback_data);
 
     (*jvm)->DetachCurrentThread(jvm);
 }
@@ -66,7 +78,7 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(
     JNIEnv *env,
     jclass jni_elg,
-    jobject elg_jobject,
+    jobject java_shutdown_callback,
     jint num_threads) {
     (void)jni_elg;
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -82,6 +94,13 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
+    callback_data->java_shutdown_completion_callback = (*env)->NewGlobalRef(env, java_shutdown_callback);
+    if (callback_data->java_shutdown_completion_callback == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to bind reference to java shutdown future");
+        goto on_error;
+    }
+
     struct aws_shutdown_callback_options shutdown_options = {
         .shutdown_callback_fn = s_event_loop_group_cleanup_completion_callback,
         .shutdown_callback_user_data = callback_data,
@@ -91,17 +110,15 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed");
+            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to create event loop group");
         goto on_error;
     }
-
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
 
     return (jlong)elg;
 
 on_error:
 
-    aws_mem_release(allocator, callback_data);
+    s_destroy_elg_callback_data(callback_data);
 
     return (jlong)NULL;
 }
@@ -110,7 +127,7 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNewPinnedToCpuGroup(
     JNIEnv *env,
     jclass jni_elg,
-    jobject elg_jobject,
+    jobject java_shutdown_callback,
     jint cpu_group,
     jint num_threads) {
     (void)jni_elg;
@@ -136,17 +153,22 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         allocator, (uint16_t)num_threads, (uint16_t)cpu_group, &shutdown_options);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed");
+            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to create event loop group");
         goto on_error;
     }
 
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
+    callback_data->java_shutdown_completion_callback = (*env)->NewGlobalRef(env, java_shutdown_callback);
+    if (callback_data->java_shutdown_completion_callback == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to bind reference to java shutdown future");
+        goto on_error;
+    }
 
     return (jlong)elg;
 
 on_error:
 
-    aws_mem_release(allocator, callback_data);
+     s_destroy_elg_callback_data(callback_data);
 
     return (jlong)NULL;
 }

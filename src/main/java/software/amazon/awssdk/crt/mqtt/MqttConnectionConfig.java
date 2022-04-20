@@ -7,15 +7,13 @@ package software.amazon.awssdk.crt.mqtt;
 
 import java.util.function.Consumer;
 
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 
 /**
  * Encapsulates all per-mqtt-connection configuration
  */
-public final class MqttConnectionConfig extends CrtResource {
+public final class MqttConnectionConfig implements AutoCloseable {
     /* connection */
     private String endpoint;
     private int port;
@@ -46,20 +44,8 @@ public final class MqttConnectionConfig extends CrtResource {
 
     public MqttConnectionConfig() {}
 
-
-    /**
-     * Required override method that must begin the release process of the acquired native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {}
-
-    /**
-     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    /* Do nothing, we keep autocloseable for backwards compatibility, but it's not needed at all */
+    public void close() {}
 
     /**
      * Configures the connection-related callbacks for a connection
@@ -140,7 +126,6 @@ public final class MqttConnectionConfig extends CrtResource {
      * @param socketOptions The socket settings
      */
     public void setSocketOptions(SocketOptions socketOptions) {
-        swapReferenceTo(this.socketOptions, socketOptions);
         this.socketOptions = socketOptions;
     }
 
@@ -301,7 +286,6 @@ public final class MqttConnectionConfig extends CrtResource {
      * @param mqttClient the mqtt client to use
      */
     public void setMqttClient(MqttClient mqttClient) {
-        swapReferenceTo(this.mqttClient, mqttClient);
         this.mqttClient = mqttClient;
     }
 
@@ -541,9 +525,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
-                
-            // success, bump up the ref count so we can escape the try-with-resources block
-            clone.addRef();
+
             return clone;
         }
     }

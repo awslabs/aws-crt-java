@@ -1,7 +1,12 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.eventstream;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.nio.charset.StandardCharsets;
@@ -11,13 +16,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Java wrapper for event-stream-rpc client continuation.
  */
-public class ClientConnectionContinuation extends CrtResource {
+public class ClientConnectionContinuation extends CleanableCrtResource {
 
     /**
      * Package private invoked from JNI. Do not call directly.
      */
     ClientConnectionContinuation(long ptr) {
-        acquireNativeHandle(ptr);
+        acquireNativeHandle(ptr, (x)->releaseContinuation(x));
     }
 
     /**
@@ -134,18 +139,6 @@ public class ClientConnectionContinuation extends CrtResource {
         });
 
         return messageFlush;
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            releaseContinuation(getNativeHandle());
-        }
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
     }
 
     private static native int activateContinuation(long continuationPtr, ClientConnectionContinuation continuation, byte[] operationName, byte[] serialized_headers, byte[] payload, int message_type, int message_flags, MessageFlushCallback callback);

@@ -120,11 +120,10 @@ public class HttpHeader {
      * each string field is: [4-bytes BE] [variable length bytes specified by the
      * previous field]
      *
-     * [header name-value pairs]
-     * 
+     * @param headers List of header name-value pairs
+     *
      * @return encoded blob of headers
      */
-
     public static byte[] marshalHeadersForJni(List<HttpHeader> headers) {
         int size = 0;
 

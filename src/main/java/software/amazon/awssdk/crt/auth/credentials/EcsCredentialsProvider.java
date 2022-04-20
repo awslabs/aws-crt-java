@@ -93,20 +93,19 @@ public class EcsCredentialsProvider extends CredentialsProvider {
         Builder withTlsContext(TlsContext tlsContext);
 
         /**
-         * Host used to connect to the credential service.
-         * @param host the host name to use
+         * @param host Host used to connect to the credential service.
          * @return The current builder
          */
         Builder withHost(String host);
 
         /**
-         * The URL path and query used to connect to the credential service.
+         * @param pathAndQuery The URL path and query used to connect to the credential service.
          * @return The current builder
          */
         Builder withPathAndQuery(String pathAndQuery);
 
         /**
-         * Token used to retrieve credentials.
+         * @param authToken Token used to retrieve credentials.
          * @return The current builder
          */
         Builder withAuthToken(String authToken);

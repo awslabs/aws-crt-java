@@ -16,11 +16,13 @@ public class Uri {
     };
 
     /**
-     * Returns a concatanation of an encoded base, and the uri path encoding of a
+     * Returns a concatenation of an encoded base, and the URI path encoding of a
      * string. This is the modified version of rfc3986 used by sigv4 signing.
-     * 
+     *
      * @param encoded The encoded original path.
      * @param path    The path to be encoded and appended to the original path
+     *
+     * @return concatenation
      */
     public static String appendEncodingUriPath(String encoded, String path) {
         return new String(
@@ -29,22 +31,26 @@ public class Uri {
     }
 
     /**
-     * Returns the uri path encoding of a string. This is the modified version of
+     * Returns the URI path encoding of a string. This is the modified version of
      * rfc3986 used by sigv4 signing.
-     * 
-     * @param path The path to be encoded and appended to the original path
+     *
+     * @param path The path to be encoded
+     *
+     * @return encoded path
      */
     public static String encodeUriPath(String path) {
         return appendEncodingUriPath("", path);
     }
 
     /**
-     * Returns a concatanation of an encoded base, and the uri query param encoding
+     * Returns a concatenation of an encoded base, and the URI query param encoding
      * (passthrough alnum + '-' '_' '~' '.') of a UTF-8 string. For example, reading
      * "a b_c" would write "a%20b_c".
-     * 
+     *
      * @param encoded The encoded original param.
      * @param param   The param to be encoded and appended to the original param
+     *
+     * @return concatenation
      */
     public static String appendEncodingUriParam(String encoded, String param) {
         return new String(appendEncodingUriParam(encoded.getBytes(StandardCharsets.UTF_8),
@@ -52,22 +58,26 @@ public class Uri {
     }
 
     /**
-     * Returns the uri query param encoding (passthrough alnum + '-' '_' '~' '.') of
+     * Returns the URI query param encoding (passthrough alnum + '-' '_' '~' '.') of
      * a UTF-8 string. For example, reading "a b_c" would write "a%20b_c".
-     * 
+     *
      * @param param The param to be encoded and appended to the original param
+     *
+     * @return encoded param
      */
     public static String encodeUriParam(String param) {
         return appendEncodingUriParam("", param);
     }
 
     /**
-     * Returns a concatanation of a decoded base, and the uri decoding of a UTF-8
+     * Returns a concatenation of a decoded base, and the URI decoding of a UTF-8
      * string, replacing %xx escapes by their single byte equivalent. For example,
      * reading "a%20b_c" would write "a b_c".
-     * 
-     * @param base    The decoded base uri.
-     * @param encoded The encoded uri to be decoded and appended to the base uri.
+     *
+     * @param base    The decoded base URI.
+     * @param encoded The encoded URI to be decoded and appended to the base URI.
+     *
+     * @return concatenation
      */
     public static String appendDecodingUri(String base, String encoded) {
         return new String(
@@ -76,10 +86,12 @@ public class Uri {
     }
 
     /**
-     * Returns the uri decoding of a UTF-8 string, replacing %xx escapes by their
+     * Returns the URI decoding of a UTF-8 string, replacing %xx escapes by their
      * single byte equivalent. For example, reading "a%20b_c" would write "a b_c".
-     * 
-     * @param encoded The encoded uri to be decoded and appended to the base uri.
+     *
+     * @param encoded The encoded URI to be decoded.
+     *
+     * @return decoded URI
      */
     public static String decodeUri(String encoded) {
         return appendDecodingUri("", encoded);

@@ -16,7 +16,6 @@ public class HostResolver extends CrtResource {
     /**
      *
      * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
-     * @throws CrtRuntimeException
      */
     public HostResolver(EventLoopGroup elg) throws CrtRuntimeException {
         this(elg, DEFAULT_MAX_ENTRIES);
@@ -25,8 +24,7 @@ public class HostResolver extends CrtResource {
     /**
      *
      * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
-     * @param maxEntries maximum size of the name -> address mapping cache
-     * @throws CrtRuntimeException
+     * @param maxEntries maximum size of the name to address mapping cache
      */
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
         acquireNativeHandle(hostResolverNew(elg.getNativeHandle(), maxEntries));

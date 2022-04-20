@@ -231,6 +231,10 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_is
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
+    if (connection == NULL) {
+        return false;
+    }
+
     return aws_event_stream_rpc_client_connection_is_open(connection);
 }
 
@@ -245,6 +249,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_closeC
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_client_connection_close(connection, error_code);
 }
 
@@ -258,6 +266,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_acquir
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_client_connection_acquire(connection);
 }
 
@@ -271,6 +283,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_releas
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_client_connection_release(connection);
 }
 

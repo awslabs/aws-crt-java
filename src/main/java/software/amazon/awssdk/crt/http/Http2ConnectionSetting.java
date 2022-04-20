@@ -51,7 +51,7 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * @exclude Marshals a list of settings into an array for Jni to deal with.
+     * @hidden Marshals a list of settings into an array for Jni to deal with.
      *
      * @param settings list of headers to write to the headers block
      * @return a long[] that with the [id, value, id, value, *]

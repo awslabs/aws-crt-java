@@ -202,8 +202,9 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * If called, HTTP2 connection will be made by connection manager with ALPN (h2;http/1.1) when TLS is used.
+     * Set the expected protocol version of the connection to be made, default is HTTP/1.1
      *
+     * @param expectedHttpVersion The expected protocol version of the connection made
      * @return this
      */
     public HttpClientConnectionManagerOptions withExpectedHttpVersion(HttpVersion expectedHttpVersion) {

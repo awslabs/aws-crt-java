@@ -38,9 +38,11 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * HTTP/2 connection settings.
+     * HTTP/2 connection setting.
      *
-     * value is limited from 0 to UINT32_MAX (RFC-7540 6.5.1)
+     * @param id    Predefined settings identifiers (RFC-7540 6.5.2).
+     * @param value The value of the setting, limited from 0 to UINT32_MAX (RFC-7540
+     *              6.5.1)
      */
     public Http2ConnectionSetting(ID id, long value) {
         if (value > 4294967296L || value < 0) {

@@ -203,7 +203,6 @@ public class HttpClientConnectionManagerOptions {
 
     /**
      * If called, HTTP2 connection will be made by connection manager with ALPN (h2;http/1.1) when TLS is used.
-     * @TODO: When TLS is not used, HTTP2 connection will be made with prior knowledge
      *
      * @return this
      */

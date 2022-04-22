@@ -49,6 +49,33 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
     env = temp_env;
 #endif
+
+    if (env == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> ENV is NULL\n");
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> ENV is not null\n");
+    }
+    if (jni == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> ENV is NULL\n");
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> ENV is not null\n");
+    }
+    if (callback_data == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data is NULL\n");
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data is not null\n");
+    }
+    if (callback_data->java_event_loop_group == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NULL\n");
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is not null\n");
+    }
+    if (event_loop_group_properties.onCleanupComplete == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is NULL\n");
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is not null\n");
+    }
+
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 

@@ -55,10 +55,10 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     } else {
         fprintf(stdout, "\n>>>>>>>>>> ENV is not null\n");
     }
-    if (jni == NULL) {
-        fprintf(stdout, "\n>>>>>>>>>> ENV is NULL\n");
+    if (jvm == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> JVM is NULL\n");
     } else {
-        fprintf(stdout, "\n>>>>>>>>>> ENV is not null\n");
+        fprintf(stdout, "\n>>>>>>>>>> JVM is not null\n");
     }
     if (callback_data == NULL) {
         fprintf(stdout, "\n>>>>>>>>>> callback_data is NULL\n");
@@ -76,6 +76,21 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
         fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is not null\n");
     }
     fflush(stdout);
+
+    // Reference: See https://stackoverflow.com/questions/2346615/jni-how-can-i-check-if-jobject-is-a-null-object-in-native-c-code
+    // Before we call, see if the EventLoopGroup is valid by checking against weak global references (and should catch normal null)
+    if ( (*env)->IsSameObject(env, callback_data->java_event_loop_group, NULL) == true ) {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NULL according to IsSameObject. Skipping clean up...\n");
+        return;
+    } else {
+        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NOT null (via IsSameObject)...\n");
+
+        // Just double check and skip if null - not ideal but if it solves the issue it would help narrow it down.
+        if (callback_data->java_event_loop_group == NULL) {
+            fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NULL according to NULL check. Skipping clean up...\n");
+            return;
+        }
+    }
 
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));

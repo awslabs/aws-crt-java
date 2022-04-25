@@ -75,6 +75,7 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     } else {
         fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is not null\n");
     }
+    fflush(stdout);
 
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));

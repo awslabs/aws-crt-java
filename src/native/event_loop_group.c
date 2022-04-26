@@ -40,26 +40,36 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     // Tell the Java event loop group that cleanup is done.  This lets it release its references.
     JavaVM *jvm = callback_data->jvm;
     JNIEnv *env = NULL;
+
+    // Check if JVM is null
+    if (jvm == NULL) {
+        fprintf(stdout, "\n>>>>>>>>>> JVM is NULL. Skipping clean up\n");
+        fflush(stdout);
+        return;
+    }
+
     /* fetch the env manually, rather than through the helper which will install an exit callback */
 #ifdef ANDROID
-    (*jvm)->AttachCurrentThread(jvm, &env, NULL);
+    int attach_status = (*jvm)->AttachCurrentThread(jvm, &env, NULL);
 #else
     /* awkward temp to get around gcc 4.1 strict aliasing incorrect warnings */
     void *temp_env = NULL;
-    (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
+    int attach_status = (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
     env = temp_env;
 #endif
 
+    if (attach_status != JNI_OK) {
+        fprintf(stdout, "\n>>>>>>>>>> JNI attach was not OK! Skipping clean up\n");
+        fflush(stdout);
+        return;
+    }
     if (env == NULL) {
-        fprintf(stdout, "\n>>>>>>>>>> ENV is NULL\n");
-    } else {
-        fprintf(stdout, "\n>>>>>>>>>> ENV is not null\n");
+        fprintf(stdout, "\n>>>>>>>>>> ENV is NULL! Skipping clean up");
+        fflush(stdout);
+        return;
     }
-    if (jvm == NULL) {
-        fprintf(stdout, "\n>>>>>>>>>> JVM is NULL\n");
-    } else {
-        fprintf(stdout, "\n>>>>>>>>>> JVM is not null\n");
-    }
+
+    // Some other info, may be helpful
     if (callback_data == NULL) {
         fprintf(stdout, "\n>>>>>>>>>> callback_data is NULL\n");
     } else {
@@ -74,22 +84,6 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
         fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is NULL\n");
     } else {
         fprintf(stdout, "\n>>>>>>>>>> event_loop_group_properties.onCleanupComplete is not null\n");
-    }
-    fflush(stdout);
-
-    // Reference: See https://stackoverflow.com/questions/2346615/jni-how-can-i-check-if-jobject-is-a-null-object-in-native-c-code
-    // Before we call, see if the EventLoopGroup is valid by checking against weak global references (and should catch normal null)
-    if ( (*env)->IsSameObject(env, callback_data->java_event_loop_group, NULL) == true ) {
-        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NULL according to IsSameObject. Skipping clean up...\n");
-        return;
-    } else {
-        fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NOT null (via IsSameObject)...\n");
-
-        // Just double check and skip if null - not ideal but if it solves the issue it would help narrow it down.
-        if (callback_data->java_event_loop_group == NULL) {
-            fprintf(stdout, "\n>>>>>>>>>> callback_data->java_event_loop_group is NULL according to NULL check. Skipping clean up...\n");
-            return;
-        }
     }
 
     (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);

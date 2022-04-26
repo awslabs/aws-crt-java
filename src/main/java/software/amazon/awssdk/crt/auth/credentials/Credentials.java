@@ -20,7 +20,6 @@ public class Credentials {
     public Credentials() {}
 
     /**
-     * Constructor
      * @param accessKeyId - access key id to use
      * @param secretAccessKey - secret access key to use
      * @param sessionToken - (optional) session token to use
@@ -32,17 +31,17 @@ public class Credentials {
     }
 
     /**
-     * gets the access key id of the credentials
+     * @return the access key id of the credentials
      */
     public byte[] getAccessKeyId() { return accessKeyId; }
 
     /**
-     * gets the secret access key of the credentials
+     * @return the secret access key of the credentials
      */
     public byte[] getSecretAccessKey() { return secretAccessKey; }
 
     /**
-     * gets the session token of the credentials
+     * @return the session token of the credentials
      */
     public byte[] getSessionToken() { return sessionToken; }
 }

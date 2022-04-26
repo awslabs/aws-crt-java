@@ -8,6 +8,7 @@ public interface DelegateCredentialsHandler {
     /**
      * Called from Native when delegate credential provider needs to fetch a
      * credential.
+     * @return Credentials
      */
     Credentials getCredentials();
 }

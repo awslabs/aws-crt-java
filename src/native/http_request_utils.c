@@ -41,6 +41,11 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
         }
 
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        if (env == NULL) {
+            /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+
         if (!(*env)->CallBooleanMethod(
                 env, impl->http_request_body_stream, http_request_body_stream_properties.reset_position)) {
             result = AWS_OP_ERR;
@@ -76,6 +81,10 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     }
 
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
 
     size_t out_remaining = dest->capacity - dest->len;
 
@@ -113,6 +122,11 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
 
     if (impl->http_request_body_stream != NULL) {
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        if (env == NULL) {
+            /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+
         *length =
             (*env)->CallLongMethod(env, impl->http_request_body_stream, http_request_body_stream_properties.get_length);
 
@@ -127,6 +141,10 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
 
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     if (impl->http_request_body_stream != NULL) {
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);

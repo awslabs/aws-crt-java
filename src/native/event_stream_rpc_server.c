@@ -88,6 +88,10 @@ static void s_server_listener_shutdown_complete(
     struct shutdown_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
     if (java_server_listener) {
@@ -130,6 +134,10 @@ static void s_stream_continuation_fn(
     struct continuation_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
@@ -157,6 +165,10 @@ static void s_stream_continuation_closed_fn(
     struct continuation_callback_data *continuation_callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->CallVoidMethod(
         env,
@@ -180,6 +192,10 @@ static int s_on_incoming_stream_fn(
     jobject java_continuation = NULL;
     jobject java_continuation_handler = NULL;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
 
     struct continuation_callback_data *continuation_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct continuation_callback_data));
@@ -262,6 +278,10 @@ static void s_connection_protocol_message_fn(
 
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
@@ -292,6 +312,10 @@ static int s_on_new_connection_fn(
     struct shutdown_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
 
     jobject java_server_connection = NULL;
     jobject java_connection_handler = NULL;
@@ -371,6 +395,11 @@ static void s_on_connection_shutdown_fn(
     struct connection_callback_data *callback_data = aws_event_stream_rpc_server_connection_get_user_data(connection);
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     jobject java_listener_handler = (*env)->NewLocalRef(env, callback_data->java_listener_handler);
     jobject java_server_connection = (*env)->NewLocalRef(env, callback_data->java_server_connection);
 
@@ -608,6 +637,11 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
     aws_jni_check_and_clear_exception(env);

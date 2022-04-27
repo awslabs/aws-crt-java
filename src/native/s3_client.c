@@ -366,8 +366,9 @@ static void s_on_s3_meta_request_progress_callback(
                 "id=%p: Ignored Exception from S3MetaRequest.onProgress callback",
                 (void *)meta_request);
         }
-        (*env)->DeleteLocalRef(env, progress_object);
     }
+
+    (*env)->DeleteLocalRef(env, progress_object);
 }
 
 static void s_s3_meta_request_callback_cleanup(

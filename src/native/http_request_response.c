@@ -153,6 +153,10 @@ static int s_on_incoming_header_block_done_fn(
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    if (env == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
     jint jni_block_type = block_type;
 
     jobject jni_headers_buf =
@@ -196,6 +200,10 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
     size_t total_window_increment = 0;
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    if (env == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
     jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, data->ptr, data->len);
 
     jint window_increment = (*env)->CallIntMethod(
@@ -230,6 +238,9 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    if (env == NULL) {
+        return;
+    }
 
     /* Don't invoke Java callbacks if Java HttpStream failed to completely setup */
     jint jErrorCode = error_code;
@@ -378,6 +389,10 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
     struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    if (env == NULL) {
+        return;
+    }
+
     (*env)->CallVoidMethod(
         env,
         chunked_callback_data->completion_callback,

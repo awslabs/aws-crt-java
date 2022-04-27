@@ -41,6 +41,10 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
     }
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     if (callback_data->java_connection_handler) {
         (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
@@ -56,6 +60,10 @@ static void s_on_connection_setup(
     (void)connection;
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->CallVoidMethod(
         env,
@@ -81,6 +89,10 @@ static void s_on_connection_shutdown(
 
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->CallVoidMethod(
         env,
@@ -100,6 +112,11 @@ static void s_connection_protocol_message(
 
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
 
@@ -311,6 +328,11 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
     aws_jni_check_and_clear_exception(env);
@@ -410,6 +432,11 @@ static void s_stream_continuation(
     struct continuation_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
 
@@ -437,6 +464,10 @@ static void s_stream_continuation_closed(
     (void)token;
     struct continuation_callback_data *continuation_callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->CallVoidMethod(
         env,

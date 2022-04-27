@@ -716,8 +716,12 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     if (java_credentials != NULL) {
-        (*env)->DeleteLocalRef(env, access_key_id);
-        (*env)->DeleteLocalRef(env, secret_access_key);
+        if (access_key_id) {
+            (*env)->DeleteLocalRef(env, access_key_id);
+        }
+        if (secret_access_key) {
+            (*env)->DeleteLocalRef(env, secret_access_key);
+        }
         if (session_token) {
             (*env)->DeleteLocalRef(env, session_token);
         }

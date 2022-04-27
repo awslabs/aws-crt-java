@@ -78,9 +78,9 @@ public class CredentialsProvider extends CrtResource {
     }
 
     /**
-     * returns the future that completes when all of this object's native resources have shut down or released
+     * Learn when this object has finished shutting down.
+     * @return future that completes when all of this object's native resources have shut down or released
      * properly.
-     * @return
      */
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 

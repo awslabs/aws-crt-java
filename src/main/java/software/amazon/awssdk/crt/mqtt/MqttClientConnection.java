@@ -77,8 +77,9 @@ public class MqttClientConnection extends CrtResource {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
 
-            if(config.getMinReconnectTimeoutSecs() != 0L) {
-                mqttClientConnectionSetReconnectTimeout(getNativeHandle(), config.getMinReconnectTimeoutSecs(), config.getMaxReconnectTimeoutSecs());
+            if (config.getMinReconnectTimeoutSecs() != 0L && config.getMaxReconnectTimeoutSecs() != 0L) {
+                mqttClientConnectionSetReconnectTimeout(getNativeHandle(), config.getMinReconnectTimeoutSecs(),
+                        config.getMaxReconnectTimeoutSecs());
             }
 
             MqttMessage message = config.getWillMessage();
@@ -179,7 +180,7 @@ public class MqttClientConnection extends CrtResource {
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
 
-        short port = (short)config.getPort();
+        short port = (short) config.getPort();
         if (port > Short.MAX_VALUE || port <= 0) {
             throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
         }
@@ -321,7 +322,8 @@ public class MqttClientConnection extends CrtResource {
     private void onWebsocketHandshake(HttpRequest handshakeRequest, long nativeUserData) {
         CompletableFuture<HttpRequest> future = new CompletableFuture<>();
         future.whenComplete((x, throwable) -> {
-            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x != null ? x.marshalForJni() : null, throwable, nativeUserData);
+            mqttClientConnectionWebsocketHandshakeComplete(getNativeHandle(), x != null ? x.marshalForJni() : null,
+                    throwable, nativeUserData);
         });
 
         WebsocketHandshakeTransformArgs args = new WebsocketHandshakeTransformArgs(this, handshakeRequest, future);
@@ -365,20 +367,22 @@ public class MqttClientConnection extends CrtResource {
     private static native void mqttClientConnectionSetLogin(long connection, String username, String password)
             throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionSetReconnectTimeout(long connection, long minTimeout, long maxTimeout)
+    private static native void mqttClientConnectionSetReconnectTimeout(long connection, long minTimeout,
+            long maxTimeout)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionUseWebsockets(long connection) throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, byte[] marshalledRequest, Throwable throwable,
+    private static native void mqttClientConnectionWebsocketHandshakeComplete(long connection, byte[] marshalledRequest,
+            Throwable throwable,
             long nativeUserData) throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetHttpProxyOptions(long connection,
-                                                                    int proxyConnectionType,
-                                                                    String proxyHost,
-                                                                    int proxyPort,
-                                                                    long proxyTlsContext,
-                                                                    int proxyAuthorizationType,
-                                                                    String proxyAuthorizationUsername,
-                                                                    String proxyAuthorizationPassword) throws CrtRuntimeException;
+            int proxyConnectionType,
+            String proxyHost,
+            int proxyPort,
+            long proxyTlsContext,
+            int proxyAuthorizationType,
+            String proxyAuthorizationUsername,
+            String proxyAuthorizationPassword) throws CrtRuntimeException;
 };

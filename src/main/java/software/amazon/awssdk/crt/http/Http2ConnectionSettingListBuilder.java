@@ -16,7 +16,7 @@ public class Http2ConnectionSettingListBuilder {
         this.settings = new ArrayList<Http2ConnectionSetting>();
     }
 
-    public Http2ConnectionSettingListBuilder addSetting(Http2ConnectionSetting setting) throws Exception {
+    public Http2ConnectionSettingListBuilder addSetting(Http2ConnectionSetting setting) {
         settings.add(setting);
         return this;
     }
@@ -30,7 +30,7 @@ public class Http2ConnectionSettingListBuilder {
      *                        (in octets)
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder headerTableSize(long headerTableSize) throws Exception {
+    public Http2ConnectionSettingListBuilder headerTableSize(long headerTableSize) {
         settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.HEADER_TABLE_SIZE, headerTableSize));
         return this;
     }
@@ -41,7 +41,7 @@ public class Http2ConnectionSettingListBuilder {
      * @param push enable server push or not.
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder enablePush(boolean push) throws Exception {
+    public Http2ConnectionSettingListBuilder enablePush(boolean push) {
         settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, push ? 1 : 0));
         return this;
     }
@@ -53,7 +53,7 @@ public class Http2ConnectionSettingListBuilder {
      * @param maxConcurrentStreams The maximum number of concurrent streams
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder maxConcurrentStreams(long maxConcurrentStreams) throws Exception {
+    public Http2ConnectionSettingListBuilder maxConcurrentStreams(long maxConcurrentStreams) {
         settings.add(
                 new Http2ConnectionSetting(Http2ConnectionSetting.ID.MAX_CONCURRENT_STREAMS, maxConcurrentStreams));
         return this;
@@ -67,7 +67,7 @@ public class Http2ConnectionSettingListBuilder {
      * @param initialWindowSize initial window size (in octets)
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder initialWindowSize(long initialWindowSize) throws Exception {
+    public Http2ConnectionSettingListBuilder initialWindowSize(long initialWindowSize) {
         settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.INITIAL_WINDOW_SIZE, initialWindowSize));
         return this;
     }
@@ -79,7 +79,7 @@ public class Http2ConnectionSettingListBuilder {
      * @param maxFrameSize the size of the largest frame payload (in octets)
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder maxFrameSize(long maxFrameSize) throws Exception {
+    public Http2ConnectionSettingListBuilder maxFrameSize(long maxFrameSize) {
         settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.MAX_FRAME_SIZE, maxFrameSize));
         return this;
     }
@@ -94,7 +94,7 @@ public class Http2ConnectionSettingListBuilder {
      * @param maxHeaderListSize the maximum size of header list (in octets)
      * @return {@link Http2ConnectionSettingListBuilder}
      */
-    public Http2ConnectionSettingListBuilder maxHeaderListSize(long maxHeaderListSize) throws Exception {
+    public Http2ConnectionSettingListBuilder maxHeaderListSize(long maxHeaderListSize) {
         settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.MAX_HEADER_LIST_SIZE, maxHeaderListSize));
         return this;
     }

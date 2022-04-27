@@ -71,4 +71,13 @@ public class Http2ConnectionSetting {
 
         return marshalledSettings;
     }
+
+    /**
+     * Helper to build a List<Http2ConnectionSetting>
+     *
+     * @return
+     */
+    public static Http2ConnectionSettingListBuilder builder() {
+        return new Http2ConnectionSettingListBuilder();
+    }
 }

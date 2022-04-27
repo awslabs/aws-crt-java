@@ -48,6 +48,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

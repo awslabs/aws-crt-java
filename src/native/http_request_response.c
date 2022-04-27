@@ -154,6 +154,7 @@ static int s_on_incoming_header_block_done_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -201,6 +202,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -239,6 +241,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -363,6 +366,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
 
     JNIEnv *env = aws_jni_get_thread_env(chunked_callback_data->stream_cb_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

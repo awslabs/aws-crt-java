@@ -39,6 +39,7 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
 
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
         if (env == NULL) {
+            /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
 
@@ -77,6 +78,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
 
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -115,6 +117,7 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
     if (impl->http_request_body_stream != NULL) {
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
         if (env == NULL) {
+            /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
 
@@ -134,6 +137,7 @@ static void s_aws_input_stream_destroy(struct aws_input_stream *stream) {
     struct aws_http_request_body_stream_impl *impl = stream->impl;
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

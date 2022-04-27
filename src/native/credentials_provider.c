@@ -58,6 +58,7 @@ static void s_on_shutdown_complete(void *user_data) {
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -527,6 +528,7 @@ static int s_credentials_provider_delegate_get_credentials(
     int return_value = AWS_OP_ERR;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -654,6 +656,7 @@ struct aws_credentials_provider_get_credentials_callback_data {
 static void s_cp_callback_data_clean_up(struct aws_credentials_provider_get_credentials_callback_data *callback_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -673,6 +676,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

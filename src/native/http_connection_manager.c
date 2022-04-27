@@ -53,6 +53,7 @@ static void s_destroy_manager_binding(struct http_connection_manager_binding *bi
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -68,6 +69,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     struct http_connection_manager_binding *binding = (struct http_connection_manager_binding *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -332,6 +334,7 @@ static void s_destroy_connection_binding(struct aws_http_connection_binding *bin
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -355,6 +358,7 @@ static void s_on_http_conn_acquisition_callback(
     binding->connection = connection;
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

@@ -89,6 +89,7 @@ static void s_server_listener_shutdown_complete(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -134,6 +135,7 @@ static void s_stream_continuation_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -164,6 +166,7 @@ static void s_stream_continuation_closed_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -190,6 +193,7 @@ static int s_on_incoming_stream_fn(
     jobject java_continuation_handler = NULL;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -275,6 +279,7 @@ static void s_connection_protocol_message_fn(
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -308,6 +313,7 @@ static int s_on_new_connection_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -390,6 +396,7 @@ static void s_on_connection_shutdown_fn(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -631,6 +638,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

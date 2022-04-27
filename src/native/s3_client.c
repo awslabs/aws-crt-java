@@ -165,6 +165,7 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -201,6 +202,7 @@ static int s_on_s3_meta_request_body_callback(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -244,6 +246,7 @@ static int s_on_s3_meta_request_headers_callback(
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -308,6 +311,7 @@ static void s_on_s3_meta_request_finish_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -348,6 +352,7 @@ static void s_on_s3_meta_request_progress_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -501,6 +506,7 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

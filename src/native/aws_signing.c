@@ -55,6 +55,7 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
@@ -215,6 +216,7 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         goto done;
     }
 
@@ -248,6 +250,7 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         goto done;
     }
 
@@ -276,6 +279,7 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return false;
     }
 

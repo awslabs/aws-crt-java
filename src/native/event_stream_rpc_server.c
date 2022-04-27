@@ -192,7 +192,7 @@ static int s_on_incoming_stream_fn(
     if (env == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
-  
+
     struct continuation_callback_data *continuation_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct continuation_callback_data));
 

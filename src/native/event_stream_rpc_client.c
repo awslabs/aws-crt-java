@@ -90,6 +90,7 @@ static void s_on_connection_shutdown(
     struct connection_callback_data *callback_data = user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
     if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 

@@ -73,9 +73,9 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * Helper to build a List<Http2ConnectionSetting>
+     * Helper to build a List of Http2ConnectionSetting
      *
-     * @return
+     * @return {@link Http2ConnectionSettingListBuilder}
      */
     public static Http2ConnectionSettingListBuilder builder() {
         return new Http2ConnectionSettingListBuilder();

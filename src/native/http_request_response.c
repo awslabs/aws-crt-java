@@ -248,33 +248,6 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
     http_stream_callback_destroy(env, callback);
 }
 
-jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_headers *headers) {
-    (void)headers;
-    jobjectArray ret;
-    const size_t header_count = aws_http_headers_count(headers);
-
-    ret = (jobjectArray)(*env)->NewObjectArray(
-        env, (jsize)header_count, http_header_properties.http_header_class, (void *)NULL);
-
-    for (size_t index = 0; index < header_count; index += 1) {
-        struct aws_http_header header;
-        aws_http_headers_get_index(headers, index, &header);
-        jbyteArray header_name = aws_jni_byte_array_from_cursor(env, &header.name);
-        jbyteArray header_value = aws_jni_byte_array_from_cursor(env, &header.value);
-
-        jobject java_http_header = (*env)->NewObject(
-            env,
-            http_header_properties.http_header_class,
-            http_header_properties.constructor_method_id,
-            header_name,
-            header_value);
-
-        (*env)->SetObjectArrayElement(env, ret, (jsize)index, java_http_header);
-    }
-
-    return (ret);
-}
-
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
     JNIEnv *env,
     jclass jni_class,

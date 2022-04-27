@@ -52,10 +52,6 @@ public class ServerListener extends CrtResource {
     protected void releaseNativeHandle() {
         if (!isNull()) {
             release(getNativeHandle());
-            removeReferenceTo(serverBootstrap);
-            if (tlsContext != null) {
-                removeReferenceTo(tlsContext);
-            }
         }
     }
 

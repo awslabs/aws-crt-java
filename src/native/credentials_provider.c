@@ -32,7 +32,7 @@
 struct aws_credentials_provider_callback_data {
     JavaVM *jvm;
     struct aws_credentials_provider *provider;
-    jweak java_crt_credentials_provider;
+    jweak java_shutdown_complete_future;
 
     jobject jni_delegate_credential_handler;
 };
@@ -42,7 +42,7 @@ static void s_callback_data_clean_up(
     struct aws_allocator *allocator,
     struct aws_credentials_provider_callback_data *callback_data) {
 
-    (*env)->DeleteWeakGlobalRef(env, callback_data->java_crt_credentials_provider);
+    (*env)->DeleteWeakGlobalRef(env, callback_data->java_shutdown_complete_future);
     if (callback_data->jni_delegate_credential_handler != NULL) {
         (*env)->DeleteGlobalRef(env, callback_data->jni_delegate_credential_handler);
     }
@@ -58,12 +58,12 @@ static void s_on_shutdown_complete(void *user_data) {
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject java_crt_credentials_provider = (*env)->NewLocalRef(env, callback_data->java_crt_credentials_provider);
-    if (java_crt_credentials_provider != NULL) {
-        (*env)->CallVoidMethod(
-            env, java_crt_credentials_provider, credentials_provider_properties.on_shutdown_complete_method_id);
+    jobject java_shutdown_complete_future = (*env)->NewLocalRef(env, callback_data->java_shutdown_complete_future);
+    if (java_shutdown_complete_future != NULL) {
+        (*env)->CallBooleanMethod(
+            env, java_shutdown_complete_future, completable_future_properties.complete_method_id, NULL);
 
-        (*env)->DeleteLocalRef(env, java_crt_credentials_provider);
+        (*env)->DeleteLocalRef(env, java_shutdown_complete_future);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
@@ -76,10 +76,10 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_StaticCredentialsProvider_staticCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jbyteArray access_key_id,
         jbyteArray secret_access_key,
-        jbyteArray session_token) {
+        jbyteArray session_token,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
 
@@ -87,7 +87,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -124,8 +124,8 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_DefaultChainCredentialsProvider_defaultChainCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
-        jlong bootstrapHandle) {
+        jlong bootstrapHandle,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -133,7 +133,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -159,12 +159,12 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_ProfileCredentialsProvider_profileCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jlong bootstrapHandle,
         jlong tls_context_handle,
         jbyteArray profile_name_override,
         jbyteArray config_file_name_override,
-        jbyteArray credentials_file_name_override) {
+        jbyteArray credentials_file_name_override,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -172,7 +172,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -225,12 +225,12 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_EcsCredentialsProvider_ecsCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jlong bootstrapHandle,
         jlong tls_context_handle,
         jbyteArray host,
         jbyteArray path_and_query,
-        jbyteArray auth_token) {
+        jbyteArray auth_token,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -238,7 +238,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -289,13 +289,13 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_StsCredentialsProvider_stsCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jlong bootstrapHandle,
         jlong tls_context_handle,
         jlong creds_provider,
         jbyteArray role_arn,
         jbyteArray session_name,
-        jlong duration_seconds) {
+        jlong duration_seconds,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -303,7 +303,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -351,9 +351,9 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_StsWebIdentityCredentialsProvider_stsWebIdentityCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jlong bootstrapHandle,
-        jlong tls_context_handle) {
+        jlong tls_context_handle,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -361,7 +361,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -388,7 +388,6 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_X509CredentialsProvider_x509CredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
         jlong bootstrap_handle,
         jlong tls_context_handle,
         jbyteArray thing_name,
@@ -400,7 +399,8 @@ JNIEXPORT jlong JNICALL
         jlong jni_proxy_tls_context,
         jint jni_proxy_authorization_type,
         jbyteArray jni_proxy_authorization_username,
-        jbyteArray jni_proxy_authorization_password) {
+        jbyteArray jni_proxy_authorization_password,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -408,7 +408,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -472,9 +472,9 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_CachedCredentialsProvider_cachedCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
+        jlong native_cached_provider,
         jint cached_duration_in_seconds,
-        jlong native_cached_provider) {
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
 
@@ -488,7 +488,7 @@ JNIEXPORT jlong JNICALL
 
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -584,8 +584,8 @@ JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_auth_credentials_DelegateCredentialsProvider_delegateCredentialsProviderNew(
         JNIEnv *env,
         jclass jni_class,
-        jobject java_crt_credentials_provider,
-        jobject jni_delegate_credential_handler) {
+        jobject jni_delegate_credential_handler,
+        jobject java_shutdown_complete_future) {
 
     (void)jni_class;
     (void)env;
@@ -593,7 +593,7 @@ JNIEXPORT jlong JNICALL
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, java_crt_credentials_provider);
+    callback_data->java_shutdown_complete_future = (*env)->NewWeakGlobalRef(env, java_shutdown_complete_future);
     callback_data->jni_delegate_credential_handler = (*env)->NewGlobalRef(env, jni_delegate_credential_handler);
 
     struct aws_credentials_provider_delegate_options options = {
@@ -621,14 +621,13 @@ JNIEXPORT jlong JNICALL
 }
 
 JNIEXPORT
-void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderDestroy(
+void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderRelease(
     JNIEnv *env,
-    jclass jni_cp,
-    jobject cp_object,
-    jlong cp_addr) {
-    (void)jni_cp;
-    (void)cp_object;
-    struct aws_credentials_provider *provider = (struct aws_credentials_provider *)cp_addr;
+    jclass jni_credentials_provider_class,
+    jlong credentials_provider_handle) {
+    (void)jni_credentials_provider_class;
+
+    struct aws_credentials_provider *provider = (struct aws_credentials_provider *)credentials_provider_handle;
     if (!provider) {
         aws_jni_throw_runtime_exception(
             env, "CredentialsProvider.credentialsProviderDestroy: instance should be non-null at destruction time");
@@ -641,19 +640,70 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
 struct aws_credentials_provider_get_credentials_callback_data {
     JavaVM *jvm;
     struct aws_credentials_provider *provider;
-    jobject java_crt_credentials_provider;
     jobject java_credentials_future;
 };
 
-static void s_cp_callback_data_clean_up(struct aws_credentials_provider_get_credentials_callback_data *callback_data) {
+static void s_provider_callback_data_clean_up(
+    struct aws_credentials_provider_get_credentials_callback_data *callback_data) {
+    if (callback_data == NULL) {
+        return;
+    }
+
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-    (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
     (*env)->DeleteGlobalRef(env, callback_data->java_credentials_future);
 
     aws_credentials_provider_release(callback_data->provider);
 
     // We're done with this callback data, free it.
     aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static void s_complete_get_credentials_exceptionally(
+    JNIEnv *env,
+    struct aws_credentials_provider_get_credentials_callback_data *callback_data,
+    int error_code) {
+
+    if (error_code == AWS_ERROR_SUCCESS) {
+        error_code = AWS_ERROR_UNKNOWN;
+    }
+
+    jint jni_error_code = error_code;
+    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
+    jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
+    AWS_FATAL_ASSERT(jni_error_string);
+
+    jobject crt_exception = (*env)->NewObject(
+        env,
+        crt_runtime_exception_properties.crt_runtime_exception_class,
+        crt_runtime_exception_properties.constructor_method_id,
+        jni_error_code,
+        jni_error_string);
+    AWS_FATAL_ASSERT(crt_exception);
+
+    struct aws_byte_cursor credential_error_cursor =
+        aws_byte_cursor_from_c_str("Failed to get a valid set of credentials");
+    jstring credential_error_string = aws_jni_string_from_cursor(env, &credential_error_cursor);
+    AWS_FATAL_ASSERT(credential_error_string);
+
+    jobject get_credentials_exception = (*env)->NewObject(
+        env,
+        runtime_exception_properties.runtime_exception_class,
+        runtime_exception_properties.constructor_method_id,
+        credential_error_string,
+        crt_exception);
+    AWS_FATAL_ASSERT(get_credentials_exception);
+
+    (*env)->CallBooleanMethod(
+        env,
+        callback_data->java_credentials_future,
+        completable_future_properties.complete_exceptionally_method_id,
+        get_credentials_exception);
+
+    aws_jni_check_and_clear_exception(env);
+    (*env)->DeleteLocalRef(env, credential_error_string);
+    (*env)->DeleteLocalRef(env, jni_error_string);
+    (*env)->DeleteLocalRef(env, crt_exception);
+    (*env)->DeleteLocalRef(env, get_credentials_exception);
 }
 
 static void s_on_get_credentials_callback(struct aws_credentials *credentials, int error_code, void *user_data) {
@@ -693,12 +743,15 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         }
     }
 
-    (*env)->CallVoidMethod(
-        env,
-        callback_data->java_crt_credentials_provider,
-        credentials_provider_properties.on_get_credentials_complete_method_id,
-        callback_data->java_credentials_future,
-        java_credentials);
+    if (java_credentials != NULL) {
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_credentials_future,
+            completable_future_properties.complete_method_id,
+            java_credentials);
+    } else {
+        s_complete_get_credentials_exceptionally(env, callback_data, error_code);
+    }
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
@@ -714,16 +767,15 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         }
         (*env)->DeleteLocalRef(env, java_credentials);
     }
-    s_cp_callback_data_clean_up(callback_data);
+    s_provider_callback_data_clean_up(callback_data);
 }
 
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvider_credentialsProviderGetCredentials(
     JNIEnv *env,
     jclass jni_cp,
-    jobject java_crt_credentials_provider,
-    jobject java_credentials_future,
-    jlong native_credentials_provider) {
+    jlong native_credentials_provider,
+    jobject java_credentials_future) {
     (void)jni_cp;
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)native_credentials_provider;
     if (!provider) {
@@ -732,7 +784,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
         return;
     }
 
-    if (java_crt_credentials_provider == NULL || java_credentials_future == NULL) {
+    if (java_credentials_future == NULL) {
         aws_jni_throw_runtime_exception(
             env, "CredentialsProvider.credentialsProviderGetCredentials: called with null parameters");
         return;
@@ -741,7 +793,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_get_credentials_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_get_credentials_callback_data));
-    callback_data->java_crt_credentials_provider = (*env)->NewGlobalRef(env, java_crt_credentials_provider);
     callback_data->java_credentials_future = (*env)->NewGlobalRef(env, java_credentials_future);
     callback_data->provider = provider;
 
@@ -753,7 +804,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     if (aws_credentials_provider_get_credentials(provider, s_on_get_credentials_callback, callback_data)) {
         aws_jni_throw_runtime_exception(env, "CrtCredentialsProvider.credentialsProviderGetCredentials: call failure");
         /* callback will not be invoked on failure, clean up the resource here. */
-        s_cp_callback_data_clean_up(callback_data);
+        s_provider_callback_data_clean_up(callback_data);
     }
 }
 

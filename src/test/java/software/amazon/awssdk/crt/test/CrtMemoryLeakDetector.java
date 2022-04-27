@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.Log;
 
 /**
@@ -78,6 +78,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
 
         for (int i = 0; i < numIterations; i++) {
             fn.call();
+            CleanableCrtResource.debugWaitForNoResources();
             jvmSamples.add(getJvmMemoryInUse());
             nativeSamples.add(getNativeMemoryInUse());
         }
@@ -98,7 +99,7 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         }
 
         final List<String> resources = new ArrayList<>();
-        CrtResource.collectNativeResources((resource) -> {
+        CleanableCrtResource.collectNativeResources((resource) -> {
             resources.add(resource);
         });
         if (resources.size() > 0) {

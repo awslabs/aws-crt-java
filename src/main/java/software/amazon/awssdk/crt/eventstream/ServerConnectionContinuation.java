@@ -6,7 +6,7 @@
 package software.amazon.awssdk.crt.eventstream;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * Note that by default ServerConnectionContinuationHandler will invoke close() in
  * ServerConnectionContinuationHandler::onContinuationClosed().
  */
-public class ServerConnectionContinuation extends CrtResource {
+public class ServerConnectionContinuation extends CleanableCrtResource {
 
     /**
      * Invoked from JNI
@@ -25,7 +25,7 @@ public class ServerConnectionContinuation extends CrtResource {
     ServerConnectionContinuation(long continuationPtr) {
         // tell c land we're acquiring
         acquire(continuationPtr);
-        acquireNativeHandle(continuationPtr);
+        acquireNativeHandle(continuationPtr, ServerConnectionContinuation::release);
     }
 
     /**
@@ -79,18 +79,6 @@ public class ServerConnectionContinuation extends CrtResource {
             int errorCode = CRT.awsLastError();
             throw new CrtRuntimeException(errorCode);
         }
-    }
-
-    @Override
-    protected void releaseNativeHandle() {
-        if (!isNull()) {
-            release(getNativeHandle());
-        }
-    }
-
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        return true;
     }
 
     private static native void acquire(long continuationPtr);

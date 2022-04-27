@@ -339,14 +339,6 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
 
     JNIEnv *env = aws_jni_get_thread_env(jni_connection->jvm);
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
-        (*env)->CallVoidMethod(env, mqtt_connection, crt_resource_properties.release_references);
-
-        aws_jni_check_and_clear_exception(env);
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-    }
-
     s_mqtt_connection_destroy(env, jni_connection);
 }
 

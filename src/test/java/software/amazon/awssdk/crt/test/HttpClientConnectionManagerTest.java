@@ -13,15 +13,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
@@ -31,7 +29,6 @@ import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
@@ -115,8 +112,8 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                                         numErrorCode.incrementAndGet();
                                     }
                                     // When this Request is complete, release the conn back to the pool
+                                    stream.forceRelease();
                                     connPool.releaseConnection(conn);
-                                    stream.close();
                                     requestCompleteFuture.complete(null);
                                 }
                             });
@@ -152,9 +149,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
             testParallelConnections(connectionPool, request, 1, numRequests);
         }
-
-        CrtResource.logNativeResources();
-        CrtResource.waitForNoResources();
     }
 
     public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {

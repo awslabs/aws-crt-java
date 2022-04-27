@@ -156,8 +156,6 @@ public class S3NativeClient implements AutoCloseable {
     }
 
     private void addCancelCheckToFuture(CompletableFuture<?> future, final S3MetaRequest metaRequest) {
-        metaRequest.addRef();
-
         future.whenComplete((r, t) -> {
             if (future.isCancelled()) {
                 metaRequest.cancel();

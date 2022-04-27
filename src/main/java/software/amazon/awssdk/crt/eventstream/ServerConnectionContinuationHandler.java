@@ -73,7 +73,6 @@ public abstract class ServerConnectionContinuationHandler implements AutoCloseab
     @Override
     public void close() {
         if (continuation != null) {
-            continuation.decRef();
             continuation = null;
         }
     }

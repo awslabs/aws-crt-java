@@ -1,5 +1,7 @@
 package software.amazon.awssdk.crt.auth.credentials;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A credentials provider that adds caching to another credentials provider via decoration
  */
@@ -60,15 +62,14 @@ public class CachedCredentialsProvider extends CredentialsProvider {
         super();
 
         cachedProvider = builder.getCachedProvider();
-        addReferenceTo(cachedProvider);
 
-        long nativeHandle = cachedCredentialsProviderNew(this, builder.getCachingDurationInSeconds(), cachedProvider.getNativeHandle());
-        acquireNativeHandle(nativeHandle);
+        long nativeHandle = cachedCredentialsProviderNew(cachedProvider.getNativeHandle(), builder.getCachingDurationInSeconds(), getShutdownCompleteFuture());
+        acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long cachedCredentialsProviderNew(CachedCredentialsProvider thisObj, int cachingDurationInSeconds, long cachedProvider);
+    private static native long cachedCredentialsProviderNew(long cachedProvider, int cachingDurationInSeconds, CompletableFuture<Void> shutdownCompleteCallback);
 }

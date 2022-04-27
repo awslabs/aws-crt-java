@@ -10,7 +10,7 @@ import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 import org.junit.Assert;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
@@ -161,7 +161,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
 
         shutdownComplete.get();
 
-        CrtResource.waitForNoResources();
+        CleanableCrtResource.debugWaitForNoResources();
 
         return response;
     }
@@ -440,7 +440,7 @@ public class HttpRequestResponseTest extends HttpClientTestFixture {
             shutdownComplete.get();
         }
 
-        CrtResource.waitForNoResources();
+        CleanableCrtResource.debugWaitForNoResources();
     }
 
     @Test

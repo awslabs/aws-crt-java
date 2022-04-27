@@ -133,9 +133,13 @@ public abstract class CleanableCrtResource implements AutoCloseable {
     }
 
     /**
-     * returns the native handle associated with this CRTResource.
+     * returns the native handle associated with this CleanableCRTResource.
      */
     public long getNativeHandle() {
+        if (nativeHandle == null) {
+            return 0;
+        }
+
         return nativeHandle.getNativeHandle();
     }
 
@@ -151,16 +155,18 @@ public abstract class CleanableCrtResource implements AutoCloseable {
         ;
     }
 
-    static void removeResource(long id) {
-        if (!debugNativeObjects) {
-            return;
-        }
+    public void forceRelease() {
+        nativeHandle.release();
+    }
 
+    static void removeResource(long id) {
         NativeHandleWrapper wrapper = null;
 
         lock.lock();
         try {
-            wrapper = CRT_RESOURCES.remove(id);
+            if (debugNativeObjects) {
+                wrapper = CRT_RESOURCES.remove(id);
+            }
             --resourceCount;
             if (resourceCount == 0) {
                 emptyResources.signal();
@@ -169,10 +175,12 @@ public abstract class CleanableCrtResource implements AutoCloseable {
             lock.unlock();
         }
 
-        if (wrapper != null) {
-            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource removed:\n%s", wrapper.toString()));
-        } else {
-            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource of with id %d removed", id));
+        if (debugNativeObjects) {
+            if (wrapper != null) {
+                Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource removed:\n%s", wrapper.toString()));
+            } else {
+                Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource of with id %d removed", id));
+            }
         }
     }
 
@@ -180,71 +188,100 @@ public abstract class CleanableCrtResource implements AutoCloseable {
      * Debug method to increment the current native object count.
      */
     private static void addResource(long id, NativeHandleWrapper wrapper) {
-        if (!debugNativeObjects) {
-            return;
+        if (debugNativeObjects) {
+            String logRecord = String.format("CleanableCrtResource instance created:\n%s", wrapper.toString());
+            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, logRecord);
         }
-
-        String logRecord = String.format("CleanableCrtResource instance created:\n%s", wrapper.toString());
-        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, logRecord);
 
         lock.lock();
         try {
-            CRT_RESOURCES.put(id, wrapper);
             ++resourceCount;
-            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource count now %d", resourceCount));
+            if (debugNativeObjects) {
+                CRT_RESOURCES.put(id, wrapper);
+                Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, String.format("CleanableCrtResource count now %d", resourceCount));
+            }
         } finally {
             lock.unlock();
         }
     }
 
+    public static void collectNativeResource(Consumer<NativeHandleWrapper> fn) {
+        lock.lock();
+        try {
+            for (HashMap.Entry<Long, NativeHandleWrapper> entry : CRT_RESOURCES.entrySet()) {
+                fn.accept(entry.getValue());
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void collectNativeResources(Consumer<String> fn) {
+        collectNativeResource((NativeHandleWrapper resource) -> {
+            String str = String.format(" * Address: %d: %s", resource.handle,
+                    resource.toString());
+            fn.accept(str);
+        });
+    }
+
+    public static void logNativeResources() {
+        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
+        collectNativeResource((resource) -> {
+            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, resource.toString());
+        });
+    }
+
+    private static int[] createAndInitArray(int size) {
+        int[] anArray = new int[size];
+        for(int j = 0; j < size; ++j) {
+            anArray[j] = j;
+        }
+
+        return anArray;
+    }
+
     private static void debugApplyGCPressure() {
         for(int i = 0; i < 1000; ++i) {
-            int[] anArray = new int[100000];
-            for(int j = 0; j < 100000; ++j) {
-                anArray[j] = j;
-            }
+            int[] anArray = createAndInitArray(100000);
+            anArray[0] = 1;
         }
         System.gc();
     }
 
-    private static void logNativeResources() {
-        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
-        for (HashMap.Entry<Long, NativeHandleWrapper> entry : CRT_RESOURCES.entrySet()) {
-            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtResource, entry.getValue().toString());
-        }
-    }
-
     public static void debugWaitForNoResources() {
-        /* TODO: change these to assign nulls internally */
         ClientBootstrap.closeStaticDefault();
         EventLoopGroup.closeStaticDefault();
         HostResolver.closeStaticDefault();
 
+        int[] oldGeneration = createAndInitArray(25000000);
+        oldGeneration[0] = 1;
         debugApplyGCPressure();
 
-        if (debugNativeObjects) {
-            lock.lock();
+        lock.lock();
 
-            try {
-                long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS * 1000;
-                while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
-                    emptyResources.await(1, TimeUnit.SECONDS);
-                }
+        try {
+            long timeout = System.currentTimeMillis() + DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS * 1000;
+            while (resourceCount != 0 && System.currentTimeMillis() < timeout) {
+                emptyResources.await(1, TimeUnit.SECONDS);
 
-                if (resourceCount != 0) {
-                    Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
-                    logNativeResources();
-                    throw new InterruptedException();
-                }
-            } catch (InterruptedException e) {
-                /* Cause tests to fail without having to go add checked exceptions to every instance */
-                throw new RuntimeException("Timeout waiting for resource count to drop to zero");
-            } finally {
-                lock.unlock();
+                oldGeneration = createAndInitArray(25000000);
+                oldGeneration[0] = 1;
+                debugApplyGCPressure();
             }
+
+            if (resourceCount != 0) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
+                logNativeResources();
+                throw new InterruptedException();
+            }
+        } catch (InterruptedException e) {
+            /* Cause tests to fail without having to go add checked exceptions to every instance */
+            throw new RuntimeException("Timeout waiting for resource count to drop to zero");
+        } finally {
+            lock.unlock();
         }
 
-        RESOURCE_JANITOR = null;
+        oldGeneration = null;
 
         waitForGlobalResourceDestruction(DEBUG_CLEANUP_WAIT_TIME_IN_SECONDS);
     }

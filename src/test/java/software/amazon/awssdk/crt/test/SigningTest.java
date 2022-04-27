@@ -330,7 +330,7 @@ public class SigningTest extends CrtTestFixture {
             assertTrue(hasHeaderWithValuePrefix(signedRequest, "Authorization", "AWS4-ECDSA-P256-SHA256 Credential=AKIDEXAMPLE/20150830/service/aws4_request, SignedHeaders=host;x-amz-date;x-amz-region-set, Signature="));
         }
 
-        CrtResource.waitForNoResources();
+        CleanableCrtResource.debugWaitForNoResources();
     }
 
     @Test(expected = CrtRuntimeException.class)

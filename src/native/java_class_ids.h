@@ -57,14 +57,11 @@ struct java_http_request_properties {
 };
 extern struct java_http_request_properties http_request_properties;
 
-/* CrtResource */
-struct java_crt_resource_properties {
+/* CleanableCrtResource */
+struct java_cleanable_crt_resource_properties {
     jmethodID get_native_handle_method_id;
-    jmethodID release_references;
-    jmethodID add_ref;
-    jmethodID close;
 };
-extern struct java_crt_resource_properties crt_resource_properties;
+extern struct java_cleanable_crt_resource_properties cleanable_crt_resource_properties;
 
 /* MqttClientConnection */
 struct java_mqtt_connection_properties {
@@ -101,13 +98,6 @@ struct java_byte_buffer_properties {
 };
 extern struct java_byte_buffer_properties byte_buffer_properties;
 
-/* CredentialsProvider */
-struct java_credentials_provider_properties {
-    jmethodID on_shutdown_complete_method_id;
-    jmethodID on_get_credentials_complete_method_id;
-};
-extern struct java_credentials_provider_properties credentials_provider_properties;
-
 /* Credentials */
 struct java_credentials_properties {
     jclass credentials_class;
@@ -131,12 +121,6 @@ struct java_async_callback_properties {
 };
 extern struct java_async_callback_properties async_callback_properties;
 
-/* ClientBootstrap */
-struct java_client_bootstrap_properties {
-    jmethodID onShutdownComplete;
-};
-extern struct java_client_bootstrap_properties client_bootstrap_properties;
-
 /* TlsContextPkcs11Options */
 struct java_tls_context_pkcs11_options_properties {
     jfieldID pkcs11Lib;
@@ -148,12 +132,6 @@ struct java_tls_context_pkcs11_options_properties {
     jfieldID certificateFileContents;
 };
 extern struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_options_properties;
-
-/* HttpClientConnectionManager */
-struct java_http_client_connection_manager_properties {
-    jmethodID onShutdownComplete;
-};
-extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
 /* HttpClientConnection */
 struct java_http_client_connection_properties {
@@ -184,12 +162,6 @@ struct java_http_stream_write_chunk_completion_properties {
     jmethodID callback;
 };
 extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
-
-/* EventStreamServerListener */
-struct java_event_stream_server_listener_properties {
-    jmethodID onShutdownComplete;
-};
-extern struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
 
 /* EventStreamServerListenerHandler */
 struct java_event_stream_server_listener_handler_properties {
@@ -240,17 +212,6 @@ struct java_cpu_info_properties {
 };
 extern struct java_cpu_info_properties cpu_info_properties;
 
-struct java_s3_client_properties {
-    jmethodID onShutdownComplete;
-};
-extern struct java_s3_client_properties s3_client_properties;
-
-/* S3Client */
-struct java_s3_meta_request_properties {
-    jmethodID onShutdownComplete;
-};
-extern struct java_s3_meta_request_properties s3_meta_request_properties;
-
 /* S3MetaRequestResponseHandlerNativeAdapter */
 struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseBody;
@@ -276,6 +237,13 @@ struct java_crt_runtime_exception_properties {
     jfieldID error_code_field_id;
 };
 extern struct java_crt_runtime_exception_properties crt_runtime_exception_properties;
+
+/* RuntimeException */
+struct java_runtime_exception_properties {
+    jclass runtime_exception_class;
+    jmethodID constructor_method_id;
+};
+extern struct java_runtime_exception_properties runtime_exception_properties;
 
 /* EccKeyPair */
 struct java_ecc_key_pair_properties {

@@ -50,7 +50,8 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     if (callback_data->java_shutdown_complete_future != NULL) {
         // Tell the Java ClientBootstrap that cleanup is done.  This lets it release its references.
-        (*env)->CallBoolMethod(env, callback_data->java_shutdown_complete_future, completable_future_properties.complete_method_id, null);
+        (*env)->CallBooleanMethod(
+            env, callback_data->java_shutdown_complete_future, completable_future_properties.complete_method_id, NULL);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
@@ -94,7 +95,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
 
     callback_data->java_shutdown_complete_future = (*env)->NewGlobalRef(env, java_shutdown_complete_future);
     if (!callback_data->java_shutdown_complete_future) {
-        aws_jni_throw_runtime_exception(env, "ClientBootstrap.client_bootstrap_new: Unable to create global ref to shutdown callback");
+        aws_jni_throw_runtime_exception(
+            env, "ClientBootstrap.client_bootstrap_new: Unable to create global ref to shutdown callback");
         goto error;
     }
 

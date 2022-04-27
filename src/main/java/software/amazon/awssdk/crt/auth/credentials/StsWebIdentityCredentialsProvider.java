@@ -5,11 +5,10 @@
 
 package software.amazon.awssdk.crt.auth.credentials;
 
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Sts with web identity credentials provider sources a set of temporary security credentials for users who have been
@@ -32,10 +31,6 @@ public class StsWebIdentityCredentialsProvider extends CredentialsProvider {
         return new BuilderImpl();
     }
 
-    private static long toNativeHandle(CrtResource crtResource) {
-        return crtResource == null ? 0 : crtResource.getNativeHandle();
-    }
-
     private StsWebIdentityCredentialsProvider(BuilderImpl builder) {
         super();
 
@@ -44,18 +39,12 @@ public class StsWebIdentityCredentialsProvider extends CredentialsProvider {
                 : builder.clientBootstrap) {
 
             long nativeHandle = stsWebIdentityCredentialsProviderNew(
-                    this,
-                    toNativeHandle(bootstrap),
-                    toNativeHandle(builder.tlsContext)
+                    bootstrap.getNativeHandle(),
+                    builder.tlsContext.getNativeHandle(),
+                    getShutdownCompleteFuture()
             );
 
-            acquireNativeHandle(nativeHandle);
-            addReferenceTo(bootstrap);
-            addReferenceTo(builder.tlsContext);
-        }
-        catch (Exception e) {
-            super.close();
-            throw e;
+            acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
         }
     }
 
@@ -118,7 +107,7 @@ public class StsWebIdentityCredentialsProvider extends CredentialsProvider {
      ******************************************************************************/
 
     private static native long stsWebIdentityCredentialsProviderNew(
-            StsWebIdentityCredentialsProvider thisObj,
             long bootstrapHandle,
-            long tlsContextHandle);
+            long tlsContextHandle,
+            CompletableFuture<Void> shutdownCompleteCallback);
 }

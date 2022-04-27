@@ -65,7 +65,11 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
 #endif
 
     if (callback_data->java_shutdown_completion_callback != NULL) {
-        (*env)->CallBoolMethod(env, callback_data->java_shutdown_completion_callback, completable_future_properties.complete_method_id, NULL);
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_shutdown_completion_callback,
+            completable_future_properties.complete_method_id,
+            NULL);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
@@ -97,7 +101,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     callback_data->java_shutdown_completion_callback = (*env)->NewGlobalRef(env, java_shutdown_callback);
     if (callback_data->java_shutdown_completion_callback == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to bind reference to java shutdown future");
+            env,
+            "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to bind reference to java "
+            "shutdown future");
         goto on_error;
     }
 
@@ -110,7 +116,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to create event loop group");
+            env,
+            "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed to create event loop group");
         goto on_error;
     }
 
@@ -153,14 +160,17 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         allocator, (uint16_t)num_threads, (uint16_t)cpu_group, &shutdown_options);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to create event loop group");
+            env,
+            "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to create event loop group");
         goto on_error;
     }
 
     callback_data->java_shutdown_completion_callback = (*env)->NewGlobalRef(env, java_shutdown_callback);
     if (callback_data->java_shutdown_completion_callback == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to bind reference to java shutdown future");
+            env,
+            "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed to bind reference to java "
+            "shutdown future");
         goto on_error;
     }
 
@@ -168,7 +178,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
 
 on_error:
 
-     s_destroy_elg_callback_data(callback_data);
+    s_destroy_elg_callback_data(callback_data);
 
     return (jlong)NULL;
 }

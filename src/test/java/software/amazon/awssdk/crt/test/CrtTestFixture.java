@@ -9,14 +9,12 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.CrtPlatform;
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import java.io.File;
@@ -62,7 +60,8 @@ public class CrtTestFixture {
         HostResolver.closeStaticDefault();
         ClientBootstrap.closeStaticDefault();
 
-        CrtResource.waitForNoResources();
+        CleanableCrtResource.debugWaitForNoResources();
+
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();

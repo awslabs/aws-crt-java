@@ -5,9 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assume;
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;;
 
 
 public class MqttClientConnectionTest extends MqttClientConnectionFixture {

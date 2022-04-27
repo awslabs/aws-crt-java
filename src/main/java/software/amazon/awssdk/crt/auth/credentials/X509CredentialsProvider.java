@@ -6,6 +6,8 @@ package software.amazon.awssdk.crt.auth.credentials;
 
 import java.lang.IllegalArgumentException;
 import java.nio.charset.Charset;
+import java.util.concurrent.CompletableFuture;
+
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -171,7 +173,6 @@ public class X509CredentialsProvider extends CredentialsProvider {
         }
 
         long nativeHandle = x509CredentialsProviderNew(
-                this,
                 clientBootstrap.getNativeHandle(),
                 tlsContext.getNativeHandle(),
                 thingName.getBytes(UTF8),
@@ -183,19 +184,17 @@ public class X509CredentialsProvider extends CredentialsProvider {
                 proxyTlsContextHandle,
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
-                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null);
+                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                getShutdownCompleteFuture());
 
-        acquireNativeHandle(nativeHandle);
-        addReferenceTo(clientBootstrap);
-        addReferenceTo(tlsContext);
+        acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long x509CredentialsProviderNew(X509CredentialsProvider thisObj,
-                                                          long bootstrapHandle,
+    private static native long x509CredentialsProviderNew(long bootstrapHandle,
                                                           long tlsContextHandle,
                                                           byte[] thingName,
                                                           byte[] roleAlias,
@@ -206,5 +205,6 @@ public class X509CredentialsProvider extends CredentialsProvider {
                                                           long proxyTlsContext,
                                                           int proxyAuthorizationType,
                                                           byte[] proxyAuthorizationUsername,
-                                                          byte[] proxyAuthorizationPassword);
+                                                          byte[] proxyAuthorizationPassword,
+                                                          CompletableFuture<Void> shutdownCompleteCallback);
 }

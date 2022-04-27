@@ -8,9 +8,7 @@ package software.amazon.awssdk.crt.test;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
@@ -98,6 +96,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         skipIfNetworkUnavailable();
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+        /*
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
         testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
@@ -112,6 +111,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         // BadSSL
         testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
         testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+
+         */
     }
 
     @Test

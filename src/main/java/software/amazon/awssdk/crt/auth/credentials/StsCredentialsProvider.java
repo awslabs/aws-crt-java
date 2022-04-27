@@ -5,11 +5,11 @@
 
 package software.amazon.awssdk.crt.auth.credentials;
 
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A class that wraps a provider that gets credentials from Security Token Service (STS).
@@ -35,10 +35,6 @@ public class StsCredentialsProvider extends CredentialsProvider {
         return string == null ? null : string.getBytes(StandardCharsets.UTF_8);
     }
 
-    private static long toNativeHandle(CrtResource crtResource) {
-        return crtResource == null ? 0 : crtResource.getNativeHandle();
-    }
-
     private StsCredentialsProvider(BuilderImpl builder) {
         super();
 
@@ -47,22 +43,16 @@ public class StsCredentialsProvider extends CredentialsProvider {
                 : builder.clientBootstrap) {
 
             long nativeHandle = stsCredentialsProviderNew(
-                    this,
-                    toNativeHandle(bootstrap),
-                    toNativeHandle(builder.tlsContext),
+                    bootstrap.getNativeHandle(),
+                    builder.tlsContext != null ? builder.tlsContext.getNativeHandle() : 0,
                     builder.credsProvider.getNativeHandle(),
                     toByteArray(builder.roleArn),
                     toByteArray(builder.sessionName),
-                    builder.durationSeconds
+                    builder.durationSeconds,
+                    getShutdownCompleteFuture()
             );
 
-            acquireNativeHandle(nativeHandle);
-            addReferenceTo(bootstrap);
-            addReferenceTo(builder.tlsContext);
-        }
-        catch (Exception e) {
-            super.close();
-            throw e;
+            acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
         }
     }
 
@@ -178,11 +168,11 @@ public class StsCredentialsProvider extends CredentialsProvider {
      ******************************************************************************/
 
     private static native long stsCredentialsProviderNew(
-            StsCredentialsProvider thisObj,
             long bootstrapHandle,
             long tlsContextHandle,
             long creds_provider,
             byte[] roleArn,
             byte[] sessionName,
-            int durationSeconds);
+            int durationSeconds,
+            CompletableFuture<Void> shutdownCompleteCallback);
 }

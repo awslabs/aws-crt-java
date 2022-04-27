@@ -1,5 +1,7 @@
 package software.amazon.awssdk.crt.auth.credentials;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A credentials provider that sources credentials from a custom synchronous
  * callback
@@ -47,15 +49,14 @@ public class DelegateCredentialsProvider extends CredentialsProvider {
         super();
         DelegateCredentialsHandler handler = builder.getHandler();
 
-        long nativeHandle = delegateCredentialsProviderNew(this, handler);
-        acquireNativeHandle(nativeHandle);
+        long nativeHandle = delegateCredentialsProviderNew(handler, getShutdownCompleteFuture());
+        acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long delegateCredentialsProviderNew(DelegateCredentialsProvider thisObj,
-            DelegateCredentialsHandler handler);
+    private static native long delegateCredentialsProviderNew(DelegateCredentialsHandler handler, CompletableFuture<Void> shutdownCompleteCallback);
 
 }

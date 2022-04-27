@@ -5,6 +5,7 @@
 package software.amazon.awssdk.crt.auth.credentials;
 
 import java.lang.IllegalArgumentException;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A class that wraps the a credentials provider that returns a fixed set of credentials
@@ -99,13 +100,13 @@ public class StaticCredentialsProvider extends CredentialsProvider {
 
         byte[] sessionToken = builder.getSessionToken();
 
-        long nativeHandle = staticCredentialsProviderNew(this, accessKeyId, secretAccessKey, sessionToken);
-        acquireNativeHandle(nativeHandle);
+        long nativeHandle = staticCredentialsProviderNew(accessKeyId, secretAccessKey, sessionToken, getShutdownCompleteFuture());
+        acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long staticCredentialsProviderNew(StaticCredentialsProvider thisObj, byte[] accessKeyId, byte[] secretAccessKey, byte[] sessionToken);
+    private static native long staticCredentialsProviderNew(byte[] accessKeyId, byte[] secretAccessKey, byte[] sessionToken, CompletableFuture<Void> shutdownCompleteCallback);
 }

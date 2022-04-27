@@ -6,12 +6,10 @@
 package com.amazonaws.test;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtPlatform;
-import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CleanableCrtResource;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
 import software.amazon.awssdk.crt.test.CrtTestFixture;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +40,7 @@ public class AwsClientTestFixture extends CrtTestFixture {
 
     @After
     public void tearDown() {
-        CrtResource.waitForNoResources();
+        CleanableCrtResource.debugWaitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();

@@ -10,13 +10,15 @@ import java.util.Map;
 
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * A class representing configuration related to signing something "signable" (an http request, a body chunk, a
  * stream event) via an AWS signing process.
  */
-public class AwsSigningConfig extends CrtResource {
+public class AwsSigningConfig implements AutoCloseable {
+
+    /* For backwards compatibility only */
+    public void close() {}
 
     /**
      * What version of the AWS signing process should we use.
@@ -235,42 +237,26 @@ public class AwsSigningConfig extends CrtResource {
      * @return a clone of this signing configuration
      */
     public AwsSigningConfig clone() {
-        try (AwsSigningConfig clone = new AwsSigningConfig()) {
+        AwsSigningConfig clone = new AwsSigningConfig();
 
-            clone.setAlgorithm(getAlgorithm());
-            clone.setSignatureType(getSignatureType());
-            clone.setRegion(getRegion());
-            clone.setService(getService());
-            clone.setTime(getTime());
-            clone.setCredentialsProvider(getCredentialsProvider());
-            clone.setCredentials(getCredentials());
-            clone.setShouldSignHeader(getShouldSignHeader());
-            clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
-            clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
-            clone.setOmitSessionToken(getOmitSessionToken());
-            clone.setSignedBodyValue(getSignedBodyValue());
-            clone.setSignedBodyHeader(getSignedBodyHeader());
-            clone.setExpirationInSeconds(getExpirationInSeconds());
+        clone.setAlgorithm(getAlgorithm());
+        clone.setSignatureType(getSignatureType());
+        clone.setRegion(getRegion());
+        clone.setService(getService());
+        clone.setTime(getTime());
+        clone.setCredentialsProvider(getCredentialsProvider());
+        clone.setCredentials(getCredentials());
+        clone.setShouldSignHeader(getShouldSignHeader());
+        clone.setUseDoubleUriEncode(getUseDoubleUriEncode());
+        clone.setShouldNormalizeUriPath(getShouldNormalizeUriPath());
+        clone.setOmitSessionToken(getOmitSessionToken());
+        clone.setSignedBodyValue(getSignedBodyValue());
+        clone.setSignedBodyHeader(getSignedBodyHeader());
+        clone.setExpirationInSeconds(getExpirationInSeconds());
 
-            // success, bump up the ref count so we can escape the try-with-resources block
-            clone.addRef();
-            return clone;
-        }
+        return clone;
     }
 
-    /**
-     * Required override method that must begin the release process of the acquired native handle
-     */
-    @Override
-    protected void releaseNativeHandle() {}
-
-    /**
-     * Override that determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources with asynchronous shutdown processes should override this with false, and establish a callback from native code that
-     * invokes releaseReferences() when the asynchronous shutdown process has completed.  See HttpClientConnectionManager for an example.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Sets what version of the AWS signing process should be used
@@ -343,7 +329,6 @@ public class AwsSigningConfig extends CrtResource {
      * @param credentialsProvider provider to retrieve credentials from prior to signing
      */
     public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
-        swapReferenceTo(this.credentialsProvider, credentialsProvider);
         this.credentialsProvider = credentialsProvider;
     }
 

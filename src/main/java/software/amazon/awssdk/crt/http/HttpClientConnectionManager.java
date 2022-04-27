@@ -150,7 +150,7 @@ public class HttpClientConnectionManager extends CleanableCrtResource {
      * @param conn Connection to release
      */
     public void releaseConnection(HttpClientConnection conn) {
-        conn.close();
+        conn.forceRelease();
     }
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }

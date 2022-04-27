@@ -6,6 +6,8 @@ package software.amazon.awssdk.crt.auth.credentials;
 
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A class that wraps the default AWS credentials provider chain
  */
@@ -53,14 +55,13 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
             throw new IllegalArgumentException("DefaultChainCredentialsProvider: clientBootstrap must be non-null");
         }
 
-        long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());
-        acquireNativeHandle(nativeHandle);
-        addReferenceTo(clientBootstrap);
+        long nativeHandle = defaultChainCredentialsProviderNew(clientBootstrap.getNativeHandle(), getShutdownCompleteFuture());
+        acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
 
-    private static native long defaultChainCredentialsProviderNew(DefaultChainCredentialsProvider provider, long bootstrapHandle);
+    private static native long defaultChainCredentialsProviderNew(long bootstrapHandle, CompletableFuture<Void> shutdownCompleteCallback);
 }

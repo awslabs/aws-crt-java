@@ -5,11 +5,11 @@
 
 package software.amazon.awssdk.crt.auth.credentials;
 
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A class that wraps a provider that gets credentials from an ECS service.
@@ -36,10 +36,6 @@ public class EcsCredentialsProvider extends CredentialsProvider {
         return string == null ? null : string.getBytes(StandardCharsets.UTF_8);
     }
 
-    private static long toNativeHandle(CrtResource crtResource) {
-        return crtResource == null ? 0 : crtResource.getNativeHandle();
-    }
-
     private EcsCredentialsProvider(BuilderImpl builder) {
         super();
 
@@ -48,27 +44,15 @@ public class EcsCredentialsProvider extends CredentialsProvider {
                 : builder.clientBootstrap) {
 
             long nativeHandle = ecsCredentialsProviderNew(
-                    this,
-                    toNativeHandle(bootstrap),
-                    toNativeHandle(builder.tlsContext),
+                    bootstrap.getNativeHandle(),
+                    builder.tlsContext != null ? builder.tlsContext.getNativeHandle() : 0,
                     toByteArray(builder.host),
                     toByteArray(builder.pathAndQuery),
-                    toByteArray(builder.authToken)
+                    toByteArray(builder.authToken),
+                            getShutdownCompleteFuture()
             );
 
-            acquireNativeHandle(nativeHandle);
-            addReferenceTo(bootstrap);
-            if (builder.tlsContext != null) {
-                addReferenceTo(builder.tlsContext);
-            }
-
-            if (builder.clientBootstrap != null) {
-                bootstrap.addRef();
-            }
-        }
-        catch (Exception e) {
-            super.close();
-            throw e;
+            acquireNativeHandle(nativeHandle, CredentialsProvider::credentialsProviderRelease);
         }
     }
 
@@ -168,10 +152,10 @@ public class EcsCredentialsProvider extends CredentialsProvider {
      ******************************************************************************/
 
     private static native long ecsCredentialsProviderNew(
-            EcsCredentialsProvider thisObj,
             long bootstrapHandle,
             long tlsContextHandle,
             byte[] host,
             byte[] pathAndQuery,
-            byte[] authToken);
+            byte[] authToken,
+            CompletableFuture<Void> shutdownCompleteCallback);
 }

@@ -94,7 +94,7 @@ struct aws_tls_ctx_pkcs11_options *aws_tls_ctx_pkcs11_options_from_java_new(JNIE
     }
 
     jlong pkcs11_lib_handle =
-        (*env)->CallLongMethod(env, pkcs11_lib_jni, crt_resource_properties.get_native_handle_method_id);
+        (*env)->CallLongMethod(env, pkcs11_lib_jni, cleanable_crt_resource_properties.get_native_handle_method_id);
     if (pkcs11_lib_handle == 0) {
         aws_jni_throw_null_pointer_exception(env, "Pkcs11Lib.getNativeHandle() returned null");
         goto error;

@@ -6,8 +6,6 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -26,9 +24,5 @@ public class ClientBootstrapTest extends CrtTestFixture {
         ClientBootstrap bootstrap = new ClientBootstrap(elg, hostResolver);
 
         assertNotNull(bootstrap);
-        bootstrap.close();
-        bootstrap.getShutdownCompleteFuture().get();
-        hostResolver.close();
-        elg.close();
     }
 };

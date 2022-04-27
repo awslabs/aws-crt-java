@@ -331,8 +331,8 @@ static int s_build_signing_config(
     jobject provider =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_provider_field_id);
     if (provider != NULL) {
-        config->credentials_provider =
-            (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+        config->credentials_provider = (void *)(*env)->CallLongMethod(
+            env, provider, cleanable_crt_resource_properties.get_native_handle_method_id);
         aws_jni_check_and_clear_exception(env);
     }
 

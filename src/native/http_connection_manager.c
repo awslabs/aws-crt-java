@@ -52,7 +52,7 @@ static void s_destroy_manager_binding(struct http_connection_manager_binding *bi
     }
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
-    if (binding->java_http_conn_manager != NULL) {
+    if (binding->java_shutdown_complete_callback != NULL) {
         (*env)->DeleteGlobalRef(env, binding->java_shutdown_complete_callback);
     }
 
@@ -66,7 +66,7 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
     if (binding->java_shutdown_complete_callback != NULL) {
-        (*env)->CallBoolMethod(
+        (*env)->CallBooleanMethod(
             env, binding->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
 
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
@@ -362,6 +362,9 @@ static void s_on_http_conn_acquisition_callback(
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     if (error_code) {
         s_destroy_connection_binding(binding);
+    } else if (binding->java_acquire_connection_future != NULL) {
+        (*env)->DeleteGlobalRef(env, binding->java_acquire_connection_future);
+        binding->java_acquire_connection_future = NULL;
     }
 }
 

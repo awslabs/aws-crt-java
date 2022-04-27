@@ -34,7 +34,7 @@ int aws_exponential_backoff_retry_options_from_java(
 
     if (jni_el_group != NULL) {
         el_group = (struct aws_event_loop_group *)(*env)->CallLongMethod(
-            env, jni_el_group, crt_resource_properties.get_native_handle_method_id);
+            env, jni_el_group, cleanable_crt_resource_properties.get_native_handle_method_id);
     }
 
     jlong jni_max_retries = (*env)->GetLongField(

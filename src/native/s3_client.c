@@ -53,7 +53,9 @@ struct s3_client_make_meta_request_callback_data {
     struct aws_input_stream *input_stream;
 };
 
-static void s_destroy_s3_meta_request_callback_data(JNIEnv *env, struct s3_client_make_meta_request_callback_data *callback_data) {
+static void s_destroy_s3_meta_request_callback_data(
+    JNIEnv *env,
+    struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data == NULL) {
         return;
     }
@@ -205,7 +207,8 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
 
     AWS_LOGF_DEBUG(AWS_LS_S3_CLIENT, "S3 Client Shutdown Complete");
     if (callback->java_shutdown_complete_callback != NULL) {
-        (*env)->CallBoolMethod(env, callback->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
+        (*env)->CallBooleanMethod(
+            env, callback->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -512,13 +515,17 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
     if (callback_data->java_shutdown_complete_callback != NULL) {
-        (*env)->CallBoolMethod(env, callback_data->java_shutdown_complete_callback, completable_future_properties.complete_method_id, NULL);
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_shutdown_complete_callback,
+            completable_future_properties.complete_method_id,
+            NULL);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Ignored Exception from S3MetaRequest.onShutdownCompete callback",
-                (void *)callback_data->java_s3_meta_request);
+                (void *)callback_data->java_shutdown_complete_callback);
         }
     }
 

@@ -18,6 +18,8 @@
 #endif
 
 struct aws_http_request_body_stream_impl {
+    struct aws_input_stream base;
+    struct aws_allocator *allocator;
     JavaVM *jvm;
     jobject http_request_body_stream;
     bool body_done;
@@ -25,7 +27,8 @@ struct aws_http_request_body_stream_impl {
 };
 
 static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offset, enum aws_stream_seek_basis basis) {
-    struct aws_http_request_body_stream_impl *impl = stream->impl;
+    struct aws_http_request_body_stream_impl *impl =
+        AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (!impl->is_valid) {
         return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
@@ -61,7 +64,8 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
 }
 
 static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_byte_buf *dest) {
-    struct aws_http_request_body_stream_impl *impl = stream->impl;
+    struct aws_http_request_body_stream_impl *impl =
+        AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (!impl->is_valid) {
         return aws_raise_error(AWS_ERROR_HTTP_INVALID_BODY_STREAM);
@@ -102,7 +106,8 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
 }
 
 static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct aws_stream_status *status) {
-    struct aws_http_request_body_stream_impl *impl = stream->impl;
+    struct aws_http_request_body_stream_impl *impl =
+        AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     status->is_end_of_stream = impl->body_done;
     status->is_valid = impl->is_valid;
@@ -112,7 +117,8 @@ static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct
 
 static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_t *length) {
     AWS_FATAL_ASSERT(length && "NULL length out param passed to JNI aws_input_stream_get_length");
-    struct aws_http_request_body_stream_impl *impl = stream->impl;
+    struct aws_http_request_body_stream_impl *impl =
+        AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (impl->http_request_body_stream != NULL) {
         JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
@@ -133,8 +139,7 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
     return AWS_OP_ERR;
 }
 
-static void s_aws_input_stream_destroy(struct aws_input_stream *stream) {
-    struct aws_http_request_body_stream_impl *impl = stream->impl;
+static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
     JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -145,7 +150,7 @@ static void s_aws_input_stream_destroy(struct aws_input_stream *stream) {
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
 
-    aws_mem_release(stream->allocator, stream);
+    aws_mem_release(impl->allocator, impl);
 }
 
 static struct aws_input_stream_vtable s_aws_input_stream_vtable = {
@@ -153,34 +158,18 @@ static struct aws_input_stream_vtable s_aws_input_stream_vtable = {
     .read = s_aws_input_stream_read,
     .get_status = s_aws_input_stream_get_status,
     .get_length = s_aws_input_stream_get_length,
-    .destroy = s_aws_input_stream_destroy,
 };
 
 struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
     struct aws_allocator *allocator,
     JNIEnv *env,
     jobject http_request_body_stream) {
-    struct aws_input_stream *input_stream = NULL;
-    struct aws_http_request_body_stream_impl *impl = NULL;
+    struct aws_http_request_body_stream_impl *impl =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_http_request_body_stream_impl));
 
-    aws_mem_acquire_many(
-        allocator,
-        2,
-        &input_stream,
-        sizeof(struct aws_input_stream),
-        &impl,
-        sizeof(struct aws_http_request_body_stream_impl));
-
-    if (!input_stream) {
-        return NULL;
-    }
-
-    AWS_ZERO_STRUCT(*input_stream);
-    AWS_ZERO_STRUCT(*impl);
-
-    input_stream->allocator = allocator;
-    input_stream->vtable = &s_aws_input_stream_vtable;
-    input_stream->impl = impl;
+    impl->allocator = allocator;
+    impl->base.vtable = &s_aws_input_stream_vtable;
+    aws_ref_count_init(&impl->base.ref_count, impl, (aws_simple_completion_callback *)s_aws_input_stream_destroy);
 
     jint jvmresult = (*env)->GetJavaVM(env, &impl->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
@@ -195,11 +184,11 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
         impl->body_done = true;
     }
 
-    return input_stream;
+    return &impl->base;
 
 on_error:
 
-    aws_input_stream_destroy(input_stream);
+    aws_input_stream_release(&impl->base);
 
     return NULL;
 }

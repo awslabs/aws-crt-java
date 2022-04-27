@@ -9,7 +9,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
 
-public class Http2Stream extends HttpStream {
+public class Http2Stream extends HttpStreamBase {
 
     protected Http2Stream(long ptr) {
         super(ptr);
@@ -29,15 +29,4 @@ public class Http2Stream extends HttpStream {
      * TODO: getters for reset stream. Not sure anyone needs it though.
      */
     private static native void http2StreamResetStream(long http_stream, int errorCode);
-
-    @Override
-    public void writeChunk(final byte[] chunkData, boolean isFinalChunk,
-            final HttpStreamWriteChunkCompletionCallback chunkCompletionCallback) {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public CompletableFuture<Void> writeChunk(final byte[] chunkData, boolean isFinalChunk) {
-        throw new RuntimeException("Not implemented");
-    }
 }

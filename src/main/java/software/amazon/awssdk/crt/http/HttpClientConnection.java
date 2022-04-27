@@ -44,7 +44,19 @@ public class HttpClientConnection extends CrtResource {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+
+        return (HttpStream)stream;
+    }
+
+    public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+        }
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),
                 request.getBodyStream(),
                 new HttpStreamResponseHandlerNativeAdapter(streamHandler));
@@ -107,7 +119,7 @@ public class HttpClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpClientConnectionMakeRequest(long connectionBinding,
+    private static native HttpStreamBase httpClientConnectionMakeRequest(long connectionBinding,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;

@@ -74,7 +74,7 @@ struct http_stream_callback_data {
     struct aws_http_message *native_request;
 
     jobject java_http_response_stream_handler;
-    jobject java_http_stream;
+    jobject java_http_stream_base;
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
@@ -91,8 +91,8 @@ static void http_stream_callback_destroy(JNIEnv *env, struct http_stream_callbac
         return;
     }
 
-    if (callback->java_http_stream) {
-        s_java_http_stream_from_native_delete(env, callback->java_http_stream);
+    if (callback->java_http_stream_base) {
+        s_java_http_stream_from_native_delete(env, callback->java_http_stream_base);
     }
 
     if (callback->java_http_response_stream_handler != NULL) {
@@ -178,7 +178,7 @@ static int s_on_incoming_header_block_done_fn(
         env,
         callback->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseHeaders,
-        callback->java_http_stream,
+        callback->java_http_stream_base,
         (jint)callback->response_status,
         (jint)block_type,
         jni_headers_buf);
@@ -196,7 +196,7 @@ static int s_on_incoming_header_block_done_fn(
         env,
         callback->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseHeadersDone,
-        callback->java_http_stream,
+        callback->java_http_stream_base,
         jni_block_type);
 
     if (aws_jni_check_and_clear_exception(env)) {
@@ -218,7 +218,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
         env,
         callback->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseBody,
-        callback->java_http_stream,
+        callback->java_http_stream_base,
         jni_payload);
 
     (*env)->DeleteLocalRef(env, jni_payload);
@@ -253,7 +253,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         env,
         callback->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseComplete,
-        callback->java_http_stream,
+        callback->java_http_stream_base,
         jErrorCode);
 
     if (aws_jni_check_and_clear_exception(env)) {
@@ -339,7 +339,7 @@ static jobject s_make_request_general(
         .user_data = callback_data,
     };
 
-    jobject jHttpStream = NULL;
+    jobject jHttpStreamBase = NULL;
 
     callback_data->native_stream = aws_http_connection_make_request(native_conn, &request_options);
     if (callback_data->native_stream) {
@@ -349,7 +349,7 @@ static jobject s_make_request_general(
             (void *)native_conn,
             (void *)callback_data->native_stream);
 
-        jHttpStream = s_java_http_stream_from_native_new(env, callback_data, version);
+        jHttpStreamBase = s_java_http_stream_from_native_new(env, callback_data, version);
     }
 
     /* Check for errors that might have occurred while holding the lock. */
@@ -359,7 +359,7 @@ static jobject s_make_request_general(
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
         http_stream_callback_destroy(env, callback_data);
         return NULL;
-    } else if (!jHttpStream) {
+    } else if (!jHttpStreamBase) {
         /* Failed to create java HttpStream, but did create native aws_http_stream.
           Close connection and mark native_stream for release.
           callback_data will clean itself up when stream completes. */
@@ -369,7 +369,7 @@ static jobject s_make_request_general(
         return NULL;
     }
 
-    return jHttpStream;
+    return jHttpStreamBase;
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -488,11 +488,11 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     return AWS_OP_SUCCESS;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamActivate(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseActivate(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_cb_data,
-    jobject j_http_stream) {
+    jobject j_http_stream_base) {
     (void)jni_class;
 
     struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
@@ -507,17 +507,17 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
     /* global ref this because now the callbacks will be firing, and they will release their reference when the
      * stream callback sequence completes. */
-    cb_data->java_http_stream = (*env)->NewGlobalRef(env, j_http_stream);
+    cb_data->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream_base);
     aws_atomic_store_int(&cb_data->activated, 1);
     if (aws_http_stream_activate(stream)) {
         aws_atomic_store_int(&cb_data->activated, 0);
-        (*env)->DeleteGlobalRef(env, cb_data->java_http_stream);
+        (*env)->DeleteGlobalRef(env, cb_data->java_http_stream_base);
         aws_jni_throw_runtime_exception(
             env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
     }
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamRelease(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseRelease(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_cb_data) {
@@ -540,7 +540,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     }
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamGetResponseStatusCode(
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseGetResponseStatusCode(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_cb_data) {
@@ -566,7 +566,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     return (jint)status;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamIncrementWindow(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseIncrementWindow(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_cb_data,
@@ -610,7 +610,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
 
     AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Resetting Stream. stream: %p", (void *)stream);
     if (aws_http2_stream_reset(stream, error_code)) {
-        aws_jni_throw_runtime_exception(env, "reset stream failed.");
+        aws_jni_throw_runtime_exception(
+            env, "reset stream failed with error %d(%s).", aws_last_error(), aws_error_debug_str(aws_last_error()));
         return;
     }
 }

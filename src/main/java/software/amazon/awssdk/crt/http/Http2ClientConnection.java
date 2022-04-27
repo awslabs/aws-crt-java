@@ -182,7 +182,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      *         the user thread making this request when it's done.
      */
     @Override
-    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamResponseHandler streamHandler)
+    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler)
             throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");

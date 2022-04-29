@@ -99,6 +99,17 @@
                 <cmake.cflags/>
             </properties>
         </profile>
+        <profile>
+            <id>mac-arm-make</id>
+                <activation>
+                    <property>
+                        <name>build_mac_m1</name>
+                    </property>
+                </activation>
+            <properties>
+                <cmake.osx_arm64>-DCMAKE_OSX_ARCHITECTURES</cmake.osx_arm64>
+            </properties>
+        </profile>
         <!-- 32-bit Unix -->
         <profile>
             <id>unix-x86</id>
@@ -159,6 +170,7 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
+                                        <argument>${cmake.architecture}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
                                         <argument>-Wno-unused-variables</argument>
@@ -354,6 +366,10 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
+                                <condition property="cmake.architecture" value="-DCMAKE_OSX_ARCHITECTURES=arm64" else="-DGENERATOR_DUMMY=1">
+                                    <isset property="cmake.osx_arm64" />
+                                </condition>
+                                <echo message="architecture = ${cmake.architecture}"/>
                             </target>
                         </configuration>
                     </execution>

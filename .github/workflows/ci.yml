@@ -31,21 +31,21 @@ jobs:
           - rhel8-x64
           #- manylinux2014-x86 until we find 32-bit linux binaries we can use
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   linux-compiler-compat:
     runs-on: ubuntu-20.04 # latest
@@ -64,21 +64,21 @@ jobs:
           - gcc-7
           - gcc-8
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }}
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: logs
-        path: |
-          hs_err_pid*
-          target/surefire-reports/*stream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
@@ -87,23 +87,23 @@ jobs:
       matrix:
         arch: [armv6, armv7, arm64]
     steps:
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-        chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
   windows:
     runs-on: windows-2022 # latest
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   windows-vc14:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
@@ -111,29 +111,29 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      env:
-        AWS_CMAKE_TOOLSET: v140
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        env:
+          AWS_CMAKE_TOOLSET: v140
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   osx:
     runs-on: macos-11 # latest
     steps:
-    - name: Checkout Sources
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-        chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   android:
     name: Android
@@ -162,12 +162,12 @@ jobs:
   check-submodules:
     runs-on: ubuntu-20.04 # latest
     steps:
-    - name: Checkout Source
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Check Submodules
-      # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
-      # https://github.com/actions/runner/issues/480
-      uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
+      - name: Checkout Source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Check Submodules
+        # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
+        # https://github.com/actions/runner/issues/480
+        uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main

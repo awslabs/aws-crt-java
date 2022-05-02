@@ -52,6 +52,11 @@ static void s_destroy_manager_binding(struct http_connection_manager_binding *bi
     }
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     if (binding->java_http_conn_manager != NULL) {
         (*env)->DeleteWeakGlobalRef(env, binding->java_http_conn_manager);
     }
@@ -63,6 +68,10 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
 
     struct http_connection_manager_binding *binding = (struct http_connection_manager_binding *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
     jobject java_http_conn_manager = (*env)->NewLocalRef(env, binding->java_http_conn_manager);
@@ -324,6 +333,11 @@ static void s_destroy_connection_binding(struct aws_http_connection_binding *bin
     }
 
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     if (binding->java_acquire_connection_future != NULL) {
         (*env)->DeleteGlobalRef(env, binding->java_acquire_connection_future);
     }
@@ -343,6 +357,11 @@ static void s_on_http_conn_acquisition_callback(
     struct aws_http_connection_binding *binding = (struct aws_http_connection_binding *)user_data;
     binding->connection = connection;
     JNIEnv *env = aws_jni_get_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     jint jni_error_code = (jint)error_code;
 
     AWS_LOGF_DEBUG(

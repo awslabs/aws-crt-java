@@ -710,7 +710,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            final long contentLength = 1024l;
+            final long contentLength = 1024l * 12;
             final long lengthWritten[] = { 0 };
             final String userMetadataKey = "CustomKey1";
             final String userMetadataValue = "SampleValue";

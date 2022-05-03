@@ -32,8 +32,7 @@ public class HttpStream extends HttpStreamBase {
     }
 
     /**
-     * Use only for Http 1.1 Chunked Encoding. At some later point we may adapt this
-     * interface for H2, but not yet.
+     * Use only for Http 1.1 Chunked Encoding.
      * You must call activate() before using this function.
      *
      * @param chunkData               chunk of data to send.
@@ -61,8 +60,7 @@ public class HttpStream extends HttpStreamBase {
     }
 
     /**
-     * Use only for Http 1.1 Chunked Encoding. At some later point we may adapt this
-     * interface for H2, but not yet.
+     * Use only for Http 1.1 Chunked Encoding.
      * You must call activate() before using this function.
      *
      * @param chunkData    chunk of data to send.

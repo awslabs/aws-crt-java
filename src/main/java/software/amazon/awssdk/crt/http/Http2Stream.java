@@ -9,6 +9,9 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * An HttpStream represents a single HTTP/2 specific Http Request/Response.
+ */
 public class Http2Stream extends HttpStreamBase {
 
     protected Http2Stream(long ptr) {

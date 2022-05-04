@@ -65,6 +65,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
 
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
+    private static final long MIN_PART_SIZE_5MB = 5l * 1024l * 1024l;
 
     @BeforeClass
     public static void haveAwsCredentials() {
@@ -464,19 +465,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
         skipIfNetworkUnavailable();
-        final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider();
 
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
-                        100.)) {
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
+                        MIN_PART_SIZE_5MB, 100.)) {
 
             CancellationException cancelException = null;
 
-            dataSupplier.setPartSize(partSize5MB);
+            dataSupplier.setPartSize(MIN_PART_SIZE_5MB);
 
             try {
                 testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
@@ -699,18 +699,28 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 null));
     }
 
+
     @Test
-    public void testPutObjectWithUserDefinedMetadata() throws Exception {
+    public void testPutObjectWithUserDefinedMetadataSinglePart() throws Exception {
+        testPutObjectWithUserDefinedMetadata(false);
+    }
+
+    @Test
+    public void testPutObjectWithUserDefinedMetadataMultiPart() throws Exception {
+        testPutObjectWithUserDefinedMetadata(true);
+    }
+
+    private void testPutObjectWithUserDefinedMetadata(boolean doMultipart) throws Exception {
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider();
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, MIN_PART_SIZE_5MB,
                         100.)) {
 
-            final long contentLength = 1024l;
+            final long contentLength = doMultipart ? MIN_PART_SIZE_5MB * 4 : 1024l;
             final long lengthWritten[] = { 0 };
             final String userMetadataKey = "CustomKey1";
             final String userMetadataValue = "SampleValue";

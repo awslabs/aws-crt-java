@@ -24,7 +24,7 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNew(this, numThreads));
+        acquireNativeHandle(eventLoopGroupNew(numThreads));
     }
 
     /**
@@ -35,7 +35,7 @@ public final class EventLoopGroup extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native event loop group
      */
     public EventLoopGroup(int cpuGroup, int numThreads) throws CrtRuntimeException {
-        acquireNativeHandle(eventLoopGroupNewPinnedToCpuGroup(this, cpuGroup, numThreads));
+        acquireNativeHandle(eventLoopGroupNewPinnedToCpuGroup(cpuGroup, numThreads));
     }
 
     /**
@@ -54,17 +54,7 @@ public final class EventLoopGroup extends CrtResource {
         if (!isNull()) {
             eventLoopGroupDestroy(getNativeHandle());
         }
-    }
-
-    /**
-     * Called from Native when the asynchronous cleanup process needed for event loop groups has completed.
-     */
-    private void onCleanupComplete() {
-        Log.log(Log.LogLevel.Trace, Log.LogSubject.IoEventLoop, "EventLoopGroup.onCleanupComplete");
-
-        releaseReferences();
-
-        this.shutdownComplete.complete(null);
+        shutdownComplete.complete(null);
     }
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
@@ -132,8 +122,8 @@ public final class EventLoopGroup extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long eventLoopGroupNew(EventLoopGroup thisObj, int numThreads) throws CrtRuntimeException;
-    private static native long eventLoopGroupNewPinnedToCpuGroup(EventLoopGroup thisObj, int cpuGroup, int numThreads) throws CrtRuntimeException;
+    private static native long eventLoopGroupNew(int numThreads) throws CrtRuntimeException;
+    private static native long eventLoopGroupNewPinnedToCpuGroup(int cpuGroup, int numThreads) throws CrtRuntimeException;
 
     private static native void eventLoopGroupDestroy(long elg);
 };

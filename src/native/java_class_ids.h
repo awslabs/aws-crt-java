@@ -131,12 +131,6 @@ struct java_async_callback_properties {
 };
 extern struct java_async_callback_properties async_callback_properties;
 
-/* EventLoopGroup */
-struct java_event_loop_group_properties {
-    jmethodID onCleanupComplete;
-};
-extern struct java_event_loop_group_properties event_loop_group_properties;
-
 /* ClientBootstrap */
 struct java_client_bootstrap_properties {
     jmethodID onShutdownComplete;

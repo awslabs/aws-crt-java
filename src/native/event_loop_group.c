@@ -27,90 +27,22 @@
 #    endif
 #endif
 
-struct event_loop_group_cleanup_callback_data {
-    JavaVM *jvm;
-    jobject java_event_loop_group;
-};
-
-static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
-    struct event_loop_group_cleanup_callback_data *callback_data = user_data;
-
-    AWS_LOGF_DEBUG(AWS_LS_IO_EVENT_LOOP, "Event Loop Shutdown Complete");
-
-    // Tell the Java event loop group that cleanup is done.  This lets it release its references.
-    JavaVM *jvm = callback_data->jvm;
-    JNIEnv *env = NULL;
-    /* fetch the env manually, rather than through the helper which will install an exit callback */
-#ifdef ANDROID
-    (*jvm)->AttachCurrentThread(jvm, &env, NULL);
-#else
-    /* awkward temp to get around gcc 4.1 strict aliasing incorrect warnings */
-    void *temp_env = NULL;
-    (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
-    env = temp_env;
-#endif
-
-    /*
-     * The likely cause of env being null is the JVM shutting down before our stuff completely shuts down.  In that
-     * case, let's not even free memory.  This is most likely a consequence of a "failed" gentle shutdown so all
-     * the library clean up and allocator/logging clean up wont get called, but let's not even take that risk.
-     */
-    if (env != NULL) {
-        (*env)->CallVoidMethod(
-            env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-
-        // Remove the ref that was probably keeping the Java event loop group alive.
-        (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
-
-        // We're done with this callback data, free it.
-        struct aws_allocator *allocator = aws_jni_get_allocator();
-        aws_mem_release(allocator, callback_data);
-
-        (*jvm)->DetachCurrentThread(jvm);
-    }
-}
-
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(
-    JNIEnv *env,
-    jclass jni_elg,
-    jobject elg_jobject,
-    jint num_threads) {
+jlong JNICALL
+    Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNew(JNIEnv *env, jclass jni_elg, jint num_threads) {
     (void)jni_elg;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    struct event_loop_group_cleanup_callback_data *callback_data =
-        aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
-    if (callback_data == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: shutdown callback data allocation failed");
-        goto on_error;
-    }
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
-
-    struct aws_shutdown_callback_options shutdown_options = {
-        .shutdown_callback_fn = s_event_loop_group_cleanup_completion_callback,
-        .shutdown_callback_user_data = callback_data,
-    };
-
-    struct aws_event_loop_group *elg =
-        aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, &shutdown_options);
+    struct aws_event_loop_group *elg = aws_event_loop_group_new_default(allocator, (uint16_t)num_threads, NULL);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: aws_event_loop_group_new_default failed");
         goto on_error;
     }
 
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
-
     return (jlong)elg;
 
 on_error:
-
-    aws_mem_release(allocator, callback_data);
 
     return (jlong)NULL;
 }
@@ -119,43 +51,22 @@ JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNewPinnedToCpuGroup(
     JNIEnv *env,
     jclass jni_elg,
-    jobject elg_jobject,
     jint cpu_group,
     jint num_threads) {
     (void)jni_elg;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    struct event_loop_group_cleanup_callback_data *callback_data =
-        aws_mem_acquire(allocator, sizeof(struct event_loop_group_cleanup_callback_data));
-    if (callback_data == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "EventLoopGroup.event_loop_group_new: shutdown callback data allocation failed");
-        goto on_error;
-    }
-
-    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
-    AWS_FATAL_ASSERT(jvmresult == 0);
-
-    struct aws_shutdown_callback_options shutdown_options = {
-        .shutdown_callback_fn = s_event_loop_group_cleanup_completion_callback,
-        .shutdown_callback_user_data = callback_data,
-    };
-
     struct aws_event_loop_group *elg = aws_event_loop_group_new_default_pinned_to_cpu_group(
-        allocator, (uint16_t)num_threads, (uint16_t)cpu_group, &shutdown_options);
+        allocator, (uint16_t)num_threads, (uint16_t)cpu_group, NULL);
     if (elg == NULL) {
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed");
         goto on_error;
     }
 
-    callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
-
     return (jlong)elg;
 
 on_error:
-
-    aws_mem_release(allocator, callback_data);
 
     return (jlong)NULL;
 }

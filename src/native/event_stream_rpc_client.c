@@ -489,7 +489,7 @@ static void s_stream_continuation_closed(
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 
-    JavaVM *jvm = jvm = continuation_callback_data->jvm;
+    JavaVM *jvm = continuation_callback_data->jvm;
     s_client_continuation_data_destroy(env, continuation_callback_data);
     aws_jni_release_thread_env(jvm, env);
 }

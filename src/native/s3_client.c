@@ -255,6 +255,7 @@ static int s_on_s3_meta_request_headers_callback(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
+    jobject java_headers_buffer = NULL;
     struct aws_allocator *allocator = aws_jni_get_allocator();
     /* calculate initial header capacity */
     size_t headers_initial_capacity = 0;
@@ -276,7 +277,7 @@ static int s_on_s3_meta_request_headers_callback(
         aws_http_headers_get_index(headers, header_index, &header);
         aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
     }
-    jobject java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+    java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         (*env)->CallVoidMethod(

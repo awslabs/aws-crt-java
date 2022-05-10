@@ -40,7 +40,7 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
             return AWS_OP_ERR;
         }
 
-        JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
@@ -52,8 +52,9 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
         }
 
         if (aws_jni_check_and_clear_exception(env)) {
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
+        aws_jni_release_thread_env(impl->jvm, env);
     }
 
     if (result == AWS_OP_SUCCESS) {
@@ -80,7 +81,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
         return AWS_OP_SUCCESS;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
@@ -93,16 +94,19 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     impl->body_done = (*env)->CallBooleanMethod(
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
+    int result = AWS_OP_SUCCESS;
     if (aws_jni_check_and_clear_exception(env)) {
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    } else {
+        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
+        dest->len += amt_written;
     }
-
-    size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-    dest->len += amt_written;
 
     (*env)->DeleteLocalRef(env, direct_buffer);
 
-    return AWS_OP_SUCCESS;
+    aws_jni_release_thread_env(impl->jvm, env);
+
+    return result;
 }
 
 static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct aws_stream_status *status) {
@@ -121,7 +125,7 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
         AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (impl->http_request_body_stream != NULL) {
-        JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
@@ -130,17 +134,21 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
         *length =
             (*env)->CallLongMethod(env, impl->http_request_body_stream, http_request_body_stream_properties.get_length);
 
+        int result = AWS_OP_SUCCESS;
         if (aws_jni_check_and_clear_exception(env)) {
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
-        return AWS_OP_SUCCESS;
+
+        aws_jni_release_thread_env(impl->jvm, env);
+
+        return result;
     }
 
     return AWS_OP_ERR;
 }
 
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
-    JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -149,6 +157,8 @@ static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl 
     if (impl->http_request_body_stream != NULL) {
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
+
+    aws_jni_release_thread_env(impl->jvm, env);
 
     aws_mem_release(impl->allocator, impl);
 }

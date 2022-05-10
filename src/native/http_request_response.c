@@ -152,12 +152,13 @@ static int s_on_incoming_header_block_done_fn(
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
+    int result = AWS_OP_ERR;
     jint jni_block_type = block_type;
 
     jobject jni_headers_buf =
@@ -174,7 +175,8 @@ static int s_on_incoming_header_block_done_fn(
 
     if (aws_jni_check_and_clear_exception(env)) {
         (*env)->DeleteLocalRef(env, jni_headers_buf);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        goto done;
     }
 
     /* instead of cleaning it up here, reset it in case another block is encountered */
@@ -189,10 +191,17 @@ static int s_on_incoming_header_block_done_fn(
         jni_block_type);
 
     if (aws_jni_check_and_clear_exception(env)) {
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        goto done;
     }
 
-    return AWS_OP_SUCCESS;
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    aws_jni_release_thread_env(callback->jvm, env);
+
+    return result;
 }
 
 static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aws_byte_cursor *data, void *user_data) {
@@ -200,11 +209,13 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     size_t total_window_increment = 0;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
+
+    int result = AWS_OP_ERR;
 
     jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, data->ptr, data->len);
 
@@ -219,12 +230,14 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     if (aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onResponseBody", (void *)stream);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        goto done;
     }
 
     if (window_increment < 0) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Window Increment from onResponseBody < 0", (void *)stream);
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        goto done;
     }
 
     total_window_increment += window_increment;
@@ -233,13 +246,19 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
         aws_http_stream_update_window(stream, total_window_increment);
     }
 
-    return AWS_OP_SUCCESS;
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    aws_jni_release_thread_env(callback->jvm, env);
+
+    return result;
 }
 
 static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
-    JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -259,7 +278,9 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
+    JavaVM *jvm = callback->jvm;
     http_stream_callback_destroy(env, callback);
+    aws_jni_release_thread_env(jvm, env);
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -364,7 +385,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
 
     struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -377,7 +398,9 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
         error_code);
     aws_jni_check_and_clear_exception(env);
 
+    JavaVM *jvm = chunked_callback_data->stream_cb_data->jvm;
     s_cleanup_chunked_callback_data(env, chunked_callback_data);
+    aws_jni_release_thread_env(jvm, env);
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamWriteChunk(

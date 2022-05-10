@@ -56,7 +56,7 @@ static void s_on_shutdown_complete(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_AUTH_CREDENTIALS_PROVIDER, "Credentials providers shutdown complete");
 
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -73,7 +73,11 @@ static void s_on_shutdown_complete(void *user_data) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     // We're done with this callback data, clean it up.
+
+    JavaVM *jvm = callback_data->jvm;
     s_callback_data_clean_up(env, allocator, callback_data);
+
+    aws_jni_release_thread_env(jvm, env);
 }
 
 JNIEXPORT jlong JNICALL
@@ -526,7 +530,7 @@ static int s_credentials_provider_delegate_get_credentials(
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     int return_value = AWS_OP_ERR;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
@@ -585,6 +589,9 @@ empty_credentials:
     (*env)->DeleteLocalRef(env, java_session_token);
 fetch_credentials_failed:
     (*env)->DeleteLocalRef(env, java_credentials);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+
     return return_value;
 }
 
@@ -654,7 +661,7 @@ struct aws_credentials_provider_get_credentials_callback_data {
 };
 
 static void s_cp_callback_data_clean_up(struct aws_credentials_provider_get_credentials_callback_data *callback_data) {
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -662,6 +669,8 @@ static void s_cp_callback_data_clean_up(struct aws_credentials_provider_get_cred
 
     (*env)->DeleteGlobalRef(env, callback_data->java_crt_credentials_provider);
     (*env)->DeleteGlobalRef(env, callback_data->java_credentials_future);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 
     aws_credentials_provider_release(callback_data->provider);
 
@@ -674,7 +683,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
 
     struct aws_credentials_provider_get_credentials_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -731,6 +740,9 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         }
         (*env)->DeleteLocalRef(env, java_credentials);
     }
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+
     s_cp_callback_data_clean_up(callback_data);
 }
 

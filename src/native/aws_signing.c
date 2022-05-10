@@ -53,7 +53,7 @@ struct s_aws_sign_request_callback_data {
 
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -107,6 +107,8 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     if (callback_data->java_previous_signature != NULL) {
         (*env)->DeleteGlobalRef(env, callback_data->java_previous_signature);
     }
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -214,7 +216,7 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         goto done;
@@ -241,6 +243,8 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
 done:
 
+    aws_jni_release_thread_env(callback_data->jvm, env);
+
     s_cleanup_callback_data(callback_data);
 }
 
@@ -248,7 +252,7 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         goto done;
@@ -262,6 +266,8 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
     s_aws_complete_signing_result(env, result, callback_data, NULL);
 
 done:
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 
     s_cleanup_callback_data(callback_data);
 }
@@ -277,7 +283,7 @@ static void s_aws_trailing_headers_signing_complete(struct aws_signing_result *r
 static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
     struct s_aws_sign_request_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return false;
@@ -290,6 +296,8 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     (*env)->DeleteLocalRef(env, header_name);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 
     return result;
 }

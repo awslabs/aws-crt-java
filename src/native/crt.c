@@ -8,7 +8,9 @@
 #include <aws/common/atomics.h>
 #include <aws/common/clock.h>
 #include <aws/common/common.h>
+#include <aws/common/hash_table.h>
 #include <aws/common/logging.h>
+#include <aws/common/rw_lock.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/thread.h>
@@ -45,6 +47,123 @@ struct aws_allocator *aws_jni_get_allocator() {
         s_allocator = s_init_allocator();
     }
     return s_allocator;
+}
+
+void s_detach_jvm_from_thread(void *user_data) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
+    JavaVM *jvm = user_data;
+    (*jvm)->DetachCurrentThread(jvm);
+}
+
+static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
+#ifdef ANDROID
+    JNIEnv *env = NULL;
+#else
+    void *env = NULL;
+#endif
+    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+#ifdef ANDROID
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+#else
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+#endif
+        /* Ran out of memory, don't log in this case */
+        AWS_FATAL_ASSERT(result != JNI_ENOMEM);
+        if (result != JNI_OK) {
+            fprintf(stderr, "Unrecoverable AttachCurrentThreadAsDaemon failed, JNI error code is %d\n", (int)result);
+            return NULL;
+        }
+        /* This should only happen in event loop threads, the JVM main thread attachment is
+         * managed by the JVM, so we only need to clean up event loop thread attachments */
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+    }
+
+    return env;
+}
+
+static struct aws_rw_lock s_jvm_table_lock = AWS_RW_LOCK_INIT;
+static struct aws_hash_table *s_jvms = NULL;
+
+static void s_jvm_table_add_jvm_for_env(JNIEnv *env) {
+    aws_rw_lock_wlock(&s_jvm_table_lock);
+
+    if (s_jvms == NULL) {
+        s_jvms = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct aws_hash_table));
+        AWS_FATAL_ASSERT(
+            AWS_OP_SUCCESS ==
+            aws_hash_table_init(s_jvms, aws_default_allocator(), 1, aws_hash_ptr, aws_ptr_eq, NULL, NULL));
+    }
+
+    JavaVM *jvm = NULL;
+    jint jvmresult = (*env)->GetJavaVM(env, &jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0 && jvm != NULL);
+
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_put(s_jvms, jvm, NULL, NULL));
+
+    aws_rw_lock_wunlock(&s_jvm_table_lock);
+}
+
+static void s_jvm_table_remove_jvm_for_env(JNIEnv *env) {
+    aws_rw_lock_wlock(&s_jvm_table_lock);
+
+    if (s_jvms == NULL) {
+        goto done;
+    }
+
+    JavaVM *jvm = NULL;
+    jint jvmresult = (*env)->GetJavaVM(env, &jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0 && jvm != NULL);
+
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove(s_jvms, jvm, NULL, NULL));
+
+    if (aws_hash_table_get_entry_count(s_jvms) == 0) {
+        aws_hash_table_clean_up(s_jvms);
+        aws_mem_release(aws_default_allocator(), s_jvms);
+        s_jvms = NULL;
+    }
+
+done:
+
+    aws_rw_lock_wunlock(&s_jvm_table_lock);
+}
+
+JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
+    aws_rw_lock_rlock(&s_jvm_table_lock);
+
+    if (s_jvms == NULL) {
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
+        goto error;
+    }
+
+    struct aws_hash_element *element = NULL;
+    int find_result = aws_hash_table_find(s_jvms, jvm, &element);
+    if (find_result != AWS_OP_SUCCESS || element == NULL) {
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
+        goto error;
+    }
+
+    JNIEnv *env = s_aws_jni_get_thread_env(jvm);
+    if (env == NULL) {
+        goto error;
+    }
+
+    return env;
+
+error:
+
+    aws_rw_lock_runlock(&s_jvm_table_lock);
+
+    return NULL;
+}
+
+void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
+    (void)jvm;
+    (void)env;
+
+    if (env != NULL) {
+        aws_rw_lock_runlock(&s_jvm_table_lock);
+    }
 }
 
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
@@ -212,40 +331,38 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str) {
     return result;
 }
 
-void s_detach_jvm_from_thread(void *user_data) {
-    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
-    JavaVM *jvm = user_data;
-    (*jvm)->DetachCurrentThread(jvm);
-}
+#define AWS_DEFINE_ERROR_INFO_CRT(CODE, STR) AWS_DEFINE_ERROR_INFO(CODE, STR, "aws-crt-java")
 
-JNIEnv *aws_jni_get_thread_env(JavaVM *jvm) {
-#ifdef ANDROID
-    JNIEnv *env = NULL;
-#else
-    void *env = NULL;
-#endif
-    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "aws_jni_get_thread_env returned detached, attaching");
-#ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
-#else
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
-#endif
-        /* Ran out of memory, don't log in this case */
-        AWS_FATAL_ASSERT(result != JNI_ENOMEM);
-        if (result != JNI_OK) {
-            fprintf(stderr, "Unrecoverable AttachCurrentThreadAsDaemon failed, JNI error code is %d\n", (int)result);
-            return NULL;
-        }
-        /* This should only happen in event loop threads, the JVM main thread attachment is
-         * managed by the JVM, so we only need to clean up event loop thread attachments */
-        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
-    }
+/* clang-format off */
+static struct aws_error_info s_crt_errors[] = {
+    AWS_DEFINE_ERROR_INFO_CRT(
+        AWS_ERROR_JAVA_CRT_JVM_DESTROYED,
+        "Attempt to use a JVM that has already been destroyed"),
+};
+/* clang-format on */
 
-    return env;
-}
+static struct aws_error_info_list s_crt_error_list = {
+    .error_list = s_crt_errors,
+    .count = sizeof(s_crt_errors) / sizeof(struct aws_error_info),
+};
+
+static struct aws_log_subject_info s_crt_log_subject_infos[] = {
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_GENERAL,
+        "JavaCrtGeneral",
+        "Subject for aws-crt-java logging that defies categorization."),
+};
+
+static struct aws_log_subject_info_list s_crt_log_subject_list = {
+    .subject_list = s_crt_log_subject_infos,
+    .count = AWS_ARRAY_SIZE(s_crt_log_subject_infos),
+};
 
 static void s_jni_atexit_strict(void) {
+
+    aws_unregister_log_subject_info_list(&s_crt_log_subject_list);
+    aws_unregister_error_info(&s_crt_error_list);
+
     aws_s3_library_clean_up();
     aws_event_stream_library_clean_up();
     aws_auth_library_clean_up();
@@ -263,6 +380,7 @@ static void s_jni_atexit_strict(void) {
         struct aws_allocator *tracer_allocator = aws_jni_get_allocator();
         aws_mem_tracer_destroy(tracer_allocator);
     }
+
     s_allocator = NULL;
 }
 
@@ -339,6 +457,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_event_stream_library_init(allocator);
     aws_s3_library_init(allocator);
 
+    aws_register_error_info(&s_crt_error_list);
+    aws_register_log_subject_info_list(&s_crt_log_subject_list);
+
+    s_jvm_table_add_jvm_for_env(env);
     cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
@@ -346,6 +468,14 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     } else {
         atexit(s_jni_atexit_gentle);
     }
+}
+
+JNIEXPORT
+void JNICALL Java_software_amazon_awssdk_crt_CRT_onJvmShutdown(JNIEnv *env, jclass jni_crt_class) {
+
+    (void)jni_crt_class;
+
+    s_jvm_table_remove_jvm_for_env(env);
 }
 
 JNIEXPORT

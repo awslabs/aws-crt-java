@@ -43,6 +43,14 @@ public final class CRT {
         boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
         awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
 
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            public void run()
+            {
+                CRT.onJvmShutdown();
+            }
+        });
+
         try {
             Log.initLoggingFromSystemProperties();
         } catch (IllegalArgumentException e) {
@@ -319,4 +327,6 @@ public final class CRT {
     }
 
     private static native void nativeCheckJniExceptionContract(boolean clearException);
+
+    private static native void onJvmShutdown();
 };

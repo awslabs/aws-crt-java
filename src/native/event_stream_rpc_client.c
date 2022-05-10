@@ -40,7 +40,7 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
         return;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -49,6 +49,8 @@ static void s_destroy_connection_callback_data(struct connection_callback_data *
     if (callback_data->java_connection_handler) {
         (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
     }
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -59,7 +61,7 @@ static void s_on_connection_setup(
     void *user_data) {
     (void)connection;
     struct connection_callback_data *callback_data = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -76,6 +78,8 @@ static void s_on_connection_setup(
         aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_UNKNOWN);
     }
 
+    aws_jni_release_thread_env(callback_data->jvm, env);
+
     if (error_code) {
         s_destroy_connection_callback_data(callback_data);
     }
@@ -88,7 +92,7 @@ static void s_on_connection_shutdown(
     (void)connection;
 
     struct connection_callback_data *callback_data = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -101,6 +105,8 @@ static void s_on_connection_shutdown(
         error_code);
     aws_jni_check_and_clear_exception(env);
 
+    aws_jni_release_thread_env(callback_data->jvm, env);
+
     s_destroy_connection_callback_data(callback_data);
 }
 
@@ -111,7 +117,7 @@ static void s_connection_protocol_message(
     (void)connection;
 
     struct connection_callback_data *callback_data = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -135,6 +141,8 @@ static void s_connection_protocol_message(
     (*env)->DeleteLocalRef(env, payload_byte_array);
     (*env)->DeleteLocalRef(env, headers_array);
     aws_jni_check_and_clear_exception(env);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 }
 
 JNIEXPORT
@@ -327,7 +335,7 @@ static void s_destroy_message_flush_callback_args(JNIEnv *env, struct message_fl
 static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -337,7 +345,10 @@ static void s_message_flush_fn(int error_code, void *user_data) {
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
     aws_jni_check_and_clear_exception(env);
 
+    JavaVM *jvm = callback_data->jvm;
     s_destroy_message_flush_callback_args(env, callback_data);
+
+    aws_jni_release_thread_env(jvm, env);
 }
 
 JNIEXPORT
@@ -431,7 +442,7 @@ static void s_stream_continuation(
 
     struct continuation_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -456,6 +467,8 @@ static void s_stream_continuation(
     (*env)->DeleteLocalRef(env, headers_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
 }
 
 static void s_stream_continuation_closed(
@@ -463,7 +476,7 @@ static void s_stream_continuation_closed(
     void *user_data) {
     (void)token;
     struct continuation_callback_data *continuation_callback_data = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(continuation_callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -475,7 +488,10 @@ static void s_stream_continuation_closed(
         event_stream_client_continuation_handler_properties.onContinuationClosed);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
+
+    JavaVM *jvm = jvm = continuation_callback_data->jvm;
     s_client_continuation_data_destroy(env, continuation_callback_data);
+    aws_jni_release_thread_env(jvm, env);
 }
 
 JNIEXPORT

@@ -17,7 +17,13 @@
 enum aws_java_crt_log_subject {
     AWS_LS_JAVA_CRT_GENERAL = AWS_LOG_SUBJECT_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 
-    AWS_LS_JAVA_CRT_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID)
+    AWS_LS_JAVA_CRT_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+};
+
+enum aws_java_crt_error {
+    AWS_ERROR_JAVA_CRT_JVM_DESTROYED = AWS_ERROR_ENUM_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+
+    AWS_ERROR_JAVA_CRT_END_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 };
 
 struct aws_allocator *aws_jni_get_allocator(void);
@@ -156,9 +162,12 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
- * aws_jni_get_thread_env - Gets the JNIEnv for the current thread from the VM,
- * attaching the env if necessary
+ * aws_jni_acquire_thread_env - Acquires the JNIEnv for the current thread from the VM,
+ * attaching the env if necessary.  aws_jni_release_thread_env() must be called once
+ * the caller is through with the environment.
  ******************************************************************************/
-JNIEnv *aws_jni_get_thread_env(JavaVM *jvm);
+JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
+
+void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_H */

@@ -172,6 +172,7 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
 
     JNIEnv *env = s_aws_jni_get_thread_env(jvm);
     if (env == NULL) {
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         goto error;
     }
 

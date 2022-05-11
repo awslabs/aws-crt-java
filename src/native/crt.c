@@ -82,6 +82,33 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
     return env;
 }
 
+/*
+A simple system to support unpredictable JVM shutdowns.  In an ideal world, everyone would correctly use the
+CrtResource ref counting and strict (aws_thread_managed_join_all) shutdown, but given the difficulty of using
+them correctly, that's not a realistic expectation.  So we need to come up with a way for JVM shutdowns to
+not trigger crashes from native threads that try and call back to Java (where even the JavaVM pointer cached
+on the binding object is now garbage) after the JVM has shutdown (but before the process has killed all of its
+threads).
+
+Our system works as follows:
+
+We track the set of all active JVMs (since we don't correctly support multiple JVMs yet, this is always going to be
+either one or zero for now).  We protect this set with a read-write lock.  Adding (CRT init) or removing (JVM
+shutdown hook) a JVM from this set will take a write lock.  Acquiring a JNIEnv from a tracked JVM, will take a read
+lock, and releasing a JNIEnv will release the read lock.
+
+Acquiring a JNIEnv succeeds if the JVM in question is in our set, and fails otherwise.  All users of a JNIEnv have
+been hardened to check for null and just not call to Java in that case.
+
+Since we don't have RAII in C, bindings must be very careful to release once, and exactly once, every JNIEnv that
+they acquire.  An alternative approach would be to replace all of the JNIEnv usage with a new API that
+takes the lock, calls a supplied callback (which does all the JNIEnv operations), and then releases the lock.  This
+approach was tried but was so disruptive refactor-wise that I deemed it too dangerous to try and push through.  So
+instead, we just have to be careful with acquire/release.
+
+In this way, the vast majority of usage is relatively contentionless; it's just a bunch of native threads taking
+read locks on a shared rw lock.  Only when the JVM shutdown hook calls into native is there read-write contention.
+ */
 static struct aws_rw_lock s_jvm_table_lock = AWS_RW_LOCK_INIT;
 static struct aws_hash_table *s_jvms = NULL;
 

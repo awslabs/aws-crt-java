@@ -168,6 +168,11 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
  ******************************************************************************/
 JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
 
+/*******************************************************************************
+ * aws_jni_release_thread_env - Releases an acquired JNIEnv for the current thread.  Every successfully
+ * acquired JNIEnv must be released exactly once.  Internally, all this does is release the reader
+ * lock on the set of valid JVMs.
+ ******************************************************************************/
 void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_H */

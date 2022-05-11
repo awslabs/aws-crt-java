@@ -12,7 +12,7 @@ class AWSCrtJavaTest(Builder.Action):
 
         os.system("echo TESTING")
         if os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
-            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"):
+            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true"):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

@@ -705,10 +705,11 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         testPutObjectWithUserDefinedMetadata(false);
     }
 
+    /*
     @Test
     public void testPutObjectWithUserDefinedMetadataMultiPart() throws Exception {
         testPutObjectWithUserDefinedMetadata(true);
-    }
+    }*/
 
     private void testPutObjectWithUserDefinedMetadata(boolean doMultipart) throws Exception {
         skipIfNetworkUnavailable();

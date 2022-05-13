@@ -109,12 +109,12 @@ public class S3ClientOptions {
         return maxConnections;
     }
 
-    public S3ClientOptions withComputeContentMd5(boolean computeContentMd5) {
+    public S3ClientOptions withComputeContentMd5(Boolean computeContentMd5) {
         this.computeContentMd5 = computeContentMd5;
         return this;
     }
 
-    public boolean getComputeContentMd5() {
+    public Boolean getComputeContentMd5() {
         return computeContentMd5;
     }
 

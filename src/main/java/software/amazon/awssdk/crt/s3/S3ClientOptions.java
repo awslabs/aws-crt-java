@@ -30,7 +30,7 @@ public class S3ClientOptions {
      *
      * Default is false;
      */
-    private boolean computeContentMd5;
+    private Boolean computeContentMd5;
     private StandardRetryOptions standardRetryOptions;
 
     public S3ClientOptions() {

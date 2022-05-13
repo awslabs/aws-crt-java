@@ -30,7 +30,7 @@ public class S3ClientOptions {
      *
      * Default is false;
      */
-    private Boolean computeContentMd5;
+    private boolean computeContentMd5;
     private StandardRetryOptions standardRetryOptions;
 
     public S3ClientOptions() {
@@ -109,12 +109,12 @@ public class S3ClientOptions {
         return maxConnections;
     }
 
-    public S3ClientOptions withComputeContentMd5(Boolean computeContentMd5) {
+    public S3ClientOptions withComputeContentMd5(boolean computeContentMd5) {
         this.computeContentMd5 = computeContentMd5;
         return this;
     }
 
-    public Boolean getComputeContentMd5() {
+    public boolean getComputeContentMd5() {
         return computeContentMd5;
     }
 

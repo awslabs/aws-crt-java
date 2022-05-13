@@ -56,6 +56,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     private static final String PUT_OBJECT_WITH_METADATA_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_key", "file_with_metadata.upload");
+    private static final String PUT_OBJECT_WITH_METADATA_MULTIPART_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_multipart_key", "file_with_metadata_multipart.upload");
 
     private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
             "filename _@_=_&_?_+_)_.txt");
@@ -721,6 +722,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         100.)) {
 
             final long contentLength = doMultipart ? MIN_PART_SIZE_5MB * 4 : 1024l;
+            final String objectKey = doMultipart ? PUT_OBJECT_WITH_METADATA_MULTIPART_KEY : PUT_OBJECT_WITH_METADATA_KEY;
             final long lengthWritten[] = { 0 };
             final String userMetadataKey = "CustomKey1";
             final String userMetadataValue = "SampleValue";
@@ -732,7 +734,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .key(objectKey)
                             .contentLength(contentLength)
                             .metadata(userMetadata)
                             .build(),
@@ -746,13 +748,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     }).join();
 
             // wait propagation
-            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_WITH_METADATA_KEY, userMetadataKey);
+            waitForPropagation(nativeClient, BUCKET, objectKey, userMetadataKey);
 
             // get
             final long length[] = { 0 };
             final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .key(objectKey)
                             .build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 

@@ -77,5 +77,10 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
      */
     public int getStatusCode() {
         return statusCode;
+
+    }
+    @Override
+    public String toString() {
+        return String.format("%s: response status code(%d). aws error code(%s), aws error message(%s)", super.toString(), statusCode, awsErrorCode, awsErrorMessage);
     }
 }

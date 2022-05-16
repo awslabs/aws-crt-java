@@ -89,10 +89,11 @@
             </properties>
         </profile>
         <profile>
-            <id>mac-make</id>
+            <id>mac-x64-make</id>
             <activation>
                 <os>
                     <family>mac</family>
+                     <arch>x86_64</arch>
                 </os>
             </activation>
             <properties>
@@ -102,9 +103,10 @@
         <profile>
             <id>mac-arm-make</id>
                 <activation>
-                    <property>
-                        <name>build_mac_m1</name>
-                    </property>
+                    <os>
+                        <family>mac</family>
+                        <arch>arm64</arch>
+                    </os>
                 </activation>
             <properties>
                 <cmake.osx_arm64>-DCMAKE_OSX_ARCHITECTURES</cmake.osx_arm64>

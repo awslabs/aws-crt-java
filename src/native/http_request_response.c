@@ -152,10 +152,11 @@ static int s_on_incoming_header_block_done_fn(
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
 
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        return AWS_OP_ERR;
     }
 
     int result = AWS_OP_ERR;
@@ -200,6 +201,7 @@ static int s_on_incoming_header_block_done_fn(
 done:
 
     aws_jni_release_thread_env(callback->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     return result;
 }
@@ -209,10 +211,11 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 
     size_t total_window_increment = 0;
 
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        return AWS_OP_ERR;
     }
 
     int result = AWS_OP_ERR;
@@ -251,6 +254,7 @@ static int s_on_incoming_body_fn(struct aws_http_stream *stream, const struct aw
 done:
 
     aws_jni_release_thread_env(callback->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     return result;
 }
@@ -258,6 +262,8 @@ done:
 static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
 
     struct http_stream_callback_data *callback = (struct http_stream_callback_data *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -281,6 +287,7 @@ static void s_on_stream_complete_fn(struct aws_http_stream *stream, int error_co
     JavaVM *jvm = callback->jvm;
     http_stream_callback_destroy(env, callback);
     aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -385,6 +392,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
 
     struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
 
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -401,6 +409,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
     JavaVM *jvm = chunked_callback_data->stream_cb_data->jvm;
     s_cleanup_chunked_callback_data(env, chunked_callback_data);
     aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStreamWriteChunk(

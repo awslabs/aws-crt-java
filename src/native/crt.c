@@ -156,7 +156,9 @@ done:
 }
 
 JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
-    aws_rw_lock_rlock(&s_jvm_table_lock);
+    if (aws_rw_lock_try_rlock(&s_jvm_table_lock)) {
+        return NULL;
+    }
 
     if (s_jvms == NULL) {
         aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);

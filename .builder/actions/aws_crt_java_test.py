@@ -10,7 +10,6 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
 
-        os.system("echo TESTING")
         all_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
             -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true")
 

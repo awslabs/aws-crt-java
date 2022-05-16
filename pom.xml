@@ -109,7 +109,7 @@
                     </os>
                 </activation>
             <properties>
-                <cmake.osx_arm64>-DCMAKE_OSX_ARCHITECTURES</cmake.osx_arm64>
+                <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=arm64</cmake.osx_arch>
             </properties>
         </profile>
         <!-- 32-bit Unix -->
@@ -368,10 +368,11 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
-                                <condition property="cmake.architecture" value="-DCMAKE_OSX_ARCHITECTURES=arm64" else="-DGENERATOR_DUMMY=1">
-                                    <isset property="cmake.osx_arm64" />
+                                <condition property="cmake.architecture" value="${cmake.osx_arch}" else="-DGENERATOR_DUMMY=1">
+                                    <isset property="cmake.osx_arch"/>
                                 </condition>
                                 <echo message="architecture = ${cmake.architecture}"/>
+                                <echo message="architecture = ${cmake.osx_arch}"/>
                             </target>
                         </configuration>
                     </execution>

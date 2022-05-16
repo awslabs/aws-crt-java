@@ -231,6 +231,7 @@ static int s_on_s3_meta_request_body_callback(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",
                 (void *)meta_request);
+            aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;
         }
     }
@@ -298,6 +299,8 @@ static int s_on_s3_meta_request_headers_callback(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Exception thrown from S3MetaRequest.onResponseHeaders callback",
                 (void *)meta_request);
+
+            aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;
         }
     }

@@ -230,11 +230,13 @@ static int s_on_incoming_stream_fn(
     aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto on_error;
     }
 
     continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
     if (continuation_callback_data->java_continuation == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto on_error;
     }
 
@@ -252,11 +254,13 @@ static int s_on_incoming_stream_fn(
     }
 
     if (!java_continuation_handler) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto on_error;
     }
 
     continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
     if (continuation_callback_data->java_continuation_handler == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto on_error;
     }
 
@@ -364,6 +368,7 @@ static int s_on_new_connection_fn(
             event_stream_server_listener_handler_properties.newConnConstructor,
             (jlong)connection);
         if (aws_jni_check_and_clear_exception(env) || java_server_connection == NULL) {
+            aws_raise_error(AWS_ERROR_INVALID_STATE);
             goto error;
         }
 
@@ -381,11 +386,13 @@ static int s_on_new_connection_fn(
     aws_jni_check_and_clear_exception(env);
 
     if (!java_connection_handler) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto error;
     }
 
     connection_callback_data->java_connection_handler = (*env)->NewGlobalRef(env, java_connection_handler);
     if (connection_callback_data->java_connection_handler == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto error;
     }
 

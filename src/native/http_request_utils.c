@@ -40,21 +40,24 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
             return AWS_OP_ERR;
         }
 
+        /********** JNI ENV ACQUIRE **********/
         JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            return AWS_OP_ERR;
         }
 
         if (!(*env)->CallBooleanMethod(
                 env, impl->http_request_body_stream, http_request_body_stream_properties.reset_position)) {
-            result = AWS_OP_ERR;
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
 
         if (aws_jni_check_and_clear_exception(env)) {
             result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
+
         aws_jni_release_thread_env(impl->jvm, env);
+        /********** JNI ENV RELEASE **********/
     }
 
     if (result == AWS_OP_SUCCESS) {
@@ -81,10 +84,11 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
         return AWS_OP_SUCCESS;
     }
 
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        return AWS_OP_ERR;
     }
 
     size_t out_remaining = dest->capacity - dest->len;
@@ -105,6 +109,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     (*env)->DeleteLocalRef(env, direct_buffer);
 
     aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     return result;
 }
@@ -125,10 +130,12 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
         AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (impl->http_request_body_stream != NULL) {
+
+        /********** JNI ENV ACQUIRE **********/
         JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            return AWS_OP_ERR;
         }
 
         *length =
@@ -140,6 +147,7 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
         }
 
         aws_jni_release_thread_env(impl->jvm, env);
+        /********** JNI ENV RELEASE **********/
 
         return result;
     }
@@ -148,6 +156,8 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
 }
 
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
+
+    /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -159,6 +169,7 @@ static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl 
     }
 
     aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     aws_mem_release(impl->allocator, impl);
 }

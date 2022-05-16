@@ -49,10 +49,19 @@ struct aws_allocator *aws_jni_get_allocator() {
     return s_allocator;
 }
 
-void s_detach_jvm_from_thread(void *user_data) {
+static void s_detach_jvm_from_thread(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
     JavaVM *jvm = user_data;
+
+    /* we don't need this JNIEnv, but this is an easy way to verify the JVM is still valid to use */
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    (void)env;
+
     (*jvm)->DetachCurrentThread(jvm);
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
@@ -116,6 +125,7 @@ static void s_jvm_table_add_jvm_for_env(JNIEnv *env) {
     aws_rw_lock_wlock(&s_jvm_table_lock);
 
     if (s_jvms == NULL) {
+        /* use default allocator so that tracing allocator doesn't flag this as a leak during tests */
         s_jvms = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct aws_hash_table));
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
@@ -126,7 +136,9 @@ static void s_jvm_table_add_jvm_for_env(JNIEnv *env) {
     jint jvmresult = (*env)->GetJavaVM(env, &jvm);
     AWS_FATAL_ASSERT(jvmresult == 0 && jvm != NULL);
 
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_put(s_jvms, jvm, NULL, NULL));
+    int was_created = 0;
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_put(s_jvms, jvm, NULL, &was_created));
+    AWS_FATAL_ASSERT(was_created == 1);
 
     aws_rw_lock_wunlock(&s_jvm_table_lock);
 }

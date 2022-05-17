@@ -41,6 +41,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
+        <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
     </properties>
 
     <profiles>
@@ -89,19 +90,20 @@
             </properties>
         </profile>
         <profile>
-            <id>mac-x64-make</id>
+            <id>mac-x64</id>
             <activation>
                 <os>
                     <family>mac</family>
-                     <arch>x86_64</arch>
+                    <arch>x86_64</arch>
                 </os>
             </activation>
             <properties>
                 <cmake.cflags/>
+                <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=x86_64</cmake.osx_arch>
             </properties>
         </profile>
         <profile>
-            <id>mac-arm-make</id>
+            <id>mac-arm64</id>
                 <activation>
                     <os>
                         <family>mac</family>
@@ -172,10 +174,10 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>${cmake.architecture}</argument>
+                                        <argument>${cmake.osx_arch}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
-                                        <argument>-Wno-unused-variables</argument>
+                                        <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>
                                     </arguments>
@@ -368,11 +370,6 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
-                                <condition property="cmake.architecture" value="${cmake.osx_arch}" else="-DGENERATOR_DUMMY=1">
-                                    <isset property="cmake.osx_arch"/>
-                                </condition>
-                                <echo message="architecture = ${cmake.architecture}"/>
-                                <echo message="architecture = ${cmake.osx_arch}"/>
                             </target>
                         </configuration>
                     </execution>

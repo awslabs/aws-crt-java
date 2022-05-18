@@ -162,7 +162,6 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, 
 struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
-<<<<<<< HEAD
  * aws_jni_acquire_thread_env - Acquires the JNIEnv for the current thread from the VM,
  * attaching the env if necessary.  aws_jni_release_thread_env() must be called once
  * the caller is through with the environment.

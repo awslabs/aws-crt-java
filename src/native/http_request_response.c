@@ -75,7 +75,7 @@ void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *ca
     }
 
     if (callback->java_http_stream_base) {
-        s_java_http_stream_from_native_delete(env, callback->java_http_stream_base);
+        aws_java_http_stream_from_native_delete(env, callback->java_http_stream_base);
     }
 
     if (callback->java_http_response_stream_handler != NULL) {
@@ -83,7 +83,6 @@ void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *ca
     }
 
     if (callback->native_request) {
-        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback->native_request);
         aws_http_message_destroy(callback->native_request);
     }
     aws_byte_buf_clean_up(&callback->headers_buf);
@@ -343,7 +342,7 @@ static jobject s_make_request_general(
             (void *)native_conn,
             (void *)callback_data->native_stream);
 
-        jHttpStreamBase = s_java_http_stream_from_native_new(env, callback_data, version);
+        jHttpStreamBase = aws_java_http_stream_from_native_new(env, callback_data, version);
     }
 
     /* Check for errors that might have occurred while holding the lock. */
@@ -364,40 +363,6 @@ static jobject s_make_request_general(
     }
 
     return jHttpStreamBase;
-}
-
-JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_connection,
-    jbyteArray marshalled_request,
-    jobject jni_http_request_body_stream,
-    jobject jni_http_response_callback_handler) {
-    (void)jni_class;
-    return s_make_request_general(
-        env,
-        jni_connection,
-        marshalled_request,
-        jni_http_request_body_stream,
-        jni_http_response_callback_handler,
-        AWS_HTTP_VERSION_1_1);
-}
-
-JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionMakeRequest(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong jni_connection,
-    jbyteArray marshalled_request,
-    jobject jni_http_request_body_stream,
-    jobject jni_http_response_callback_handler) {
-    (void)jni_class;
-    return s_make_request_general(
-        env,
-        jni_connection,
-        marshalled_request,
-        jni_http_request_body_stream,
-        jni_http_response_callback_handler,
-        AWS_HTTP_VERSION_2);
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -633,7 +598,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
 
     (void)jni_class;
 
-    struct http_stream_callback_data *cb_data = (struct http_stream_callback_data *)jni_cb_data;
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
 
     if (stream == NULL) {

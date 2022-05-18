@@ -1,6 +1,8 @@
 package software.amazon.awssdk.crt.http;
 
 import java.net.URI;
+import java.util.List;
+import java.util.ArrayList;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -20,7 +22,6 @@ public class HttpStreamManagerOptions {
     private URI uri;
     private int port = -1;
     private boolean manualWindowManagement = false;
-    private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private HttpMonitoringOptions monitoringOptions;
     private HttpProxyOptions proxyOptions;
 
@@ -28,6 +29,8 @@ public class HttpStreamManagerOptions {
     private int maxConcurrentStreamsPerConnection = DEFAULT_MAX;
 
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
+
+    private List<Http2ConnectionSetting> initialSettingsList = new ArrayList<Http2ConnectionSetting>();
 
     /**
      * Default constructor
@@ -93,22 +96,24 @@ public class HttpStreamManagerOptions {
     }
 
     /**
-     * Sets the IO channel window size to use for connections in the connection pool
+     * For HTTP/2 stream manager only.
      *
-     * @param windowSize The initial window size to use for each connection
+     * The initial settings for the HTTP/2 connections made by stream manger.
+     * `Http2ConnectionSettingListBuilder` can help to build the settings list
+     *
+     * @param initialSettingsList The List of initial settings
      * @return this
      */
-    public HttpStreamManagerOptions withWindowSize(int windowSize) {
-        this.windowSize = windowSize;
+    public HttpStreamManagerOptions withInitialSettingsList(List<Http2ConnectionSetting> initialSettingsList) {
+        this.initialSettingsList.addAll(initialSettingsList);
         return this;
     }
 
     /**
-     * @return the IO channel window size to use for connections in the connection
-     *         pool
+     * @return The List of initial settings
      */
-    public int getWindowSize() {
-        return windowSize;
+    public List<Http2ConnectionSetting> getInitialSettingsList() {
+        return this.initialSettingsList;
     }
 
     /**

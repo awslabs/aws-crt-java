@@ -85,7 +85,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
-    jint jni_window_size,
+    jlongArray java_marshalled_settings,
     jbyteArray jni_endpoint,
     jint jni_port,
     jint jni_proxy_connection_type,
@@ -108,6 +108,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
     struct aws_http2_stream_manager_binding *binding = NULL;
+    struct aws_allocator *allocator = aws_jni_get_allocator();
 
     if (!client_bootstrap) {
         aws_jni_throw_runtime_exception(env, "ClientBootstrap can't be null");
@@ -119,16 +120,25 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         return (jlong)NULL;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    const size_t marshalled_len = (*env)->GetArrayLength(env, java_marshalled_settings);
+    AWS_ASSERT(marshalled_len % 2 == 0);
+
+    size_t num_initial_settings = marshalled_len / 2;
+    struct aws_http2_setting *initial_settings =
+        num_initial_settings ? aws_mem_calloc(allocator, num_initial_settings, sizeof(struct aws_http2_setting)) : NULL;
+
+    jlong *marshalled_settings = (*env)->GetLongArrayElements(env, java_marshalled_settings, NULL);
+    for (size_t i = 0; i < num_initial_settings; i++) {
+        jlong id = marshalled_settings[i * 2];
+        initial_settings[i].id = id;
+        jlong value = marshalled_settings[i * 2 + 1];
+        initial_settings[i].value = (uint32_t)value;
+    }
+
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
 
     if (jni_port <= 0 || 65535 < jni_port) {
         aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
-        goto cleanup;
-    }
-
-    if (jni_window_size <= 0) {
-        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
         goto cleanup;
     }
 
@@ -161,7 +171,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     AWS_ZERO_STRUCT(manager_options);
 
     manager_options.bootstrap = client_bootstrap;
-    manager_options.initial_window_size = (size_t)jni_window_size;
+    manager_options.initial_settings_array = initial_settings;
+    manager_options.num_initial_settings = num_initial_settings;
+
     manager_options.socket_options = socket_options;
     manager_options.tls_connection_options = NULL;
     manager_options.host = endpoint;
@@ -294,12 +306,12 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
         } else {
             /* Stream is activated once we acquired from the Stream Manager */
             aws_atomic_store_int(&callback_data->stream_binding->activated, 1);
-            callback_data->stream_binding->java_http_stream = (*env)->NewGlobalRef(env, j_http_stream);
+            callback_data->stream_binding->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream);
             (*env)->CallVoidMethod(
                 env,
                 callback_data->java_async_callback,
                 async_callback_properties.on_success_with_object,
-                callback_data->stream_binding->java_http_stream);
+                callback_data->stream_binding->java_http_stream_base);
             (*env)->DeleteLocalRef(env, j_http_stream);
         }
     }

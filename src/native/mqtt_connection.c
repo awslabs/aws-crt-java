@@ -170,7 +170,8 @@ static void s_on_connection_complete(
     struct mqtt_jni_connection *connection = connect_callback->connection;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
+    JavaVM *jvm = connection->jvm;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -191,7 +192,6 @@ static void s_on_connection_complete(
         }
     }
 
-    JavaVM *jvm = connect_callback->jvm;
     mqtt_jni_async_callback_destroy(connect_callback, env);
 
     aws_jni_release_thread_env(jvm, env);
@@ -224,6 +224,8 @@ static void s_on_connection_interrupted(
     int error_code,
     void *user_data) {
     (void)client_connection;
+
+    struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
@@ -627,7 +629,7 @@ static void s_cleanup_handler(void *user_data) {
     struct mqtt_jni_async_callback *handler = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JavaVM *jvm = callback->connection->jvm;
+    JavaVM *jvm = handler->connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         return;

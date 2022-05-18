@@ -239,7 +239,7 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
     s_aws_complete_signing_result(env, result, callback_data, java_signed_request);
 
-done:
+done:;
 
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_callback_data(callback_data, env);
@@ -266,7 +266,7 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
 
     s_aws_complete_signing_result(env, result, callback_data, NULL);
 
-done:
+done:;
 
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_callback_data(callback_data, env);

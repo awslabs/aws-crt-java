@@ -135,18 +135,7 @@ static void s_complete_signing_exceptionally(
         error_code = AWS_ERROR_UNKNOWN;
     }
 
-    jint jni_error_code = error_code;
-    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
-    jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
-    AWS_FATAL_ASSERT(jni_error_string);
-
-    jobject crt_exception = (*env)->NewObject(
-        env,
-        crt_runtime_exception_properties.crt_runtime_exception_class,
-        crt_runtime_exception_properties.constructor_method_id,
-        jni_error_code,
-        jni_error_string);
-    AWS_FATAL_ASSERT(crt_exception);
+    jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
 
     (*env)->CallBooleanMethod(
         env,
@@ -155,7 +144,6 @@ static void s_complete_signing_exceptionally(
         crt_exception);
 
     aws_jni_check_and_clear_exception(env);
-    (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
 }
 

@@ -29,6 +29,7 @@ public class HttpClientConnectionManagerOptions {
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
+    private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
 
     /**
      * Default constructor
@@ -201,6 +202,24 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
+     * Set the expected protocol version of the connection to be made, default is HTTP/1.1
+     *
+     * @param expectedHttpVersion The expected protocol version of the connection made
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withExpectedHttpVersion(HttpVersion expectedHttpVersion) {
+        this.expectedHttpVersion = expectedHttpVersion;
+        return this;
+    }
+
+    /**
+     * @return Return the expected HTTP protocol version.
+     */
+    public HttpVersion getExpectedHttpVersion() {
+        return expectedHttpVersion;
+    }
+
+    /**
      * Sets maximum amount of time, in milliseconds, that the connection can be idle in the manager before
      * getting culled by the manager
      * @param maxConnectionIdleInMilliseconds How long to allow connections to be idle before reaping them
@@ -231,4 +250,3 @@ public class HttpClientConnectionManagerOptions {
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
 }
-

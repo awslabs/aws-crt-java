@@ -1,5 +1,6 @@
 
 import Builder
+import sys
 import os
 
 
@@ -21,5 +22,9 @@ class AWSCrtJavaTest(Builder.Action):
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")
+        python = sys.executable
+        actions.append(
+            [python, 'crt/aws-c-http/integration-testing/http_client_test.py',
+                python, 'integration-testing/java_elasticurl_runner.py'])
 
         return Builder.Script(actions, name='aws-crt-java-test')

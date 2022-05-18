@@ -169,9 +169,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jboolean jni_manual_window_management,
     jlong jni_max_connection_idle_in_milliseconds,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
-    jint jni_monitoring_failure_interval_in_seconds) {
+    jint jni_monitoring_failure_interval_in_seconds,
+    jint jni_expected_protocol_version) {
 
     (void)jni_class;
+    (void)jni_expected_protocol_version;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;

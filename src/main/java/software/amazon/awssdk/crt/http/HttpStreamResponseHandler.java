@@ -5,10 +5,9 @@
 
 package software.amazon.awssdk.crt.http;
 
-import java.nio.ByteBuffer;
-
 /**
- * Interface that Native code knows how to call when handling Http Responses
+ * Interface that Native code knows how to call when handling Http Responses for HTTP/1.1 only.
+ * You can use HttpStreamBaseResponseHandler instead to adapt both HTTP/1.1 and HTTP/2
  *
  * Maps 1-1 to the Native Http API here: https://github.com/awslabs/aws-c-http/blob/master/include/aws/http/request_response.h
  */

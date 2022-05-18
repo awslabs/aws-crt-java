@@ -149,7 +149,7 @@ public class HttpStreamManagerOptions {
      *
      * @param maxConcurrentStreamsPerConnection The max number of concurrent
      *                                          streams for a connection
-     * @return
+     * @return this
      */
     public HttpStreamManagerOptions withMaxConcurrentStreamsPerConnection(int maxConcurrentStreamsPerConnection) {
         this.maxConcurrentStreamsPerConnection = maxConcurrentStreamsPerConnection;
@@ -208,8 +208,8 @@ public class HttpStreamManagerOptions {
      * connections are full, manager will wait until available to vender more
      * streams
      *
-     * @param maxConnections
-     * @return
+     * @param maxConnections The max number of connections will be open at same time.
+     * @return this
      */
     public HttpStreamManagerOptions withMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;

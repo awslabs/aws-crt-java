@@ -74,10 +74,6 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     }
 
     if (callback_data->native_request) {
-        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback_data->native_request);
-        if (input_stream != NULL) {
-            aws_input_stream_destroy(input_stream);
-        }
         aws_http_message_release(callback_data->native_request);
     }
 

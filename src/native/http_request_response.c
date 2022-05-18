@@ -83,7 +83,7 @@ void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *ca
     }
 
     if (callback->native_request) {
-        aws_http_message_destroy(callback->native_request);
+        aws_http_message_release(callback->native_request);
     }
     aws_byte_buf_clean_up(&callback->headers_buf);
     aws_mem_release(aws_jni_get_allocator(), callback);

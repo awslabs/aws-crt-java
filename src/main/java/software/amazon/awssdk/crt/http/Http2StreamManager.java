@@ -169,11 +169,11 @@ public class Http2StreamManager extends CrtResource {
     /**
      * Request a Http2Stream from StreamManager.
      *
-     * @param request
-     * @param streamHandler
+     * @param request       The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native
+     *                      EventLoop
      * @return A future for a Http2Stream that will be completed when the stream is
      *         acquired.
-     * @throws CrtRuntimeException
      */
     public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
         HttpStreamBaseResponseHandler streamHandler) {

@@ -365,6 +365,8 @@ int aws_apply_java_http_request_changes_to_native_request(
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
 
         aws_http_message_set_body_stream(message, body_stream);
+        /* request controls the lifetime of body stream fully */
+        aws_input_stream_release(body_stream);
     }
 
     return result;
@@ -407,6 +409,8 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
         }
 
         aws_http_message_set_body_stream(request, body_stream);
+        /* request controls the lifetime of body stream fully */
+        aws_input_stream_release(body_stream);
     }
 
     return request;

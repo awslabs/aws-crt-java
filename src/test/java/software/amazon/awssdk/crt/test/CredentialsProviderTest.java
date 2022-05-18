@@ -182,7 +182,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
             @Override
             public Credentials getCredentials() {
-                throw new RuntimeException("hate coding");
+                throw new RuntimeException("Some exception. =)");
             }
         };
         boolean failed = false;

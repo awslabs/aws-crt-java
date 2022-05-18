@@ -18,6 +18,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.Http2ConnectionSetting;
+import software.amazon.awssdk.crt.http.Http2ConnectionSettingListBuilder;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
@@ -68,9 +69,10 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
                 List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
-                settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
-                settings.add(new Http2ConnectionSetting(Http2ConnectionSetting.ID.ENABLE_PUSH, 0));
-                conn.updateSettings(settings).get(5, TimeUnit.SECONDS);
+                conn.updateSettings(Http2ConnectionSetting.builder()
+                        .enablePush(false)
+                        .enablePush(false)
+                        .build()).get(5, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -98,8 +100,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
                     TimeUnit.SECONDS);) {
                 actuallyConnected = true;
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
-                conn.updateSettings(settings).get(5, TimeUnit.SECONDS);
+                conn.updateSettings(Http2ConnectionSetting.builder().build()).get(5, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

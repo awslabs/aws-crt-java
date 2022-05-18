@@ -33,6 +33,8 @@ import software.amazon.awssdk.crt.http.HttpRequestBase;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -291,11 +293,11 @@ public class Elasticurl {
                     try (HttpClientConnection conn = connMgr.acquireConnection().get(60, TimeUnit.SECONDS)) {
 
                         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
-                        HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                        HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
                             boolean statusWritten = false;
 
                             @Override
-                            public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                            public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                                     HttpHeader[] nextHeaders) {
                                 if (blockType == 1) {
                                     /* Ignore informational headers */
@@ -313,7 +315,7 @@ public class Elasticurl {
                             }
 
                             @Override
-                            public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                            public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                                 try {
                                     out.write(bodyBytesIn, 0, bodyBytesIn.length);
                                     out.flush();
@@ -324,17 +326,17 @@ public class Elasticurl {
                             }
 
                             @Override
-                            public void onResponseComplete(HttpStream stream, int errorCode) {
-                                if (errorCode!=0) {
+                            public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                                if (errorCode != 0) {
                                     reqCompleted.completeExceptionally(new CrtRuntimeException(errorCode));
-                                } else{
+                                } else {
                                     reqCompleted.complete(null);
                                 }
                                 stream.close();
                             }
                         };
                         HttpRequestBase request = buildHttpRequest(cli, conn.getVersion(), uri);
-                        HttpStream stream = conn.makeRequest(request, streamHandler);
+                        HttpStreamBase stream = conn.makeRequest(request, streamHandler);
                         stream.activate();
 
                         // Give the request up to 60 seconds to complete, otherwise throw a

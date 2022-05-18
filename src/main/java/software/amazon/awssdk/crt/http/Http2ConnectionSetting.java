@@ -38,9 +38,11 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * HTTP/2 connection settings.
+     * HTTP/2 connection setting.
      *
-     * value is limited from 0 to UINT32_MAX (RFC-7540 6.5.1)
+     * @param id    Predefined settings identifiers (RFC-7540 6.5.2).
+     * @param value The value of the setting, limited from 0 to UINT32_MAX (RFC-7540
+     *              6.5.1)
      */
     public Http2ConnectionSetting(ID id, long value) {
         if (value > 4294967296L || value < 0) {
@@ -51,7 +53,7 @@ public class Http2ConnectionSetting {
     }
 
     /**
-     * @exclude Marshals a list of settings into an array for Jni to deal with.
+     * @hidden Marshals a list of settings into an array for Jni to deal with.
      *
      * @param settings list of headers to write to the headers block
      * @return a long[] that with the [id, value, id, value, *]
@@ -68,5 +70,14 @@ public class Http2ConnectionSetting {
         }
 
         return marshalledSettings;
+    }
+
+    /**
+     * Helper to build a List of Http2ConnectionSetting
+     *
+     * @return {@link Http2ConnectionSettingListBuilder}
+     */
+    public static Http2ConnectionSettingListBuilder builder() {
+        return new Http2ConnectionSettingListBuilder();
     }
 }

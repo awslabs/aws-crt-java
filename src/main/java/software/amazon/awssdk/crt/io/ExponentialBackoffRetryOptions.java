@@ -27,8 +27,8 @@ public class ExponentialBackoffRetryOptions {
          * exponential backoff value */
         Full(2),
 
-        /** Backoff is taken randomly from the interval between the base backoff interval and a scaling (>1) of the
-         * current backoff value */
+        /** Backoff is taken randomly from the interval between the base backoff
+         * interval and a scaling (greater than 1) of the current backoff value */
         Decorrelated(3);
 
         private int value;

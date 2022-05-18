@@ -12,41 +12,41 @@ This library is licensed under the Apache 2.0 License.
 Requirements:
 * Clang 3.9+ or GCC 4.4+
 * cmake 3.1+
-* Java: Any JDK8 or above, ensure JAVA_HOME is set
+* Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 
 Building:
-1) apt-get install cmake3 maven openjdk-8-jdk-headless -y
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `apt-get install cmake3 maven openjdk-8-jdk-headless -y`
+2) `git clone https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
 ### OSX
 Requirements:
 * cmake 3.1
 * ninja
-* Java: Any JDK8 or above, ensure JAVA_HOME is set
+* Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
-1) brew install maven cmake3 (if you have homebrew installed, otherwise install these manually)
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `brew install maven cmake3` (if you have homebrew installed, otherwise install these manually)
+2) `git clone https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
 ### Windows
 Requirements:
 * Visual Studio 2015 or above
 * CMake 3.1
-* Java: Any JDK8 or above, ensure JAVA_HOME is set
+* Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
-1) choco install maven (if you have chocolatey installed), otherwise install maven and the JDK manually
-2) git clone https://github.com/awslabs/aws-crt-java.git
-3) cd aws-crt-java
-4) git submodule update --init --recursive
-5) mvn compile
+1) `choco install maven` (if you have chocolatey installed), otherwise install maven and the JDK manually
+2) `git clone https://github.com/awslabs/aws-crt-java.git`
+3) `cd aws-crt-java`
+4) `git submodule update --init --recursive`
+5) `mvn compile`
 
-NOTE: Make sure you run this from a VS Command Prompt or have run VCVARSALL.BAT in your current shell so
+NOTE: Make sure you run this from a VS Command Prompt or have run `VCVARSALL.BAT` in your current shell so
 CMake can find Visual Studio.
 
 ## Documentation
@@ -74,15 +74,15 @@ mvn test -Dcertificate=path/to/cert -Dprivatekey=path/to/key ...
 Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
 Full list of test arguments:
-- endpoint: AWS IoT service endpoint hostname
-- certificate: Path to the IoT thing certificate
-- privatekey: Path to the IoT thing private key
-- rootca: Path to the root certificate
-- proxyhost: Hostname of proxy
-- proxyport: Port of proxy
-- NETWORK_TESTS_DISABLED: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+- `endpoint`: AWS IoT service endpoint hostname
+- `certificate`: Path to the IoT thing certificate
+- `privatekey`: Path to the IoT thing private key
+- `rootca`: Path to the root certificate
+- `proxyhost`: Hostname of proxy
+- `proxyport`: Port of proxy
+- `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
 
-These can be set persistently via Maven settings (usually in ~/.m2/settings.xml):
+These can be set persistently via Maven settings (usually in `~/.m2/settings.xml`):
 ```xml
 <settings>
     ...
@@ -100,7 +100,7 @@ These can be set persistently via Maven settings (usually in ~/.m2/settings.xml)
         </properties>
     </profile>
   </profiles>
-</settings>% 
+</settings>%
 ```
 
 ## IDEs
@@ -125,5 +125,5 @@ To debug native code with VSCode or CLion or any other IDE:
       for call stacks, but less so for live debugging.
 2. Set the executable to launch to be your java binary (e.g. ```/usr/bin/java```)
 3. Set the parameters to be the ones used by the ```mvn``` script, as per above
-4. Set the working directory to the aws-crt-java directory
+4. Set the working directory to the `aws-crt-java` directory
 5. On windows, you will need to manually load the PDB via the Modules window in Visual Studio, as it is not embedded in the JAR. It will be in the ```target/cmake-build/lib/windows/<arch>``` folder.

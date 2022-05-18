@@ -31,7 +31,7 @@ public class HttpClientConnection extends CrtResource {
     }
 
     /**
-     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection.
+     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection specific to HTTP/1.1 connection.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
@@ -39,12 +39,36 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public HttpStream makeRequest(HttpRequestBase request, HttpStreamResponseHandler streamHandler)
+    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
             throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
+        if (getVersion() == HttpVersion.HTTP_2) {
+            throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
+        }
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+
+        return (HttpStream)stream;
+    }
+
+    /**
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection applies to both HTTP/2 and HTTP/1.1 connection.
+     *
+     * @param request The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native EventLoop
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
+     *          request/response, but must be closed by the user thread making this request when it's done.
+     */
+    public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+        }
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),
                 request.getBodyStream(),
                 new HttpStreamResponseHandlerNativeAdapter(streamHandler));
@@ -107,7 +131,7 @@ public class HttpClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpClientConnectionMakeRequest(long connectionBinding,
+    private static native HttpStreamBase httpClientConnectionMakeRequest(long connectionBinding,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;

@@ -24,9 +24,6 @@ public class HttpStream extends HttpStreamBase {
         super(ptr);
     }
 
-    /*******************************************************************************
-     * Shared method
-     ******************************************************************************/
     /**
      * Completion interface for writing chunks to an http stream
      */

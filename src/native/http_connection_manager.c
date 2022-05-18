@@ -46,24 +46,14 @@ struct http_connection_manager_binding {
     struct aws_http_connection_manager *manager;
 };
 
-static void s_destroy_manager_binding(struct http_connection_manager_binding *binding) {
-    if (binding == NULL) {
-        return;
-    }
-
-    /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
-    if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+static void s_destroy_manager_binding(struct http_connection_manager_binding *binding, JNIEnv *env) {
+    if (binding == NULL || env == NULL) {
         return;
     }
 
     if (binding->java_http_conn_manager != NULL) {
         (*env)->DeleteWeakGlobalRef(env, binding->java_http_conn_manager);
     }
-
-    aws_jni_release_thread_env(binding->jvm, env);
-    /********** JNI ENV RELEASE **********/
 
     aws_mem_release(aws_jni_get_allocator(), binding);
 }
@@ -89,11 +79,12 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
         (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
-    aws_jni_release_thread_env(binding->jvm, env);
-    /********** JNI ENV RELEASE **********/
-
     // We're done with this wrapper, free it.
-    s_destroy_manager_binding(binding);
+    JavaVM *jvm = binding->jvm;
+    s_destroy_manager_binding(binding, env);
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 void aws_http_proxy_options_jni_init(
@@ -306,7 +297,7 @@ cleanup:
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
 
     if (binding->manager == NULL) {
-        s_destroy_manager_binding(binding);
+        s_destroy_manager_binding(binding, env);
         binding = NULL;
     }
 
@@ -336,24 +327,14 @@ JNIEXPORT void JNICALL
 
 /********************************************************************************************************************/
 
-static void s_destroy_connection_binding(struct aws_http_connection_binding *binding) {
-    if (binding == NULL) {
-        return;
-    }
-
-    /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
-    if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+static void s_destroy_connection_binding(struct aws_http_connection_binding *binding, JNIEnv *env) {
+    if (binding == NULL || env == NULL) {
         return;
     }
 
     if (binding->java_acquire_connection_future != NULL) {
         (*env)->DeleteGlobalRef(env, binding->java_acquire_connection_future);
     }
-
-    aws_jni_release_thread_env(binding->jvm, env);
-    /********** JNI ENV RELEASE **********/
 
     if (binding->manager != NULL && binding->connection != NULL) {
         aws_http_connection_manager_release_connection(binding->manager, binding->connection);
@@ -397,12 +378,13 @@ static void s_on_http_conn_acquisition_callback(
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    aws_jni_release_thread_env(binding->jvm, env);
-    /********** JNI ENV RELEASE **********/
-
+    JavaVM *jvm = binding->jvm;
     if (error_code) {
-        s_destroy_connection_binding(binding);
+        s_destroy_connection_binding(binding, env);
     }
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 JNIEXPORT void JNICALL
@@ -474,7 +456,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
         (void *)conn_manager,
         (void *)conn);
 
-    s_destroy_connection_binding(binding);
+    s_destroy_connection_binding(binding, env);
 }
 
 #if UINTPTR_MAX == 0xffffffff

@@ -35,24 +35,14 @@ struct connection_callback_data {
     jobject java_connection_handler;
 };
 
-static void s_destroy_connection_callback_data(struct connection_callback_data *callback_data) {
-    if (callback_data == NULL) {
-        return;
-    }
-
-    /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
-    if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+static void s_destroy_connection_callback_data(struct connection_callback_data *callback_data, JNIEnv *env) {
+    if (callback_data == NULL || env == NULL) {
         return;
     }
 
     if (callback_data->java_connection_handler) {
         (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
     }
-
-    aws_jni_release_thread_env(callback_data->jvm, env);
-    /********** JNI ENV RELEASE **********/
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -82,12 +72,13 @@ static void s_on_connection_setup(
         aws_event_stream_rpc_client_connection_close(connection, AWS_ERROR_UNKNOWN);
     }
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
-    /********** JNI ENV RELEASE **********/
-
+    JavaVM *jvm = callback_data->jvm;
     if (error_code) {
-        s_destroy_connection_callback_data(callback_data);
+        s_destroy_connection_callback_data(callback_data, env);
     }
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_on_connection_shutdown(
@@ -112,10 +103,11 @@ static void s_on_connection_shutdown(
         error_code);
     aws_jni_check_and_clear_exception(env);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
-    /********** JNI ENV RELEASE **********/
+    JavaVM *jvm = callback_data->jvm;
+    s_destroy_connection_callback_data(callback_data, env);
 
-    s_destroy_connection_callback_data(callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_connection_protocol_message(
@@ -248,7 +240,7 @@ error:
 
     aws_string_destroy(host_name_str);
 
-    s_destroy_connection_callback_data(callback_data);
+    s_destroy_connection_callback_data(callback_data, env);
 
     if (conn_options_ptr) {
         aws_tls_connection_options_clean_up(conn_options_ptr);

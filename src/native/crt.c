@@ -56,12 +56,12 @@ static void s_detach_jvm_from_thread(void *user_data) {
     /* we don't need this JNIEnv, but this is an easy way to verify the JVM is still valid to use */
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
-    (void)env;
+    if (env != NULL) {
+        (*jvm)->DetachCurrentThread(jvm);
 
-    (*jvm)->DetachCurrentThread(jvm);
-
-    aws_jni_release_thread_env(jvm, env);
-    /********** JNI ENV RELEASE **********/
+        aws_jni_release_thread_env(jvm, env);
+        /********** JNI ENV RELEASE **********/
+    }
 }
 
 static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
@@ -168,7 +168,16 @@ done:
 }
 
 JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
+    /*
+     * We use try-lock here in order to avoid the re-entrant deadlock case that could happen if we have a read
+     * lock already, the JVM shutdown hooks causes another thread to block on taking the write lock, and then
+     * we try to reacquire the read-lock recursively due to some synchronous code path.  That case can deadlock
+     * but since the JVM is going away, it's safe to just fail completely from here on out.
+     */
     if (aws_rw_lock_try_rlock(&s_jvm_table_lock)) {
+        if (aws_last_error() != AWS_ERROR_UNSUPPORTED_OPERATION) {
+            aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
+        }
         return NULL;
     }
 

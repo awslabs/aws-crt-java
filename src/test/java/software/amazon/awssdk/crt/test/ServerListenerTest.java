@@ -54,6 +54,34 @@ public class ServerListenerTest extends CrtTestFixture {
     }
 
     @Test
+    public void testSetupWith0PortAndTearDown() throws ExecutionException, InterruptedException, TimeoutException {
+        SocketOptions socketOptions = new SocketOptions();
+        socketOptions.connectTimeoutMs = 3000;
+        socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+        socketOptions.type = SocketOptions.SocketType.STREAM;
+
+        EventLoopGroup elGroup = new EventLoopGroup(1);
+        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+        ServerListener listener = new ServerListener("127.0.0.1", (short)0, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                return null;
+            }
+
+            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+            }
+        });
+
+        int boundPort = listener.getBoundPort();
+        assertTrue(boundPort > 0);
+        listener.close();
+        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        bootstrap.close();
+        elGroup.close();
+        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        socketOptions.close();
+    }
+
+    @Test
     public void testBindErrorPropagates() throws ExecutionException, InterruptedException, TimeoutException {
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;

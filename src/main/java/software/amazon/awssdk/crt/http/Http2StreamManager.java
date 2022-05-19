@@ -71,15 +71,16 @@ public class Http2StreamManager extends CrtResource {
             throw new IllegalArgumentException("TlsContext must not be null if https is used");
         }
 
-
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) {
             throw new IllegalArgumentException("Max Connections must be greater than zero.");
         }
+
         int maxConcurrentStreamsPerConnection = options.getMaxConcurrentStreamsPerConnection();
         if (maxConcurrentStreamsPerConnection <= 0) {
             throw new IllegalArgumentException("Max Concurrent Streams Per Connection must be greater than zero.");
         }
+
         int idealConcurrentStreamsPerConnection = options.getIdealConcurrentStreamsPerConnection();
         if (idealConcurrentStreamsPerConnection <= 0
                 || idealConcurrentStreamsPerConnection > maxConcurrentStreamsPerConnection) {

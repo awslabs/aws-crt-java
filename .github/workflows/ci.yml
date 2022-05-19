@@ -183,8 +183,7 @@ jobs:
     - name: Configure local host
       run: |
         python3 -m pip install h2
-        ls
-        ls crt
+        ls crt/aws-c-http/
         cd crt/aws-c-http/tests/py_localhost/
         python3 server.py &
         python3 non_tls_server.py &

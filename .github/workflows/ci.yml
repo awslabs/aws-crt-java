@@ -189,7 +189,8 @@ jobs:
         python3 non_tls_server.py &
     - name: Build and test
       run: |
-        mvn install
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-test-mac:
     runs-on: macos-11 # latest
@@ -208,7 +209,7 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        ./builder localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-test-win:
     runs-on: windows-2022 # latest
@@ -226,4 +227,4 @@ jobs:
         Start-Process -NoNewWindow python .\server.py
         Start-Process -NoNewWindow python .\non_tls_server.py
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream

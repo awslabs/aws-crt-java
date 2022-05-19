@@ -40,20 +40,24 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
             return AWS_OP_ERR;
         }
 
-        JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+        /********** JNI ENV ACQUIRE **********/
+        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            return AWS_OP_ERR;
         }
 
         if (!(*env)->CallBooleanMethod(
                 env, impl->http_request_body_stream, http_request_body_stream_properties.reset_position)) {
-            result = AWS_OP_ERR;
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
 
         if (aws_jni_check_and_clear_exception(env)) {
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
+
+        aws_jni_release_thread_env(impl->jvm, env);
+        /********** JNI ENV RELEASE **********/
     }
 
     if (result == AWS_OP_SUCCESS) {
@@ -80,10 +84,11 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
         return AWS_OP_SUCCESS;
     }
 
-    JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        return AWS_OP_ERR;
     }
 
     size_t out_remaining = dest->capacity - dest->len;
@@ -93,16 +98,20 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     impl->body_done = (*env)->CallBooleanMethod(
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
+    int result = AWS_OP_SUCCESS;
     if (aws_jni_check_and_clear_exception(env)) {
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    } else {
+        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
+        dest->len += amt_written;
     }
-
-    size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-    dest->len += amt_written;
 
     (*env)->DeleteLocalRef(env, direct_buffer);
 
-    return AWS_OP_SUCCESS;
+    aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
+
+    return result;
 }
 
 static int s_aws_input_stream_get_status(struct aws_input_stream *stream, struct aws_stream_status *status) {
@@ -121,26 +130,35 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
         AWS_CONTAINER_OF(stream, struct aws_http_request_body_stream_impl, base);
 
     if (impl->http_request_body_stream != NULL) {
-        JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+
+        /********** JNI ENV ACQUIRE **********/
+        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            return AWS_OP_ERR;
         }
 
         *length =
             (*env)->CallLongMethod(env, impl->http_request_body_stream, http_request_body_stream_properties.get_length);
 
+        int result = AWS_OP_SUCCESS;
         if (aws_jni_check_and_clear_exception(env)) {
-            return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
-        return AWS_OP_SUCCESS;
+
+        aws_jni_release_thread_env(impl->jvm, env);
+        /********** JNI ENV RELEASE **********/
+
+        return result;
     }
 
     return AWS_OP_ERR;
 }
 
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
-    JNIEnv *env = aws_jni_get_thread_env(impl->jvm);
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -149,6 +167,9 @@ static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl 
     if (impl->http_request_body_stream != NULL) {
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
+
+    aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     aws_mem_release(impl->allocator, impl);
 }
@@ -220,32 +241,64 @@ int aws_marshal_http_headers_to_dynamic_buffer(
 
     return AWS_OP_SUCCESS;
 }
+/**
+ * Unmarshal the request from java.
+ *
+ * Version is as int: [4-bytes BE]
+ *
+ * Each string field is: [4-bytes BE] [variable length bytes specified
+ *          by the previous field]
+ *
+ * Each request is like: [version][method][path][header name-value
+ *          pairs]
+ *
+ * s_unmarshal_http_request_to_get_version to get the version field, which is a 4 byte int.
+ * s_unmarshal_http_request_without_version to get the whole request without version field.
+ */
+static inline enum aws_http_version s_unmarshal_http_request_to_get_version(struct aws_byte_cursor *request_blob) {
+    uint32_t version = 0;
+    if (!aws_byte_cursor_read_be32(request_blob, &version)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    return version;
+}
 
-static inline int s_unmarshal_http_request(struct aws_http_message *message, struct aws_byte_cursor *request_blob) {
+static inline int s_unmarshal_http_request_without_version(
+    struct aws_http_message *message,
+    struct aws_byte_cursor *request_blob) {
     uint32_t field_len = 0;
+    if (aws_http_message_get_protocol_version(message) != AWS_HTTP_VERSION_2) {
+        /* HTTP/1 puts method and path first, but those are empty in HTTP/2 */
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
 
-    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
+
+        int result = aws_http_message_set_request_method(message, method);
+        if (result != AWS_OP_SUCCESS) {
+            return AWS_OP_ERR;
+        }
+
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
+
+        result = aws_http_message_set_request_path(message, path);
+        if (result != AWS_OP_SUCCESS) {
+            return AWS_OP_ERR;
+        }
+    } else {
+        /* Read empty method and path from the marshalled request */
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len) || field_len) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+        if (!aws_byte_cursor_read_be32(request_blob, &field_len) || field_len) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
     }
-
-    struct aws_byte_cursor method = aws_byte_cursor_advance(request_blob, field_len);
-
-    int result = aws_http_message_set_request_method(message, method);
-    if (result != AWS_OP_SUCCESS) {
-        return AWS_OP_ERR;
-    }
-
-    if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
-
-    struct aws_byte_cursor path = aws_byte_cursor_advance(request_blob, field_len);
-
-    result = aws_http_message_set_request_path(message, path);
-    if (result != AWS_OP_SUCCESS) {
-        return AWS_OP_ERR;
-    }
-
     while (request_blob->len) {
         if (!aws_byte_cursor_read_be32(request_blob, &field_len)) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -314,19 +367,25 @@ int aws_apply_java_http_request_changes_to_native_request(
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
 
-    result = s_unmarshal_http_request(message, &marshalled_cur);
+    enum aws_http_version version = s_unmarshal_http_request_to_get_version(&marshalled_cur);
+    if (version != aws_http_message_get_protocol_version(message)) {
+        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    } else {
+        result = s_unmarshal_http_request_without_version(message, &marshalled_cur);
+    }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
+
+    if (result) {
+        aws_jni_throw_runtime_exception(
+            env, "HttpRequest.applyChangesToNativeRequest: %s\n", aws_error_debug_str(aws_last_error()));
+        return result;
+    }
 
     if (jni_body_stream) {
         struct aws_input_stream *body_stream =
             aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
 
         aws_http_message_set_body_stream(message, body_stream);
-    }
-
-    if (result) {
-        aws_jni_throw_runtime_exception(
-            env, "HttpRequest.applyChangesToNativeRequest: %s\n", aws_error_debug_str(aws_last_error()));
     }
 
     return result;
@@ -337,17 +396,22 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     jbyteArray marshalled_request,
     jobject jni_body_stream) {
     const char *exception_message = NULL;
-    struct aws_http_message *request = aws_http_message_new_request(aws_jni_get_allocator());
-    if (request == NULL) {
-        aws_jni_throw_runtime_exception(env, "aws_http_request_new_from_java_http_request: Unable to allocate request");
-        return NULL;
-    }
     const size_t marshalled_request_length = (*env)->GetArrayLength(env, marshalled_request);
 
     jbyte *marshalled_request_data = (*env)->GetPrimitiveArrayCritical(env, marshalled_request, NULL);
     struct aws_byte_cursor marshalled_cur =
         aws_byte_cursor_from_array((uint8_t *)marshalled_request_data, marshalled_request_length);
-    int result = s_unmarshal_http_request(request, &marshalled_cur);
+    enum aws_http_version version = s_unmarshal_http_request_to_get_version(&marshalled_cur);
+    struct aws_http_message *request = version == AWS_HTTP_VERSION_2
+                                           ? aws_http2_message_new_request(aws_jni_get_allocator())
+                                           : aws_http_message_new_request(aws_jni_get_allocator());
+
+    int result = AWS_OP_SUCCESS;
+    if (version != aws_http_message_get_protocol_version(request)) {
+        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    } else {
+        result = s_unmarshal_http_request_without_version(request, &marshalled_cur);
+    }
     (*env)->ReleasePrimitiveArrayCritical(env, marshalled_request, marshalled_request_data, 0);
 
     if (result) {
@@ -417,10 +481,11 @@ static inline int s_marshall_http_request(const struct aws_http_message *message
 
     AWS_FATAL_ASSERT(!aws_http_message_get_request_path(message, &path));
 
-    if (aws_byte_buf_reserve_relative(request_buf, sizeof(int) + sizeof(int) + method.len + path.len)) {
+    if (aws_byte_buf_reserve_relative(request_buf, sizeof(int) + sizeof(int) + sizeof(int) + method.len + path.len)) {
         return AWS_OP_ERR;
     }
 
+    aws_byte_buf_write_be32(request_buf, (uint32_t)aws_http_message_get_protocol_version(message));
     aws_byte_buf_write_be32(request_buf, (uint32_t)method.len);
     aws_byte_buf_write_from_whole_cursor(request_buf, method);
     aws_byte_buf_write_be32(request_buf, (uint32_t)path.len);

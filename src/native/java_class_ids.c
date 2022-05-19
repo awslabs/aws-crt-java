@@ -107,6 +107,10 @@ struct java_boxed_long_properties boxed_long_properties;
 static void s_cache_boxed_long(JNIEnv *env) {
     jclass boxed_long_class = (*env)->FindClass(env, "java/lang/Long");
     AWS_FATAL_ASSERT(boxed_long_class);
+    boxed_long_properties.long_class = (*env)->NewGlobalRef(env, boxed_long_class);
+
+    boxed_long_properties.constructor = (*env)->GetMethodID(env, boxed_long_class, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(boxed_long_properties.constructor);
 
     boxed_long_properties.long_value_method_id = (*env)->GetMethodID(env, boxed_long_class, "longValue", "()J");
     AWS_FATAL_ASSERT(boxed_long_properties.long_value_method_id);
@@ -288,6 +292,10 @@ static void s_cache_async_callback(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/AsyncCallback");
     AWS_FATAL_ASSERT(cls);
 
+    async_callback_properties.on_success_with_object =
+        (*env)->GetMethodID(env, cls, "onSuccess", "(Ljava/lang/Object;)V");
+    AWS_FATAL_ASSERT(async_callback_properties.on_success_with_object);
+
     async_callback_properties.on_success = (*env)->GetMethodID(env, cls, "onSuccess", "()V");
     AWS_FATAL_ASSERT(async_callback_properties.on_success);
 
@@ -384,6 +392,17 @@ static void s_cache_http_stream(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_properties.close);
 }
 
+struct java_http2_stream_properties http2_stream_properties;
+
+static void s_cache_http2_stream(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http2Stream");
+    AWS_FATAL_ASSERT(cls);
+    http2_stream_properties.stream_class = (*env)->NewGlobalRef(env, cls);
+
+    http2_stream_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
+    AWS_FATAL_ASSERT(http2_stream_properties.constructor);
+}
+
 struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
 static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
@@ -391,19 +410,19 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
 
     http_stream_response_handler_properties.onResponseHeaders = (*env)->GetMethodID(
-        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;IILjava/nio/ByteBuffer;)V");
+        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;IILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeaders);
 
     http_stream_response_handler_properties.onResponseHeadersDone =
-        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
+        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeadersDone);
 
     http_stream_response_handler_properties.onResponseBody = (*env)->GetMethodID(
-        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
+        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Ljava/nio/ByteBuffer;)I");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseBody);
 
     http_stream_response_handler_properties.onResponseComplete =
-        (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
+        (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
 }
 
@@ -614,8 +633,7 @@ static void s_cache_crt_runtime_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     crt_runtime_exception_properties.crt_runtime_exception_class = (*env)->NewGlobalRef(env, cls);
 
-    crt_runtime_exception_properties.constructor_method_id =
-        (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;)V");
+    crt_runtime_exception_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
     AWS_FATAL_ASSERT(crt_runtime_exception_properties.constructor_method_id);
 
     crt_runtime_exception_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");
@@ -816,6 +834,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_client_connection_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);
+    s_cache_http2_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
     s_cache_event_stream_server_listener_properties(env);

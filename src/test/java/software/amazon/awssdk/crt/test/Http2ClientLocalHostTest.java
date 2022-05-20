@@ -127,7 +127,6 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     @Test
     public void testParallelRequestsStress() throws Exception {
         skipIfLocalhostUnavailable();
-        Log.initLoggingToStderr(Log.LogLevel.Trace);
         URI uri = new URI("https://localhost:8443/echo");
         try(
         Http2StreamManager streamManager = createStreamManager(uri, 100)) {

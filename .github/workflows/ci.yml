@@ -144,7 +144,7 @@ jobs:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
-          mvn compile -P mac-arm-make
+          mvn -B compile -P mac-arm64
 
   android:
     name: Android

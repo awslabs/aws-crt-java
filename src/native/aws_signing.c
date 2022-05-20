@@ -51,15 +51,14 @@ struct s_aws_sign_request_callback_data {
     struct aws_credentials *credentials;
 };
 
-static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
-
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
-    if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data, JNIEnv *env) {
+    if (callback_data == NULL || env == NULL) {
         return;
     }
 
-    (*env)->DeleteGlobalRef(env, callback_data->java_signing_result_future);
+    if (callback_data->java_signing_result_future != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_signing_result_future);
+    }
 
     if (callback_data->java_original_request != NULL) {
         (*env)->DeleteGlobalRef(env, callback_data->java_original_request);
@@ -136,18 +135,7 @@ static void s_complete_signing_exceptionally(
         error_code = AWS_ERROR_UNKNOWN;
     }
 
-    jint jni_error_code = error_code;
-    struct aws_byte_cursor error_cursor = aws_byte_cursor_from_c_str(aws_error_name(error_code));
-    jstring jni_error_string = aws_jni_string_from_cursor(env, &error_cursor);
-    AWS_FATAL_ASSERT(jni_error_string);
-
-    jobject crt_exception = (*env)->NewObject(
-        env,
-        crt_runtime_exception_properties.crt_runtime_exception_class,
-        crt_runtime_exception_properties.constructor_method_id,
-        jni_error_code,
-        jni_error_string);
-    AWS_FATAL_ASSERT(crt_exception);
+    jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
 
     (*env)->CallBooleanMethod(
         env,
@@ -156,7 +144,6 @@ static void s_complete_signing_exceptionally(
         crt_exception);
 
     aws_jni_check_and_clear_exception(env);
-    (*env)->DeleteLocalRef(env, jni_error_string);
     (*env)->DeleteLocalRef(env, crt_exception);
 }
 
@@ -214,10 +201,11 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        goto done;
+        return;
     }
 
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
@@ -239,19 +227,24 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
 
     s_aws_complete_signing_result(env, result, callback_data, java_signed_request);
 
-done:
+done:;
 
-    s_cleanup_callback_data(callback_data);
+    JavaVM *jvm = callback_data->jvm;
+    s_cleanup_callback_data(callback_data, env);
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
 
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        goto done;
+        return;
     }
 
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
@@ -261,9 +254,13 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
 
     s_aws_complete_signing_result(env, result, callback_data, NULL);
 
-done:
+done:;
 
-    s_cleanup_callback_data(callback_data);
+    JavaVM *jvm = callback_data->jvm;
+    s_cleanup_callback_data(callback_data, env);
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_aws_chunk_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
@@ -277,7 +274,8 @@ static void s_aws_trailing_headers_signing_complete(struct aws_signing_result *r
 static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
     struct s_aws_sign_request_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return false;
@@ -290,6 +288,9 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     (*env)->DeleteLocalRef(env, header_name);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     return result;
 }
@@ -380,7 +381,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
-    (void)env;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -439,7 +439,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 
 on_error:
 
-    s_cleanup_callback_data(callback_data);
+    s_cleanup_callback_data(callback_data, env);
 }
 
 JNIEXPORT
@@ -452,7 +452,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
-    (void)env;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -514,7 +513,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 
 on_error:
 
-    s_cleanup_callback_data(callback_data);
+    s_cleanup_callback_data(callback_data, env);
 }
 
 JNIEXPORT
@@ -527,7 +526,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
-    (void)env;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -579,7 +577,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 
 on_error:
 
-    s_cleanup_callback_data(callback_data);
+    s_cleanup_callback_data(callback_data, env);
 }
 
 JNIEXPORT
@@ -665,7 +663,7 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
 
 done:
 
-    s_cleanup_callback_data(callback_data);
+    s_cleanup_callback_data(callback_data, env);
 
     aws_string_destroy(expected_canonical_request);
     if (signature_cursor.len > 0) {

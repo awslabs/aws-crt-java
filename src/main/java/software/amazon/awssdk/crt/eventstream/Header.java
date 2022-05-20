@@ -7,8 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * Event-stream header. This object can be represented in many types, so before using
- * the getValueAs*() functions, check the value of getHeaderType() and then decide
+ * Event-stream header. This object can be represented in many types, so before
+ * using
+ * the getValueAs*() functions, check the value of getHeaderType() and then
+ * decide
  * which getValueAs*() function to call based on the returned type.
  */
 public class Header {
@@ -21,7 +23,8 @@ public class Header {
 
     /**
      * Create a header with name of boolean value
-     * @param name name for the header.
+     *
+     * @param name  name for the header.
      * @param value value for the header.
      * @return new Header instance
      */
@@ -35,7 +38,8 @@ public class Header {
 
     /**
      * Create a header with name of byte or int8 value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -49,7 +53,8 @@ public class Header {
 
     /**
      * Create a header with name of String value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -63,7 +68,8 @@ public class Header {
 
     /**
      * Create a header with name of short or int16 value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -77,7 +83,8 @@ public class Header {
 
     /**
      * Create a header with name of int or int32 value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -91,7 +98,8 @@ public class Header {
 
     /**
      * Create a header with name of long or int64 value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -105,7 +113,8 @@ public class Header {
 
     /**
      * Create a header with name of Date (assumed to be UTC) value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -119,7 +128,8 @@ public class Header {
 
     /**
      * Create a header with name of byte[] value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -133,7 +143,8 @@ public class Header {
 
     /**
      * Create a header with name of UUID value
-     * @param name name for the header
+     *
+     * @param name  name for the header
      * @param value value for the header
      * @return new Header instance
      */
@@ -147,6 +158,7 @@ public class Header {
 
     /**
      * Marshals buffer into a Header instance
+     *
      * @param buffer buffer to read the header data from
      * @return New instance of Header
      */
@@ -210,14 +222,16 @@ public class Header {
     }
 
     /**
-     * Writes the value of this header into a buffer, using the wire representation of
+     * Writes the value of this header into a buffer, using the wire representation
+     * of
      * the header.
+     *
      * @param buffer buffer to write this header into
      */
     public void writeToByteBuffer(ByteBuffer buffer) {
-        buffer.put((byte)headerName.length());
+        buffer.put((byte) headerName.length());
         buffer.put(headerName.getBytes(StandardCharsets.UTF_8));
-        buffer.put((byte)headerType.getEnumIntValue());
+        buffer.put((byte) headerType.getEnumIntValue());
 
         if (headerType != HeaderType.BooleanFalse && headerType != HeaderType.BooleanTrue) {
             buffer.put(headerValue);
@@ -226,6 +240,7 @@ public class Header {
 
     /**
      * Gets the name of the header as a (UTF-8) string
+     *
      * @return utf-8 encoded string for the header name
      */
     public String getName() {
@@ -234,6 +249,7 @@ public class Header {
 
     /**
      * Gets the header type of the value.
+     *
      * @return HeaderType for this header
      */
     public HeaderType getHeaderType() {
@@ -241,8 +257,10 @@ public class Header {
     }
 
     /**
-     * Gets the value as a boolean. This assumes you've already checked getHeaderType()
+     * Gets the value as a boolean. This assumes you've already checked
+     * getHeaderType()
      * returns BooleanTrue or BooleanFalse
+     *
      * @return the value as a boolean
      */
     public boolean getValueAsBoolean() {
@@ -262,8 +280,10 @@ public class Header {
     }
 
     /**
-     * Gets the value as a byte or int8. This assumes you've already checked getHeaderType()
+     * Gets the value as a byte or int8. This assumes you've already checked
+     * getHeaderType()
      * returns Byte
+     *
      * @return the value as a byte
      */
     public byte getValueAsByte() {
@@ -273,12 +293,14 @@ public class Header {
 
     private void setValue(byte value) {
         headerType = HeaderType.Byte;
-        headerValue = new byte[] { value};
+        headerValue = new byte[] { value };
     }
 
     /**
-     * Gets the value as a short or int16. This assumes you've already checked getHeaderType()
+     * Gets the value as a short or int16. This assumes you've already checked
+     * getHeaderType()
      * returns Int16
+     *
      * @return the value as a short
      */
     public short getValueAsShort() {
@@ -295,8 +317,10 @@ public class Header {
     }
 
     /**
-     * Gets the value as an int or int32. This assumes you've already checked getHeaderType()
+     * Gets the value as an int or int32. This assumes you've already checked
+     * getHeaderType()
      * returns Int32
+     *
      * @return the value as a int
      */
     public int getValueAsInt() {
@@ -313,8 +337,10 @@ public class Header {
     }
 
     /**
-     * Gets the value as a long or int64. This assumes you've already checked getHeaderType()
+     * Gets the value as a long or int64. This assumes you've already checked
+     * getHeaderType()
      * returns Int64
+     *
      * @return the value as a long
      */
     public long getValueAsLong() {
@@ -333,6 +359,7 @@ public class Header {
     /**
      * Gets the value as a Date. This assumes you've already checked getHeaderType()
      * returns TimeStamp
+     *
      * @return the value as a Date
      */
     public Date getValueAsTimestamp() {
@@ -349,8 +376,10 @@ public class Header {
     }
 
     /**
-     * Gets the value as a byte[]. This assumes you've already checked getHeaderType()
+     * Gets the value as a byte[]. This assumes you've already checked
+     * getHeaderType()
      * returns ByteBuf
+     *
      * @return the value as a byte[]
      */
     public byte[] getValueAsBytes() {
@@ -369,7 +398,7 @@ public class Header {
 
         headerType = HeaderType.ByteBuf;
         ByteBuffer valueBuffer = ByteBuffer.allocate(headerType.getWireBytesOverhead() + value.length);
-        valueBuffer.putShort((short)value.length);
+        valueBuffer.putShort((short) value.length);
         valueBuffer.put(value);
         headerValue = valueBuffer.array();
     }
@@ -378,6 +407,7 @@ public class Header {
      * Gets the value as a utf-8 encoded string.
      * This assumes you've already checked getHeaderType()
      * returns String
+     *
      * @return the value as a utf-8 encoded string
      */
     public String getValueAsString() {
@@ -396,7 +426,7 @@ public class Header {
 
         headerType = HeaderType.String;
         ByteBuffer valueBuffer = ByteBuffer.allocate(headerType.getWireBytesOverhead() + value.length());
-        valueBuffer.putShort((short)value.length());
+        valueBuffer.putShort((short) value.length());
         valueBuffer.put(value.getBytes(StandardCharsets.UTF_8));
         headerValue = valueBuffer.array();
     }
@@ -404,6 +434,7 @@ public class Header {
     /**
      * Gets the value as a UUID. This assumes you've already checked getHeaderType()
      * returns UUID
+     *
      * @return the value as a UUID
      */
     public UUID getValueAsUUID() {
@@ -415,12 +446,12 @@ public class Header {
         long lsb = 0;
 
         int i;
-        for(i = 0; i < 8; ++i) {
-            msb = msb << 8 | (long)(headerValue[i] & 255);
+        for (i = 0; i < 8; ++i) {
+            msb = msb << 8 | (long) (headerValue[i] & 255);
         }
 
-        for(i = 8; i < 16; ++i) {
-            lsb = lsb << 8 | (long)(headerValue[i] & 255);
+        for (i = 8; i < 16; ++i) {
+            lsb = lsb << 8 | (long) (headerValue[i] & 255);
         }
         return new UUID(msb, lsb);
     }
@@ -445,21 +476,22 @@ public class Header {
     }
 
     /**
-     * Marshals a list of headers into a usable headers block for an event-stream message.
-     * Used for sending headers across the JNI boundary more efficiently
+     * @hidden Marshals a list of headers into a usable headers block for an
+     *         event-stream message. Used for sending headers across the JNI
+     *         boundary more efficiently
      * @param headers list of headers to write to the headers block
      * @return a byte[] that matches the event-stream header-block format.
      */
     public static byte[] marshallHeadersForJNI(List<Header> headers) {
         int totalWireLength = 0;
-        for(Header header: headers) {
+        for (Header header : headers) {
             totalWireLength += header.getTotalByteLength();
         }
 
         byte[] marshalledData = new byte[totalWireLength];
         ByteBuffer marshalledBuf = ByteBuffer.wrap(marshalledData);
 
-        for(Header header: headers) {
+        for (Header header : headers) {
             header.writeToByteBuffer(marshalledBuf);
         }
 
@@ -480,8 +512,10 @@ public class Header {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Header header = (Header) o;
         return headerName.equals(header.headerName) &&
                 headerType == header.headerType &&

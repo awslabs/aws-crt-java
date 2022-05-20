@@ -113,7 +113,7 @@ public class S3Client extends CrtResource {
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
             long tlsContext, long signingConfig, long partSize, double throughputTargetGbps, int maxConnections,
-            StandardRetryOptions standardRetryOptions, Boolean computeContentMd5) throws CrtRuntimeException;
+            StandardRetryOptions standardRetryOptions, boolean computeContentMd5) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 

@@ -43,8 +43,10 @@ struct java_predicate_properties {
 };
 extern struct java_predicate_properties predicate_properties;
 
-/* java/lang/Integer */
+/* java/lang/Long */
 struct java_boxed_long_properties {
+    jclass long_class;
+    jmethodID constructor;
     jmethodID long_value_method_id;
 };
 extern struct java_boxed_long_properties boxed_long_properties;
@@ -126,6 +128,7 @@ extern struct java_credentials_handler_properties credentials_handler_properties
 
 /* AsyncCallback */
 struct java_async_callback_properties {
+    jmethodID on_success_with_object;
     jmethodID on_success;
     jmethodID on_failure;
 };
@@ -175,6 +178,13 @@ struct java_http_stream_properties {
     jmethodID close;
 };
 extern struct java_http_stream_properties http_stream_properties;
+
+/* Http2Stream */
+struct java_http2_stream_properties {
+    jclass stream_class;
+    jmethodID constructor;
+};
+extern struct java_http2_stream_properties http2_stream_properties;
 
 /* HttpStreamResponseHandler */
 struct java_http_stream_response_handler_native_adapter_properties {

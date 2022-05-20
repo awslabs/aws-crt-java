@@ -43,6 +43,14 @@ public final class CRT {
         boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
         awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
 
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            public void run()
+            {
+                CRT.onJvmShutdown();
+            }
+        });
+
         try {
             Log.initLoggingFromSystemProperties();
         } catch (IllegalArgumentException e) {
@@ -69,7 +77,6 @@ public final class CRT {
 
     /**
      * @return a string describing the detected platform the CRT is executing on
-     * @throws UnknownPlatformException
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
 
@@ -93,7 +100,6 @@ public final class CRT {
 
     /**
      * @return a string describing the detected architecture the CRT is executing on
-     * @throws UnknownPlatformException
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
         CrtPlatform platform = getPlatformImpl();
@@ -321,4 +327,6 @@ public final class CRT {
     }
 
     private static native void nativeCheckJniExceptionContract(boolean clearException);
+
+    private static native void onJvmShutdown();
 };

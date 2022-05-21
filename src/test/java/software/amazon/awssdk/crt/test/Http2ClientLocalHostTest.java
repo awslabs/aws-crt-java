@@ -48,7 +48,8 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
-                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2").withVerifyPeer(false);
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2")
+                        .withVerifyPeer(false);
                 TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
             HttpStreamManagerOptions options = new HttpStreamManagerOptions();
             options.withClientBootstrap(bootstrap)
@@ -116,7 +117,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 new HttpHeader("content-length", Long.toString(bodyLength))
         };
         HttpRequestBodyStream bodyStream = null;
-        if(bodyLength > 0) {
+        if (bodyLength > 0) {
             bodyStream = createBodyStreamWithLength(bodyLength);
         }
         Http2Request request = new Http2Request(requestHeaders, bodyStream);
@@ -128,8 +129,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testParallelRequestsStress() throws Exception {
         skipIfLocalhostUnavailable();
         URI uri = new URI("https://localhost:8443/echo");
-        try(
-        Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
 
             Http2Request request = createHttp2Request("GET", uri, 0);
@@ -142,10 +142,80 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                                  HttpHeader[] nextHeaders) {
+                            HttpHeader[] nextHeaders) {
                         if (responseStatusCode != 200) {
                             numStreamsFailures.incrementAndGet();
                         }
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                        stream.close();
+                        requestCompleteFuture.complete(null);
+                    }
+                }));
+            }
+            for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            // Wait for all Requests to complete
+            for (CompletableFuture<Void> f : requestCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            Assert.assertTrue(numStreamsFailures.get() == 0);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testParallelRequestsStressWithBody() throws Exception {
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/uploadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            int numberToAcquire = 500 * 100;
+            if (CRT.getOSIdentifier() == "linux") {
+                /*
+                 * Using Python hyper h2 server frame work, met a weird upload performance issue
+                 * on Linux. Our client against nginx platform has not met the same issue.
+                 * We assume it's because the server framework implementation.
+                 * Use lower number of linux
+                 */
+                numberToAcquire = 500;
+            }
+            int bodyLength = 2000;
+
+            List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
+            List<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
+            final AtomicInteger numStreamsFailures = new AtomicInteger(0);
+            for (int i = 0; i < numberToAcquire; i++) {
+                Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+
+                final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+                final int expectedLength = bodyLength;
+                requestCompleteFutures.add(requestCompleteFuture);
+                acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        if (responseStatusCode != 200) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                    }
+
+                    @Override
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                        String bodyString = new String(bodyBytesIn);
+                        int receivedLength = Integer.parseInt(bodyString);
+
+                        Assert.assertTrue(receivedLength == expectedLength);
+                        if(receivedLength!=expectedLength) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                        return bodyString.length();
                     }
 
                     @Override

@@ -184,7 +184,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                  * We assume it's because the server framework implementation.
                  * Use lower number of linux
                  */
-                numberToAcquire = 5;
+                numberToAcquire = 500;
             }
             int bodyLength = 2000;
 

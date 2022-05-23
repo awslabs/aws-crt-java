@@ -291,10 +291,13 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 }
             });
 
+            System.out.println("before acquire");
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
+            System.out.println("before complete");
             requestCompleteFuture.get(30, TimeUnit.SECONDS);
 
         }
+        System.out.println("before check resource");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }

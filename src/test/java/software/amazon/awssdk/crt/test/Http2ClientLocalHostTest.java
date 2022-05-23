@@ -247,10 +247,10 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testRequestsUploadStress() throws Exception {
         /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
         skipIfLocalhostUnavailable();
-        Log.initLoggingToStderr(Log.LogLevel.Debug);
+//        Log.initLoggingToStderr(Log.LogLevel.Debug);
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-            long bodyLength = 2500000000L;
+            long bodyLength = 2500L;
             if (CRT.getOSIdentifier() == "linux") {
                 /*
                  * Using Python hyper h2 server frame work, met a weird upload performance issue
@@ -277,7 +277,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
                     String bodyString = new String(bodyBytesIn);
                     long receivedLength = Long.parseLong(bodyString);
-
+                    System.out.println(bodyString);
                     Assert.assertTrue(receivedLength == expectedLength);
                     return bodyString.length();
                 }

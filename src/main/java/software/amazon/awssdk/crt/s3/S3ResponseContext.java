@@ -1,17 +1,33 @@
 package software.amazon.awssdk.crt.s3;
 
 public class S3ResponseContext {
-    public final int errorCode;
-    public final int responseStatus;
-    public final byte[] errorPayload;
-    public final S3ChecksumAlgorithm checksumAlgorithm;
-    public final boolean didValidateChecksum;
+    private final int errorCode;
+    private final int responseStatus;
+    private final byte[] errorPayload;
+    private final ChecksumAlgorithm checksumAlgorithm;
+    private final boolean didValidateChecksum;
 
-    public S3ResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final S3ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum) {
+    public S3ResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
+    }
+
+    public int getErrorCode () {
+        return this.errorCode;
+    }
+    public int getResponseStatus () {
+        return this.responseStatus;
+    }
+    public byte[] getErrorPayload () {
+        return this.errorPayload;
+    }
+    public ChecksumAlgorithm getChecksumAlgorithm () {
+        return this.checksumAlgorithm;
+    }
+    public boolean getDidValidateChecksum () {
+        return this.didValidateChecksum;
     }
 }

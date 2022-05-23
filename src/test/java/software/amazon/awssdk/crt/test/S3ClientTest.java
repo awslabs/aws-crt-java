@@ -14,7 +14,7 @@ import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
-import software.amazon.awssdk.crt.s3.S3ChecksumAlgorithm;
+import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
@@ -412,7 +412,7 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler)
-                    .withChecksumAlgorithm(S3ChecksumAlgorithm.AWS_SCA_CRC32);
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onPutFinishedFuture.get());
@@ -447,7 +447,7 @@ public class S3ClientTest extends CrtTestFixture {
                                 new CrtS3RuntimeException(context.errorCode, context.responseStatus, context.errorPayload));
                         return;
                     }
-                    if(context.checksumAlgorithm != S3ChecksumAlgorithm.AWS_SCA_CRC32) {
+                    if(context.checksumAlgorithm != ChecksumAlgorithm.CRC32) {
                         onGetFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(context.errorCode, context.responseStatus, context.errorPayload));
                         return;
@@ -494,7 +494,7 @@ public class S3ClientTest extends CrtTestFixture {
                                 new CrtS3RuntimeException(context.errorCode, context.responseStatus, context.errorPayload));
                         return;
                     }
-                    if(context.checksumAlgorithm != S3ChecksumAlgorithm.AWS_SCA_CRC32) {
+                    if(context.checksumAlgorithm != ChecksumAlgorithm.CRC32) {
                         onFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(context.errorCode, context.responseStatus, context.errorPayload));
                         return;

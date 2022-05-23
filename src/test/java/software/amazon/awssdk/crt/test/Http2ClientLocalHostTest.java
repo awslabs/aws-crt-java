@@ -278,14 +278,18 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                     String bodyString = new String(bodyBytesIn);
                     long receivedLength = Long.parseLong(bodyString);
                     System.out.println(bodyString);
+                    System.out.println("before length check");
                     Assert.assertTrue(receivedLength == expectedLength);
+                    System.out.println("after length check");
                     return bodyString.length();
                 }
 
                 @Override
                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
 
+                    System.out.println("before error code check");
                     Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                    System.out.println("after error code check");
                     stream.close();
                     requestCompleteFuture.complete(null);
                 }
@@ -295,6 +299,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             System.out.println("before complete");
             requestCompleteFuture.get(30, TimeUnit.SECONDS);
+            System.out.println("after complete");
 
         }
         System.out.println("before check resource");

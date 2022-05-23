@@ -291,14 +291,16 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                     Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
                     System.out.println("after error code check");
                     stream.close();
+                    System.out.println("after stream close");
                     requestCompleteFuture.complete(null);
+                    System.out.println("after complete");
                 }
             });
 
             System.out.println("before acquire");
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             System.out.println("before complete");
-            requestCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.join();
             System.out.println("after complete");
 
         }

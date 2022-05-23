@@ -16,7 +16,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, int checksumAlgorithm, boolean didValidateChecksum) {
-        S3ResponseContext context = new S3ResponseContext(errorCode, responseStatus, errorPayload, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum);
+        S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum);
         this.responseHandler.onFinished(context);
     }
 

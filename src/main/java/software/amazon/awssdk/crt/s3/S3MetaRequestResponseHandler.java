@@ -39,7 +39,7 @@ public interface S3MetaRequestResponseHandler {
      * @param responseStatus statusCode of the HTTP response
      * @param errorPayload body of the error response. Can be null if the request completed successfully
      */
-    default void onFinished(S3ResponseContext context) {
+    default void onFinished(S3FinishedResponseContext context) {
     }
 
     /**

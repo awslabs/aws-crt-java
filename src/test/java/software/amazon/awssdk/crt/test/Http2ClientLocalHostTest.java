@@ -45,6 +45,7 @@ import software.amazon.awssdk.crt.Log;
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
+        Log.initLoggingToStderr(Log.LogLevel.Error);
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);

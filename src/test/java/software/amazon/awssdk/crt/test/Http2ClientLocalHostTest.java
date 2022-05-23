@@ -45,7 +45,6 @@ import software.amazon.awssdk.crt.Log;
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
-        Log.initLoggingToStderr(Log.LogLevel.Error);
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -248,6 +247,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testRequestsUploadStress() throws Exception {
         /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
         skipIfLocalhostUnavailable();
+        Log.initLoggingToStderr(Log.LogLevel.Debug);
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;

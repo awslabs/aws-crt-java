@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -236,6 +238,106 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 f.get(30, TimeUnit.SECONDS);
             }
             Assert.assertTrue(numStreamsFailures.get() == 0);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testRequestsUploadStress() throws Exception {
+        /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/uploadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            long bodyLength = 2500000000L;
+            if (CRT.getOSIdentifier() == "linux") {
+                /*
+                 * Using Python hyper h2 server frame work, met a weird upload performance issue
+                 * on Linux. Our client against nginx platform has not met the same issue.
+                 * We assume it's because the server framework implementation.
+                 * Use lower number of linux
+                 */
+                bodyLength = 250000000L;
+            }
+
+            Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            final long expectedLength = bodyLength;
+            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+
+                    Assert.assertTrue(responseStatusCode == 200);
+                }
+
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    String bodyString = new String(bodyBytesIn);
+                    long receivedLength = Long.parseLong(bodyString);
+
+                    Assert.assertTrue(receivedLength == expectedLength);
+                    return bodyString.length();
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+
+                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                    stream.close();
+                    requestCompleteFuture.complete(null);
+                }
+            });
+
+            acquireCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.get(30, TimeUnit.SECONDS);
+
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testRequestsDownloadStress() throws Exception {
+        /* Test that download a 2.5GB data from local server */
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/downloadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            long bodyLength = 2500000000L;
+
+            Http2Request request = createHttp2Request("GET", uri, 0);
+
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            final AtomicLong receivedLength = new AtomicLong(0);
+            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+
+                    Assert.assertTrue(responseStatusCode == 200);
+                }
+
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    receivedLength.addAndGet(bodyBytesIn.length);
+
+                    return bodyBytesIn.length;
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+
+                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                    stream.close();
+                    requestCompleteFuture.complete(null);
+                }
+            });
+
+            acquireCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.get(30, TimeUnit.SECONDS);
+
+            Assert.assertTrue(receivedLength.get() == bodyLength);
         }
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();

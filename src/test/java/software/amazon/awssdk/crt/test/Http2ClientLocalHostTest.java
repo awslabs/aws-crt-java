@@ -250,7 +250,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 //        Log.initLoggingToStderr(Log.LogLevel.Debug);
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-            long bodyLength = 2500L;
+            long bodyLength = 2500000000L;
             if (CRT.getOSIdentifier() == "linux") {
                 /*
                  * Using Python hyper h2 server frame work, met a weird upload performance issue

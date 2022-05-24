@@ -277,34 +277,22 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
                     String bodyString = new String(bodyBytesIn);
                     long receivedLength = Long.parseLong(bodyString);
-                    System.out.println(bodyString);
-                    System.out.println("before length check");
                     Assert.assertTrue(receivedLength == expectedLength);
-                    System.out.println("after length check");
                     return bodyString.length();
                 }
 
                 @Override
                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-
-                    System.out.println("before error code check");
                     Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-                    System.out.println("after error code check");
                     stream.close();
-                    System.out.println("after stream close");
                     requestCompleteFuture.complete(null);
-                    System.out.println("after complete");
                 }
             });
 
-            System.out.println("before acquire");
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            System.out.println("before complete");
             requestCompleteFuture.join();
-            System.out.println("after complete");
 
         }
-        System.out.println("before check resource");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -346,7 +334,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            requestCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.join();
 
             Assert.assertTrue(receivedLength.get() == bodyLength);
         }

@@ -7,7 +7,7 @@ public enum ChecksumAlgorithm {
 
     NONE(0),
 
-    CRC32_C(1),
+    CRC32C(1),
 
     CRC32(2),
 
@@ -35,7 +35,7 @@ public enum ChecksumAlgorithm {
     private static Map<Integer, ChecksumAlgorithm> buildEnumMapping() {
         Map<Integer, ChecksumAlgorithm> enumMapping = new HashMap<Integer, ChecksumAlgorithm>();
         enumMapping.put(NONE.getNativeValue(), NONE);
-        enumMapping.put(CRC32_C.getNativeValue(), CRC32_C);
+        enumMapping.put(CRC32C.getNativeValue(), CRC32C);
         enumMapping.put(CRC32.getNativeValue(), CRC32);
         enumMapping.put(SHA1.getNativeValue(), SHA1);
         enumMapping.put(SHA256.getNativeValue(), SHA256);

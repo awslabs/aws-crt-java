@@ -442,7 +442,7 @@ public class S3ClientTest extends CrtTestFixture {
                                 new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
                         return;
                     }
-                    if(!context.getDidValidateChecksum()) {
+                    if(!context.isChecksumValidated()) {
                         onGetFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
                         return;
@@ -489,7 +489,7 @@ public class S3ClientTest extends CrtTestFixture {
                                 new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
                         return;
                     }
-                    if(!context.getDidValidateChecksum()) {
+                    if(!context.isChecksumValidated()) {
                         onFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
                         return;

@@ -40,12 +40,8 @@ public class ServerListener extends CrtResource {
         long serverHandler = serverListenerNew(this, hostName.getBytes(StandardCharsets.UTF_8), port,
                 socketOptions.getNativeHandle(), tlsContextPtr, serverBootstrap.getNativeHandle(),
                 handler);
-        if (port == 0 && (socketOptions.domain == SocketOptions.SocketDomain.IPv4
-                || socketOptions.domain == SocketOptions.SocketDomain.IPv6)) {
-            boundPort = getBoundPort(serverHandler);
-        } else {
-            boundPort = port;
-        }
+
+        boundPort = getBoundPort(serverHandler);
 
         acquireNativeHandle(serverHandler);
 
@@ -69,6 +65,9 @@ public class ServerListener extends CrtResource {
         return false;
     }
 
+    /**
+     * @return the port which the listener socket is bound to.
+     */
     public int getBoundPort() {
         return boundPort;
     }

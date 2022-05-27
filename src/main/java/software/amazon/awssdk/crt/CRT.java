@@ -172,7 +172,9 @@ public final class CRT {
                     while ((read = in.read(bytes)) != -1){
                         out.write(bytes, 0, read);
                     }
-                    out.close();
+                }
+                finally{
+                    in.close();
                 }
             }
 

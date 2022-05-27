@@ -124,6 +124,15 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
+    private static void cleanPreviousTempFiles(String path){
+        String tmpdirPath;
+        File tmpdirFile;
+        try{
+
+        }
+
+    }
+
     private static void extractAndLoadLibrary(String path) {
         try {
             // Check java.io.tmpdir
@@ -149,7 +158,7 @@ public final class CRT {
             }
 
             // Prefix the lib
-            String prefix = "AWSCRT_TEST";
+            String prefix = "AWSCRT_";
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
 
@@ -172,6 +181,7 @@ public final class CRT {
                     while ((read = in.read(bytes)) != -1){
                         out.write(bytes, 0, read);
                     }
+                    out.close();
                 }
             }
 

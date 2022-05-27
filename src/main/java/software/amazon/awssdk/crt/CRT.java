@@ -124,15 +124,6 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
-    private static void cleanPreviousTempFiles(String path){
-        String tmpdirPath;
-        File tmpdirFile;
-        try{
-
-        }
-
-    }
-
     private static void extractAndLoadLibrary(String path) {
         try {
             // Check java.io.tmpdir

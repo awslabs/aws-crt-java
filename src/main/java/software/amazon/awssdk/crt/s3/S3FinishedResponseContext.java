@@ -19,10 +19,9 @@ public class S3FinishedResponseContext {
         return this.errorCode;
     }
 
-    /**
+    /*
      * If the request didn't receive a response due to a connection 
      * failure or some othe issue the response status will be 0.
-     * @return
      */
     public int getResponseStatus () {
         return this.responseStatus;
@@ -31,10 +30,9 @@ public class S3FinishedResponseContext {
         return this.errorPayload;
     }
 
-    /**
+    /*
      * if no checksum is found, or the request finished with an error the Algorithm will be None,
      * otherwise the algorithm will correspond to the one attached to the object when uploaded.
-     * @return
      */
     public ChecksumAlgorithm getChecksumAlgorithm () {
         return this.checksumAlgorithm;

@@ -157,20 +157,26 @@ public final class CRT {
 
             // open a stream to read the shared lib contents from this JAR
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
-                if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
-                }
+                try {
+                    if (in == null) {
+                        throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
+                    }
 
-                if (tempSharedLib.exists()) {
-                    tempSharedLib.delete();
-                }
+                    if (tempSharedLib.exists()) {
+                        tempSharedLib.delete();
+                    }
 
-                // Copy from jar stream to temp file
-                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
-                    int read;
-                    byte [] bytes = new byte[1024];
-                    while ((read = in.read(bytes)) != -1){
-                        out.write(bytes, 0, read);
+                    // Copy from jar stream to temp file
+                    try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
+                        try {
+                            int read;
+                            byte[] bytes = new byte[1024];
+                            while ((read = in.read(bytes)) != -1) {
+                                out.write(bytes, 0, read);
+                            }
+                        } finally {
+                            out.close();
+                        }
                     }
                 }
                 finally{

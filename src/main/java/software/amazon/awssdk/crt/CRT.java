@@ -149,7 +149,7 @@ public final class CRT {
             }
 
             // Prefix the lib
-            String prefix = "AWSCRT_";
+            String prefix = "AWSCRT_TEST";
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
 

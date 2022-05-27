@@ -34,10 +34,10 @@ public interface S3MetaRequestResponseHandler {
 
     /**
      * Invoked when the entire meta request execution is complete.
-     *
-     * @param errorCode The CRT error code
-     * @param responseStatus statusCode of the HTTP response
-     * @param errorPayload body of the error response. Can be null if the request completed successfully
+     * @param context a wrapper object containing the following fields
+     * errorCode The CRT error code
+     * responseStatus statusCode of the HTTP response
+     * errorPayload body of the error response. Can be null if the request completed successfully
      */
     default void onFinished(S3FinishedResponseContext context) {
     }

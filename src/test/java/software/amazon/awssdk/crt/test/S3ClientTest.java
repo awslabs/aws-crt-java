@@ -482,8 +482,6 @@ public class S3ClientTest extends CrtTestFixture {
 
                 @Override
                 public void onFinished(S3FinishedResponseContext context) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Meta request finished with error code " + context.getErrorCode());
                     if (context.getErrorCode() != 0) {
                         onFinishedFuture.completeExceptionally(
                                 new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));

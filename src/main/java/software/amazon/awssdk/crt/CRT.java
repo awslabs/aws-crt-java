@@ -126,8 +126,6 @@ public final class CRT {
     }
 
     private static void extractAndLoadLibrary(String path) {
-        File tempSharedLib = null;
-        boolean tempSharedLibLoaded = false;
         try {
             // Check java.io.tmpdir
             String tmpdirPath;
@@ -154,16 +152,24 @@ public final class CRT {
             // Prefix the lib
             String prefix = "AWSCRT_";
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-            String os = getOSIdentifier();
-            String arch = getArchIdentifier();
 
-            // The lib should be deleted when we're done using it. Unfortunately,
-            // Windows prevents files from being deleted while they're in use,
-            // so once our .dll is loaded, it can't be deleted by this process.
+            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
+
+			// The lib should be deleted when we're done using it.
+			// Ask Java to try and delete it on exit, we do this immediately
+			// so that if anything goes wrong writing the file to disk, or
+			// loading it as a shared lib, it will still get cleaned up.
+			tempSharedLib.deleteOnExit();
+
+
+            // Unfortunately File.deleteOnExit() won't work on Windows,
+			// where files cannot be deleted while they're in use.
+            // Once our .dll is loaded, it can't be deleted by this process.
             //
             // The Windows-only solution to this problem is to scan on startup
-            // for any old instances of the .dll and try to delete them.
+            // for old instances of the .dll and try to delete them.
             // If another process is still using the .dll, the delete will fail, which is fine.
+            String os = getOSIdentifier();
             if (os == "windows") {
                 try {
                     File[] oldLibs = tmpdirFile.listFiles(new FilenameFilter() {
@@ -187,8 +193,7 @@ public final class CRT {
             }
 
             // open a stream to read the shared lib contents from this JAR
-            tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
-            String libraryPath = "/" + os + "/" + arch + "/" + libraryName;
+            String libraryPath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
@@ -220,17 +225,6 @@ public final class CRT {
 
             // load the shared lib from the temp path
             System.load(tempSharedLib.getAbsolutePath());
-            tempSharedLibLoaded = true;
-
-            // On non-Windows platforms we can safely delete the lib from the
-            // filesystem immediately after it's loaded. We do this instead of
-            // using File.deleteOnExit() because that doesn't work when the
-            // JVM is terminated suddenly (process killed, debugging session ended,
-            // crash in native code, etc)
-            if (os != "windows") {
-                tempSharedLib.delete();
-            }
-
         } catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex);
             crtex.printStackTrace();
@@ -247,13 +241,6 @@ public final class CRT {
             CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
             rex.initCause(ex);
             throw rex;
-        } finally {
-            // delete the lib if something went wrong and we couldn't load it.
-            if (tempSharedLib != null && tempSharedLib.exists() && !tempSharedLibLoaded) {
-                try {
-                    tempSharedLib.delete();
-                } catch (Exception ex) {}
-            }
         }
     }
 

@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -125,6 +126,8 @@ public final class CRT {
     }
 
     private static void extractAndLoadLibrary(String path) {
+        File tempSharedLib = null;
+        boolean tempSharedLibLoaded = false;
         try {
             // Check java.io.tmpdir
             String tmpdirPath;
@@ -151,12 +154,41 @@ public final class CRT {
             // Prefix the lib
             String prefix = "AWSCRT_";
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-            String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
+            String os = getOSIdentifier();
+            String arch = getArchIdentifier();
 
-            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
-            File tempSharedTest = File.createTempFile(prefix + "test", libraryName, tmpdirFile);
+            // The lib should be deleted when we're done using it. Unfortunately,
+            // Windows prevents files from being deleted while they're in use,
+            // so once our .dll is loaded, it can't be deleted by this process.
+            //
+            // The Windows-only solution to this problem is to scan on startup
+            // for any old instances of the .dll and try to delete them.
+            // If another process is still using the .dll, the delete will fail, which is fine.
+            if (os == "windows") {
+                try {
+                    File[] oldLibs = tmpdirFile.listFiles(new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return name.startsWith(prefix) && name.endsWith(libraryName);
+                        }
+                    });
+
+                    // Don't delete files that are too new.
+                    // We don't want to delete a lib in the millisecond between
+                    // when we've finished writing it to disk, but haven't yet loaded it.
+                    long aFewSecondsAgo = System.currentTimeMillis() - 10_000; // 10sec
+                    for (File oldLib : oldLibs) {
+                        try {
+                            if (oldLib.lastModified() < aFewSecondsAgo) {
+                                oldLib.delete();
+                            }
+                        } catch (Exception e) {}
+                    }
+                } catch (Exception e) {}
+            }
 
             // open a stream to read the shared lib contents from this JAR
+            tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
+            String libraryPath = "/" + os + "/" + arch + "/" + libraryName;
             try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
@@ -186,12 +218,19 @@ public final class CRT {
                 throw new CrtRuntimeException("Unable to make shared library readable");
             }
 
-            // Ensure that the shared lib will be destroyed when java exits
-            tempSharedLib.deleteOnExit();
-            tempSharedTest.deleteOnExit();
-
             // load the shared lib from the temp path
             System.load(tempSharedLib.getAbsolutePath());
+            tempSharedLibLoaded = true;
+
+            // On non-Windows platforms we can safely delete the lib from the
+            // filesystem immediately after it's loaded. We do this instead of
+            // using File.deleteOnExit() because that doesn't work when the
+            // JVM is terminated suddenly (process killed, debugging session ended,
+            // crash in native code, etc)
+            if (os != "windows") {
+                tempSharedLib.delete();
+            }
+
         } catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex);
             crtex.printStackTrace();
@@ -208,6 +247,13 @@ public final class CRT {
             CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
             rex.initCause(ex);
             throw rex;
+        } finally {
+            // delete the lib if something went wrong and we couldn't load it.
+            if (tempSharedLib != null && tempSharedLib.exists() && !tempSharedLibLoaded) {
+                try {
+                    tempSharedLib.delete();
+                } catch (Exception ex) {}
+            }
         }
     }
 

@@ -155,20 +155,19 @@ public final class CRT {
 
             File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
 
-			// The lib should be deleted when we're done using it.
-			// Ask Java to try and delete it on exit, we do this immediately
+			// The temp lib file should be deleted when we're done with it.
+			// Ask Java to try and delete it on exit. We call this immediately
 			// so that if anything goes wrong writing the file to disk, or
 			// loading it as a shared lib, it will still get cleaned up.
 			tempSharedLib.deleteOnExit();
 
-
-            // Unfortunately File.deleteOnExit() won't work on Windows,
-			// where files cannot be deleted while they're in use.
-            // Once our .dll is loaded, it can't be deleted by this process.
+            // Unfortunately File.deleteOnExit() won't work on Windows, where
+            // files cannot be deleted while they're in use. On Windows, once
+            // our .dll is loaded, it can't be deleted by this process.
             //
             // The Windows-only solution to this problem is to scan on startup
-            // for old instances of the .dll and try to delete them.
-            // If another process is still using the .dll, the delete will fail, which is fine.
+            // for old instances of the .dll and try to delete them. If another
+            // process is still using the .dll, the delete will fail, which is fine.
             String os = getOSIdentifier();
             if (os == "windows") {
                 try {
@@ -179,8 +178,9 @@ public final class CRT {
                     });
 
                     // Don't delete files that are too new.
-                    // We don't want to delete a lib in the millisecond between
-                    // when we've finished writing it to disk, but haven't yet loaded it.
+                    // We don't want to delete another process's lib in the
+                    // millisecond between the file being written to disk,
+                    // and the file being loaded as a shared lib.
                     long aFewSecondsAgo = System.currentTimeMillis() - 10_000; // 10sec
                     for (File oldLib : oldLibs) {
                         try {

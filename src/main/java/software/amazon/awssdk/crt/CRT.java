@@ -170,7 +170,7 @@ public final class CRT {
             // for old instances of the .dll and try to delete them. If another
             // process is still using the .dll, the delete will fail, which is fine.
             String os = getOSIdentifier();
-            if (os == "windows") {
+            if (os.equals("windows")) {
                 tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
             }
 

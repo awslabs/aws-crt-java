@@ -149,11 +149,12 @@ public final class CRT {
                 throw new IOException(msg, ex);
             }
 
-            // Prefix the lib
-            String prefix = "AWSCRT_";
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
 
-            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
+            // Prefix the lib we'll extract to disk
+            String tempSharedLibPrefix = "AWSCRT_";
+
+            File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
 
 			// The temp lib file should be deleted when we're done with it.
 			// Ask Java to try and delete it on exit. We call this immediately
@@ -170,33 +171,14 @@ public final class CRT {
             // process is still using the .dll, the delete will fail, which is fine.
             String os = getOSIdentifier();
             if (os == "windows") {
-                try {
-                    File[] oldLibs = tmpdirFile.listFiles(new FilenameFilter() {
-                        public boolean accept(File dir, String name) {
-                            return name.startsWith(prefix) && name.endsWith(libraryName);
-                        }
-                    });
-
-                    // Don't delete files that are too new.
-                    // We don't want to delete another process's lib in the
-                    // millisecond between the file being written to disk,
-                    // and the file being loaded as a shared lib.
-                    long aFewSecondsAgo = System.currentTimeMillis() - 10_000; // 10sec
-                    for (File oldLib : oldLibs) {
-                        try {
-                            if (oldLib.lastModified() < aFewSecondsAgo) {
-                                oldLib.delete();
-                            }
-                        } catch (Exception e) {}
-                    }
-                } catch (Exception e) {}
+                tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
             }
 
             // open a stream to read the shared lib contents from this JAR
-            String libraryPath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
-            try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
+            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
+            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
+                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
                 }
 
                 if (tempSharedLib.exists()) {
@@ -269,6 +251,30 @@ public final class CRT {
         StringBuilder failureMessage = new StringBuilder();
         exceptions.stream().map(Exception::toString).forEach(failureMessage::append);
         throw new CrtRuntimeException(failureMessage.toString());
+    }
+
+    // Try to delete old CRT libraries that were extracted to the temp dir by previous runs.
+    private static void tryDeleteOldLibrariesFromTempDir(File tmpDir, String libNamePrefix, String libNameSuffix) {
+        try {
+            File[] oldLibs = tmpDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(libNamePrefix) && name.endsWith(libNameSuffix);
+                }
+            });
+
+            // Don't delete files that are too new.
+            // We don't want to delete another process's lib in the
+            // millisecond between the file being written to disk,
+            // and the file being loaded as a shared lib.
+            long aFewMomentsAgo = System.currentTimeMillis() - 10_000; // 10sec
+            for (File oldLib : oldLibs) {
+                try {
+                    if (oldLib.lastModified() < aFewMomentsAgo) {
+                        oldLib.delete();
+                    }
+                } catch (Exception e) {}
+            }
+        } catch (Exception e) {}
     }
 
     private static CrtPlatform findPlatformImpl() {

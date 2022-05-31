@@ -203,7 +203,7 @@ public class S3NativeClient implements AutoCloseable {
                 CrtS3RuntimeException ex = null;
                 try {
                     if (context.getErrorCode() != CRT.AWS_CRT_SUCCESS) {
-                        ex = new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload());
+                        ex = new CrtS3RuntimeException(context);
                         dataHandler.onException(ex);
                     } else {
                         dataHandler.onFinished();
@@ -310,7 +310,7 @@ public class S3NativeClient implements AutoCloseable {
                 CrtS3RuntimeException ex = null;
                 try {
                     if (context.getErrorCode() != CRT.AWS_CRT_SUCCESS) {
-                        ex = new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload());
+                        ex = new CrtS3RuntimeException(context);
                         requestDataSupplier.onException(ex);
                     } else {
                         requestDataSupplier.onFinished();

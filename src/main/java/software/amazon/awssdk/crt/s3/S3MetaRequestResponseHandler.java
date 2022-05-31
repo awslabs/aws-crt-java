@@ -38,6 +38,8 @@ public interface S3MetaRequestResponseHandler {
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
      * errorPayload body of the error response. Can be null if the request completed successfully
+     * checksumAlgorithm, the algorith used to validate the Body, None if not validated
+     * and isChecksumValidated which is true if the response was validated.
      */
     default void onFinished(S3FinishedResponseContext context) {
     }

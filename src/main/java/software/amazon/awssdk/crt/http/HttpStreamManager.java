@@ -124,9 +124,9 @@ public class HttpStreamManager implements AutoCloseable {
      *         acquired.
      * @throws CrtRuntimeException
      */
-    public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
-            HttpStreamResponseHandler streamHandler) {
-        CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
+    public CompletableFuture<HttpStreamBase> acquireStream(HttpRequestBase request,
+            HttpStreamBaseResponseHandler streamHandler) {
+        CompletableFuture<HttpStreamBase> completionFuture = new CompletableFuture<>();
         try {
             /*
              * Try get version first. If we haven't decided the version yet, this will help
@@ -142,7 +142,7 @@ public class HttpStreamManager implements AutoCloseable {
                 if (throwable != null) {
                     completionFuture.completeExceptionally(throwable);
                 } else {
-                    completionFuture.complete((HttpStream) stream);
+                    completionFuture.complete((Http2Stream) stream);
                 }
             });
             return completionFuture;
@@ -153,25 +153,25 @@ public class HttpStreamManager implements AutoCloseable {
                 completionFuture.completeExceptionally(throwable);
             } else {
                 try {
-                    HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
+                    HttpStreamBase stream = conn.makeRequest(request, new HttpStreamBaseResponseHandler() {
                         @Override
-                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                                 HttpHeader[] nextHeaders) {
                             streamHandler.onResponseHeaders(stream, responseStatusCode, blockType, nextHeaders);
                         }
 
                         @Override
-                        public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                        public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
                             streamHandler.onResponseHeadersDone(stream, blockType);
                         }
 
                         @Override
-                        public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                             return streamHandler.onResponseBody(stream, bodyBytesIn);
                         }
 
                         @Override
-                        public void onResponseComplete(HttpStream stream, int errorCode) {
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                             streamHandler.onResponseComplete(stream, errorCode);
                             /* Release the connection back */
                             connManager.releaseConnection(conn);

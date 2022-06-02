@@ -41,6 +41,8 @@ import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -149,9 +151,9 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
         final TestHttpResponse response = new TestHttpResponse();
 
         try {
-            HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
                 @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                         HttpHeader[] nextHeaders) {
                     response.statusCode = responseStatusCode;
                     Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
@@ -159,12 +161,12 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
                 }
 
                 @Override
-                public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
                     response.blockType = blockType;
                 }
 
                 @Override
-                public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                     try {
                         response.bodyBuffer.put(bodyBytesIn);
                     } catch (Exception e) {
@@ -177,7 +179,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
                 }
 
                 @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                     response.onCompleteErrorCode = errorCode;
                     reqCompleted.complete(null);
                     stream.close();

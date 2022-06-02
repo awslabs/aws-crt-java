@@ -36,12 +36,11 @@ public class HttpStreamManager implements AutoCloseable {
     }
 
     private HttpClientConnectionManagerOptions getConnManagerOptFromStreamManagerOpt(HttpStreamManagerOptions options) {
-
+        // TODO: split the HTTP/1 stream manager to its own thing
         HttpClientConnectionManagerOptions connManagerOptions = new HttpClientConnectionManagerOptions();
         connManagerOptions.withClientBootstrap(options.getClientBootstrap())
                 .withSocketOptions(options.getSocketOptions())
                 .withTlsContext(options.getTlsContext())
-                .withWindowSize(options.getWindowSize())
                 .withUri(options.getUri())
                 .withMaxConnections(options.getMaxConnections())
                 .withPort(options.getPort())

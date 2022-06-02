@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
@@ -26,8 +30,8 @@ import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -101,15 +105,15 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             threadPool.execute(() -> {
                 // Request a connection from the connection pool
                 int requestId = numRequestsMade.incrementAndGet();
-                streamManager.acquireStream(request, new HttpStreamResponseHandler() {
+                streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
                         reqIdToStatus.put(requestId, responseStatusCode);
                     }
 
                     @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         if (errorCode != CRT.AWS_CRT_SUCCESS
                                 || stream.getResponseStatusCode() != EXPECTED_HTTP_STATUS) {
                             Log.log(Log.LogLevel.Error, Log.LogSubject.HttpConnectionManager,
@@ -139,7 +143,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         // Verify we got some Http Status Code for each Request
         Assert.assertTrue(reqIdToStatus.size() >= requiredSuccesses);
-        // Verify that the failure counts aren't too high ?????
+        // Verify that the failure counts aren't too high
         Assert.assertTrue(numErrorCode.get() <= allowedFailures);
         Assert.assertTrue(numStreamsFailures.get() <= allowedFailures);
     }

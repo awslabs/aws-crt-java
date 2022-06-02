@@ -23,7 +23,6 @@ public class Http2StreamManager extends CrtResource {
     private static final int DEFAULT_HTTPS_PORT = 443;
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
 
-    private final int windowSize;
     private final URI uri;
     private final int port;
     private final int maxConnections;
@@ -72,19 +71,16 @@ public class Http2StreamManager extends CrtResource {
             throw new IllegalArgumentException("TlsContext must not be null if https is used");
         }
 
-        int windowSize = options.getWindowSize();
-        if (windowSize <= 0) {
-            throw new IllegalArgumentException("Window Size must be greater than zero.");
-        }
-
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) {
             throw new IllegalArgumentException("Max Connections must be greater than zero.");
         }
+
         int maxConcurrentStreamsPerConnection = options.getMaxConcurrentStreamsPerConnection();
         if (maxConcurrentStreamsPerConnection <= 0) {
             throw new IllegalArgumentException("Max Concurrent Streams Per Connection must be greater than zero.");
         }
+
         int idealConcurrentStreamsPerConnection = options.getIdealConcurrentStreamsPerConnection();
         if (idealConcurrentStreamsPerConnection <= 0
                 || idealConcurrentStreamsPerConnection > maxConcurrentStreamsPerConnection) {
@@ -108,7 +104,6 @@ public class Http2StreamManager extends CrtResource {
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
 
-        this.windowSize = windowSize;
         this.uri = uri;
         this.port = port;
         this.maxConnections = maxConnections;
@@ -145,7 +140,7 @@ public class Http2StreamManager extends CrtResource {
                 clientBootstrap.getNativeHandle(),
                 socketOptions.getNativeHandle(),
                 useTls ? tlsContext.getNativeHandle() : 0,
-                windowSize,
+                Http2ConnectionSetting.marshallSettingsForJNI(options.getInitialSettingsList()),
                 uri.getHost().getBytes(UTF8),
                 port,
                 proxyConnectionType,
@@ -175,14 +170,24 @@ public class Http2StreamManager extends CrtResource {
     /**
      * Request a Http2Stream from StreamManager.
      *
-     * @param request
-     * @param streamHandler
+     * @param request       The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native
+     *                      EventLoop
      * @return A future for a Http2Stream that will be completed when the stream is
      *         acquired.
-     * @throws CrtRuntimeException
      */
-    public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
-            HttpStreamResponseHandler streamHandler) {
+    public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
+        HttpStreamBaseResponseHandler streamHandler) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler);
+    }
+
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
+        HttpStreamBaseResponseHandler streamHandler) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler);
+    }
+
+    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+        HttpStreamBaseResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {
@@ -251,7 +256,7 @@ public class Http2StreamManager extends CrtResource {
             long client_bootstrap,
             long socketOptions,
             long tlsContext,
-            int windowSize,
+            long[] marshalledSettings,
             byte[] endpoint,
             int port,
             int proxyConnectionType,

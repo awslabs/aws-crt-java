@@ -89,8 +89,8 @@ public final class EventLoopGroup extends CrtResource {
     }
 
     /**
-     * Closes the static default event loop group, if it exists.  Primarily intended for tests that use the static
-     * default event loop group, before they call waitForNoResources().
+     * Closes the static EventLoopGroup, if it exists.  Primarily intended for tests that use the static
+     * default EventLoopGroup, before they call waitForNoResources().
      */
     public static void closeStaticDefault() {
         synchronized (EventLoopGroup.class) {
@@ -102,7 +102,15 @@ public final class EventLoopGroup extends CrtResource {
     }
 
     /**
-     * Gets the static default event loop group, creating it if necessary
+     * Gets the static default EventLoopGroup, creating it if necessary.
+     *
+     * This default will be used when a EventLoopGroup is not explicitly passed but is needed
+     * to allow the process to function. An example of this would be in the MQTT connection creation workflow.
+     *
+     * The EventLoopGroup will automatically pick a default number of threads based on the system.
+     *
+     * The default EventLoopGroup will be automatically managed and released by the API handle when it's
+     * resources are being freed, not requiring any manual memory management.
      * @return the static default event loop group
      */
     static EventLoopGroup getOrCreateStaticDefault() {

@@ -158,8 +158,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      * Size is 2**31 - 1. If the increment size cause the connection flow window
      * exceeds the Maximum size, this call will result in the connection lost.
      *
-     * @param increment_size The size to increment for the connection's flow control
-     *                       window
+     * @param incrementSize The size to increment for the connection's flow control
+     *                      window
      */
     public void updateConnectionWindow(long incrementSize) {
         if (incrementSize > 4294967296L || incrementSize < 0) {
@@ -182,7 +182,7 @@ public class Http2ClientConnection extends HttpClientConnection {
      *         the user thread making this request when it's done.
      */
     @Override
-    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamResponseHandler streamHandler)
+    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler)
             throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");

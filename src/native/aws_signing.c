@@ -54,6 +54,10 @@ struct s_aws_sign_request_callback_data {
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data) {
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->DeleteGlobalRef(env, callback_data->java_signing_result_future);
 
@@ -70,10 +74,6 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     }
 
     if (callback_data->native_request) {
-        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback_data->native_request);
-        if (input_stream != NULL) {
-            aws_input_stream_destroy(input_stream);
-        }
         aws_http_message_release(callback_data->native_request);
     }
 
@@ -199,6 +199,11 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        goto done;
+    }
+
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
         s_complete_signing_exceptionally(env, callback_data, error_code);
         goto done;
@@ -228,6 +233,11 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        goto done;
+    }
+
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
         s_complete_signing_exceptionally(env, callback_data, error_code);
         goto done;
@@ -252,6 +262,10 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
     struct s_aws_sign_request_callback_data *callback_data = user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return false;
+    }
 
     jstring header_name = aws_jni_string_from_cursor(env, name);
 
@@ -410,8 +424,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT
@@ -487,8 +499,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT
@@ -554,8 +564,6 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
 on_error:
 
     s_cleanup_callback_data(callback_data);
-
-    (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT

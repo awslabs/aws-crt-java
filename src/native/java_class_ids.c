@@ -420,19 +420,19 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
 
     http_stream_response_handler_properties.onResponseHeaders = (*env)->GetMethodID(
-        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;IILjava/nio/ByteBuffer;)V");
+        env, cls, "onResponseHeaders", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;IILjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeaders);
 
     http_stream_response_handler_properties.onResponseHeadersDone =
-        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
+        (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeadersDone);
 
     http_stream_response_handler_properties.onResponseBody = (*env)->GetMethodID(
-        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;Ljava/nio/ByteBuffer;)I");
+        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Ljava/nio/ByteBuffer;)I");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseBody);
 
     http_stream_response_handler_properties.onResponseComplete =
-        (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStream;I)V");
+        (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
 }
 

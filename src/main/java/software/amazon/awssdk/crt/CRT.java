@@ -69,7 +69,6 @@ public final class CRT {
 
     /**
      * @return a string describing the detected platform the CRT is executing on
-     * @throws UnknownPlatformException
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
 
@@ -93,7 +92,6 @@ public final class CRT {
 
     /**
      * @return a string describing the detected architecture the CRT is executing on
-     * @throws UnknownPlatformException
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
         CrtPlatform platform = getPlatformImpl();

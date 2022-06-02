@@ -11,6 +11,7 @@
 #include <aws/io/retry_strategy.h>
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
+#include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
 #include <jni.h>
 
@@ -163,6 +164,10 @@ JNIEXPORT void JNICALL
 static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     AWS_LOGF_DEBUG(AWS_LS_S3_CLIENT, "S3 Client Shutdown Complete");
     if (callback->java_s3_client != NULL) {
@@ -196,6 +201,10 @@ static int s_on_s3_meta_request_body_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
 
     jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
     jint body_response_result = 0;
@@ -236,6 +245,11 @@ static int s_on_s3_meta_request_headers_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
     /* calculate initial header capacity */
     size_t headers_initial_capacity = 0;
@@ -296,6 +310,10 @@ static void s_on_s3_meta_request_finish_callback(
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         struct aws_byte_buf *error_response_body = meta_request_result->error_response_body;
@@ -333,6 +351,10 @@ static void s_on_s3_meta_request_progress_callback(
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jobject progress_object = (*env)->NewObject(
         env,
@@ -365,15 +387,15 @@ static void s_on_s3_meta_request_progress_callback(
                 "id=%p: Ignored Exception from S3MetaRequest.onProgress callback",
                 (void *)meta_request);
         }
-        (*env)->DeleteLocalRef(env, progress_object);
     }
+
+    (*env)->DeleteLocalRef(env, progress_object);
 }
 
 static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data) {
-        aws_input_stream_destroy(callback_data->input_stream);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -390,13 +412,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
-    jobject java_response_handler_jobject) {
+    jobject java_response_handler_jobject,
+    jbyteArray jni_endpoint) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     struct aws_signing_config_aws *signing_config = NULL;
+    struct aws_s3_meta_request *meta_request = NULL;
     bool success = false;
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
     if (credentials_provider) {
@@ -425,7 +449,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
-    callback_data->input_stream = aws_http_message_get_body_stream(request_message);
+
+    struct aws_uri endpoint;
+    AWS_ZERO_STRUCT(endpoint);
+    if (jni_endpoint != NULL) {
+        struct aws_byte_cursor endpoint_str = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
+        int uri_parse = aws_uri_init_parse(&endpoint, allocator, &endpoint_str);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint_str);
+        if (uri_parse) {
+            aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_make_meta_request: failed to parse endpoint");
+            goto done;
+        }
+    }
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .message = request_message,
@@ -435,9 +471,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .body_callback = s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
-        .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback};
+        .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
+        .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
+    };
 
-    struct aws_s3_meta_request *meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
+    meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
 
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
@@ -453,6 +491,7 @@ done:
         aws_mem_release(allocator, signing_config);
     }
     aws_http_message_release(request_message);
+    aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;
     }
@@ -464,6 +503,10 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
     JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     if (callback_data->java_s3_meta_request != NULL) {
         (*env)->CallVoidMethod(env, callback_data->java_s3_meta_request, s3_meta_request_properties.onShutdownComplete);

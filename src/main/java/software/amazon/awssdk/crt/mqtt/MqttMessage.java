@@ -70,6 +70,8 @@ public final class MqttMessage {
 
     /**
      * @deprecated Use alternate constructor.
+     * @param topic   Message topic.
+     * @param payload Message payload.
      */
     @Deprecated
     public MqttMessage(String topic, byte[] payload) {

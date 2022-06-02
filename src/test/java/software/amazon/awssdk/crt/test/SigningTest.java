@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
+import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler;
+import software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigner;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
@@ -189,6 +191,50 @@ public class SigningTest extends CrtTestFixture {
             }
         }
     }
+
+
+    @Test
+    public void testSigningException() throws Exception {
+        DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
+            @Override
+            public Credentials getCredentials() {
+                throw new RuntimeException("failed");
+            }
+        };
+        boolean failed = false;
+        try (DelegateCredentialsProvider provider = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder()
+            .withHandler(credentialsHandler)
+            .build();) {
+
+            HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+
+            Predicate<String> filterParam = param -> !param.equals("bad-param");
+
+            try (AwsSigningConfig config = new AwsSigningConfig()) {
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+                config.setRegion("us-east-1");
+                config.setService("service");
+                config.setTime(System.currentTimeMillis());
+                config.setCredentialsProvider(provider);
+                config.setShouldSignHeader(filterParam);
+                config.setUseDoubleUriEncode(true);
+                config.setShouldNormalizeUriPath(true);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+
+                CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+                HttpRequest signedRequest = result.get();
+                assertNotNull(signedRequest);
+
+                assertTrue(hasHeader(signedRequest, "X-Amz-Date"));
+                assertTrue(hasHeader(signedRequest, "Authorization"));
+            }
+        } catch (Exception ex) {
+            failed = true;
+        }
+        assertTrue(failed);
+    }
+
 
     @Test
     public void testQuerySigningSuccess() throws Exception {
@@ -415,12 +461,12 @@ public class SigningTest extends CrtTestFixture {
         config.setRegion(CHUNKED_TEST_REGION);
         config.setService(CHUNKED_TEST_SERVICE);
         config.setTime(DATE_FORMAT.parse(CHUNKED_TEST_SIGNING_TIME).getTime());
-    
+
         config.setUseDoubleUriEncode(false);
         config.setShouldNormalizeUriPath(true);
         config.setSignedBodyHeader(AwsSigningConfig.AwsSignedBodyHeaderType.NONE);
         config.setCredentials(createChunkedTestCredentials());
-    
+
         return config;
     }
 
@@ -567,7 +613,7 @@ public class SigningTest extends CrtTestFixture {
     private static String CHUNK3_STS_POST_SIGNATURE = "\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n" +
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-    private static String TRAILING_HEADERS_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-TRAILER\n" + "20130524T000000Z\n" + 
+    private static String TRAILING_HEADERS_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-TRAILER\n" + "20130524T000000Z\n" +
         "20130524/s3/aws4_request\n";
 
     private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n83d8f190334fb741bc8daf73c891689d320bd8017756bc730c540021ed48001f";
@@ -625,7 +671,7 @@ public class SigningTest extends CrtTestFixture {
 
     private byte[] buildTrailingHeadersStringToSign(byte[] previousSignature, String stsPostSignature) {
         StringBuilder stsBuilder = new StringBuilder();
-        
+
         stsBuilder.append(TRAILING_HEADERS_STS_PRE_SIGNATURE);
         String signature = new String(previousSignature, StandardCharsets.UTF_8);
         int paddingIndex = signature.indexOf('*');
@@ -634,100 +680,100 @@ public class SigningTest extends CrtTestFixture {
         }
         stsBuilder.append(signature);
         stsBuilder.append(stsPostSignature);
-        
+
         return stsBuilder.toString().getBytes(StandardCharsets.UTF_8);
     }
-        
+
     @Test
     public void testTrailingHeadersSigv4Signing() throws Exception {
-        
+
         HttpRequest request = createChunkedTestRequest();
-        
+
         CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, createChunkedRequestSigningConfig());
         HttpRequest signedRequest = result.get();
         assertNotNull(signedRequest);
-        
+
         assertTrue(hasHeaderWithValue(signedRequest, "Authorization", EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER));
-        
+
         /*
         * If the authorization header is equal then certainly we can assume the
         * signature value
         */
         byte[] signature = EXPECTED_REQUEST_SIGNATURE;
-        
+
         HttpRequestBodyStream chunk1 = createChunk1Stream();
         CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1, signature,
             createChunkSigningConfig());
-        
+
         signature = chunk1Result.get().getSignature();
         assertTrue(Arrays.equals(signature, EXPECTED_FIRST_CHUNK_SIGNATURE));
-        
+
         HttpRequestBodyStream chunk2 = createChunk2Stream();
         CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2, signature,
             createChunkSigningConfig());
-        
+
         signature = chunk2Result.get().getSignature();
         assertTrue(Arrays.equals(signature, EXPECTED_SECOND_CHUNK_SIGNATURE));
-        
+
         CompletableFuture<AwsSigningResult> finalChunkResult = AwsSigner.sign((HttpRequestBodyStream) null, signature,
             createChunkSigningConfig());
         signature = finalChunkResult.get().getSignature();
         assertTrue(Arrays.equals(signature, EXPECTED_FINAL_CHUNK_SIGNATURE));
-        
+
         List<HttpHeader> trailingHeaders = createTrailingHeaders();
         AwsSigningConfig trailingHeadersSigningConfig = createTrailingHeadersSigningConfig();
         CompletableFuture<AwsSigningResult> trailingHeadersResult = AwsSigner.sign(trailingHeaders, signature,
             trailingHeadersSigningConfig);
         signature = trailingHeadersResult.get().getSignature();
         assertTrue(Arrays.equals(signature, EXPECTED_TRAILING_HEADERS_SIGNATURE));
-        
+
         }
-        
+
         @Test
         public void testTrailingHeadersSigv4aSigning() throws Exception {
-        
+
         HttpRequest request = createChunkedTrailerTestRequest();
         AwsSigningConfig chunkedRequestSigningConfig = createChunkedRequestSigningConfig();
         chunkedRequestSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
         chunkedRequestSigningConfig
             .setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER);
-        
+
         CompletableFuture<AwsSigningResult> result = AwsSigner.sign(request, chunkedRequestSigningConfig);
         HttpRequest signedRequest = result.get().getSignedRequest();
         assertNotNull(signedRequest);
-        
+
         byte[] requestSignature = result.get().getSignature();
         assertTrue(AwsSigningUtils.verifySigv4aEcdsaSignature(request, CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST,
             chunkedRequestSigningConfig, requestSignature, CHUNKED_SIGV4A_TEST_ECC_PUB_X,
             CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
-        
+
         HttpRequestBodyStream chunk1 = createChunk1Stream();
         AwsSigningConfig chunkSigningConfig = createChunkSigningConfig();
         chunkSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
-        
+
         CompletableFuture<AwsSigningResult> chunk1Result = AwsSigner.sign(chunk1, requestSignature, chunkSigningConfig);
-        
+
         byte[] chunk1StringToSign = buildChunkStringToSign(requestSignature, CHUNK1_STS_POST_SIGNATURE);
         assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk1StringToSign, chunk1Result.get().getSignature(),
             CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
-        
+
         HttpRequestBodyStream chunk2 = createChunk2Stream();
         CompletableFuture<AwsSigningResult> chunk2Result = AwsSigner.sign(chunk2, chunk1Result.get().getSignature(),
             chunkSigningConfig);
-        
+
         byte[] chunk2StringToSign = buildChunkStringToSign(chunk1Result.get().getSignature(),
             CHUNK2_STS_POST_SIGNATURE);
         assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk2StringToSign, chunk2Result.get().getSignature(),
             CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
-        
+
         CompletableFuture<AwsSigningResult> chunk3Result = AwsSigner.sign((HttpRequestBodyStream) null,
             chunk2Result.get().getSignature(), chunkSigningConfig);
-        
+
         byte[] chunk3StringToSign = buildChunkStringToSign(chunk2Result.get().getSignature(),
             CHUNK3_STS_POST_SIGNATURE);
         assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(chunk3StringToSign, chunk3Result.get().getSignature(),
             CHUNKED_SIGV4A_TEST_ECC_PUB_X, CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
-        
+
         List<HttpHeader> trailingHeaders = createTrailingHeaders();
         AwsSigningConfig trailingHeadersSigningConfig = createTrailingHeadersSigningConfig();
         trailingHeadersSigningConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_ASYMMETRIC);
@@ -738,6 +784,6 @@ public class SigningTest extends CrtTestFixture {
         assertTrue(AwsSigningUtils.verifyRawSha256EcdsaSignature(trailingHeadersStringToSign,
             trailingHeadersResult.get().getSignature(), CHUNKED_SIGV4A_TEST_ECC_PUB_X,
             CHUNKED_SIGV4A_TEST_ECC_PUB_Y));
-        
+
     }
 };

@@ -35,15 +35,15 @@ public class HttpRequestBase {
     }
 
     /**
-     * @exclude Requests are marshalled as follows:
+     * @hidden Requests are marshalled as follows:
      *
-     *          version is as int: [4-bytes BE]
+     *         version is as int: [4-bytes BE]
      *
-     *          each string field is: [4-bytes BE] [variable length bytes specified
-     *          by the previous field]
+     *         each string field is: [4-bytes BE] [variable length bytes specified
+     *         by the previous field]
      *
-     *          Each request is then: [version][method][path][header name-value
-     *          pairs]
+     *         Each request is then: [version][method][path][header name-value
+     *         pairs]
      * @return encoded blob of headers
      */
     public byte[] marshalForJni() {

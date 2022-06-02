@@ -15,7 +15,8 @@ import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBase;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.http.Http2Stream;
 
@@ -102,9 +103,9 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
             shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                 actuallyConnected = true;
-                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
                     @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
                         response.statusCode = responseStatusCode;
                         Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
@@ -112,12 +113,12 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     }
 
                     @Override
-                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                    public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
                         response.blockType = blockType;
                     }
 
                     @Override
-                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                         response.bodyBuffer.put(bodyBytesIn);
                         int amountRead = bodyBytesIn.length;
 
@@ -126,16 +127,17 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     }
 
                     @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
                         stream.close();
                     }
                 };
-                HttpStream stream = conn.makeRequest(request, streamHandler);
+                HttpStreamBase stream = conn.makeRequest(request, streamHandler);
                 stream.activate();
                 if (chunkedData != null) {
-                    stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
+                    HttpStream h1_stream = (HttpStream)stream;
+                    h1_stream.writeChunk(chunkedData, true).get(5, TimeUnit.SECONDS);
                 }
 
                 // Give the request up to 60 seconds to complete, otherwise throw a

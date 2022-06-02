@@ -14,11 +14,11 @@ import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.Http2Request;
-import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
 import software.amazon.awssdk.crt.http.Http2Stream;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
 import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
@@ -179,9 +179,9 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                 actuallyConnected = true;
                 CompletableFuture<Void> streamComplete = new CompletableFuture<>();
                 Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
                     @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
                     }
 
@@ -193,7 +193,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                     }
 
                     @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         stream.close();
                         if (errorCode != 0) {
                             streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));

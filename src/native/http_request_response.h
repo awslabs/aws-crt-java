@@ -22,13 +22,13 @@ struct http_stream_binding {
     struct aws_http_message *native_request;
 
     jobject java_http_response_stream_handler;
-    jobject java_http_stream;
+    jobject java_http_stream_base;
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
 
     /*
-     * Unactivated streams must have their callback data destroyed at release time
+     * Inactivated streams must have their callback data destroyed at release time
      */
     struct aws_atomic_var activated;
 };

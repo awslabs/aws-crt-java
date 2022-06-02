@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import com.sun.net.httpserver.HttpServer;
+
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -70,8 +71,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testCreateDestroyDefaultChain() {
         skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-             HostResolver resolver = new HostResolver(eventLoopGroup);
-             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -88,8 +89,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     public void testGetCredentialsDefaultChain() {
         skipIfNetworkUnavailable();
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-             HostResolver resolver = new HostResolver(eventLoopGroup);
-             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver)) {
             DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder builder = new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
 
@@ -176,6 +177,29 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
+    public void testDelegateException() {
+        DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
+        DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
+            @Override
+            public Credentials getCredentials() {
+                throw new RuntimeException("Some exception. =)");
+            }
+        };
+        boolean failed = false;
+        builder.withHandler(credentialsHandler);
+        try (DelegateCredentialsProvider provider = builder.build()) {
+            CompletableFuture<Credentials> future = provider.getCredentials();
+            Credentials credentials = future.get();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), null));
+        } catch (Exception ex) {
+            failed = true;
+        }
+        assertTrue(failed);
+    }
+
+    @Test
     public void testCreateDestroyProfile_ValidCreds() throws IOException {
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
@@ -247,10 +271,11 @@ public class CredentialsProviderTest extends CrtTestFixture {
         }
     }
 
-
-    @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has been resolved
+    @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has
+            // been resolved
     @Test
-    public void testCreateDestroyEcs_ValidCreds() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    public void testCreateDestroyEcs_ValidCreds()
+            throws IOException, ExecutionException, InterruptedException, TimeoutException {
         skipIfNetworkUnavailable();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
@@ -324,7 +349,6 @@ public class CredentialsProviderTest extends CrtTestFixture {
                         .withTlsContext(tlsCtx)
                         .build()) {
 
-
             fail("Expected StsWebIdentityCredentialsProvider construction to fail due to missing config state.");
         } catch (CrtRuntimeException e) {
             // Check that the right exception type caused the completion error in the future
@@ -339,8 +363,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                StaticCredentialsProvider staticCP = new StaticCredentialsProvider
-                        .StaticCredentialsProviderBuilder()
+                StaticCredentialsProvider staticCP = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
                         .withAccessKeyId(ACCESS_KEY_ID.getBytes())
                         .withSecretAccessKey(SECRET_ACCESS_KEY.getBytes())
                         .withSessionToken(SESSION_TOKEN.getBytes())

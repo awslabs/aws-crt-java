@@ -8,6 +8,7 @@ package com.amazonaws.s3;
 import com.amazonaws.s3.model.*;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
@@ -200,11 +201,14 @@ public class S3NativeClient implements AutoCloseable {
 
             @Override
             public void onFinished(S3FinishedResponseContext context) {
-                CrtS3RuntimeException ex = null;
+                CrtRuntimeException ex = null;
                 try {
-                    if (context.getErrorCode() != CRT.AWS_CRT_SUCCESS) {
+                    if (context.getResponseStatus() > 299){
                         ex = new CrtS3RuntimeException(context);
                         dataHandler.onException(ex);
+                    }
+                    else if (context.getErrorCode() != CRT.AWS_CRT_SUCCESS) {
+                        ex = new CrtRuntimeException(context.getErrorCode());
                     } else {
                         dataHandler.onFinished();
                     }

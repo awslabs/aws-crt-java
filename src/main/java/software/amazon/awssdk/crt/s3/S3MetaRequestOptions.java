@@ -91,7 +91,7 @@ public class S3MetaRequestOptions {
     }
 
     /*
-     * Specify the checksum algorithm to use use for put requests, if unset no checksum will be calculated.
+     * Specify the checksum algorithm to use use for put requests, if unset defaults to NONE and no checksum will be calculated.
      */
     public S3MetaRequestOptions withChecksumAlgorithm(ChecksumAlgorithm checksumAlgorithm) {
         this.checksumAlgorithm = checksumAlgorithm;
@@ -103,9 +103,9 @@ public class S3MetaRequestOptions {
     }
 
     /*
-     * validateChecksum will cause the client to compare a streamed calculation of the objects 
-     * checksum to a remotely stored checksum assigned to the object if one exists.
-     * the checksumValidated field passed in parameter of the finished callback will inform
+     * validateChecksum defaults to false, if set to true, it will cause the client to compare a streamed 
+     * calculation of the objects checksum to a remotely stored checksum assigned to the object if one exists.
+     * The checksumValidated field passed in parameter of the finished callback will inform
      * the user if validation occured. A mismatch will result in a AWS_ERROR_S3_RESPONSE_CHECKSUM_MISMATCH error
      */
     public S3MetaRequestOptions withValidateChecksum(boolean validateChecksum) {

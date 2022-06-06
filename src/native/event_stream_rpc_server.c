@@ -579,6 +579,23 @@ error:
 }
 
 JNIEXPORT
+jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_getBoundPort(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_server_listener) {
+    (void)env;
+    (void)jni_class;
+    struct aws_event_stream_rpc_server_listener *listener =
+        (struct aws_event_stream_rpc_server_listener *)jni_server_listener;
+    if (!listener) {
+        aws_jni_throw_runtime_exception(env, "ServerListener.getBoundPort: Invalid serverListener");
+        return (jshort)-1;
+    }
+
+    return (jint)aws_event_stream_rpc_server_listener_get_bound_port(listener);
+}
+
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_release(
     JNIEnv *env,
     jclass jni_class,

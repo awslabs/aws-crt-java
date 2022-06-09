@@ -10,6 +10,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -155,7 +156,7 @@ public final class CRT {
             // Prefix the lib we'll extract to disk
             String tempSharedLibPrefix = "AWSCRT_";
 
-            File tempSharedLib = Files.createTempFile(tmpdirFile.toPath(), tempSharedLibPrefix, libraryName).toFile();
+            File tempSharedLib = Files.createTempFile(Paths.get(tmpdirFile.getPath()), tempSharedLibPrefix, libraryName).toFile();
 
 			// The temp lib file should be deleted when we're done with it.
 			// Ask Java to try and delete it on exit. We call this immediately

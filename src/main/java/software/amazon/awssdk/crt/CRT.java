@@ -155,7 +155,15 @@ public final class CRT {
             String tempSharedLibPrefix = "AWSCRT_";
 
             File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
-            tempSharedLib.setWritable(true, true);
+            if (!tempSharedLib.setExecutable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library executable by owner only");
+            }
+            if (!tempSharedLib.setWritable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
+            }
+            if (!tempSharedLib.setReadable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library readable by owner only");
+            }
 
 			// The temp lib file should be deleted when we're done with it.
 			// Ask Java to try and delete it on exit. We call this immediately
@@ -182,10 +190,6 @@ public final class CRT {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
                 }
 
-                if (tempSharedLib.exists()) {
-                    tempSharedLib.delete();
-                }
-
                 // Copy from jar stream to temp file
                 try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
                     int read;
@@ -196,14 +200,8 @@ public final class CRT {
                 }
             }
 
-            if (!tempSharedLib.setExecutable(true)) {
-                throw new CrtRuntimeException("Unable to make shared library executable");
-            }
             if (!tempSharedLib.setWritable(false)) {
                 throw new CrtRuntimeException("Unable to make shared library read-only");
-            }
-            if (!tempSharedLib.setReadable(true)) {
-                throw new CrtRuntimeException("Unable to make shared library readable");
             }
 
             // load the shared lib from the temp path

@@ -12,27 +12,50 @@ import java.nio.ByteBuffer;
  */
 class HttpStreamResponseHandlerNativeAdapter {
     private HttpStreamResponseHandler responseHandler;
+    private HttpStreamBaseResponseHandler responseBaseHandler;
 
     HttpStreamResponseHandlerNativeAdapter(HttpStreamResponseHandler responseHandler) {
         this.responseHandler = responseHandler;
+        this.responseBaseHandler = null;
     }
 
-    void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, ByteBuffer headersBlob) {
+    HttpStreamResponseHandlerNativeAdapter(HttpStreamBaseResponseHandler responseBaseHandler) {
+        this.responseBaseHandler = responseBaseHandler;
+        this.responseHandler = null;
+    }
+
+    void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType, ByteBuffer headersBlob) {
         HttpHeader[] headersArray = HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
-        responseHandler.onResponseHeaders(stream, responseStatusCode, blockType, headersArray);
+        if (this.responseBaseHandler != null) {
+            responseBaseHandler.onResponseHeaders(stream, responseStatusCode, blockType, headersArray);
+        } else {
+            responseHandler.onResponseHeaders((HttpStream) stream, responseStatusCode, blockType, headersArray);
+        }
     }
 
-    void onResponseHeadersDone(HttpStream stream, int blockType) {
-        responseHandler.onResponseHeadersDone(stream, blockType);
+    void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
+        if (this.responseBaseHandler != null) {
+            responseBaseHandler.onResponseHeadersDone(stream, blockType);
+        } else {
+            responseHandler.onResponseHeadersDone((HttpStream) stream, blockType);
+        }
     }
 
-    int onResponseBody(HttpStream stream, ByteBuffer bodyBytesIn) {
+    int onResponseBody(HttpStreamBase stream, ByteBuffer bodyBytesIn) {
         byte[] body = new byte[bodyBytesIn.limit()];
         bodyBytesIn.get(body);
-        return responseHandler.onResponseBody(stream, body);
+        if (this.responseBaseHandler != null) {
+            return responseBaseHandler.onResponseBody(stream, body);
+        } else {
+            return responseHandler.onResponseBody((HttpStream) stream, body);
+        }
     }
 
-    void onResponseComplete(HttpStream stream, int errorCode) {
-        responseHandler.onResponseComplete(stream, errorCode);
+    void onResponseComplete(HttpStreamBase stream, int errorCode) {
+        if (this.responseBaseHandler != null) {
+            responseBaseHandler.onResponseComplete(stream, errorCode);
+        } else {
+            responseHandler.onResponseComplete((HttpStream) stream, errorCode);
+        }
     }
 }

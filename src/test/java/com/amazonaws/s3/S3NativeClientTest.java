@@ -56,15 +56,17 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             "get_object_test_10MB.txt");
     private static final String PUT_OBJECT_KEY = System.getProperty("crt.test_s3_put_object_key", "file.upload");
     private static final String PUT_OBJECT_WITH_METADATA_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_key", "file_with_metadata.upload");
+    private static final String PUT_OBJECT_WITH_METADATA_MULTIPART_KEY = System.getProperty("crt.test_s3_put_object_with_metadata_multipart_key", "file_with_metadata_multipart.upload");
 
     private static final String GET_OBJECT_SPECIAL_CHARACTERS = System.getProperty("crt.test_s3_special_characters_key",
             "filename _@_=_&_?_+_)_.txt");
 
     private static final String GET_OBJECT_VERSION = System.getProperty("crt.test_s3_get_object_version",
-            "2Z_dpqRBdrGjax8dyIZ3XYnASOVkdY9J");
+            "AHnsnRWnGRVvEGrvWZuEgBoRZ9jZR4is");
 
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;
+    private static final long MIN_PART_SIZE_5MB = 5l * 1024l * 1024l;
 
     @BeforeClass
     public static void haveAwsCredentials() {
@@ -464,19 +466,18 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     public void testPutObjectCancelHelper(CancelTestData<PutObjectOutput> testData,
             CancelRequestDataSupplier dataSupplier) {
         skipIfNetworkUnavailable();
-        final long partSize5MB = 5l * 1024l * 1024l;
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider();
 
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, partSize5MB,
-                        100.)) {
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider,
+                        MIN_PART_SIZE_5MB, 100.)) {
 
             CancellationException cancelException = null;
 
-            dataSupplier.setPartSize(partSize5MB);
+            dataSupplier.setPartSize(MIN_PART_SIZE_5MB);
 
             try {
                 testData.ResultFuture = nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
@@ -699,18 +700,29 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                                 null));
     }
 
+
     @Test
-    public void testPutObjectWithUserDefinedMetadata() throws Exception {
+    public void testPutObjectWithUserDefinedMetadataSinglePart() throws Exception {
+        testPutObjectWithUserDefinedMetadata(false);
+    }
+
+    @Test
+    public void testPutObjectWithUserDefinedMetadataMultiPart() throws Exception {
+        testPutObjectWithUserDefinedMetadata(true);
+    }
+
+    private void testPutObjectWithUserDefinedMetadata(boolean doMultipart) throws Exception {
         skipIfNetworkUnavailable();
 
         try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
                 final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
                 final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
                 final CredentialsProvider provider = getTestCredentialsProvider();
-                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, MIN_PART_SIZE_5MB,
                         100.)) {
 
-            final long contentLength = 1024l;
+            final long contentLength = doMultipart ? MIN_PART_SIZE_5MB * 4 : 1024l;
+            final String objectKey = doMultipart ? PUT_OBJECT_WITH_METADATA_MULTIPART_KEY : PUT_OBJECT_WITH_METADATA_KEY;
             final long lengthWritten[] = { 0 };
             final String userMetadataKey = "CustomKey1";
             final String userMetadataValue = "SampleValue";
@@ -722,7 +734,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .key(objectKey)
                             .contentLength(contentLength)
                             .metadata(userMetadata)
                             .build(),
@@ -736,13 +748,13 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                     }).join();
 
             // wait propagation
-            waitForPropagation(nativeClient, BUCKET, PUT_OBJECT_WITH_METADATA_KEY, userMetadataKey);
+            waitForPropagation(nativeClient, BUCKET, objectKey, userMetadataKey);
 
             // get
             final long length[] = { 0 };
             final GetObjectOutput getObjectOutput = nativeClient.getObject(GetObjectRequest.builder()
                             .bucket(BUCKET)
-                            .key(PUT_OBJECT_WITH_METADATA_KEY)
+                            .key(objectKey)
                             .build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 

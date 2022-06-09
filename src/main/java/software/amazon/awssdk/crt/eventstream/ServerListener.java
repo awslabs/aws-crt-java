@@ -19,6 +19,7 @@ public class ServerListener extends CrtResource {
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private TlsContext tlsContext = null;
     private final ServerBootstrap serverBootstrap;
+    private int boundPort = -1;
 
     /**
      * Instantiates a server listener. Once this function completes, the server is configured
@@ -36,9 +37,13 @@ public class ServerListener extends CrtResource {
                           final ServerListenerHandler handler) {
 
         long tlsContextPtr = tlsContext != null ? tlsContext.getNativeHandle(): 0;
-        acquireNativeHandle(serverListenerNew(this, hostName.getBytes(StandardCharsets.UTF_8), port,
+        long serverHandler = serverListenerNew(this, hostName.getBytes(StandardCharsets.UTF_8), port,
                 socketOptions.getNativeHandle(), tlsContextPtr, serverBootstrap.getNativeHandle(),
-                handler));
+                handler);
+
+        boundPort = getBoundPort(serverHandler);
+
+        acquireNativeHandle(serverHandler);
 
         if (tlsContext != null) {
             addReferenceTo(tlsContext);
@@ -52,16 +57,19 @@ public class ServerListener extends CrtResource {
     protected void releaseNativeHandle() {
         if (!isNull()) {
             release(getNativeHandle());
-            removeReferenceTo(serverBootstrap);
-            if (tlsContext != null) {
-                removeReferenceTo(tlsContext);
-            }
         }
     }
 
     @Override
     protected boolean canReleaseReferencesImmediately() {
         return false;
+    }
+
+    /**
+     * @return the port which the listener socket is bound to.
+     */
+    public int getBoundPort() {
+        return boundPort;
     }
 
     /**
@@ -82,6 +90,8 @@ public class ServerListener extends CrtResource {
                                                  short port, long socketOptionsHandle,
                                                  long tlsContextHandle, long bootstrapHandle,
                                                  ServerListenerHandler handler);
+    private static native int getBoundPort(long serverListener);
+
     private static native void release(long serverListenerPtr);
 
 }

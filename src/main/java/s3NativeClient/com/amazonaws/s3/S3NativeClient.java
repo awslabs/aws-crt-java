@@ -203,11 +203,12 @@ public class S3NativeClient implements AutoCloseable {
             public void onFinished(S3FinishedResponseContext context) {
                 CrtS3RuntimeException ex = null;
                 try {
-                    if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                        ex = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
+                    if (context.getErrorCode() != CRT.AWS_CRT_SUCCESS) {
+                        ex = new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload());
                         dataHandler.onException(ex);
                     } else {
-                       
+                        dataHandler.onFinished();
+                    }
                 } catch (Exception e) { /* ignore user callback exception */
                 } finally {
                     if (ex != null) {

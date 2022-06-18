@@ -4,6 +4,7 @@
  */
 package software.amazon.awssdk.crt.io;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.List;
@@ -166,6 +167,15 @@ public final class TlsContextOptions extends CrtResource {
      * @param privateKeyPath Path to PEM format private key
      */
     public void initMtlsFromPath(String certificatePath, String privateKeyPath) {
+        File fileCheck = new File(certificatePath);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        }
+        fileCheck = new File(privateKeyPath);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("privateKeyPath does not point to a valid file");
+        }
+
         this.certificatePath = certificatePath;
         this.privateKeyPath = privateKeyPath;
     }
@@ -192,6 +202,11 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Password PKCS12 password
      */
     public void initMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
+        File fileCheck = new File(pkcs12Path);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("pkcs12Path does not point to a valid file");
+        }
+
         if (this.certificate != null || this.privateKey != null || this.certificatePath != null
                 || this.privateKeyPath != null) {
             throw new IllegalArgumentException(
@@ -227,6 +242,18 @@ public final class TlsContextOptions extends CrtResource {
         if (this.caRoot != null) {
             throw new IllegalArgumentException("Certificate authority is already specified via PEM buffer");
         }
+
+        if (caPath != null) {
+            File caFileCheck = new File(caPath);
+            if (!caFileCheck.exists()) {
+                throw new IllegalArgumentException("caPath does not point to a valid file or directory");
+            }
+        }
+        File fileCheck = new File(caFile);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("caFile does not point to a valid file");
+        }
+
         this.caDir = caPath;
         this.caFile = caFile;
     }
@@ -274,6 +301,15 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an mTLS connection
      */
     public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) {
+        File fileCheck = new File(certificatePath);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        }
+        fileCheck = new File(privateKeyPath);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("privateKeyPath does not point to a valid file");
+        }
+
         TlsContextOptions options = new TlsContextOptions();
         options.initMtlsFromPath(certificatePath, privateKeyPath);
         options.verifyPeer = true;
@@ -303,6 +339,11 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for creating a PKCS12 mTLS connection
      */
     public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
+        File fileCheck = new File(pkcs12Path);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("pkcs12Path does not point to a valid file");
+        }
+
         TlsContextOptions options = new TlsContextOptions();
         options.initMtlsPkcs12(pkcs12Path, pkcs12Password);
         options.verifyPeer = true;
@@ -332,6 +373,11 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an mTLS connection
      */
     public static TlsContextOptions createWithMtlsWindowsCertStorePath(String certificatePath) {
+        File fileCheck = new File(certificatePath);
+        if (!fileCheck.exists() && !fileCheck.isFile()) {
+            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        }
+
         TlsContextOptions options = new TlsContextOptions();
         options.withMtlsWindowsCertStorePath(certificatePath);
         options.verifyPeer = true;
@@ -452,6 +498,11 @@ public final class TlsContextOptions extends CrtResource {
      * @return this
      */
     public TlsContextOptions withMtlsWindowsCertStorePath(String certificatePath) {
+        File fileCheck = new File(certificatePath);
+        if (!fileCheck.exists()) {
+            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        }
+
         this.windowsCertStorePath = certificatePath;
         return this;
     }

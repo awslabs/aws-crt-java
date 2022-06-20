@@ -45,28 +45,15 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     private HttpClientConnectionManager(HttpClientConnectionManagerOptions options) {
+
+        options.validateOptions();
         URI uri = options.getUri();
-        if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
-        if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
-        if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
-        if (uri.getHost() == null) { throw new IllegalArgumentException("URI does not have a Host name"); }
-
         ClientBootstrap clientBootstrap = options.getClientBootstrap();
-        if (clientBootstrap == null) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
-
         SocketOptions socketOptions = options.getSocketOptions();
-        if (socketOptions == null) { throw new IllegalArgumentException("SocketOptions must not be null"); }
-
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = options.getTlsContext();
-        if (useTls && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
-
         int windowSize = options.getWindowSize();
-        if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
-
         int maxConnections = options.getMaxConnections();
-        if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
-
         int port = options.getPort();
         if (port == -1) {
             port = uri.getPort();

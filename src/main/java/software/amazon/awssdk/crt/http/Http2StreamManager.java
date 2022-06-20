@@ -36,72 +36,32 @@ public class Http2StreamManager extends CrtResource {
      * @param options configuration options
      * @return a new instance of an Http2StreamManager
      */
-    public static Http2StreamManager create(HttpStreamManagerOptions options) {
+    public static Http2StreamManager create(Http2StreamManagerOptions options) {
         return new Http2StreamManager(options);
     }
 
-    private Http2StreamManager(HttpStreamManagerOptions options) {
-        URI uri = options.getUri();
-        if (uri == null) {
-            throw new IllegalArgumentException("URI must not be null");
-        }
-        if (uri.getScheme() == null) {
-            throw new IllegalArgumentException("URI does not have a Scheme");
-        }
-        if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("URI has unknown Scheme");
-        }
-        if (uri.getHost() == null) {
-            throw new IllegalArgumentException("URI does not have a Host name");
-        }
+    private Http2StreamManager(Http2StreamManagerOptions options) {
+        options.validateOptions();
 
-        ClientBootstrap clientBootstrap = options.getClientBootstrap();
-        if (clientBootstrap == null) {
-            throw new IllegalArgumentException("ClientBootstrap must not be null");
-        }
-
-        SocketOptions socketOptions = options.getSocketOptions();
-        if (socketOptions == null) {
-            throw new IllegalArgumentException("SocketOptions must not be null");
-        }
-
+        HttpClientConnectionManagerOptions connectionManagerOptions = options.getConnectionManagerOptions();
+        URI uri = connectionManagerOptions.getUri();
+        ClientBootstrap clientBootstrap = connectionManagerOptions.getClientBootstrap();
+        SocketOptions socketOptions = connectionManagerOptions.getSocketOptions();
         boolean useTls = HTTPS.equals(uri.getScheme());
-        TlsContext tlsContext = options.getTlsContext();
-        if (useTls && tlsContext == null) {
-            throw new IllegalArgumentException("TlsContext must not be null if https is used");
-        }
-
-
-        int maxConnections = options.getMaxConnections();
-        if (maxConnections <= 0) {
-            throw new IllegalArgumentException("Max Connections must be greater than zero.");
-        }
-        int maxConcurrentStreamsPerConnection = options.getMaxConcurrentStreamsPerConnection();
-        if (maxConcurrentStreamsPerConnection <= 0) {
-            throw new IllegalArgumentException("Max Concurrent Streams Per Connection must be greater than zero.");
-        }
-        int idealConcurrentStreamsPerConnection = options.getIdealConcurrentStreamsPerConnection();
-        if (idealConcurrentStreamsPerConnection <= 0
-                || idealConcurrentStreamsPerConnection > maxConcurrentStreamsPerConnection) {
-            throw new IllegalArgumentException(
-                    "Ideal Concurrent Streams Per Connection must be greater than zero and smaller than max.");
-        }
-
-        int port = options.getPort();
+        TlsContext tlsContext = connectionManagerOptions.getTlsContext();
+        int maxConnections = connectionManagerOptions.getMaxConnections();
+        int port = connectionManagerOptions.getPort();
         if (port == -1) {
             port = uri.getPort();
             /* Pick a default port based on the scheme if one wasn't set */
             if (port == -1) {
-                if (HTTP.equals(uri.getScheme())) {
-                    port = DEFAULT_HTTP_PORT;
-                }
-                if (HTTPS.equals(uri.getScheme())) {
-                    port = DEFAULT_HTTPS_PORT;
-                }
+                if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
+                if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
             }
         }
 
-        HttpProxyOptions proxyOptions = options.getProxyOptions();
+        int maxConcurrentStreamsPerConnection = options.getMaxConcurrentStreamsPerConnection();
+        int idealConcurrentStreamsPerConnection = options.getIdealConcurrentStreamsPerConnection();
 
         this.uri = uri;
         this.port = port;
@@ -116,6 +76,7 @@ public class Http2StreamManager extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        HttpProxyOptions proxyOptions = connectionManagerOptions.getProxyOptions();
 
         if (proxyOptions != null) {
             proxyConnectionType = proxyOptions.getConnectionType().getValue();
@@ -127,7 +88,7 @@ public class Http2StreamManager extends CrtResource {
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }
 
-        HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
+        HttpMonitoringOptions monitoringOptions = connectionManagerOptions.getMonitoringOptions();
         long monitoringThroughputThresholdInBytesPerSecond = 0;
         int monitoringFailureIntervalInSeconds = 0;
         if (monitoringOptions != null) {
@@ -149,7 +110,7 @@ public class Http2StreamManager extends CrtResource {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
-                options.isManualWindowManagement(),
+                connectionManagerOptions.isManualWindowManagement(),
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
                 maxConnections,
@@ -176,17 +137,20 @@ public class Http2StreamManager extends CrtResource {
      *         acquired.
      */
     public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
-        HttpStreamBaseResponseHandler streamHandler) {
+            HttpStreamBaseResponseHandler streamHandler) {
+
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
     public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
-        HttpStreamBaseResponseHandler streamHandler) {
+            HttpStreamBaseResponseHandler streamHandler) {
+
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
     private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
-        HttpStreamBaseResponseHandler streamHandler) {
+            HttpStreamBaseResponseHandler streamHandler) {
+
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {

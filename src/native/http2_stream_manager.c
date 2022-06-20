@@ -339,7 +339,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
 
     if (!stream_manager) {
-        aws_jni_throw_runtime_exception(env, "Stream Manager can't be null");
+        aws_jni_throw_illegal_argument_exception(env, "Stream Manager can't be null");
         return;
     }
 

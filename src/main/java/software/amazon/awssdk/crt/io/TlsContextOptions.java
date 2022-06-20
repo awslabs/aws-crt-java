@@ -167,13 +167,11 @@ public final class TlsContextOptions extends CrtResource {
      * @param privateKeyPath Path to PEM format private key
      */
     public void initMtlsFromPath(String certificatePath, String privateKeyPath) {
-        File fileCheck = new File(certificatePath);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        if (!checkIfFileExists(certificatePath)) {
+            throw new IllegalArgumentException("initMtlsFromPath certificate path does not point to a valid file!");
         }
-        fileCheck = new File(privateKeyPath);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("privateKeyPath does not point to a valid file");
+        if (!checkIfFileExists(privateKeyPath)) {
+            throw new IllegalArgumentException("initMtlsFromPath private key path does not point to a valid file!");
         }
 
         this.certificatePath = certificatePath;
@@ -202,9 +200,8 @@ public final class TlsContextOptions extends CrtResource {
      * @param pkcs12Password PKCS12 password
      */
     public void initMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
-        File fileCheck = new File(pkcs12Path);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("pkcs12Path does not point to a valid file");
+        if (!checkIfFileExists(caFile)) {
+            throw new IllegalArgumentException("initMtlsPkcs12 pkcs12 path does not point to a valid file!");
         }
 
         if (this.certificate != null || this.privateKey != null || this.certificatePath != null
@@ -244,14 +241,14 @@ public final class TlsContextOptions extends CrtResource {
         }
 
         if (caPath != null) {
-            File caFileCheck = new File(caPath);
-            if (!caFileCheck.exists()) {
-                throw new IllegalArgumentException("caPath does not point to a valid file or directory");
+            if (!checkIfFileOrDirectoryExists(caPath)) {
+                throw new IllegalArgumentException("overrideDefaultTrustStoreFromPath CA path does not point to a valid file!");
             }
         }
-        File fileCheck = new File(caFile);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("caFile does not point to a valid file");
+        if (caFile != null) {
+            if (!checkIfFileExists(caFile)) {
+                throw new IllegalArgumentException("overrideDefaultTrustStoreFromPath CA file path does not point to a valid file!");
+            }
         }
 
         this.caDir = caPath;
@@ -301,13 +298,11 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an mTLS connection
      */
     public static TlsContextOptions createWithMtlsFromPath(String certificatePath, String privateKeyPath) {
-        File fileCheck = new File(certificatePath);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        if (!checkIfFileExists(certificatePath)) {
+            throw new IllegalArgumentException("createWithMtlsFromPath certificate path does not point to a valid file!");
         }
-        fileCheck = new File(privateKeyPath);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("privateKeyPath does not point to a valid file");
+        if (!checkIfFileExists(privateKeyPath)) {
+            throw new IllegalArgumentException("createWithMtlsFromPath private key path does not point to a valid file!");
         }
 
         TlsContextOptions options = new TlsContextOptions();
@@ -339,9 +334,8 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for creating a PKCS12 mTLS connection
      */
     public static TlsContextOptions createWithMtlsPkcs12(String pkcs12Path, String pkcs12Password) {
-        File fileCheck = new File(pkcs12Path);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("pkcs12Path does not point to a valid file");
+        if (!checkIfFileExists(pkcs12Path)) {
+            throw new IllegalArgumentException("createWithMtlsPkcs12 pkcs12 path does not point to a valid file!");
         }
 
         TlsContextOptions options = new TlsContextOptions();
@@ -373,9 +367,8 @@ public final class TlsContextOptions extends CrtResource {
      * @return A set of options for setting up an mTLS connection
      */
     public static TlsContextOptions createWithMtlsWindowsCertStorePath(String certificatePath) {
-        File fileCheck = new File(certificatePath);
-        if (!fileCheck.exists() && !fileCheck.isFile()) {
-            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        if (!checkIfFileExists(certificatePath)) {
+            throw new IllegalArgumentException("createWithMtlsWindowsCertStorePath certificate path does not point to a valid file!");
         }
 
         TlsContextOptions options = new TlsContextOptions();
@@ -498,11 +491,9 @@ public final class TlsContextOptions extends CrtResource {
      * @return this
      */
     public TlsContextOptions withMtlsWindowsCertStorePath(String certificatePath) {
-        File fileCheck = new File(certificatePath);
-        if (!fileCheck.exists()) {
-            throw new IllegalArgumentException("certificatePath does not point to a valid file");
+        if (!checkIfFileExists(certificatePath)) {
+            throw new IllegalArgumentException("withMtlsWindowsCertStorePath certificate path does not point to a valid file!");
         }
-
         this.windowsCertStorePath = certificatePath;
         return this;
     }
@@ -525,6 +516,29 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withVerifyPeer() {
         return this.withVerifyPeer(true);
+    }
+
+    /**
+     * A helper function that returns true if the filepath points to a valid file
+     */
+    private static boolean checkIfFileExists(String filepath) {
+        if (filepath == null) {
+            return false;
+        }
+        File fileCheck = new File(filepath);
+        return fileCheck.exists() && fileCheck.isFile();
+    }
+
+    /**
+     * A helper function that returns true if the filepath points to something
+     * (file or directory) on the file system.
+     */
+    private static boolean checkIfFileOrDirectoryExists(String filepath) {
+        if (filepath == null) {
+            return false;
+        }
+        File fileCheck = new File(filepath);
+        return fileCheck.exists();
     }
 
     /*******************************************************************************

@@ -6,7 +6,7 @@ cd `dirname $0`/../..
 
 git submodule update --init
 
-mvn -B compile -P mac-x64
+mvn -B compile -P mac-arm64
 
 # Copy artifacts to dist
 mkdir -p ../dist

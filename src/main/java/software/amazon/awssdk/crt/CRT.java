@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -42,6 +43,14 @@ public final class CRT {
         boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
         boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
         awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
+
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            public void run()
+            {
+                CRT.onJvmShutdown();
+            }
+        });
 
         try {
             Log.initLoggingFromSystemProperties();
@@ -140,21 +149,45 @@ public final class CRT {
                 throw new IOException(msg, ex);
             }
 
-            // Prefix the lib
-            String prefix = "AWSCRT_" + new Date().getTime();
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-            String libraryPath = "/" + getOSIdentifier() + "/" + getArchIdentifier() + "/" + libraryName;
 
-            File tempSharedLib = File.createTempFile(prefix, libraryName, tmpdirFile);
+            // Prefix the lib we'll extract to disk
+            String tempSharedLibPrefix = "AWSCRT_";
+
+            File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
+            if (!tempSharedLib.setExecutable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library executable by owner only");
+            }
+            if (!tempSharedLib.setWritable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
+            }
+            if (!tempSharedLib.setReadable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library readable by owner only");
+            }
+
+			// The temp lib file should be deleted when we're done with it.
+			// Ask Java to try and delete it on exit. We call this immediately
+			// so that if anything goes wrong writing the file to disk, or
+			// loading it as a shared lib, it will still get cleaned up.
+			tempSharedLib.deleteOnExit();
+
+            // Unfortunately File.deleteOnExit() won't work on Windows, where
+            // files cannot be deleted while they're in use. On Windows, once
+            // our .dll is loaded, it can't be deleted by this process.
+            //
+            // The Windows-only solution to this problem is to scan on startup
+            // for old instances of the .dll and try to delete them. If another
+            // process is still using the .dll, the delete will fail, which is fine.
+            String os = getOSIdentifier();
+            if (os.equals("windows")) {
+                tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
+            }
 
             // open a stream to read the shared lib contents from this JAR
-            try (InputStream in = CRT.class.getResourceAsStream(libraryPath)) {
+            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
+            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libraryPath);
-                }
-
-                if (tempSharedLib.exists()) {
-                    tempSharedLib.delete();
+                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
                 }
 
                 // Copy from jar stream to temp file
@@ -167,18 +200,9 @@ public final class CRT {
                 }
             }
 
-            if (!tempSharedLib.setExecutable(true)) {
-                throw new CrtRuntimeException("Unable to make shared library executable");
-            }
             if (!tempSharedLib.setWritable(false)) {
                 throw new CrtRuntimeException("Unable to make shared library read-only");
             }
-            if (!tempSharedLib.setReadable(true)) {
-                throw new CrtRuntimeException("Unable to make shared library readable");
-            }
-
-            // Ensure that the shared lib will be destroyed when java exits
-            tempSharedLib.deleteOnExit();
 
             // load the shared lib from the temp path
             System.load(tempSharedLib.getAbsolutePath());
@@ -226,6 +250,30 @@ public final class CRT {
         StringBuilder failureMessage = new StringBuilder();
         exceptions.stream().map(Exception::toString).forEach(failureMessage::append);
         throw new CrtRuntimeException(failureMessage.toString());
+    }
+
+    // Try to delete old CRT libraries that were extracted to the temp dir by previous runs.
+    private static void tryDeleteOldLibrariesFromTempDir(File tmpDir, String libNamePrefix, String libNameSuffix) {
+        try {
+            File[] oldLibs = tmpDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(libNamePrefix) && name.endsWith(libNameSuffix);
+                }
+            });
+
+            // Don't delete files that are too new.
+            // We don't want to delete another process's lib in the
+            // millisecond between the file being written to disk,
+            // and the file being loaded as a shared lib.
+            long aFewMomentsAgo = System.currentTimeMillis() - 10_000; // 10sec
+            for (File oldLib : oldLibs) {
+                try {
+                    if (oldLib.lastModified() < aFewMomentsAgo) {
+                        oldLib.delete();
+                    }
+                } catch (Exception e) {}
+            }
+        } catch (Exception e) {}
     }
 
     private static CrtPlatform findPlatformImpl() {
@@ -319,4 +367,6 @@ public final class CRT {
     }
 
     private static native void nativeCheckJniExceptionContract(boolean clearException);
+
+    private static native void onJvmShutdown();
 };

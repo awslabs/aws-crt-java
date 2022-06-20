@@ -240,14 +240,14 @@ public final class TlsContextOptions extends CrtResource {
             throw new IllegalArgumentException("Certificate authority is already specified via PEM buffer");
         }
 
-        if (caPath != null) {
-            if (!checkIfFileOrDirectoryExists(caPath)) {
-                throw new IllegalArgumentException("overrideDefaultTrustStoreFromPath CA path does not point to a valid file!");
-            }
-        }
         if (caFile != null) {
             if (!checkIfFileExists(caFile)) {
                 throw new IllegalArgumentException("overrideDefaultTrustStoreFromPath CA file path does not point to a valid file!");
+            }
+        }
+        else if (caPath != null) {
+            if (!checkIfFileOrDirectoryExists(caPath)) {
+                throw new IllegalArgumentException("overrideDefaultTrustStoreFromPath CA path does not point to a valid directory!");
             }
         }
 

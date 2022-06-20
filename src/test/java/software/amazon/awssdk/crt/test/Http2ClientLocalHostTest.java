@@ -23,7 +23,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.Http2StreamManager;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.Http2Stream;
-import software.amazon.awssdk.crt.http.HttpStreamManagerOptions;
+import software.amazon.awssdk.crt.http.Http2StreamManagerOptions;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
@@ -53,12 +53,14 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2")
                         .withVerifyPeer(false);
                 TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
-            HttpStreamManagerOptions options = new HttpStreamManagerOptions();
-            options.withClientBootstrap(bootstrap)
+            Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
+            connectionManagerOptions.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
                     .withTlsContext(tlsContext)
                     .withUri(uri)
                     .withMaxConnections(numConnections);
+            options.withConnectionManagerOptions(connectionManagerOptions);
 
             return Http2StreamManager.create(options);
         }

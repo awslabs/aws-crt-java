@@ -349,7 +349,9 @@ static void s_on_s3_meta_request_finish_callback(
             s3_meta_request_response_handler_native_adapter_properties.onFinished,
             meta_request_result->error_code,
             meta_request_result->response_status,
-            jni_payload);
+            jni_payload,
+            meta_request_result->validation_algorithm,
+            meta_request_result->did_validate);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -440,6 +442,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_s3_meta_request_jobject,
     jbyteArray jni_region,
     jint meta_request_type,
+    jint checksum_algorithm,
+    jboolean validate_response,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
@@ -496,6 +500,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
+        .checksum_algorithm = checksum_algorithm,
+        .validate_get_response_checksum = validate_response,
         .message = request_message,
         .user_data = callback_data,
         .signing_config = signing_config,

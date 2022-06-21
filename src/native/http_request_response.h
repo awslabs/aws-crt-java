@@ -28,7 +28,7 @@ struct http_stream_binding {
     int response_status;
 
     /*
-     * Unactivated streams must have their callback data destroyed at release time
+     * Inactivated streams must have their callback data destroyed at release time
      */
     struct aws_atomic_var activated;
 };

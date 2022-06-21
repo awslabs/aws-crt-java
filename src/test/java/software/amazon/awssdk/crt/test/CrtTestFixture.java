@@ -109,4 +109,8 @@ public class CrtTestFixture {
     protected void skipIfNetworkUnavailable() {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
     }
+
+    protected void skipIfLocalhostUnavailable() {
+        Assume.assumeTrue(System.getProperty("aws.crt.localhost") != null);
+    }
 }

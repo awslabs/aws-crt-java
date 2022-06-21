@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
@@ -141,7 +145,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         // Verify we got some Http Status Code for each Request
         Assert.assertTrue(reqIdToStatus.size() >= requiredSuccesses);
-        // Verify that the failure counts aren't too high ?????
+        // Verify that the failure counts aren't too high
         Assert.assertTrue(numErrorCode.get() <= allowedFailures);
         Assert.assertTrue(numStreamsFailures.get() <= allowedFailures);
     }

@@ -182,3 +182,60 @@ jobs:
         # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
         # https://github.com/actions/runner/issues/480
         uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
+
+
+  localhost-test-linux:
+    runs-on: ubuntu-20.04 # latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Configure local host
+      run: |
+        python3 -m pip install h2
+        ls crt/aws-c-http/
+        cd crt/aws-c-http/tests/py_localhost/
+        python3 server.py &
+        python3 non_tls_server.py &
+    - name: Build and test
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+
+  localhost-test-mac:
+    runs-on: macos-11 # latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Configure local host
+      run: |
+        python3 -m pip install h2
+        cd crt/aws-c-http/tests/py_localhost/
+        python3 server.py &
+        python3 non_tls_server.py &
+    - name: Build and test
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+
+  localhost-test-win:
+    runs-on: windows-2022 # latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Configure local host
+      run: |
+        python -m pip install h2
+    - name: Build and test
+      run: |
+        cd crt/aws-c-http/tests/py_localhost/
+        Start-Process -NoNewWindow python .\server.py
+        Start-Process -NoNewWindow python .\non_tls_server.py
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream

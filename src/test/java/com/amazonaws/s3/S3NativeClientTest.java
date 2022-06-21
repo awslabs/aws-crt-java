@@ -48,6 +48,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.Log;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
@@ -62,7 +63,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             "filename _@_=_&_?_+_)_.txt");
 
     private static final String GET_OBJECT_VERSION = System.getProperty("crt.test_s3_get_object_version",
-            "2Z_dpqRBdrGjax8dyIZ3XYnASOVkdY9J");
+            "AHnsnRWnGRVvEGrvWZuEgBoRZ9jZR4is");
 
     private static final int DEFAULT_NUM_THREADS = 3;
     private static final int DEFAULT_MAX_HOST_ENTRIES = 8;

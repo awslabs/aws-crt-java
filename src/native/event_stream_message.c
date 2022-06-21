@@ -191,19 +191,22 @@ jbyteArray aws_event_stream_rpc_marshall_headers_to_byteArray(
     uint32_t headers_buf_len = aws_event_stream_compute_headers_required_buffer_len(&headers_list);
 
     struct aws_byte_buf headers_buf;
-
     if (aws_byte_buf_init(&headers_buf, allocator, headers_buf_len)) {
         return NULL;
     }
 
-    headers_buf.len = aws_event_stream_write_headers_to_buffer(&headers_list, headers_buf.buffer);
-
-    aws_array_list_clean_up(&headers_list);
+    jbyteArray headers_byte_array = NULL;
+    if (aws_event_stream_write_headers_to_buffer_safe(&headers_list, &headers_buf)) {
+        goto done;
+    }
 
     struct aws_byte_cursor headers_cur = aws_byte_cursor_from_buf(&headers_buf);
+    headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
 
-    jbyteArray headers_byte_array = aws_jni_byte_array_from_cursor(env, &headers_cur);
+done:
+
     aws_byte_buf_clean_up(&headers_buf);
+    aws_array_list_clean_up(&headers_list);
 
     return headers_byte_array;
 }

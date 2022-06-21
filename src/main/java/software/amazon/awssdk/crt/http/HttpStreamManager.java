@@ -31,27 +31,12 @@ public class HttpStreamManager implements AutoCloseable {
      * @param options configuration options
      * @return a new instance of an HttpStreamManager
      */
-    public static HttpStreamManager create(HttpStreamManagerOptions options) {
+    public static HttpStreamManager create(Http2StreamManagerOptions options) {
         return new HttpStreamManager(options);
     }
 
-    private HttpClientConnectionManagerOptions getConnManagerOptFromStreamManagerOpt(HttpStreamManagerOptions options) {
-        // TODO: split the HTTP/1 stream manager to its own thing
-        HttpClientConnectionManagerOptions connManagerOptions = new HttpClientConnectionManagerOptions();
-        connManagerOptions.withClientBootstrap(options.getClientBootstrap())
-                .withSocketOptions(options.getSocketOptions())
-                .withTlsContext(options.getTlsContext())
-                .withUri(options.getUri())
-                .withMaxConnections(options.getMaxConnections())
-                .withPort(options.getPort())
-                .withProxyOptions(options.getProxyOptions())
-                .withManualWindowManagement(options.isManualWindowManagement())
-                .withMonitoringOptions(options.getMonitoringOptions());
-        return connManagerOptions;
-    }
-
-    private HttpStreamManager(HttpStreamManagerOptions options) {
-        HttpClientConnectionManagerOptions connManagerOptions = getConnManagerOptFromStreamManagerOpt(options);
+    private HttpStreamManager(Http2StreamManagerOptions options) {
+        HttpClientConnectionManagerOptions connManagerOptions = options.getConnectionManagerOptions();
         this.connectionManager = HttpClientConnectionManager.create(connManagerOptions);
         this.h2StreamManager = Http2StreamManager.create(options);
         this.shutdownComplete = new CompletableFuture<Void>();

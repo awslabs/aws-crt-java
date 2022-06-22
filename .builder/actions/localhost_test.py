@@ -12,6 +12,7 @@ class LocalhostTest(Builder.Action):
             -DrerunFailingTestsCount=5 \
             -Daws.crt.memory.tracing=2 \
             -Daws.crt.debugnative=true \
+            -Daws.crt.log.level=Error \
             -Daws.crt.localhost=true"):
             # Failed
             actions.append("exit 1")

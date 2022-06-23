@@ -56,6 +56,15 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
 
 /*******************************************************************************
+ * Get the exception that is pending on the stack and clears it if any.
+ * If an exception was pending, it is cleared and returned. Otherwise, return NULL.
+ *
+ * @return true the exception was pending, NULL otherwise. If it returns the exception
+ * the pending exception was cleared.
+ ******************************************************************************/
+jthrowable aws_jni_get_and_clear_exception(JNIEnv *env);
+
+/*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
  ******************************************************************************/
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);

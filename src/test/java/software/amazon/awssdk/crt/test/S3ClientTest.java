@@ -269,9 +269,9 @@ public class S3ClientTest extends CrtTestFixture {
         Assert.assertTrue(expectedException);
     }
 
-    private byte[] createTestPayload() {
+    private byte[] createTestPayload(int size) {
         String msg = "This is an S3 Java CRT Client Test";
-        ByteBuffer payload = ByteBuffer.allocate(1024 * 1024);
+        ByteBuffer payload = ByteBuffer.allocate(size);
         while (true) {
             try {
                 payload.put(msg.getBytes());
@@ -318,7 +318,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload());
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(1024 * 1024));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
                 @Override
                 public boolean sendRequestBody(ByteBuffer outBuffer) {
@@ -348,6 +348,99 @@ public class S3ClientTest extends CrtTestFixture {
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    private S3MetaRequestResponseHandler createTestPutPauseResumeHandler(CompletableFuture<Integer> onFinishedFuture) {
+        return new S3MetaRequestResponseHandler() {
+
+            @Override
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                return 0;
+            }
+
+            @Override
+            public void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
+                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                        "Meta request finished with error code " + errorCode);
+                if (errorCode != 0) {
+                    onFinishedFuture.completeExceptionally(
+                            new CrtS3RuntimeException(errorCode, responseStatus, errorPayload));
+                    return;
+                }
+                onFinishedFuture.complete(Integer.valueOf(errorCode));
+            }
+        };
+    }
+
+    @Test
+    public void testS3PutPauseResume() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture);
+
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
+            HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
+                @Override
+                public boolean sendRequestBody(ByteBuffer outBuffer) {
+                    ByteBufferUtils.transferData(payload, outBuffer);
+                    return payload.remaining() == 0;
+                }
+
+                @Override
+                public boolean resetPosition() {
+                    return true;
+                }
+
+                @Override
+                public long getLength() {
+                    return payload.capacity();
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
+                    new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_128MB.txt", headers, payloadStream);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            String resumeToken;
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                
+                TimeUnit.MILLISECONDS.sleep(500);
+
+                resumeToken = metaRequest.pause();
+                Assert.assertNotNull(resumeToken);
+
+                Throwable thrown = Assert.assertThrows(Throwable.class, 
+                    () -> onFinishedFuture.get());
+
+                Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtS3RuntimeException)thrown.getCause()).errorName);
+            }
+
+
+            CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandlerResume = createTestPutPauseResumeHandler(onFinishedFutureResume);
+            S3MetaRequestOptions metaRequestOptionsResume = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandlerResume)
+                    .withResumeToken(resumeToken);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptionsResume)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFutureResume.get());
+            }
+
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }

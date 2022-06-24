@@ -2,7 +2,6 @@ package software.amazon.awssdk.crt.s3;
 
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.Log;
 
 public class S3MetaRequest extends CrtResource {
 
@@ -49,10 +48,21 @@ public class S3MetaRequest extends CrtResource {
         s3MetaRequestCancel(getNativeHandle());
     }
 
+    /**
+     * Pauses meta request and returns a token that can be used to resume a meta request.
+     * For PutObject resume, input stream should always start at the begining,
+     * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo. 
+     */
+    public String pause() {
+        return s3MetaRequestPause(getNativeHandle());
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native void s3MetaRequestDestroy(long s3MetaRequest);
 
     private static native void s3MetaRequestCancel(long s3MetaRequest);
+
+    private static native String s3MetaRequestPause(long s3MetaRequest);
 }

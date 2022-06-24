@@ -66,11 +66,12 @@ public class S3Client extends CrtResource {
         }
 
         URI endpoint = options.getEndpoint();
+        byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
                 options.getMetaRequestType().getNativeValue(), httpRequestBytes,
                 options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8));
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8), resumeToken);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
@@ -120,5 +121,5 @@ public class S3Client extends CrtResource {
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
             int metaRequestType, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
-            byte[] endpoint);
+            byte[] endpoint, byte[] resumeToken);
 }

@@ -13,6 +13,7 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
+#include <aws/common/string.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -444,7 +445,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
     jobject java_response_handler_jobject,
-    jbyteArray jni_endpoint) {
+    jbyteArray jni_endpoint, 
+    jbyteArray jni_resume_token) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -494,6 +496,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         }
     }
 
+    struct aws_byte_cursor resume_token;
+    AWS_ZERO_STRUCT(resume_token);
+    if (jni_resume_token != NULL) {
+        resume_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_resume_token);
+    }
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .message = request_message,
@@ -505,6 +513,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
         .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
+        .resume_token = jni_resume_token != NULL ? &resume_token : NULL,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
@@ -589,8 +598,37 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestCancel: Invalid/null meta request");
         return;
     }
-
+    
     aws_s3_meta_request_cancel(meta_request);
+}
+
+JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestPause(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request) {
+    (void)jni_class;
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid/null meta request");
+        return NULL;
+    }
+    
+    struct aws_string *resume_token = NULL;
+
+    if(aws_s3_meta_request_pause(meta_request, &resume_token)) {
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to pause request");
+        return NULL;
+    }
+
+    if (resume_token == NULL) {
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid resume token");
+        return NULL;
+    }
+  
+    struct aws_byte_cursor token_cur = aws_byte_cursor_from_string(resume_token);
+    return aws_jni_string_from_cursor(env, &token_cur);
 }
 
 #if UINTPTR_MAX == 0xffffffff

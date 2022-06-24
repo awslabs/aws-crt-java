@@ -64,12 +64,14 @@ public class S3Client extends CrtResource {
         if (options.getCredentialsProvider() != null) {
             credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
         }
-
         URI endpoint = options.getEndpoint();
+        
         byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
 
+        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue() : ChecksumAlgorithm.NONE.getNativeValue();
+
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), httpRequestBytes,
+                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(), httpRequestBytes,
                 options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8), resumeToken);
 
@@ -119,7 +121,7 @@ public class S3Client extends CrtResource {
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
-            int metaRequestType, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, byte[] resumeToken);
 }

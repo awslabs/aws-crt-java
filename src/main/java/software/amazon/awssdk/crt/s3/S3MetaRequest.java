@@ -52,6 +52,7 @@ public class S3MetaRequest extends CrtResource {
      * Pauses meta request and returns a token that can be used to resume a meta request.
      * For PutObject resume, input stream should always start at the begining,
      * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo. 
+     * @return token to resume request
      */
     public String pause() {
         return s3MetaRequestPause(getNativeHandle());

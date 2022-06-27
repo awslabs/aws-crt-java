@@ -6,6 +6,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include <aws/common/string.h>
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -13,7 +14,6 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
-#include <aws/common/string.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -449,7 +449,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
     jobject java_response_handler_jobject,
-    jbyteArray jni_endpoint, 
+    jbyteArray jni_endpoint,
     jbyteArray jni_resume_token) {
     (void)jni_class;
 
@@ -604,7 +604,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestCancel: Invalid/null meta request");
         return;
     }
-    
+
     aws_s3_meta_request_cancel(meta_request);
 }
 
@@ -620,10 +620,10 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid/null meta request");
         return NULL;
     }
-    
+
     struct aws_string *resume_token = NULL;
 
-    if(aws_s3_meta_request_pause(meta_request, &resume_token)) {
+    if (aws_s3_meta_request_pause(meta_request, &resume_token)) {
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to pause request");
         return NULL;
     }
@@ -632,7 +632,7 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid resume token");
         return NULL;
     }
-  
+
     struct aws_byte_cursor token_cur = aws_byte_cursor_from_string(resume_token);
     return aws_jni_string_from_cursor(env, &token_cur);
 }

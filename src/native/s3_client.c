@@ -215,6 +215,7 @@ static int s_on_s3_meta_request_body_callback(
     }
 
     jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+
     jint body_response_result = 0;
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
@@ -633,8 +634,10 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         return NULL;
     }
 
-    struct aws_byte_cursor token_cur = aws_byte_cursor_from_string(resume_token);
-    return aws_jni_string_from_cursor(env, &token_cur);
+    jstring jni_resume_token = (*env)->NewStringUTF(env, resume_token);
+    aws_string_destroy(resume_token);
+
+    return jni_resume_token;
 }
 
 #if UINTPTR_MAX == 0xffffffff

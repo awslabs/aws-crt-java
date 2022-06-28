@@ -618,7 +618,7 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid/null meta request");
+        aws_jni_throw_illegal_argument_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid/null meta request");
         return NULL;
     }
 
@@ -631,7 +631,7 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
 
     jstring jni_resume_token = NULL;
     if (resume_token) {
-        jni_resume_token = (*env)->NewStringUTF(env, aws_string_c_str(resume_token));
+        jni_resume_token = aws_jni_string_from_string(env, resume_token);
         aws_string_destroy(resume_token);
     }
 

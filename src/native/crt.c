@@ -592,6 +592,14 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
     return java_string;
 }
 
+jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string) {
+    AWS_FATAL_ASSERT(string != NULL);
+
+    jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
+
+    return java_string;
+}
+
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CrtResource_waitForGlobalResourceDestruction(
     JNIEnv *env,

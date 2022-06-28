@@ -630,7 +630,7 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
     }
 
     jstring jni_resume_token = NULL;
-    if(resume_token) {
+    if (resume_token) {
         jni_resume_token = (*env)->NewStringUTF(env, aws_string_c_str(resume_token));
         aws_string_destroy(resume_token);
     }

@@ -629,13 +629,11 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         return NULL;
     }
 
-    if (resume_token == NULL) {
-        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid resume token");
-        return NULL;
+    jstring jni_resume_token = NULL;
+    if(resume_token) {
+        jni_resume_token = (*env)->NewStringUTF(env, aws_string_c_str(resume_token));
+        aws_string_destroy(resume_token);
     }
-
-    jstring jni_resume_token = (*env)->NewStringUTF(env, aws_string_c_str(resume_token));
-    aws_string_destroy(resume_token);
 
     return jni_resume_token;
 }

@@ -420,11 +420,12 @@ public class S3ClientTest extends CrtTestFixture {
             String resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 
+                /* This is a bit hacky but currently there is no way to determine that put request started. 
+                 * OnProgress or OnBody callbacks are not triggered for puts. */
                 TimeUnit.MILLISECONDS.sleep(500);
 
                 resumeToken = metaRequest.pause();
-                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + resumeToken.toString());
-                Assert.assertNotNull(resumeToken);
+                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Resume token: " + resumeToken);
 
                 Throwable thrown = Assert.assertThrows(Throwable.class, 
                     () -> onFinishedFuture.get());

@@ -98,7 +98,7 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
  * aws_jni_string_from_cursor - Creates a Java String from a string.
  * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
  ******************************************************************************/
-jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string) ;
+jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string);
 
 /*******************************************************************************
  * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer

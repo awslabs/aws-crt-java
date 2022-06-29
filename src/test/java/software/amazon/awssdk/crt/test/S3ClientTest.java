@@ -378,7 +378,7 @@ public class S3ClientTest extends CrtTestFixture {
         };
     }
 
-    @Test
+    //@Test
     public void testS3PutPauseResume() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

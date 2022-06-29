@@ -443,20 +443,16 @@ static void s_jni_atexit_strict(void) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_jni_atexit_strict invoked");
     s_jni_atexit_common();
 
-    if (s_allocator) {
-        if (g_memory_tracing) {
-            s_allocator = aws_mem_tracer_destroy(s_allocator);
-        }
-        /*
-         * If there are outstanding leaks, something is likely to crash on shutdown
-         * so leave the allocators in place to avoid this
-         */
-        if (aws_small_block_allocator_bytes_active(s_allocator)) {
-            return;
-        }
-        aws_small_block_allocator_destroy(s_allocator);
-        s_allocator = NULL;
+    if (g_memory_tracing) {
+        struct aws_allocator *trace_allocator = aws_jni_get_allocator();
+        aws_mem_tracer_destroy(trace_allocator);
+        trace_allocator = NULL;
     }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    aws_small_block_allocator_destroy(allocator);
+    allocator = NULL;
+    s_allocator = NULL;
 }
 
 #define DEFAULT_MANAGED_SHUTDOWN_WAIT_IN_SECONDS 1
@@ -584,7 +580,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, j
     (void)jni_crt_class;
     jlong allocated = 0;
     if (g_memory_tracing) {
-        allocated = (jlong)aws_mem_tracer_bytes(aws_jni_get_allocator());
+        if (s_allocator != NULL) {
+            allocated = (jlong)aws_mem_tracer_bytes(s_allocator);
+        }
     }
     return allocated;
 }
@@ -594,7 +592,9 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     (void)env;
     (void)jni_crt_class;
     if (g_memory_tracing > 1) {
-        aws_mem_tracer_dump(aws_jni_get_allocator());
+        if (s_allocator != NULL) {
+            aws_mem_tracer_dump(s_allocator);
+        }
     }
 }
 

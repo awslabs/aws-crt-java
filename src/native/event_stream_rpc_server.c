@@ -72,6 +72,11 @@ static void s_server_connection_data_destroy(JNIEnv *env, struct connection_call
     if (callback_data->java_server_connection) {
         (*env)->DeleteGlobalRef(env, callback_data->java_server_connection);
     }
+
+    if (callback_data->java_connection_handler) {
+        (*env)->DeleteGlobalRef(env, callback_data->java_connection_handler);
+    }
+
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
 
@@ -82,7 +87,12 @@ static void s_server_listener_shutdown_complete(
 
     struct shutdown_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jobject java_server_listener = (*env)->NewLocalRef(env, callback_data->java_server_listener);
     if (java_server_listener) {
@@ -91,7 +101,10 @@ static void s_server_listener_shutdown_complete(
         (*env)->DeleteLocalRef(env, java_server_listener);
     }
 
+    JavaVM *jvm = callback_data->jvm;
     s_shutdown_callback_data_destroy(env, callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 struct continuation_callback_data {
@@ -124,7 +137,12 @@ static void s_stream_continuation_fn(
 
     struct continuation_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
@@ -143,6 +161,9 @@ static void s_stream_continuation_fn(
     (*env)->DeleteLocalRef(env, payload_byte_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_stream_continuation_closed_fn(
@@ -151,7 +172,12 @@ static void s_stream_continuation_closed_fn(
     (void)token;
     struct continuation_callback_data *continuation_callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(continuation_callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(continuation_callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     (*env)->CallVoidMethod(
         env,
@@ -159,7 +185,11 @@ static void s_stream_continuation_closed_fn(
         event_stream_server_continuation_handler_properties.onContinuationClosed);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
+
+    JavaVM *jvm = continuation_callback_data->jvm;
     s_server_continuation_data_destroy(env, continuation_callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static int s_on_incoming_stream_fn(
@@ -172,18 +202,26 @@ static int s_on_incoming_stream_fn(
 
     struct connection_callback_data *callback_data = user_data;
 
+    jobject java_continuation = NULL;
+    jobject java_continuation_handler = NULL;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return AWS_OP_ERR;
+    }
+
     struct continuation_callback_data *continuation_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct continuation_callback_data));
 
     if (!continuation_callback_data) {
-        aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
-        return AWS_OP_ERR;
+        goto on_error;
     }
 
     continuation_callback_data->jvm = callback_data->jvm;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
 
-    jobject java_continuation = (*env)->NewObject(
+    java_continuation = (*env)->NewObject(
         env,
         event_stream_server_connection_handler_properties.continuationCls,
         event_stream_server_connection_handler_properties.newContinuationConstructor,
@@ -192,37 +230,69 @@ static int s_on_incoming_stream_fn(
     aws_jni_check_and_clear_exception(env);
 
     if (!java_continuation) {
-        aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
-        s_server_continuation_data_destroy(env, continuation_callback_data);
-        return AWS_OP_ERR;
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        goto on_error;
     }
 
     continuation_callback_data->java_continuation = (*env)->NewGlobalRef(env, java_continuation);
+    if (continuation_callback_data->java_continuation == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        goto on_error;
+    }
 
+    java_continuation_handler = NULL;
     jbyteArray operation_name_array = aws_jni_byte_array_from_cursor(env, &operation_name);
-
-    jobject java_continuation_handler = (*env)->CallObjectMethod(
-        env,
-        callback_data->java_connection_handler,
-        event_stream_server_connection_handler_properties.onIncomingStream,
-        java_continuation,
-        operation_name_array);
-    (*env)->DeleteLocalRef(env, operation_name_array);
-    aws_jni_check_and_clear_exception(env);
+    if (operation_name_array != NULL) {
+        java_continuation_handler = (*env)->CallObjectMethod(
+            env,
+            callback_data->java_connection_handler,
+            event_stream_server_connection_handler_properties.onIncomingStream,
+            java_continuation,
+            operation_name_array);
+        (*env)->DeleteLocalRef(env, operation_name_array);
+        aws_jni_check_and_clear_exception(env);
+    }
 
     if (!java_continuation_handler) {
-        aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
-        s_server_continuation_data_destroy(env, continuation_callback_data);
-        return AWS_OP_ERR;
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        goto on_error;
+    }
+
+    continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
+    if (continuation_callback_data->java_continuation_handler == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        goto on_error;
     }
 
     continuation_options->user_data = continuation_callback_data;
     continuation_options->on_continuation = s_stream_continuation_fn;
     continuation_options->on_continuation_closed = s_stream_continuation_closed_fn;
-    continuation_callback_data->java_continuation_handler = (*env)->NewGlobalRef(env, java_continuation_handler);
+
     (*env)->DeleteLocalRef(env, java_continuation_handler);
     (*env)->DeleteLocalRef(env, java_continuation);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE SUCCESS PATH **********/
+
     return AWS_OP_SUCCESS;
+
+on_error:
+
+    if (java_continuation_handler != NULL) {
+        (*env)->DeleteLocalRef(env, java_continuation_handler);
+    }
+
+    if (java_continuation != NULL) {
+        (*env)->DeleteLocalRef(env, java_continuation);
+    }
+
+    aws_event_stream_rpc_server_connection_close(connection, aws_last_error());
+    s_server_continuation_data_destroy(env, continuation_callback_data);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE FAILURE PATH **********/
+
+    return AWS_OP_ERR;
 }
 
 static void s_connection_protocol_message_fn(
@@ -232,7 +302,13 @@ static void s_connection_protocol_message_fn(
     (void)connection;
 
     struct connection_callback_data *callback_data = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     jbyteArray headers_array = aws_event_stream_rpc_marshall_headers_to_byteArray(
         aws_jni_get_allocator(), env, message_args->headers, message_args->headers_count);
@@ -252,6 +328,9 @@ static void s_connection_protocol_message_fn(
     (*env)->DeleteLocalRef(env, payload_byte_array);
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static int s_on_new_connection_fn(
@@ -262,7 +341,15 @@ static int s_on_new_connection_fn(
 
     struct shutdown_callback_data *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return AWS_OP_ERR;
+    }
+
+    jobject java_server_connection = NULL;
+    jobject java_connection_handler = NULL;
 
     struct connection_callback_data *connection_callback_data =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct connection_callback_data));
@@ -274,21 +361,21 @@ static int s_on_new_connection_fn(
     connection_callback_data->jvm = callback_data->jvm;
     connection_callback_data->java_listener_handler = (*env)->NewGlobalRef(env, callback_data->java_listener_handler);
 
-    jobject java_server_connection = NULL;
     if (!error_code) {
         java_server_connection = (*env)->NewObject(
             env,
             event_stream_server_listener_handler_properties.connCls,
             event_stream_server_listener_handler_properties.newConnConstructor,
             (jlong)connection);
-        if (aws_jni_check_and_clear_exception(env)) {
+        if (aws_jni_check_and_clear_exception(env) || java_server_connection == NULL) {
+            aws_raise_error(AWS_ERROR_INVALID_STATE);
             goto error;
         }
 
         connection_callback_data->java_server_connection = (*env)->NewGlobalRef(env, java_server_connection);
     }
 
-    jobject java_connection_handler = (*env)->CallObjectMethod(
+    java_connection_handler = (*env)->CallObjectMethod(
         env,
         connection_callback_data->java_listener_handler,
         event_stream_server_listener_handler_properties.onNewConnection,
@@ -299,27 +386,42 @@ static int s_on_new_connection_fn(
     aws_jni_check_and_clear_exception(env);
 
     if (!java_connection_handler) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
         goto error;
     }
 
     connection_callback_data->java_connection_handler = (*env)->NewGlobalRef(env, java_connection_handler);
+    if (connection_callback_data->java_connection_handler == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        goto error;
+    }
+
     connection_options->on_connection_protocol_message = s_connection_protocol_message_fn;
     connection_options->on_incoming_stream = s_on_incoming_stream_fn;
     connection_options->user_data = connection_callback_data;
 
+    (*env)->DeleteLocalRef(env, java_connection_handler);
+    (*env)->DeleteLocalRef(env, java_server_connection);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE SUCCESS PATH **********/
+
     return AWS_OP_SUCCESS;
 
 error:
-    if (connection_callback_data) {
-        if (connection_callback_data->java_server_connection) {
-            (*env)->DeleteGlobalRef(env, connection_callback_data->java_server_connection);
-        }
 
-        if (connection_callback_data->java_listener_handler) {
-            (*env)->DeleteGlobalRef(env, connection_callback_data->java_listener_handler);
-        }
-        aws_mem_release(aws_jni_get_allocator(), connection_callback_data);
+    if (java_connection_handler != NULL) {
+        (*env)->DeleteLocalRef(env, java_connection_handler);
     }
+
+    if (java_server_connection != NULL) {
+        (*env)->DeleteLocalRef(env, java_server_connection);
+    }
+
+    s_server_connection_data_destroy(env, connection_callback_data);
+
+    aws_jni_release_thread_env(callback_data->jvm, env);
+    /********** JNI ENV RELEASE ERROR PATH **********/
 
     return AWS_OP_ERR;
 }
@@ -332,7 +434,13 @@ static void s_on_connection_shutdown_fn(
 
     struct connection_callback_data *callback_data = aws_event_stream_rpc_server_connection_get_user_data(connection);
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     jobject java_listener_handler = (*env)->NewLocalRef(env, callback_data->java_listener_handler);
     jobject java_server_connection = (*env)->NewLocalRef(env, callback_data->java_server_connection);
 
@@ -352,7 +460,10 @@ static void s_on_connection_shutdown_fn(
     (*env)->DeleteLocalRef(env, java_listener_handler);
 
     /* this is the should be connection specific callback data. */
+    JavaVM *jvm = callback_data->jvm;
     s_server_connection_data_destroy(env, callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 JNIEXPORT
@@ -468,6 +579,23 @@ error:
 }
 
 JNIEXPORT
+jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_getBoundPort(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_server_listener) {
+    (void)env;
+    (void)jni_class;
+    struct aws_event_stream_rpc_server_listener *listener =
+        (struct aws_event_stream_rpc_server_listener *)jni_server_listener;
+    if (!listener) {
+        aws_jni_throw_runtime_exception(env, "ServerListener.getBoundPort: Invalid serverListener");
+        return (jshort)-1;
+    }
+
+    return (jint)aws_event_stream_rpc_server_listener_get_bound_port(listener);
+}
+
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_release(
     JNIEnv *env,
     jclass jni_class,
@@ -492,6 +620,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_acquir
     (void)jni_class;
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_server_connection_acquire(connection);
 }
 
@@ -504,6 +636,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_releas
     (void)jni_class;
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_server_connection_release(connection);
 }
 
@@ -517,6 +653,10 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_closeC
     (void)jni_class;
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
+    if (connection == NULL) {
+        return;
+    }
+
     aws_event_stream_rpc_server_connection_close(connection, error_code);
 }
 
@@ -529,6 +669,11 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_is
     (void)jni_class;
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
+
+    if (connection == NULL) {
+        return false;
+    }
+
     return aws_event_stream_rpc_server_connection_is_open(connection);
 }
 
@@ -537,15 +682,36 @@ struct message_flush_callback_args {
     jobject callback;
 };
 
+static void s_destroy_message_flush_callback_args(JNIEnv *env, struct message_flush_callback_args *callback_args) {
+    if (callback_args == NULL) {
+        return;
+    }
+
+    if (callback_args->callback != NULL) {
+        (*env)->DeleteGlobalRef(env, callback_args->callback);
+    }
+
+    aws_mem_release(aws_jni_get_allocator(), callback_args);
+}
+
 static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
-    JNIEnv *env = aws_jni_get_thread_env(callback_data->jvm);
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
     (*env)->CallVoidMethod(
         env, callback_data->callback, event_stream_server_message_flush_properties.callback, error_code);
     aws_jni_check_and_clear_exception(env);
-    (*env)->DeleteGlobalRef(env, callback_data->callback);
-    aws_mem_release(aws_jni_get_allocator(), callback_data);
+
+    JavaVM *jvm = callback_data->jvm;
+    s_destroy_message_flush_callback_args(env, callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 JNIEXPORT
@@ -571,6 +737,11 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
         goto clean_up;
     }
 
+    if (connection == NULL) {
+        aws_jni_throw_runtime_exception(env, "ServerConnection.sendProtocolMessage: native connection is NULL.");
+        goto clean_up;
+    }
+
     callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));
 
     if (!callback_data) {
@@ -585,6 +756,11 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     }
 
     callback_data->callback = (*env)->NewGlobalRef(env, callback);
+    if (callback_data->callback == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "ServerConnection.sendProtocolMessage: Unable to create global ref to callback");
+        goto clean_up;
+    }
 
     if (aws_event_stream_rpc_server_connection_send_protocol_message(
             connection, &marshalled_message.message_args, s_message_flush_fn, callback_data)) {
@@ -595,7 +771,11 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     ret_val = AWS_OP_SUCCESS;
 
 clean_up:
+
     aws_event_stream_rpc_marshall_message_args_clean_up(&marshalled_message);
+    if (ret_val != AWS_OP_SUCCESS) {
+        s_destroy_message_flush_callback_args(env, callback_data);
+    }
 
     return ret_val;
 }
@@ -633,6 +813,11 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionCon
     (void)jni_class;
     struct aws_event_stream_rpc_server_continuation_token *continuation =
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
+
+    if (continuation == NULL) {
+        return true;
+    }
+
     return aws_event_stream_rpc_server_continuation_is_closed(continuation);
 }
 
@@ -660,8 +845,12 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
         goto clean_up;
     }
 
-    callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));
+    if (continuation == NULL) {
+        aws_jni_throw_runtime_exception(env, "ServerConnection.sendContinuationMessage: native continuation is NULL.");
+        goto clean_up;
+    }
 
+    callback_data = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct message_flush_callback_args));
     if (!callback_data) {
         aws_jni_throw_runtime_exception(
             env, "ServerConnectionContinuation.sendContinuationMessage: allocation failed.");
@@ -675,6 +864,11 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     }
 
     callback_data->callback = (*env)->NewGlobalRef(env, callback);
+    if (callback_data->callback == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "ServerConnection.sendContinuationMessage: Unable to create global ref to callback");
+        goto clean_up;
+    }
 
     if (aws_event_stream_rpc_server_continuation_send_message(
             continuation, &marshalled_message.message_args, s_message_flush_fn, callback_data)) {
@@ -687,6 +881,9 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
 
 clean_up:
     aws_event_stream_rpc_marshall_message_args_clean_up(&marshalled_message);
+    if (ret_val != AWS_OP_SUCCESS) {
+        s_destroy_message_flush_callback_args(env, callback_data);
+    }
 
     return ret_val;
 }

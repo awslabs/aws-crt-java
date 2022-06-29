@@ -90,7 +90,7 @@ public final class ClientBootstrap extends CrtResource {
     public static void closeStaticDefault() {
         synchronized (ClientBootstrap.class) {
             if (staticDefaultClientBootstrap != null) {
-                staticDefaultClientBootstrap.releaseNativeHandle();
+                staticDefaultClientBootstrap.close();
             }
             staticDefaultClientBootstrap = null;
         }

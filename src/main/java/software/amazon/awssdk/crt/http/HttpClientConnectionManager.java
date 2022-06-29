@@ -32,6 +32,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int port;
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private final HttpVersion expectedHttpVersion;
 
     /**
      * Factory function for HttpClientConnectionManager instances
@@ -85,6 +86,7 @@ public class HttpClientConnectionManager extends CrtResource {
         this.uri = uri;
         this.port = port;
         this.maxConnections = maxConnections;
+        this.expectedHttpVersion = options.getExpectedHttpVersion();
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -130,7 +132,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
-                                            monitoringFailureIntervalInSeconds));
+                                            monitoringFailureIntervalInSeconds,
+                                            expectedHttpVersion.getValue()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -242,7 +245,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         boolean isManualWindowManagement,
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,
-                                                        int monitoringFailureIntervalInSeconds) throws CrtRuntimeException;
+                                                        int monitoringFailureIntervalInSeconds,
+                                                        int expectedProtocol) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

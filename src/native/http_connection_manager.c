@@ -155,6 +155,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
+    jlong jni_tls_connection_options,
     jint jni_window_size,
     jbyteArray jni_endpoint,
     jint jni_port,
@@ -178,6 +179,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_tls_connection_options *tls_connection_options =
+        (struct aws_tls_connection_options *)jni_tls_connection_options;
     struct http_connection_manager_binding *binding = NULL;
 
     if (!client_bootstrap) {
@@ -210,14 +213,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     uint16_t port = (uint16_t)jni_port;
 
-    int use_tls = (jni_tls_ctx != 0);
+    bool new_tls_conn_opts = (jni_tls_ctx != 0 && !tls_connection_options);
 
     struct aws_tls_connection_options tls_conn_options;
     AWS_ZERO_STRUCT(tls_conn_options);
-
-    if (use_tls) {
+    if (new_tls_conn_opts) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
+        tls_connection_options = &tls_conn_options;
     }
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct http_connection_manager_binding));
@@ -234,7 +237,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.bootstrap = client_bootstrap;
     manager_options.initial_window_size = (size_t)jni_window_size;
     manager_options.socket_options = socket_options;
-    manager_options.tls_connection_options = NULL;
+    manager_options.tls_connection_options = tls_connection_options;
     manager_options.host = endpoint;
     manager_options.port = port;
     manager_options.max_connections = (size_t)jni_max_conns;
@@ -244,10 +247,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
     manager_options.enable_read_back_pressure = jni_manual_window_management;
     manager_options.max_connection_idle_in_milliseconds = jni_max_connection_idle_in_milliseconds;
-
-    if (use_tls) {
-        manager_options.tls_connection_options = &tls_conn_options;
-    }
 
     struct aws_http_connection_monitoring_options monitoring_options;
     AWS_ZERO_STRUCT(monitoring_options);
@@ -291,7 +290,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     aws_http_proxy_options_jni_clean_up(
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
-    if (use_tls) {
+    if (new_tls_conn_opts) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
     }
 

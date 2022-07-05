@@ -40,8 +40,8 @@ import javax.naming.Context;
 
 public class S3ClientTest extends CrtTestFixture {
 
-    static final String ENDPOINT = System.getenv("ENDPOINT") == null ?
-            "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("ENDPOINT");
+    static final String ENDPOINT = System.getenv("S3ENDPOINT") == null ?
+            "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("S3ENDPOINT");
     static final String REGION = System.getenv("REGION") == null ? "us-west-2" : System.getenv("REGION");
 
     static final String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";

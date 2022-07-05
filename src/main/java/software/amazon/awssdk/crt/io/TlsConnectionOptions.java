@@ -43,12 +43,12 @@ public class TlsConnectionOptions extends CrtResource {
     }
 
     /**
-     * Sets alpn list in the form <protocol1;protocol2;...>. A maximum of 4
+     * Sets alpn list in the form protocol1;protocol2;.... A maximum of 4
      * protocols are supported.
      * alpnList is copied. This value is already inherited from TlsContext, but the
      * TlsContext is expensive, and should be used across as many connections as
      * possible. If you want to set this per connection, set it here.
-     * @param alpnList alpn list in the form <protocol1;protocol2;...>
+     * @param alpnList Semi-colon delimited list of supported ALPN protocols
      * @return this
      */
     public TlsConnectionOptions withAlpnList(String alpnList) {

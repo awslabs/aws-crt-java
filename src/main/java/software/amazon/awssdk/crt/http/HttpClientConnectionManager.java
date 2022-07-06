@@ -61,6 +61,9 @@ public class HttpClientConnectionManager extends CrtResource {
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = options.getTlsContext();
         TlsConnectionOptions tlsConnectionOptions = options.getTlsConnectionOptions();
+        if(tlsContext!= null && tlsConnectionOptions != null) {
+            throw new IllegalArgumentException("Cannot set both TlsContext and TlsConnectionOptions.");
+        }
         boolean tlsSet = (tlsContext!= null || tlsConnectionOptions != null);
         if (useTls && !tlsSet) { throw new IllegalArgumentException("TlsContext or TlsConnectionOptions must not be null if https is used"); }
 

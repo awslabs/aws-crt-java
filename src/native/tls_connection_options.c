@@ -40,7 +40,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnect
     struct aws_tls_connection_options *options =
         (struct aws_tls_connection_options *)aws_mem_calloc(allocator, 1, sizeof(struct aws_tls_connection_options));
 
-    AWS_ZERO_STRUCT(*options);
     aws_tls_connection_options_init_from_ctx(options, ctx);
     if (jni_alpn) {
         const char *alpn_chars = (*env)->GetStringUTFChars(env, jni_alpn, NULL);
@@ -69,6 +68,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnect
     return (jlong)options;
 on_error:
     aws_tls_connection_options_clean_up(options);
+    aws_mem_release(allocator, options);
     return (jlong)0;
 }
 

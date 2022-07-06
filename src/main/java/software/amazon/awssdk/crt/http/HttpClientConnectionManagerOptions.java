@@ -88,7 +88,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * Sets the connection-specific TLS options to use for connections in the connection pool.
      * Either TLS context or TLS connection options will be enough to set up TLS connection.
-     * If both set, TLS connection options will override the TLS context was set.
+     * If both set, an exception will be raised.
      * @param tlsConnectionOptions The TlsConnectionOptions to use
      * @return this
      */

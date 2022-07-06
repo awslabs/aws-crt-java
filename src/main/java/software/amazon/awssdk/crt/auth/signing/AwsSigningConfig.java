@@ -22,15 +22,32 @@ public class AwsSigningConfig extends CrtResource {
      * What version of the AWS signing process should we use.
      */
     public enum AwsSigningAlgorithm {
+
+        /** Standard AWS Sigv4 signing, based on AWS credentials and symmetric secrets */
         SIGV4(0),
+
+        /** AWS Sigv4a signing, based on ECDSA signatures */
         SIGV4_ASYMMETRIC(1);
 
+        /**
+         * Constructs a Java enum value from the associated native enum value
+         * @param nativeValue native enum value
+         */
         AwsSigningAlgorithm(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Trivial Java Enum value to native enum value conversion function
+         * @return integer associated with this enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSigningAlgorithm getEnumValueFromInteger(int value) {
             AwsSigningAlgorithm enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -78,14 +95,32 @@ public class AwsSigningConfig extends CrtResource {
          *
          * This option is not yet supported.
          */
-        HTTP_REQUEST_EVENT(3);
+        HTTP_REQUEST_EVENT(3),
 
+        /**
+         * Compute a signature for a payloads trailing headers.
+         */
+        HTTP_REQUEST_TRAILING_HEADERS(6);
+
+        /**
+         * Constructs a Java enum value from a native enum value as an integer
+         * @param nativeValue native enum value
+         */
         AwsSignatureType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Gets the native enum value as an integer that is associated with this Java enum value
+         * @return this value's associated native enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSignatureType getEnumValueFromInteger(int value) {
             AwsSignatureType enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -101,6 +136,7 @@ public class AwsSigningConfig extends CrtResource {
             enumMapping.put(HTTP_REQUEST_VIA_QUERY_PARAMS.getNativeValue(), HTTP_REQUEST_VIA_QUERY_PARAMS);
             enumMapping.put(HTTP_REQUEST_CHUNK.getNativeValue(), HTTP_REQUEST_CHUNK);
             enumMapping.put(HTTP_REQUEST_EVENT.getNativeValue(), HTTP_REQUEST_EVENT);
+            enumMapping.put(HTTP_REQUEST_TRAILING_HEADERS.getNativeValue(), HTTP_REQUEST_TRAILING_HEADERS);
 
             return enumMapping;
         }
@@ -117,8 +153,10 @@ public class AwsSigningConfig extends CrtResource {
     public class AwsSignedBodyValue {
         public static final String EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         public static final String UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
+        public static final String STREAMING_UNSIGNED_PAYLOAD_TRAILER = "STREAMING-UNSIGNED-PAYLOAD-TRAILER";
         public static final String STREAMING_AWS4_HMAC_SHA256_PAYLOAD = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
         public static final String STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD = "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD";
+        public static final String STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER = "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER";
         public static final String STREAMING_AWS4_HMAC_SHA256_EVENTS = "STREAMING-AWS4-HMAC-SHA256-EVENTS";
     }
 
@@ -126,15 +164,31 @@ public class AwsSigningConfig extends CrtResource {
      * Controls if signing adds a header containing the canonical request's body value
      */
     public enum AwsSignedBodyHeaderType {
+        /** Do not add any signing information about the body to the signed request */
         NONE(0),
+
+        /** Add the 'X-Amz-Content-Sha256' header to the signed request */
         X_AMZ_CONTENT_SHA256(1);
 
+        /**
+         * Constructs a Java enum value from a native enum value as an integer
+         * @param nativeValue native enum value
+         */
         AwsSignedBodyHeaderType(int nativeValue) {
             this.nativeValue = nativeValue;
         }
 
+        /**
+         * Gets the native enum value as an integer that is associated with this Java enum value
+         * @return this value's associated native enum value
+         */
         public int getNativeValue() { return nativeValue; }
 
+        /**
+         * Creates a Java enum value from a native enum value as an integer
+         * @param value native enum value
+         * @return the corresponding Java enum value
+         */
         public static AwsSignedBodyHeaderType getEnumValueFromInteger(int value) {
             AwsSignedBodyHeaderType enumValue = enumMapping.get(value);
             if (enumValue != null) {
@@ -172,8 +226,15 @@ public class AwsSigningConfig extends CrtResource {
     private int signedBodyHeader = AwsSignedBodyHeaderType.NONE.getNativeValue();
     private long expirationInSeconds = 0;
 
+    /**
+     * Default constructor
+     */
     public AwsSigningConfig() {}
 
+    /**
+     * Creates a new signing configuration from this one.
+     * @return a clone of this signing configuration
+     */
     public AwsSigningConfig clone() {
         try (AwsSigningConfig clone = new AwsSigningConfig()) {
 

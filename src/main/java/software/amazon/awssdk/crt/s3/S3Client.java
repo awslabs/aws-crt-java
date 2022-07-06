@@ -13,21 +13,23 @@ import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
+import java.net.URI;
 
 public class S3Client extends CrtResource {
 
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private final String region;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
-
-        acquireNativeHandle(s3ClientNew(this, options.getRegion().getBytes(UTF8),
+        region = options.getRegion();
+        acquireNativeHandle(s3ClientNew(this, region.getBytes(UTF8),
                 options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
-                options.getThroughputTargetGbps(), options.getMaxConnections(),
-                options.getStandardRetryOptions(), options.getComputeContentMd5()));
+                options.getThroughputTargetGbps(), options.getMaxConnections(), options.getStandardRetryOptions(),
+                options.getComputeContentMd5()));
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
@@ -58,13 +60,26 @@ public class S3Client extends CrtResource {
                 options.getResponseHandler());
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
+        long credentialsProviderNativeHandle = 0;
+        if (options.getCredentialsProvider() != null) {
+            credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
+        }
+        URI endpoint = options.getEndpoint();
+        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue() : ChecksumAlgorithm.NONE.getNativeValue();
 
-        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest,
-                options.getMetaRequestType().getNativeValue(), httpRequestBytes,
-                options.getHttpRequest().getBodyStream(), responseHandlerNativeAdapter);
+        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
+                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(), httpRequestBytes,
+                options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8));
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-
+        if (credentialsProviderNativeHandle != 0) {
+            /*
+             * Keep the java object alive until the meta Request shut down and release all
+             * the resources it's pointing to
+             */
+            metaRequest.addReferenceTo(options.getCredentialsProvider());
+        }
         return metaRequest;
     }
 
@@ -98,11 +113,12 @@ public class S3Client extends CrtResource {
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
             long tlsContext, long signingConfig, long partSize, double throughputTargetGbps, int maxConnections,
-            StandardRetryOptions standardRetryOptions, Boolean computeContentMd5) throws CrtRuntimeException;
+            StandardRetryOptions standardRetryOptions, boolean computeContentMd5) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
-    private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, int metaRequestType,
-            byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
-            S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter);
+    private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
+            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
+            byte[] endpoint);
 }

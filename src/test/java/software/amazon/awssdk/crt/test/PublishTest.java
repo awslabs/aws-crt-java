@@ -5,15 +5,20 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assume;
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import software.amazon.awssdk.crt.mqtt.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class PublishTest extends MqttClientConnectionFixture {
     @Rule
@@ -22,27 +27,82 @@ public class PublishTest extends MqttClientConnectionFixture {
     public PublishTest() {
     }
 
-    static final String TEST_TOPIC = "publish/me/senpai";
+    final String TEST_TOPIC = "publish/me/senpai" + (UUID.randomUUID()).toString();
     static final String TEST_PAYLOAD = "PUBLISH ME! SHINY AND CHROME!";
+    static final String EMPTY_PAYLOAD = "";
 
-    int pubsAcked = 0;
+    final Lock receivedLock = new ReentrantLock();
+    final Condition receivedSignal  = receivedLock.newCondition();
 
-    @Test
-    public void testPublish() {
-        skipIfNetworkUnavailable();
-        connect();
+    ArrayList<MqttMessage> receivedMessages = new ArrayList<>();
 
+    private void onPublishHandler(MqttMessage message) {
+        receivedLock.lock();
+        receivedMessages.add(message);
+        receivedSignal.signal();
+        receivedLock.unlock();
+    }
+
+    private void subscribe() {
         try {
-            MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
-            CompletableFuture<Integer> published = connection.publish(message);
-            published.thenApply(packetId -> pubsAcked++);
-            published.get();
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
+                    this::onPublishHandler);
 
-            assertEquals("Published", 1, pubsAcked);
+            subscribed.get();
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
+    }
 
+    private void publishAndCheck(byte[] payload) {
+        try {
+            MqttMessage message = new MqttMessage(TEST_TOPIC, payload, QualityOfService.AT_LEAST_ONCE);
+            CompletableFuture<Integer> published = connection.publish(message);
+            published.get();
+
+            // test time out will break us out of this on failure
+            receivedLock.lock();
+            while(receivedMessages.size() == 0) {
+                receivedSignal.await();
+            }
+
+            MqttMessage received = receivedMessages.get(0);
+            Assert.assertEquals(
+                    Arrays.toString(message.getPayload()),
+                    Arrays.toString(payload));
+
+            receivedLock.unlock();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testRoundTrip() {
+        skipIfNetworkUnavailable();
+        connect();
+        subscribe();
+        publishAndCheck(TEST_PAYLOAD.getBytes());
+        disconnect();
+        close();
+    }
+
+    @Test
+    public void testEmptyRoundTrip() {
+        skipIfNetworkUnavailable();
+        connect();
+        subscribe();
+        publishAndCheck(EMPTY_PAYLOAD.getBytes());
+        disconnect();
+        close();
+    }
+
+    @Test
+    public void testNullRoundTrip() {
+        skipIfNetworkUnavailable();
+        connect();
+        subscribe();
+        publishAndCheck(null);
         disconnect();
         close();
     }

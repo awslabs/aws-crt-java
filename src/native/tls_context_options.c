@@ -32,6 +32,7 @@ struct jni_tls_ctx_options {
     struct aws_string *pkcs12_password;
     struct aws_string *certificate;
     struct aws_string *private_key;
+    struct aws_string *windows_cert_store_path;
     struct aws_string *ca_root;
 
     struct aws_tls_ctx_pkcs11_options *pkcs11_options;
@@ -120,6 +121,7 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_string_destroy_secure(tls->pkcs12_password);
     aws_string_destroy(tls->certificate);
     aws_string_destroy_secure(tls->private_key);
+    aws_string_destroy(tls->windows_cert_store_path);
     aws_string_destroy(tls->ca_root);
 
     aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
@@ -150,7 +152,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jobject jni_pkcs11_options,
     jobject jni_custom_key_op_handler,
     jstring jni_custom_key_op_cert_path,
-    jstring jni_custom_key_op_cert_contents) {
+    jstring jni_custom_key_op_cert_contents,
+    jstring jni_windows_cert_store_path) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -250,9 +253,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
             goto on_error;
         }
-    }
-#if defined(__APPLE__)
-    else if (jni_pkcs12_path && jni_pkcs12_password) {
+    } else if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
         if (!tls->pkcs12_path) {
             aws_jni_throw_runtime_exception(env, "failed to get pkcs12Path string");
@@ -270,10 +271,20 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_pkcs12_from_path failed");
             goto on_error;
         }
+    } else if (jni_windows_cert_store_path) {
+        tls->windows_cert_store_path = aws_jni_new_string_from_jstring(env, jni_windows_cert_store_path);
+        if (!tls->windows_cert_store_path) {
+            aws_jni_throw_runtime_exception(env, "failed to get windowsCertStorePath string");
+            goto on_error;
+        }
+
+        if (aws_tls_ctx_options_init_client_mtls_from_system_path(
+                &tls->options, allocator, aws_string_c_str(tls->windows_cert_store_path))) {
+
+            aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_system_path failed");
+            goto on_error;
+        }
     }
-#endif
-    (void)jni_pkcs12_path;
-    (void)jni_pkcs12_password;
 
     if (jni_ca) {
         tls->ca_root = aws_jni_new_string_from_jstring(env, jni_ca);

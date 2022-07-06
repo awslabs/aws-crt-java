@@ -91,3 +91,6 @@ settings.xml
 
 bin/
 log.txt
+# docs are updated automatically by .github/workflows/docs.yml
+docs/
+

@@ -5,6 +5,9 @@
 
 package software.amazon.awssdk.crt;
 
+/**
+ * Utility class for querying system hardware properties
+ */
 public class SystemInfo {
 
     /**

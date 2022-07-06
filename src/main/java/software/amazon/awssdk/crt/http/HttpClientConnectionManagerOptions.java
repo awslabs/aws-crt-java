@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.http;
 import java.net.URI;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
@@ -20,16 +21,21 @@ public class HttpClientConnectionManagerOptions {
     private ClientBootstrap clientBootstrap;
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
+    private TlsConnectionOptions tlsConnectionOptions;
     private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
-    private int port;
+    private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
+    private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
 
+    /**
+     * Default constructor
+     */
     public HttpClientConnectionManagerOptions() {
     }
 
@@ -78,6 +84,23 @@ public class HttpClientConnectionManagerOptions {
      * @return the tls context used by connections in the connection pool
      */
     public TlsContext getTlsContext() { return tlsContext; }
+
+    /**
+     * Sets the connection-specific TLS options to use for connections in the connection pool.
+     * Either TLS context or TLS connection options will be enough to set up TLS connection.
+     * If both set, an exception will be raised.
+     * @param tlsConnectionOptions The TlsConnectionOptions to use
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
+        this.tlsConnectionOptions = tlsConnectionOptions;
+        return this;
+    }
+
+    /**
+     * @return the tls context used by connections in the connection pool
+     */
+    public TlsConnectionOptions getTlsConnectionOptions() { return tlsConnectionOptions; }
 
     /**
      * Sets the IO channel window size to use for connections in the connection pool
@@ -136,7 +159,8 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * @return the port to connect to for connections in the connection pool
+     * @return the port to connect to for connections in the connection pool.
+     *         Returns -1 if none has been explicitly set.
      */
     public int getPort() { return port; }
 
@@ -197,6 +221,24 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
+     * Set the expected protocol version of the connection to be made, default is HTTP/1.1
+     *
+     * @param expectedHttpVersion The expected protocol version of the connection made
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withExpectedHttpVersion(HttpVersion expectedHttpVersion) {
+        this.expectedHttpVersion = expectedHttpVersion;
+        return this;
+    }
+
+    /**
+     * @return Return the expected HTTP protocol version.
+     */
+    public HttpVersion getExpectedHttpVersion() {
+        return expectedHttpVersion;
+    }
+
+    /**
      * Sets maximum amount of time, in milliseconds, that the connection can be idle in the manager before
      * getting culled by the manager
      * @param maxConnectionIdleInMilliseconds How long to allow connections to be idle before reaping them
@@ -227,4 +269,3 @@ public class HttpClientConnectionManagerOptions {
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
 }
-

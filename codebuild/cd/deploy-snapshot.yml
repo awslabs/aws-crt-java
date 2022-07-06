@@ -27,6 +27,7 @@ phases:
       - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
+      - cp -rv $CODEBUILD_SRC_DIR_osx_arm64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
@@ -36,6 +37,8 @@ phases:
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      # Use the password from secret manager to update the settings
+      - sed -i 's/password-to-replace/'"$ST_PASSWORD"'/g' $HOME/.m2/settings.xml
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java

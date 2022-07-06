@@ -4,6 +4,7 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
@@ -32,6 +33,9 @@ public abstract class CrtResource implements AutoCloseable {
 
     private static final Log.LogLevel ResourceLogLevel = Log.LogLevel.Debug;
 
+    /**
+     * Debug/diagnostic data about a CrtResource object
+     */
     public class ResourceInstance {
         public long nativeHandle;
         public final String canonicalName;
@@ -100,6 +104,9 @@ public abstract class CrtResource implements AutoCloseable {
         new CRT();
     }
 
+    /**
+     * Default constructor
+     */
     public CrtResource() {
         if (debugNativeObjects) {
             String canonicalName = this.getClass().getCanonicalName();
@@ -152,6 +159,11 @@ public abstract class CrtResource implements AutoCloseable {
         resource.decRef();
     }
 
+    /**
+     * Swaps a reference from one resource to another
+     * @param oldReference resource to stop referencing
+     * @param newReference resource to start referencing
+     */
     protected void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
         if (oldReference != newReference) {
             if (newReference != null) {
@@ -306,10 +318,18 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    /**
+     * Sets a custom logging description for this resource
+     * @param description custom resource description
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * Gets a debug/diagnostic string describing this resource and its reference state
+     * @return resource diagnostic string
+     */
     public String getResourceLogDescription() {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
@@ -325,6 +345,10 @@ public abstract class CrtResource implements AutoCloseable {
         return builder.toString();
     }
 
+    /**
+     * Applies a resource description consuming functor to all CRTResource objects
+     * @param fn function to apply to each resource description
+     */
     public static void collectNativeResources(Consumer<String> fn) {
         collectNativeResource((ResourceInstance resource) -> {
             String str = String.format(" * Address: %d: %s", resource.nativeHandle,
@@ -333,6 +357,10 @@ public abstract class CrtResource implements AutoCloseable {
         });
     }
 
+    /**
+     * Applies a generic diagnostic-gathering functor to all CRTResource objects
+     * @param fn function to apply to each outstanding Crt resource
+     */
     public static void collectNativeResource(Consumer<ResourceInstance> fn) {
         synchronized(CrtResource.class) {
             for (Map.Entry<Long, ResourceInstance> entry : CRT_RESOURCES.entrySet()) {
@@ -393,6 +421,7 @@ public abstract class CrtResource implements AutoCloseable {
      * a period of waiting.
      */
     public static void waitForNoResources() {
+        ClientBootstrap.closeStaticDefault();
         EventLoopGroup.closeStaticDefault();
         HostResolver.closeStaticDefault();
 

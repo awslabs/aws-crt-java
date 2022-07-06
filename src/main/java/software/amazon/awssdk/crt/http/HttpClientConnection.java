@@ -6,6 +6,8 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.HashMap;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -29,7 +31,7 @@ public class HttpClientConnection extends CrtResource {
     }
 
     /**
-     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection.
+     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection specific to HTTP/1.1 connection.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
@@ -37,18 +39,39 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler) throws CrtRuntimeException {
+    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
+            throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-
-        HttpStream stream = httpClientConnectionMakeRequest(getNativeHandle(),
-            request.marshalForJni(),
-            request.getBodyStream(),
-            new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        if (stream == null || stream.isNull()) {
-            throw new CrtRuntimeException(awsLastError());
+        if (getVersion() == HttpVersion.HTTP_2) {
+            throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
         }
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+
+        return (HttpStream)stream;
+    }
+
+    /**
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection applies to both HTTP/2 and HTTP/1.1 connection.
+     *
+     * @param request The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native EventLoop
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
+     *          request/response, but must be closed by the user thread making this request when it's done.
+     */
+    public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+        }
+        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
 
         return stream;
     }
@@ -78,6 +101,10 @@ public class HttpClientConnection extends CrtResource {
         httpClientConnectionShutdown(getNativeHandle());
     }
 
+    public HttpVersion getVersion() {
+        short version = httpClientConnectionGetVersion(getNativeHandle());
+        return HttpVersion.getEnumValueFromInteger((int) version);
+    };
 
     /** Called from Native when a new connection is acquired **/
     private static void onConnectionAcquired(CompletableFuture<HttpClientConnection> acquireFuture, long nativeConnectionBinding, int errorCode) {
@@ -85,15 +112,26 @@ public class HttpClientConnection extends CrtResource {
             acquireFuture.completeExceptionally(new HttpException(errorCode));
             return;
         }
-
-        HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
-        acquireFuture.complete(conn);
+        if (HttpVersion.getEnumValueFromInteger(
+                (int) httpClientConnectionGetVersion(nativeConnectionBinding)) == HttpVersion.HTTP_2) {
+            HttpClientConnection h2Conn = new Http2ClientConnection(nativeConnectionBinding);
+            if (!acquireFuture.complete(h2Conn)) {
+                // future was already completed/cancelled, return it immediately to the pool to not leak it
+                h2Conn.close();
+            }
+        } else {
+            HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
+            if (!acquireFuture.complete(conn)) {
+                // future was already completed/cancelled, return it immediately to the pool to not leak it
+                conn.close();
+            }
+        }
     }
 
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native HttpStream httpClientConnectionMakeRequest(long connectionBinding,
+    private static native HttpStreamBase httpClientConnectionMakeRequest(long connectionBinding,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
@@ -101,4 +139,5 @@ public class HttpClientConnection extends CrtResource {
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
 
     private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
+    private static native short httpClientConnectionGetVersion(long connectionBinding) throws CrtRuntimeException;
 }

@@ -25,13 +25,13 @@ public class ClientConnectionContinuation extends CrtResource {
      * @param operationName name for the operation to be invoked by the peer endpoint.
      * @param headers headers for the event-stream message, may be null or empty.
      * @param payload payload for the event-stream message, may be null or empty.
-     * @param messsageType messageType for the message. Must be ApplicationMessage or ApplicationError
+     * @param messageType messageType for the message. Must be ApplicationMessage or ApplicationError
      * @param messageFlags union of flags for MessageFlags.getByteValue()
      * @param callback callback to be invoked upon the message being flushed to the underlying transport.
      */
     public void activate(final String operationName,
                          final List<Header> headers, final byte[] payload,
-                         final MessageType messsageType, int messageFlags,
+                         final MessageType messageType, int messageFlags,
                          MessageFlushCallback callback) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
@@ -40,7 +40,7 @@ public class ClientConnectionContinuation extends CrtResource {
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = activateContinuation(getNativeHandle(), this, operationName.getBytes(StandardCharsets.UTF_8),
-                headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);
+                headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
         if (result != 0) {
             int errorCode = CRT.awsLastError();
@@ -53,17 +53,17 @@ public class ClientConnectionContinuation extends CrtResource {
      * @param operationName name of the operation to invoke on the server.
      * @param headers list of additional event stream headers to include on the message.
      * @param payload payload for the message
-     * @param messsageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageType message type. Must be either ApplicationMessage or ApplicationError
      * @param messageFlags message flags for the message.
      * @return Completeable future for syncing with the connection completing or failing.
      */
     public CompletableFuture<Void> activate(final String operationName,
                                       final List<Header> headers, final byte[] payload,
-                                      final MessageType messsageType, int messageFlags) {
+                                      final MessageType messageType, int messageFlags) {
 
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
-        activate(operationName, headers, payload, messsageType, messageFlags, new MessageFlushCallback() {
+        activate(operationName, headers, payload, messageType, messageFlags, new MessageFlushCallback() {
             @Override
             public void onCallbackInvoked(int errorCode) {
                 if (errorCode == 0) {
@@ -81,14 +81,14 @@ public class ClientConnectionContinuation extends CrtResource {
      * Sends message on the continuation
      * @param headers list of additional event stream headers to include on the message.
      * @param payload payload for the message
-     * @param messsageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageType message type. Must be either ApplicationMessage or ApplicationError
      * @param messageFlags message flags for the message, use TerminateStream to cause this message
      *                     to close the continuation after sending.
      * @param callback completion callback to be invoked when the message is synced to the underlying
      *                 transport.
      */
     public void sendMessage(final List<Header> headers, final byte[] payload,
-                         final MessageType messsageType, int messageFlags,
+                         final MessageType messageType, int messageFlags,
                          MessageFlushCallback callback) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
@@ -97,7 +97,7 @@ public class ClientConnectionContinuation extends CrtResource {
         byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
         int result = sendContinuationMessage(getNativeHandle(),
-                headersBuf, payload, messsageType.getEnumValue(), messageFlags, callback);
+                headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
         if (result != 0) {
             int errorCode = CRT.awsLastError();
@@ -109,20 +109,20 @@ public class ClientConnectionContinuation extends CrtResource {
      * Sends message on the continuation
      * @param headers list of additional event stream headers to include on the message.
      * @param payload payload for the message
-     * @param messsageType message type. Must be either ApplicationMessage or ApplicationError
+     * @param messageType message type. Must be either ApplicationMessage or ApplicationError
      * @param messageFlags message flags for the message, use TerminateStream to cause this message
      *                     to close the continuation after sending.
      * @return Future for syncing when the message is flushed to the transport or fails.
      */
     public CompletableFuture<Void> sendMessage(final List<Header> headers, final byte[] payload,
-                                            final MessageType messsageType, int messageFlags) {
+                                            final MessageType messageType, int messageFlags) {
         if (isNull()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
 
         CompletableFuture<Void> messageFlush = new CompletableFuture<>();
 
-        sendMessage(headers, payload, messsageType, messageFlags, new MessageFlushCallback() {
+        sendMessage(headers, payload, messageType, messageFlags, new MessageFlushCallback() {
             @Override
             public void onCallbackInvoked(int errorCode) {
                 if (errorCode == 0) {

@@ -15,6 +15,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
@@ -32,7 +33,14 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int port;
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
+    private final HttpVersion expectedHttpVersion;
 
+    /**
+     * Factory function for HttpClientConnectionManager instances
+     *
+     * @param options configuration options
+     * @return a new instance of an HttpClientConnectionManager
+     */
     public static HttpClientConnectionManager create(HttpClientConnectionManagerOptions options) {
         return new HttpClientConnectionManager(options);
     }
@@ -52,7 +60,12 @@ public class HttpClientConnectionManager extends CrtResource {
 
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = options.getTlsContext();
-        if (useTls && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+        TlsConnectionOptions tlsConnectionOptions = options.getTlsConnectionOptions();
+        if(tlsContext!= null && tlsConnectionOptions != null) {
+            throw new IllegalArgumentException("Cannot set both TlsContext and TlsConnectionOptions.");
+        }
+        boolean tlsSet = (tlsContext!= null || tlsConnectionOptions != null);
+        if (useTls && !tlsSet) { throw new IllegalArgumentException("TlsContext or TlsConnectionOptions must not be null if https is used"); }
 
         int windowSize = options.getWindowSize();
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
@@ -63,11 +76,14 @@ public class HttpClientConnectionManager extends CrtResource {
         int maxConnections = options.getMaxConnections();
         if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
 
-        int port = uri.getPort();
-        /* Pick a default port based on the scheme if one wasn't set in the URI */
+        int port = options.getPort();
         if (port == -1) {
-            if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
-            if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            port = uri.getPort();
+            /* Pick a default port based on the scheme if one wasn't set */
+            if (port == -1) {
+                if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
+                if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
+            }
         }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
@@ -76,6 +92,7 @@ public class HttpClientConnectionManager extends CrtResource {
         this.uri = uri;
         this.port = port;
         this.maxConnections = maxConnections;
+        this.expectedHttpVersion = options.getExpectedHttpVersion();
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -106,7 +123,8 @@ public class HttpClientConnectionManager extends CrtResource {
         acquireNativeHandle(httpClientConnectionManagerNew(this,
                                             clientBootstrap.getNativeHandle(),
                                             socketOptions.getNativeHandle(),
-                                            useTls ? tlsContext.getNativeHandle() : 0,
+                                            useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
+                                            useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                                             windowSize,
                                             uri.getHost().getBytes(UTF8),
                                             port,
@@ -121,12 +139,18 @@ public class HttpClientConnectionManager extends CrtResource {
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
-                                            monitoringFailureIntervalInSeconds));
+                                            monitoringFailureIntervalInSeconds,
+                                            expectedHttpVersion.getValue()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
          if (useTls) {
-             addReferenceTo(tlsContext);
+            if (tlsContext != null) {
+                addReferenceTo(tlsContext);
+            }
+            if (tlsConnectionOptions != null) {
+                addReferenceTo(tlsConnectionOptions);
+            }
          }
     }
 
@@ -197,10 +221,16 @@ public class HttpClientConnectionManager extends CrtResource {
         return maxConnections;
     }
 
+    /**
+     * @return size of the per-connection streaming read window for response handling
+     */
     public int getWindowSize() {
         return windowSize;
     }
 
+    /**
+     * @return uri the connection manager is making connections to
+     */
     public URI getUri() {
         return uri;
     }
@@ -213,6 +243,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long client_bootstrap,
                                                         long socketOptions,
                                                         long tlsContext,
+                                                        long tlsConnectionOptions,
                                                         int windowSize,
                                                         byte[] endpoint,
                                                         int port,
@@ -227,7 +258,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         boolean isManualWindowManagement,
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,
-                                                        int monitoringFailureIntervalInSeconds) throws CrtRuntimeException;
+                                                        int monitoringFailureIntervalInSeconds,
+                                                        int expectedProtocol) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

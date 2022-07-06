@@ -15,11 +15,16 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
     }
 
-    void onFinished(int errorCode, int responseStatus, byte[] errorPayload) {
-        this.responseHandler.onFinished(errorCode, responseStatus, errorPayload);
+    void onFinished(int errorCode, int responseStatus, byte[] errorPayload, int checksumAlgorithm, boolean didValidateChecksum) {
+        S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum);
+        this.responseHandler.onFinished(context);
     }
 
     void onResponseHeaders(final int statusCode, final ByteBuffer headersBlob) {
         responseHandler.onResponseHeaders(statusCode, HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob));
+    }
+
+    void onProgress(final S3MetaRequestProgress progress) {
+        responseHandler.onProgress(progress);
     }
 }

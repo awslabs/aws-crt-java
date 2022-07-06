@@ -7,13 +7,25 @@ package software.amazon.awssdk.crt.io;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
+/**
+ * Java wrapper around the native CRT host resolver, responsible for performing async dns lookups
+ */
 public class HostResolver extends CrtResource {
     private final static int DEFAULT_MAX_ENTRIES = 8;
 
+    /**
+     *
+     * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
+     */
     public HostResolver(EventLoopGroup elg) throws CrtRuntimeException {
         this(elg, DEFAULT_MAX_ENTRIES);
     }
 
+    /**
+     *
+     * @param elg event loop group to pass to the host resolver.  Not currently used but still mandatory.
+     * @param maxEntries maximum size of the name to address mapping cache
+     */
     public HostResolver(EventLoopGroup elg, int maxEntries) throws CrtRuntimeException {
         acquireNativeHandle(hostResolverNew(elg.getNativeHandle(), maxEntries));
         addReferenceTo(elg);
@@ -68,7 +80,15 @@ public class HostResolver extends CrtResource {
     }
 
     /**
-     * Gets the static default host resolver, creating it if necessary
+     * Gets the static default HostResolver, creating it if necessary.
+     *
+     * This default will be used when a HostResolver is not explicitly passed but is needed
+     * to allow the process to function. An example of this would be in the MQTT connection creation workflow.
+     *
+     * The HostResolver will be set to have a maximum of 8 entries by default.
+     *
+     * The default HostResolver will be automatically managed and released when it's
+     * resources are being freed, not requiring any manual memory management.
      * @return the static default host resolver
      */
     static HostResolver getOrCreateStaticDefault() {

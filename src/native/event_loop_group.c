@@ -49,17 +49,26 @@ static void s_event_loop_group_cleanup_completion_callback(void *user_data) {
     (*jvm)->AttachCurrentThread(jvm, (void **)&temp_env, NULL);
     env = temp_env;
 #endif
-    (*env)->CallVoidMethod(env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
-    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    // Remove the ref that was probably keeping the Java event loop group alive.
-    (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
+    /*
+     * The likely cause of env being null is the JVM shutting down before our stuff completely shuts down.  In that
+     * case, let's not even free memory.  This is most likely a consequence of a "failed" gentle shutdown so all
+     * the library clean up and allocator/logging clean up wont get called, but let's not even take that risk.
+     */
+    if (env != NULL) {
+        (*env)->CallVoidMethod(
+            env, callback_data->java_event_loop_group, event_loop_group_properties.onCleanupComplete);
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    // We're done with this callback data, free it.
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mem_release(allocator, callback_data);
+        // Remove the ref that was probably keeping the Java event loop group alive.
+        (*env)->DeleteGlobalRef(env, callback_data->java_event_loop_group);
 
-    (*jvm)->DetachCurrentThread(jvm);
+        // We're done with this callback data, free it.
+        struct aws_allocator *allocator = aws_jni_get_allocator();
+        aws_mem_release(allocator, callback_data);
+
+        (*jvm)->DetachCurrentThread(jvm);
+    }
 }
 
 JNIEXPORT

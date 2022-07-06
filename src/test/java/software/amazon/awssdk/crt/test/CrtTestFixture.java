@@ -15,7 +15,6 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.test.CrtTestContext;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import java.io.File;
@@ -59,6 +58,7 @@ public class CrtTestFixture {
 
         EventLoopGroup.closeStaticDefault();
         HostResolver.closeStaticDefault();
+        ClientBootstrap.closeStaticDefault();
 
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {

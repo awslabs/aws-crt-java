@@ -15,6 +15,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
@@ -59,7 +60,12 @@ public class HttpClientConnectionManager extends CrtResource {
 
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = options.getTlsContext();
-        if (useTls && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+        TlsConnectionOptions tlsConnectionOptions = options.getTlsConnectionOptions();
+        if(tlsContext!= null && tlsConnectionOptions != null) {
+            throw new IllegalArgumentException("Cannot set both TlsContext and TlsConnectionOptions.");
+        }
+        boolean tlsSet = (tlsContext!= null || tlsConnectionOptions != null);
+        if (useTls && !tlsSet) { throw new IllegalArgumentException("TlsContext or TlsConnectionOptions must not be null if https is used"); }
 
         int windowSize = options.getWindowSize();
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
@@ -117,7 +123,8 @@ public class HttpClientConnectionManager extends CrtResource {
         acquireNativeHandle(httpClientConnectionManagerNew(this,
                                             clientBootstrap.getNativeHandle(),
                                             socketOptions.getNativeHandle(),
-                                            useTls ? tlsContext.getNativeHandle() : 0,
+                                            useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
+                                            useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                                             windowSize,
                                             uri.getHost().getBytes(UTF8),
                                             port,
@@ -138,7 +145,12 @@ public class HttpClientConnectionManager extends CrtResource {
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
          if (useTls) {
-             addReferenceTo(tlsContext);
+            if (tlsContext != null) {
+                addReferenceTo(tlsContext);
+            }
+            if (tlsConnectionOptions != null) {
+                addReferenceTo(tlsConnectionOptions);
+            }
          }
     }
 
@@ -231,6 +243,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long client_bootstrap,
                                                         long socketOptions,
                                                         long tlsContext,
+                                                        long tlsConnectionOptions,
                                                         int windowSize,
                                                         byte[] endpoint,
                                                         int port,

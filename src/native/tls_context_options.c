@@ -55,7 +55,7 @@ struct jni_tls_ctx_options {
 
 static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operation *operation, void *user_data) {
     struct custom_key_op_handler *op_handler = user_data;
-    JNIEnv *env = aws_jni_get_thread_env(op_handler->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     AWS_FATAL_ASSERT(env != NULL);
 
     jbyteArray jni_input_data = NULL;

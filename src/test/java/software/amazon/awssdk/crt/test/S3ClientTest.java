@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -40,8 +41,8 @@ import javax.naming.Context;
 
 public class S3ClientTest extends CrtTestFixture {
 
-    static final String ENDPOINT = System.getenv("S3ENDPOINT") == null ?
-            "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("S3ENDPOINT");
+    static final String ENDPOINT = System.getenv("ENDPOINT") == null ?
+            "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("ENDPOINT");
     static final String REGION = System.getenv("REGION") == null ? "us-west-2" : System.getenv("REGION");
 
     static final String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
@@ -383,6 +384,8 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
+        Log.initLoggingToStdout(LogLevel.Trace);
+
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -422,7 +425,7 @@ public class S3ClientTest extends CrtTestFixture {
                 
                 /* This is a bit hacky but currently there is no way to determine that put request started. 
                  * OnProgress or OnBody callbacks are not triggered for puts. */
-                TimeUnit.MILLISECONDS.sleep(500);
+                TimeUnit.MILLISECONDS.sleep(100);
 
                 resumeToken = metaRequest.pause();
                 Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Resume token: " + resumeToken);

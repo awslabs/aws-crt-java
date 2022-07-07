@@ -12,11 +12,7 @@
 #include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
 
-/* TODO: move this to its own file */
-struct custom_key_op_handler {
-    JavaVM *jvm;
-    jobject jni_handler;
-};
+#include "custom_key_op_handler.h"
 
 /* Have to wrap the native struct so we can manage string lifetime */
 struct jni_tls_ctx_options {
@@ -57,6 +53,10 @@ static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operati
     struct custom_key_op_handler *op_handler = user_data;
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     AWS_FATAL_ASSERT(env != NULL);
+
+    // TODO - right now "op_handler->jni_handler" is a reference to the "operationHandler", but
+    // we could, and maybe should, have it be a reference to the "TlsContextCustomKeyOperationOptions"
+    // and then get the operationHandler from there...
 
     jbyteArray jni_input_data = NULL;
     jobject jni_operation = NULL;
@@ -105,6 +105,8 @@ clean_up:
     if (!success) {
         aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_UNKNOWN);
     }
+
+    aws_jni_release_thread_env(op_handler->jvm, env);
 }
 
 static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
@@ -150,9 +152,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jstring jni_pkcs12_path,
     jstring jni_pkcs12_password,
     jobject jni_pkcs11_options,
-    jobject jni_custom_key_op_handler,
-    jstring jni_custom_key_op_cert_path,
-    jstring jni_custom_key_op_cert_contents,
+    jobject jni_custom_key_op,
     jstring jni_windows_cert_store_path) {
     (void)jni_class;
 
@@ -212,24 +212,26 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failed");
             goto on_error;
         }
-    } else if (jni_custom_key_op_handler) {
+    } else if (jni_custom_key_op) {
+        // TODO - instead of having "TlsContextCustomKeyOperationOptions" keep an internal
+        // "custom_key_op_handler", maybe it should keep an internal
+        // "aws_tls_ctx_custom_key_operation_options" instead? Would simplify things a bit...
         struct aws_tls_ctx_custom_key_operation_options custom_options;
         AWS_ZERO_STRUCT(custom_options);
 
-        tls->custom_key_op_handler = aws_mem_calloc(allocator, 1, sizeof(struct custom_key_op_handler));
-
-        if ((*env)->GetJavaVM(env, &tls->custom_key_op_handler->jvm) != 0) {
-            aws_jni_throw_runtime_exception(env, "failed to get JVM");
+        jlong jni_custom_key_op_handle = (*env)->CallLongMethod(
+            env, jni_custom_key_op, crt_resource_properties.get_native_handle_method_id);
+        if (jni_custom_key_op_handle == 0) {
+            aws_jni_throw_runtime_exception(env, "failed to get custom key operation handler native handle");
             goto on_error;
         }
 
-        tls->custom_key_op_handler->jni_handler = (*env)->NewGlobalRef(env, jni_custom_key_op_handler);
-        if (!tls->custom_key_op_handler->jni_handler) {
-            goto on_error;
-        }
+        tls->custom_key_op_handler = (struct custom_key_op_handler *)jni_custom_key_op_handle;        
         custom_options.user_data = tls->custom_key_op_handler;
         custom_options.on_key_operation = s_custom_key_op_handler_perform_operation;
 
+        jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
+            tls_context_custom_key_operation_options_properties.certificateFilePath);
         if (jni_custom_key_op_cert_path) {
             tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
             if (!tls->certificate_path) {
@@ -238,6 +240,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             }
             custom_options.cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
         }
+        
+        jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(env, jni_custom_key_op,
+            tls_context_custom_key_operation_options_properties.certificateFileContents);
         if (jni_custom_key_op_cert_contents) {
             tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
             if (!tls->certificate) {

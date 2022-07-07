@@ -366,6 +366,22 @@ static void s_cache_tls_key_operation(JNIEnv *env) {
     AWS_FATAL_ASSERT(tls_key_operation_properties.constructor);
 }
 
+struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;
+
+static void s_cache_tls_context_custom_key_operation_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsContextCustomKeyOperationOptions");
+    AWS_FATAL_ASSERT(cls);
+
+    tls_context_custom_key_operation_options_properties.operationHandler = (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.operationHandler);
+
+    tls_context_custom_key_operation_options_properties.certificateFilePath = (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificateFilePath);
+
+    tls_context_custom_key_operation_options_properties.certificateFileContents = (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificateFileContents);
+}
+
 struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
 static void s_cache_tls_key_operation_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperationHandler");
@@ -853,6 +869,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_client_bootstrap(env);
     s_cache_tls_context_pkcs11_options(env);
     s_cache_tls_key_operation(env);
+    s_cache_tls_context_custom_key_operation_options(env);
     s_cache_tls_key_operation_handler(env);
     s_cache_http_client_connection_manager(env);
     s_cache_http_client_connection(env);

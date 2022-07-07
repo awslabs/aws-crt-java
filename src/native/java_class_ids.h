@@ -158,6 +158,14 @@ struct java_tls_context_pkcs11_options_properties {
 };
 extern struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_options_properties;
 
+/* TlsContextCustomKeyOperationOptions */
+struct java_tls_context_custom_key_operation_options_properties {
+    jfieldID operationHandler;
+    jfieldID certificateFilePath;
+    jfieldID certificateFileContents;
+};
+extern struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;
+
 /* TlsKeyOperation */
 struct java_tls_key_operation_properties {
     jclass cls;

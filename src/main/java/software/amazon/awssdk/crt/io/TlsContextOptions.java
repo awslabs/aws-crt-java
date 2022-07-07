@@ -122,11 +122,13 @@ public final class TlsContextOptions extends CrtResource {
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
-                customKeyOperations == null ? null : customKeyOperations.getOperationHandler(),
-                customKeyOperations == null ? null : customKeyOperations.getCertificateFilePath(),
-                customKeyOperations == null ? null : customKeyOperations.getCertificateFileContents(),
+                customKeyOperations,
                 windowsCertStorePath
             ));
+
+            if (customKeyOperations != null) {
+                addReferenceTo(customKeyOperations);
+            }
         }
         return super.getNativeHandle();
     }
@@ -517,9 +519,10 @@ public final class TlsContextOptions extends CrtResource {
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,
-                TlsKeyOperationHandler customKeyOperationHandler,
-                String customKeyOperationCertificateFilePath,
-                String customKeyOperationCertificateFileContents,
+                TlsContextCustomKeyOperationOptions customKeyOperation,
+                // TlsKeyOperationHandler customKeyOperationHandler,
+                // String customKeyOperationCertificateFilePath,
+                // String customKeyOperationCertificateFileContents,
                 String windowsCertStorePath
             );
 

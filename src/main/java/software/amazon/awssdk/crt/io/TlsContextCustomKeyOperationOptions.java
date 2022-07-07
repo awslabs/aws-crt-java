@@ -5,10 +5,13 @@
 
 package software.amazon.awssdk.crt.io;
 
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+
 /**
  * TODO: document
  */
-public class TlsContextCustomKeyOperationOptions {
+public class TlsContextCustomKeyOperationOptions extends CrtResource {
     TlsKeyOperationHandler operationHandler;
     String certificateFilePath;
     String certificateFileContents;
@@ -18,6 +21,15 @@ public class TlsContextCustomKeyOperationOptions {
      */
     public TlsContextCustomKeyOperationOptions(TlsKeyOperationHandler operationHandler) {
         this.operationHandler = operationHandler;
+        acquireNativeHandle(tlsContextCustomKeyOperationOptionsNew(this.operationHandler));
+    }
+
+    /**
+     * Frees the native resources associated with this instance
+     */
+    @Override
+    protected void releaseNativeHandle() {
+        tlsContextCustomKeyOperationOptionsDestroy(getNativeHandle());
     }
 
     /**
@@ -55,4 +67,19 @@ public class TlsContextCustomKeyOperationOptions {
     public TlsKeyOperationHandler getOperationHandler() {
         return operationHandler;
     }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    @Override
+    protected boolean canReleaseReferencesImmediately() {
+        // TODO determine if this needs to be true or false
+        return true;
+    }
+
+    private static native long tlsContextCustomKeyOperationOptionsNew(
+        TlsKeyOperationHandler operationHandler) throws CrtRuntimeException;
+    private static native long tlsContextCustomKeyOperationOptionsDestroy(long context);
+
 }

@@ -399,7 +399,7 @@ public class S3ClientTest extends CrtTestFixture {
             CompletableFuture<Void> onProgressFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture, onProgressFuture);
 
-            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(16 * 1024 * 1024));
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
                 @Override
                 public boolean sendRequestBody(ByteBuffer outBuffer) {

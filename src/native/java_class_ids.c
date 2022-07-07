@@ -372,14 +372,17 @@ static void s_cache_tls_context_custom_key_operation_options(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsContextCustomKeyOperationOptions");
     AWS_FATAL_ASSERT(cls);
 
-    tls_context_custom_key_operation_options_properties.operationHandler = (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
-    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.operationHandler);
+    tls_context_custom_key_operation_options_properties.invokePerformOperation_id = (*env)->GetMethodID(
+        env, cls, "invokePerformOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
 
-    tls_context_custom_key_operation_options_properties.certificateFilePath = (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificateFilePath);
+    tls_context_custom_key_operation_options_properties.operation_handler_field_id = (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.operation_handler_field_id);
 
-    tls_context_custom_key_operation_options_properties.certificateFileContents = (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificateFileContents);
+    tls_context_custom_key_operation_options_properties.certificate_file_path_field_id = (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
+
+    tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id = (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
 }
 
 struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;

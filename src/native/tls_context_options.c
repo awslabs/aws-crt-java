@@ -81,21 +81,17 @@ static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operati
         goto clean_up;
     }
 
-    /* Get the Jni options handler interface */
-    jobject jni_options_handler = (*env)->GetObjectField(env, op_handler->jni_key_operations_options,
-        tls_context_custom_key_operation_options_properties.operationHandler);
-    if (!jni_options_handler) {
-        aws_jni_check_and_clear_exception(env);
-        goto clean_up;
-    }
+    // TODO - handle the situation where a operation is never completed and the tls_context_options is going
+    // to be destroyed.
 
-    /* Invoke TlsKeyOperationHandler.performOperation() */
+    // Invoke TlsKeyOperationHandler.performOperation() through the invokePerformOperation
+    // function. This function will also catch any exceptions and clear the operation
+    // with an exception should it occur.
     (*env)->CallVoidMethod(
-        env, jni_options_handler, tls_key_operation_handler_properties.performOperation, jni_operation);
+        env, op_handler->jni_key_operations_options,
+        tls_context_custom_key_operation_options_properties.invokePerformOperation_id,
+        jni_operation);
 
-    /* TODO: it's ambiguous what to do if the callback throws an exception.
-     * is this a good argument for aws_tls_key_operation having both set_output AND release()
-     * instead of just complete()? then we could safely allow for multiple calls to complete/complete_with_error. */
     aws_jni_check_and_clear_exception(env);
     success = true;
 
@@ -229,7 +225,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         tls->custom_key_op_handler->operation_options.on_key_operation = s_custom_key_op_handler_perform_operation;
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
-            tls_context_custom_key_operation_options_properties.certificateFilePath);
+            tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
         if (jni_custom_key_op_cert_path) {
             tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
             if (!tls->certificate_path) {
@@ -240,7 +236,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
         
         jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(env, jni_custom_key_op,
-            tls_context_custom_key_operation_options_properties.certificateFileContents);
+            tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
         if (jni_custom_key_op_cert_contents) {
             tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
             if (!tls->certificate) {

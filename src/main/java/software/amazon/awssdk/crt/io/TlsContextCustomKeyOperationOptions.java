@@ -7,6 +7,9 @@ package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
+import software.amazon.awssdk.crt.Log.LogSubject;
 
 /**
  * TODO: document
@@ -76,6 +79,18 @@ public class TlsContextCustomKeyOperationOptions extends CrtResource {
     protected boolean canReleaseReferencesImmediately() {
         // TODO determine if this needs to be true or false
         return true;
+    }
+
+    protected void invokePerformOperation(TlsKeyOperation operation)
+    {
+        // If an exception occurs for any reason, catch it and complete the operation with an exception.
+        try {
+            this.operationHandler.performOperation(operation);
+        } catch (Exception ex) {
+            Log.log(LogLevel.Error, LogSubject.CommonGeneral,
+                "Exception occured while performing TlsKeyOperation: " + ex.toString());
+            operation.completeExceptionally(ex);
+        }
     }
 
     private static native long tlsContextCustomKeyOperationOptionsNew(

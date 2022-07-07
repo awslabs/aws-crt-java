@@ -160,9 +160,11 @@ extern struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_opti
 
 /* TlsContextCustomKeyOperationOptions */
 struct java_tls_context_custom_key_operation_options_properties {
-    jfieldID operationHandler;
-    jfieldID certificateFilePath;
-    jfieldID certificateFileContents;
+    jmethodID invokePerformOperation_id;
+
+    jfieldID operation_handler_field_id;
+    jfieldID certificate_file_path_field_id;
+    jfieldID certificate_file_contents_field_id;
 };
 extern struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;
 

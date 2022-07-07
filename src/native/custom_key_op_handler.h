@@ -15,7 +15,10 @@
 // TODO - document
 struct custom_key_op_handler {
     JavaVM *jvm;
-    jobject jni_handler;
+
+    // A reference to the Java TODO class that this struct is linked to.
+    // The interface, strings, etc, can be gotten from this class.
+    jobject jni_key_operations_options;
 
     // The operation_options we pass to S2N. This contains references to the functions,
     // the handler, etc.

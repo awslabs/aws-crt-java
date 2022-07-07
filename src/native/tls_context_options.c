@@ -54,10 +54,6 @@ static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operati
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     AWS_FATAL_ASSERT(env != NULL);
 
-    // TODO - right now "op_handler->jni_handler" is a reference to the "operationHandler", but
-    // we could, and maybe should, have it be a reference to the "TlsContextCustomKeyOperationOptions"
-    // and then get the operationHandler from there...
-
     jbyteArray jni_input_data = NULL;
     jobject jni_operation = NULL;
     bool success = false;
@@ -85,9 +81,17 @@ static void s_custom_key_op_handler_perform_operation(struct aws_tls_key_operati
         goto clean_up;
     }
 
+    /* Get the Jni options handler interface */
+    jobject jni_options_handler = (*env)->GetObjectField(env, op_handler->jni_key_operations_options,
+        tls_context_custom_key_operation_options_properties.operationHandler);
+    if (!jni_options_handler) {
+        aws_jni_check_and_clear_exception(env);
+        goto clean_up;
+    }
+
     /* Invoke TlsKeyOperationHandler.performOperation() */
     (*env)->CallVoidMethod(
-        env, op_handler->jni_handler, tls_key_operation_handler_properties.performOperation, jni_operation);
+        env, jni_options_handler, tls_key_operation_handler_properties.performOperation, jni_operation);
 
     /* TODO: it's ambiguous what to do if the callback throws an exception.
      * is this a good argument for aws_tls_key_operation having both set_output AND release()

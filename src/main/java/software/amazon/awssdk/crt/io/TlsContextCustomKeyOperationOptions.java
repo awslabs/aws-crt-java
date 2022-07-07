@@ -21,7 +21,7 @@ public class TlsContextCustomKeyOperationOptions extends CrtResource {
      */
     public TlsContextCustomKeyOperationOptions(TlsKeyOperationHandler operationHandler) {
         this.operationHandler = operationHandler;
-        acquireNativeHandle(tlsContextCustomKeyOperationOptionsNew(this.operationHandler));
+        acquireNativeHandle(tlsContextCustomKeyOperationOptionsNew(this));
     }
 
     /**
@@ -79,7 +79,7 @@ public class TlsContextCustomKeyOperationOptions extends CrtResource {
     }
 
     private static native long tlsContextCustomKeyOperationOptionsNew(
-        TlsKeyOperationHandler operationHandler) throws CrtRuntimeException;
+        TlsContextCustomKeyOperationOptions keyOperationOptions) throws CrtRuntimeException;
     private static native long tlsContextCustomKeyOperationOptionsDestroy(long context);
 
 }

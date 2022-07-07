@@ -357,7 +357,8 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    private S3MetaRequestResponseHandler createTestPutPauseResumeHandler(CompletableFuture<Integer> onFinishedFuture) {
+    private S3MetaRequestResponseHandler createTestPutPauseResumeHandler(CompletableFuture<Integer> onFinishedFuture,
+        CompletableFuture<Void> onProgressFuture) {
         return new S3MetaRequestResponseHandler() {
             @Override
             public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
@@ -376,6 +377,11 @@ public class S3ClientTest extends CrtTestFixture {
                 }
                 onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
             }
+
+            @Override
+            public void onProgress(final S3MetaRequestProgress progress) {
+                onProgressFuture.complete(null);
+            }
         };
     }
 
@@ -384,12 +390,11 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        Log.initLoggingToStdout(LogLevel.Trace);
-
         S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
-            S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture);
+            CompletableFuture<Void> onProgressFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture, onProgressFuture);
 
             final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
@@ -423,9 +428,7 @@ public class S3ClientTest extends CrtTestFixture {
             String resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 
-                /* This is a bit hacky but currently there is no way to determine that put request started. 
-                 * OnProgress or OnBody callbacks are not triggered for puts. */
-                TimeUnit.MILLISECONDS.sleep(100);
+                onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
                 Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Resume token: " + resumeToken);
@@ -459,7 +462,8 @@ public class S3ClientTest extends CrtTestFixture {
                 "/put_object_test_128MB.txt", headers, payloadStreamResume);
 
             CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
-            S3MetaRequestResponseHandler responseHandlerResume = createTestPutPauseResumeHandler(onFinishedFutureResume);
+            CompletableFuture<Void> onProgressFutureResume = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandlerResume = createTestPutPauseResumeHandler(onFinishedFutureResume, onProgressFutureResume);
             S3MetaRequestOptions metaRequestOptionsResume = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
                     .withHttpRequest(httpRequestResume)

@@ -17,6 +17,10 @@ struct custom_key_op_handler {
     JavaVM *jvm;
     jobject jni_handler;
 
+    // The operation_options we pass to S2N. This contains references to the functions,
+    // the handler, etc.
+    struct aws_tls_ctx_custom_key_operation_options operation_options;
+
     // TODO - add reference counting here?
     // TODO - need to add callback when no longer used.
 };

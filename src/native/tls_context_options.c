@@ -213,12 +213,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
     } else if (jni_custom_key_op) {
-        // TODO - instead of having "TlsContextCustomKeyOperationOptions" keep an internal
-        // "custom_key_op_handler", maybe it should keep an internal
-        // "aws_tls_ctx_custom_key_operation_options" instead? Would simplify things a bit...
-        struct aws_tls_ctx_custom_key_operation_options custom_options;
-        AWS_ZERO_STRUCT(custom_options);
-
         jlong jni_custom_key_op_handle = (*env)->CallLongMethod(
             env, jni_custom_key_op, crt_resource_properties.get_native_handle_method_id);
         if (jni_custom_key_op_handle == 0) {
@@ -226,9 +220,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
 
-        tls->custom_key_op_handler = (struct custom_key_op_handler *)jni_custom_key_op_handle;        
-        custom_options.user_data = tls->custom_key_op_handler;
-        custom_options.on_key_operation = s_custom_key_op_handler_perform_operation;
+        tls->custom_key_op_handler = (struct custom_key_op_handler *)jni_custom_key_op_handle;
+        tls->custom_key_op_handler->operation_options.user_data = tls->custom_key_op_handler;
+        tls->custom_key_op_handler->operation_options.on_key_operation = s_custom_key_op_handler_perform_operation;
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificateFilePath);
@@ -238,7 +232,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 aws_jni_throw_runtime_exception(env, "failed to get certificate path string");
                 goto on_error;
             }
-            custom_options.cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
+            tls->custom_key_op_handler->operation_options.cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
         }
         
         jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(env, jni_custom_key_op,
@@ -249,11 +243,11 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 aws_jni_throw_runtime_exception(env, "failed to get certificate contents string");
                 goto on_error;
             }
-            custom_options.cert_file_contents = aws_byte_cursor_from_string(tls->certificate);
+            tls->custom_key_op_handler->operation_options.cert_file_contents = aws_byte_cursor_from_string(tls->certificate);
         }
 
         if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                &tls->options, allocator, &custom_options)) {
+                &tls->options, allocator, &tls->custom_key_op_handler->operation_options)) {
             aws_jni_throw_runtime_exception(
                 env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
             goto on_error;

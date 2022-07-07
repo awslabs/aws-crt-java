@@ -391,13 +391,16 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         Log.initLoggingToStdout(LogLevel.Trace);
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions()
+            .withEndpoint(ENDPOINT)
+            .withRegion(REGION)
+            .withPartSize(1_000_000l);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             CompletableFuture<Void> onProgressFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture, onProgressFuture);
 
-            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(16 * 1024 * 1024));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
                 @Override
                 public boolean sendRequestBody(ByteBuffer outBuffer) {
@@ -419,7 +422,7 @@ public class S3ClientTest extends CrtTestFixture {
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
                 new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
 
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_128MB.txt", headers, payloadStream);
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_16MB.txt", headers, payloadStream);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
@@ -463,7 +466,7 @@ public class S3ClientTest extends CrtTestFixture {
                 new HttpHeader("Content-Length", Integer.valueOf(payloadResume.capacity()).toString()), };
 
             HttpRequest httpRequestResume = new HttpRequest("PUT",
-                "/put_object_test_128MB.txt", headersResume, payloadStreamResume);
+                "/put_object_test_16MB.txt", headersResume, payloadStreamResume);
 
             CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
             CompletableFuture<Void> onProgressFutureResume = new CompletableFuture<>();
@@ -474,15 +477,15 @@ public class S3ClientTest extends CrtTestFixture {
                     .withResponseHandler(responseHandlerResume)
                     .withResumeToken(resumeToken);
 
-            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Before Resume meta request started");
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptionsResume)) {
                 Integer finish = onFinishedFutureResume.get();
-                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Resume meta request finished");
                 Assert.assertEquals(Integer.valueOf(0), finish);
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+
+        Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Pause resume test finished.");
     }
 
     @Test

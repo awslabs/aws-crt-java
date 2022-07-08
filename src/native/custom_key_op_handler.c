@@ -4,9 +4,7 @@
  */
 #include "custom_key_op_handler.h"
 
-static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_op_handler *key_op_handler, struct aws_tls_key_operation *operation, void *user_data) {
-    // Unused currently (needs to be removed / totally replaced with key_op_handler->impl in all code)
-    (void)user_data;
+static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_op_handler *key_op_handler, struct aws_tls_key_operation *operation) {
 
     struct custom_key_op_handler *op_handler = (struct custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);

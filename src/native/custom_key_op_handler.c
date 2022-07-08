@@ -88,6 +88,10 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 
     // Release the global reference
     if (op_handler->jni_custom_key_op) {
+        // Let the customer clean up their stuff if needed
+        (*env)->CallVoidMethod(
+            env, op_handler->jni_custom_key_op,
+            tls_key_operation_handler_properties.invoke_on_cleanup_id);
         (*env)->DeleteGlobalRef(env, op_handler->jni_custom_key_op);
     }
 
@@ -110,9 +114,6 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
         &impl->ref_count, impl, (aws_simple_completion_callback *)s_aws_custom_key_op_handler_destroy);
 
     impl->impl = (void *)op_handler;
-    // TODO
-    // impl->cert_file_path = NULL;
-    // impl->cert_file_contents = NULL;
 
     // Get the Java ENV
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
@@ -169,34 +170,3 @@ void aws_custom_key_op_handler_java_release(struct aws_allocator *allocator, str
     /* Frees allocated memory */
     aws_mem_release(allocator, java_custom_key_op_handler);
 }
-
-// JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextCustomKeyOperationOptions_tlsContextCustomKeyOperationOptionsNew(
-//     JNIEnv *env,
-//     jclass jni_class,
-//     jobject jni_custom_key_op) {
-//     (void)jni_class;
-
-//     struct aws_allocator *allocator = aws_jni_get_allocator();
-//     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op);
-//     if (java_custom_key_op_handler == NULL) {
-//         aws_jni_throw_runtime_exception(env, "TlsContextCustomKeyOperationOptions new: Could not create new custom key operator!");
-//         return (jlong)NULL;
-//     }
-//     return (jlong)java_custom_key_op_handler;
-// }
-
-// JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextCustomKeyOperationOptions_tlsContextCustomKeyOperationOptionsDestroy(
-//     JNIEnv *env,
-//     jclass jni_class,
-//     jlong jni_custom_key_op) {
-//     (void)jni_class;
-
-//     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)jni_custom_key_op;
-//     if (!java_custom_key_op_handler) {
-//         aws_jni_throw_runtime_exception(env, "TlsContextCustomKeyOperationOptions destroy: Invalid/null custom key operator");
-//         return;
-//     }
-
-//     struct aws_allocator *allocator = aws_jni_get_allocator();
-//     aws_custom_key_op_handler_java_release(env, allocator, java_custom_key_op_handler);
-// }

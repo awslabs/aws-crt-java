@@ -12,8 +12,6 @@
 #include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
 
-// TODO - be implemented/used for TlsKeyOperationHandler.java instead of TlsContextCustomKeyOperationOptions.java
-
 // TODO - document
 struct aws_jni_custom_key_op_handler {
     JavaVM *jvm;

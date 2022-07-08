@@ -17,7 +17,7 @@ public class TlsKeyOperationHandler {
 
     // A pointer to the native C object associated with this class. If set to null, then no C object is associated.
     // Is used internally.
-    private Long nativeHandle;
+    private long nativeHandle;
 
     /**
      * Returns the operation handler events associated with this TlsKeyOperationHandler.
@@ -31,7 +31,7 @@ public class TlsKeyOperationHandler {
     }
 
     /**
-     * Calls operationHandlerEvents.performOperation, passing hte TlsKeyOperation from the tls context handler.
+     * Calls operationHandlerEvents.performOperation, passing the TlsKeyOperation from the tls context handler.
      * This function is called in JNI native code.
      *
      * If there is no operationHandlerEvents assigned, it will complete the operation with an exception.
@@ -49,6 +49,16 @@ public class TlsKeyOperationHandler {
                 "Exception occured while performing TlsKeyOperation: " + ex.toString());
             operation.completeExceptionally(ex);
         }
+    }
+
+    /**
+     * Calls operationHandlerEvents.onCleanup, allowing the interface to clean up.
+     * This function is called in JNI native code right before cleaning up the native class.
+     */
+    protected void invokeOnCleanup()
+    {
+        // TODO - seems that this isn't be called in the sample... Need to figure out why...
+        this.operationHandlerEvents.onCleanup();
     }
 
     /**
@@ -73,9 +83,11 @@ public class TlsKeyOperationHandler {
         void performOperation(TlsKeyOperation operation);
 
         /**
-         * TODO - add a function that is called when the entire thing is destroyed, so
-         * the customer can tear down whatever as needed.
+         * Invoked when the TlsKeyOperationHandler is no longer used in native code
+         * and is about to be cleaned up. If you have anything to clean up, close, or
+         * otherwise tear down for the interface, this is the place to do it.
          */
+        void onCleanup();
     }
 
 }

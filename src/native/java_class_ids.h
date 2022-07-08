@@ -168,9 +168,9 @@ extern struct java_tls_context_custom_key_operation_options_properties tls_conte
 
 /* TlsKeyOperationHandler */
 struct java_tls_key_operation_handler_properties {
-    //jfieldID operation_handler_events_field_id;
     jfieldID native_handle_field_id;
     jmethodID invoke_perform_operation_id;
+    jmethodID invoke_on_cleanup_id;
 };
 extern struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
 

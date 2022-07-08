@@ -8,7 +8,13 @@ import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.Log.LogSubject;
 
-// TODO: Document
+/**
+ * This class wraps the aws_custom_key_op_handler from aws-c-io to provide
+ * the ability to perform custom private key operations during the MQTT TLS handshake.
+ *
+ * This is necessary if you require an external library to handle private operations
+ * such as signing and decrypting.
+ */
 public class TlsKeyOperationHandler {
 
     // The interface to call when the TLS context handler gets an operation event. Will call the corresponding function

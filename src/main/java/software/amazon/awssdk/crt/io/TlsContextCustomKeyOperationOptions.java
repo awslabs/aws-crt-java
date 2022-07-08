@@ -6,15 +6,19 @@
 package software.amazon.awssdk.crt.io;
 
 /**
- * TODO: document
+ * Top level configuration for the custom TLS key operations.
  */
 public class TlsContextCustomKeyOperationOptions {
-    TlsKeyOperationHandler operationHandler;
-    String certificateFilePath;
-    String certificateFileContents;
+    private TlsKeyOperationHandler operationHandler;
+    private String certificateFilePath;
+    private String certificateFileContents;
 
     /**
-     * TODO: document
+     * Creates a new TlsContextCustomKeyOperationOptions and sets the TlsKeyOperationHandler that
+     * will be invoked when there is a TLS key operation that needs to be performed.
+     *
+     * Through the TlsKeyOperationHandler you can add your own private key operations during the
+     * MQTT TLS handshake.
      */
     public TlsContextCustomKeyOperationOptions(TlsKeyOperationHandler operationHandler) {
         this.operationHandler = operationHandler;
@@ -44,14 +48,23 @@ public class TlsContextCustomKeyOperationOptions {
         return this;
     }
 
+    /**
+     * Returns the path to the X.509 certificate file on desk if it has been set.
+     */
     public String getCertificateFilePath() {
         return certificateFilePath;
     }
 
+    /**
+     * Returns the contents of the X.509 certificate if it has been set.
+     */
     public String getCertificateFileContents() {
         return certificateFileContents;
     }
 
+    /**
+     * Returns the TlsKeyOperationHandler assigned to this class.
+     */
     public TlsKeyOperationHandler getOperationHandler() {
         return operationHandler;
     }

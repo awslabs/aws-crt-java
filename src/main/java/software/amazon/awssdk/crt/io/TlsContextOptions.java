@@ -325,7 +325,12 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Unix platforms only - TODO document
+     * Unix (Linux) platforms only - Helper which creates a TLS options using a custom private key operations. This
+     * allows you to perform custom private key operations such as signing and decrypting. This is necessary if you
+     * require an external library to handle private key operations.
+     *
+     * @param TlsContextCustomKeyOperationOptions The options for the custom private key operations
+     * @return A set of options for creating a TLS connection with custom private key operations
      */
     public static TlsContextOptions createWithMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions custom) {
         TlsContextOptions options = new TlsContextOptions();
@@ -455,7 +460,11 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Unix platforms only, TODO document.
+     * Unix platforms only, specifies TLS options for custom private key operations. This
+     * allows you to perform custom private key operations such as signing and decrypting.
+     *
+     * @param customKeyOperations The custom private key operations
+     * @return this
      */
     public TlsContextOptions withMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions customKeyOperations) {
         this.customKeyOperations = customKeyOperations;
@@ -516,9 +525,6 @@ public final class TlsContextOptions extends CrtResource {
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,
                 TlsContextCustomKeyOperationOptions customKeyOperation,
-                // TlsKeyOperationHandler customKeyOperationHandler,
-                // String customKeyOperationCertificateFilePath,
-                // String customKeyOperationCertificateFileContents,
                 String windowsCertStorePath
             );
 

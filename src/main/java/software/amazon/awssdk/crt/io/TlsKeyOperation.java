@@ -7,14 +7,30 @@ package software.amazon.awssdk.crt.io;
 import java.util.HashMap;
 import java.util.Map;
 
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
+import software.amazon.awssdk.crt.Log.LogSubject;
+
 import software.amazon.awssdk.crt.CrtResource;
 
 /* TODO: should this be a CrtResource? (how to handle close() vs complete())
  *       if we do make it a CrtResource close() needs to become idempotent,
  *       currently it can make the refcount go negative and crazy things happen */
 
+/**
+ * A class containing a TLS Private Key operation that needs to be performed.
+ * This class is passed to TlsKeyOperationHandler if a custom key operation is set
+ * in the MQTT client.
+ *
+ * You MUST call either complete(output) or completeExceptionally(exception)
+ * or the TLS connection will hang forever.
+ */
 public final class TlsKeyOperation {
 
+    /**
+     * The type of TlsKeyOperation that needs to be performed by the TlsKeyOperationHandlerEvents
+     * interface in the TlsKeyOperationHandler.
+     */
     public enum Type {
         SIGN(1), DECRYPT(2);
 
@@ -46,13 +62,13 @@ public final class TlsKeyOperation {
         static Map<Integer, Type> enumMapping = buildEnumMapping();
     }
 
-    long nativeHandle;
-    byte[] inputData;
-    Type operationType;
-    TlsSignatureAlgorithm signatureAlgorithm;
-    TlsHashAlgorithm digestAlgorithm;
+    private long nativeHandle;
+    private byte[] inputData;
+    private Type operationType;
+    private TlsSignatureAlgorithm signatureAlgorithm;
+    private TlsHashAlgorithm digestAlgorithm;
 
-    /* called from native when there's a new operation to be performed */
+    /* Called from native when there's a new operation to be performed. Creates a new TlsKeyOperation */
     protected TlsKeyOperation(long nativeHandle, byte[] inputData, int operationType, int signatureAlgorithm,
             int digestAlgorithm) {
 
@@ -74,40 +90,69 @@ public final class TlsKeyOperation {
         }
     }
 
+    /**
+     * Returns the input data from native that needs to be operated on using the private key.
+     * You can determine the operation that needs to be performed on the data using the getType function.
+     */
     public byte[] getInput() {
         return inputData;
     }
 
+    /**
+     * Returns the operation that needs to be performed.
+     */
     public Type getType() {
         return operationType;
     }
 
+    /**
+     * Returns the TLS algorithm used in the signature.
+     */
     public TlsSignatureAlgorithm getSignatureAlgorithm() {
         return signatureAlgorithm;
     }
 
+    /**
+     * Returns the TLS Hash algorithm used in the digest.
+     */
     public TlsHashAlgorithm getDigestAlgorithm() {
         return digestAlgorithm;
     }
 
+    /**
+     * The function to call when you have modified the input data using the private key and are ready to
+     * return it for use in the MQTT TLS Handshake.
+     */
     public void complete(byte[] output) {
         if (nativeHandle == 0) {
-            return; /* TODO: log? */
+            Log.log(LogLevel.Error, LogSubject.CommonGeneral,
+                "No native handle set in TlsKeyOperation! Cannot complete operation");
+            return;
         }
 
         tlsKeyOperationComplete(nativeHandle, output);
         clear();
     }
 
+    /**
+     * The function to call when you either have an exception and want to complete the operation with an
+     * exception or you cannot complete the operation. This will mark the operation as complete with an
+     * exception so it can be reacted to accordingly.
+     */
     public void completeExceptionally(Throwable ex) {
         if (nativeHandle == 0) {
-            return; /* TODO: log? */
+            Log.log(LogLevel.Error, LogSubject.CommonGeneral,
+                "No native handle set in TlsKeyOperation! Cannot complete operation exceptionally");
+            return;
         }
 
         tlsKeyOperationCompleteExceptionally(nativeHandle, ex);
         clear();
     }
 
+    /**
+     * Clears the data and makes the object no longer valid for use
+     */
     private void clear() {
         this.nativeHandle = 0; // the operation backing this is no longer valid
         this.inputData = null; // the DirectByteBuffer backing this is no longer valid

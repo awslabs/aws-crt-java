@@ -5,11 +5,9 @@
 #include "custom_key_op_handler.h"
 
 static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_op_handler *key_op_handler, struct aws_tls_key_operation *operation, void *user_data) {
-    // Unused currently
-    (void)key_op_handler;
+    // Unused currently (needs to be removed / totally replaced with key_op_handler->impl in all code)
     (void)user_data;
 
-    //struct custom_key_op_handler *op_handler = (struct custom_key_op_handler *)user_data;
     struct custom_key_op_handler *op_handler = (struct custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);
 
@@ -151,14 +149,7 @@ struct custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, st
         return NULL;
     }
 
-    // java_custom_key_op_handler->jni_key_operations_options = (*env)->NewGlobalRef(env, jni_custom_key_op);
-    // if (java_custom_key_op_handler->jni_key_operations_options == NULL) {
-    //     aws_jni_throw_runtime_exception(env, "failed to make global reference for custom key operation options in JNI");
-    //     aws_mem_release(allocator, java_custom_key_op_handler);
-    //     return NULL;
-    // }
     java_custom_key_op_handler->jni_key_operations_options = jni_custom_key_op;
-
     java_custom_key_op_handler->key_handler = s_aws_custom_key_op_handler_new(allocator, java_custom_key_op_handler);
 
     AWS_LOGF_DEBUG(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p: Initalizing Custom Key Operations", (void *)java_custom_key_op_handler);
@@ -166,14 +157,17 @@ struct custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, st
 }
 
 static void aws_custom_key_op_handler_java_release(JNIEnv *env, struct aws_allocator *allocator, struct custom_key_op_handler *java_custom_key_op_handler) {
+    (void)env;
+
     AWS_PRECONDITION(!java_custom_key_op_handler);
     if (!java_custom_key_op_handler) {
         return;
     }
     AWS_LOGF_DEBUG(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p: Destroying Custom Key Operations", (void *)java_custom_key_op_handler);
 
-    if (java_custom_key_op_handler->jni_key_operations_options) {
-        (*env)->DeleteGlobalRef(env, java_custom_key_op_handler->jni_key_operations_options);
+    // (Potentially) Release the reference
+    if (java_custom_key_op_handler->key_handler != NULL) {
+        aws_ref_count_release(&java_custom_key_op_handler->key_handler->ref_count);
     }
 
     /* Frees allocated memory */

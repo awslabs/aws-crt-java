@@ -12,7 +12,6 @@
 #include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
 
-// TODO - change to extend/use a aws_custom_key_op_handler class (see tls_channel_handler.h)
 // TODO - be implemented/used for TlsKeyOperationHandler.java instead of TlsContextCustomKeyOperationOptions.java
 
 // TODO - document
@@ -23,10 +22,8 @@ struct custom_key_op_handler {
     // The interface, strings, etc, can be gotten from this class.
     jobject jni_key_operations_options;
 
-    // The operation_options we pass to S2N. This contains references to the functions,
-    // the handler, etc.
-    //struct aws_tls_ctx_custom_key_operation_options operation_options;
-
+    // The C class containing the key operations. We extend/define it's VTable to allow
+    // us to have it call into the customer's Java code.
     struct aws_custom_key_op_handler *key_handler;
 
     // TODO - add reference counting here?

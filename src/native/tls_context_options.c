@@ -33,7 +33,7 @@ struct jni_tls_ctx_options {
 
     struct aws_tls_ctx_pkcs11_options *pkcs11_options;
 
-    struct custom_key_op_handler *custom_key_op_handler;
+    struct aws_jni_custom_key_op_handler *custom_key_op_handler;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -160,7 +160,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
 
-        tls->custom_key_op_handler = (struct custom_key_op_handler *)jni_custom_key_op_handle;
+        tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)jni_custom_key_op_handle;
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);

@@ -5,16 +5,10 @@
 
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
-import software.amazon.awssdk.crt.Log.LogSubject;
-
 /**
  * TODO: document
  */
-public class TlsContextCustomKeyOperationOptions extends CrtResource {
+public class TlsContextCustomKeyOperationOptions {
     TlsKeyOperationHandler operationHandler;
     String certificateFilePath;
     String certificateFileContents;
@@ -24,15 +18,6 @@ public class TlsContextCustomKeyOperationOptions extends CrtResource {
      */
     public TlsContextCustomKeyOperationOptions(TlsKeyOperationHandler operationHandler) {
         this.operationHandler = operationHandler;
-        acquireNativeHandle(tlsContextCustomKeyOperationOptionsNew(this));
-    }
-
-    /**
-     * Frees the native resources associated with this instance
-     */
-    @Override
-    protected void releaseNativeHandle() {
-        tlsContextCustomKeyOperationOptionsDestroy(getNativeHandle());
     }
 
     /**
@@ -70,31 +55,5 @@ public class TlsContextCustomKeyOperationOptions extends CrtResource {
     public TlsKeyOperationHandler getOperationHandler() {
         return operationHandler;
     }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    @Override
-    protected boolean canReleaseReferencesImmediately() {
-        // TODO determine if this needs to be true or false
-        return true;
-    }
-
-    protected void invokePerformOperation(TlsKeyOperation operation)
-    {
-        // If an exception occurs for any reason, catch it and complete the operation with an exception.
-        try {
-            this.operationHandler.performOperation(operation);
-        } catch (Exception ex) {
-            Log.log(LogLevel.Error, LogSubject.CommonGeneral,
-                "Exception occured while performing TlsKeyOperation: " + ex.toString());
-            operation.completeExceptionally(ex);
-        }
-    }
-
-    private static native long tlsContextCustomKeyOperationOptionsNew(
-        TlsContextCustomKeyOperationOptions keyOperationOptions) throws CrtRuntimeException;
-    private static native long tlsContextCustomKeyOperationOptionsDestroy(long context);
 
 }

@@ -125,10 +125,6 @@ public final class TlsContextOptions extends CrtResource {
                 customKeyOperations,
                 windowsCertStorePath
             ));
-
-            if (customKeyOperations != null) {
-                addReferenceTo(customKeyOperations);
-            }
         }
         return super.getNativeHandle();
     }

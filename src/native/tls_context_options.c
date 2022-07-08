@@ -67,9 +67,16 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
 
     aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
 
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    if (tls->custom_key_op_handler) {
+        if (tls->custom_key_op_handler->key_handler) {
+            aws_ref_count_release(&tls->custom_key_op_handler->key_handler->ref_count);
+        }
+        aws_custom_key_op_handler_java_release(allocator, tls->custom_key_op_handler);
+    }
+
     aws_tls_ctx_options_clean_up(&tls->options);
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, tls);
 }
 
@@ -153,14 +160,39 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
     } else if (jni_custom_key_op) {
 
-        jlong jni_custom_key_op_handle = (*env)->CallLongMethod(
-            env, jni_custom_key_op, crt_resource_properties.get_native_handle_method_id);
-        if (jni_custom_key_op_handle == 0) {
-            aws_jni_throw_runtime_exception(env, "failed to get custom key operation handler native handle");
+        // jlong jni_custom_key_op_handle = (*env)->CallLongMethod(
+        //     env, jni_custom_key_op, crt_resource_properties.get_native_handle_method_id);
+        // if (jni_custom_key_op_handle == 0) {
+        //     aws_jni_throw_runtime_exception(env, "failed to get custom key operation handler native handle");
+        //     goto on_error;
+        // }
+        // tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)jni_custom_key_op_handle;
+
+        // TODO - get/create the C class here!
+        jobject jni_custom_key_op_handle = (*env)->GetObjectField(
+            env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.operation_handler_field_id);
+        if (!jni_custom_key_op_handle) {
+            // TODO - print error
             goto on_error;
         }
 
-        tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)jni_custom_key_op_handle;
+        jobject jni_custom_key_op_handle_native = (*env)->GetObjectField(
+            env, jni_custom_key_op_handle, tls_key_operation_handler_properties.native_handle_field_id);
+        if (jni_custom_key_op_handle_native) {
+            jlong jni_custom_key_op_handle_native_value = (*env)->CallLongMethod(
+                env, jni_custom_key_op_handle_native, boxed_long_properties.long_value_method_id);
+            int64_t custom_key_op_handle_native_value = (int64_t)jni_custom_key_op_handle_native_value;
+            if (custom_key_op_handle_native_value == 0) {
+                tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
+            }
+            else {
+                tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)custom_key_op_handle_native_value;
+                aws_ref_count_acquire(&tls->custom_key_op_handler->key_handler->ref_count);
+            }
+        } else {
+            tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
+        }
+
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);

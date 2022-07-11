@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.http;
 import java.net.URI;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
@@ -20,6 +21,7 @@ public class HttpClientConnectionManagerOptions {
     private ClientBootstrap clientBootstrap;
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
+    private TlsConnectionOptions tlsConnectionOptions;
     private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
@@ -85,6 +87,23 @@ public class HttpClientConnectionManagerOptions {
      * @return the tls context used by connections in the connection pool
      */
     public TlsContext getTlsContext() { return tlsContext; }
+
+    /**
+     * Sets the connection-specific TLS options to use for connections in the connection pool.
+     * Either TLS context or TLS connection options will be enough to set up TLS connection.
+     * If both set, an exception will be raised.
+     * @param tlsConnectionOptions The TlsConnectionOptions to use
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
+        this.tlsConnectionOptions = tlsConnectionOptions;
+        return this;
+    }
+
+    /**
+     * @return the tls context used by connections in the connection pool
+     */
+    public TlsConnectionOptions getTlsConnectionOptions() { return tlsConnectionOptions; }
 
     /**
      * Sets the IO channel window size to use for connections in the connection pool

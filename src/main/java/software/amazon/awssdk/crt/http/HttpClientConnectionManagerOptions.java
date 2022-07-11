@@ -286,8 +286,12 @@ public class HttpClientConnectionManagerOptions {
 
         if (socketOptions == null) { throw new IllegalArgumentException("SocketOptions must not be null"); }
 
+        if(tlsContext!= null && tlsConnectionOptions != null) {
+            throw new IllegalArgumentException("Cannot set both TlsContext and TlsConnectionOptions.");
+        }
         boolean useTls = HTTPS.equals(uri.getScheme());
-        if (useTls && tlsContext == null) { throw new IllegalArgumentException("TlsContext must not be null if https is used"); }
+        boolean tlsSet = (tlsContext!= null || tlsConnectionOptions != null);
+        if (useTls && !tlsSet) { throw new IllegalArgumentException("TlsContext or TlsConnectionOptions must not be null if https is used"); }
 
         if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
 

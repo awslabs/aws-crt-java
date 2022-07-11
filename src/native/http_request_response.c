@@ -50,10 +50,8 @@ jobject aws_java_http_stream_from_native_new(JNIEnv *env, void *opaque, int vers
                 env, http_stream_properties.stream_class, http_stream_properties.constructor, jni_native_ptr);
             break;
         default:
+            aws_jni_throw_runtime_exception(env, "Unsupported HTTP protocol.");
             aws_raise_error(AWS_ERROR_UNIMPLEMENTED);
-    }
-    if (!stream) {
-        aws_jni_throw_runtime_exception(env, "Failed to create Java stream from native stream");
     }
     return stream;
 }

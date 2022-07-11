@@ -303,11 +303,12 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
         jobject j_http_stream =
             aws_java_http_stream_from_native_new(env, callback_data->stream_binding, AWS_HTTP_VERSION_2);
         if (!j_http_stream) {
-            jthrowable crt_exception = aws_jni_get_and_clear_exception(env);
+            jthrowable crt_exception = (*env)->ExceptionOccurred(env);
             AWS_ASSERT(crt_exception);
             (*env)->CallVoidMethod(
                 env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
             (*env)->DeleteLocalRef(env, crt_exception);
+            (*env)->ExceptionClear(env);
             aws_http_stream_binding_destroy(env, callback_data->stream_binding);
         } else {
             /* Stream is activated once we acquired from the Stream Manager */

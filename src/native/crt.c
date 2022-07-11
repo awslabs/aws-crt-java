@@ -265,15 +265,6 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     return exception_pending;
 }
 
-jthrowable aws_jni_get_and_clear_exception(JNIEnv *env) {
-    jthrowable exception = (*env)->ExceptionOccurred(env);
-    if (exception) {
-        (*env)->ExceptionDescribe(env);
-        (*env)->ExceptionClear(env);
-    }
-    return exception;
-}
-
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;

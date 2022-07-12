@@ -93,7 +93,7 @@ public class S3ClientTest extends CrtTestFixture {
         return createS3Client(options, 1);
     }
 
-    @Test
+    //@Test
     public void testS3ClientCreateDestroy() {
         skipIfNetworkUnavailable();
 
@@ -105,7 +105,7 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     /* Test that a client can be created successfully with retry options. */
-    @Test
+    //@Test
     public void testS3ClientCreateDestroyRetryOptions() {
         skipIfNetworkUnavailable();
 
@@ -125,7 +125,7 @@ public class S3ClientTest extends CrtTestFixture {
      * Test that a client can be created successfully with retry options that do not
      * specify an ELG.
      */
-    @Test
+    //@Test
     public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
         skipIfNetworkUnavailable();
 
@@ -141,7 +141,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    //@Test
     public void testS3Get() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
@@ -187,7 +187,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    //@Test
     public void testS3GetWithEndpoint() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
@@ -234,7 +234,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    //@Test
     public void testS3OverrideRequestCredentials() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
@@ -302,7 +302,7 @@ public class S3ClientTest extends CrtTestFixture {
         return payload.array();
     }
 
-    @Test
+    //@Test
     public void testS3Put() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

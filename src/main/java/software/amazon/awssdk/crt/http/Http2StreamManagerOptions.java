@@ -126,6 +126,8 @@ public class Http2StreamManagerOptions {
     }
 
     /**
+     * Required.
+     *
      * The configuration options for the connection manager under the hood.
      * It controls the connection specific thing for the stream manager. See `HttpClientConnectionManagerOptions` for details.
      *
@@ -146,6 +148,9 @@ public class Http2StreamManagerOptions {
      * Validate the stream manager options are valid to use. Throw exceptions if not.
      */
     public void validateOptions() {
+        if(connectionManagerOptions == null) {
+            throw new IllegalArgumentException("Connection manager options are required.");
+        }
         connectionManagerOptions.validateOptions();
         if (maxConcurrentStreamsPerConnection <= 0) {
             throw new IllegalArgumentException("Max Concurrent Streams Per Connection must be greater than zero.");

@@ -178,7 +178,7 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
 /*******************************************************************************
  * Returns true if the JVM is shutdown and is no longer safe to call.
  ******************************************************************************/
-bool aws_jni_is_shutdown_and_unsafe();
+bool aws_jni_is_shutdown_and_unsafe(void);
 
 /*******************************************************************************
  * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws

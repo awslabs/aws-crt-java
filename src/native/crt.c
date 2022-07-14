@@ -217,6 +217,34 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
     }
 }
 
+JNIEnv *aws_jni_shutdown_acquire_thread_env(JavaVM *jvm) {
+    /* Only will work if the JVM is shutting down, the static JVM is NULL, and the JVM pointer is not null. */
+    if (s_jvms != NULL || jvm == NULL) {
+        return NULL;
+    }
+
+    /* We use try-lock here to avoid deadlock case. See comment in aws_jni_acquire_thread_env for details */
+    if (aws_rw_lock_try_rlock(&s_jvm_table_lock)) {
+        if (aws_last_error() != AWS_ERROR_UNSUPPORTED_OPERATION) {
+            aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
+        }
+        return NULL;
+    }
+
+    JNIEnv *env = s_aws_jni_get_thread_env(jvm);
+    if (env == NULL) {
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
+        goto error;
+    }
+
+    return env;
+
+error:
+
+    aws_rw_lock_runlock(&s_jvm_table_lock);
+    return NULL;
+}
+
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     va_list args;
     va_start(args, msg);

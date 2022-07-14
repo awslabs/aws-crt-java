@@ -176,6 +176,18 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
 void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
 
 /*******************************************************************************
+ * aws_jni_shutdown_acquire_thread_env - Acquires the JNIEnv for the current thread from the VM,
+ * attaching the env if necessary.  This function ONLY works if the JVM is shutting down, I.E the
+ * JVM shutdown hook was invoked.
+ * 
+ * It should only be used to get a thread to perform last-minute Java operations to allow
+ * a smooth shutdown, like completing promises that Java code may be waiting on.
+ * 
+ * aws_jni_release_thread_env() must be called once the caller is through with the environment.
+ ******************************************************************************/
+JNIEnv *aws_jni_shutdown_acquire_thread_env(JavaVM *jvm);
+
+/*******************************************************************************
  * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws
  * error code, which is the type of software/amazon/awssdk/crt/CrtRuntimeException.
  * Reference of the jobject needed to be cleaned up after use.

@@ -171,8 +171,15 @@ static void s_on_connection_complete(
     JavaVM *jvm = connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
@@ -228,8 +235,15 @@ static void s_on_connection_interrupted(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(connection->jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     s_on_connection_interrupted_internal(user_data, error_code, NULL, env);
@@ -251,8 +265,15 @@ static void s_on_connection_resumed(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(connection->jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
@@ -278,8 +299,15 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(jni_connection->jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback, env);
@@ -387,8 +415,15 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(jni_connection->jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
@@ -597,7 +632,15 @@ static void s_on_op_complete(
     JavaVM *jvm = callback->connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     if (error_code) {
@@ -631,7 +674,15 @@ static void s_cleanup_handler(void *user_data) {
     JavaVM *jvm = handler->connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     s_mqtt_jni_async_callback_destroy(handler, env);
@@ -662,8 +713,15 @@ static void s_on_subscription_delivered(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback->connection->jvm);
     if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
+        /*
+         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
+         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
+         */
+        env = aws_jni_shutdown_acquire_thread_env(callback->connection->jvm);
+        if (env == NULL) {
+            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
+            return;
+        }
     }
 
     jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);

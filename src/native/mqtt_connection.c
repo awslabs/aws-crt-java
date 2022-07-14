@@ -171,15 +171,8 @@ static void s_on_connection_complete(
     JavaVM *jvm = connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
@@ -235,15 +228,8 @@ static void s_on_connection_interrupted(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(connection->jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     s_on_connection_interrupted_internal(user_data, error_code, NULL, env);
@@ -265,15 +251,8 @@ static void s_on_connection_resumed(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(connection->jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
@@ -299,15 +278,8 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(jni_connection->jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     s_on_connection_interrupted_internal(connect_callback->connection, 0, connect_callback->async_callback, env);
@@ -387,6 +359,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
     jobject jni_mqtt_connection) {
     (void)jni_class;
 
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: JVM is shutdown");
+        return (jlong)NULL;
+    }
+
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_client;
     if (!client) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Client is invalid/null");
@@ -415,15 +392,8 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(jni_connection->jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
@@ -451,6 +421,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     (void)jni_class;
     (void)env;
 
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_destroy: JVM is shutdown");
+        return;
+    }
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     s_mqtt_jni_connection_release(connection);
 }
@@ -474,6 +449,12 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jint protocol_operation_timeout_ms) {
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_connect: JVM is shutdown");
+        return;
+    }
+
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_connect: Connection is invalid/null");
         return;
@@ -557,6 +538,12 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jclass jni_class,
     jlong jni_connection,
     jobject jni_ack) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_disconnect: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -632,15 +619,8 @@ static void s_on_op_complete(
     JavaVM *jvm = callback->connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     if (error_code) {
@@ -674,15 +654,8 @@ static void s_cleanup_handler(void *user_data) {
     JavaVM *jvm = handler->connection->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     s_mqtt_jni_async_callback_destroy(handler, env);
@@ -713,15 +686,8 @@ static void s_on_subscription_delivered(
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback->connection->jvm);
     if (env == NULL) {
-        /*
-         * Is the JVM shutting down but not fully shut down? If so, try to get an ENV
-         * using our JVM pointer so we can continue to avoid having Java promises waiting on this connection.
-         */
-        env = aws_jni_shutdown_acquire_thread_env(callback->connection->jvm);
-        if (env == NULL) {
-            /* If we still cannot get an ENV, then the JVM is fully shut down. Don't crash. */
-            return;
-        }
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
     }
 
     jbyteArray jni_payload = (*env)->NewByteArray(env, (jsize)payload->len);
@@ -750,6 +716,12 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jint jni_qos,
     jobject jni_handler,
     jobject jni_ack) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_subscribe: JVM is shutdown");
+        return (jlong)NULL;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -812,6 +784,12 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jclass jni_class,
     jlong jni_connection,
     jobject jni_handler) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqttClientConnectionOnMessage: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -862,6 +840,12 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jlong jni_connection,
     jstring jni_topic,
     jobject jni_ack) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_unsubscribe: JVM is shutdown");
+        return 0;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -907,6 +891,12 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jboolean jni_retain,
     jbyteArray jni_payload,
     jobject jni_ack) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_publish: JVM is shutdown");
+        return 0;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -968,6 +958,12 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnec
     jint jni_qos,
     jboolean jni_retain,
     jbyteArray jni_payload) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_will: JVM is shutdown");
+        return false;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -1006,6 +1002,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     jlong jni_connection,
     jstring jni_user,
     jstring jni_pass) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_login: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -1040,6 +1042,12 @@ JNIEXPORT void JNICALL
         jlong jni_connection,
         jlong jni_min_timeout,
         jlong jni_max_timeout) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_reconnect_timeout: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -1129,6 +1137,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.useWebsockets: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
@@ -1152,6 +1166,12 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jbyteArray jni_marshalled_request,
     jobject jni_throwable,
     jlong jni_user_data) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: JVM is shutdown");
+        return;
+    }
+
     (void)jni_class;
     (void)jni_connection;
 
@@ -1193,6 +1213,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
     jstring jni_proxy_authorization_password) {
+
+    if (aws_jni_is_shutdown_and_unsafe()) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: JVM is shutdown");
+        return;
+    }
 
     (void)jni_class;
 

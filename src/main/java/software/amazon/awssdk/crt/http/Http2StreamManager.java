@@ -4,6 +4,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.io.TlsContext;
 
@@ -49,6 +50,7 @@ public class Http2StreamManager extends CrtResource {
         SocketOptions socketOptions = connectionManagerOptions.getSocketOptions();
         boolean useTls = HTTPS.equals(uri.getScheme());
         TlsContext tlsContext = connectionManagerOptions.getTlsContext();
+        TlsConnectionOptions tlsConnectionOptions = connectionManagerOptions.getTlsConnectionOptions();
         int maxConnections = connectionManagerOptions.getMaxConnections();
         int port = connectionManagerOptions.getPort();
         if (port == -1) {
@@ -99,7 +101,8 @@ public class Http2StreamManager extends CrtResource {
         acquireNativeHandle(http2StreamManagerNew(this,
                 clientBootstrap.getNativeHandle(),
                 socketOptions.getNativeHandle(),
-                useTls ? tlsContext.getNativeHandle() : 0,
+                useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
+                useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                 Http2ConnectionSetting.marshallSettingsForJNI(options.getInitialSettingsList()),
                 uri.getHost().getBytes(UTF8),
                 port,
@@ -115,7 +118,11 @@ public class Http2StreamManager extends CrtResource {
                 monitoringFailureIntervalInSeconds,
                 maxConnections,
                 idealConcurrentStreamsPerConnection,
-                maxConcurrentStreamsPerConnection));
+                maxConcurrentStreamsPerConnection,
+                options.isPriorKnowledge(),
+                options.isCloseConnectionOnServerError(),
+                options.getConnectionPingPeriodMs(),
+                options.getConnectionPingTimeoutMs()));
 
         /*
          * we don't need to add a reference to socketOptions since it's copied during
@@ -219,6 +226,7 @@ public class Http2StreamManager extends CrtResource {
             long client_bootstrap,
             long socketOptions,
             long tlsContext,
+            long tlsConnectionOptions,
             long[] marshalledSettings,
             byte[] endpoint,
             int port,
@@ -234,7 +242,11 @@ public class Http2StreamManager extends CrtResource {
             int monitoringFailureIntervalInSeconds,
             int maxConns,
             int ideal_concurrent_streams_per_connection,
-            int max_concurrent_streams_per_connection) throws CrtRuntimeException;
+            int max_concurrent_streams_per_connection,
+            boolean priorKnowledge,
+            boolean closeConnectionOnServerError,
+            int connectionPingPeriodMs,
+            int connectionPingTimeoutMs) throws CrtRuntimeException;
 
     private static native void http2StreamManagerRelease(long stream_manager) throws CrtRuntimeException;
 

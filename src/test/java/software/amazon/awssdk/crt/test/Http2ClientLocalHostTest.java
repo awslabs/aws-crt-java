@@ -114,13 +114,11 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     }
 
     private Http2Request createHttp2Request(String method, URI uri, long bodyLength) {
-        HttpHeader[] baseHeaders = new HttpHeader[] {
-                new HttpHeader(":method", method),
-                new HttpHeader(":path", uri.getPath()),
-                new HttpHeader(":scheme", uri.getScheme()),
-                new HttpHeader(":authority", uri.getHost()),
-        };
-        List<HttpHeader> headerList = Arrays.asList(baseHeaders);
+        ArrayList<HttpHeader> headerList = new ArrayList<HttpHeader>();
+        headerList.add(new HttpHeader(":method", method));
+        headerList.add(new HttpHeader(":path", uri.getPath()));
+        headerList.add(new HttpHeader(":scheme", uri.getScheme()));
+        headerList.add(new HttpHeader(":authority", uri.getHost()));
         HttpRequestBodyStream bodyStream = null;
         if (bodyLength > 0) {
             headerList.add(new HttpHeader("content-length", Long.toString(bodyLength)));

@@ -183,6 +183,11 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
+                    }
+
+                    @Override
+                    public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
+                        /* Only invoke once */
                         Http2Stream h2Stream = (Http2Stream) stream;
                         h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
                     }

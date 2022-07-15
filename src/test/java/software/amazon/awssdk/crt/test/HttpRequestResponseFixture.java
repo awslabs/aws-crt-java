@@ -43,8 +43,12 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         int statusCode = -1;
         int blockType = -1;
         List<HttpHeader> headers = new ArrayList<>();
-        ByteBuffer bodyBuffer = ByteBuffer.wrap(new byte[16 * 1024 * 1024]); // Allow up to 16 MB Responses
+        ByteBuffer bodyBuffer;
         int onCompleteErrorCode = -1;
+
+        public TestHttpResponse(){
+            bodyBuffer = ByteBuffer.allocate(16 * 1024 * 1024); // Allow up to 16 MB Responses
+        }
 
         public String getBody() {
             bodyBuffer.flip();

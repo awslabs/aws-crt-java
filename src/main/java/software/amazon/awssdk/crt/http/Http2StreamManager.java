@@ -148,9 +148,8 @@ public class Http2StreamManager extends CrtResource {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
-            HttpStreamBaseResponseHandler streamHandler) {
-
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+        HttpStreamBaseResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {

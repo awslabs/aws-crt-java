@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,19 +114,21 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     }
 
     private Http2Request createHttp2Request(String method, URI uri, long bodyLength) {
-        HttpHeader[] requestHeaders = new HttpHeader[] {
+        HttpHeader[] baseHeaders = new HttpHeader[] {
                 new HttpHeader(":method", method),
                 new HttpHeader(":path", uri.getPath()),
                 new HttpHeader(":scheme", uri.getScheme()),
                 new HttpHeader(":authority", uri.getHost()),
-                new HttpHeader("content-length", Long.toString(bodyLength))
         };
+        List<HttpHeader> headerList = Arrays.asList(baseHeaders);
         HttpRequestBodyStream bodyStream = null;
         if (bodyLength > 0) {
+            headerList.add(new HttpHeader("content-length", Long.toString(bodyLength)));
             bodyStream = createBodyStreamWithLength(bodyLength);
         }
-        Http2Request request = new Http2Request(requestHeaders, bodyStream);
-
+        HttpHeader[] requestHeadersArray = new HttpHeader[headerList.size()];
+        headerList.toArray(requestHeadersArray);
+        Http2Request request = new Http2Request(requestHeadersArray, bodyStream);
         return request;
     }
 

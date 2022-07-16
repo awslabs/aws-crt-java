@@ -179,7 +179,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_ref_count_acquire(&tls->custom_key_op_handler->key_handler->ref_count);
         }
 
-
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
         if (jni_custom_key_op_cert_path) {
@@ -188,7 +187,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 aws_jni_throw_runtime_exception(env, "failed to get certificate path string");
                 goto on_error;
             }
-            tls->custom_key_op_handler->key_handler->cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
+            tls->custom_key_op_handler->cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
         }
 
         jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(env, jni_custom_key_op,
@@ -199,7 +198,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 aws_jni_throw_runtime_exception(env, "failed to get certificate contents string");
                 goto on_error;
             }
-            tls->custom_key_op_handler->key_handler->cert_file_contents = aws_byte_cursor_from_string(tls->certificate);
+            tls->custom_key_op_handler->cert_file_contents = aws_byte_cursor_from_string(tls->certificate);
         }
 
         if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(

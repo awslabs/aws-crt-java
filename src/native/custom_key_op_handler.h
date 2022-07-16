@@ -23,6 +23,25 @@ struct aws_jni_custom_key_op_handler {
     // The C class containing the key operations. We extend/define it's VTable to allow
     // us to have it call into the customer's Java code.
     struct aws_custom_key_op_handler *key_handler;
+
+    // The allocator to use
+    struct aws_allocator *allocator;
+
+    /**
+     * Certificate's file path on disk (UTF-8).
+     * The certificate must be PEM formatted and UTF-8 encoded.
+     * Zero out if passing in certificate by some other means (such as file contents).
+     * (Can also be zero out if it is unused, like in PKCS11 implementation)
+     */
+    struct aws_byte_cursor cert_file_path;
+
+    /**
+     * Certificate's file contents (UTF-8).
+     * The certificate must be PEM formatted and UTF-8 encoded.
+     * Zero out if passing in certificate by some other means (such as file path).
+     * (Can also be zero out if it is unused, like in PKCS11 implementation)
+     */
+    struct aws_byte_cursor cert_file_contents;
 };
 
 struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, struct aws_allocator *allocator, jobject jni_custom_key_op);

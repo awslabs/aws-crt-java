@@ -69,10 +69,37 @@ clean_up:
     aws_jni_release_thread_env(op_handler->jvm, env);
 }
 
+static bool s_aws_custom_key_op_handler_get_certificate(struct aws_custom_key_op_handler *key_op_handler, struct aws_byte_buf *certificate_output) {
+    struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
+    AWS_FATAL_ASSERT(op_handler != NULL);
+
+    //struct aws_allocator *allocator = key_op_handler->allocator;
+    struct aws_allocator *allocator = op_handler->allocator;
+
+    /* certificate needs to be set, but there are multiple ways to return it */
+    if ((op_handler->cert_file_path.ptr != NULL) && (op_handler->cert_file_contents.ptr != NULL)) {
+        return false;
+    } else if (op_handler->cert_file_path.ptr != NULL) {
+        struct aws_string *tmp_string = aws_string_new_from_cursor(allocator, &op_handler->cert_file_path);
+        int op = aws_byte_buf_init_from_file(certificate_output, allocator, aws_string_c_str(tmp_string));
+        aws_string_destroy(tmp_string);
+        if (op != AWS_OP_SUCCESS) {
+            return false;
+        }
+    } else if (op_handler->cert_file_contents.ptr != NULL) {
+        if (aws_byte_buf_init_copy_from_cursor(certificate_output, allocator, op_handler->cert_file_contents)) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
 static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtable = {
     .destroy = NULL,
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
-    .on_ctx_destroy = NULL,
+    .get_certificate = s_aws_custom_key_op_handler_get_certificate,
 };
 
 static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler *impl) {
@@ -98,7 +125,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     // Release the Java ENV
     aws_jni_release_thread_env(op_handler->jvm, env);
 
-    aws_mem_release(impl->allocator, impl);
+    aws_mem_release(op_handler->allocator, impl);
 }
 
 static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
@@ -108,8 +135,8 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
     struct aws_custom_key_op_handler *impl =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_custom_key_op_handler));
 
-    impl->allocator = allocator;
     impl->vtable = &s_aws_custom_key_op_handler_vtable;
+    // TODO - add a function to handle this?
     aws_ref_count_init(
         &impl->ref_count, impl, (aws_simple_completion_callback *)s_aws_custom_key_op_handler_destroy);
 
@@ -150,6 +177,7 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv 
 
     java_custom_key_op_handler->jni_custom_key_op = jni_custom_key_op;
     java_custom_key_op_handler->key_handler = s_aws_custom_key_op_handler_new(allocator, java_custom_key_op_handler);
+    java_custom_key_op_handler->allocator = allocator;
 
     AWS_LOGF_DEBUG(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p: Initalizing Custom Key Operations", (void *)java_custom_key_op_handler);
     return java_custom_key_op_handler;
@@ -164,7 +192,7 @@ void aws_custom_key_op_handler_java_release(struct aws_allocator *allocator, str
 
     // (Potentially) Release the reference
     if (java_custom_key_op_handler->key_handler != NULL) {
-        aws_ref_count_release(&java_custom_key_op_handler->key_handler->ref_count);
+        java_custom_key_op_handler->key_handler = aws_custom_key_op_handler_release(java_custom_key_op_handler->key_handler);
     }
 
     /* Frees allocated memory */

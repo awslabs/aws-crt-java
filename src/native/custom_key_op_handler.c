@@ -40,9 +40,6 @@ static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_
         goto clean_up;
     }
 
-    // TODO - handle the situation where a operation is never completed and the tls_context_options is going
-    // to be destroyed.
-
     // Invoke TlsKeyOperationHandler.performOperation() through the invokePerformOperation
     // function. This function will also catch any exceptions and clear the operation
     // with an exception should it occur.
@@ -95,14 +92,15 @@ static bool s_aws_custom_key_op_handler_get_certificate(struct aws_custom_key_op
     return true;
 }
 
-static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler *impl) {
+static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler *key_op_handler) {
 
-    struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)impl->impl;
+    struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
 
     // Get the Java ENV
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
-        // TODO: Log/Handle error!
+        // JVM is likely shutting down. Do not crash but log error.
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)java_custom_key_op_handler);
         return;
     }
 
@@ -119,7 +117,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     // Release the Java ENV
     aws_jni_release_thread_env(op_handler->jvm, env);
 
-    aws_mem_release(op_handler->allocator, impl);
+    aws_mem_release(op_handler->allocator, key_op_handler);
 
     // Release the Java struct
     aws_mem_release(op_handler->allocator, op_handler);
@@ -142,7 +140,8 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
     // Get the Java ENV
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
-        // TODO: Log/Handle error!
+        // JVM is likely shutting down. Do not crash but log error.
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p new: Could not get Java ENV!", (void *)java_custom_key_op_handler);
         return NULL;
     }
 
@@ -156,9 +155,6 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
 
     return key_op_handler;
 }
-
-// ============================================
-
 
 struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, struct aws_allocator *allocator, jobject jni_custom_key_op) {
     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler = aws_mem_calloc(allocator, 1, sizeof(struct aws_jni_custom_key_op_handler));

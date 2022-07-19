@@ -161,7 +161,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         jobject jni_custom_key_op_handle = (*env)->GetObjectField(
             env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.operation_handler_field_id);
         if (!jni_custom_key_op_handle) {
-            // TODO - print error
+            aws_jni_throw_runtime_exception(env, "could not get custom operation handler from jni_custom_key_op_handle!");
             goto on_error;
         }
 

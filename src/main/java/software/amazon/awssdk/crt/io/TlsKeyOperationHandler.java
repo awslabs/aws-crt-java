@@ -63,7 +63,6 @@ public class TlsKeyOperationHandler {
      */
     protected void invokeOnCleanup()
     {
-        // TODO - seems that this isn't be called in the sample... Need to figure out why...
         this.operationHandlerEvents.onCleanup();
     }
 
@@ -92,6 +91,9 @@ public class TlsKeyOperationHandler {
          * Invoked when the TlsKeyOperationHandler is no longer used in native code
          * and is about to be cleaned up. If you have anything to clean up, close, or
          * otherwise tear down for the interface, this is the place to do it.
+         *
+         * This will only be called once right before destroying the
+         * TlsKeyOperationHandler fully.
          */
         void onCleanup();
     }

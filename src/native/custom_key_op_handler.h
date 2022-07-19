@@ -12,7 +12,10 @@
 #include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
 
-// TODO - document
+/**
+ * A struct that contains all the data for a Java custom_key_op_handler that is exposed
+ * in Java so the customer can perform their own custom private key operation handler functions.
+ */
 struct aws_jni_custom_key_op_handler {
     JavaVM *jvm;
 

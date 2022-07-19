@@ -68,10 +68,8 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    if (tls->custom_key_op_handler) {
-        if (tls->custom_key_op_handler->key_handler) {
-            aws_ref_count_release(&tls->custom_key_op_handler->key_handler->ref_count);
-        }
+    if (tls->custom_key_op_handler != NULL) {
+        // Release the reference to the Java class
         aws_custom_key_op_handler_java_release(allocator, tls->custom_key_op_handler);
     }
 
@@ -176,7 +174,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
         else {
             tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)custom_key_op_handle_native_value;
-            aws_ref_count_acquire(&tls->custom_key_op_handler->key_handler->ref_count);
+            aws_custom_key_op_handler_aquire(tls->custom_key_op_handler->key_handler);
         }
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,

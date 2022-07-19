@@ -135,7 +135,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         skipIfLocalhostUnavailable();
         URI uri = new URI("https://localhost:8443/echo");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-            int numberToAcquire = 500 * 100;
+            int numberToAcquire = 5;
 
             Http2Request request = createHttp2Request("GET", uri, 0);
             List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
@@ -181,7 +181,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         skipIfLocalhostUnavailable();
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-            int numberToAcquire = 500 * 100;
+            int numberToAcquire = 5;
             if (CRT.getOSIdentifier() == "linux") {
                 /*
                  * Using Python hyper h2 server frame work, met a weird upload performance issue

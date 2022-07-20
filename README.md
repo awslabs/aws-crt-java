@@ -28,7 +28,7 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
-1) `brew install maven cmake3` (if you have homebrew installed, otherwise install these manually)
+1) `brew install maven cmake` (if you have homebrew installed, otherwise install these manually)
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
 4) `git submodule update --init --recursive`

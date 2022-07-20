@@ -291,7 +291,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            requestCompleteFuture.join();
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
         }
         CrtResource.logNativeResources();
@@ -335,7 +335,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            requestCompleteFuture.join();
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
             Assert.assertTrue(receivedLength.get() == bodyLength);
         }

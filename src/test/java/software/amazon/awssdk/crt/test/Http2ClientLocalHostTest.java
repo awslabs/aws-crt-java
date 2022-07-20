@@ -170,6 +170,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             }
             Assert.assertTrue(numStreamsFailures.get() == 0);
         }
+        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtResource, "testParallelRequestsStress - waiting for resource to clean up");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -240,6 +241,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             }
             Assert.assertTrue(numStreamsFailures.get() == 0);
         }
+        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtResource, "testParallelRequestsStressWithBody - waiting for resource to clean up");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -294,6 +296,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
         }
+        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtResource, "testRequestsUploadStress - waiting for resource to clean up");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
@@ -339,6 +342,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
             Assert.assertTrue(receivedLength.get() == bodyLength);
         }
+        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtResource, "testRequestsDownloadStress - waiting for resource to clean up");
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }

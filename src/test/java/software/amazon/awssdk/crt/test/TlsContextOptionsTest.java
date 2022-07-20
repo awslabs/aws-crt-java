@@ -129,7 +129,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
             boolean exceptionThrown = false;
 
             try {
-                options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06);
+                options.setCipherPreference(TlsCipherPreference.TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05);
                 options.minTlsVersion = TlsVersions.TLSv1_2;
                 Assert.assertEquals(0, options.getNativeHandle()); // Will never get here
             } catch (IllegalArgumentException | IllegalStateException e) {

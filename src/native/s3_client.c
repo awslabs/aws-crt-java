@@ -430,7 +430,6 @@ static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data) {
-        aws_input_stream_destroy(callback_data->input_stream);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -487,7 +486,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
-    callback_data->input_stream = aws_http_message_get_body_stream(request_message);
 
     struct aws_uri endpoint;
     AWS_ZERO_STRUCT(endpoint);

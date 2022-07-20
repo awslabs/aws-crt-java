@@ -366,6 +366,16 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
 }
 
+struct java_http2_stream_manager_properties http2_stream_manager_properties;
+
+static void s_cache_http2_stream_manager(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http2StreamManager");
+    AWS_FATAL_ASSERT(cls);
+
+    http2_stream_manager_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(http2_stream_manager_properties.onShutdownComplete);
+}
+
 struct java_http_client_connection_properties http_client_connection_properties;
 
 static void s_cache_http_client_connection(JNIEnv *env) {
@@ -599,7 +609,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
-        (*env)->GetMethodID(env, cls, "onFinished", "(II[B)V");
+        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZ)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
@@ -832,6 +842,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_client_bootstrap(env);
     s_cache_tls_context_pkcs11_options(env);
     s_cache_http_client_connection_manager(env);
+    s_cache_http2_stream_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);
     s_cache_http2_stream(env);

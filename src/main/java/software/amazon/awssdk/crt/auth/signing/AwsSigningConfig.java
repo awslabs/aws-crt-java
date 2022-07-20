@@ -153,6 +153,7 @@ public class AwsSigningConfig extends CrtResource {
     public class AwsSignedBodyValue {
         public static final String EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         public static final String UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
+        public static final String STREAMING_UNSIGNED_PAYLOAD_TRAILER = "STREAMING-UNSIGNED-PAYLOAD-TRAILER";
         public static final String STREAMING_AWS4_HMAC_SHA256_PAYLOAD = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
         public static final String STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD = "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD";
         public static final String STREAMING_AWS4_ECDSA_P256_SHA256_PAYLOAD_TRAILER = "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER";

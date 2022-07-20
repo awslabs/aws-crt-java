@@ -119,8 +119,8 @@ public class Http2StreamManager extends CrtResource {
                 maxConnections,
                 idealConcurrentStreamsPerConnection,
                 maxConcurrentStreamsPerConnection,
-                options.isPriorKnowledge(),
-                options.isCloseConnectionOnServerError(),
+                options.hasPriorKnowledge(),
+                options.shouldCloseConnectionOnServerError(),
                 options.getConnectionPingPeriodMs(),
                 options.getConnectionPingTimeoutMs()));
 

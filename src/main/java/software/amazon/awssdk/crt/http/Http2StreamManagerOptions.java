@@ -161,7 +161,7 @@ public class Http2StreamManagerOptions {
     /**
      * @return Prior knowledge is used or not
      */
-    public boolean isPriorKnowledge() {
+    public boolean hasPriorKnowledge() {
         return priorKnowledge;
     }
 
@@ -184,7 +184,7 @@ public class Http2StreamManagerOptions {
      * @return Connection closed or not when server error happened (500/502/503/504
      *         response status code received).
      */
-    public boolean isCloseConnectionOnServerError() {
+    public boolean shouldCloseConnectionOnServerError() {
         return closeConnectionOnServerError;
     }
 
@@ -207,24 +207,19 @@ public class Http2StreamManagerOptions {
      * Settings to control the period ping to be sent for connections held by stream
      * manager.
      *
-     * @param connectionPingPeriodMs  The period for all the connections held by
-     *                                stream manager to send a PING in milliseconds.
-     *                                If you specify 0, manager will NOT send any
-     *                                PING.
-     * @param connectionPingTimeoutMs Network connection will be closed if a ping
-     *                                response is not received
-     *                                within this amount of time (milliseconds).
-     *                                If you specify 0, a default value will be
-     *                                used. If this is larger than
-     *                                connectionPingPeriodMs,
-     *                                it will be capped to be equal.
+     * @param periodMs  The period for all the connections held by stream manager to
+     *                  send a PING in milliseconds. If you specify 0, manager will
+     *                  NOT send any PING.
+     * @param timeoutMs Network connection will be closed if a ping response is not
+     *                  received within this amount of time (milliseconds). If you
+     *                  specify 0, a default value will be used. If this is larger
+     *                  than periodMs, it will be capped to be equal.
      * @return this
      */
-    public Http2StreamManagerOptions withConnectionPeriodPingSettings(int connectionPingPeriodMs,
-            int connectionPingTimeoutMs) {
-        this.connectionPingPeriodMs = connectionPingPeriodMs;
-        this.connectionPingTimeoutMs = connectionPingTimeoutMs == 0 ? DEFAULT_CONNECTION_PING_TIMEOUT_MS
-                : connectionPingTimeoutMs;
+    public Http2StreamManagerOptions withConnectionPing(int periodMs, int timeoutMs) {
+        this.connectionPingPeriodMs = periodMs;
+        this.connectionPingTimeoutMs = timeoutMs == 0 ? DEFAULT_CONNECTION_PING_TIMEOUT_MS
+                : timeoutMs;
         this.connectionPingTimeoutMs = Math.min(this.connectionPingPeriodMs, this.connectionPingTimeoutMs);
         return this;
     }

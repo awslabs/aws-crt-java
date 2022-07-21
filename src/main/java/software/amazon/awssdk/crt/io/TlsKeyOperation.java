@@ -19,7 +19,10 @@ import software.amazon.awssdk.crt.CrtResource;
  * in the MQTT client.
  *
  * You MUST call either complete(output) or completeExceptionally(exception)
- * or the TLS connection will hang forever.
+ * or the TLS connection will hang forever!
+ *
+ * You do NOT need to call close on this CrtResource - it will be called automatically
+ * when you call either complete(output) or completeExceptionally(exception)
  */
 public final class TlsKeyOperation extends CrtResource {
 

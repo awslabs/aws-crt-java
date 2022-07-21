@@ -2,14 +2,9 @@ package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -42,13 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
 
 public class S3ClientTest extends CrtTestFixture {
-
-    @Rule
-    public TestRule watcher = new TestWatcher() {
-        protected void starting(Description description) {
-            System.out.println("Starting test: " + description.getMethodName());
-        }
-    };
 
     static final String ENDPOINT = System.getenv("ENDPOINT") == null ?
             "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com" : System.getenv("ENDPOINT");
@@ -442,7 +430,6 @@ public class S3ClientTest extends CrtTestFixture {
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
-                Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Resume token: " + resumeToken);
 
                 Throwable thrown = Assert.assertThrows(Throwable.class, 
                     () -> onFinishedFuture.get());
@@ -491,8 +478,6 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
-
-        Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Pause resume test finished.");
     }
 
     @Test

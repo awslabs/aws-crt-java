@@ -43,9 +43,6 @@ public class CustomKeyOps {
     static String certPath;
     static String keyPath;
     static String endpoint;
-    static String topic = "test/topic";
-    static String message = "Hello World!";
-    static int    messagesToPublish = 4;
     static boolean showHelp = false;
     static int port = 8883;
 
@@ -285,7 +282,7 @@ public class CustomKeyOps {
             MqttClientConnection connection = new MqttClientConnection(config);
 
             // ========================================================================================================
-            // PubSub part of sample:
+            // Connection/Disconnection part of sample:
 
             CompletableFuture<Boolean> connected = connection.connect();
             try {
@@ -294,23 +291,6 @@ public class CustomKeyOps {
             } catch (Exception ex) {
                 throw new RuntimeException("Exception occurred during connect", ex);
             }
-
-            CountDownLatch countDownLatch = new CountDownLatch(messagesToPublish);
-            CompletableFuture<Integer> subscribed = connection.subscribe(topic, QualityOfService.AT_LEAST_ONCE, (message) -> {
-                String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-                System.out.println("MESSAGE: " + payload);
-                countDownLatch.countDown();
-            });
-
-            subscribed.get();
-
-            int count = 0;
-            while (count++ < messagesToPublish) {
-                CompletableFuture<Integer> published = connection.publish(new MqttMessage(topic, message.getBytes(), QualityOfService.AT_LEAST_ONCE, false));
-                published.get();
-                Thread.sleep(1000);
-            }
-            countDownLatch.await();
 
             CompletableFuture<Void> disconnected = connection.disconnect();
             disconnected.get();

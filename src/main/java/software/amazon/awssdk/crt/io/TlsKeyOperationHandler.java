@@ -17,12 +17,16 @@ import software.amazon.awssdk.crt.Log.LogSubject;
  */
 public class TlsKeyOperationHandler {
 
-    // The interface to call when the TLS context handler gets an operation event. Will call the corresponding function
-    // in the interface based on the data received. See TlsKeyOperationHandlerEvents for details.
+    /**
+     * The interface to call when the TLS context handler gets an operation event. Will call the corresponding function
+     * in the interface based on the data received. See TlsKeyOperationHandlerEvents for details.
+     */
     private TlsKeyOperationHandlerEvents operationHandlerEvents;
 
-    // A pointer to the native C object associated with this class. If set to null, then no C object is associated.
-    // Is used internally.
+    /**
+     * A pointer to the native C object associated with this class. If set to null, then no C object is associated.
+     * Is used internally.
+     */
     private long nativeHandle;
 
     /**
@@ -32,6 +36,9 @@ public class TlsKeyOperationHandler {
         return this.operationHandlerEvents;
     }
 
+    /**
+     * Creates a new TlsKeyOperationHandler with the given TlsKeyOperationHandlerEvents
+     */
     public TlsKeyOperationHandler(TlsKeyOperationHandlerEvents operationHandlerEvents) {
         this.operationHandlerEvents = operationHandlerEvents;
     }
@@ -84,6 +91,10 @@ public class TlsKeyOperationHandler {
         * The function is always invoked from an IO event-loop thread. Therefore you
         * MUST NOT perform an async call and wait for it in a blocking way from within
         * this function. Such behavior is likely to deadlock your program.
+        *
+        * Additionally, this may be called from multiple times from multiple threads
+        * at once, so keep this in mind if using a private key operation that has to
+        * be single-threaded and synchronously called.
         */
         void performOperation(TlsKeyOperation operation);
 

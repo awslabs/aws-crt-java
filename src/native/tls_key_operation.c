@@ -35,8 +35,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     if (output_data.ptr == NULL) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "aws_tls_key_operation=%p tlsKeyOperationComplete: Could not allocate byte cursor from Java byte array",
-            (void *)java_custom_key_op_handler);
+            "aws_tls_key_operation tlsKeyOperationComplete: Could not allocate byte cursor from Java byte array");
         aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
@@ -63,8 +62,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     if (error_code == 0) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "aws_tls_key_operation=%p tlsKeyOperationCompleteExceptionally: Completed with exception but with an error code of zero",
-            (void *)java_custom_key_op_handler);
+            "aws_tls_key_operation tlsKeyOperationCompleteExceptionally: Completed with exception but with an error code of zero");
         error_code = AWS_ERROR_UNKNOWN;
     }
 

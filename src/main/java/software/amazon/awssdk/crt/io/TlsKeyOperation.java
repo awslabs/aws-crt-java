@@ -13,10 +13,6 @@ import software.amazon.awssdk.crt.Log.LogSubject;
 
 import software.amazon.awssdk.crt.CrtResource;
 
-/* TODO: should this be a CrtResource? (how to handle close() vs complete())
- *       if we do make it a CrtResource close() needs to become idempotent,
- *       currently it can make the refcount go negative and crazy things happen */
-
 /**
  * A class containing a TLS Private Key operation that needs to be performed.
  * This class is passed to TlsKeyOperationHandler if a custom key operation is set
@@ -25,7 +21,7 @@ import software.amazon.awssdk.crt.CrtResource;
  * You MUST call either complete(output) or completeExceptionally(exception)
  * or the TLS connection will hang forever.
  */
-public final class TlsKeyOperation {
+public final class TlsKeyOperation extends CrtResource {
 
     /**
      * The type of TlsKeyOperation that needs to be performed by the TlsKeyOperationHandlerEvents
@@ -62,7 +58,8 @@ public final class TlsKeyOperation {
         static Map<Integer, Type> enumMapping = buildEnumMapping();
     }
 
-    private long nativeHandle;
+    private boolean closeCalled;
+    private boolean clearCalled;
     private byte[] inputData;
     private Type operationType;
     private TlsSignatureAlgorithm signatureAlgorithm;
@@ -72,7 +69,10 @@ public final class TlsKeyOperation {
     protected TlsKeyOperation(long nativeHandle, byte[] inputData, int operationType, int signatureAlgorithm,
             int digestAlgorithm) {
 
-        this.nativeHandle = nativeHandle;
+        acquireNativeHandle(nativeHandle);
+
+        this.closeCalled = false;
+        this.clearCalled = false;
         this.inputData = inputData;
         this.operationType = Type.getEnumValueFromInteger(operationType);
 
@@ -124,13 +124,13 @@ public final class TlsKeyOperation {
      * return it for use in the MQTT TLS Handshake.
      */
     public void complete(byte[] output) {
-        if (nativeHandle == 0) {
+        if (getNativeHandle() == 0 || this.clearCalled == true) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation");
             return;
         }
 
-        tlsKeyOperationComplete(nativeHandle, output);
+        tlsKeyOperationComplete(getNativeHandle(), output);
         clear();
     }
 
@@ -140,13 +140,13 @@ public final class TlsKeyOperation {
      * exception so it can be reacted to accordingly.
      */
     public void completeExceptionally(Throwable ex) {
-        if (nativeHandle == 0) {
+        if (getNativeHandle() == 0 || this.clearCalled == true) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation exceptionally");
             return;
         }
 
-        tlsKeyOperationCompleteExceptionally(nativeHandle, ex);
+        tlsKeyOperationCompleteExceptionally(getNativeHandle(), ex);
         clear();
     }
 
@@ -154,9 +154,58 @@ public final class TlsKeyOperation {
      * Clears the data and makes the object no longer valid for use
      */
     private void clear() {
-        this.nativeHandle = 0; // the operation backing this is no longer valid
-        this.inputData = null; // the DirectByteBuffer backing this is no longer valid
+        if (this.closeCalled == false) {
+            /* Indicates to the code that clear has been called but close has not yet, which will allow
+               the code to call close once, and only once. */
+            this.clearCalled = true;
+
+            this.inputData = null; // the DirectByteBuffer backing this is no longer valid
+            close(); // the operation backing this is no longer valid
+
+            /* Indicates that close has now been called, so any further attempts to call it are unncessary */
+            this.closeCalled = true;
+        }
+        else {
+            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
+                "TlsKeyOperation cannot be cleared: clear() already called!");
+        }
     }
+
+    @Override
+    public void close() {
+        // This should only occur if clear is called for the first time
+        if (this.closeCalled == false && this.clearCalled == true) {
+            decRef();
+            return;
+        }
+        else if (this.closeCalled == true) {
+            // Trying to close after calling complete
+            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
+                "TlsKeyOperation cannot be closed: TlsKeyOperation already closed as part of calling complete() or completeExceptionally()");
+        }
+        else {
+            // Trying to close before calling complete
+            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
+                "TlsKeyOperation cannot be closed: complete() or completeExceptionally() has to be called!");
+        }
+    }
+
+    /**
+     * Frees all native resources associated with the context. This object is unusable after close is called.
+     */
+    protected void releaseNativeHandle() {
+        if (this.clearCalled == false) {
+            completeExceptionally(new RuntimeException("releaseNativeHandle called!"));
+        }
+    }
+
+    /**
+     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
+     * Resources that wait are responsible for calling releaseReferences() manually.
+     */
+    protected boolean canReleaseReferencesImmediately() {
+        return false;
+    };
 
     /*******************************************************************************
      * native methods

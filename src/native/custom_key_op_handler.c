@@ -100,7 +100,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
         // JVM is likely shutting down. Do not crash but log error.
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)java_custom_key_op_handler);
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)op_handler);
         return;
     }
 
@@ -141,7 +141,7 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
         // JVM is likely shutting down. Do not crash but log error.
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p new: Could not get Java ENV!", (void *)java_custom_key_op_handler);
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p new: Could not get Java ENV!", (void *)op_handler);
         return NULL;
     }
 

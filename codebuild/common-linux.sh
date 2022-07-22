@@ -13,7 +13,7 @@ git submodule update --init
 curl https://www.amazontrust.com/repository/AmazonRootCA1.pem --output /tmp/AmazonRootCA1.pem
 cert=$(aws secretsmanager get-secret-value --secret-id "unit-test/certificate" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$cert" > /tmp/certificate.pem
 key=$(aws secretsmanager get-secret-value --secret-id "unit-test/privatekey" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$key" > /tmp/privatekey.pem
-key_p8=$(aws secretsmanager get-secret-value --secret-id "unit-test/privatekey-p8" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$key_pkcs" > /tmp/privatekey_p8.pem
+key_p8=$(aws secretsmanager get-secret-value --secret-id "unit-test/privatekey-p8" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$key_p8" > /tmp/privatekey_p8.pem
 ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
 
 # build java package

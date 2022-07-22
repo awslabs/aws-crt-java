@@ -88,6 +88,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jlong jni_client_bootstrap,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
+    jlong jni_tls_connection_options,
     jlongArray java_marshalled_settings,
     jbyteArray jni_endpoint,
     jint jni_port,
@@ -103,13 +104,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jint jni_monitoring_failure_interval_in_seconds,
     jint jni_max_conns,
     jint jni_ideal_concurrent_streams_per_connection,
-    jint jni_max_concurrent_streams_per_connection) {
+    jint jni_max_concurrent_streams_per_connection,
+    jboolean jni_prior_knowledge,
+    jboolean jni_close_connection_on_server_error,
+    jint jni_connection_ping_period_ms,
+    jint jni_connection_ping_timeout_ms) {
 
     (void)jni_class;
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
+    struct aws_tls_connection_options *tls_connection_options =
+        (struct aws_tls_connection_options *)jni_tls_connection_options;
     struct aws_http2_stream_manager_binding *binding = NULL;
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -153,14 +160,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
 
     uint16_t port = (uint16_t)jni_port;
 
-    int use_tls = (jni_tls_ctx != 0);
+    bool new_tls_conn_opts = (jni_tls_ctx != 0 && !tls_connection_options);
 
     struct aws_tls_connection_options tls_conn_options;
     AWS_ZERO_STRUCT(tls_conn_options);
-
-    if (use_tls) {
+    if (new_tls_conn_opts) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
         aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
+        tls_connection_options = &tls_conn_options;
     }
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));
@@ -171,30 +178,26 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    struct aws_http2_stream_manager_options manager_options;
-    AWS_ZERO_STRUCT(manager_options);
-
-    manager_options.bootstrap = client_bootstrap;
-    manager_options.initial_settings_array = initial_settings;
-    manager_options.num_initial_settings = num_initial_settings;
-
-    manager_options.socket_options = socket_options;
-    manager_options.tls_connection_options = NULL;
-    manager_options.host = endpoint;
-    manager_options.port = port;
-    manager_options.shutdown_complete_callback = &s_on_stream_manager_shutdown_complete_callback;
-    manager_options.shutdown_complete_user_data = binding;
-    manager_options.monitoring_options = NULL;
-    /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
-    manager_options.enable_read_back_pressure = jni_manual_window_management;
-
-    manager_options.max_connections = (size_t)jni_max_conns;
-    manager_options.ideal_concurrent_streams_per_connection = (size_t)jni_ideal_concurrent_streams_per_connection;
-    manager_options.max_concurrent_streams_per_connection = (size_t)jni_max_concurrent_streams_per_connection;
-
-    if (use_tls) {
-        manager_options.tls_connection_options = &tls_conn_options;
-    }
+    struct aws_http2_stream_manager_options manager_options = {
+        .bootstrap = client_bootstrap,
+        .initial_settings_array = initial_settings,
+        .num_initial_settings = num_initial_settings,
+        .socket_options = socket_options,
+        .http2_prior_knowledge = jni_prior_knowledge,
+        .tls_connection_options = tls_connection_options,
+        .monitoring_options = NULL,
+        .host = endpoint,
+        .port = port,
+        .shutdown_complete_callback = &s_on_stream_manager_shutdown_complete_callback,
+        .shutdown_complete_user_data = binding,
+        .enable_read_back_pressure = jni_manual_window_management,
+        .close_connection_on_server_error = jni_close_connection_on_server_error,
+        .connection_ping_period_ms = jni_connection_ping_period_ms,
+        .connection_ping_timeout_ms = jni_connection_ping_timeout_ms,
+        .ideal_concurrent_streams_per_connection = (size_t)jni_ideal_concurrent_streams_per_connection,
+        .max_concurrent_streams_per_connection = (size_t)jni_max_concurrent_streams_per_connection,
+        .max_connections = (size_t)jni_max_conns,
+    };
 
     struct aws_http_connection_monitoring_options monitoring_options;
     AWS_ZERO_STRUCT(monitoring_options);
@@ -237,7 +240,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     aws_http_proxy_options_jni_clean_up(
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
-    if (use_tls) {
+    if (new_tls_conn_opts) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
     }
 

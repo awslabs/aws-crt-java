@@ -28,20 +28,13 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.UUID;
 
-
 public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     public CustomKeyOpsTest() {
     }
 
     static RSAPrivateKey loadPrivateKey(String filepath) {
         /* Adapted from: https://stackoverflow.com/a/27621696
-            * You probably need to convert your private key file from PKCS#1
-            * to PKCS#8 to get it working with this sample:
-            *
-            * $ openssl pkcs8 -topk8 -in my-private.pem.key -out my-private-pk8.pem.key -nocrypt
-            *
-            * IoT Core vends keys as PKCS#1 by default,
-            * but Java only seems to have this PKCS8EncodedKeySpec class */
+         * NOTE - this only works with PKCS#8 keys. See sample for more info */
         try {
             /* Read the BASE64-encoded contents of the private key file */
             StringBuilder pemBase64 = new StringBuilder();
@@ -158,7 +151,6 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, false);
         TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
-        System.out.println("\n ABOUT TO CONNECT... \n");
         try {
             connect(keyOperationOptions);
         }

@@ -9,6 +9,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
+#include <aws/common/string.h>
 
 #include <jni.h>
 
@@ -92,6 +93,12 @@ jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_
  * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
  ******************************************************************************/
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
+
+/*******************************************************************************
+ * aws_jni_string_from_cursor - Creates a Java String from a string.
+ * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
+ ******************************************************************************/
+jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string);
 
 /*******************************************************************************
  * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer

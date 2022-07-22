@@ -54,5 +54,4 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
 
 void aws_custom_key_op_handler_java_release(
     struct aws_allocator *allocator,
-    struct aws_jni_custom_key_op_handler
-    *java_custom_key_op_handler);
+    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler);

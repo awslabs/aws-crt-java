@@ -19,6 +19,8 @@ public class TlsContextCustomKeyOperationOptions {
      *
      * Through the TlsKeyOperationHandler you can add your own private key operations during the
      * MQTT TLS handshake.
+     *
+     * @param operationHandler The operation handler to use when performing a TLS key operation.
      */
     public TlsContextCustomKeyOperationOptions(TlsKeyOperationHandler operationHandler) {
         this.operationHandler = operationHandler;
@@ -29,7 +31,7 @@ public class TlsContextCustomKeyOperationOptions {
      * by other means instead (ex: {@link withCertificateFileContents})
      *
      * @param path path to PEM-formatted certificate file on disk.
-     * @return this
+     * @return The TlsContextCustomKeyOperationOptions after setting the path
      */
     public TlsContextCustomKeyOperationOptions withCertificateFilePath(String path) {
         this.certificateFilePath = path;
@@ -41,7 +43,7 @@ public class TlsContextCustomKeyOperationOptions {
      * specified by other means instead (ex: {@link withCertificateFilePath})
      *
      * @param contents contents of PEM-formatted certificate file.
-     * @return this
+     * @return The TlsContextCustomKeyOperationOptions after certificate contents
      */
     public TlsContextCustomKeyOperationOptions withCertificateFileContents(String contents) {
         this.certificateFileContents = contents;
@@ -50,6 +52,8 @@ public class TlsContextCustomKeyOperationOptions {
 
     /**
      * Returns the path to the X.509 certificate file on desk if it has been set.
+     *
+     * @return The path to the certificate file
      */
     public String getCertificateFilePath() {
         return certificateFilePath;
@@ -57,6 +61,8 @@ public class TlsContextCustomKeyOperationOptions {
 
     /**
      * Returns the contents of the X.509 certificate if it has been set.
+     *
+     * @return The contents of the certificate
      */
     public String getCertificateFileContents() {
         return certificateFileContents;
@@ -64,6 +70,8 @@ public class TlsContextCustomKeyOperationOptions {
 
     /**
      * Returns the TlsKeyOperationHandler assigned to this class.
+     *
+     * @return The operation handler that will be used
      */
     public TlsKeyOperationHandler getOperationHandler() {
         return operationHandler;

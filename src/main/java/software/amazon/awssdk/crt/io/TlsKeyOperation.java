@@ -96,6 +96,8 @@ public final class TlsKeyOperation extends CrtResource {
     /**
      * Returns the input data from native that needs to be operated on using the private key.
      * You can determine the operation that needs to be performed on the data using the getType function.
+     *
+     * @return The input data from native that needs to be operated on
      */
     public byte[] getInput() {
         return inputData;
@@ -103,6 +105,8 @@ public final class TlsKeyOperation extends CrtResource {
 
     /**
      * Returns the operation that needs to be performed.
+     *
+     * @return The operation that needs to be performed.
      */
     public Type getType() {
         return operationType;
@@ -110,6 +114,8 @@ public final class TlsKeyOperation extends CrtResource {
 
     /**
      * Returns the TLS algorithm used in the signature.
+     *
+     * @return The TLS algorithm used in the signature
      */
     public TlsSignatureAlgorithm getSignatureAlgorithm() {
         return signatureAlgorithm;
@@ -117,6 +123,8 @@ public final class TlsKeyOperation extends CrtResource {
 
     /**
      * Returns the TLS Hash algorithm used in the digest.
+     *
+     * @return The TLS Hash algorithm used in the digest
      */
     public TlsHashAlgorithm getDigestAlgorithm() {
         return digestAlgorithm;
@@ -125,6 +133,8 @@ public final class TlsKeyOperation extends CrtResource {
     /**
      * The function to call when you have modified the input data using the private key and are ready to
      * return it for use in the MQTT TLS Handshake.
+     *
+     * @param output The modified input data that has been modified by the custom key operation
      */
     public void complete(byte[] output) {
         if (getNativeHandle() == 0 || this.clearCalled == true) {
@@ -141,6 +151,8 @@ public final class TlsKeyOperation extends CrtResource {
      * The function to call when you either have an exception and want to complete the operation with an
      * exception or you cannot complete the operation. This will mark the operation as complete with an
      * exception so it can be reacted to accordingly.
+     *
+     * @param ex The exeception to complete with
      */
     public void completeExceptionally(Throwable ex) {
         if (getNativeHandle() == 0 || this.clearCalled == true) {

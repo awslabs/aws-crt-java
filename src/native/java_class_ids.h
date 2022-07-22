@@ -188,6 +188,12 @@ struct java_http_client_connection_manager_properties {
 };
 extern struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
+/* Http2StreamManager */
+struct java_http2_stream_manager_properties {
+    jmethodID onShutdownComplete;
+};
+extern struct java_http2_stream_manager_properties http2_stream_manager_properties;
+
 /* HttpClientConnection */
 struct java_http_client_connection_properties {
     jclass http_client_connection_class;

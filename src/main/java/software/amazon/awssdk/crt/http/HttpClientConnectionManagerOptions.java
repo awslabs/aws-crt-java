@@ -33,6 +33,9 @@ public class HttpClientConnectionManagerOptions {
     private long maxConnectionIdleInMilliseconds = 0;
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
 
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
+
     /**
      * Default constructor
      */
@@ -118,7 +121,7 @@ public class HttpClientConnectionManagerOptions {
     public int getWindowSize() { return windowSize; }
 
     /**
-     * Sets the IO buffer size to use for connections in the connection pool
+     * @deprecated Sets the IO buffer size to use for connections in the connection pool
      * @param bufferSize Size of I/O buffer per connection
      * @return this
      */
@@ -128,10 +131,10 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
+     * @deprecated
      * @return the IO buffer size to use for connections in the connection pool
      */
     public int getBufferSize() { return bufferSize; }
-
 
     /**
      * Sets the URI to use for connections in the connection pool
@@ -268,4 +271,30 @@ public class HttpClientConnectionManagerOptions {
      * @return the monitoring options for connections in the connection pool
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
+
+    /**
+     * Validate the connection manager options are valid to use. Throw exceptions if not.
+     */
+    public void validateOptions() {
+        URI uri = this.getUri();
+        if (uri == null) {  throw new IllegalArgumentException("URI must not be null"); }
+        if (uri.getScheme() == null) { throw new IllegalArgumentException("URI does not have a Scheme"); }
+        if (!HTTP.equals(uri.getScheme()) && !HTTPS.equals(uri.getScheme())) { throw new IllegalArgumentException("URI has unknown Scheme"); }
+        if (uri.getHost() == null) { throw new IllegalArgumentException("URI does not have a Host name"); }
+
+        if (clientBootstrap == null) {  throw new IllegalArgumentException("ClientBootstrap must not be null"); }
+
+        if (socketOptions == null) { throw new IllegalArgumentException("SocketOptions must not be null"); }
+
+        if(tlsContext!= null && tlsConnectionOptions != null) {
+            throw new IllegalArgumentException("Cannot set both TlsContext and TlsConnectionOptions.");
+        }
+        boolean useTls = HTTPS.equals(uri.getScheme());
+        boolean tlsSet = (tlsContext!= null || tlsConnectionOptions != null);
+        if (useTls && !tlsSet) { throw new IllegalArgumentException("TlsContext or TlsConnectionOptions must not be null if https is used"); }
+
+        if (windowSize <= 0) { throw new  IllegalArgumentException("Window Size must be greater than zero."); }
+
+        if (maxConnections <= 0) { throw new  IllegalArgumentException("Max Connections must be greater than zero."); }
+    }
 }

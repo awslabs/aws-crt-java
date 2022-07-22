@@ -329,7 +329,7 @@ public final class TlsContextOptions extends CrtResource {
      * allows you to perform custom private key operations such as signing and decrypting. This is necessary if you
      * require an external library to handle private key operations.
      *
-     * @param TlsContextCustomKeyOperationOptions The options for the custom private key operations
+     * @param custom The options for the custom private key operations
      * @return A set of options for creating a TLS connection with custom private key operations
      */
     public static TlsContextOptions createWithMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions custom) {

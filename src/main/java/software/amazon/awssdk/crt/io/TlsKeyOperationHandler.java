@@ -31,6 +31,8 @@ public class TlsKeyOperationHandler {
 
     /**
      * Returns the operation handler events associated with this TlsKeyOperationHandler.
+     *
+     * @return The operation handler events associated with this TlsKeyOperationHandler
      */
     public TlsKeyOperationHandlerEvents getOperationHandlerEvents() {
         return this.operationHandlerEvents;
@@ -38,6 +40,8 @@ public class TlsKeyOperationHandler {
 
     /**
      * Creates a new TlsKeyOperationHandler with the given TlsKeyOperationHandlerEvents
+     *
+     * @param operationHandlerEvents The TlsKeyOperationHandlerEvents to use
      */
     public TlsKeyOperationHandler(TlsKeyOperationHandlerEvents operationHandlerEvents) {
         this.operationHandlerEvents = operationHandlerEvents;
@@ -95,6 +99,8 @@ public class TlsKeyOperationHandler {
         * Additionally, this may be called from multiple times from multiple threads
         * at once, so keep this in mind if using a private key operation that has to
         * be single-threaded and synchronously called.
+        *
+        * @param operation The operation to be acted on
         */
         void performOperation(TlsKeyOperation operation);
 

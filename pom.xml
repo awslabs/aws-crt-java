@@ -200,7 +200,6 @@
                                         <argument>${cmake.buildconfig}</argument>
                                         <argument>--target</argument>
                                         <argument>aws-crt-jni</argument>
-                                        <argument>--parallel</argument>
                                     </arguments>
                                 </configuration>
                             </execution>

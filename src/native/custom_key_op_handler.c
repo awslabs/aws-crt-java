@@ -27,12 +27,16 @@ static void s_aws_custom_key_op_handler_perform_operation(
         goto clean_up;
     }
 
+    if (operation == NULL) {
+        goto clean_up;
+    }
+
     /* Create TlsKeyOperation */
     jni_operation = (*env)->NewObject(
         env,
         tls_key_operation_properties.cls,
         tls_key_operation_properties.constructor,
-        (jlong)(void *)operation,
+        (jlong)(intptr_t)operation,
         jni_input_data,
         (jint)aws_tls_key_operation_get_type(operation),
         (jint)aws_tls_key_operation_get_signature_algorithm(operation),

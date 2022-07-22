@@ -32,7 +32,7 @@ static void s_aws_custom_key_op_handler_perform_operation(
         env,
         tls_key_operation_properties.cls,
         tls_key_operation_properties.constructor,
-        (jlong)operation,
+        (jlong)(void *)operation,
         jni_input_data,
         (jint)aws_tls_key_operation_get_type(operation),
         (jint)aws_tls_key_operation_get_signature_algorithm(operation),

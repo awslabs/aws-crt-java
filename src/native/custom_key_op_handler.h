@@ -47,5 +47,12 @@ struct aws_jni_custom_key_op_handler {
     struct aws_byte_cursor cert_file_contents;
 };
 
-struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, struct aws_allocator *allocator, jobject jni_custom_key_op);
-void aws_custom_key_op_handler_java_release(struct aws_allocator *allocator, struct aws_jni_custom_key_op_handler *java_custom_key_op_handler);
+struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
+    JNIEnv *env,
+    struct aws_allocator *allocator,
+    jobject jni_custom_key_op);
+
+void aws_custom_key_op_handler_java_release(
+    struct aws_allocator *allocator,
+    struct aws_jni_custom_key_op_handler
+    *java_custom_key_op_handler);

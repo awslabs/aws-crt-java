@@ -62,7 +62,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     if (error_code == 0) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "aws_tls_key_operation tlsKeyOperationCompleteExceptionally: Completed with exception but with an error code of zero");
+            "aws_tls_key_operation tlsKeyOperationCompleteExceptionally: "
+            "Completed with exception but with an error code of zero");
         error_code = AWS_ERROR_UNKNOWN;
     }
 

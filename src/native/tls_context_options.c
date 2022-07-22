@@ -161,7 +161,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         jobject jni_custom_key_op_handle = (*env)->GetObjectField(
             env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.operation_handler_field_id);
         if (!jni_custom_key_op_handle) {
-            aws_jni_throw_runtime_exception(env, "could not get custom operation handler from jni_custom_key_op_handle!");
+            aws_jni_throw_runtime_exception(
+                env, "could not get custom operation handler from jni_custom_key_op_handle!");
             goto on_error;
         }
 
@@ -170,15 +171,18 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         int64_t custom_key_op_handle_native_value = (int64_t)jni_custom_key_op_handle_native;
         if (custom_key_op_handle_native_value <= 0) {
             tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
-            (*env)->SetLongField(env, jni_custom_key_op_handle, tls_key_operation_handler_properties.native_handle_field_id, (jlong)tls->custom_key_op_handler);
-        }
-        else {
+            (*env)->SetLongField(
+                env,
+                jni_custom_key_op_handle,
+                tls_key_operation_handler_properties.native_handle_field_id,
+                (jlong)tls->custom_key_op_handler);
+        } else {
             tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)custom_key_op_handle_native_value;
             aws_custom_key_op_handler_aquire(tls->custom_key_op_handler->key_handler);
         }
 
-        jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(env, jni_custom_key_op,
-            tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
+        jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(
+            env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
         if (jni_custom_key_op_cert_path) {
             tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
             if (!tls->certificate_path) {
@@ -188,7 +192,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             tls->custom_key_op_handler->cert_file_path = aws_byte_cursor_from_string(tls->certificate_path);
         }
 
-        jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(env, jni_custom_key_op,
+        jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(
+            env,
+            jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
         if (jni_custom_key_op_cert_contents) {
             tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);

@@ -372,13 +372,16 @@ static void s_cache_tls_context_custom_key_operation_options(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsContextCustomKeyOperationOptions");
     AWS_FATAL_ASSERT(cls);
 
-    tls_context_custom_key_operation_options_properties.operation_handler_field_id = (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
+    tls_context_custom_key_operation_options_properties.operation_handler_field_id =
+        (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
     AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.operation_handler_field_id);
 
-    tls_context_custom_key_operation_options_properties.certificate_file_path_field_id = (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
+    tls_context_custom_key_operation_options_properties.certificate_file_path_field_id =
+        (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
 
-    tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id = (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
+    tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id =
+        (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
 }
 
@@ -394,8 +397,7 @@ static void s_cache_tls_key_operation_handler(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "invokePerformOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
     AWS_FATAL_ASSERT(tls_key_operation_handler_properties.invoke_perform_operation_id);
 
-    tls_key_operation_handler_properties.invoke_on_cleanup_id =
-        (*env)->GetMethodID(env, cls, "invokeOnCleanup", "()V");
+    tls_key_operation_handler_properties.invoke_on_cleanup_id = (*env)->GetMethodID(env, cls, "invokeOnCleanup", "()V");
     AWS_FATAL_ASSERT(tls_key_operation_handler_properties.invoke_perform_operation_id);
 }
 

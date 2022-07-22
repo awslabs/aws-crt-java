@@ -164,7 +164,8 @@ struct java_tls_context_custom_key_operation_options_properties {
     jfieldID certificate_file_path_field_id;
     jfieldID certificate_file_contents_field_id;
 };
-extern struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;
+extern struct java_tls_context_custom_key_operation_options_properties
+    tls_context_custom_key_operation_options_properties;
 
 /* TlsKeyOperationHandler */
 struct java_tls_key_operation_handler_properties {

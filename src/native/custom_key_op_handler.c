@@ -4,7 +4,9 @@
  */
 #include "custom_key_op_handler.h"
 
-static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_op_handler *key_op_handler, struct aws_tls_key_operation *operation) {
+static void s_aws_custom_key_op_handler_perform_operation(
+    struct aws_custom_key_op_handler *key_op_handler,
+    struct aws_tls_key_operation *operation) {
 
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);
@@ -44,7 +46,8 @@ static void s_aws_custom_key_op_handler_perform_operation(struct aws_custom_key_
     // function. This function will also catch any exceptions and clear the operation
     // with an exception should it occur.
     (*env)->CallVoidMethod(
-        env, op_handler->jni_custom_key_op,
+        env,
+        op_handler->jni_custom_key_op,
         tls_key_operation_handler_properties.invoke_perform_operation_id,
         jni_operation);
 
@@ -66,7 +69,9 @@ clean_up:
     aws_jni_release_thread_env(op_handler->jvm, env);
 }
 
-static bool s_aws_custom_key_op_handler_get_certificate(struct aws_custom_key_op_handler *key_op_handler, struct aws_byte_buf *certificate_output) {
+static bool s_aws_custom_key_op_handler_get_certificate(
+    struct aws_custom_key_op_handler *key_op_handler,
+    struct aws_byte_buf *certificate_output) {
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);
 
@@ -100,7 +105,8 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
         // JVM is likely shutting down. Do not crash but log error.
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)op_handler);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)op_handler);
         return;
     }
 
@@ -108,8 +114,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     if (op_handler->jni_custom_key_op) {
         // Let the customer clean up their stuff if needed
         (*env)->CallVoidMethod(
-            env, op_handler->jni_custom_key_op,
-            tls_key_operation_handler_properties.invoke_on_cleanup_id);
+            env, op_handler->jni_custom_key_op, tls_key_operation_handler_properties.invoke_on_cleanup_id);
 
         (*env)->DeleteGlobalRef(env, op_handler->jni_custom_key_op);
     }
@@ -141,7 +146,8 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
         // JVM is likely shutting down. Do not crash but log error.
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p new: Could not get Java ENV!", (void *)op_handler);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p new: Could not get Java ENV!", (void *)op_handler);
         return NULL;
     }
 
@@ -156,8 +162,13 @@ static struct aws_custom_key_op_handler *s_aws_custom_key_op_handler_new(
     return key_op_handler;
 }
 
-struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, struct aws_allocator *allocator, jobject jni_custom_key_op) {
-    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler = aws_mem_calloc(allocator, 1, sizeof(struct aws_jni_custom_key_op_handler));
+struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
+    JNIEnv *env,
+    struct aws_allocator *allocator,
+    jobject jni_custom_key_op) {
+
+    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_jni_custom_key_op_handler));
     if (java_custom_key_op_handler == NULL) {
         return NULL;
     }
@@ -172,11 +183,17 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv 
     java_custom_key_op_handler->key_handler = s_aws_custom_key_op_handler_new(allocator, java_custom_key_op_handler);
     java_custom_key_op_handler->allocator = allocator;
 
-    AWS_LOGF_DEBUG(AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p: Initalizing Custom Key Operations", (void *)java_custom_key_op_handler);
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_IO,
+        "java_custom_key_op_handler=%p: Initalizing Custom Key Operations",
+        (void *)java_custom_key_op_handler);
     return java_custom_key_op_handler;
 }
 
-void aws_custom_key_op_handler_java_release(struct aws_allocator *allocator, struct aws_jni_custom_key_op_handler *java_custom_key_op_handler) {
+void aws_custom_key_op_handler_java_release(
+    struct aws_allocator *allocator,
+    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler) {
+
     (void)allocator;
 
     if (!java_custom_key_op_handler) {
@@ -184,11 +201,13 @@ void aws_custom_key_op_handler_java_release(struct aws_allocator *allocator, str
     }
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_IO,
-        "java_custom_key_op_handler=%p: Releasing Custom Key Operations (may destroy custom key operations if this the Java class holds the last reference)",
+        "java_custom_key_op_handler=%p: Releasing Custom Key Operations (may destroy custom key operations if "
+        "this Java class holds the last reference)",
         (void *)java_custom_key_op_handler);
 
     // Release the reference (which will only clean everything up if this is the last thing holding a reference)
     if (java_custom_key_op_handler->key_handler != NULL) {
-        java_custom_key_op_handler->key_handler = aws_custom_key_op_handler_release(java_custom_key_op_handler->key_handler);
+        java_custom_key_op_handler->key_handler =
+            aws_custom_key_op_handler_release(java_custom_key_op_handler->key_handler);
     }
 }

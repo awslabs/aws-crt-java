@@ -57,7 +57,7 @@ public class ShutdownTest {
     public void testShutdownDuringAcquire() throws Exception {
         Assume.assumeTrue(doShutdownTest());
 
-        //HttpClientConnectionManager manager = createConnectionManager(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"));
-        //CompletableFuture<HttpClientConnection> connection = manager.acquireConnection();
+        HttpClientConnectionManager manager = createConnectionManager(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"));
+        CompletableFuture<HttpClientConnection> connection = manager.acquireConnection();
     }
 }

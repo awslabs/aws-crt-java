@@ -153,9 +153,12 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testHappyPath() {
         skipIfNetworkUnavailable();
+        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, false);
         TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
+        System.out.println("\n ABOUT TO CONNECT... \n");
         try {
             connect(keyOperationOptions);
         }
@@ -173,6 +176,8 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExceptionFailurePath() {
         skipIfNetworkUnavailable();
+        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, false);
         TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
@@ -190,6 +195,8 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExtraClosesHappy() {
         skipIfNetworkUnavailable();
+        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, true);
         TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
@@ -206,6 +213,8 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExceptionExtraClosesFailurePath() {
         skipIfNetworkUnavailable();
+        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, true);
         TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);

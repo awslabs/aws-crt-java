@@ -31,7 +31,7 @@ public final class TlsKeyOperation extends CrtResource {
      * interface in the TlsKeyOperationHandler.
      */
     public enum Type {
-        SIGN(1), DECRYPT(2);
+        UNKNOWN(-1), SIGN(0), DECRYPT(1);
 
         static Map<Integer, Type> buildEnumMapping() {
             Map<Integer, Type> enumMapping = new HashMap<Integer, Type>();
@@ -81,14 +81,14 @@ public final class TlsKeyOperation extends CrtResource {
 
         /*
          * signatureAlgorithm and digestAlgorithm may not be used by the operation. In
-         * native we use enum value UNKNOWN(0) to indicate this, but in Java we'll use
+         * native we use enum value UNKNOWN(-1) to indicate this, but in Java we'll use
          * null ot indicate this.
          */
-        if (signatureAlgorithm != 0) {
+        if (signatureAlgorithm != -1) {
             this.signatureAlgorithm = TlsSignatureAlgorithm.getEnumValueFromInteger(signatureAlgorithm);
         }
 
-        if (digestAlgorithm != 0) {
+        if (digestAlgorithm != -1) {
             this.digestAlgorithm = TlsHashAlgorithm.getEnumValueFromInteger(digestAlgorithm);
         }
     }

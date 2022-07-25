@@ -126,7 +126,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     // Release the Java ENV
     aws_jni_release_thread_env(op_handler->jvm, env);
 
-    aws_mem_release(op_handler->allocator, key_op_handler);
+    aws_mem_release(op_handler->allocator, op_handler->key_handler);
 
     // Release the Java struct
     aws_mem_release(op_handler->allocator, op_handler);

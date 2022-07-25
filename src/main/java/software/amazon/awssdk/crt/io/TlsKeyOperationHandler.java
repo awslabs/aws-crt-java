@@ -14,6 +14,9 @@ import software.amazon.awssdk.crt.Log.LogSubject;
  *
  * This is necessary if you require an external library to handle private operations
  * such as signing and decrypting.
+ *
+ * Note: custom private key operations do not support TLS 1.3 currently and are set
+ * to not allow the use of TLS 1.3.
  */
 public class TlsKeyOperationHandler {
 

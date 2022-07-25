@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum TlsHashAlgorithm {
-    SHA1(1), SHA224(2), SHA256(3), SHA384(4), SHA512(5);
+    UNKNOWN(-1), SHA1(0), SHA224(1), SHA256(2), SHA384(3), SHA512(4);
 
     static Map<Integer, TlsHashAlgorithm> buildEnumMapping() {
         Map<Integer, TlsHashAlgorithm> enumMapping = new HashMap<Integer, TlsHashAlgorithm>();

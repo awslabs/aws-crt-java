@@ -73,34 +73,6 @@ clean_up:
     aws_jni_release_thread_env(op_handler->jvm, env);
 }
 
-static int s_aws_custom_key_op_handler_get_certificate(
-    struct aws_custom_key_op_handler *key_op_handler,
-    struct aws_byte_buf *certificate_output) {
-    struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
-    AWS_FATAL_ASSERT(op_handler != NULL);
-
-    struct aws_allocator *allocator = op_handler->allocator;
-
-    /* certificate needs to be set, but there are multiple ways to return it */
-    if ((op_handler->cert_file_path.ptr != NULL) && (op_handler->cert_file_contents.ptr != NULL)) {
-        return AWS_OP_ERR;
-    } else if (op_handler->cert_file_path.ptr != NULL) {
-        struct aws_string *tmp_string = aws_string_new_from_cursor(allocator, &op_handler->cert_file_path);
-        int op = aws_byte_buf_init_from_file(certificate_output, allocator, aws_string_c_str(tmp_string));
-        aws_string_destroy(tmp_string);
-        if (op != AWS_OP_SUCCESS) {
-            return AWS_OP_ERR;
-        }
-    } else if (op_handler->cert_file_contents.ptr != NULL) {
-        if (aws_byte_buf_init_copy_from_cursor(certificate_output, allocator, op_handler->cert_file_contents)) {
-            return AWS_OP_ERR;
-        }
-    } else {
-        return AWS_OP_ERR;
-    }
-    return AWS_OP_SUCCESS;
-}
-
 static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler *key_op_handler) {
 
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
@@ -133,7 +105,6 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtable = {
     .destroy = s_aws_custom_key_op_handler_destroy,
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
-    .get_certificate = s_aws_custom_key_op_handler_get_certificate,
 };
 
 struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(

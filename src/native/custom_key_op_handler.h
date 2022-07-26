@@ -25,7 +25,7 @@ struct aws_jni_custom_key_op_handler {
 
     // The C class containing the key operations. We extend/define it's VTable to allow
     // us to have it call into the customer's Java code.
-    struct aws_custom_key_op_handler *key_handler;
+    struct aws_custom_key_op_handler key_handler;
 
     // The allocator to use
     struct aws_allocator *allocator;

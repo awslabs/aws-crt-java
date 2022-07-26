@@ -178,7 +178,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 (jlong)tls->custom_key_op_handler);
         } else {
             tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)custom_key_op_handle_native_value;
-            aws_custom_key_op_handler_aquire(tls->custom_key_op_handler->key_handler);
+            aws_custom_key_op_handler_acquire(&tls->custom_key_op_handler->key_handler);
         }
 
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(
@@ -206,7 +206,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         }
 
         if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                &tls->options, allocator, tls->custom_key_op_handler->key_handler)) {
+                &tls->options, allocator, &tls->custom_key_op_handler->key_handler)) {
             aws_jni_throw_runtime_exception(
                 env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
             goto on_error;

@@ -153,10 +153,6 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         }
         disconnect();
         close();
-
-        if (myKeyOperationHandler.cleanupCalled != true) {
-            fail("Cleanup function was not called!");
-        }
     }
 
     @Test

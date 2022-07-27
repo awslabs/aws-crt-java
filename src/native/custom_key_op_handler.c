@@ -103,7 +103,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 }
 
 static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtable = {
-    .destroy = s_aws_custom_key_op_handler_destroy,
+    //.destroy = s_aws_custom_key_op_handler_destroy,
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
 };
 
@@ -127,7 +127,7 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
     aws_ref_count_init(
         &java_custom_key_op_handler->key_handler.ref_count,
         &java_custom_key_op_handler->key_handler,
-        (aws_simple_completion_callback *)aws_custom_key_op_handler_perform_destroy);
+        (aws_simple_completion_callback *)s_aws_custom_key_op_handler_destroy);
     java_custom_key_op_handler->key_handler.vtable = &s_aws_custom_key_op_handler_vtable;
     java_custom_key_op_handler->key_handler.impl = (void *)java_custom_key_op_handler;
     java_custom_key_op_handler->jni_custom_key_op = (*env)->NewGlobalRef(env, jni_custom_key_op);

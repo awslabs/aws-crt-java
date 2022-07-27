@@ -166,6 +166,14 @@ public final class TlsKeyOperation extends CrtResource {
     }
 
     /**
+     * Forces the CRT resource to close. This is only used in JNI to force a close when an exception occurs
+     * after trying to call
+     */
+    private void forceClose() {
+        decRef();
+    }
+
+    /**
      * Clears the data and makes the object no longer valid for use
      */
     private void clear() {

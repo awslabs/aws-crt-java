@@ -18,6 +18,7 @@ static void s_aws_custom_key_op_handler_perform_operation(
     jbyteArray jni_input_data = NULL;
     jobject jni_operation = NULL;
     bool success = false;
+    bool exception_occured = false;
 
     if (operation == NULL) {
         goto clean_up;
@@ -46,21 +47,25 @@ static void s_aws_custom_key_op_handler_perform_operation(
         goto clean_up;
     }
 
-    // Invoke TlsKeyOperationHandler.performOperation() through the invokePerformOperation
-    // function. This function will also catch any exceptions and clear the operation
-    // with an exception should it occur.
+    /**
+     * Invoke TlsKeyOperationHandler.performOperation() through the invokePerformOperation
+     * function. This function will also catch any exceptions and clear the operation
+     * with an exception should it occur.
+     */
     (*env)->CallVoidMethod(
-        env,
-        op_handler->jni_custom_key_op,
-        tls_key_operation_handler_properties.perform_operation_id,
-        jni_operation);
+        env, op_handler->jni_custom_key_op, tls_key_operation_handler_properties.perform_operation_id, jni_operation);
 
-    bool did_exception_occur = aws_jni_check_and_clear_exception(env);
-    if (did_exception_occur) {
+    exception_occured = aws_jni_check_and_clear_exception(env);
+    if (exception_occured) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "java_custom_key_op_handler=%p do_operation: Exception occured in Java code. Completing operation with error",
+            "java_custom_key_op_handler=%p do_operation: Exception occured in Java code",
             (void *)op_handler);
+        /**
+         * Free the TlsKeyOperation in Java so it doesn't stick around.
+         * Will also complete the key operation
+         */
+        (*env)->CallVoidMethod(env, jni_operation, tls_key_operation_properties.force_close_id);
     } else {
         success = true;
     }
@@ -72,7 +77,7 @@ clean_up:
     if (jni_operation) {
         (*env)->DeleteLocalRef(env, jni_operation);
     }
-    if (!success) {
+    if (!success && !exception_occured) {
         aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_UNKNOWN);
     }
 

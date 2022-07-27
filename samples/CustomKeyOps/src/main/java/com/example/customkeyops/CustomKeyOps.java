@@ -120,12 +120,11 @@ public class CustomKeyOps {
         }
 
         public void performOperation(TlsKeyOperation operation) {
+            // Test throwing an exception (this should complete the operation with an exception)
+            //throw new RuntimeException("Test Exception!");
 
             try {
                 System.out.println("MyKeyOperationHandler.performOperation" + operation.getType().name());
-
-                // Test throwing an exception (this should complete the operation with an exception)
-                // throw new RuntimeException("Test Exception!");
 
                 // Try to close right away (this should not do anything but print to logs)
                 // operation.close();
@@ -181,6 +180,7 @@ public class CustomKeyOps {
                 // Try to close afterwards (this should not do anything but print to logs)
                 // operation.close();
             }
+            */
         }
 
         RSAPrivateKey loadPrivateKey(String filepath) {
@@ -285,6 +285,7 @@ public class CustomKeyOps {
                 boolean sessionPresent = connected.get();
                 System.out.println("Connected to " + (!sessionPresent ? "new" : "existing") + " session!");
             } catch (Exception ex) {
+                // Comment this out to test MyKeyOperationHandler exception routes.
                 throw new RuntimeException("Exception occurred during connect", ex);
             }
 

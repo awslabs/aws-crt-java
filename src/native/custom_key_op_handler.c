@@ -19,15 +19,15 @@ static void s_aws_custom_key_op_handler_perform_operation(
     jobject jni_operation = NULL;
     bool success = false;
 
+    if (operation == NULL) {
+        goto clean_up;
+    }
+
     /* Create DirectByteBuffer */
     struct aws_byte_cursor input_data = aws_tls_key_operation_get_input(operation);
     jni_input_data = aws_jni_byte_array_from_cursor(env, &input_data);
     if (jni_input_data == NULL) {
         aws_jni_check_and_clear_exception(env);
-        goto clean_up;
-    }
-
-    if (operation == NULL) {
         goto clean_up;
     }
 

@@ -144,24 +144,45 @@ struct aws_tls_ctx_pkcs11_options *aws_tls_ctx_pkcs11_options_from_java_new(JNIE
         goto error;
     }
 
-    /* cert_file_path is optional String */
+    /**
+     * cert_file_path is optional String path to a cert file,
+     * which we convert to the file contents right away
+     */
+    struct aws_byte_cursor cert_file_path_cursor;
     if (!s_read_optional_string(
             env,
             options_jni,
             tls_context_pkcs11_options_properties.certificateFilePath,
             &binding->cert_file_path,
-            &binding->options.cert_file_path)) {
+            &cert_file_path_cursor)) {
         goto error;
+    }
+    if (binding->cert_file_path) {
+        struct aws_allocator *allocator = aws_jni_get_allocator();
+        struct aws_byte_buf tmp_cert_buf;
+        if (aws_byte_buf_init(&tmp_cert_buf, allocator, 0) != AWS_OP_SUCCESS) {
+            goto error;
+        }
+        int op = aws_byte_buf_init_from_file(&tmp_cert_buf, allocator, aws_string_c_str(binding->cert_file_path));
+        if (op != AWS_OP_SUCCESS) {
+            aws_byte_buf_clean_up(&tmp_cert_buf);
+            goto error;
+        }
+        binding->cert_file_contents = aws_string_new_from_buf(allocator, &tmp_cert_buf);
+        binding->options.cert_file_contents = aws_byte_cursor_from_string(binding->cert_file_contents);
+        aws_byte_buf_clean_up(&tmp_cert_buf);
     }
 
     /* binding->cert_file_contents is optional String */
-    if (!s_read_optional_string(
-            env,
-            options_jni,
-            tls_context_pkcs11_options_properties.certificateFileContents,
-            &binding->cert_file_contents,
-            &binding->options.cert_file_contents)) {
-        goto error;
+    if (!binding->cert_file_contents) {
+        if (!s_read_optional_string(
+                env,
+                options_jni,
+                tls_context_pkcs11_options_properties.certificateFileContents,
+                &binding->cert_file_contents,
+                &binding->options.cert_file_contents)) {
+            goto error;
+        }
     }
 
     /* success! */

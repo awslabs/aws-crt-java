@@ -185,32 +185,32 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
         /* Validate the certificate key and/or certificate data */
         if (jni_custom_key_op_cert_path && jni_custom_key_op_cert_contents) {
-            aws_jni_throw_runtime_exception(env,
-                "Custom key operation handler: cannot have both certificate file path and certificate contents!");
+            aws_jni_throw_runtime_exception(
+                env, "Custom key operation handler: cannot have both certificate file path and certificate contents!");
             aws_byte_buf_clean_up(&certificate_byte_buf);
             goto on_error;
-        }
-        else if (jni_custom_key_op_cert_path) {
+        } else if (jni_custom_key_op_cert_path) {
             /* If we have a certificate path, we need to get the certificate data from it and use that */
             tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
             if (!tls->certificate_path) {
-                aws_jni_throw_runtime_exception(env, "Custom key operation handler: failed to get certificate path string");
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate path string");
                 aws_byte_buf_clean_up(&certificate_byte_buf);
                 goto on_error;
             }
-            int op = aws_byte_buf_init_from_file(&certificate_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
+            int op =
+                aws_byte_buf_init_from_file(&certificate_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
             if (op != AWS_OP_SUCCESS) {
-                aws_jni_throw_runtime_exception(env, "Custom key operation handler: failed to get certificate path string");
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate path string");
                 aws_byte_buf_clean_up(&certificate_byte_buf);
                 goto on_error;
             }
             certificate_byte_cursor = aws_byte_cursor_from_buf(&certificate_byte_buf);
-        }
-        else if (jni_custom_key_op_cert_contents) {
+        } else if (jni_custom_key_op_cert_contents) {
             tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
             certificate_byte_cursor = aws_byte_cursor_from_string(tls->certificate);
-        }
-        else {
+        } else {
             aws_jni_throw_runtime_exception(env, "Custom key operation handler: No certificate set!");
             aws_byte_buf_clean_up(&certificate_byte_buf);
             goto on_error;

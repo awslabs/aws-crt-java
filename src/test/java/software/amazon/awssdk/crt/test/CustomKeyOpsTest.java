@@ -66,17 +66,15 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         }
     }
 
-    static class TestKeyOperationHandler implements TlsKeyOperationHandler.TlsKeyOperationHandlerEvents {
+    static class TestKeyOperationHandler implements TlsKeyOperationHandler {
         RSAPrivateKey key;
         boolean throwException;
         boolean performExtraCloses;
-        boolean cleanupCalled;
 
         TestKeyOperationHandler(String keyPath, boolean throwException, boolean performExtraCloses) {
             this.key = loadPrivateKey(keyPath);
             this.throwException = throwException;
             this.performExtraCloses = performExtraCloses;
-            this.cleanupCalled = false;
         }
 
         public void performOperation(TlsKeyOperation operation) {
@@ -138,9 +136,6 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
                 }
             }
         }
-        public void onCleanup() {
-            this.cleanupCalled = true;
-        }
     }
 
     @Test
@@ -149,8 +144,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, false);
-        TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connect(keyOperationOptions);
         }
@@ -171,8 +165,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, false);
-        TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connect(keyOperationOptions);
         }
@@ -190,8 +183,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, true);
-        TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connect(keyOperationOptions);
         }
@@ -208,8 +200,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, true);
-        TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler);
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connect(keyOperationOptions);
         }

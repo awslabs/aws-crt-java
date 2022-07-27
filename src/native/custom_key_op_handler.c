@@ -52,11 +52,18 @@ static void s_aws_custom_key_op_handler_perform_operation(
     (*env)->CallVoidMethod(
         env,
         op_handler->jni_custom_key_op,
-        tls_key_operation_handler_properties.invoke_perform_operation_id,
+        tls_key_operation_handler_properties.perform_operation_id,
         jni_operation);
 
-    aws_jni_check_and_clear_exception(env);
-    success = true;
+    bool did_exception_occur = aws_jni_check_and_clear_exception(env);
+    if (did_exception_occur) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "java_custom_key_op_handler=%p do_operation: Exception occured in Java code. Completing operation with error",
+            (void *)op_handler);
+    } else {
+        success = true;
+    }
 
 clean_up:
     if (jni_input_data) {
@@ -88,10 +95,6 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 
     // Release the global reference
     if (op_handler->jni_custom_key_op) {
-        // Let the customer clean up their stuff if needed
-        (*env)->CallVoidMethod(
-            env, op_handler->jni_custom_key_op, tls_key_operation_handler_properties.invoke_on_cleanup_id);
-
         (*env)->DeleteGlobalRef(env, op_handler->jni_custom_key_op);
     }
 
@@ -103,7 +106,6 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 }
 
 static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtable = {
-    //.destroy = s_aws_custom_key_op_handler_destroy,
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
 };
 
@@ -130,6 +132,7 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
         (aws_simple_completion_callback *)s_aws_custom_key_op_handler_destroy);
     java_custom_key_op_handler->key_handler.vtable = &s_aws_custom_key_op_handler_vtable;
     java_custom_key_op_handler->key_handler.impl = (void *)java_custom_key_op_handler;
+    /* Make a global reference so the Java interface is kept alive */
     java_custom_key_op_handler->jni_custom_key_op = (*env)->NewGlobalRef(env, jni_custom_key_op);
     java_custom_key_op_handler->allocator = allocator;
 

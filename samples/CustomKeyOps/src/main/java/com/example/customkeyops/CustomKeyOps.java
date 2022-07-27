@@ -112,7 +112,7 @@ public class CustomKeyOps {
         }
     }
 
-    static class MyKeyOperationHandler implements TlsKeyOperationHandler.TlsKeyOperationHandlerEvents {
+    static class MyKeyOperationHandler implements TlsKeyOperationHandler {
         RSAPrivateKey key;
 
         MyKeyOperationHandler(String keyPath) {
@@ -120,6 +120,7 @@ public class CustomKeyOps {
         }
 
         public void performOperation(TlsKeyOperation operation) {
+
             try {
                 System.out.println("MyKeyOperationHandler.performOperation" + operation.getType().name());
 
@@ -221,10 +222,6 @@ public class CustomKeyOps {
                 throw new RuntimeException(ex);
             }
         }
-
-        public void onCleanup() {
-            System.out.println(("Cleaned up MyKeyOperationHandler"));
-        }
     }
 
     public static void main(String[] args) {
@@ -251,8 +248,7 @@ public class CustomKeyOps {
         };
 
         MyKeyOperationHandler myKeyOperationHandler = new MyKeyOperationHandler(keyPath);
-        TlsKeyOperationHandler keyOperationHandler = new TlsKeyOperationHandler(myKeyOperationHandler);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(keyOperationHandler)
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler)
                 .withCertificateFilePath(certPath);
 
         try {

@@ -166,20 +166,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
 
-        jlong jni_custom_key_op_handle_native = (*env)->GetLongField(
-            env, jni_custom_key_op_handle, tls_key_operation_handler_properties.native_handle_field_id);
-        int64_t custom_key_op_handle_native_value = (int64_t)jni_custom_key_op_handle_native;
-        if (custom_key_op_handle_native_value <= 0) {
-            tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
-            (*env)->SetLongField(
-                env,
-                jni_custom_key_op_handle,
-                tls_key_operation_handler_properties.native_handle_field_id,
-                (jlong)tls->custom_key_op_handler);
-        } else {
-            tls->custom_key_op_handler = (struct aws_jni_custom_key_op_handler *)custom_key_op_handle_native_value;
-            aws_custom_key_op_handler_acquire(&tls->custom_key_op_handler->key_handler);
-        }
+        tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
 
         /* Initialize the certificate byte cursor we pass when initializing the client */
         struct aws_byte_buf certificate_byte_buf;

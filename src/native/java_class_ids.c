@@ -386,19 +386,14 @@ static void s_cache_tls_context_custom_key_operation_options(JNIEnv *env) {
 }
 
 struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
+
 static void s_cache_tls_key_operation_handler(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperationHandler");
     AWS_FATAL_ASSERT(cls);
 
-    tls_key_operation_handler_properties.native_handle_field_id = (*env)->GetFieldID(env, cls, "nativeHandle", "J");
-    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
-
-    tls_key_operation_handler_properties.invoke_perform_operation_id =
-        (*env)->GetMethodID(env, cls, "invokePerformOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
-    AWS_FATAL_ASSERT(tls_key_operation_handler_properties.invoke_perform_operation_id);
-
-    tls_key_operation_handler_properties.invoke_on_cleanup_id = (*env)->GetMethodID(env, cls, "invokeOnCleanup", "()V");
-    AWS_FATAL_ASSERT(tls_key_operation_handler_properties.invoke_perform_operation_id);
+    tls_key_operation_handler_properties.perform_operation_id =
+        (*env)->GetMethodID(env, cls, "performOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
+    AWS_FATAL_ASSERT(tls_key_operation_handler_properties.perform_operation_id);
 }
 
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;

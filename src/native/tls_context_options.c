@@ -168,14 +168,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
         tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
 
-        /* Initialize the certificate byte cursor we pass when initializing the client */
-        struct aws_byte_buf certificate_byte_buf;
-        struct aws_byte_cursor certificate_byte_cursor;
-        /* Initialize the byte buffer */
-        if (aws_byte_buf_init(&certificate_byte_buf, allocator, 0) != AWS_OP_SUCCESS) {
-            aws_jni_throw_runtime_exception(env, "Could not allocate byte buffer for custom key operation certificate");
-            goto on_error;
-        }
         /* Certificate needs to be set, but there are multiple ways to get it */
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(
             env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
@@ -183,49 +175,56 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             env,
             jni_custom_key_op,
             tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
-        /* Validate the certificate key and/or certificate data */
+
         if (jni_custom_key_op_cert_path && jni_custom_key_op_cert_contents) {
+            /* Cannot have both a certificate path and data - use one or the other */
             aws_jni_throw_runtime_exception(
                 env, "Custom key operation handler: cannot have both certificate file path and certificate contents!");
-            aws_byte_buf_clean_up(&certificate_byte_buf);
             goto on_error;
+        } else if (jni_custom_key_op_cert_contents) {
+            /* If we have the certificate contents, then use it directly */
+            tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
+            struct aws_byte_cursor certificate_byte_cursor = aws_byte_cursor_from_string(tls->certificate);
+
+            /* Initialize the client with a custom key operation */
+            if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
+                    &tls->options, allocator, &tls->custom_key_op_handler->key_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                aws_jni_throw_runtime_exception(
+                    env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
+                goto on_error;
+            }
         } else if (jni_custom_key_op_cert_path) {
             /* If we have a certificate path, we need to get the certificate data from it and use that */
             tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
             if (!tls->certificate_path) {
                 aws_jni_throw_runtime_exception(
                     env, "Custom key operation handler: failed to get certificate path string");
-                aws_byte_buf_clean_up(&certificate_byte_buf);
                 goto on_error;
             }
+            struct aws_byte_buf tmp_byte_buf;
             int op =
-                aws_byte_buf_init_from_file(&certificate_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
+                aws_byte_buf_init_from_file(&tmp_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
             if (op != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "Custom key operation handler: failed to get certificate path string");
-                aws_byte_buf_clean_up(&certificate_byte_buf);
+                aws_byte_buf_clean_up(&tmp_byte_buf);
                 goto on_error;
             }
-            certificate_byte_cursor = aws_byte_cursor_from_buf(&certificate_byte_buf);
-        } else if (jni_custom_key_op_cert_contents) {
-            tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
-            certificate_byte_cursor = aws_byte_cursor_from_string(tls->certificate);
+            struct aws_byte_cursor certificate_byte_cursor = aws_byte_cursor_from_buf(&tmp_byte_buf);
+
+            /* Initialize the client with a custom key operation */
+            if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
+                    &tls->options, allocator, &tls->custom_key_op_handler->key_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                aws_jni_throw_runtime_exception(
+                    env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
+                aws_byte_buf_clean_up(&tmp_byte_buf);
+                goto on_error;
+            }
+            aws_byte_buf_clean_up(&tmp_byte_buf);
         } else {
             aws_jni_throw_runtime_exception(env, "Custom key operation handler: No certificate set!");
-            aws_byte_buf_clean_up(&certificate_byte_buf);
             goto on_error;
         }
-
-        if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                &tls->options, allocator, &tls->custom_key_op_handler->key_handler, &certificate_byte_cursor)) {
-            aws_jni_throw_runtime_exception(
-                env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
-            aws_byte_buf_clean_up(&certificate_byte_buf);
-            goto on_error;
-        }
-
-        /* We no longer need the byte buffer, as with_custom_key_operations makes a copy */
-        aws_byte_buf_clean_up(&certificate_byte_buf);
 
     } else if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);

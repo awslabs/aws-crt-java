@@ -14,9 +14,8 @@ import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.CrtResource;
 
 /**
- * A class containing a TLS Private Key operation that needs to be performed.
- * This class is passed to TlsKeyOperationHandler if a custom key operation is set
- * in the MQTT client.
+ * A class containing a mutual TLS (mTLS) Private Key operation that needs to be performed.
+ * This class is passed to TlsKeyOperationHandler if a custom key operation is set.
  *
  * You MUST call either complete(output) or completeExceptionally(exception)
  * or the TLS connection will hang forever!
@@ -27,11 +26,10 @@ import software.amazon.awssdk.crt.CrtResource;
 public final class TlsKeyOperation extends CrtResource {
 
     /**
-     * The type of TlsKeyOperation that needs to be performed by the TlsKeyOperationHandlerEvents
-     * interface in the TlsKeyOperationHandler.
+     * The type of TlsKeyOperation that needs to be performed by the TlsKeyOperationHandler interface.
      */
     public enum Type {
-        UNKNOWN(-1), SIGN(0), DECRYPT(1);
+        UNKNOWN(0), SIGN(1), DECRYPT(2);
 
         static Map<Integer, Type> buildEnumMapping() {
             Map<Integer, Type> enumMapping = new HashMap<Integer, Type>();
@@ -78,19 +76,8 @@ public final class TlsKeyOperation extends CrtResource {
         this.clearCalled = false;
         this.inputData = inputData;
         this.operationType = Type.getEnumValueFromInteger(operationType);
-
-        /*
-         * signatureAlgorithm and digestAlgorithm may not be used by the operation. In
-         * native we use enum value UNKNOWN(-1) to indicate this, but in Java we'll use
-         * null ot indicate this.
-         */
-        if (signatureAlgorithm != -1) {
-            this.signatureAlgorithm = TlsSignatureAlgorithm.getEnumValueFromInteger(signatureAlgorithm);
-        }
-
-        if (digestAlgorithm != -1) {
-            this.digestAlgorithm = TlsHashAlgorithm.getEnumValueFromInteger(digestAlgorithm);
-        }
+        this.signatureAlgorithm = TlsSignatureAlgorithm.getEnumValueFromInteger(signatureAlgorithm);
+        this.digestAlgorithm = TlsHashAlgorithm.getEnumValueFromInteger(digestAlgorithm);
     }
 
     /**

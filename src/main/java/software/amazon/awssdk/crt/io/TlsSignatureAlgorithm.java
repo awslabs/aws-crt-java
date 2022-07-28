@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum TlsSignatureAlgorithm {
-    UNKNOWN(-1), RSA(0), ECDSA(1);
+    UNKNOWN(0), RSA(1), ECDSA(2);
 
     static Map<Integer, TlsSignatureAlgorithm> buildEnumMapping() {
         Map<Integer, TlsSignatureAlgorithm> enumMapping = new HashMap<Integer, TlsSignatureAlgorithm>();

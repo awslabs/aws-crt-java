@@ -120,14 +120,8 @@ public class CustomKeyOps {
         }
 
         public void performOperation(TlsKeyOperation operation) {
-            // Test throwing an exception (this should complete the operation with an exception)
-            //throw new RuntimeException("Test Exception!");
-
             try {
                 System.out.println("MyKeyOperationHandler.performOperation" + operation.getType().name());
-
-                // Try to close right away (this should not do anything but print to logs)
-                // operation.close();
 
                 if (operation.getType() != TlsKeyOperation.Type.SIGN) {
                     throw new RuntimeException("Simple sample only handles SIGN operations");
@@ -164,23 +158,10 @@ public class CustomKeyOps {
 
                 operation.complete(signatureBytes);
 
-                // Complete again (this should not do anything but print to logs)
-                // operation.complete(signatureBytes);
-
-                // Try to close afterwards (this should not do anything but print to logs)
-                // operation.close();
-
             } catch (Exception ex) {
-                // Try to close right away (this should not do anything but print to logs)
-                // operation.close();
-
                 System.out.println("Error during key operation:" + ex);
                 operation.completeExceptionally(ex);
-
-                // Try to close afterwards (this should not do anything but print to logs)
-                // operation.close();
             }
-            */
         }
 
         RSAPrivateKey loadPrivateKey(String filepath) {

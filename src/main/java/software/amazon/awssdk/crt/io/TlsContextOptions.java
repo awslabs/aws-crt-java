@@ -325,12 +325,12 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
-     * Unix (Linux) platforms only - Helper which creates a TLS options using a custom private key operations. This
+     * Unix platforms only - Helper which creates mutual TLS (mTLS) options using the applied custom key operations. This
      * allows you to perform custom private key operations such as signing and decrypting. This is necessary if you
      * require an external library to handle private key operations.
      *
      * @param custom The options for the custom private key operations
-     * @return A set of options for creating a TLS connection with custom private key operations
+     * @return A set of options for creating a custom key operation mTLS connection
      */
     public static TlsContextOptions createWithMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions custom) {
         TlsContextOptions options = new TlsContextOptions();

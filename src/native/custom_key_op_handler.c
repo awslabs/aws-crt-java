@@ -11,7 +11,7 @@ static void s_aws_custom_key_op_handler_perform_operation(
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);
 
-    // Get the Java ENV
+    /* Get the Java ENV */
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     AWS_FATAL_ASSERT(env != NULL);
 
@@ -81,7 +81,7 @@ clean_up:
         aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_UNKNOWN);
     }
 
-    // Release the Java ENV
+    /* Release the Java ENV */
     aws_jni_release_thread_env(op_handler->jvm, env);
 }
 
@@ -89,24 +89,24 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
 
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
 
-    // Get the Java ENV
+    /* Get the Java ENV */
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
-        // JVM is likely shutting down. Do not crash but log error.
+        /* JVM is likely shutting down. Do not crash but log error. */
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p destroy: Could not get Java ENV!", (void *)op_handler);
         return;
     }
 
-    // Release the global reference
+    /* Release the global reference */
     if (op_handler->jni_custom_key_op) {
         (*env)->DeleteGlobalRef(env, op_handler->jni_custom_key_op);
     }
 
-    // Release the Java ENV
+    /* Release the Java ENV */
     aws_jni_release_thread_env(op_handler->jvm, env);
 
-    // Release the Java struct
+    /* Release the Java struct */
     aws_mem_release(op_handler->allocator, op_handler);
 }
 
@@ -163,6 +163,8 @@ void aws_custom_key_op_handler_java_release(
         "this Java class holds the last reference)",
         (void *)java_custom_key_op_handler);
 
-    // Release the reference (which will only clean everything up if this is the last thing holding a reference)
+    /**
+     * Release the reference (which will only clean everything up if this is the last thing holding a reference)
+     */
     aws_custom_key_op_handler_release(&java_custom_key_op_handler->key_handler);
 }

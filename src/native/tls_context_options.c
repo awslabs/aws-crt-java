@@ -69,7 +69,7 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     if (tls->custom_key_op_handler != NULL) {
-        // Release the reference to the Java class
+        /* Release the reference to the Java class */
         aws_custom_key_op_handler_java_release(allocator, tls->custom_key_op_handler);
     }
 

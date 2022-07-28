@@ -19,15 +19,19 @@
 struct aws_jni_custom_key_op_handler {
     JavaVM *jvm;
 
-    // A reference to the Java class that this struct is linked to.
-    // The interface, strings, etc, can be gotten from this class.
+    /**
+     * A reference to the Java class that this struct is linked to.
+     * The interface, strings, etc, can be gotten from this class.
+     */
     jobject jni_custom_key_op;
 
-    // The C class containing the key operations. We extend/define it's VTable to allow
-    // us to have it call into the customer's Java code.
+    /**
+     * The C class containing the key operations. We extend/define it's VTable to allow
+     * us to have it call into the customer's Java code.
+     */
     struct aws_custom_key_op_handler key_handler;
 
-    // The allocator to use
+    /** The allocator to use */
     struct aws_allocator *allocator;
 
     /**

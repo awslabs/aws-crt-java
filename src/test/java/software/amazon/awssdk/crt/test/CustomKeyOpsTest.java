@@ -69,12 +69,12 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     static class TestKeyOperationHandler implements TlsKeyOperationHandler {
         RSAPrivateKey key;
         boolean throwException;
-        boolean performExtraCloses;
+        boolean performExtraComplete;
 
-        TestKeyOperationHandler(String keyPath, boolean throwException, boolean performExtraCloses) {
+        TestKeyOperationHandler(String keyPath, boolean throwException, boolean performExtraComplete) {
             this.key = loadPrivateKey(keyPath);
             this.throwException = throwException;
-            this.performExtraCloses = performExtraCloses;
+            this.performExtraComplete = performExtraComplete;
         }
 
         public void performOperation(TlsKeyOperation operation) {
@@ -83,10 +83,6 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
             }
 
             try {
-                if (this.performExtraCloses == true) {
-                    operation.close();
-                }
-
                 if (operation.getType() != TlsKeyOperation.Type.SIGN) {
                     throw new RuntimeException("Test only handles SIGN operations");
                 }
@@ -120,19 +116,15 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
 
                 operation.complete(signatureBytes);
 
-                if (this.performExtraCloses == true) {
-                    operation.close();
+                if (this.performExtraComplete == true) {
+                    operation.complete(signatureBytes);
                 }
 
             } catch (Exception ex) {
-                if (this.performExtraCloses == true) {
-                    operation.close();
-                }
-
                 operation.completeExceptionally(ex);
 
-                if (this.performExtraCloses == true) {
-                    operation.close();
+                if (this.performExtraComplete == true) {
+                    operation.completeExceptionally(ex);
                 }
             }
         }
@@ -174,7 +166,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     }
 
     @Test
-    public void testExtraClosesHappy() {
+    public void testExtraCompleteHappy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 
@@ -191,7 +183,7 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     }
 
     @Test
-    public void testExceptionExtraClosesFailurePath() {
+    public void testExceptionExtraCompleteFailurePath() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
 

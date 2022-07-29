@@ -18,7 +18,7 @@ public class TlsContextCustomKeyOperationOptions {
      * will be invoked when there is a TLS key operation that needs to be performed.
      *
      * Through the TlsKeyOperationHandler you can add your own private key operations during the
-     * MQTT TLS handshake.
+     * mutual TLS handshake.
      *
      * @param operationHandler The operation handler to use when performing a TLS key operation.
      */

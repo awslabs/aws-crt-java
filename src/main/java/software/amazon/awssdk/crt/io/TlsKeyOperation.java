@@ -113,7 +113,7 @@ public final class TlsKeyOperation {
 
     /**
      * The function to call when you have modified the input data using the private key and are ready to
-     * return it for use in the MQTT TLS Handshake.
+     * return it for use in the mutual TLS Handshake.
      *
      * @param output The modified input data that has been modified by the custom key operation
      */

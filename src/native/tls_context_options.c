@@ -66,15 +66,10 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_string_destroy(tls->ca_root);
 
     aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    if (tls->custom_key_op_handler != NULL) {
-        /* Release the reference to the Java class */
-        aws_custom_key_op_handler_java_release(allocator, tls->custom_key_op_handler);
-    }
-
+    aws_custom_key_op_handler_java_release(tls->custom_key_op_handler);
     aws_tls_ctx_options_clean_up(&tls->options);
 
+    struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, tls);
 }
 
@@ -166,7 +161,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             goto on_error;
         }
 
-        tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, allocator, jni_custom_key_op_handle);
+        tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, jni_custom_key_op_handle);
 
         /* Certificate needs to be set, but there are multiple ways to get it */
         jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(
@@ -184,11 +179,16 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
         } else if (jni_custom_key_op_cert_contents) {
             /* If we have the certificate contents, then use it directly */
             tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
+            if (!tls->certificate) {
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate contents string");
+                goto on_error;
+            }
             struct aws_byte_cursor certificate_byte_cursor = aws_byte_cursor_from_string(tls->certificate);
 
             /* Initialize the client with a custom key operation */
             if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                    &tls->options, allocator, &tls->custom_key_op_handler->key_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                    &tls->options, allocator, aws_custom_key_op_handler_java_get_handler(tls->custom_key_op_handler), &certificate_byte_cursor) != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
                 goto on_error;
@@ -214,7 +214,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
             /* Initialize the client with a custom key operation */
             if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                    &tls->options, allocator, &tls->custom_key_op_handler->key_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                    &tls->options, allocator, aws_custom_key_op_handler_java_get_handler(tls->custom_key_op_handler), &certificate_byte_cursor) != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
                 aws_byte_buf_clean_up(&tmp_byte_buf);

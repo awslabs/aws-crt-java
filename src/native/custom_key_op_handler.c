@@ -4,6 +4,30 @@
  */
 #include "custom_key_op_handler.h"
 
+#include <aws/common/string.h>
+#include <aws/io/tls_channel_handler.h>
+#include "java_class_ids.h"
+#include "tls_context_pkcs11_options.h"
+
+struct aws_jni_custom_key_op_handler {
+    JavaVM *jvm;
+
+    /**
+     * A reference to the Java class that this struct is linked to.
+     * The interface, strings, etc, can be gotten from this class.
+     */
+    jobject jni_custom_key_op;
+
+    /**
+     * The C class containing the key operations. We extend/define it's VTable to allow
+     * us to have it call into the customer's Java code.
+     */
+    struct aws_custom_key_op_handler key_handler;
+
+    /** The allocator to use */
+    struct aws_allocator *allocator;
+};
+
 static void s_aws_custom_key_op_handler_perform_operation(
     struct aws_custom_key_op_handler *key_op_handler,
     struct aws_tls_key_operation *operation) {
@@ -13,16 +37,19 @@ static void s_aws_custom_key_op_handler_perform_operation(
 
     /* Get the Java ENV */
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
-    AWS_FATAL_ASSERT(env != NULL);
+    if (env == NULL) {
+        /* JVM is likely shutting down. Do not crash but log error. */
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p perform operation: Could not get Java ENV!", (void *)op_handler);
+        return;
+    }
 
     jbyteArray jni_input_data = NULL;
     jobject jni_operation = NULL;
     bool success = false;
     bool exception_occured = false;
 
-    if (operation == NULL) {
-        goto clean_up;
-    }
+    AWS_ASSERT(operation != NULL);
 
     /* Create DirectByteBuffer */
     struct aws_byte_cursor input_data = aws_tls_key_operation_get_input(operation);
@@ -116,14 +143,12 @@ static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtabl
 
 struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
     JNIEnv *env,
-    struct aws_allocator *allocator,
     jobject jni_custom_key_op) {
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_jni_custom_key_op_handler));
-    if (java_custom_key_op_handler == NULL) {
-        return NULL;
-    }
 
     if ((*env)->GetJavaVM(env, &java_custom_key_op_handler->jvm) != 0) {
         aws_jni_throw_runtime_exception(env, "failed to get JVM");
@@ -139,6 +164,7 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
     java_custom_key_op_handler->key_handler.impl = (void *)java_custom_key_op_handler;
     /* Make a global reference so the Java interface is kept alive */
     java_custom_key_op_handler->jni_custom_key_op = (*env)->NewGlobalRef(env, jni_custom_key_op);
+    AWS_FATAL_ASSERT(java_custom_key_op_handler->jni_custom_key_op != NULL);
     java_custom_key_op_handler->allocator = allocator;
 
     AWS_LOGF_DEBUG(
@@ -149,10 +175,7 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
 }
 
 void aws_custom_key_op_handler_java_release(
-    struct aws_allocator *allocator,
     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler) {
-
-    (void)allocator;
 
     if (!java_custom_key_op_handler) {
         return;
@@ -168,3 +191,10 @@ void aws_custom_key_op_handler_java_release(
      */
     aws_custom_key_op_handler_release(&java_custom_key_op_handler->key_handler);
 }
+
+struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_get_handler(
+    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler)
+    {
+        AWS_ASSERT(java_custom_key_op_handler != NULL);
+        return &java_custom_key_op_handler->key_handler;
+    }

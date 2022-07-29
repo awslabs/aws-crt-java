@@ -123,7 +123,7 @@ public final class TlsKeyOperation extends CrtResource {
      *
      * @param output The modified input data that has been modified by the custom key operation
      */
-    public void complete(byte[] output) {
+    public synchronized void complete(byte[] output) {
         if (getNativeHandle() == 0 || this.clearCalled == true) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation");
@@ -141,7 +141,7 @@ public final class TlsKeyOperation extends CrtResource {
      *
      * @param ex The exeception to complete with
      */
-    public void completeExceptionally(Throwable ex) {
+    public synchronized void completeExceptionally(Throwable ex) {
         if (getNativeHandle() == 0 || this.clearCalled == true) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation exceptionally");

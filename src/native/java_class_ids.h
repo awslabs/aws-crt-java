@@ -177,7 +177,7 @@ extern struct java_tls_key_operation_handler_properties tls_key_operation_handle
 struct java_tls_key_operation_properties {
     jclass cls;
     jmethodID constructor;
-    jmethodID force_close_id;
+    jmethodID invoke_operation_id;
 };
 extern struct java_tls_key_operation_properties tls_key_operation_properties;
 

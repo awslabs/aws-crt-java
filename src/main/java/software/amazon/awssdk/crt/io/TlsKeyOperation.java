@@ -7,11 +7,10 @@ package software.amazon.awssdk.crt.io;
 import java.util.HashMap;
 import java.util.Map;
 
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.Log.LogSubject;
-
-import software.amazon.awssdk.crt.CrtResource;
 
 /**
  * A class containing a mutual TLS (mTLS) Private Key operation that needs to be performed.
@@ -19,11 +18,8 @@ import software.amazon.awssdk.crt.CrtResource;
  *
  * You MUST call either complete(output) or completeExceptionally(exception)
  * or the TLS connection will hang forever!
- *
- * You do NOT need to call close on this CrtResource - it will be called automatically
- * when you call either complete(output) or completeExceptionally(exception)
  */
-public final class TlsKeyOperation extends CrtResource {
+public final class TlsKeyOperation {
 
     /**
      * The type of TlsKeyOperation that needs to be performed by the TlsKeyOperationHandler interface.
@@ -59,8 +55,7 @@ public final class TlsKeyOperation extends CrtResource {
         static Map<Integer, Type> enumMapping = buildEnumMapping();
     }
 
-    private boolean closeCalled;
-    private boolean clearCalled;
+    private CrtResourceInternal nativeResource;
     private byte[] inputData;
     private Type operationType;
     private TlsSignatureAlgorithm signatureAlgorithm;
@@ -70,10 +65,9 @@ public final class TlsKeyOperation extends CrtResource {
     protected TlsKeyOperation(long nativeHandle, byte[] inputData, int operationType, int signatureAlgorithm,
             int digestAlgorithm) {
 
-        acquireNativeHandle(nativeHandle);
+        nativeResource = new CrtResourceInternal();
+        nativeResource.internalAcquireNativeHandle(nativeHandle);
 
-        this.closeCalled = false;
-        this.clearCalled = false;
         this.inputData = inputData;
         this.operationType = Type.getEnumValueFromInteger(operationType);
         this.signatureAlgorithm = TlsSignatureAlgorithm.getEnumValueFromInteger(signatureAlgorithm);
@@ -124,14 +118,14 @@ public final class TlsKeyOperation extends CrtResource {
      * @param output The modified input data that has been modified by the custom key operation
      */
     public synchronized void complete(byte[] output) {
-        if (getNativeHandle() == 0 || this.clearCalled == true) {
+        if (nativeResource.internalGetNativeHandle() == 0) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation");
             return;
         }
 
-        tlsKeyOperationComplete(getNativeHandle(), output);
-        clear();
+        tlsKeyOperationComplete(nativeResource.internalGetNativeHandle(), output);
+        nativeResource.close();
     }
 
     /**
@@ -142,85 +136,54 @@ public final class TlsKeyOperation extends CrtResource {
      * @param ex The exeception to complete with
      */
     public synchronized void completeExceptionally(Throwable ex) {
-        if (getNativeHandle() == 0 || this.clearCalled == true) {
+        if (nativeResource.internalGetNativeHandle() == 0) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation exceptionally");
             return;
         }
 
-        tlsKeyOperationCompleteExceptionally(getNativeHandle(), ex);
-        clear();
+        tlsKeyOperationCompleteExceptionally(nativeResource.internalGetNativeHandle(), ex);
+        nativeResource.close();
     }
 
     /**
-     * Forces the CRT resource to close. This is only used in JNI to force a close when an exception occurs
-     * after trying to call
+     * The TlsKeyOperation has special lifetime rules, where you have to call one of the complete functions, and
+     * by using this private, internal-only CRT resource, we can still get the benefits of using a CRT resource
+     * for detecting memory leaks, while not exposing functionality that would conflict with the lifetime rules.
      */
-    private void forceClose() {
-        decRef();
-    }
+    private class CrtResourceInternal extends CrtResource {
+        protected void releaseNativeHandle() {}
 
-    /**
-     * Clears the data and makes the object no longer valid for use
-     */
-    private void clear() {
-        if (this.closeCalled == false) {
-            /* Indicates to the code that clear has been called but close has not yet, which will allow
-               the code to call close once, and only once. */
-            this.clearCalled = true;
+        protected boolean canReleaseReferencesImmediately() {
+            return true;
+        };
 
-            this.inputData = null; // the DirectByteBuffer backing this is no longer valid
-            close(); // the operation backing this is no longer valid
-
-            /* Indicates that close has now been called, so any further attempts to call it are unncessary */
-            this.closeCalled = true;
+        /* Exposing acquireNativeHandle */
+        public void internalAcquireNativeHandle(long handle) {
+            acquireNativeHandle(handle);
         }
-        else {
-            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
-                "TlsKeyOperation cannot be cleared: clear() already called!");
+
+        /* Exposing getNativeHandle */
+        public long internalGetNativeHandle() {
+            return getNativeHandle();
         }
     }
 
-    @Override
-    public void close() {
-        // This should only occur if clear is called for the first time
-        if (this.closeCalled == false && this.clearCalled == true) {
-            decRef();
-            return;
-        }
-        else if (this.closeCalled == true) {
-            // Trying to close after calling complete
-            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
-                "TlsKeyOperation cannot be closed: TlsKeyOperation already closed as part of calling complete() or completeExceptionally()");
-        }
-        else {
-            // Trying to close before calling complete
-            Log.log(LogLevel.Warn, LogSubject.CommonGeneral,
-                "TlsKeyOperation cannot be closed: complete() or completeExceptionally() has to be called!");
+    static private void invokePerformOperation(TlsKeyOperationHandler handler, TlsKeyOperation operation) {
+        try {
+            handler.performOperation(operation);
+        } catch (Exception ex) {
+            Log.log(LogLevel.Error, LogSubject.CommonGeneral,
+                "Exception occured! Completing exceptionally...");
+            operation.completeExceptionally(ex);
         }
     }
-
-    /**
-     * Frees all native resources associated with the context. This object is unusable after close is called.
-     */
-    protected void releaseNativeHandle() {
-        if (this.clearCalled == false) {
-            completeExceptionally(new RuntimeException("releaseNativeHandle called!"));
-        }
-    }
-
-    /**
-     * Determines whether a resource releases its dependencies at the same time the native handle is released or if it waits.
-     * Resources that wait are responsible for calling releaseReferences() manually.
-     */
-    protected boolean canReleaseReferencesImmediately() {
-        return false;
-    };
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native void tlsKeyOperationComplete(long nativeHandle, byte[] output);
     private static native void tlsKeyOperationCompleteExceptionally(long nativeHandle, Throwable ex);
+
 }
 

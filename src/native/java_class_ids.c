@@ -365,8 +365,8 @@ static void s_cache_tls_key_operation(JNIEnv *env) {
     tls_key_operation_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J[BIII)V");
     AWS_FATAL_ASSERT(tls_key_operation_properties.constructor);
 
-    tls_key_operation_properties.force_close_id = (*env)->GetMethodID(env, cls, "forceClose", "()V");
-    AWS_FATAL_ASSERT(tls_key_operation_properties.force_close_id);
+    tls_key_operation_properties.invoke_operation_id = (*env)->GetStaticMethodID(env, cls, "invokePerformOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
+    AWS_FATAL_ASSERT(tls_key_operation_properties.invoke_operation_id);
 }
 
 struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;

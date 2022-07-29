@@ -35,27 +35,27 @@ static void s_aws_custom_key_op_handler_perform_operation(
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
     AWS_FATAL_ASSERT(op_handler != NULL);
 
+    jbyteArray jni_input_data = NULL;
+    jobject jni_operation = NULL;
+    bool success = false;
+    AWS_ASSERT(operation != NULL);
+
     /* Get the Java ENV */
     JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
     if (env == NULL) {
         /* JVM is likely shutting down. Do not crash but log error. */
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p perform operation: Could not get Java ENV!", (void *)op_handler);
-        return;
+        success = false;
+        goto clean_up;
     }
-
-    jbyteArray jni_input_data = NULL;
-    jobject jni_operation = NULL;
-    bool success = false;
-    bool exception_occured = false;
-
-    AWS_ASSERT(operation != NULL);
 
     /* Create DirectByteBuffer */
     struct aws_byte_cursor input_data = aws_tls_key_operation_get_input(operation);
     jni_input_data = aws_jni_byte_array_from_cursor(env, &input_data);
     if (jni_input_data == NULL) {
         aws_jni_check_and_clear_exception(env);
+        success = false;
         goto clean_up;
     }
 
@@ -71,6 +71,7 @@ static void s_aws_custom_key_op_handler_perform_operation(
         (jint)aws_tls_key_operation_get_digest_algorithm(operation));
     if (jni_operation == NULL) {
         aws_jni_check_and_clear_exception(env);
+        success = false;
         goto clean_up;
     }
 
@@ -79,23 +80,14 @@ static void s_aws_custom_key_op_handler_perform_operation(
      * function. This function will also catch any exceptions and clear the operation
      * with an exception should it occur.
      */
-    (*env)->CallVoidMethod(
-        env, op_handler->jni_custom_key_op, tls_key_operation_handler_properties.perform_operation_id, jni_operation);
-
-    exception_occured = aws_jni_check_and_clear_exception(env);
-    if (exception_occured) {
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO,
-            "java_custom_key_op_handler=%p do_operation: Exception occured in Java code",
-            (void *)op_handler);
-        /**
-         * Free the TlsKeyOperation in Java so it doesn't stick around.
-         * Will also complete the key operation
-         */
-        (*env)->CallVoidMethod(env, jni_operation, tls_key_operation_properties.force_close_id);
-    } else {
-        success = true;
-    }
+    (*env)->CallStaticVoidMethod(
+        env,
+        tls_key_operation_properties.cls,
+        tls_key_operation_properties.invoke_operation_id,
+        op_handler->jni_custom_key_op, jni_operation);
+    /* This should never fail, but just to be extra sure... */
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    success = true;
 
 clean_up:
     if (jni_input_data) {
@@ -104,7 +96,7 @@ clean_up:
     if (jni_operation) {
         (*env)->DeleteLocalRef(env, jni_operation);
     }
-    if (!success && !exception_occured) {
+    if (!success) {
         aws_tls_key_operation_complete_with_error(operation, AWS_ERROR_UNKNOWN);
     }
 

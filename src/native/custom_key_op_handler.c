@@ -45,7 +45,9 @@ static void s_aws_custom_key_op_handler_perform_operation(
     if (env == NULL) {
         /* JVM is likely shutting down. Do not crash but log error. */
         AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO, "java_custom_key_op_handler=%p perform operation: Could not get Java ENV!", (void *)op_handler);
+            AWS_LS_COMMON_IO,
+            "java_custom_key_op_handler=%p perform operation: Could not get Java ENV!",
+            (void *)op_handler);
         success = false;
         goto clean_up;
     }
@@ -84,7 +86,8 @@ static void s_aws_custom_key_op_handler_perform_operation(
         env,
         tls_key_operation_properties.cls,
         tls_key_operation_properties.invoke_operation_id,
-        op_handler->jni_custom_key_op, jni_operation);
+        op_handler->jni_custom_key_op,
+        jni_operation);
     /* This should never fail, but just to be extra sure... */
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     success = true;
@@ -133,9 +136,7 @@ static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtabl
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
 };
 
-struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(
-    JNIEnv *env,
-    jobject jni_custom_key_op) {
+struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env, jobject jni_custom_key_op) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -167,8 +168,7 @@ struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(
     return &java_custom_key_op_handler->key_handler;
 }
 
-void aws_custom_key_op_handler_java_release(
-    struct aws_custom_key_op_handler *custom_key_op_handler) {
+void aws_custom_key_op_handler_java_release(struct aws_custom_key_op_handler *custom_key_op_handler) {
 
     if (custom_key_op_handler == NULL) {
         return;
@@ -190,10 +190,3 @@ void aws_custom_key_op_handler_java_release(
      */
     aws_custom_key_op_handler_release(&java_custom_key_op_handler->key_handler);
 }
-
-struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_get_handler(
-    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler)
-    {
-        AWS_ASSERT(java_custom_key_op_handler != NULL);
-        return &java_custom_key_op_handler->key_handler;
-    }

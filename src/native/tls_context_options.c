@@ -202,8 +202,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
                 goto on_error;
             }
             struct aws_byte_buf tmp_byte_buf;
-            int op =
-                aws_byte_buf_init_from_file(&tmp_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
+            int op = aws_byte_buf_init_from_file(&tmp_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
             if (op != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "Custom key operation handler: failed to get certificate path string");

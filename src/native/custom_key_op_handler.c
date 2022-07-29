@@ -141,7 +141,7 @@ static struct aws_custom_key_op_handler_vtable s_aws_custom_key_op_handler_vtabl
     .on_key_operation = s_aws_custom_key_op_handler_perform_operation,
 };
 
-struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
+struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(
     JNIEnv *env,
     jobject jni_custom_key_op) {
 
@@ -171,15 +171,22 @@ struct aws_jni_custom_key_op_handler *aws_custom_key_op_handler_java_new(
         AWS_LS_COMMON_IO,
         "java_custom_key_op_handler=%p: Initalizing Custom Key Operations",
         (void *)java_custom_key_op_handler);
-    return java_custom_key_op_handler;
+
+    return &java_custom_key_op_handler->key_handler;
 }
 
 void aws_custom_key_op_handler_java_release(
-    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler) {
+    struct aws_custom_key_op_handler *custom_key_op_handler) {
 
+    if (custom_key_op_handler == NULL) {
+        return;
+    }
+    struct aws_jni_custom_key_op_handler *java_custom_key_op_handler =
+        (struct aws_jni_custom_key_op_handler *)custom_key_op_handler->impl;
     if (!java_custom_key_op_handler) {
         return;
     }
+
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_IO,
         "java_custom_key_op_handler=%p: Releasing Custom Key Operations (may destroy custom key operations if "

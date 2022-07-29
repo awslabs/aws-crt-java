@@ -33,7 +33,7 @@ struct jni_tls_ctx_options {
 
     struct aws_tls_ctx_pkcs11_options *pkcs11_options;
 
-    struct aws_jni_custom_key_op_handler *custom_key_op_handler;
+    struct aws_custom_key_op_handler *custom_key_op_handler;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -188,7 +188,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
             /* Initialize the client with a custom key operation */
             if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                    &tls->options, allocator, aws_custom_key_op_handler_java_get_handler(tls->custom_key_op_handler), &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                    &tls->options, allocator, tls->custom_key_op_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
                 goto on_error;
@@ -214,7 +214,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
             /* Initialize the client with a custom key operation */
             if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
-                    &tls->options, allocator, aws_custom_key_op_handler_java_get_handler(tls->custom_key_op_handler), &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                    &tls->options, allocator, tls->custom_key_op_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
                 aws_jni_throw_runtime_exception(
                     env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
                 aws_byte_buf_clean_up(&tmp_byte_buf);

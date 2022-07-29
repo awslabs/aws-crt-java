@@ -6,6 +6,8 @@ package software.amazon.awssdk.crt.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
@@ -65,9 +67,7 @@ public final class TlsKeyOperation {
     protected TlsKeyOperation(long nativeHandle, byte[] inputData, int operationType, int signatureAlgorithm,
             int digestAlgorithm) {
 
-        nativeResource = new CrtResourceInternal();
-        nativeResource.internalAcquireNativeHandle(nativeHandle);
-
+        nativeResource = new CrtResourceInternal(nativeHandle);
         this.inputData = inputData;
         this.operationType = Type.getEnumValueFromInteger(operationType);
         this.signatureAlgorithm = TlsSignatureAlgorithm.getEnumValueFromInteger(signatureAlgorithm);
@@ -118,13 +118,13 @@ public final class TlsKeyOperation {
      * @param output The modified input data that has been modified by the custom key operation
      */
     public synchronized void complete(byte[] output) {
-        if (nativeResource.internalGetNativeHandle() == 0) {
+        if (nativeResource.isNull()) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation");
             return;
         }
 
-        tlsKeyOperationComplete(nativeResource.internalGetNativeHandle(), output);
+        tlsKeyOperationComplete(nativeResource.getNativeHandle(), output);
         nativeResource.close();
     }
 
@@ -136,13 +136,13 @@ public final class TlsKeyOperation {
      * @param ex The exeception to complete with
      */
     public synchronized void completeExceptionally(Throwable ex) {
-        if (nativeResource.internalGetNativeHandle() == 0) {
+        if (nativeResource.isNull()) {
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
                 "No native handle set in TlsKeyOperation! Cannot complete operation exceptionally");
             return;
         }
 
-        tlsKeyOperationCompleteExceptionally(nativeResource.internalGetNativeHandle(), ex);
+        tlsKeyOperationCompleteExceptionally(nativeResource.getNativeHandle(), ex);
         nativeResource.close();
     }
 
@@ -152,29 +152,30 @@ public final class TlsKeyOperation {
      * for detecting memory leaks, while not exposing functionality that would conflict with the lifetime rules.
      */
     private class CrtResourceInternal extends CrtResource {
+        CrtResourceInternal(long nativeHandle) {
+            acquireNativeHandle(nativeHandle);
+        }
+
         protected void releaseNativeHandle() {}
 
         protected boolean canReleaseReferencesImmediately() {
             return true;
         };
-
-        /* Exposing acquireNativeHandle */
-        public void internalAcquireNativeHandle(long handle) {
-            acquireNativeHandle(handle);
-        }
-
-        /* Exposing getNativeHandle */
-        public long internalGetNativeHandle() {
-            return getNativeHandle();
-        }
     }
 
     static private void invokePerformOperation(TlsKeyOperationHandler handler, TlsKeyOperation operation) {
         try {
             handler.performOperation(operation);
         } catch (Exception ex) {
+            /**
+             * printStackTrace gives a nice, full picture of the exception
+             * but to use it, we have to use a stringWriter and a StringWriter
+             */
+            StringWriter stringWriter = new StringWriter();
+            ex.printStackTrace(new PrintWriter(stringWriter));
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
-                "Exception occured! Completing exceptionally...");
+                "Exception occured!\n" + stringWriter.toString());
+
             operation.completeExceptionally(ex);
         }
     }

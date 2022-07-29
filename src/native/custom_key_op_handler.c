@@ -10,6 +10,13 @@
 #include <aws/io/tls_channel_handler.h>
 
 struct aws_jni_custom_key_op_handler {
+    /**
+     * The C class containing the key operations. We extend/define it's VTable to allow
+     * us to have it call into the customer's Java code.
+     */
+    struct aws_custom_key_op_handler base;
+
+    /** A pointer to the JVM for getting JNI threads */
     JavaVM *jvm;
 
     /**
@@ -17,12 +24,6 @@ struct aws_jni_custom_key_op_handler {
      * The interface, strings, etc, can be gotten from this class.
      */
     jobject jni_custom_key_op;
-
-    /**
-     * The C class containing the key operations. We extend/define it's VTable to allow
-     * us to have it call into the customer's Java code.
-     */
-    struct aws_custom_key_op_handler key_handler;
 
     /** The allocator to use */
     struct aws_allocator *allocator;
@@ -48,7 +49,6 @@ static void s_aws_custom_key_op_handler_perform_operation(
             AWS_LS_COMMON_IO,
             "java_custom_key_op_handler=%p perform operation: Could not get Java ENV!",
             (void *)op_handler);
-        success = false;
         goto clean_up;
     }
 
@@ -57,7 +57,6 @@ static void s_aws_custom_key_op_handler_perform_operation(
     jni_input_data = aws_jni_byte_array_from_cursor(env, &input_data);
     if (jni_input_data == NULL) {
         aws_jni_check_and_clear_exception(env);
-        success = false;
         goto clean_up;
     }
 
@@ -73,7 +72,6 @@ static void s_aws_custom_key_op_handler_perform_operation(
         (jint)aws_tls_key_operation_get_digest_algorithm(operation));
     if (jni_operation == NULL) {
         aws_jni_check_and_clear_exception(env);
-        success = false;
         goto clean_up;
     }
 
@@ -88,7 +86,10 @@ static void s_aws_custom_key_op_handler_perform_operation(
         tls_key_operation_properties.invoke_operation_id,
         op_handler->jni_custom_key_op,
         jni_operation);
-    /* This should never fail, but just to be extra sure... */
+    /**
+     * This should never fail because the function we're calling, invokePerformOperation,
+     * wraps the user callback in a try-catch block that will catch any exceptions.
+     */
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     success = true;
 
@@ -150,11 +151,11 @@ struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env
     }
 
     aws_ref_count_init(
-        &java_custom_key_op_handler->key_handler.ref_count,
-        &java_custom_key_op_handler->key_handler,
+        &java_custom_key_op_handler->base.ref_count,
+        &java_custom_key_op_handler->base,
         (aws_simple_completion_callback *)s_aws_custom_key_op_handler_destroy);
-    java_custom_key_op_handler->key_handler.vtable = &s_aws_custom_key_op_handler_vtable;
-    java_custom_key_op_handler->key_handler.impl = (void *)java_custom_key_op_handler;
+    java_custom_key_op_handler->base.vtable = &s_aws_custom_key_op_handler_vtable;
+    java_custom_key_op_handler->base.impl = (void *)java_custom_key_op_handler;
     /* Make a global reference so the Java interface is kept alive */
     java_custom_key_op_handler->jni_custom_key_op = (*env)->NewGlobalRef(env, jni_custom_key_op);
     AWS_FATAL_ASSERT(java_custom_key_op_handler->jni_custom_key_op != NULL);
@@ -165,7 +166,7 @@ struct aws_custom_key_op_handler *aws_custom_key_op_handler_java_new(JNIEnv *env
         "java_custom_key_op_handler=%p: Initalizing Custom Key Operations",
         (void *)java_custom_key_op_handler);
 
-    return &java_custom_key_op_handler->key_handler;
+    return &java_custom_key_op_handler->base;
 }
 
 void aws_custom_key_op_handler_java_release(struct aws_custom_key_op_handler *custom_key_op_handler) {
@@ -175,9 +176,6 @@ void aws_custom_key_op_handler_java_release(struct aws_custom_key_op_handler *cu
     }
     struct aws_jni_custom_key_op_handler *java_custom_key_op_handler =
         (struct aws_jni_custom_key_op_handler *)custom_key_op_handler->impl;
-    if (!java_custom_key_op_handler) {
-        return;
-    }
 
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_IO,
@@ -188,5 +186,5 @@ void aws_custom_key_op_handler_java_release(struct aws_custom_key_op_handler *cu
     /**
      * Release the reference (which will only clean everything up if this is the last thing holding a reference)
      */
-    aws_custom_key_op_handler_release(&java_custom_key_op_handler->key_handler);
+    aws_custom_key_op_handler_release(&java_custom_key_op_handler->base);
 }

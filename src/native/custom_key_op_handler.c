@@ -4,10 +4,10 @@
  */
 #include "custom_key_op_handler.h"
 
-#include <aws/common/string.h>
-#include <aws/io/tls_channel_handler.h>
 #include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
+#include <aws/common/string.h>
+#include <aws/io/tls_channel_handler.h>
 
 struct aws_jni_custom_key_op_handler {
     JavaVM *jvm;

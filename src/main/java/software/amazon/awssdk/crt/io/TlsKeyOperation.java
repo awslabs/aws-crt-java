@@ -169,7 +169,7 @@ public final class TlsKeyOperation {
         } catch (Exception ex) {
             /**
              * printStackTrace gives a nice, full picture of the exception
-             * but to use it, we have to use a stringWriter and a StringWriter
+             * but to use it, we have to use a StringWriter and a PrintWriter
              */
             StringWriter stringWriter = new StringWriter();
             ex.printStackTrace(new PrintWriter(stringWriter));

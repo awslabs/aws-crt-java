@@ -7,6 +7,10 @@ package software.amazon.awssdk.crt.io;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The hash algorithm of a TLS private key operation. Any custom private key operation handlers are expected to perform
+ * operations on the input TLS data using the correct hash algorithm or fail the operation.
+ */
 public enum TlsHashAlgorithm {
     UNKNOWN(0), SHA1(1), SHA224(2), SHA256(3), SHA384(4), SHA512(5);
 

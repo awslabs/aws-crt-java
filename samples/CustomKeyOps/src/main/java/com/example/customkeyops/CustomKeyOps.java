@@ -31,13 +31,6 @@ import java.util.concurrent.ExecutionException;
  * sample with additional options that can be configured via the terminal. This is for testing primarily.
  */
 public class CustomKeyOps {
-
-    // When run normally, we want to exit nicely even if something goes wrong
-    // When run from CI, we want to let an exception escape which in turn causes the
-    // exec:java task to return a non-zero exit code
-    static String ciPropValue = System.getProperty("aws.crt.ci");
-    static boolean isCI = ciPropValue != null && Boolean.valueOf(ciPropValue);
-
     static String clientId = "test-" + UUID.randomUUID().toString();
     static String caFilePath;
     static String certPath;
@@ -97,18 +90,6 @@ public class CustomKeyOps {
                 default:
                     System.out.println("Unrecognized argument: " + args[idx]);
             }
-        }
-    }
-
-    /*
-     * When called during a CI run, throw an exception that will escape and fail the exec:java task
-     * When called otherwise, print what went wrong (if anything) and just continue (return from main)
-     */
-    static void onApplicationFailure(Throwable cause) {
-        if (isCI) {
-            throw new RuntimeException("CustomKeyOpsPubSub execution failure", cause);
-        } else if (cause != null) {
-            System.out.println("Exception encountered: " + cause.toString());
         }
     }
 
@@ -210,7 +191,6 @@ public class CustomKeyOps {
         parseCommandLine(args);
         if (showHelp || endpoint == null || certPath == null || keyPath == null) {
             printUsage();
-            onApplicationFailure(null);
             return;
         }
 
@@ -285,7 +265,7 @@ public class CustomKeyOps {
             eventLoopGroup.close();
 
         } catch (CrtRuntimeException | InterruptedException | ExecutionException ex) {
-            onApplicationFailure(ex);
+            throw new RuntimeException("CustomKeyOpsPubSub execution failure", ex);
         }
 
         CrtResource.waitForNoResources();

@@ -7,6 +7,10 @@ package software.amazon.awssdk.crt.io;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The signature of a TLS private key operation. Any custom private key operation handlers are expected to perform
+ * operations on the input TLS data using the correct signature algorithm or fail the operation.
+ */
 public enum TlsSignatureAlgorithm {
     UNKNOWN(0), RSA(1), ECDSA(2);
 

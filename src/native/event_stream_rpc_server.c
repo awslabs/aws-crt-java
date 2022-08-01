@@ -396,6 +396,7 @@ static int s_on_new_connection_fn(
         goto error;
     }
 
+    /* Nothing can fail after here */
     connection_options->on_connection_protocol_message = s_connection_protocol_message_fn;
     connection_options->on_incoming_stream = s_on_incoming_stream_fn;
     connection_options->user_data = connection_callback_data;
@@ -430,14 +431,18 @@ static void s_on_connection_shutdown_fn(
     struct aws_event_stream_rpc_server_connection *connection,
     int error_code,
     void *user_data) {
-    (void)user_data;
 
-    struct connection_callback_data *callback_data = aws_event_stream_rpc_server_connection_get_user_data(connection);
+    struct shutdown_callback_data *shutdown_callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = aws_jni_acquire_thread_env(shutdown_callback_data->jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+    struct connection_callback_data *callback_data = aws_event_stream_rpc_server_connection_get_user_data(connection);
+    if (!callback_data) {
+        /* The connection was not setup correctly. Probably failed within s_on_new_connection_fn. Just end here. */
         return;
     }
 

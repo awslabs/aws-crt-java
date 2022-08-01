@@ -432,6 +432,7 @@ static void s_on_connection_shutdown_fn(
     int error_code,
     void *user_data) {
 
+    (void)user_data;
     struct connection_callback_data *callback_data = aws_event_stream_rpc_server_connection_get_user_data(connection);
     if (!callback_data) {
         /* The connection was not setup correctly. Probably failed within s_on_new_connection_fn. Early out. */

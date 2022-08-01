@@ -80,6 +80,7 @@ public class S3MetaRequestOptions {
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
     private URI endpoint;
+    private String resumeToken;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -151,5 +152,14 @@ public class S3MetaRequestOptions {
 
     public URI getEndpoint() {
         return endpoint;
+    }
+
+    public S3MetaRequestOptions withResumeToken(String resumeToken) {
+        this.resumeToken = resumeToken;
+        return this;
+    }
+
+    public String getResumeToken() {
+        return resumeToken;
     }
 }

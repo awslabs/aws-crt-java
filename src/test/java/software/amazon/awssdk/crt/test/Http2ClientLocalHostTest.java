@@ -118,7 +118,6 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 new HttpHeader(":path", uri.getPath()),
                 new HttpHeader(":scheme", uri.getScheme()),
                 new HttpHeader(":authority", uri.getHost()),
-                new HttpHeader("content-length", Long.toString(bodyLength))
         };
         HttpRequestBodyStream bodyStream = null;
         if (bodyLength > 0) {
@@ -249,7 +248,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testRequestsUploadStress() throws Exception {
         /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
         skipIfLocalhostUnavailable();
-//        Log.initLoggingToStderr(Log.LogLevel.Debug);
+
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
@@ -292,7 +291,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            requestCompleteFuture.join();
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
         }
         CrtResource.logNativeResources();
@@ -336,7 +335,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-            requestCompleteFuture.join();
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
             Assert.assertTrue(receivedLength.get() == bodyLength);
         }

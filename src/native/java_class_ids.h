@@ -158,6 +158,29 @@ struct java_tls_context_pkcs11_options_properties {
 };
 extern struct java_tls_context_pkcs11_options_properties tls_context_pkcs11_options_properties;
 
+/* TlsContextCustomKeyOperationOptions */
+struct java_tls_context_custom_key_operation_options_properties {
+    jfieldID operation_handler_field_id;
+    jfieldID certificate_file_path_field_id;
+    jfieldID certificate_file_contents_field_id;
+};
+extern struct java_tls_context_custom_key_operation_options_properties
+    tls_context_custom_key_operation_options_properties;
+
+/* TlsKeyOperationHandler */
+struct java_tls_key_operation_handler_properties {
+    jmethodID perform_operation_id;
+};
+extern struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
+
+/* TlsKeyOperation */
+struct java_tls_key_operation_properties {
+    jclass cls;
+    jmethodID constructor;
+    jmethodID invoke_operation_id;
+};
+extern struct java_tls_key_operation_properties tls_key_operation_properties;
+
 /* HttpClientConnectionManager */
 struct java_http_client_connection_manager_properties {
     jmethodID onShutdownComplete;

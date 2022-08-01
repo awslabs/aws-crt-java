@@ -897,9 +897,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
         debug_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, debug_data);
         debug_cur_pointer = &debug_cur;
     }
-    if (aws_http2_connection_send_goaway(native_conn, (uint32_t)h2_error_code, allow_more_streams, debug_cur_pointer)) {
-        aws_jni_throw_runtime_exception(env, "Failed to send goaway");
-    }
+    aws_http2_connection_send_goaway(native_conn, (uint32_t)h2_error_code, allow_more_streams, debug_cur_pointer);
     if (debug_cur_pointer) {
         aws_jni_byte_cursor_from_jbyteArray_release(env, debug_data, debug_cur);
     }

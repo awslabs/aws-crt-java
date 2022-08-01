@@ -345,8 +345,18 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
-    size_t len = (*env)->GetArrayLength(env, array);
+    if (array == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "byte[] is null");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
     jbyte *bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    if (bytes == NULL) {
+        /* GetByteArrayElements() has thrown exception */
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetArrayLength(env, array);
     return aws_byte_cursor_from_array(bytes, len);
 }
 
@@ -588,6 +598,14 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
 
     jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
     aws_string_destroy(string);
+
+    return java_string;
+}
+
+jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string) {
+    AWS_FATAL_ASSERT(string != NULL);
+
+    jstring java_string = (*env)->NewStringUTF(env, aws_string_c_str(string));
 
     return java_string;
 }

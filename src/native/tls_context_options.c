@@ -9,7 +9,10 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 #include "tls_context_pkcs11_options.h"
+
+#include "custom_key_op_handler.h"
 
 /* Have to wrap the native struct so we can manage string lifetime */
 struct jni_tls_ctx_options {
@@ -29,6 +32,8 @@ struct jni_tls_ctx_options {
     struct aws_string *ca_root;
 
     struct aws_tls_ctx_pkcs11_options *pkcs11_options;
+
+    struct aws_custom_key_op_handler *custom_key_op_handler;
 };
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -61,7 +66,7 @@ static void s_jni_tls_ctx_options_destroy(struct jni_tls_ctx_options *tls) {
     aws_string_destroy(tls->ca_root);
 
     aws_tls_ctx_pkcs11_options_from_java_destroy(tls->pkcs11_options);
-
+    aws_custom_key_op_handler_java_release(tls->custom_key_op_handler);
     aws_tls_ctx_options_clean_up(&tls->options);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -86,6 +91,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jstring jni_pkcs12_path,
     jstring jni_pkcs12_password,
     jobject jni_pkcs11_options,
+    jobject jni_custom_key_op,
     jstring jni_windows_cert_store_path) {
     (void)jni_class;
 
@@ -145,6 +151,80 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_with_pkcs11 failed");
             goto on_error;
         }
+    } else if (jni_custom_key_op) {
+
+        jobject jni_custom_key_op_handle = (*env)->GetObjectField(
+            env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.operation_handler_field_id);
+        if (!jni_custom_key_op_handle) {
+            aws_jni_throw_runtime_exception(
+                env, "could not get custom operation handler from jni_custom_key_op_handle!");
+            goto on_error;
+        }
+
+        tls->custom_key_op_handler = aws_custom_key_op_handler_java_new(env, jni_custom_key_op_handle);
+
+        /* Certificate needs to be set, but there are multiple ways to get it */
+        jstring jni_custom_key_op_cert_path = (*env)->GetObjectField(
+            env, jni_custom_key_op, tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
+        jstring jni_custom_key_op_cert_contents = (*env)->GetObjectField(
+            env,
+            jni_custom_key_op,
+            tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
+
+        if (jni_custom_key_op_cert_path && jni_custom_key_op_cert_contents) {
+            /* Cannot have both a certificate path and data - use one or the other */
+            aws_jni_throw_runtime_exception(
+                env, "Custom key operation handler: cannot have both certificate file path and certificate contents!");
+            goto on_error;
+        } else if (jni_custom_key_op_cert_contents) {
+            /* If we have the certificate contents, then use it directly */
+            tls->certificate = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_contents);
+            if (!tls->certificate) {
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate contents string");
+                goto on_error;
+            }
+            struct aws_byte_cursor certificate_byte_cursor = aws_byte_cursor_from_string(tls->certificate);
+
+            /* Initialize the client with a custom key operation */
+            if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
+                    &tls->options, allocator, tls->custom_key_op_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                aws_jni_throw_runtime_exception(
+                    env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
+                goto on_error;
+            }
+        } else if (jni_custom_key_op_cert_path) {
+            /* If we have a certificate path, we need to get the certificate data from it and use that */
+            tls->certificate_path = aws_jni_new_string_from_jstring(env, jni_custom_key_op_cert_path);
+            if (!tls->certificate_path) {
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate path string");
+                goto on_error;
+            }
+            struct aws_byte_buf tmp_byte_buf;
+            int op = aws_byte_buf_init_from_file(&tmp_byte_buf, allocator, aws_string_c_str(tls->certificate_path));
+            if (op != AWS_OP_SUCCESS) {
+                aws_jni_throw_runtime_exception(
+                    env, "Custom key operation handler: failed to get certificate path string");
+                aws_byte_buf_clean_up(&tmp_byte_buf);
+                goto on_error;
+            }
+            struct aws_byte_cursor certificate_byte_cursor = aws_byte_cursor_from_buf(&tmp_byte_buf);
+
+            /* Initialize the client with a custom key operation */
+            if (aws_tls_ctx_options_init_client_mtls_with_custom_key_operations(
+                    &tls->options, allocator, tls->custom_key_op_handler, &certificate_byte_cursor) != AWS_OP_SUCCESS) {
+                aws_jni_throw_runtime_exception(
+                    env, "aws_tls_ctx_options_init_client_mtls_with_custom_key_operations failed");
+                aws_byte_buf_clean_up(&tmp_byte_buf);
+                goto on_error;
+            }
+            aws_byte_buf_clean_up(&tmp_byte_buf);
+        } else {
+            aws_jni_throw_runtime_exception(env, "Custom key operation handler: No certificate set!");
+            goto on_error;
+        }
+
     } else if (jni_pkcs12_path && jni_pkcs12_password) {
         tls->pkcs12_path = aws_jni_new_string_from_jstring(env, jni_pkcs12_path);
         if (!tls->pkcs12_path) {

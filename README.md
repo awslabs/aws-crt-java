@@ -77,6 +77,7 @@ Full list of test arguments:
 - `endpoint`: AWS IoT service endpoint hostname
 - `certificate`: Path to the IoT thing certificate
 - `privatekey`: Path to the IoT thing private key
+- `privatekey_p8`: Path to the IoT thing private key in PKCS#8 format
 - `rootca`: Path to the root certificate
 - `proxyhost`: Hostname of proxy
 - `proxyport`: Port of proxy

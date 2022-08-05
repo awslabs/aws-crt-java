@@ -180,15 +180,6 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
-            if (CRT.getOSIdentifier() == "linux") {
-                /*
-                 * Using Python hyper h2 server frame work, met a weird upload performance issue
-                 * on Linux. Our client against nginx platform has not met the same issue.
-                 * We assume it's because the server framework implementation.
-                 * Use lower number of linux
-                 */
-                numberToAcquire = 500;
-            }
             int bodyLength = 2000;
 
             List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
@@ -252,15 +243,6 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         URI uri = new URI("https://localhost:8443/uploadTest");
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
-            if (CRT.getOSIdentifier() == "linux") {
-                /*
-                 * Using Python hyper h2 server frame work, met a weird upload performance issue
-                 * on Linux. Our client against nginx platform has not met the same issue.
-                 * We assume it's because the server framework implementation.
-                 * Use lower number of linux
-                 */
-                bodyLength = 250000000L;
-            }
 
             Http2Request request = createHttp2Request("PUT", uri, bodyLength);
 

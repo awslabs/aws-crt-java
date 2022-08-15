@@ -33,6 +33,7 @@ public class Credentials {
 
     /**
      * Anonymous Credentials constructor. Use Anonymous Credentials when you want to skip signing.
+     * @return Anonymous Credentials
      */
     public static Credentials createAnonymousCredentials(){
         return new Credentials();

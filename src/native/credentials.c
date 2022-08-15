@@ -32,6 +32,10 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
     jbyteArray session_token =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
 
+    if (access_key_id == NULL && secret_access_key == NULL) {
+        return aws_credentials_new_anonymous(aws_jni_get_allocator());
+    }
+
     if (access_key_id == NULL || secret_access_key == NULL) {
         return NULL;
     }

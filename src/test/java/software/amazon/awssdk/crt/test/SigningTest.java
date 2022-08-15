@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +22,8 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -271,6 +274,53 @@ public class SigningTest extends CrtTestFixture {
         }
         assertTrue(failed);
     }
+    @Test
+    public void testSigningAnonymous() throws Exception {
+            HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+            try (AwsSigningConfig config = new AwsSigningConfig()) {
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+                config.setRegion("us-east-1");
+                config.setService("service");
+                config.setTime(System.currentTimeMillis());
+                config.setUseDoubleUriEncode(true);
+                config.setShouldNormalizeUriPath(true);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+                config.setCredentials(Credentials.createAnonymousCredentials());
+
+                CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+                HttpRequest signedRequest = result.get();
+                assertNotNull(signedRequest);
+                assertFalse(hasHeader(signedRequest, "Authorization"));
+            }
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void testSigningNullFail() throws Exception {
+        HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+        try{
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+            config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+            config.setRegion("us-east-1");
+            config.setService("service");
+            config.setTime(System.currentTimeMillis());
+            config.setUseDoubleUriEncode(true);
+            config.setShouldNormalizeUriPath(true);
+            config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+
+            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+            HttpRequest signedRequest = result.get();
+            assertNotNull(signedRequest);
+            assertFalse(hasHeader(signedRequest, "Authorization"));
+        } catch (ExecutionException e){
+            assertEquals(e.getCause().getClass(), CrtRuntimeException.class);
+            CrtRuntimeException crtRuntimeException = (CrtRuntimeException) e.getCause();
+            assertEquals(crtRuntimeException.errorCode, 6149);
+            throw crtRuntimeException;
+        }
+    }
+
 
 
     @Test

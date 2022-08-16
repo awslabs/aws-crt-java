@@ -274,9 +274,16 @@ public class SigningTest extends CrtTestFixture {
         }
         assertTrue(failed);
     }
+
+    /**
+     * Tests that Signing is successful and doesn't add any headers when credentials are anonymous.
+     * @throws Exception
+     */
     @Test
-    public void testSigningAnonymous() throws Exception {
+    public void testSigningAnonymousCredentials() throws Exception {
             HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+            int numHeaders = request.getHeaders().size();
+
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
                 config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
@@ -291,12 +298,18 @@ public class SigningTest extends CrtTestFixture {
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
                 assertNotNull(signedRequest);
-                assertFalse(hasHeader(signedRequest, "Authorization"));
+
+                int numHeadersSignedRequest = signedRequest.getHeaders().size();
+                assertEquals(numHeaders, numHeadersSignedRequest);
             }
     }
 
+    /**
+     * Tests that an exception is thrown when credentials are null.
+     * @throws Exception
+     */
     @Test(expected = CrtRuntimeException.class)
-    public void testSigningNullFail() throws Exception {
+    public void testSigningFailNullCredentials() throws Exception {
         HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
         try{
             AwsSigningConfig config = new AwsSigningConfig();
@@ -310,13 +323,11 @@ public class SigningTest extends CrtTestFixture {
             config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
 
             CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
-            HttpRequest signedRequest = result.get();
-            assertNotNull(signedRequest);
-            assertFalse(hasHeader(signedRequest, "Authorization"));
+            HttpRequest signedRequest = result.get(); //This should throw an exception
         } catch (ExecutionException e){
             assertEquals(e.getCause().getClass(), CrtRuntimeException.class);
             CrtRuntimeException crtRuntimeException = (CrtRuntimeException) e.getCause();
-            assertEquals(crtRuntimeException.errorCode, 6149);
+            assertEquals(crtRuntimeException.errorName, "AWS_AUTH_SIGNING_INVALID_CONFIGURATION");
             throw crtRuntimeException;
         }
     }

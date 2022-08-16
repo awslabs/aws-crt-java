@@ -154,6 +154,7 @@ static void s_aws_complete_signing_result(
     struct aws_string *signature = NULL;
     aws_signing_result_get_property(result, g_aws_signature_property_name, &signature);
 
+    /* Signature will be NULL for anonymous credentials. */
     if (signature != NULL) {
         struct aws_byte_cursor signature_cursor = aws_byte_cursor_from_string(signature);
         java_signature = aws_jni_byte_array_from_cursor(env, &signature_cursor);

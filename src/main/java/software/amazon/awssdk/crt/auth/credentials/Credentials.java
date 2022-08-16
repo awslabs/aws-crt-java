@@ -14,7 +14,10 @@ public class Credentials {
     private byte[] secretAccessKey;
     private byte[] sessionToken;
 
-    private Credentials() {}
+    /**
+     * Anonymous Credentials Constructor. The recommended approach is to use createAnonymousCredentials() instead.
+     */
+    public Credentials() {}
 
     /**
      * @param accessKeyId - access key id to use

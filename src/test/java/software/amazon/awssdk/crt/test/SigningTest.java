@@ -276,13 +276,12 @@ public class SigningTest extends CrtTestFixture {
     }
 
     /**
-     * Tests that Signing is successful and doesn't add any headers when credentials are anonymous.
+     * Tests that signing is successful and doesn't add any headers when credentials are anonymous.
      * @throws Exception
      */
     @Test
     public void testSigningAnonymousCredentials() throws Exception {
             HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
-            int numHeaders = request.getHeaders().size();
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
@@ -298,9 +297,7 @@ public class SigningTest extends CrtTestFixture {
                 CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
                 HttpRequest signedRequest = result.get();
                 assertNotNull(signedRequest);
-
-                int numHeadersSignedRequest = signedRequest.getHeaders().size();
-                assertEquals(numHeaders, numHeadersSignedRequest);
+                assertEquals(request.getHeaders().size(), signedRequest.getHeaders().size());
             }
     }
 

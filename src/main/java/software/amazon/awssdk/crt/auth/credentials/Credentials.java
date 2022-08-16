@@ -15,7 +15,8 @@ public class Credentials {
     private byte[] sessionToken;
 
     /**
-     * Anonymous Credentials Constructor. The recommended approach is to use createAnonymousCredentials() instead.
+     * Anonymous Credentials constructor. Use Anonymous Credentials when you want to skip signing.
+     * The recommended approach is to use createAnonymousCredentials().
      */
     public Credentials() {}
 

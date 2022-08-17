@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,7 +22,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -305,28 +303,28 @@ public class SigningTest extends CrtTestFixture {
      * Tests that an exception is thrown when credentials are null.
      * @throws Exception
      */
-    @Test(expected = CrtRuntimeException.class)
+    @Test
     public void testSigningFailNullCredentials() throws Exception {
         HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
-        try{
-            AwsSigningConfig config = new AwsSigningConfig();
-            config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-            config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
-            config.setRegion("us-east-1");
-            config.setService("service");
-            config.setTime(System.currentTimeMillis());
-            config.setUseDoubleUriEncode(true);
-            config.setShouldNormalizeUriPath(true);
-            config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
 
-            CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
-            HttpRequest signedRequest = result.get(); //This should throw an exception
-        } catch (ExecutionException e){
-            assertEquals(e.getCause().getClass(), CrtRuntimeException.class);
-            CrtRuntimeException crtRuntimeException = (CrtRuntimeException) e.getCause();
-            assertEquals(crtRuntimeException.errorName, "AWS_AUTH_SIGNING_INVALID_CONFIGURATION");
-            throw crtRuntimeException;
-        }
+        AwsSigningConfig config = new AwsSigningConfig();
+        config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+        config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+        config.setRegion("us-east-1");
+        config.setService("service");
+        config.setTime(System.currentTimeMillis());
+        config.setUseDoubleUriEncode(true);
+        config.setShouldNormalizeUriPath(true);
+        config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+
+        AwsSigner.signRequest(request, config)
+                .handle((signedRequest, exception) -> {
+                    assertNotNull(exception);
+                    assertEquals(exception.getClass(), CrtRuntimeException.class);
+                    CrtRuntimeException crtRuntimeException = (CrtRuntimeException) exception;
+                    assertEquals(crtRuntimeException.errorName, "AWS_AUTH_SIGNING_INVALID_CONFIGURATION");
+                    return null; // Asserting for exception, return value doesn't matter.
+                }).join();
     }
 
 

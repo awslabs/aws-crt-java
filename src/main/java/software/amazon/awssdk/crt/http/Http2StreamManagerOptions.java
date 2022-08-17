@@ -2,6 +2,7 @@ package software.amazon.awssdk.crt.http;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.net.URI;
 
 /**
  * Contains all the configuration options for a Http2StreamManager
@@ -12,6 +13,7 @@ public class Http2StreamManagerOptions {
     public static final int DEFAULT_MAX = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
     public static final int DEFAULT_CONNECTION_PING_TIMEOUT_MS = 3000;
+    private static final String HTTPS = "https";
 
     private HttpClientConnectionManagerOptions connectionManagerOptions;
 
@@ -249,8 +251,9 @@ public class Http2StreamManagerOptions {
             throw new IllegalArgumentException("Connection manager options are required.");
         }
         connectionManagerOptions.validateOptions();
-        if ((connectionManagerOptions.getTlsConnectionOptions() != null
-                || connectionManagerOptions.getTlsContext() != null) && priorKnowledge) {
+        URI uri = connectionManagerOptions.getUri();
+        boolean useTls = HTTPS.equals(uri.getScheme());
+        if (useTls && priorKnowledge) {
             throw new IllegalArgumentException("HTTP/2 prior knowledge cannot be set when TLS is used.");
         }
         if ((connectionManagerOptions.getTlsConnectionOptions() == null

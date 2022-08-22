@@ -171,6 +171,13 @@ if (NOT MSVC AND NOT APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-z noexecstack")
 endif()
 
+if (UNIX AND NOT APPLE)
+    # hide the symbols from libcrypto.a
+    # this prevents weird crashes if an application also ends up using
+    # libcrypto.so from the system's OpenSSL installation.
+    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS -Wl,--exclude-libs,libcrypto.a)
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # for non-msvc, library output will control the shared lib output
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})

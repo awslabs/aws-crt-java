@@ -17,7 +17,7 @@ public class Http2StreamManagerOptions {
 
     private HttpClientConnectionManagerOptions connectionManagerOptions;
 
-    private int idealConcurrentStreamsPerConnection = 100;
+    private int idealConcurrentStreamsPerConnection = DEFAULT_MAX;
     private boolean connectionManualWindowManagement = false;
     private int maxConcurrentStreamsPerConnection = DEFAULT_MAX;
 

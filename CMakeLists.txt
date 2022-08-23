@@ -168,14 +168,7 @@ aws_use_package(aws-c-s3)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC AND NOT APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-z noexecstack")
-endif()
-
-if (UNIX AND NOT APPLE)
-    # hide the symbols from libcrypto.a
-    # this prevents weird crashes if an application also ends up using
-    # libcrypto.so from the system's OpenSSL installation.
-    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS -Wl,--exclude-libs,libcrypto.a)
+    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -z noexecstack")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)

@@ -49,7 +49,6 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 
 public class S3NativeClientTest extends AwsClientTestFixture {
     private static final String BUCKET = System.getProperty("crt.test_s3_bucket", "aws-crt-canary-bucket");
@@ -73,7 +72,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
     @BeforeClass
     public static void haveAwsCredentials() {
         Assume.assumeTrue(areAwsCredentialsAvailable());
-        Log.initLoggingToStdout(LogLevel.Trace);
     }
 
     @Test

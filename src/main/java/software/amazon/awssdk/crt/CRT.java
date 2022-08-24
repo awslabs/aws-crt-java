@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -285,11 +286,11 @@ public final class CRT {
         for (String platformImpl : platforms) {
             try {
                 Class<?> platformClass = classLoader.loadClass(platformImpl);
-                CrtPlatform instance = (CrtPlatform) platformClass.newInstance();
+                CrtPlatform instance = (CrtPlatform) platformClass.getDeclaredConstructor().newInstance();
                 return instance;
             } catch (ClassNotFoundException ex) {
                 // IGNORED
-            } catch (IllegalAccessException | InstantiationException ex) {
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException ex) {
                 throw new CrtRuntimeException(ex.toString());
             }
         }

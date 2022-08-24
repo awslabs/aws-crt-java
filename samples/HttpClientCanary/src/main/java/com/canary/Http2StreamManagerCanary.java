@@ -133,11 +133,9 @@ public class Http2StreamManagerCanary {
             AtomicInteger numStreamsFailures, AtomicInteger opts, AtomicBoolean done) throws Exception {
         Http2Request request = createHttp2Request("GET", uri, 0);
         while (!done.get()) {
-            ArrayList<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
-            ArrayList<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
+            final AtomicInteger requestCompleted = new AtomicInteger(0);
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             for (int i = 0; i < concurrentNum; i++) {
-                final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-                requestCompleteFutures.add(requestCompleteFuture);
                 acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
@@ -149,22 +147,21 @@ public class Http2StreamManagerCanary {
 
                     @Override
                     public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                        opts.incrementAndGet();
                         if (errorCode != CRT.AWS_CRT_SUCCESS) {
                             numStreamsFailures.incrementAndGet();
                         }
                         stream.close();
-                        requestCompleteFuture.complete(null);
+
+                        opts.incrementAndGet();
+                        int requestCompletedNum = requestCompleted.incrementAndGet();
+                        if(requestCompletedNum == concurrentNum) {
+                            requestCompleteFuture.complete(null);
+                        }
                     }
                 }));
             }
-            for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
-                f.get(30, TimeUnit.SECONDS);
-            }
             // Wait for all Requests to complete
-            for (CompletableFuture<Void> f : requestCompleteFutures) {
-                f.get(30, TimeUnit.SECONDS);
-            }
+            requestCompleteFuture.get(30, TimeUnit.SECONDS);
         }
     }
 
@@ -177,7 +174,7 @@ public class Http2StreamManagerCanary {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
             ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
-            concurrentRequests(streamManager, 1, streamFailed, opts, done);
+            concurrentRequests(streamManager, 100, streamFailed, opts, done);
             scheduler.shutdown();
         }
         System.out.println("Failed request num: " + streamFailed.get());

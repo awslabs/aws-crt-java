@@ -25,7 +25,7 @@ class EnumGenerator(pluginContext: PluginContext, private val enumShape: StringS
         private fun toEnumName(s: String) : String {
             var ident = s.replace(":*", "")
             ident = ident.replace(':', '_')
-            return CaseUtils.toSnakeCase(ident).toUpperCase()
+            return CaseUtils.toSnakeCase(ident).uppercase()
         }
     }
 

@@ -9,7 +9,7 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.7.10"
 }
 
 tasks.named<KotlinJvmCompile>("compileKotlin") {

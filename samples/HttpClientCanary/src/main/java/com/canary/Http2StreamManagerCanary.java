@@ -169,8 +169,8 @@ public class Http2StreamManagerCanary {
     }
 
     private void runCanary(int warmupLoops, int loops, long timerSecs) throws Exception {
-        ArrayList<Integer> warmupResults = new ArrayList<>();
-        ArrayList<Integer> results = new ArrayList<>();
+        ArrayList<Double> warmupResults = new ArrayList<>();
+        ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
 
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {

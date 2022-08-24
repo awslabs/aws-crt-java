@@ -16,22 +16,22 @@ public class CanaryUtils {
 
     public static ScheduledExecutorService createDataCollector(int warmupLoops, int loops, long timerSecs,
             AtomicInteger opts, AtomicBoolean done,
-            ArrayList<Integer> warmupResults, ArrayList<Integer> results) {
+            ArrayList<Double> warmupResults, ArrayList<Double> results) {
         ScheduledFuture<?> task = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 int numCollected = numDataCollected.incrementAndGet();
+                int collectedOpts = opts.getAndSet(0);
+                double result = (double)collectedOpts/(double)timerSecs;
                 if (numCollected <= warmupLoops) {
-                    int warmupResult = opts.getAndSet(0);
-                    System.out.println("warm up: " + warmupResult);
-                    warmupResults.add(warmupResult);
+                    System.out.println("warm up: " + result);
+                    warmupResults.add(result);
                     return;
                 }
                 if (numCollected > loops + warmupLoops) {
                     done.set(true);
                     return;
                 }
-                int result = opts.getAndSet(0);
                 System.out.println("result: " + result);
                 results.add(result);
             }
@@ -39,28 +39,26 @@ public class CanaryUtils {
         return scheduler;
     }
 
-    public static double calculateAverage(ArrayList<Integer> list) {
+    public static double calculateAverage(ArrayList<Double> list) {
         return list.stream().mapToDouble(d -> d).average().orElse(0.0);
     }
 
-    public static double calculateVariance(ArrayList<Integer> list) {
-        /* This seems wrong... */
-        double sumDiffsSquared = 0.0;
+    public static double calculateSTD(ArrayList<Double> list) {
         double avg = calculateAverage(list);
-        for (int value : list)
-        {
-            double diff = value - avg;
-            diff *= diff;
-            sumDiffsSquared += diff;
+
+        double variance = 0;
+        for (int i = 0; i < list.size(); i++) {
+            variance += Math.pow(list.get(i) - avg, 2);
         }
-        return sumDiffsSquared  / (list.size()-1);
+        variance /= (list.size()-1);
+        return Math.sqrt(variance);
      }
 
-     public static void printResult(ArrayList<Integer> list) {
+     public static void printResult(ArrayList<Double> list) {
          double avg = calculateAverage(list);
-         double various = calculateVariance(list);
+         double std = calculateSTD(list);
          System.out.println("Result collected has: " + list.size());
          System.out.println("avg of all samples: " + avg);
-         System.out.println("various of all samples: " + various);
+         System.out.println("Standard deviation of all samples: " + std);
       }
 }

@@ -136,7 +136,7 @@ public class Http2StreamManagerCanary {
             final AtomicInteger requestCompleted = new AtomicInteger(0);
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             for (int i = 0; i < concurrentNum; i++) {
-                acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
@@ -158,7 +158,7 @@ public class Http2StreamManagerCanary {
                             requestCompleteFuture.complete(null);
                         }
                     }
-                }));
+                });
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get(30, TimeUnit.SECONDS);

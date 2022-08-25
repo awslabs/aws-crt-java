@@ -56,6 +56,11 @@ tasks.compileJava {
     dependsOn(":native:cmakeBuild")
 }
 
+tasks.processResources {
+    // sourceSets includes the compiled libs, so declare the dependency
+    dependsOn(":native:cmakeBuild")
+}
+
 tasks.test {
     useJUnit()
     testLogging {

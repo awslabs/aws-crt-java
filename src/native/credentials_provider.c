@@ -563,6 +563,12 @@ static int s_credentials_provider_delegate_get_credentials(
      */
     if (java_access_key_id == NULL && java_secret_access_key == NULL) {
         struct aws_credentials *native_credentials = aws_credentials_new_anonymous(allocator);
+        if (!native_credentials) {
+            aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
+            // error has been raised from creating function
+            goto empty_credentials;
+        }
+
         callback(native_credentials, AWS_ERROR_SUCCESS, callback_user_data);
         aws_credentials_release(native_credentials);
 

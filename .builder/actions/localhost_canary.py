@@ -9,7 +9,7 @@ class LocalhostCanary(Builder.Action):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = [
             # "mvn install -DskipTests",
-            "cd ./samples/HttpClientCanary && ls",
+            "cd ./samples/HttpClientCanary",
             "ls"
             # "mvn install",
             # "mvn exec:exec@netty exec:exec@crt"

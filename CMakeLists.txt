@@ -33,6 +33,8 @@ if (NOT WIN32 AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
+message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+
 # This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
 set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
 string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
@@ -166,7 +168,7 @@ aws_use_package(aws-c-s3)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 if (NOT MSVC AND NOT APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-z noexecstack")
+    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -z noexecstack")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)

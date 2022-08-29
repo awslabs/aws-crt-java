@@ -73,10 +73,6 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     }
 
     if (callback_data->native_request) {
-        struct aws_input_stream *input_stream = aws_http_message_get_body_stream(callback_data->native_request);
-        if (input_stream != NULL) {
-            aws_input_stream_destroy(input_stream);
-        }
         aws_http_message_release(callback_data->native_request);
     }
 
@@ -158,8 +154,11 @@ static void s_aws_complete_signing_result(
     struct aws_string *signature = NULL;
     aws_signing_result_get_property(result, g_aws_signature_property_name, &signature);
 
-    struct aws_byte_cursor signature_cursor = aws_byte_cursor_from_string(signature);
-    java_signature = aws_jni_byte_array_from_cursor(env, &signature_cursor);
+    /* Anonymous requests don't have a signature because they are not signed. */
+    if (signature != NULL) {
+        struct aws_byte_cursor signature_cursor = aws_byte_cursor_from_string(signature);
+        java_signature = aws_jni_byte_array_from_cursor(env, &signature_cursor);
+    }
 
     java_signing_result = (*env)->NewObject(
         env, aws_signing_result_properties.aws_signing_result_class, aws_signing_result_properties.constructor);

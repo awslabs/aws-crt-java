@@ -156,6 +156,27 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
+    public void testDelegateAnonymousCredentials() {
+        DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
+        DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
+            @Override
+            public Credentials getCredentials() {
+                return Credentials.createAnonymousCredentials();
+            }
+        };
+        builder.withHandler(credentialsHandler);
+        try (DelegateCredentialsProvider provider = builder.build()) {
+            CompletableFuture<Credentials> future = provider.getCredentials();
+            Credentials credentials = future.get();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), null));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), null));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), null));
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
     public void testDelegateWithoutToken() {
         DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
@@ -182,7 +203,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
             @Override
             public Credentials getCredentials() {
-                throw new RuntimeException("hate coding");
+                throw new RuntimeException("Some exception. =)");
             }
         };
         boolean failed = false;

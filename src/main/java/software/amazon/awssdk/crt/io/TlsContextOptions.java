@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.io;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -89,6 +90,7 @@ public final class TlsContextOptions extends CrtResource {
     private String pkcs12Path;
     private String pkcs12Password;
     private TlsContextPkcs11Options pkcs11Options;
+    private TlsContextCustomKeyOperationOptions customKeyOperations;
     private String windowsCertStorePath;
 
     /**
@@ -120,6 +122,7 @@ public final class TlsContextOptions extends CrtResource {
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
+                customKeyOperations,
                 windowsCertStorePath
             ));
         }
@@ -322,6 +325,21 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Unix platforms only - Helper which creates mutual TLS (mTLS) options using the applied custom key operations. This
+     * allows you to perform custom private key operations such as signing and decrypting. This is necessary if you
+     * require an external library to handle private key operations.
+     *
+     * @param custom The options for the custom private key operations
+     * @return A set of options for creating a custom key operation mTLS connection
+     */
+    public static TlsContextOptions createWithMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions custom) {
+        TlsContextOptions options = new TlsContextOptions();
+        options.withMtlsCustomKeyOperations(custom);
+        options.verifyPeer = true;
+        return options;
+    }
+
+     /**
      * Windows platforms only - Helper which creates mutual TLS (mTLS) options using a
      * certificate in a Windows certificate store.
      *
@@ -442,6 +460,18 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Unix platforms only, specifies TLS options for custom private key operations. This
+     * allows you to perform custom private key operations such as signing and decrypting.
+     *
+     * @param customKeyOperations The custom private key operations
+     * @return this
+     */
+    public TlsContextOptions withMtlsCustomKeyOperations(TlsContextCustomKeyOperationOptions customKeyOperations) {
+        this.customKeyOperations = customKeyOperations;
+        return this;
+    }
+
+     /**
      * Windows platforms only, specifies mutual TLS (mTLS) using a certificate in a Windows
      * certificate store.
      *
@@ -494,6 +524,7 @@ public final class TlsContextOptions extends CrtResource {
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,
+                TlsContextCustomKeyOperationOptions customKeyOperation,
                 String windowsCertStorePath
             );
 

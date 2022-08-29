@@ -9,6 +9,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
+#include <aws/common/string.h>
 
 #include <jni.h>
 
@@ -73,11 +74,6 @@ bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8
 bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount);
 
 /*******************************************************************************
- * aws_jni_byte_cursor_from_jbyteArray - Creates an aws_byte_cursor from a jbyteArray.
- ******************************************************************************/
-struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray(JNIEnv *env, jbyteArray array);
-
-/*******************************************************************************
  * aws_jni_byte_array_from_cursor - Creates a jbyteArray from a aws_byte_cursor.
  ******************************************************************************/
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
@@ -92,6 +88,12 @@ jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_
  * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
  ******************************************************************************/
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
+
+/*******************************************************************************
+ * aws_jni_string_from_cursor - Creates a Java String from a string.
+ * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
+ ******************************************************************************/
+jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string);
 
 /*******************************************************************************
  * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer
@@ -139,6 +141,9 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
  * bytes extracted from the supplied jbyteArray.
  * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
  * it's no longer needed, or it will leak.
+ *
+ * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
+ * and a java exception is being thrown.
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
 

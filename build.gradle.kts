@@ -56,12 +56,17 @@ tasks.compileJava {
     dependsOn(":native:cmakeBuild")
 }
 
+tasks.processResources {
+    // sourceSets includes the compiled libs, so declare the dependency
+    dependsOn(":native:cmakeBuild")
+}
+
 tasks.test {
     useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
     }
-    for (prop in listOf("certificate", "privatekey", "endpoint", "rootca")) {
+    for (prop in listOf("certificate", "privatekey", "endpoint", "rootca", "privatekey_p8")) {
         if (project.hasProperty(prop)) {
             systemProperty(prop, project.property(prop).toString())
         }

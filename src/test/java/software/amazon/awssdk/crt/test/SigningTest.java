@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -128,36 +131,65 @@ public class SigningTest extends CrtTestFixture {
         return new HttpRequest(method, path, requestHeaders, badBodyStream);
     }
 
-    private boolean hasHeader(HttpRequest request, String name) {
+    private HttpHeader findHeader(HttpRequest request, String name) {
         for (HttpHeader header : request.getHeaders()) {
-            if (header.getName().equals(name)) {
-                return true;
+            if (header.getName().equalsIgnoreCase(name)) {
+                return header;
             }
         }
+        return null;
+    }
 
-        return false;
+    private boolean hasHeader(HttpRequest request, String name) {
+        return findHeader(request, name) != null;
     }
 
     private boolean hasHeaderWithValue(HttpRequest request, String name, String value) {
-        for (HttpHeader header : request.getHeaders()) {
-            if (header.getName().equals(name) && header.getValue().equals(value)) {
-                return true;
-            }
+        HttpHeader header = findHeader(request, name);
+        if (header == null) {
+            return false;
         }
 
-        return false;
+        return header.getValue().equals(value);
     }
 
     private boolean hasHeaderWithValuePrefix(HttpRequest request, String name, String valuePrefix) {
-        for (HttpHeader header : request.getHeaders()) {
-            if (header.getName().equals(name) && header.getValue().startsWith(valuePrefix)) {
+        HttpHeader header = findHeader(request, name);
+        if (header == null) {
+            return false;
+        }
+
+        return header.getValue().startsWith(valuePrefix);
+    }
+
+    private boolean isHeaderSignedByAuthHeader(HttpRequest signedRequest, String header) {
+        assertTrue(hasHeader(signedRequest, "Authorization"));
+        String authValue = findHeader(signedRequest, "Authorization").getValue();
+        Matcher signedHeadersMatcher = Pattern.compile("SignedHeaders=([^,]*)").matcher(authValue);
+        assertTrue(signedHeadersMatcher.find());
+        String signedHeadersValue = signedHeadersMatcher.group(1);
+        String[] signedHeaders = signedHeadersValue.split(";");
+        for (String signedHeader : signedHeaders) {
+            if (header.equalsIgnoreCase(signedHeader)) {
                 return true;
             }
         }
-
         return false;
     }
 
+    private boolean isHeaderSignedByQueryParams(HttpRequest signedRequest, String header) {
+        String path = signedRequest.getEncodedPath();
+        Matcher signedHeadersMatcher = Pattern.compile("X-Amz-SignedHeaders=([^&]*)").matcher(path);
+        assertTrue(signedHeadersMatcher.find());
+        String signedHeadersValue = signedHeadersMatcher.group(1);
+        String[] signedHeaders = signedHeadersValue.split("%3B");
+        for (String signedHeader : signedHeaders) {
+            if (header.equalsIgnoreCase(signedHeader)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Test
     public void testSigningSuccess() throws Exception {
@@ -167,8 +199,10 @@ public class SigningTest extends CrtTestFixture {
             .build();) {
 
             HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+            request.addHeader("SignMePlease", "yes oh yes");
+            request.addHeader("DoNotSignThis", "no oh no");
 
-            Predicate<String> filterParam = param -> !param.equals("bad-param");
+            Predicate<String> shouldSignHeader = name -> !name.equalsIgnoreCase("DoNotSignThis");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
@@ -177,7 +211,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setService("service");
                 config.setTime(System.currentTimeMillis());
                 config.setCredentialsProvider(provider);
-                config.setShouldSignHeader(filterParam);
+                config.setShouldSignHeader(shouldSignHeader);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
                 config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
@@ -188,6 +222,10 @@ public class SigningTest extends CrtTestFixture {
 
                 assertTrue(hasHeader(signedRequest, "X-Amz-Date"));
                 assertTrue(hasHeader(signedRequest, "Authorization"));
+
+                // check that shouldSignHeader is working
+                assertTrue(isHeaderSignedByAuthHeader(signedRequest, "SignMePlease"));
+                assertTrue(!isHeaderSignedByAuthHeader(signedRequest, "DoNotSignThis"));
             }
         }
     }
@@ -235,6 +273,61 @@ public class SigningTest extends CrtTestFixture {
         assertTrue(failed);
     }
 
+    /**
+     * Tests that signing is successful and doesn't add any headers when credentials are anonymous.
+     * @throws Exception
+     */
+    @Test
+    public void testSigningAnonymousCredentials() throws Exception {
+            HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+
+            try (AwsSigningConfig config = new AwsSigningConfig()) {
+                config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+                config.setRegion("us-east-1");
+                config.setService("service");
+                config.setTime(System.currentTimeMillis());
+                config.setUseDoubleUriEncode(true);
+                config.setShouldNormalizeUriPath(true);
+                config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+                config.setCredentials(Credentials.createAnonymousCredentials());
+
+                CompletableFuture<HttpRequest> result = AwsSigner.signRequest(request, config);
+                HttpRequest signedRequest = result.get();
+                assertNotNull(signedRequest);
+                assertEquals(request.getHeaders().size(), signedRequest.getHeaders().size());
+            }
+    }
+
+    /**
+     * Tests that an exception is thrown when credentials are null.
+     * @throws Exception
+     */
+    @Test
+    public void testSigningFailNullCredentials() throws Exception {
+        HttpRequest request = createSimpleRequest("https://www.example.com", "POST", "/derp", "<body>Hello</body>");
+
+        AwsSigningConfig config = new AwsSigningConfig();
+        config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+        config.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_HEADERS);
+        config.setRegion("us-east-1");
+        config.setService("service");
+        config.setTime(System.currentTimeMillis());
+        config.setUseDoubleUriEncode(true);
+        config.setShouldNormalizeUriPath(true);
+        config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
+
+        AwsSigner.signRequest(request, config)
+                .handle((signedRequest, exception) -> {
+                    assertNotNull(exception);
+                    assertEquals(exception.getClass(), CrtRuntimeException.class);
+                    CrtRuntimeException crtRuntimeException = (CrtRuntimeException) exception;
+                    assertEquals(crtRuntimeException.errorName, "AWS_AUTH_SIGNING_INVALID_CONFIGURATION");
+                    return null; // Asserting for exception, return value doesn't matter.
+                }).join();
+    }
+
+
 
     @Test
     public void testQuerySigningSuccess() throws Exception {
@@ -244,6 +337,10 @@ public class SigningTest extends CrtTestFixture {
             .build();) {
 
             HttpRequest request = createSigv4TestSuiteRequest();
+            request.addHeader("SignMePlease", "yes oh yes");
+            request.addHeader("DoNotSignThis", "no oh no");
+
+            Predicate<String> shouldSignHeader = name -> !name.equalsIgnoreCase("DoNotSignThis");
 
             try (AwsSigningConfig config = new AwsSigningConfig()) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
@@ -252,6 +349,7 @@ public class SigningTest extends CrtTestFixture {
                 config.setService("service");
                 config.setTime(DATE_FORMAT.parse("2015-08-30T12:36:00Z").getTime());
                 config.setCredentialsProvider(provider);
+                config.setShouldSignHeader(shouldSignHeader);
                 config.setUseDoubleUriEncode(true);
                 config.setShouldNormalizeUriPath(true);
                 config.setSignedBodyValue(AwsSigningConfig.AwsSignedBodyValue.EMPTY_SHA256);
@@ -264,10 +362,14 @@ public class SigningTest extends CrtTestFixture {
                 String path = signedRequest.getEncodedPath();
 
                 assertTrue(path.contains("X-Amz-Signature="));
-                assertTrue(path.contains("X-Amz-SignedHeaders=host"));
                 assertTrue(path.contains("X-Amz-Credential=AKIDEXAMPLE%2F20150830%2F"));
                 assertTrue(path.contains("X-Amz-Algorithm=AWS4-HMAC-SHA256"));
                 assertTrue(path.contains("X-Amz-Expires=60"));
+
+
+                assertTrue(isHeaderSignedByQueryParams(signedRequest, "host"));
+                assertTrue(isHeaderSignedByQueryParams(signedRequest, "SignMePlease"));
+                assertTrue(!isHeaderSignedByQueryParams(signedRequest, "DoNotSignThis"));
             }
         }
     }

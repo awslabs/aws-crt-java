@@ -355,6 +355,54 @@ static void s_cache_tls_context_pkcs11_options(JNIEnv *env) {
     AWS_FATAL_ASSERT(tls_context_pkcs11_options_properties.certificateFileContents);
 }
 
+struct java_tls_key_operation_properties tls_key_operation_properties;
+
+static void s_cache_tls_key_operation(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperation");
+    AWS_FATAL_ASSERT(cls);
+    tls_key_operation_properties.cls = (*env)->NewGlobalRef(env, cls);
+
+    tls_key_operation_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(J[BIII)V");
+    AWS_FATAL_ASSERT(tls_key_operation_properties.constructor);
+
+    tls_key_operation_properties.invoke_operation_id = (*env)->GetStaticMethodID(
+        env,
+        cls,
+        "invokePerformOperation",
+        "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
+    AWS_FATAL_ASSERT(tls_key_operation_properties.invoke_operation_id);
+}
+
+struct java_tls_context_custom_key_operation_options_properties tls_context_custom_key_operation_options_properties;
+
+static void s_cache_tls_context_custom_key_operation_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsContextCustomKeyOperationOptions");
+    AWS_FATAL_ASSERT(cls);
+
+    tls_context_custom_key_operation_options_properties.operation_handler_field_id =
+        (*env)->GetFieldID(env, cls, "operationHandler", "Lsoftware/amazon/awssdk/crt/io/TlsKeyOperationHandler;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.operation_handler_field_id);
+
+    tls_context_custom_key_operation_options_properties.certificate_file_path_field_id =
+        (*env)->GetFieldID(env, cls, "certificateFilePath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_path_field_id);
+
+    tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id =
+        (*env)->GetFieldID(env, cls, "certificateFileContents", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(tls_context_custom_key_operation_options_properties.certificate_file_contents_field_id);
+}
+
+struct java_tls_key_operation_handler_properties tls_key_operation_handler_properties;
+
+static void s_cache_tls_key_operation_handler(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/TlsKeyOperationHandler");
+    AWS_FATAL_ASSERT(cls);
+
+    tls_key_operation_handler_properties.perform_operation_id =
+        (*env)->GetMethodID(env, cls, "performOperation", "(Lsoftware/amazon/awssdk/crt/io/TlsKeyOperation;)V");
+    AWS_FATAL_ASSERT(tls_key_operation_handler_properties.perform_operation_id);
+}
+
 struct java_http_client_connection_manager_properties http_client_connection_manager_properties;
 
 static void s_cache_http_client_connection_manager(JNIEnv *env) {
@@ -364,6 +412,16 @@ static void s_cache_http_client_connection_manager(JNIEnv *env) {
     http_client_connection_manager_properties.onShutdownComplete =
         (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(http_client_connection_manager_properties.onShutdownComplete);
+}
+
+struct java_http2_stream_manager_properties http2_stream_manager_properties;
+
+static void s_cache_http2_stream_manager(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http2StreamManager");
+    AWS_FATAL_ASSERT(cls);
+
+    http2_stream_manager_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
+    AWS_FATAL_ASSERT(http2_stream_manager_properties.onShutdownComplete);
 }
 
 struct java_http_client_connection_properties http_client_connection_properties;
@@ -831,7 +889,11 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_event_loop_group(env);
     s_cache_client_bootstrap(env);
     s_cache_tls_context_pkcs11_options(env);
+    s_cache_tls_key_operation(env);
+    s_cache_tls_context_custom_key_operation_options(env);
+    s_cache_tls_key_operation_handler(env);
     s_cache_http_client_connection_manager(env);
+    s_cache_http2_stream_manager(env);
     s_cache_http_client_connection(env);
     s_cache_http_stream(env);
     s_cache_http2_stream(env);

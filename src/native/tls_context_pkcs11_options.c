@@ -164,6 +164,17 @@ struct aws_tls_ctx_pkcs11_options *aws_tls_ctx_pkcs11_options_from_java_new(JNIE
         goto error;
     }
 
+    if (!binding->cert_file_contents) {
+        if (!s_read_optional_string(
+                env,
+                options_jni,
+                tls_context_pkcs11_options_properties.certificateFileContents,
+                &binding->cert_file_contents,
+                &binding->options.cert_file_contents)) {
+            goto error;
+        }
+    }
+
     /* success! */
     return &binding->options;
 

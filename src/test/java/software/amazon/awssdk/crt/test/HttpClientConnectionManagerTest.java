@@ -30,6 +30,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
@@ -50,12 +51,13 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext = createHttpClientTlsContext()) {
-
+                TlsContext tlsContext = createHttpClientTlsContext();
+                TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext)) {
+            tlsConnectionOptions.withServerName(endpoint);
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
-                    .withTlsContext(tlsContext)
+                    .withTlsConnectionOptions(tlsConnectionOptions)
                     .withUri(uri)
                     .withMaxConnections(numConnections);
 

@@ -6,6 +6,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include <aws/common/string.h>
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -214,6 +215,7 @@ static int s_on_s3_meta_request_body_callback(
     }
 
     jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+
     jint body_response_result = 0;
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
@@ -428,7 +430,6 @@ static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data) {
-        aws_input_stream_destroy(callback_data->input_stream);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
@@ -448,7 +449,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
     jobject java_response_handler_jobject,
-    jbyteArray jni_endpoint) {
+    jbyteArray jni_endpoint,
+    jbyteArray jni_resume_token) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -484,7 +486,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
-    callback_data->input_stream = aws_http_message_get_body_stream(request_message);
 
     struct aws_uri endpoint;
     AWS_ZERO_STRUCT(endpoint);
@@ -496,6 +497,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
             aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_make_meta_request: failed to parse endpoint");
             goto done;
         }
+    }
+
+    struct aws_byte_cursor resume_token;
+    AWS_ZERO_STRUCT(resume_token);
+    if (jni_resume_token != NULL) {
+        resume_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_resume_token);
     }
 
     struct aws_s3_meta_request_options meta_request_options = {
@@ -511,6 +518,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
         .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
+        .resume_token = jni_resume_token != NULL ? &resume_token : NULL,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
@@ -597,6 +605,35 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     }
 
     aws_s3_meta_request_cancel(meta_request);
+}
+
+JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestPause(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request) {
+    (void)jni_class;
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_illegal_argument_exception(env, "S3MetaRequest.s3MetaRequestPause: Invalid/null meta request");
+        return NULL;
+    }
+
+    struct aws_string *resume_token = NULL;
+
+    if (aws_s3_meta_request_pause(meta_request, &resume_token)) {
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to pause request");
+        return NULL;
+    }
+
+    jstring jni_resume_token = NULL;
+    if (resume_token) {
+        jni_resume_token = aws_jni_string_from_string(env, resume_token);
+        aws_string_destroy(resume_token);
+    }
+
+    return jni_resume_token;
 }
 
 #if UINTPTR_MAX == 0xffffffff

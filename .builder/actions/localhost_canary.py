@@ -8,7 +8,7 @@ class LocalhostCanary(Builder.Action):
     def run(self, env):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = [
-            "cd /samples/HttpClientCanary",
+            "cd ./samples/HttpClientCanary",
             "mvn install",
             "mvn exec:exec@netty exec:exec@crt"
         ]

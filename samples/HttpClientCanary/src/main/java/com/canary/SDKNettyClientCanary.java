@@ -74,7 +74,6 @@ public class SDKNettyClientCanary {
                 .uri(uri)
                 .method(SdkHttpMethod.GET)
                 .encodedPath("/echo")
-                .putHeader("host", uri.getHost())
                 .putHeader("content-length", "0")
                 .build();
     }
@@ -128,7 +127,7 @@ public class SDKNettyClientCanary {
         AtomicBoolean done = new AtomicBoolean(false);
         ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done,
                 warmupResults, results);
-        concurrentRequests(sdkHttpClient, 50, streamFailed, opts, done);
+        concurrentRequests(sdkHttpClient, 100, streamFailed, opts, done);
         scheduler.shutdown();
 
         System.out.println("Failed request num: " + streamFailed.get());

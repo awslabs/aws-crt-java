@@ -35,14 +35,30 @@
           <!-- Need to use exec not java see:http://mail.openjdk.java.net/pipermail/jmh-dev/2014-July/001192.html, https://stackoverflow.com/questions/15013651/using-maven-execexec-with-arguments -->
           <artifactId>exec-maven-plugin</artifactId>
           <version>1.6.0</version>
-          <configuration>
-              <executable>java</executable>
-              <arguments>
-                  <argument>-classpath</argument>
-                  <classpath/>
-                  <argument>com.canary.Http2StreamManagerCanary</argument>
-              </arguments>
-          </configuration>
+          <executions>
+            <execution>
+              <id>netty</id>
+              <configuration>
+                  <executable>java</executable>
+                  <arguments>
+                      <argument>-classpath</argument>
+                      <classpath/>
+                      <argument>com.canary.SDKNettyClientCanary</argument>
+                  </arguments>
+              </configuration>
+            </execution>
+            <execution>
+              <id>crt</id>
+              <configuration>
+                  <executable>java</executable>
+                  <arguments>
+                      <argument>-classpath</argument>
+                      <classpath/>
+                      <argument>com.canary.Http2StreamManagerCanary</argument>
+                  </arguments>
+              </configuration>
+            </execution>
+          </executions>
       </plugin>
     </plugins>
   </build>

@@ -9,10 +9,8 @@ class LocalhostCanary(Builder.Action):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = [
             # "mvn install -DskipTests",
-            "cd ./samples/HttpClientCanary && ls",
-            "ls"
-            # "mvn install",
-            # "mvn exec:exec@netty exec:exec@crt"
+            "cd ./samples/HttpClientCanary && mvn install",
+            "cd ./samples/HttpClientCanary && mvn exec:exec@netty exec:exec@crt"
         ]
 
         return Builder.Script(actions, name='aws-crt-java-test')

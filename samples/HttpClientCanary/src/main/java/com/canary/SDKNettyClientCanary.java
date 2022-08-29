@@ -26,6 +26,7 @@ import static com.canary.CanaryUtils.printResult;
 public class SDKNettyClientCanary {
     private final AtomicInteger opts = new AtomicInteger(0);
     private URI uri;
+    private int benchNum;
 
     public static AttributeMap.Builder trustAllTlsAttributeMapBuilder() {
         return AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, true);
@@ -127,7 +128,7 @@ public class SDKNettyClientCanary {
         AtomicBoolean done = new AtomicBoolean(false);
         ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done,
                 warmupResults, results);
-        concurrentRequests(sdkHttpClient, 100, streamFailed, opts, done);
+        concurrentRequests(sdkHttpClient, benchNum, streamFailed, opts, done);
         scheduler.shutdown();
 
         System.out.println("Failed request num: " + streamFailed.get());
@@ -139,7 +140,9 @@ public class SDKNettyClientCanary {
 
     public static void main(String[] args) throws Exception {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
+        /* TODO: make all those number configurable */
         canary.uri = new URI("https://localhost:8443/echo");
+        canary.benchNum = 100;
         canary.runCanary(5, 5, 10);
     }
 }

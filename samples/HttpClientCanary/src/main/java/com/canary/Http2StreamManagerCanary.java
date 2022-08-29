@@ -44,6 +44,7 @@ import static com.canary.CanaryUtils.printResult;
 public class Http2StreamManagerCanary {
     private final AtomicInteger opts = new AtomicInteger(0);
     private URI uri;
+    private int benchNum;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -174,7 +175,7 @@ public class Http2StreamManagerCanary {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
             ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
-            concurrentRequests(streamManager, 100, streamFailed, opts, done);
+            concurrentRequests(streamManager, benchNum, streamFailed, opts, done);
             scheduler.shutdown();
         }
         System.out.println("Failed request num: " + streamFailed.get());
@@ -187,8 +188,10 @@ public class Http2StreamManagerCanary {
     }
 
     public static void main(String[] args) throws Exception {
+        /* TODO: make all those number configurable */
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
         canary.uri = new URI("https://localhost:8443/echo");
+        canary.benchNum = 100;
         canary.runCanary(5, 5, 10);
     }
 }

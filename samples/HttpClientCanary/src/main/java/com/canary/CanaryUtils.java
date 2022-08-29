@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.ArrayList;
 
 public class CanaryUtils {
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private static final AtomicInteger numDataCollected = new AtomicInteger(0);
 
     public static ScheduledExecutorService createDataCollector(int warmupLoops, int loops, long timerSecs,

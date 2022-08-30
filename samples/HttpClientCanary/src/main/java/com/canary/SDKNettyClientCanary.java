@@ -59,6 +59,10 @@ public class SDKNettyClientCanary {
             }
 
             @Override
+            public void onStream(Publisher<ByteBuffer> stream) {
+            }
+
+            @Override
             public void onError(Throwable error) {
                 numStreamsFailures.incrementAndGet();
             }

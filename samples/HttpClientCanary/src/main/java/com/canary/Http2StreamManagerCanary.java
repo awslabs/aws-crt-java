@@ -48,7 +48,7 @@ public class Http2StreamManagerCanary {
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(0 /* default to number of cores */);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();

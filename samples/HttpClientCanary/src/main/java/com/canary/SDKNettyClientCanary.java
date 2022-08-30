@@ -110,7 +110,7 @@ public class SDKNettyClientCanary {
                 }
             }
             // Wait for all Requests to complete
-            requestCompleteFuture.get(130, TimeUnit.SECONDS);
+            requestCompleteFuture.get(30, TimeUnit.SECONDS);
         }
     }
 

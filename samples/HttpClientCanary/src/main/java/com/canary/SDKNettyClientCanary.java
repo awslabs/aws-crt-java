@@ -4,6 +4,7 @@ import static software.amazon.awssdk.http.SdkHttpConfigurationOption.TRUST_ALL_C
 import static software.amazon.awssdk.http.SdkHttpConfigurationOption.PROTOCOL;
 
 import org.reactivestreams.Publisher;
+import io.reactivex.Flowable;
 import software.amazon.awssdk.http.*;
 import software.amazon.awssdk.http.async.AsyncExecuteRequest;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
@@ -39,6 +40,8 @@ public class SDKNettyClientCanary {
 
         @Override
         public void onStream(Publisher<ByteBuffer> stream) {
+            Flowable.fromPublisher(stream).forEach(b -> {
+            });
         }
 
         @Override
@@ -56,10 +59,6 @@ public class SDKNettyClientCanary {
                 if (!headers.isSuccessful()) {
                     numStreamsFailures.incrementAndGet();
                 }
-            }
-
-            @Override
-            public void onStream(Publisher<ByteBuffer> stream) {
             }
 
             @Override

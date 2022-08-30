@@ -78,7 +78,6 @@ public class SDKNettyClientCanary {
                 .uri(uri)
                 .method(SdkHttpMethod.GET)
                 .encodedPath("/echo")
-                .putHeader("content-length", "0")
                 .build();
     }
 

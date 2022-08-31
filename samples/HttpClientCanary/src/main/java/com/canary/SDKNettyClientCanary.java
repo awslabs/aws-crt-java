@@ -145,6 +145,6 @@ public class SDKNettyClientCanary {
         /* TODO: make all those number configurable */
         canary.uri = new URI("https://localhost:8443/echo");
         canary.benchNum = 100;
-        canary.runCanary(5, 5, 10);
+        canary.runCanary(5, 5, 30);
     }
 }

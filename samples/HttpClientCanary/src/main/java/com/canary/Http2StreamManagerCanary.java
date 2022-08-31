@@ -192,6 +192,6 @@ public class Http2StreamManagerCanary {
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
         canary.uri = new URI("https://localhost:8443/echo");
         canary.benchNum = 100;
-        canary.runCanary(5, 5, 10);
+        canary.runCanary(5, 5, 30);
     }
 }

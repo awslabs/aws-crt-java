@@ -143,7 +143,7 @@ public class SDKNettyClientCanary {
     public static void main(String[] args) throws Exception {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
         /* TODO: make all those number configurable */
-        canary.uri = new URI("https://localhost:8443/echo");
+        canary.uri = new URI("http://localhost:8080/");
         canary.benchNum = 100;
         canary.runCanary(5, 5, 30);
     }

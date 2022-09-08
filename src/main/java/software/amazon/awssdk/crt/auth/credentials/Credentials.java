@@ -15,7 +15,8 @@ public class Credentials {
     private byte[] sessionToken;
 
     /**
-     * Default constructor
+     * Anonymous Credentials constructor. Use Anonymous Credentials when you want to skip signing.
+     * The recommended approach is to use createAnonymousCredentials().
      */
     public Credentials() {}
 
@@ -25,9 +26,21 @@ public class Credentials {
      * @param sessionToken - (optional) session token to use
      */
     public Credentials(byte[] accessKeyId, byte[] secretAccessKey, byte[] sessionToken) {
+        if (accessKeyId == null || secretAccessKey == null) {
+            throw new IllegalArgumentException("Credentials - accessKeyId and secretAccessKey must be non null");
+        }
+
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
         this.sessionToken = sessionToken;
+    }
+
+    /**
+     * Anonymous Credentials constructor. Use Anonymous Credentials when you want to skip signing.
+     * @return Anonymous Credentials
+     */
+    public static Credentials createAnonymousCredentials(){
+        return new Credentials();
     }
 
     /**

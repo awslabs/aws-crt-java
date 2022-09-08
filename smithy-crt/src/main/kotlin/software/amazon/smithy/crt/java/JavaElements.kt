@@ -87,11 +87,11 @@ interface BuilderClient<T: AbstractStructure<T>>
     , JavaElement
 
 interface MethodElement : JavaElement {
-    open val javaBuilder: MethodSpec.Builder
+    val javaBuilder: MethodSpec.Builder
     override fun java() : MethodSpec.Builder {
         return javaBuilder
     }
-    open val args: Array<out Field>
+    val args: Array<out Field>
 }
 
 open class Method(name: String, returnType: TypeName = TypeName.VOID, vararg args: Field)
@@ -115,7 +115,9 @@ open class Method(name: String, returnType: TypeName = TypeName.VOID, vararg arg
     companion object {
         fun <M: MethodElement> build(builder: TypeSpec.Builder, src: M): M {
             val spec = src.java()
+            @Suppress("UNCHECKED_CAST")
             JavaElement.addModifiers(spec, src as AbstractElement<M>)
+            @Suppress("UNCHECKED_CAST")
             JavaElement.addAnnotations(spec, src as AbstractElement<M>)
             src.args.forEach { arg ->
                 spec.addParameter(
@@ -274,6 +276,7 @@ open class Structure(className: ClassName)
                 })
         }
 
+        @Suppress("UNUSED_PARAMETER")
         fun objectHashCode(classBuilder: TypeSpec.Builder, src: AbstractStructure<*>) : MethodSpec.Builder {
             // @Override
             // public int hashCode()
@@ -285,6 +288,7 @@ open class Structure(className: ClassName)
                 .returns(TypeName.INT)
         }
 
+        @Suppress("UNUSED_PARAMETER")
         fun objectEquals(classBuilder: TypeSpec.Builder, src: AbstractStructure<*>) : MethodSpec.Builder {
             // @Override
             // public boolean equals(Object rhs)
@@ -329,7 +333,7 @@ open class Enum(className: ClassName, override var values: MutableMap<String, St
         fun toEnumName(s: String) : String {
             var ident = s.replace(":*", "")
             ident = ident.replace(':', '_')
-            return CaseUtils.toSnakeCase(ident).toUpperCase()
+            return CaseUtils.toSnakeCase(ident).uppercase()
         }
     }
 
@@ -337,7 +341,7 @@ open class Enum(className: ClassName, override var values: MutableMap<String, St
 
     override fun build(): Enum {
         javaBuilder.addModifiers(Modifier.PUBLIC)
-        
+
         // private final String value
         val value = Field("value", TypeName.get(String::class.javaObjectType))
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
@@ -548,7 +552,7 @@ open class Builder<T: BuilderClient<*>>(private val client: T) {
                         client.className
                 ).addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             )
-        
+
         builderImpl
             .addConstructor(Constructor(client.className, Field("model", client.className))
                 .addModifier(Modifier.PRIVATE)

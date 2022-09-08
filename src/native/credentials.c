@@ -32,7 +32,16 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
     jbyteArray session_token =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
 
+    if (access_key_id == NULL && secret_access_key == NULL) {
+        return aws_credentials_new_anonymous(aws_jni_get_allocator());
+    }
+
     if (access_key_id == NULL || secret_access_key == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_illegal_argument_exception(
+            env,
+            "Aws_credentials_new_from_java_credentials: Both access_key_id and secret_access_key must be either null "
+            "or non-null.");
         return NULL;
     }
 

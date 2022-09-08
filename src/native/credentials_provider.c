@@ -557,9 +557,28 @@ static int s_credentials_provider_delegate_get_credentials(
     jbyteArray java_session_token =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
 
+    /**
+     * Construct Anonymous Credentials.
+     * Anonymous Credentials are used to skip signing.
+     */
+    if (java_access_key_id == NULL && java_secret_access_key == NULL) {
+        struct aws_credentials *native_credentials = aws_credentials_new_anonymous(allocator);
+        if (!native_credentials) {
+            aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
+            // error has been raised from creating function
+            goto empty_credentials;
+        }
+
+        callback(native_credentials, AWS_ERROR_SUCCESS, callback_user_data);
+        aws_credentials_release(native_credentials);
+
+        return_value = AWS_OP_SUCCESS;
+        goto empty_credentials;
+    }
+
     if (java_access_key_id == NULL || java_secret_access_key == NULL) {
         aws_jni_throw_runtime_exception(
-            env, "DelegateCredentialProvider - accessKeyId and secretAccessKey must be non null");
+            env, "DelegateCredentialProvider - Both accessKeyId and secretAccessKey must be either null or non-null");
         goto empty_credentials;
     }
 
@@ -702,11 +721,16 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         java_credentials = (*env)->NewObject(
             env, credentials_properties.credentials_class, credentials_properties.constructor_method_id);
         if (java_credentials != NULL) {
+
             struct aws_byte_cursor access_key_id_cursor = aws_credentials_get_access_key_id(credentials);
-            access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
+            if (access_key_id_cursor.len > 0) {
+                access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
+            }
 
             struct aws_byte_cursor secret_access_key_cursor = aws_credentials_get_secret_access_key(credentials);
-            secret_access_key = aws_jni_byte_array_from_cursor(env, &secret_access_key_cursor);
+            if (secret_access_key_cursor.len > 0) {
+                secret_access_key = aws_jni_byte_array_from_cursor(env, &secret_access_key_cursor);
+            }
 
             struct aws_byte_cursor session_token_cursor = aws_credentials_get_session_token(credentials);
             if (session_token_cursor.len > 0) {

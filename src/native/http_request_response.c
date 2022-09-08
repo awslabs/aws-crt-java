@@ -214,7 +214,7 @@ int aws_java_http_stream_on_incoming_body_fn(
 
     int result = AWS_OP_ERR;
 
-    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, data->ptr, data->len);
+    jobject jni_payload = aws_jni_byte_array_from_cursor(env, data);
 
     jint window_increment = (*env)->CallIntMethod(
         env,

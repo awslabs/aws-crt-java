@@ -43,6 +43,7 @@ import static com.canary.CanaryUtils.printResult;
  */
 public class Http2StreamManagerCanary {
     private final AtomicInteger opts = new AtomicInteger(0);
+    private static final String HTTPS = "https";
     private URI uri;
     private int benchNum;
 
@@ -55,13 +56,18 @@ public class Http2StreamManagerCanary {
                 TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2")
                         .withVerifyPeer(false);
                 TlsContext tlsContext = new TlsContext(tlsOpts)) {
+            boolean useTls = HTTPS.equals(uri.getScheme());
             Http2StreamManagerOptions options = new Http2StreamManagerOptions();
             HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
             connectionManagerOptions.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
-                    .withTlsContext(tlsContext)
                     .withUri(uri)
                     .withMaxConnections(numConnections);
+            if(useTls) {
+                connectionManagerOptions.withTlsContext(tlsContext);
+            } else {
+                options.withPriorKnowledge(true);
+            }
             options.withConnectionManagerOptions(connectionManagerOptions);
 
             return Http2StreamManager.create(options);
@@ -170,6 +176,7 @@ public class Http2StreamManagerCanary {
         ArrayList<Double> warmupResults = new ArrayList<>();
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
+        Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             AtomicInteger opts = new AtomicInteger(0);

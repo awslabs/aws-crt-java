@@ -7,6 +7,8 @@
 #include "java_class_ids.h"
 #include "retry_utils.h"
 #include <aws/common/string.h>
+#include <aws/http/connection.h>
+#include <aws/http/proxy.h>
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -14,6 +16,8 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
+#include <http_proxy_options.h>
+#include <http_proxy_options_enviornment_variable.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -44,6 +48,29 @@ struct s3_client_make_meta_request_callback_data {
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
 static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data);
 
+int aws_tcp_keep_alive_options_from_java(
+    JNIEnv *env,
+    jobject jni_tcp_keep_alive_options,
+    struct aws_s3_tcp_keep_alive_options *tcp_keep_alive_options) {
+
+    int jni_keep_alive_interval_sec = (*env)->GetIntField(
+        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id);
+
+    int jni_keep_alive_timeout_sec = (*env)->GetIntField(
+        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id);
+
+    int jni_keep_alive_max_failed_probes = (*env)->GetIntField(
+        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id);
+
+    AWS_ZERO_STRUCT(*tcp_keep_alive_options);
+
+    tcp_keep_alive_options->keep_alive_interval_sec = jni_keep_alive_interval_sec;
+    tcp_keep_alive_options->keep_alive_timeout_sec = jni_keep_alive_timeout_sec;
+    tcp_keep_alive_options->keep_alive_max_failed_probes = jni_keep_alive_max_failed_probes;
+
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     JNIEnv *env,
     jclass jni_class,
@@ -57,7 +84,22 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jdouble throughput_target_gbps,
     int max_connections,
     jobject jni_standard_retry_options,
-    jboolean compute_content_md5) {
+    jboolean compute_content_md5,
+    jint jni_proxy_connection_type,
+    jbyteArray jni_proxy_host,
+    jint jni_proxy_port,
+    jlong jni_proxy_tls_context,
+    jint jni_proxy_authorization_type,
+    jbyteArray jni_proxy_authorization_username,
+    jbyteArray jni_proxy_authorization_password,
+    // jobject proxy_environment_variable_options,
+    jint jni_environment_variable_proxy_connection_type,
+    jlong jni_environment_variable_proxy_tls_context,
+    jint jni_environment_variable_setting,
+    int connect_timeout_ms,
+    jobject jni_tcp_keep_alive_options,
+    jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
+    jint jni_monitoring_failure_interval_in_seconds) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -92,6 +134,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
         if (retry_strategy == NULL) {
             aws_jni_throw_runtime_exception(env, "Could not create retry strategy with standard-retry-options");
+            return (jlong)NULL;
+        }
+    }
+    struct aws_s3_tcp_keep_alive_options *tcp_keep_alive_options = NULL;
+
+    if (jni_tcp_keep_alive_options != NULL) {
+        tcp_keep_alive_options = aws_mem_calloc(allocator, 1, sizeof(struct aws_s3_tcp_keep_alive_options));
+        if (aws_tcp_keep_alive_options_from_java(env, jni_tcp_keep_alive_options, tcp_keep_alive_options)) {
+            aws_jni_throw_runtime_exception(env, "Could not create s3_tcp_keep_alive_options");
             return (jlong)NULL;
         }
     }
@@ -134,7 +185,58 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
         .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
+        .connect_timeout_ms = connect_timeout_ms,
+        .tcp_keep_alive_options = tcp_keep_alive_options,
     };
+
+    struct aws_http_connection_monitoring_options monitoring_options;
+    AWS_ZERO_STRUCT(monitoring_options);
+    if (jni_monitoring_throughput_threshold_in_bytes_per_second >= 0 &&
+        jni_monitoring_failure_interval_in_seconds >= 2) {
+        monitoring_options.minimum_throughput_bytes_per_second =
+            jni_monitoring_throughput_threshold_in_bytes_per_second;
+        monitoring_options.allowable_throughput_failure_interval_seconds = jni_monitoring_failure_interval_in_seconds;
+        client_config.monitoring_options = &monitoring_options;
+    }
+
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    struct aws_tls_connection_options proxy_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_tls_conn_options);
+
+    aws_http_proxy_options_jni_init(
+        env,
+        &proxy_options,
+        jni_proxy_connection_type,
+        &proxy_tls_conn_options,
+        jni_proxy_host,
+        (uint16_t)jni_proxy_port,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_authorization_type,
+        (struct aws_tls_ctx *)jni_proxy_tls_context);
+
+    if (jni_proxy_host != NULL) {
+        client_config.proxy_options = &proxy_options;
+    }
+
+    struct proxy_env_var_settings proxy_ev_settings;
+    AWS_ZERO_STRUCT(proxy_ev_settings);
+
+    struct aws_tls_connection_options proxy_env_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_env_tls_conn_options);
+
+    aws_http_proxy_environment_variable_options_jni_init(
+        &proxy_ev_settings,
+        jni_environment_variable_proxy_connection_type,
+        &proxy_env_tls_conn_options,
+        jni_environment_variable_setting,
+        (struct aws_tls_ctx *)jni_environment_variable_proxy_tls_context);
+
+    if (jni_proxy_host != NULL) {
+        client_config.proxy_ev_settings = &proxy_ev_settings;
+    }
 
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {
@@ -146,6 +248,13 @@ clean_up:
     aws_retry_strategy_release(retry_strategy);
 
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
+
+    aws_http_proxy_options_jni_clean_up(
+        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+
+    aws_http_proxy_environment_variable_options_jni_clean_up(&proxy_ev_settings);
+
+    aws_mem_release(aws_jni_get_allocator(), tcp_keep_alive_options);
 
     return (jlong)client;
 }

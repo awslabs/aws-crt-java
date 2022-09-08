@@ -7,12 +7,10 @@ package com.amazonaws.s3;
 
 import com.amazonaws.s3.model.*;
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.s3.CrtS3RuntimeException;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.io.Uri;
@@ -62,6 +60,21 @@ public class S3NativeClient implements AutoCloseable {
                         .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
                         .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
                         .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)));
+    }
+
+    public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
+                          final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
+                          final int maxConnections, final StandardRetryOptions retryOptions, final HttpProxyOptions proxyOptions,
+                          final HttpProxyEnvironmentVariableOptions proxyEnvironmentVariableOptions, final int connectTimeoutMs, final S3TcpKeepAliveOptions tcpKeepAliveOptions,
+                          final HttpMonitoringOptions monitoringOptions) {
+
+        this(signingRegion,
+                new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                        .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
+                        .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
+                        .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)
+                        .withProxyOptions(proxyOptions).withProxyEnvironmentVariableOptions(proxyEnvironmentVariableOptions)
+                        .withConnectTimeoutMs(connectTimeoutMs).withS3TcpKeepAliveOptions(tcpKeepAliveOptions).withHttpMonitoringOptions(monitoringOptions)));
     }
 
     public S3NativeClient(final String signingRegion, final S3Client s3Client) {

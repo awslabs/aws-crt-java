@@ -7,12 +7,17 @@ package software.amazon.awssdk.crt.s3;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
+
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
+import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableOptions;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
+
 import java.net.URI;
 
 public class S3Client extends CrtResource {
@@ -24,12 +29,65 @@ public class S3Client extends CrtResource {
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
+
+        int proxyConnectionType = 0;
+        String proxyHost = null;
+        int proxyPort = 0;
+        TlsContext proxyTlsContext = null;
+        int proxyAuthorizationType = 0;
+        String proxyAuthorizationUsername = null;
+        String proxyAuthorizationPassword = null;
+
+        HttpProxyOptions proxyOptions = options.getProxyOptions();
+        if (proxyOptions != null) {
+            proxyConnectionType = proxyOptions.getConnectionType().getValue();
+            proxyHost = proxyOptions.getHost();
+            proxyPort = proxyOptions.getPort();
+            proxyTlsContext = proxyOptions.getTlsContext();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
+            proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+        }
+
+        int environmentVariableProxyConnectionType = 0;
+        TlsContext environmentVariableProxyTlsContext = null;
+        int environmentVariableSetting = 1;
+        HttpProxyEnvironmentVariableOptions environmentVariableOptions = options.getProxyEnvironmentVariableOptions();
+        if (environmentVariableOptions != null) {
+            environmentVariableProxyConnectionType = environmentVariableOptions.getConnectionType().getValue();
+            environmentVariableProxyTlsContext = environmentVariableOptions.getTlsContext();
+            environmentVariableSetting = environmentVariableOptions.getEnvironmentVariableSetting().getValue();
+        }
+
+        HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
+        long monitoringThroughputThresholdInBytesPerSecond = 0;
+        int monitoringFailureIntervalInSeconds = 0;
+        if (monitoringOptions != null) {
+            monitoringThroughputThresholdInBytesPerSecond = monitoringOptions.getMinThroughputBytesPerSecond();
+            monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
+        }
+
         acquireNativeHandle(s3ClientNew(this, region.getBytes(UTF8),
                 options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
                 options.getThroughputTargetGbps(), options.getMaxConnections(), options.getStandardRetryOptions(),
-                options.getComputeContentMd5()));
+                options.getComputeContentMd5(),
+                proxyConnectionType,
+                proxyHost != null ? proxyHost.getBytes(UTF8) : null,
+                proxyPort,
+                proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
+                proxyAuthorizationType,
+                proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
+                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                environmentVariableProxyConnectionType,
+                environmentVariableProxyTlsContext != null ? environmentVariableProxyTlsContext.getNativeHandle()
+                        : 0,
+                environmentVariableSetting,
+                options.getConnectTimeoutMs(),
+                options.getTcpKeepAliveOptions(),
+                monitoringThroughputThresholdInBytesPerSecond,
+                monitoringFailureIntervalInSeconds));
 
         addReferenceTo(options.getClientBootstrap());
         addReferenceTo(options.getCredentialsProvider());
@@ -65,15 +123,18 @@ public class S3Client extends CrtResource {
             credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
         }
         URI endpoint = options.getEndpoint();
-        
+
         byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
 
-        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue() : ChecksumAlgorithm.NONE.getNativeValue();
+        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue()
+                : ChecksumAlgorithm.NONE.getNativeValue();
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(), httpRequestBytes,
+                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(),
+                httpRequestBytes,
                 options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8), resumeToken);
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                resumeToken);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
@@ -116,12 +177,27 @@ public class S3Client extends CrtResource {
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
             long tlsContext, long signingConfig, long partSize, double throughputTargetGbps, int maxConnections,
-            StandardRetryOptions standardRetryOptions, boolean computeContentMd5) throws CrtRuntimeException;
+            StandardRetryOptions standardRetryOptions, boolean computeContentMd5,
+            int proxyConnectionType,
+            byte[] proxyHost,
+            int proxyPort,
+            long proxyTlsContext,
+            int proxyAuthorizationType,
+            byte[] proxyAuthorizationUsername,
+            byte[] proxyAuthorizationPassword,
+            int environmentVariableProxyConnectionType,
+            long environmentVariableProxyTlsContext,
+            int environmentVariableSetting,
+            int connectTimeoutMs,
+            S3TcpKeepAliveOptions tcpKeepAliveOptions,
+            long monitoringThroughputThresholdInBytesPerSecond,
+            int monitoringFailureIntervalInSeconds) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
-            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes,
+            HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, byte[] resumeToken);
 }

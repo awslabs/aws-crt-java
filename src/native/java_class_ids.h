@@ -404,6 +404,16 @@ struct java_aws_s3_meta_request_progress {
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
+/* S3TcpKeepAliveOptions */
+struct java_aws_s3_tcp_keep_alive_options_properties {
+    jclass tcp_keep_alive_options_class;
+    jmethodID tcp_keep_alive_options_constructor_method_id;
+    jfieldID keep_alive_interval_sec_field_id;
+    jfieldID keep_alive_timeout_sec_field_id;
+    jfieldID keep_alive_max_failed_probes_field_id;
+};
+extern struct java_aws_s3_tcp_keep_alive_options_properties tcp_keep_alive_options_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

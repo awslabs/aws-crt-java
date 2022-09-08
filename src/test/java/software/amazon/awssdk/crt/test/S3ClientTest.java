@@ -8,9 +8,7 @@ import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
@@ -124,6 +122,61 @@ public class S3ClientTest extends CrtTestFixture {
 
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
+
+            }
+        }
+    }
+
+
+    /*
+     * Test that a client can be created successfully with Tcp Keep Alive options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyTcpKeepAliveOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            S3TcpKeepAliveOptions tcpKeepAliveOptions = new S3TcpKeepAliveOptions();
+            tcpKeepAliveOptions.setKeepAliveIntervalSec(10);
+            tcpKeepAliveOptions.setKeepAliveTimeoutSec(20);
+            tcpKeepAliveOptions.setKeepAliveMaxFailedProbes(30);
+
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withS3TcpKeepAliveOptions(tcpKeepAliveOptions), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with monitoring options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyMonitoringOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            HttpMonitoringOptions monitoringOptions = new HttpMonitoringOptions();
+            monitoringOptions.setMinThroughputBytesPerSecond(100);
+            monitoringOptions.setAllowableThroughputFailureIntervalSeconds(10);
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withHttpMonitoringOptions(monitoringOptions), elg)) {
+
+            }
+        }
+    }
+
+    @Test
+    public void testS3ClientCreateDestroyEnvironmentVariableProxyOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            HttpProxyEnvironmentVariableOptions environmentVariableOptions = new HttpProxyEnvironmentVariableOptions();
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withProxyEnvironmentVariableOptions(environmentVariableOptions), elg)) {
 
             }
         }

@@ -30,8 +30,8 @@ public class HttpProxyEnvironmentVariableSetting {
 
         /**
          * Default.
-         * Enable reading from environment variable for proxy configuration, when the manual proxy options
-         * of connection manager is not set.
+         * Enable reading from environment variable for proxy configuration, when the proxy options
+         * are not set.
          * env HTTPS_PROXY/https_proxy will be checked when the main connection use tls.
          * env HTTP_PROXY/http_proxy will be checked when the main connection does not use tls.
          * The lower case version has precedence.

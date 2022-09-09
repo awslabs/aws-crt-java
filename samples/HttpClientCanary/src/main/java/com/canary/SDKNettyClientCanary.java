@@ -11,6 +11,7 @@ import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpResponseHandler;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.utils.AttributeMap;
+import software.amazon.awssdk.http.nio.netty.Http2Configuration;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -121,7 +122,7 @@ public class SDKNettyClientCanary {
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
 
-        SdkAsyncHttpClient sdkHttpClient = NettyNioAsyncHttpClient.builder()
+        SdkAsyncHttpClient sdkHttpClient = NettyNioAsyncHttpClient.builder().http2Configuration(Http2Configuration.builder().maxStreams(new Long(40)).build())
                 .buildWithDefaults(trustAllTlsAttributeMapBuilder()
                         .put(PROTOCOL, Protocol.HTTP2)
                         .build());
@@ -144,7 +145,7 @@ public class SDKNettyClientCanary {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
         /* TODO: make all those number configurable */
         canary.uri = new URI("https://localhost:8443/echo");
-        canary.benchNum = 100;
+        canary.benchNum = 800;
         canary.runCanary(5, 5, 30);
     }
 }

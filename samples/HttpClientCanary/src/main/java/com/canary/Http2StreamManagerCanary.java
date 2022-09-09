@@ -49,7 +49,7 @@ public class Http2StreamManagerCanary {
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(0 /* default to number of cores */);
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(4 /* default to number of cores */);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
@@ -68,7 +68,7 @@ public class Http2StreamManagerCanary {
             } else {
                 options.withPriorKnowledge(true);
             }
-            options.withConnectionManagerOptions(connectionManagerOptions);
+            options.withConnectionManagerOptions(connectionManagerOptions).withIdealConcurrentStreamsPerConnection(40);
 
             return Http2StreamManager.create(options);
         }
@@ -178,7 +178,7 @@ public class Http2StreamManagerCanary {
         AtomicInteger streamFailed = new AtomicInteger(0);
         // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
-        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, 20)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
             ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
@@ -195,10 +195,11 @@ public class Http2StreamManagerCanary {
     }
 
     public static void main(String[] args) throws Exception {
+        System.out.println("Current JVM version - " + System.getProperty("java.version"));
         /* TODO: make all those number configurable */
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
         canary.uri = new URI("https://localhost:8443/echo");
-        canary.benchNum = 100;
+        canary.benchNum = 800;
         canary.runCanary(5, 5, 30);
     }
 }

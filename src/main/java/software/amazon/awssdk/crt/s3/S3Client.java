@@ -7,7 +7,6 @@ package software.amazon.awssdk.crt.s3;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
-
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
@@ -17,7 +16,6 @@ import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
-
 import java.net.URI;
 
 public class S3Client extends CrtResource {
@@ -52,11 +50,11 @@ public class S3Client extends CrtResource {
         int environmentVariableProxyConnectionType = 0;
         TlsContext environmentVariableProxyTlsContext = null;
         int environmentVariableType = 1;
-        HttpProxyEnvironmentVariableSetting environmentVariableOptions = options.getHttpProxyEnvironmentVariableSetting();
-        if (environmentVariableOptions != null) {
-            environmentVariableProxyConnectionType = environmentVariableOptions.getConnectionType().getValue();
-            environmentVariableProxyTlsContext = environmentVariableOptions.getTlsContext();
-            environmentVariableType = environmentVariableOptions.getEnvironmentVariableType().getValue();
+        HttpProxyEnvironmentVariableSetting environmentVariableSetting = options.getHttpProxyEnvironmentVariableSetting();
+        if (environmentVariableSetting != null) {
+            environmentVariableProxyConnectionType = environmentVariableSetting.getConnectionType().getValue();
+            environmentVariableProxyTlsContext = environmentVariableSetting.getTlsContext();
+            environmentVariableType = environmentVariableSetting.getEnvironmentVariableType().getValue();
         }
 
         HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();

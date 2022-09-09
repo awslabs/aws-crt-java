@@ -52,10 +52,7 @@ public class HttpProxyEnvironmentVariableSetting {
 
     /**
      * Creates a new set of environment variable proxy options
-     * By Default environmentVariableSetting is set to Enable.
-     *
-     * @throws CrtRuntimeException If the system is unable to allocate space for a
-     *                             http environment variable proxy options instance
+     * By Default environmentVariableType is set to Enable.
      */
     public HttpProxyEnvironmentVariableSetting() {
         this.environmentVariableType = HttpProxyEnvironmentVariableType.AWS_HPEV_ENABLE;
@@ -79,12 +76,12 @@ public class HttpProxyEnvironmentVariableSetting {
     }
 
     /**
-     * @return the http proxy environment variable setting
+     * @return the http proxy environment variable type
      */
     public HttpProxyEnvironmentVariableType getEnvironmentVariableType() {
         return environmentVariableType;
     }
-    
+
     public void setEnvironmentVariableType(HttpProxyEnvironmentVariableType environmentVariableType) {
         this.environmentVariableType = environmentVariableType;
     }

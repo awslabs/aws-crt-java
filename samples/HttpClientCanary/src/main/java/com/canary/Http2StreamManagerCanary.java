@@ -176,7 +176,7 @@ public class Http2StreamManagerCanary {
         ArrayList<Double> warmupResults = new ArrayList<>();
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
-        Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
+        // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             AtomicInteger opts = new AtomicInteger(0);

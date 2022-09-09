@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
-import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableOptions;
+import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableSetting;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -51,12 +51,12 @@ public class S3Client extends CrtResource {
 
         int environmentVariableProxyConnectionType = 0;
         TlsContext environmentVariableProxyTlsContext = null;
-        int environmentVariableSetting = 1;
-        HttpProxyEnvironmentVariableOptions environmentVariableOptions = options.getProxyEnvironmentVariableOptions();
+        int environmentVariableType = 1;
+        HttpProxyEnvironmentVariableSetting environmentVariableOptions = options.getHttpProxyEnvironmentVariableSetting();
         if (environmentVariableOptions != null) {
             environmentVariableProxyConnectionType = environmentVariableOptions.getConnectionType().getValue();
             environmentVariableProxyTlsContext = environmentVariableOptions.getTlsContext();
-            environmentVariableSetting = environmentVariableOptions.getEnvironmentVariableSetting().getValue();
+            environmentVariableType = environmentVariableOptions.getEnvironmentVariableType().getValue();
         }
 
         HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
@@ -83,7 +83,7 @@ public class S3Client extends CrtResource {
                 environmentVariableProxyConnectionType,
                 environmentVariableProxyTlsContext != null ? environmentVariableProxyTlsContext.getNativeHandle()
                         : 0,
-                environmentVariableSetting,
+                environmentVariableType,
                 options.getConnectTimeoutMs(),
                 options.getTcpKeepAliveOptions(),
                 monitoringThroughputThresholdInBytesPerSecond,

@@ -169,14 +169,14 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3ClientCreateDestroyEnvironmentVariableProxyOptions() {
+    public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSettung() {
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
 
-            HttpProxyEnvironmentVariableOptions environmentVariableOptions = new HttpProxyEnvironmentVariableOptions();
+            HttpProxyEnvironmentVariableSetting environmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
-                    .withProxyEnvironmentVariableOptions(environmentVariableOptions), elg)) {
+                    .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {
 
             }
         }

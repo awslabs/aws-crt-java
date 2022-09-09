@@ -6,7 +6,7 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
-import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableOptions;
+import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableSetting;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -51,7 +51,7 @@ public class S3ClientOptions {
      * Only works when proxy_options is not set. If both are set, configuration from
      * proxy_options is used.
      */
-    private HttpProxyEnvironmentVariableOptions proxyEnvironmentVariableOptions;
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
 
     /**
      * Optional.
@@ -177,14 +177,14 @@ public class S3ClientOptions {
         return proxyOptions;
     }
 
-    public S3ClientOptions withProxyEnvironmentVariableOptions(
-            HttpProxyEnvironmentVariableOptions proxyEnvironmentVariableOptions) {
-        this.proxyEnvironmentVariableOptions = proxyEnvironmentVariableOptions;
+    public S3ClientOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
         return this;
     }
 
-    public HttpProxyEnvironmentVariableOptions getProxyEnvironmentVariableOptions() {
-        return proxyEnvironmentVariableOptions;
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
     }
 
     public S3ClientOptions withConnectTimeoutMs(int connectTimeoutMs) {

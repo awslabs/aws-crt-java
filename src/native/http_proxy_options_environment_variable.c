@@ -24,15 +24,15 @@
 #    endif
 #endif
 
-void aws_http_proxy_environment_variable_options_jni_init(
+void aws_http_proxy_environment_variable_setting_jni_init(
     struct proxy_env_var_settings *options,
     jint environment_variable_proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
-    jint environment_variable_setting,
+    jint environment_variable_type,
     struct aws_tls_ctx *proxy_tls_ctx) {
 
     options->connection_type = environment_variable_proxy_connection_type;
-    options->env_var_type = environment_variable_setting;
+    options->env_var_type = environment_variable_type;
 
     if (proxy_tls_ctx != NULL) {
         aws_tls_connection_options_init_from_ctx(tls_options, proxy_tls_ctx);
@@ -40,7 +40,7 @@ void aws_http_proxy_environment_variable_options_jni_init(
     }
 }
 
-void aws_http_proxy_environment_variable_options_jni_clean_up(struct proxy_env_var_settings *options) {
+void aws_http_proxy_environment_variable_setting_jni_clean_up(struct proxy_env_var_settings *options) {
     if (options->tls_options != NULL) {
         aws_tls_connection_options_clean_up((struct aws_tls_connection_options *)options->tls_options);
     }

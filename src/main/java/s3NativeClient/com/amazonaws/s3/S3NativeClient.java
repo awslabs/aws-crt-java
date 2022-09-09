@@ -65,7 +65,7 @@ public class S3NativeClient implements AutoCloseable {
     public S3NativeClient(final String signingRegion, final ClientBootstrap clientBootstrap,
                           final CredentialsProvider credentialsProvider, final long partSizeBytes, final double targetThroughputGbps,
                           final int maxConnections, final StandardRetryOptions retryOptions, final HttpProxyOptions proxyOptions,
-                          final HttpProxyEnvironmentVariableOptions proxyEnvironmentVariableOptions, final int connectTimeoutMs, final S3TcpKeepAliveOptions tcpKeepAliveOptions,
+                          final HttpProxyEnvironmentVariableSetting proxyEnvironmentVariableSetting, final int connectTimeoutMs, final S3TcpKeepAliveOptions tcpKeepAliveOptions,
                           final HttpMonitoringOptions monitoringOptions) {
 
         this(signingRegion,
@@ -73,7 +73,7 @@ public class S3NativeClient implements AutoCloseable {
                         .withCredentialsProvider(credentialsProvider).withRegion(signingRegion)
                         .withPartSize(partSizeBytes).withThroughputTargetGbps(targetThroughputGbps)
                         .withMaxConnections(maxConnections).withStandardRetryOptions(retryOptions)
-                        .withProxyOptions(proxyOptions).withProxyEnvironmentVariableOptions(proxyEnvironmentVariableOptions)
+                        .withProxyOptions(proxyOptions).withProxyEnvironmentVariableSetting(proxyEnvironmentVariableSetting)
                         .withConnectTimeoutMs(connectTimeoutMs).withS3TcpKeepAliveOptions(tcpKeepAliveOptions).withHttpMonitoringOptions(monitoringOptions)));
     }
 

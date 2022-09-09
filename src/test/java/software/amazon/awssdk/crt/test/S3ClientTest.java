@@ -138,9 +138,9 @@ public class S3ClientTest extends CrtTestFixture {
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
 
             S3TcpKeepAliveOptions tcpKeepAliveOptions = new S3TcpKeepAliveOptions();
-            tcpKeepAliveOptions.setKeepAliveIntervalSec(10);
-            tcpKeepAliveOptions.setKeepAliveTimeoutSec(20);
-            tcpKeepAliveOptions.setKeepAliveMaxFailedProbes(30);
+            tcpKeepAliveOptions.setKeepAliveIntervalSec((short) 10);
+            tcpKeepAliveOptions.setKeepAliveTimeoutSec((short) 20);
+            tcpKeepAliveOptions.setKeepAliveMaxFailedProbes((short) 30);
 
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withS3TcpKeepAliveOptions(tcpKeepAliveOptions), elg)) {
@@ -169,7 +169,7 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSettung() {
+    public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {

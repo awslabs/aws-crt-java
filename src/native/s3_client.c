@@ -53,13 +53,13 @@ int aws_tcp_keep_alive_options_from_java(
     jobject jni_tcp_keep_alive_options,
     struct aws_s3_tcp_keep_alive_options *tcp_keep_alive_options) {
 
-    int jni_keep_alive_interval_sec = (*env)->GetIntField(
+    uint16_t jni_keep_alive_interval_sec = (*env)->GetShortField(
         env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id);
 
-    int jni_keep_alive_timeout_sec = (*env)->GetIntField(
+    uint16_t jni_keep_alive_timeout_sec = (*env)->GetShortField(
         env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id);
 
-    int jni_keep_alive_max_failed_probes = (*env)->GetIntField(
+    uint16_t jni_keep_alive_max_failed_probes = (*env)->GetShortField(
         env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id);
 
     AWS_ZERO_STRUCT(*tcp_keep_alive_options);

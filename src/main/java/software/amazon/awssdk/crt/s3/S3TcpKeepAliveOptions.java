@@ -6,35 +6,35 @@ package software.amazon.awssdk.crt.s3;
  */
 public class S3TcpKeepAliveOptions {
 
-    private int keepAliveIntervalSec;
+    private short keepAliveIntervalSec;
 
-    private int keepAliveTimeoutSec;
+    private short keepAliveTimeoutSec;
 
     /* If set, sets the number of keep alive probes allowed to fail before the connection is considered
      * lost. If zero OS defaults are used. On Windows, this option is meaningless until Windows 10 1703.*/
-    private int keepAliveMaxFailedProbes;
+    private short keepAliveMaxFailedProbes;
 
-    public int getKeepAliveIntervalSec() {
+    public short getKeepAliveIntervalSec() {
         return keepAliveIntervalSec;
     }
 
-    public void setKeepAliveIntervalSec(int keepAliveIntervalSec) {
+    public void setKeepAliveIntervalSec(short keepAliveIntervalSec) {
         this.keepAliveIntervalSec = keepAliveIntervalSec;
     }
 
-    public int getKeepAliveTimeoutSec() {
+    public short getKeepAliveTimeoutSec() {
         return keepAliveTimeoutSec;
     }
 
-    public void setKeepAliveTimeoutSec(int keepAliveTimeoutSec) {
+    public void setKeepAliveTimeoutSec(short keepAliveTimeoutSec) {
         this.keepAliveTimeoutSec = keepAliveTimeoutSec;
     }
 
-    public int getKeepAliveMaxFailedProbes() {
+    public short getKeepAliveMaxFailedProbes() {
         return keepAliveMaxFailedProbes;
     }
 
-    public void setKeepAliveMaxFailedProbes(int keepAliveMaxFailedProbes) {
+    public void setKeepAliveMaxFailedProbes(short keepAliveMaxFailedProbes) {
         this.keepAliveMaxFailedProbes = keepAliveMaxFailedProbes;
     }
 }

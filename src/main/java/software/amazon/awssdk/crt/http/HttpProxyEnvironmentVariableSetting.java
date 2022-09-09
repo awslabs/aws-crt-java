@@ -10,7 +10,7 @@ import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 
 /**
  * This class provides access to Http proxy environment variable configuration
- * options
+ * setting
  */
 public class HttpProxyEnvironmentVariableSetting {
 

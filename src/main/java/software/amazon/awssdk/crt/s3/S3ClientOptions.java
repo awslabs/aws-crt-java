@@ -45,9 +45,7 @@ public class S3ClientOptions {
     /**
      * Optional.
      * Configuration for fetching proxy configuration from environment.
-     * By Default proxy_ev_settings.aws_http_proxy_env_var_type is set to
-     * AWS_HPEV_ENABLE which means read proxy
-     * configuration from environment.
+     * By Default read proxy configuration from environment is enabled.
      * Only works when proxy_options is not set. If both are set, configuration from
      * proxy_options is used.
      */

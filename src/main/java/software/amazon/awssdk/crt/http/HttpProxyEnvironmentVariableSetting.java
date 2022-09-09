@@ -84,12 +84,7 @@ public class HttpProxyEnvironmentVariableSetting {
     public HttpProxyEnvironmentVariableType getEnvironmentVariableType() {
         return environmentVariableType;
     }
-
-    /**
-     * Sets the http proxy environment variable setting
-     *
-     * @param environmentVariableType
-     */
+    
     public void setEnvironmentVariableType(HttpProxyEnvironmentVariableType environmentVariableType) {
         this.environmentVariableType = environmentVariableType;
     }

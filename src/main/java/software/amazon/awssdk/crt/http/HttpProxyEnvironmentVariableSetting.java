@@ -26,18 +26,17 @@ public class HttpProxyEnvironmentVariableSetting {
         /**
          * Disable reading from environment variable for proxy.
          */
-        AWS_HPEV_DISABLE(0),
+        DISABLED(0),
 
         /**
          * Default.
-         * Enable get proxy URL from environment variable, when the manual proxy options
+         * Enable reading from environment variable for proxy configuration, when the manual proxy options
          * of connection manager is not set.
          * env HTTPS_PROXY/https_proxy will be checked when the main connection use tls.
-         * env HTTP_PROXY/http_proxy will be checked when the main connection NOT use
-         * tls.
+         * env HTTP_PROXY/http_proxy will be checked when the main connection does not use tls.
          * The lower case version has precedence.
          */
-        AWS_HPEV_ENABLE(1);
+        ENABLED(1);
 
         private int environmentVariableType;
 
@@ -51,17 +50,16 @@ public class HttpProxyEnvironmentVariableSetting {
     }
 
     /**
-     * Creates a new set of environment variable proxy options
+     * Creates a new set of environment variable proxy setting
      * By Default environmentVariableType is set to Enable.
      */
     public HttpProxyEnvironmentVariableSetting() {
-        this.environmentVariableType = HttpProxyEnvironmentVariableType.AWS_HPEV_ENABLE;
+        this.environmentVariableType = HttpProxyEnvironmentVariableType.ENABLED;
         this.connectionType = HttpProxyConnectionType.Legacy;
     }
 
     /**
      * Sets the proxy connection type
-     *
      * @param connectionType what kind of connection to establish
      */
     public void setConnectionType(HttpProxyConnectionType connectionType) {

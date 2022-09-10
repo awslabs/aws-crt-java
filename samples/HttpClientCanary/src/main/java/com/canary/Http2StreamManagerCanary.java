@@ -45,6 +45,8 @@ public class Http2StreamManagerCanary {
     private final AtomicInteger opts = new AtomicInteger(0);
     private static final String HTTPS = "https";
     private URI uri;
+    private int maxStreams = 100;
+    private int maxConnections = 50;
     private int benchNum;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
@@ -68,7 +70,9 @@ public class Http2StreamManagerCanary {
             } else {
                 options.withPriorKnowledge(true);
             }
-            options.withConnectionManagerOptions(connectionManagerOptions).withIdealConcurrentStreamsPerConnection(40);
+            options.withConnectionManagerOptions(connectionManagerOptions)
+                    .withIdealConcurrentStreamsPerConnection(this.maxStreams)
+                    .withMaxConcurrentStreamsPerConnection(this.maxStreams);
 
             return Http2StreamManager.create(options);
         }
@@ -178,7 +182,7 @@ public class Http2StreamManagerCanary {
         AtomicInteger streamFailed = new AtomicInteger(0);
         // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
-        try (Http2StreamManager streamManager = createStreamManager(uri, 20)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, this.maxConnections)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
             ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
@@ -199,7 +203,9 @@ public class Http2StreamManagerCanary {
         /* TODO: make all those number configurable */
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
         canary.uri = new URI("https://localhost:8443/echo");
-        canary.benchNum = 800;
+        canary.maxConnections = 8;
+        canary.maxStreams = 20;
+        canary.benchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }
 }

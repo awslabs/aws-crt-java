@@ -28,7 +28,7 @@ import static com.canary.CanaryUtils.printResult;
 public class SDKNettyClientCanary {
     private final AtomicInteger opts = new AtomicInteger(0);
     private URI uri;
-    private int benchNum;
+    private int batchNum;
     private int maxStreams = 100;
     private int maxConnections = 50;
 
@@ -124,12 +124,12 @@ public class SDKNettyClientCanary {
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
 
-        System.out.println("benchNum: "+ this.benchNum);
+        System.out.println("batchNum: "+ this.batchNum);
         System.out.println("maxStreams: "+ this.maxStreams);
         System.out.println("maxConnections: "+ this.maxConnections);
         SdkAsyncHttpClient sdkHttpClient = NettyNioAsyncHttpClient.builder().http2Configuration(Http2Configuration.builder()
                 .maxStreams(new Long(this.maxStreams)).build())
-                .maxConcurrency(this.benchNum)
+                .maxConcurrency(this.batchNum)
                 .buildWithDefaults(trustAllTlsAttributeMapBuilder()
                         .put(PROTOCOL, Protocol.HTTP2)
                         .build());
@@ -138,7 +138,7 @@ public class SDKNettyClientCanary {
         AtomicBoolean done = new AtomicBoolean(false);
         ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done,
                 warmupResults, results);
-        concurrentRequests(sdkHttpClient, benchNum, streamFailed, opts, done);
+        concurrentRequests(sdkHttpClient, batchNum, streamFailed, opts, done);
         scheduler.shutdown();
 
         System.out.println("Failed request num: " + streamFailed.get());
@@ -154,7 +154,7 @@ public class SDKNettyClientCanary {
         canary.uri = new URI("https://localhost:8443/echo");
         canary.maxConnections = 8;
         canary.maxStreams = 20;
-        canary.benchNum = canary.maxStreams * canary.maxConnections;
+        canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }
 }

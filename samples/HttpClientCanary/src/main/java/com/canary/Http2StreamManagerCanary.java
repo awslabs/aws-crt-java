@@ -47,7 +47,7 @@ public class Http2StreamManagerCanary {
     private URI uri;
     private int maxStreams = 100;
     private int maxConnections = 50;
-    private int benchNum;
+    private int batchNum;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -182,14 +182,14 @@ public class Http2StreamManagerCanary {
         AtomicInteger streamFailed = new AtomicInteger(0);
         // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
-        System.out.println("benchNum: "+ this.benchNum);
+        System.out.println("batchNum: "+ this.batchNum);
         System.out.println("maxStreams: "+ this.maxStreams);
         System.out.println("maxConnections: "+ this.maxConnections);
         try (Http2StreamManager streamManager = createStreamManager(uri, this.maxConnections)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
             ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
-            concurrentRequests(streamManager, benchNum, streamFailed, opts, done);
+            concurrentRequests(streamManager, batchNum, streamFailed, opts, done);
             scheduler.shutdown();
         }
         System.out.println("Failed request num: " + streamFailed.get());
@@ -208,7 +208,7 @@ public class Http2StreamManagerCanary {
         canary.uri = new URI("https://localhost:8443/echo");
         canary.maxConnections = 8;
         canary.maxStreams = 20;
-        canary.benchNum = canary.maxStreams * canary.maxConnections;
+        canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }
 }

@@ -124,8 +124,12 @@ public class SDKNettyClientCanary {
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
 
+        System.out.println("benchNum: "+ this.benchNum);
+        System.out.println("maxStreams: "+ this.maxStreams);
+        System.out.println("maxConnections: "+ this.maxConnections);
         SdkAsyncHttpClient sdkHttpClient = NettyNioAsyncHttpClient.builder().http2Configuration(Http2Configuration.builder()
                 .maxStreams(new Long(this.maxStreams)).build())
+                .maxConcurrency(this.benchNum)
                 .buildWithDefaults(trustAllTlsAttributeMapBuilder()
                         .put(PROTOCOL, Protocol.HTTP2)
                         .build());
@@ -148,6 +152,8 @@ public class SDKNettyClientCanary {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
         /* TODO: make all those number configurable */
         canary.uri = new URI("https://localhost:8443/echo");
+        canary.maxConnections = 8;
+        canary.maxStreams = 20;
         canary.benchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }

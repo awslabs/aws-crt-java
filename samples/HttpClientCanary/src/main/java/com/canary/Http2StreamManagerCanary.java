@@ -51,7 +51,7 @@ public class Http2StreamManagerCanary {
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(4 /* default to number of cores */);
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(0 /* default to number of cores */);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
@@ -182,6 +182,9 @@ public class Http2StreamManagerCanary {
         AtomicInteger streamFailed = new AtomicInteger(0);
         // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
+        System.out.println("benchNum: "+ this.benchNum);
+        System.out.println("maxStreams: "+ this.maxStreams);
+        System.out.println("maxConnections: "+ this.maxConnections);
         try (Http2StreamManager streamManager = createStreamManager(uri, this.maxConnections)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);

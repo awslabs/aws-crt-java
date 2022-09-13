@@ -54,11 +54,13 @@ public class CanaryUtils {
         return Math.sqrt(variance);
      }
 
-     public static void printResult(ArrayList<Double> list) {
+    /* Return avg of the list and print out the avg and std */
+     public static double printResult(ArrayList<Double> list) {
          double avg = calculateAverage(list);
          double std = calculateSTD(list);
          System.out.println("Result collected has: " + list.size());
          System.out.println("avg of all samples: " + avg);
          System.out.println("Standard deviation of all samples: " + std);
+         return avg;
       }
 }

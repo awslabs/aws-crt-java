@@ -13,6 +13,8 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.utils.AttributeMap;
 import software.amazon.awssdk.http.nio.netty.Http2Configuration;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ public class SDKNettyClientCanary {
     private int batchNum;
     private int maxStreams = 100;
     private int maxConnections = 50;
+    private String nettyResultPath;
 
     public static AttributeMap.Builder trustAllTlsAttributeMapBuilder() {
         return AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, true);
@@ -145,15 +148,20 @@ public class SDKNettyClientCanary {
         System.out.println("////////////// warmup results //////////////");
         printResult(warmupResults);
         System.out.println("////////////// real results //////////////");
-        printResult(results);
+        double avg_result = printResult(results);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.nettyResultPath, false));
+        writer.append(Double.toString(avg_result));
+        writer.close();
     }
 
     public static void main(String[] args) throws Exception {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
-        /* TODO: make all those number configurable */
-        canary.uri = new URI("https://localhost:8443/echo");
-        canary.maxConnections = 8;
-        canary.maxStreams = 20;
+
+        canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
+        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
+        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
+        canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
+
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }

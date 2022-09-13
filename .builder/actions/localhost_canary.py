@@ -10,7 +10,8 @@ class LocalhostCanary(Builder.Action):
         actions = [
             "mvn install -DskipTests",
             "cd ./samples/HttpClientCanary && mvn install",
-            "cd ./samples/HttpClientCanary && mvn exec:exec@netty exec:exec@crt"
+            "cd ./samples/HttpClientCanary && mvn exec:exec@netty",
+            "cd ./samples/HttpClientCanary && mvn exec:exec@crt"
         ]
 
         return Builder.Script(actions, name='aws-crt-java-test')

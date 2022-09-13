@@ -48,6 +48,7 @@ public class Http2StreamManagerCanary {
     private int maxStreams = 100;
     private int maxConnections = 50;
     private int batchNum;
+    private String nettyResultPath;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -65,7 +66,7 @@ public class Http2StreamManagerCanary {
                     .withSocketOptions(sockOpts)
                     .withUri(uri)
                     .withMaxConnections(numConnections);
-            if(useTls) {
+            if (useTls) {
                 connectionManagerOptions.withTlsContext(tlsContext);
             } else {
                 options.withPriorKnowledge(true);
@@ -165,7 +166,7 @@ public class Http2StreamManagerCanary {
 
                         opts.incrementAndGet();
                         int requestCompletedNum = requestCompleted.incrementAndGet();
-                        if(requestCompletedNum == concurrentNum) {
+                        if (requestCompletedNum == concurrentNum) {
                             requestCompleteFuture.complete(null);
                         }
                     }
@@ -180,15 +181,15 @@ public class Http2StreamManagerCanary {
         ArrayList<Double> warmupResults = new ArrayList<>();
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
-        // Log.initLoggingToFile(Log.LogLevel.Error, "errorlog.txt");
 
-        System.out.println("batchNum: "+ this.batchNum);
-        System.out.println("maxStreams: "+ this.maxStreams);
-        System.out.println("maxConnections: "+ this.maxConnections);
+        System.out.println("batchNum: " + this.batchNum);
+        System.out.println("maxStreams: " + this.maxStreams);
+        System.out.println("maxConnections: " + this.maxConnections);
         try (Http2StreamManager streamManager = createStreamManager(uri, this.maxConnections)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
-            ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done, warmupResults, results);
+            ScheduledExecutorService scheduler = createDataCollector(warmupLoops, loops, timerSecs, opts, done,
+                    warmupResults, results);
             concurrentRequests(streamManager, batchNum, streamFailed, opts, done);
             scheduler.shutdown();
         }
@@ -196,18 +197,37 @@ public class Http2StreamManagerCanary {
         System.out.println("////////////// warmup results //////////////");
         printResult(warmupResults);
         System.out.println("////////////// real results //////////////");
-        printResult(results);
+        double avg_result = printResult(results);
+        BufferedReader reader = new BufferedReader(new FileReader(nettyResultPath));
+        StringBuilder stringBuilder = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            stringBuilder.append(line);
+        }
+        reader.close();
+        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        String content = stringBuilder.toString();
+        double netty_result = Double.parseDouble(content);
+        if (avg_result < netty_result) {
+            System.out.println("CRT result is smaller than netty. CRT: " + avg_result + " Netty: " + netty_result);
+            System.exit(-1);
+        }
+
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
+
     }
 
     public static void main(String[] args) throws Exception {
         System.out.println("Current JVM version - " + System.getProperty("java.version"));
-        /* TODO: make all those number configurable */
+
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
-        canary.uri = new URI("https://localhost:8443/echo");
-        canary.maxConnections = 8;
-        canary.maxStreams = 20;
+
+        canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
+        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
+        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
+        canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
+
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
     }

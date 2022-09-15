@@ -80,7 +80,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
                 new HttpHeader(":method", method),
                 new HttpHeader(":path", path),
                 new HttpHeader(":scheme", uri.getScheme()),
-                new HttpHeader(":authority", uri.getHost()),
+                new HttpHeader(":authority", uri.getAuthority()),
                 new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length))
         };
         Http2Request request = new Http2Request(requestHeaders, null);

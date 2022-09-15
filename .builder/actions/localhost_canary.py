@@ -10,8 +10,9 @@ class LocalhostCanary(Builder.Action):
         actions = [
             "mvn install -DskipTests",
             "cd ./samples/HttpClientCanary && mvn install",
-            "cd ./samples/HttpClientCanary && mvn exec:exec@netty",
-            "cd ./samples/HttpClientCanary && mvn exec:exec@crt"
+            "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.SDKNettyClientCanary -Daws.crt.http.canary.uri=https://localhost:8443/echo",
+            "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.Http2StreamManagerCanary -Daws.crt.http.canary.uri=https://localhost:8443/echo",
+            # "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.Http2StreamManagerCanary -Daws.crt.http.canary.uri=https://localhost:8443/uploadTest -Daws.crt.http.canary.bodyLength=10",
         ]
 
         return Builder.Script(actions, name='aws-crt-java-test')

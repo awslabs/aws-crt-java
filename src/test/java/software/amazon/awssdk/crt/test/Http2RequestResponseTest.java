@@ -40,7 +40,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         HttpHeader[] requestHeaders = null;
 
         requestHeaders = new HttpHeader[] { new HttpHeader(":method", method), new HttpHeader(":path", path),
-                new HttpHeader(":scheme", uri.getScheme()), new HttpHeader(":authority", uri.getHost()),
+                new HttpHeader(":scheme", uri.getScheme()), new HttpHeader(":authority", uri.getAuthority()),
                 new HttpHeader("content-length", Integer.toString(requestBody.getBytes(UTF8).length)), };
 
         HttpRequestBodyStream bodyStream = null;

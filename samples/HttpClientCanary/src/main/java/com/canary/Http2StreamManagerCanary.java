@@ -49,6 +49,8 @@ public class Http2StreamManagerCanary {
     private int maxConnections = 50;
     private int batchNum;
     private String nettyResultPath;
+    /* If the body length is larger than 0, the request will be a PUT request. Otherwise, it will be a GET request. */
+    private int bodyLength = 0;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -130,7 +132,7 @@ public class Http2StreamManagerCanary {
                 new HttpHeader(":method", method),
                 new HttpHeader(":path", uri.getPath()),
                 new HttpHeader(":scheme", uri.getScheme()),
-                new HttpHeader(":authority", uri.getHost()),
+                new HttpHeader(":authority", uri.getAuthority()),
         };
         HttpRequestBodyStream bodyStream = null;
         if (bodyLength > 0) {
@@ -143,7 +145,7 @@ public class Http2StreamManagerCanary {
 
     private void concurrentRequests(Http2StreamManager streamManager, int concurrentNum,
             AtomicInteger numStreamsFailures, AtomicInteger opts, AtomicBoolean done) throws Exception {
-        Http2Request request = createHttp2Request("GET", uri, 0);
+        Http2Request request = createHttp2Request(this.bodyLength == 0?"GET": "PUT", uri, this.bodyLength);
         while (!done.get()) {
             final AtomicInteger requestCompleted = new AtomicInteger(0);
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
@@ -227,6 +229,7 @@ public class Http2StreamManagerCanary {
         canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
         canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
+        canary.bodyLength = Integer.parseInt(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);

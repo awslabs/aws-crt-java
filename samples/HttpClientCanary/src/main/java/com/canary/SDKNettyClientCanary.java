@@ -57,6 +57,7 @@ public class SDKNettyClientCanary {
 
     private AsyncExecuteRequest createExecuteRequest(AtomicInteger numStreamsFailures) {
         SdkHttpRequest request = createRequest(uri);
+        /* TODO: what headers SDK have? */
 
         SdkAsyncHttpResponseHandler handler = new TestResponseHandler() {
             @Override
@@ -119,6 +120,7 @@ public class SDKNettyClientCanary {
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get(30, TimeUnit.SECONDS);
+
         }
     }
 
@@ -131,7 +133,7 @@ public class SDKNettyClientCanary {
         System.out.println("maxStreams: "+ this.maxStreams);
         System.out.println("maxConnections: "+ this.maxConnections);
         SdkAsyncHttpClient sdkHttpClient = NettyNioAsyncHttpClient.builder().http2Configuration(Http2Configuration.builder()
-                .maxStreams(new Long(this.maxStreams)).build())
+                .maxStreams((long) this.maxStreams).build())
                 .maxConcurrency(this.batchNum)
                 .buildWithDefaults(trustAllTlsAttributeMapBuilder()
                         .put(PROTOCOL, Protocol.HTTP2)
@@ -158,8 +160,8 @@ public class SDKNettyClientCanary {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
 
         canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
-        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
-        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
+        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "1"));
+        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "1"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;

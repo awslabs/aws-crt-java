@@ -152,7 +152,6 @@ public class SDKNettyClientCanary {
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get();
-            System.exit(0);
         }
     }
 

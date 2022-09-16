@@ -158,6 +158,15 @@ public class Http2StreamManagerCanary {
                             numStreamsFailures.incrementAndGet();
                         }
                     }
+                    // @Override
+                    // public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                    //     /*
+                    //      * Optional Callback, ignore incoming response body by default unless user wants
+                    //      * to capture it.
+                    //      */
+                    //     System.out.println(new String(bodyBytesIn, StandardCharsets.UTF_8));
+                    //     return bodyBytesIn.length;
+                    // }
 
                     @Override
                     public void onResponseComplete(HttpStreamBase stream, int errorCode) {
@@ -176,10 +185,12 @@ public class Http2StreamManagerCanary {
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get(30, TimeUnit.SECONDS);
+            System.exit(0);
         }
     }
 
     private void runCanary(int warmupLoops, int loops, long timerSecs) throws Exception {
+        Log.initLoggingToStderr(Log.LogLevel.Error);
         ArrayList<Double> warmupResults = new ArrayList<>();
         ArrayList<Double> results = new ArrayList<>();
         AtomicInteger streamFailed = new AtomicInteger(0);
@@ -187,6 +198,7 @@ public class Http2StreamManagerCanary {
         System.out.println("batchNum: " + this.batchNum);
         System.out.println("maxStreams: " + this.maxStreams);
         System.out.println("maxConnections: " + this.maxConnections);
+        System.out.println("bodyLength: " + this.bodyLength);
         try (Http2StreamManager streamManager = createStreamManager(uri, this.maxConnections)) {
             AtomicInteger opts = new AtomicInteger(0);
             AtomicBoolean done = new AtomicBoolean(false);
@@ -226,8 +238,8 @@ public class Http2StreamManagerCanary {
         Http2StreamManagerCanary canary = new Http2StreamManagerCanary();
 
         canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
-        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
-        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
+        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "1"));
+        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "1"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
         canary.bodyLength = Integer.parseInt(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
 

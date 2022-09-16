@@ -49,6 +49,7 @@ public class SDKNettyClientCanary {
     /* If the body length is larger than 0, the request will be a PUT request. Otherwise, it will be a GET request. */
     private int bodyLength = 0;
     private String data = null;
+    private boolean timer = false; /* If true, instead of collect ops/sec, it collects the time/ops */
 
     public static AttributeMap.Builder trustAllTlsAttributeMapBuilder() {
         return AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, true);
@@ -199,5 +200,6 @@ public class SDKNettyClientCanary {
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);
+        System.exit(0);
     }
 }

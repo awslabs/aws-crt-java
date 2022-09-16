@@ -151,7 +151,7 @@ public class SDKNettyClientCanary {
                 }
             }
             // Wait for all Requests to complete
-            requestCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.get();
             System.exit(0);
         }
     }
@@ -193,12 +193,12 @@ public class SDKNettyClientCanary {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
 
         canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
-        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "1"));
-        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "1"));
+        canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
+        canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
         canary.bodyLength = Integer.parseInt(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
-        canary.runCanary(1, 1, 1);
+        canary.runCanary(5, 5, 30);
     }
 }

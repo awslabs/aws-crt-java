@@ -184,8 +184,7 @@ public class Http2StreamManagerCanary {
                 });
             }
             // Wait for all Requests to complete
-            requestCompleteFuture.get(30, TimeUnit.SECONDS);
-            System.exit(0);
+            requestCompleteFuture.get();
         }
     }
 

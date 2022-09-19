@@ -275,8 +275,9 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
                     }
                 };
 
-                HttpStream stream = conn.makeRequest(request, streamHandler);
-                stream.close();
+                try(HttpStream stream = conn.makeRequest(request, streamHandler)){
+
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

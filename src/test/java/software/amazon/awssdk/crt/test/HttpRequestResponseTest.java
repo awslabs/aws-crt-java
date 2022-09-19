@@ -277,17 +277,18 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
                 try(HttpStream stream = conn.makeRequest(request, streamHandler)){
 
+                    if (shutdownComplete != null) {
+                        shutdownComplete.get();
+                    }
+
+                    CrtResource.waitForNoResources();
+                    return;
                 }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        if (shutdownComplete != null) {
-            shutdownComplete.get();
-        }
-
-        CrtResource.waitForNoResources();
     }
 
     @Test

@@ -50,7 +50,7 @@ public class Http2StreamManagerCanary {
     private int batchNum;
     private String nettyResultPath;
     /* If the body length is larger than 0, the request will be a PUT request. Otherwise, it will be a GET request. */
-    private int bodyLength = 0;
+    private long bodyLength = 0;
     private boolean timer = false; /* If true, instead of collect ops/sec, it collects the time/ops */
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
@@ -241,7 +241,8 @@ public class Http2StreamManagerCanary {
         canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
         canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
-        canary.bodyLength = Integer.parseInt(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
+        canary.bodyLength = Long.parseLong(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
+//        canary.timer = Integer.parseInt(System.getProperty("aws.crt.http.canary.timer", "0"));
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);

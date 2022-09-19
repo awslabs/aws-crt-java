@@ -281,7 +281,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
                         shutdownComplete.get();
                     }
 
-                    CrtResource.waitForNoResources();
                     return;
                 }
             }

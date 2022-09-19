@@ -278,7 +278,6 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
     }
 
     JavaVM *jvm = callback->jvm;
-    aws_http_stream_binding_destroy(env, callback);
     aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 }

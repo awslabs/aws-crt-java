@@ -300,7 +300,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
         (*env)->CallVoidMethod(
             env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
         (*env)->DeleteLocalRef(env, crt_exception);
-        aws_http_stream_binding_destroy(env, callback_data->stream_binding);
+        aws_http_stream_binding_release(env, callback_data->stream_binding);
     } else {
         callback_data->stream_binding->native_stream = stream;
         jobject j_http_stream =
@@ -312,10 +312,10 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
                 env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
             (*env)->DeleteLocalRef(env, crt_exception);
             (*env)->ExceptionClear(env);
-            aws_http_stream_binding_destroy(env, callback_data->stream_binding);
+            aws_http_stream_binding_release(env, callback_data->stream_binding);
         } else {
-            /* Stream is activated once we acquired from the Stream Manager */
-            aws_atomic_store_int(&callback_data->stream_binding->activated, 1);
+            /* Stream is activated once we acquired from the Stream Manager. Hold the refcount on the binding */
+            aws_http_stream_binding_acquire(callback_data->stream_binding);
             callback_data->stream_binding->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream);
             (*env)->CallVoidMethod(
                 env,
@@ -358,7 +358,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
         return;
     }
 
-    struct http_stream_binding *stream_binding = aws_http_stream_binding_alloc(env, jni_http_response_callback_handler);
+    struct http_stream_binding *stream_binding = aws_http_stream_binding_new(env, jni_http_response_callback_handler);
     if (!stream_binding) {
         /* Exception already thrown */
         return;
@@ -368,7 +368,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
         aws_http_request_new_from_java_http_request(env, marshalled_request, jni_http_request_body_stream);
     if (stream_binding->native_request == NULL) {
         /* Exception already thrown */
-        aws_http_stream_binding_destroy(env, stream_binding);
+        aws_http_stream_binding_release(env, stream_binding);
         return;
     }
 

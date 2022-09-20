@@ -27,19 +27,18 @@ struct http_stream_binding {
     struct aws_byte_buf headers_buf;
     int response_status;
 
-    /*
-     * Inactivated streams must have their callback data destroyed at release time
-     */
-    struct aws_atomic_var activated;
+    /* For the native http stream and the Java stream object */
+    struct aws_atomic_var ref;
 };
 
 jobject aws_java_http_stream_from_native_new(JNIEnv *env, void *opaque, int version);
 void aws_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream);
 
-void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *callback);
+void *aws_http_stream_binding_release(JNIEnv *env, struct http_stream_binding *binding);
+void *aws_http_stream_binding_acquire(struct http_stream_binding *binding);
 
 // If error occurs, A Java exception is thrown and NULL is returned.
-struct http_stream_binding *aws_http_stream_binding_alloc(JNIEnv *env, jobject java_callback_handler);
+struct http_stream_binding *aws_http_stream_binding_new(JNIEnv *env, jobject java_callback_handler);
 
 /* Default callbacks using binding */
 int aws_java_http_stream_on_incoming_headers_fn(

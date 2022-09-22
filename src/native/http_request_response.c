@@ -292,10 +292,18 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
-    JavaVM *jvm = binding->jvm;
-    /* Release the ref on binding for native stream */
+    aws_jni_release_thread_env(binding->jvm, env);
+    /********** JNI ENV RELEASE **********/
+}
+
+void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    /* Native stream destroyed, release the binding. */
     aws_http_stream_binding_release(env, binding);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(binding->jvm, env);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -371,6 +379,7 @@ static jobject s_make_request_general(
         .on_response_header_block_done = aws_java_http_stream_on_incoming_header_block_done_fn,
         .on_response_body = aws_java_http_stream_on_incoming_body_fn,
         .on_complete = aws_java_http_stream_on_stream_complete_fn,
+        .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
         .user_data = stream_binding,
     };
 
@@ -402,6 +411,8 @@ static jobject s_make_request_general(
         /* Java exception has already been raised. */
         return NULL;
     }
+    /* Stream created successfully, acquire on binding for the native stream lifetime. */
+    aws_http_stream_binding_acquire(stream_binding);
 
     return jHttpStreamBase;
 }
@@ -555,10 +566,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
         (*env)->DeleteGlobalRef(env, binding->java_http_stream_base);
         aws_jni_throw_runtime_exception(
             env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
-    } else {
-        /* Succeed activating the stream, holding the binding to make sure it lives across all the callbacks until
-         * stream completes */
-        aws_http_stream_binding_acquire(binding);
     }
 }
 

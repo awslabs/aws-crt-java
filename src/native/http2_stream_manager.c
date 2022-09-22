@@ -314,7 +314,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
             (*env)->ExceptionClear(env);
             aws_http_stream_binding_release(env, callback_data->stream_binding);
         } else {
-            /* Stream is activated once we acquired from the Stream Manager. Hold the refcount on the binding */
+            /* Acquire for the native stream */
             aws_http_stream_binding_acquire(callback_data->stream_binding);
             callback_data->stream_binding->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream);
             (*env)->CallVoidMethod(

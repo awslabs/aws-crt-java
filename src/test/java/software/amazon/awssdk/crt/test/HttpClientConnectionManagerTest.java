@@ -163,7 +163,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         skipIfNetworkUnavailable();
         Callable<Void> fn = () -> {
             testParallelRequests(numThreads, numRequests);
-            Thread.sleep(2000); // wait for async shutdowns to complete
             return null;
         };
 

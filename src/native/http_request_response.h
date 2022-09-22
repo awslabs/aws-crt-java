@@ -56,5 +56,6 @@ int aws_java_http_stream_on_incoming_body_fn(
     const struct aws_byte_cursor *data,
     void *user_data);
 void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data);
+void aws_java_http_stream_on_stream_destroy_fn(void *user_data);
 
 #endif /* AWS_JNI_CRT_HTTP_REQUEST_RESPONSE_H */

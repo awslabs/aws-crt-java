@@ -380,6 +380,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
         .on_response_header_block_done = aws_java_http_stream_on_incoming_header_block_done_fn,
         .on_response_body = aws_java_http_stream_on_incoming_body_fn,
         .on_complete = aws_java_http_stream_on_stream_complete_fn,
+        .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
         .user_data = stream_binding,
     };
 

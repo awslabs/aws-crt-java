@@ -496,7 +496,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
         Assume.assumeTrue(isCIEnvironmentSetUp());
 
         try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
-             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+            TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
             builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");

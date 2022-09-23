@@ -367,8 +367,7 @@ static jobject s_make_request_general(
         aws_http_request_new_from_java_http_request(env, marshalled_request, jni_http_request_body_stream);
     if (stream_binding->native_request == NULL) {
         /* Exception already thrown */
-        aws_http_stream_binding_release(env, stream_binding);
-        return (jobject)NULL;
+        goto error;
     }
 
     struct aws_http_make_request_options request_options = {
@@ -383,38 +382,33 @@ static jobject s_make_request_general(
         .user_data = stream_binding,
     };
 
-    jobject jHttpStreamBase = NULL;
-
     stream_binding->native_stream = aws_http_connection_make_request(native_conn, &request_options);
-    if (stream_binding->native_stream) {
-        AWS_LOGF_TRACE(
-            AWS_LS_HTTP_CONNECTION,
-            "Opened new Stream on Connection. conn: %p, stream: %p",
-            (void *)native_conn,
-            (void *)stream_binding->native_stream);
-
-        jHttpStreamBase = aws_java_http_stream_from_native_new(env, stream_binding, version);
-    }
-
-    /* Check for errors that might have occurred while holding the lock. */
-    if (!stream_binding->native_stream) {
-        /* Failed to create native aws_http_stream. Clean up stream_binding. */
+    if (stream_binding->native_stream == NULL) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
-        aws_http_stream_binding_release(env, stream_binding);
-        return NULL;
-    } else if (!jHttpStreamBase) {
-        /* Failed to create java HttpStream, but did create native aws_http_stream. As we never activate the native
-         * stream, we can just release the native stream, and release the binding. */
-        aws_http_stream_release(stream_binding->native_stream);
-        aws_http_stream_binding_release(env, stream_binding);
-        /* Java exception has already been raised. */
-        return NULL;
+        goto error;
     }
+
     /* Stream created successfully, acquire on binding for the native stream lifetime. */
     aws_http_stream_binding_acquire(stream_binding);
 
+    jobject jHttpStreamBase = aws_java_http_stream_from_native_new(env, stream_binding, version);
+    if (jHttpStreamBase == NULL) {
+        goto error;
+    }
+
+    AWS_LOGF_TRACE(
+        AWS_LS_HTTP_CONNECTION,
+        "Opened new Stream on Connection. conn: %p, stream: %p",
+        (void *)native_conn,
+        (void *)stream_binding->native_stream);
+
     return jHttpStreamBase;
+
+error:
+    aws_http_stream_release(native_request);
+    aws_http_stream_binding_release(stream_binding, env);
+    return NULL;
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(

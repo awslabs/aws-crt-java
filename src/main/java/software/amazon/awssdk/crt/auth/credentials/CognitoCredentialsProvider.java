@@ -220,11 +220,27 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         addReferenceTo(tlsContext);
     }
 
+    private void writeLengthPrefixedBytesSafe(ByteBuffer buffer, byte[] bytes) {
+        if (bytes != null) {
+            buffer.putInt(bytes.length);
+            buffer.put(bytes);
+        } else {
+            buffer.putInt(0);
+        }
+    }
+
     private byte[] marshalLoginsForJni(ArrayList<CognitoLoginTokenPair> logins) {
         int size = 0;
 
         for (CognitoLoginTokenPair login : logins) {
-            size += login.identityProviderName.length + login.identityProviderToken.length + (BUFFER_INT_SIZE * 2);
+            size += BUFFER_INT_SIZE * 2;
+            if (login.identityProviderName != null) {
+                size += login.identityProviderName.length;
+            }
+
+            if (login.identityProviderToken != null) {
+                size += login.identityProviderToken.length;
+            }
         }
 
         if (size == 0) {
@@ -232,13 +248,9 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
-
-
         for (CognitoLoginTokenPair login : logins) {
-            buffer.putInt(login.identityProviderName.length);
-            buffer.put(login.identityProviderName);
-            buffer.putInt(login.identityProviderToken.length);
-            buffer.put(login.identityProviderToken);
+            writeLengthPrefixedBytesSafe(buffer, login.identityProviderName);
+            writeLengthPrefixedBytesSafe(buffer, login.identityProviderToken);
         }
 
         return buffer.array();

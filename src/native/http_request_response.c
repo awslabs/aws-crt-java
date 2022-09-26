@@ -410,8 +410,8 @@ static jobject s_make_request_general(
     return jHttpStreamBase;
 
 error:
-    aws_http_stream_release(stream_binding->native_request);
-    aws_http_stream_binding_release(stream_binding, env);
+    aws_http_stream_release(stream_binding->native_stream);
+    aws_http_stream_binding_release(env, stream_binding);
     return NULL;
 }
 

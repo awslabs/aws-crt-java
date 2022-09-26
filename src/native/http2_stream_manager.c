@@ -63,6 +63,10 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
     struct aws_http2_stream_manager_binding *binding = (struct aws_http2_stream_manager_binding *)user_data;
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Java Stream Manager Shutdown Complete");
     jobject java_http2_stream_manager = (*env)->NewLocalRef(env, binding->java_http2_stream_manager);
@@ -295,13 +299,20 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
     struct aws_sm_acquire_stream_callback_data *callback_data = user_data;
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
     if (error_code) {
+        AWS_ASSERT(stream == NULL);
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
         (*env)->CallVoidMethod(
             env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
         (*env)->DeleteLocalRef(env, crt_exception);
         aws_http_stream_binding_release(env, callback_data->stream_binding);
     } else {
+        /* Acquire for the native stream. The destroy callback for native stream will release the ref. */
+        aws_http_stream_binding_acquire(callback_data->stream_binding);
         callback_data->stream_binding->native_stream = stream;
         jobject j_http_stream =
             aws_java_http_stream_from_native_new(env, callback_data->stream_binding, AWS_HTTP_VERSION_2);
@@ -312,10 +323,9 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
                 env, callback_data->java_async_callback, async_callback_properties.on_failure, crt_exception);
             (*env)->DeleteLocalRef(env, crt_exception);
             (*env)->ExceptionClear(env);
+            /* Release the refcount on binding for the java object that failed to be created. */
             aws_http_stream_binding_release(env, callback_data->stream_binding);
         } else {
-            /* Acquire for the native stream */
-            aws_http_stream_binding_acquire(callback_data->stream_binding);
             callback_data->stream_binding->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream);
             (*env)->CallVoidMethod(
                 env,

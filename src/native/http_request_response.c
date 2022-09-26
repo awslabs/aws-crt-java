@@ -301,6 +301,10 @@ void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
     /* Native stream destroyed, release the binding. */
     aws_http_stream_binding_release(env, binding);
     aws_jni_release_thread_env(binding->jvm, env);
@@ -406,7 +410,7 @@ static jobject s_make_request_general(
     return jHttpStreamBase;
 
 error:
-    aws_http_stream_release(native_request);
+    aws_http_stream_release(stream_binding->native_request);
     aws_http_stream_binding_release(stream_binding, env);
     return NULL;
 }

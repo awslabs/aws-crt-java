@@ -35,6 +35,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import java.time.Instant;
+import java.time.Duration;
+
 import static com.canary.CanaryUtils.createDataCollector;
 import static com.canary.CanaryUtils.printResult;
 import static software.amazon.awssdk.utils.StringUtils.isBlank;
@@ -49,7 +52,7 @@ public class SDKNettyClientCanary {
     /* If the body length is larger than 0, the request will be a PUT request. Otherwise, it will be a GET request. */
     private long bodyLength = 0;
     private String data = null;
-    private boolean timer = false; /* If true, instead of collect ops/sec, it collects the time/ops */
+    private Integer timer = 0; /* If not zero, instead of collect ops/sec, it collects the time/ops and exit */
 
     public static AttributeMap.Builder trustAllTlsAttributeMapBuilder() {
         return AttributeMap.builder().put(TRUST_ALL_CERTIFICATES, true);
@@ -88,12 +91,13 @@ public class SDKNettyClientCanary {
                 numStreamsFailures.incrementAndGet();
             }
         };
-        this.data = StringUtils.repeat("*", 10);
         AsyncExecuteRequest.Builder builder = AsyncExecuteRequest.builder()
                 .request(request)
                 .responseHandler(handler);
-        Publisher<ByteBuffer> dataPublisher = Flowable.just(ByteBuffer.wrap(data.getBytes(UTF_8)));
         if (this.bodyLength > 0) {
+            this.data = StringUtils.repeat("*", 10);
+            // this.data = StringUtils.repeat("*", this.bodyLength);
+            Publisher<ByteBuffer> dataPublisher = Flowable.just(ByteBuffer.wrap(data.getBytes(UTF_8)));
             builder.requestContentPublisher(new SdkHttpContentPublisher() {
                 @Override
                 public Optional<Long> contentLength() {
@@ -132,6 +136,7 @@ public class SDKNettyClientCanary {
 
             final AtomicInteger requestCompleted = new AtomicInteger(0);
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            Instant start = Instant.now();
 
             for (int i = 0; i < concurrentNum; i++) {
                 try {
@@ -153,6 +158,13 @@ public class SDKNettyClientCanary {
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get();
+            Instant end = Instant.now();
+            if(timer!=0) {
+                Duration timeElapsed = Duration.between(start, end);
+                System.out.println("Time taken: "+ timeElapsed.toMillis() +" milliseconds");
+                System.exit(0);
+            }
+
         }
     }
 
@@ -197,6 +209,7 @@ public class SDKNettyClientCanary {
         canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
         canary.bodyLength = Long.parseLong(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
+        canary.timer = Integer.parseInt(System.getProperty("aws.crt.http.canary.timer", "0"));
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);

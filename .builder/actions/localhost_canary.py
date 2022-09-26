@@ -17,6 +17,7 @@ class LocalhostCanary(Builder.Action):
             "-Daws.crt.http.canary.bodyLength=10 "
             "-Daws.crt.http.canary.nettyResultPath=netty_upload_body",
             "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.Http2StreamManagerCanary -Daws.crt.http.canary.uri=https://localhost:8443/uploadTest -Daws.crt.http.canary.bodyLength=10 -Daws.crt.http.canary.nettyResultPath=netty_upload_body",
+            "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.SDKNettyClientCanary -Daws.crt.http.canary.uri=https://localhost:8443/downloadTest -Daws.crt.http.canary.maxConnections=1 -Daws.crt.http.canary.maxStreams=1 -Daws.crt.http.canary.timer=1",
+            "cd ./samples/HttpClientCanary && mvn exec:java -Dexec.mainClass=com.canary.Http2StreamManagerCanary -Daws.crt.http.canary.uri=https://localhost:8443/downloadTest -Daws.crt.http.canary.maxConnections=1 -Daws.crt.http.canary.maxStreams=1 -Daws.crt.http.canary.timer=1",
         ]
-
         return Builder.Script(actions, name='aws-crt-java-test')

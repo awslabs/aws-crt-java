@@ -25,6 +25,8 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.UUID;
@@ -51,7 +53,7 @@ public class Http2StreamManagerCanary {
     private String nettyResultPath;
     /* If the body length is larger than 0, the request will be a PUT request. Otherwise, it will be a GET request. */
     private long bodyLength = 0;
-    private boolean timer = false; /* If true, instead of collect ops/sec, it collects the time/ops */
+    private int timer = 0; /* If not zero, instead of collect ops/sec, it collects the time/ops and exit */
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -150,6 +152,8 @@ public class Http2StreamManagerCanary {
         while (!done.get()) {
             final AtomicInteger requestCompleted = new AtomicInteger(0);
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            Instant start = Instant.now();
+
             for (int i = 0; i < concurrentNum; i++) {
                 streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
@@ -186,6 +190,12 @@ public class Http2StreamManagerCanary {
             }
             // Wait for all Requests to complete
             requestCompleteFuture.get();
+            Instant end = Instant.now();
+            if(timer!=0) {
+                Duration timeElapsed = Duration.between(start, end);
+                System.out.println("Time taken: "+ timeElapsed.toMillis() +" milliseconds");
+                System.exit(0);
+            }
         }
     }
 
@@ -242,7 +252,7 @@ public class Http2StreamManagerCanary {
         canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");
         canary.bodyLength = Long.parseLong(System.getProperty("aws.crt.http.canary.bodyLength", "0"));
-//        canary.timer = Integer.parseInt(System.getProperty("aws.crt.http.canary.timer", "0"));
+        canary.timer = Integer.parseInt(System.getProperty("aws.crt.http.canary.timer", "0"));
 
         canary.batchNum = canary.maxStreams * canary.maxConnections;
         canary.runCanary(5, 5, 30);

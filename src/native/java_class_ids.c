@@ -475,8 +475,8 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onResponseHeadersDone", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseHeadersDone);
 
-    http_stream_response_handler_properties.onResponseBody = (*env)->GetMethodID(
-        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Ljava/nio/ByteBuffer;)I");
+    http_stream_response_handler_properties.onResponseBody =
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;[B)I");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseBody);
 
     http_stream_response_handler_properties.onResponseComplete =

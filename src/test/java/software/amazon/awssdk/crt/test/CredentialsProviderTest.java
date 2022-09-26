@@ -12,6 +12,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.*;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.*;
 
 import java.io.IOException;
@@ -30,6 +31,26 @@ public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
+
+    private static String COGNITO_IDENTITY = System.getenv("AWS_TESTING_COGNITO_IDENTITY");
+    private static String TEST_HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
+    private static String TEST_HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
+
+    private boolean isCIEnvironmentSetUp() {
+        if (COGNITO_IDENTITY == null ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isProxyEnvironmentSetUp() {
+        if (TEST_HTTP_PROXY_HOST == null || TEST_HTTP_PROXY_PORT == null) {
+            return false;
+        }
+
+        return true;
+    }
 
     public CredentialsProviderTest() {
     }
@@ -408,6 +429,87 @@ public class CredentialsProviderTest extends CrtTestFixture {
             // Check that the right exception type caused the completion error in the future
             assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
             assertEquals(RuntimeException.class, innerException.getClass());
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognito() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                Credentials credentials = future.get();
+
+                assertNotNull(credentials.getAccessKeyId());
+                assertNotNull(credentials.getSecretAccessKey());
+                assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoProxy() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+        Assume.assumeTrue(isProxyEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            HttpProxyOptions proxyOptions = new HttpProxyOptions();
+            proxyOptions.setHost(TEST_HTTP_PROXY_HOST);
+            proxyOptions.setPort(Integer.parseInt(TEST_HTTP_PROXY_PORT));
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withHttpProxyOptions(proxyOptions);
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                Credentials credentials = future.get();
+
+                assertNotNull(credentials.getAccessKeyId());
+                assertNotNull(credentials.getSecretAccessKey());
+                assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testCreateCognitoMaximal() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+            TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLogin(new CognitoCredentialsProvider.CognitoLoginTokenPair("test", "token"));
+            builder.withLogin(new CognitoCredentialsProvider.CognitoLoginTokenPair("garbage", "value"));
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                ;
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
         }
     }
 }

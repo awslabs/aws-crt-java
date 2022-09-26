@@ -341,7 +341,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jst
 }
 
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {
-    (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
@@ -361,7 +363,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
 }
 
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
-    (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {

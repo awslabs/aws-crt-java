@@ -7,7 +7,8 @@
         "mvn -P continuous-integration -B compile"
     ],
     "test_steps": [
-       "aws-crt-java-test"
+        "crt-ci-prep",
+        "aws-crt-java-test"
     ],
     "+imports": [
         "JDK8"

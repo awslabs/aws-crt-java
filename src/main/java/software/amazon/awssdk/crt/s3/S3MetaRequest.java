@@ -13,7 +13,7 @@ public class S3MetaRequest extends CrtResource {
 
     private void onShutdownComplete() {
         releaseReferences();
-        
+
         this.shutdownComplete.complete(null);
     }
 
@@ -50,12 +50,35 @@ public class S3MetaRequest extends CrtResource {
 
     /**
      * Pauses meta request and returns a token that can be used to resume a meta request.
-     * For PutObject resume, input stream should always start at the begining,
-     * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo. 
+     * For PutObject resume, input stream should always start at the beginning,
+     * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo.
      * @return token to resume request. might be null if request has not started executing yet
      */
     public String pause() {
         return s3MetaRequestPause(getNativeHandle());
+    }
+
+    /**
+     * Increment the flow-control window, so that response data continues downloading.
+     * <p>
+     * If the client was created with {@link S3ClientOptions#withReadBackpressureEnabled} set true,
+     * each S3MetaRequest has a flow-control window that shrinks as response
+     * body data is downloaded (headers do not affect the size of the window).
+     * {@link S3ClientOptions#withInitialReadWindowSize} sets the starting size for each S3MetaRequest's window.
+     * Whenever the S3MetaRequest's window reaches 0, data stops downloading.
+     * If the initial window size is 0, the request will not start until the window is incremented.
+     * Maintain a larger window to keep up a high download throughput,
+     * parts cannot download in parallel unless the window is large enough to hold multiple parts.
+     * Maintain a smaller window to limit the amount of data buffered in memory.
+     * <p>
+     * If backpressure is disabled this call has no effect, data is downloaded as fast as possible.
+     * <p>
+     * WARNING: This feature is experimental.
+     * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
+     * and you may still receive some data after the window reaches 0.
+     */
+    public void incrementReadWindow(long bytes) {
+        s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
     }
 
     /*******************************************************************************
@@ -66,4 +89,6 @@ public class S3MetaRequest extends CrtResource {
     private static native void s3MetaRequestCancel(long s3MetaRequest);
 
     private static native String s3MetaRequestPause(long s3MetaRequest);
+
+    private static native void s3MetaRequestIncrementReadWindow(long s3MetaRequest, long bytes);
 }

@@ -265,6 +265,25 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     return exception_pending;
 }
 
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix) {
+    if (java_long < 0) {
+        aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
+        goto error;
+    }
+
+    if ((uint64_t)java_long > (uint64_t)SIZE_MAX) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "%s cannot exceed %zu when running 32bit", errmsg_prefix, SIZE_MAX);
+        goto error;
+    }
+
+    *out_size = (size_t)java_long;
+    return AWS_OP_SUCCESS;
+error:
+    *out_size = 0;
+    return AWS_OP_ERR;
+}
+
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;

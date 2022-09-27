@@ -57,6 +57,13 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
 
 /*******************************************************************************
+ * Set a size_t based on a jlong.
+ * If conversion fails, a java IllegalArgumentException is thrown like
+ * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.
+ ******************************************************************************/
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix);
+
+/*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
  ******************************************************************************/
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);

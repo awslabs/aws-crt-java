@@ -53,8 +53,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_client_bootstrap,
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
-    jlong part_size,
+    jlong part_size_jlong,
     jdouble throughput_target_gbps,
+    jboolean enable_read_backpressure,
+    jlong initial_read_window_jlong,
     int max_connections,
     jobject jni_standard_retry_options,
     jboolean compute_content_md5) {
@@ -65,13 +67,23 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
 
     if (!client_bootstrap) {
-        aws_jni_throw_runtime_exception(env, "Invalid Client Bootstrap");
+        aws_jni_throw_illegal_argument_exception(env, "Invalid Client Bootstrap");
         return (jlong)NULL;
     }
 
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     if (!credentials_provider) {
-        aws_jni_throw_runtime_exception(env, "Invalid Credentials Provider");
+        aws_jni_throw_illegal_argument_exception(env, "Invalid Credentials Provider");
+        return (jlong)NULL;
+    }
+
+    size_t part_size;
+    if (aws_size_t_from_java(env, &part_size, part_size_jlong, "Part size")) {
+        return (jlong)NULL;
+    }
+
+    size_t initial_read_window;
+    if (aws_size_t_from_java(env, &initial_read_window, initial_read_window_jlong, "Initial read window")) {
         return (jlong)NULL;
     }
 
@@ -130,6 +142,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .signing_config = &signing_config,
         .part_size = (size_t)part_size,
         .throughput_target_gbps = throughput_target_gbps,
+        .enable_read_backpressure = enable_read_backpressure,
+        .initial_read_window = initial_read_window,
         .retry_strategy = retry_strategy,
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
@@ -634,6 +648,30 @@ JNIEXPORT jstring JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
     }
 
     return jni_resume_token;
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestIncrementReadWindow(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request,
+    jlong increment) {
+
+    (void)jni_class;
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "S3MetaRequest.s3MetaRequestIncrementReadWindow: Invalid/null meta request");
+        return;
+    }
+
+    if (increment < 0) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "S3MetaRequest.s3MetaRequestIncrementReadWindow: Number cannot be negative");
+        return;
+    }
+
+    aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)increment);
 }
 
 #if UINTPTR_MAX == 0xffffffff

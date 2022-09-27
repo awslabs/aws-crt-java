@@ -19,6 +19,8 @@ public class S3ClientOptions {
     private CredentialsProvider credentialsProvider;
     private long partSize;
     private double throughputTargetGbps;
+    private boolean readBackpressureEnabled;
+    private long initialReadWindowSize;
     private int maxConnections;
     /**
      * For multi-part upload, content-md5 will be calculated if the
@@ -80,6 +82,43 @@ public class S3ClientOptions {
 
     public double getThroughputTargetGbps() {
         return throughputTargetGbps;
+    }
+
+    /**
+     * Set whether backpressure is enabled, to prevent response data from downloading faster than you can handle it.
+     * <p>
+     * If false (default), no backpressure is applied and data will download as fast as possible.
+     * <p>
+     * If true, each S3MetaRequest has a flow-control window that shrinks as
+     * response body data is downloaded (headers do not affect the window).
+     * {@link withInitialReadWindowSize} determines the starting size of each S3MetaRequest's window, in bytes.
+     * You will stop downloading data whenever the window reaches zero.
+     * You must call {@link S3MetaRequest#incrementReadWindow} to keep data flowing.
+     * <p>
+     * WARNING: This feature is experimental.
+     * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
+     * and you may still receive some data after the window reaches zero.
+     */
+    public S3ClientOptions withReadBackpressureEnabled(boolean enable) {
+        this.readBackpressureEnabled = enable;
+        return this;
+    }
+
+    public boolean getReadBackpressureEnabled() {
+        return this.readBackpressureEnabled;
+    }
+
+    /**
+     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
+     * Ignored unless {@link withReadBackpressureEnabled} is true.
+     */
+    public S3ClientOptions withInitialReadWindowSize(long bytes) {
+        initialReadWindowSize = bytes;
+        return this;
+    }
+
+    public long getInitialReadWindowSize() {
+        return this.initialReadWindowSize;
     }
 
     public S3ClientOptions withEndpoint(String endpoint) {

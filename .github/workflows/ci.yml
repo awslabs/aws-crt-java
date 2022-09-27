@@ -105,11 +105,8 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  windows-vc14:
+  windows-vc14-x64:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
-    strategy:
-      matrix:
-        arch: [x86, x64]
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -117,7 +114,21 @@ jobs:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         env:
-          AWS_CMAKE_TOOLSET: v140
+          AWS_CMAKE_GENERATOR: Visual Studio 14 2015 Win64
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+
+  windows-vc14-x86:
+    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        env:
+          AWS_CMAKE_GENERATOR: Visual Studio 14 2015
         run: |
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream

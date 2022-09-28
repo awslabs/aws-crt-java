@@ -240,7 +240,6 @@ static int s_on_s3_meta_request_body_callback(
             jni_payload,
             range_start,
             range_end);
-        (void)body_response_result;
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -249,6 +248,11 @@ static int s_on_s3_meta_request_body_callback(
                 (void *)meta_request);
             aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;
+        }
+
+        /* The Java onResponseBody API lets users return a size for auto-incrementing the read window */
+        if (body_response_result > 0) {
+            aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)body_response_result);
         }
     }
     return_value = AWS_OP_SUCCESS;

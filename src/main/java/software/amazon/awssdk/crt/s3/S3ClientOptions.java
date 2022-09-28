@@ -85,15 +85,19 @@ public class S3ClientOptions {
     }
 
     /**
-     * Set whether backpressure is enabled, to prevent response data from downloading faster than you can handle it.
+     * Set whether backpressure is enabled (false by default), to prevent response data downloading faster than you can handle it.
      * <p>
-     * If false (default), no backpressure is applied and data will download as fast as possible.
+     * If false, no backpressure is applied and data will download as fast as possible.
      * <p>
      * If true, each S3MetaRequest has a flow-control window that shrinks as
      * response body data is downloaded (headers do not affect the window).
-     * {@link withInitialReadWindowSize} determines the starting size of each S3MetaRequest's window, in bytes.
-     * You will stop downloading data whenever the window reaches zero.
-     * You must call {@link S3MetaRequest#incrementReadWindow} to keep data flowing.
+     * {@link #withInitialReadWindowSize} determines the starting size of each S3MetaRequest's window, in bytes.
+     * Data stops downloading data whenever the window reaches zero.
+     * Increment the window to keep data flowing by calling {@link S3MetaRequest#incrementReadWindow},
+     * or by returning a size from {@link S3MetaRequestResponseHandler#onResponseBody}.
+     * Maintain a larger window to keep up a high download throughput,
+     * parts cannot download in parallel unless the window is large enough to hold multiple parts.
+     * Maintain a smaller window to limit the amount of data buffered in memory.
      * <p>
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
@@ -113,7 +117,9 @@ public class S3ClientOptions {
 
     /**
      * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
-     * Ignored unless {@link withReadBackpressureEnabled} is true.
+     *
+     * @see #withReadBackpressureEnabled
+     *
      * @param bytes size in bytes
      * @return this
      */

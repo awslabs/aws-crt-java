@@ -65,8 +65,8 @@ public class S3MetaRequest extends CrtResource {
      * each S3MetaRequest has a flow-control window that shrinks as response
      * body data is downloaded (headers do not affect the size of the window).
      * {@link S3ClientOptions#withInitialReadWindowSize} sets the starting size for each S3MetaRequest's window.
-     * Whenever the S3MetaRequest's window reaches 0, data stops downloading.
-     * If the initial window size is 0, the request will not start until the window is incremented.
+     * Whenever the window reaches zero, data stops downloading.
+     * Increment the window to keep data flowing.
      * Maintain a larger window to keep up a high download throughput,
      * parts cannot download in parallel unless the window is large enough to hold multiple parts.
      * Maintain a smaller window to limit the amount of data buffered in memory.
@@ -75,9 +75,11 @@ public class S3MetaRequest extends CrtResource {
      * <p>
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
-     * and you may still receive some data after the window reaches 0.
+     * and you may still receive some data after the window reaches zero.
      *
      * @param bytes size to increment window by
+
+     * @see S3ClientOptions#withReadBackpressureEnabled
      */
     public void incrementReadWindow(long bytes) {
         s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);

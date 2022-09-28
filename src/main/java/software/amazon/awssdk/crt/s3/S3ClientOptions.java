@@ -98,6 +98,9 @@ public class S3ClientOptions {
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
      * and you may still receive some data after the window reaches zero.
+     *
+     * @param enable whether to enable or disable backpressure
+     * @return this
      */
     public S3ClientOptions withReadBackpressureEnabled(boolean enable) {
         this.readBackpressureEnabled = enable;
@@ -111,6 +114,8 @@ public class S3ClientOptions {
     /**
      * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
      * Ignored unless {@link withReadBackpressureEnabled} is true.
+     * @param bytes size in bytes
+     * @return this
      */
     public S3ClientOptions withInitialReadWindowSize(long bytes) {
         initialReadWindowSize = bytes;

@@ -76,6 +76,8 @@ public class S3MetaRequest extends CrtResource {
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
      * and you may still receive some data after the window reaches 0.
+     *
+     * @param bytes size to increment window by
      */
     public void incrementReadWindow(long bytes) {
         s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);

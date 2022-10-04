@@ -12,7 +12,7 @@ class AWSCrtJavaTest(Builder.Action):
         actions = []
 
         all_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
-            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.aws_trace_log_per_test")
+            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.aws_trace_log_per_test=true")
 
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         shutdown_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \

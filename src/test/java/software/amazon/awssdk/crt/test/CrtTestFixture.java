@@ -45,7 +45,7 @@ public class CrtTestFixture {
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             File logsFile = new File("log.txt");
             logsFile.delete();
-            Log.initLoggingToFile(Log.LogLevel.Debug, "log.txt");
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
         context = new CrtTestContext();
         CrtPlatform platform = CRT.getPlatformImpl();

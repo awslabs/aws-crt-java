@@ -428,12 +428,12 @@ public class S3ClientTest extends CrtTestFixture {
 
             String resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                
+
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
 
-                Throwable thrown = Assert.assertThrows(Throwable.class, 
+                Throwable thrown = Assert.assertThrows(Throwable.class,
                     () -> onFinishedFuture.get());
 
                 Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtS3RuntimeException)thrown.getCause()).errorName);
@@ -586,7 +586,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpGetRequest)
                     .withResponseHandler(getResponseHandler)
                     .withValidateChecksum(true);
-            
+
             try (S3MetaRequest metaRequest = client.makeMetaRequest(getRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onGetFinishedFuture.get());
             }
@@ -653,13 +653,6 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3Copy() {
-        /**
-         * NOTE - for this test we skip a native memory leak check. This is because if the test fails due getting a 404 from S3, it will error out and say that there is memory
-         * remaining when, in reality, it is only remaining because of the test fail. Unfortunately, trying to check for this error and prevent the memory check does not seem
-         * to work, so we have to just disable it entirely for this test. BUMP 2 (double check that it's good now)
-         */
-        CrtMemoryLeakDetector.didTestFail = true;
-
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -916,7 +909,7 @@ public class S3ClientTest extends CrtTestFixture {
                 double totalGbps = 0;
                 for (CompletableFuture<TransferStats> request : requestFutures) {
                     try {
-                        request.get();
+                        request.join();
                         totalGbps += request.get().avgGbps();
                     } catch (CompletionException | InterruptedException | ExecutionException ex) {
                         System.out.println(ex.toString());

@@ -54,11 +54,6 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     }
 
     public static void nativeMemoryLeakCheck() throws Exception {
-        // Skip if the test failed
-        if (CrtTestFixture.didTestFail == true) {
-            return;
-        }
-
         String output = "";
         long nativeMemory = getNativeMemoryInUse();
         if (nativeMemory > 0) {
@@ -75,11 +70,6 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
     }
 
     public static void leakCheck(int numIterations, int maxLeakage, Callable<Void> fn) throws Exception {
-        // Skip if the test failed
-        if (CrtTestFixture.didTestFail == true) {
-            return;
-        }
-
         List<Long> jvmSamples = new ArrayList<>();
         List<Long> nativeSamples = new ArrayList<>();
         numIterations = Math.max(2, numIterations); // There need to be at least 2 iterations to get deltas

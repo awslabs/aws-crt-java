@@ -92,7 +92,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -114,11 +113,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
         }
     }
 
@@ -132,7 +127,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            try {
             final long length[] = { 0 };
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
@@ -154,11 +148,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
         }
     }
 
@@ -173,7 +163,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            try {
             final long length[] = { 0 };
             nativeClient.getObject(
                     GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
@@ -197,11 +186,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
         }
     }
 
@@ -216,7 +201,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            try {
             nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
                     new ResponseDataConsumer<GetObjectOutput>() {
 
@@ -235,11 +219,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         @Override
                         public void onException(final CrtRuntimeException e) {
                         }
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
         } catch (CompletionException e) {
             try {
                 throw e.getCause();
@@ -266,7 +246,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                 final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
                         100.)) {
 
-            try {
             final long contentLength = 1024l;
             final long lengthWritten[] = { 0 };
             nativeClient.putObject(
@@ -278,11 +257,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
 
                         return lengthWritten[0] == contentLength;
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
 
         }
     }
@@ -336,14 +311,9 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                             return lengthWritten[0] == contentLength;
                         }));
             }
-            try {
-                CompletableFuture<?> allFutures = CompletableFuture
-                        .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
-                allFutures.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+            CompletableFuture<?> allFutures = CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+            allFutures.join();
         }
     }
 
@@ -769,7 +739,6 @@ public class S3NativeClientTest extends AwsClientTestFixture {
             userMetadata.put(userMetadataKey, userMetadataValue);
 
             // put with metadata
-            try {
             nativeClient.putObject(
                     PutObjectRequest.builder()
                             .bucket(BUCKET)
@@ -784,11 +753,7 @@ public class S3NativeClientTest extends AwsClientTestFixture {
                         }
 
                         return lengthWritten[0] == contentLength;
-                    }).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                System.out.println("Exception: " + ex.getMessage());
-                CrtMemoryLeakDetector.didTestFail = true;
-            }
+                    }).join();
 
             // wait propagation
             waitForPropagation(nativeClient, BUCKET, objectKey, userMetadataKey);

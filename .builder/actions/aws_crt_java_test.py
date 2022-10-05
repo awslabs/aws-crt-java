@@ -21,7 +21,10 @@ class AWSCrtJavaTest(Builder.Action):
         if shutdown_test_result or all_test_result:
             # Failed
             actions.append("exit 1")
-        os.system("cat log.txt")
+
+        if (os.path.isfile("log.txt")):
+            os.system("cat log.txt")
+
         python = sys.executable
         actions.append(
             [python, 'crt/aws-c-http/integration-testing/http_client_test.py',

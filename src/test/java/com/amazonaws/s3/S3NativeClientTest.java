@@ -81,241 +81,247 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         Assume.assumeTrue(areAwsCredentialsAvailable());
     }
 
-    // @Test
-    // public void testGetObject() {
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testGetObject() {
+        System.out.println("Running testGetObject...");
+        skipIfNetworkUnavailable();
 
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     100.)) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
-    //         final long length[] = { 0 };
-    //         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
-    //                 new ResponseDataConsumer<GetObjectOutput>() {
+            final long length[] = { 0 };
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
 
-    //                     @Override
-    //                     public void onResponse(GetObjectOutput response) {
-    //                         assertNotNull(response);
-    //                     }
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
 
-    //                     @Override
-    //                     public void onResponseData(ByteBuffer bodyBytesIn) {
-    //                         length[0] += bodyBytesIn.remaining();
-    //                     }
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
 
-    //                     @Override
-    //                     public void onFinished() {
-    //                     }
+                        @Override
+                        public void onFinished() {
+                        }
 
-    //                     @Override
-    //                     public void onException(final CrtRuntimeException e) {
-    //                     }
-    //                 }).join();
-    //     }
-    // }
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
 
-    // @Test
-    // public void testGetObjectSpecialCharacters() {
-    //     skipIfNetworkUnavailable();
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     100.)) {
+    @Test
+    public void testGetObjectSpecialCharacters() {
+        System.out.println("Running testGetObjectSpecialCharacters...");
+        skipIfNetworkUnavailable();
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
-    //         final long length[] = { 0 };
-    //         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
-    //                 new ResponseDataConsumer<GetObjectOutput>() {
+            final long length[] = { 0 };
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_SPECIAL_CHARACTERS).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
 
-    //                     @Override
-    //                     public void onResponse(GetObjectOutput response) {
-    //                         assertNotNull(response);
-    //                     }
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                        }
 
-    //                     @Override
-    //                     public void onResponseData(ByteBuffer bodyBytesIn) {
-    //                         length[0] += bodyBytesIn.remaining();
-    //                     }
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
 
-    //                     @Override
-    //                     public void onFinished() {
-    //                     }
+                        @Override
+                        public void onFinished() {
+                        }
 
-    //                     @Override
-    //                     public void onException(final CrtRuntimeException e) {
-    //                     }
-    //                 }).join();
-    //     }
-    // }
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
 
-    // @Test
-    // public void testGetObjectVersioned() {
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testGetObjectVersioned() {
+        System.out.println("Running testGetObjectVersioned...");
+        skipIfNetworkUnavailable();
 
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     100.)) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
-    //         final long length[] = { 0 };
-    //         nativeClient.getObject(
-    //                 GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
-    //                 new ResponseDataConsumer<GetObjectOutput>() {
+            final long length[] = { 0 };
+            nativeClient.getObject(
+                    GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).versionId(GET_OBJECT_VERSION).build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
 
-    //                     @Override
-    //                     public void onResponse(GetObjectOutput response) {
-    //                         assertNotNull(response);
-    //                         assertEquals(response.versionId(), GET_OBJECT_VERSION);
-    //                     }
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                            assertNotNull(response);
+                            assertEquals(response.versionId(), GET_OBJECT_VERSION);
+                        }
 
-    //                     @Override
-    //                     public void onResponseData(ByteBuffer bodyBytesIn) {
-    //                         length[0] += bodyBytesIn.remaining();
-    //                     }
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                            length[0] += bodyBytesIn.remaining();
+                        }
 
-    //                     @Override
-    //                     public void onFinished() {
-    //                     }
+                        @Override
+                        public void onFinished() {
+                        }
 
-    //                     @Override
-    //                     public void onException(final CrtRuntimeException e) {
-    //                     }
-    //                 }).join();
-    //     }
-    // }
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        }
+    }
 
-    // @Test
-    // public void testGetObjectExceptionCatch() throws Throwable {
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testGetObjectExceptionCatch() throws Throwable {
+        System.out.println("Running testGetObjectExceptionCatch...");
+        skipIfNetworkUnavailable();
 
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     100.)) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
-    //         nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
-    //                 new ResponseDataConsumer<GetObjectOutput>() {
+            nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key("_NON_EXIST_OBJECT_").build(),
+                    new ResponseDataConsumer<GetObjectOutput>() {
 
-    //                     @Override
-    //                     public void onResponse(GetObjectOutput response) {
-    //                     }
+                        @Override
+                        public void onResponse(GetObjectOutput response) {
+                        }
 
-    //                     @Override
-    //                     public void onResponseData(ByteBuffer bodyBytesIn) {
-    //                     }
+                        @Override
+                        public void onResponseData(ByteBuffer bodyBytesIn) {
+                        }
 
-    //                     @Override
-    //                     public void onFinished() {
-    //                     }
+                        @Override
+                        public void onFinished() {
+                        }
 
-    //                     @Override
-    //                     public void onException(final CrtRuntimeException e) {
-    //                     }
-    //                 }).join();
-    //     } catch (CompletionException e) {
-    //         try {
-    //             throw e.getCause();
-    //         } catch (CrtS3RuntimeException causeException) {
-    //             /**
-    //              * Assert the exceptions are set correctly.
-    //              */
-    //             assertTrue(causeException.errorName.equals("AWS_ERROR_S3_INVALID_RESPONSE_STATUS"));
-    //             assertTrue(causeException.getAwsErrorCode().equals("NoSuchKey"));
-    //             assertTrue(causeException.getAwsErrorMessage().equals("The specified key does not exist."));
-    //             assertTrue(causeException.getStatusCode() == 404);
-    //         }
-    //     }
-    // }
+                        @Override
+                        public void onException(final CrtRuntimeException e) {
+                        }
+                    }).join();
+        } catch (CompletionException e) {
+            try {
+                throw e.getCause();
+            } catch (CrtS3RuntimeException causeException) {
+                /**
+                 * Assert the exceptions are set correctly.
+                 */
+                assertTrue(causeException.errorName.equals("AWS_ERROR_S3_INVALID_RESPONSE_STATUS"));
+                assertTrue(causeException.getAwsErrorCode().equals("NoSuchKey"));
+                assertTrue(causeException.getAwsErrorMessage().equals("The specified key does not exist."));
+                assertTrue(causeException.getStatusCode() == 404);
+            }
+        }
+    }
 
-    // @Test
-    // public void testPutObject() {
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testPutObject() {
+        System.out.println("Running testPutObject...");
+        skipIfNetworkUnavailable();
 
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     100.)) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        100.)) {
 
-    //         final long contentLength = 1024l;
-    //         final long lengthWritten[] = { 0 };
-    //         nativeClient.putObject(
-    //                 PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
-    //                 buffer -> {
-    //                     while (buffer.hasRemaining()) {
-    //                         buffer.put((byte) 42);
-    //                         ++lengthWritten[0];
-    //                     }
+            final long contentLength = 1024l;
+            final long lengthWritten[] = { 0 };
+            nativeClient.putObject(
+                    PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(contentLength).build(),
+                    buffer -> {
+                        while (buffer.hasRemaining()) {
+                            buffer.put((byte) 42);
+                            ++lengthWritten[0];
+                        }
 
-    //                     return lengthWritten[0] == contentLength;
-    //                 }).join();
+                        return lengthWritten[0] == contentLength;
+                    }).join();
 
-    //     }
-    // }
+        }
+    }
 
-    // @Test
-    // public void testConcurrentRequests() {
-    //     skipIfNetworkUnavailable();
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider();
-    //             final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
-    //                     10.)) {
+    @Test
+    public void testConcurrentRequests() {
+        System.out.println("Running testConcurrentRequests...");
+        skipIfNetworkUnavailable();
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider();
+                final S3NativeClient nativeClient = new S3NativeClient(REGION, clientBootstrap, provider, 64_000_000l,
+                        10.)) {
 
-    //         final long lengthWritten[] = { 0 };
-    //         final long contentLength = 1024l;
-    //         final long length[] = { 0 };
-    //         List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
-    //         final int concurrentNum = 20;
-    //         for (int i = 0; i < concurrentNum; i++) {
-    //             futures.add(
-    //                     nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
-    //                             new ResponseDataConsumer<GetObjectOutput>() {
+            final long lengthWritten[] = { 0 };
+            final long contentLength = 1024l;
+            final long length[] = { 0 };
+            List<CompletableFuture<?>> futures = new ArrayList<CompletableFuture<?>>();
+            final int concurrentNum = 20;
+            for (int i = 0; i < concurrentNum; i++) {
+                futures.add(
+                        nativeClient.getObject(GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).build(),
+                                new ResponseDataConsumer<GetObjectOutput>() {
 
-    //                                 @Override
-    //                                 public void onResponse(GetObjectOutput response) {
-    //                                     assertNotNull(response);
-    //                                 }
+                                    @Override
+                                    public void onResponse(GetObjectOutput response) {
+                                        assertNotNull(response);
+                                    }
 
-    //                                 @Override
-    //                                 public void onResponseData(ByteBuffer bodyBytesIn) {
-    //                                     length[0] += bodyBytesIn.remaining();
-    //                                 }
+                                    @Override
+                                    public void onResponseData(ByteBuffer bodyBytesIn) {
+                                        length[0] += bodyBytesIn.remaining();
+                                    }
 
-    //                                 @Override
-    //                                 public void onFinished() {
-    //                                 }
+                                    @Override
+                                    public void onFinished() {
+                                    }
 
-    //                                 @Override
-    //                                 public void onException(final CrtRuntimeException e) {
-    //                                 }
-    //                             }));
+                                    @Override
+                                    public void onException(final CrtRuntimeException e) {
+                                    }
+                                }));
 
-    //             futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
-    //                     .contentLength(contentLength).build(), buffer -> {
-    //                         while (buffer.hasRemaining()) {
-    //                             buffer.put((byte) 65);
-    //                             ++lengthWritten[0];
-    //                         }
+                futures.add(nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET).key(PUT_OBJECT_KEY)
+                        .contentLength(contentLength).build(), buffer -> {
+                            while (buffer.hasRemaining()) {
+                                buffer.put((byte) 65);
+                                ++lengthWritten[0];
+                            }
 
-    //                         return lengthWritten[0] == contentLength;
-    //                     }));
-    //         }
-    //         CompletableFuture<?> allFutures = CompletableFuture
-    //                 .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
-    //         allFutures.join();
-    //     }
-    // }
+                            return lengthWritten[0] == contentLength;
+                        }));
+            }
+            CompletableFuture<?> allFutures = CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+            allFutures.join();
+        }
+    }
 
     private class CancelTestData<T> {
         public int ExpectedPartCount;
@@ -398,35 +404,37 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    // @Test
-    // public void testGetObjectCancelHeaders() {
-    //     final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
+    @Test
+    public void testGetObjectCancelHeaders() {
+        System.out.println("Running testGetObjectCancelHeaders...");
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(0);
 
-    //     testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
-    //         @Override
-    //         public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
-    //             super.onResponseHeaders(statusCode, headers);
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
 
-    //             testData.ResultFuture.cancel(true);
-    //         }
-    //     });
-    // }
+                testData.ResultFuture.cancel(true);
+            }
+        });
+    }
 
-    // @Test
-    // public void testGetObjectCancelDuringParts() {
-    //     final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
+    @Test
+    public void testGetObjectCancelDuringParts() {
+        System.out.println("Running testGetObjectCancelDuringParts...");
+        final CancelTestData<GetObjectOutput> testData = new CancelTestData<GetObjectOutput>(1);
 
-    //     testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
-    //         @Override
-    //         public void onResponseData(ByteBuffer bodyBytesIn) {
-    //             super.onResponseData(bodyBytesIn);
+        testGetObjectCancelHelper(testData, new CancelResponseDataConsumer(testData) {
+            @Override
+            public void onResponseData(ByteBuffer bodyBytesIn) {
+                super.onResponseData(bodyBytesIn);
 
-    //             if (testData.PartCount == testData.ExpectedPartCount) {
-    //                 testData.ResultFuture.cancel(true);
-    //             }
-    //         }
-    //     });
-    // }
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
+            }
+        });
+    }
 
     private class CancelRequestDataSupplier implements RequestDataSupplier {
 
@@ -500,58 +508,61 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         }
     }
 
-    // @Test
-    // public void testPutObjectCancelParts() {
-    //     final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+    @Test
+    public void testPutObjectCancelParts() {
+        System.out.println("Running testPutObjectCancelParts...");
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
 
-    //     testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(10, testData) {
-    //         @Override
-    //         public boolean getRequestBytes(ByteBuffer buffer) {
-    //             boolean result = super.getRequestBytes(buffer);
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(10, testData) {
+            @Override
+            public boolean getRequestBytes(ByteBuffer buffer) {
+                boolean result = super.getRequestBytes(buffer);
 
-    //             if (testData.PartCount == testData.ExpectedPartCount) {
-    //                 testData.ResultFuture.cancel(true);
-    //             }
+                if (testData.PartCount == testData.ExpectedPartCount) {
+                    testData.ResultFuture.cancel(true);
+                }
 
-    //             return result;
-    //         }
-    //     });
-    // }
+                return result;
+            }
+        });
+    }
 
-    // @Test
-    // public void testPutObjectCancelHeaders() {
-    //     final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
+    @Test
+    public void testPutObjectCancelHeaders() {
+        System.out.println("Running testPutObjectCancelHeaders...");
+        final CancelTestData<PutObjectOutput> testData = new CancelTestData<PutObjectOutput>(2);
 
-    //     testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(2, testData) {
-    //         @Override
-    //         public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
-    //             super.onResponseHeaders(statusCode, headers);
+        testPutObjectCancelHelper(testData, new CancelRequestDataSupplier(2, testData) {
+            @Override
+            public void onResponseHeaders(final int statusCode, final HttpHeader[] headers) {
+                super.onResponseHeaders(statusCode, headers);
 
-    //             testData.ResultFuture.cancel(true);
-    //         }
-    //     });
-    // }
+                testData.ResultFuture.cancel(true);
+            }
+        });
+    }
 
-    // @Test
-    // public void testRetryOptions() {
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testRetryOptions() {
+        System.out.println("Running testRetryOptions...");
+        skipIfNetworkUnavailable();
 
-    //     try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
-    //             final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
-    //             final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
-    //             final CredentialsProvider provider = getTestCredentialsProvider()) {
+        try (final EventLoopGroup elGroup = new EventLoopGroup(DEFAULT_NUM_THREADS);
+                final HostResolver resolver = new HostResolver(elGroup, DEFAULT_MAX_HOST_ENTRIES);
+                final ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, resolver);
+                final CredentialsProvider provider = getTestCredentialsProvider()) {
 
-    //         final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
-    //                 .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));
+            final StandardRetryOptions standardRetryOptions = new StandardRetryOptions()
+                    .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(elGroup));
 
-    //         try (final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
-    //                 .withCredentialsProvider(provider).withRegion(REGION).withPartSize(64_000_000l)
-    //                 .withThroughputTargetGbps(100.).withStandardRetryOptions(standardRetryOptions));
-    //                 final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
+            try (final S3Client s3Client = new S3Client(new S3ClientOptions().withClientBootstrap(clientBootstrap)
+                    .withCredentialsProvider(provider).withRegion(REGION).withPartSize(64_000_000l)
+                    .withThroughputTargetGbps(100.).withStandardRetryOptions(standardRetryOptions));
+                    final S3NativeClient nativeClient = new S3NativeClient(REGION, s3Client)) {
 
-    //         }
-    //     }
-    // }
+            }
+        }
+    }
 
     private void validateCustomHeaders(List<HttpHeader> generatedHeaders, HttpHeader[] customHeaders) {
         if (customHeaders == null || customHeaders.length == 0) {
@@ -619,18 +630,20 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         customHeadersTestCase(customHeadersLambda, customHeaders);
     }
 
-    // @Test
-    // public void testGetObjectCustomHeaders() {
-    //     testCustomHeaders((nativeClient, customHeaders) -> nativeClient.getObject(
-    //             GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).customHeaders(customHeaders).build(),
-    //             null));
-    // }
+    @Test
+    public void testGetObjectCustomHeaders() {
+        System.out.println("Running testGetObjectCustomHeaders...");
+        testCustomHeaders((nativeClient, customHeaders) -> nativeClient.getObject(
+                GetObjectRequest.builder().bucket(BUCKET).key(GET_OBJECT_KEY).customHeaders(customHeaders).build(),
+                null));
+    }
 
-    // @Test
-    // public void testPutObjectCustomHeaders() {
-    //     testCustomHeaders((nativeClient, customHeaders) -> nativeClient.putObject(PutObjectRequest.builder()
-    //             .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L).customHeaders(customHeaders).build(), null));
-    // }
+    @Test
+    public void testPutObjectCustomHeaders() {
+        System.out.println("Running testPutObjectCustomHeaders...");
+        testCustomHeaders((nativeClient, customHeaders) -> nativeClient.putObject(PutObjectRequest.builder()
+                .bucket(BUCKET).key(PUT_OBJECT_KEY).contentLength(0L).customHeaders(customHeaders).build(), null));
+    }
 
     /*
      * Interface for an anonymous function to generate a specific type of request
@@ -692,32 +705,36 @@ public class S3NativeClientTest extends AwsClientTestFixture {
         customQueryParametersTestCase(customQueryParametersTestLambda, key, customQueryParameters);
     }
 
-    // @Test
-    // public void testGetObjectCustomQueryParameters() {
-    //     testCustomQueryParameters((nativeClient, key, customQueryParameters) -> nativeClient.getObject(
-    //             GetObjectRequest.builder().bucket(BUCKET).key(key).customQueryParameters(customQueryParameters).build(),
-    //             null));
-    // }
+    @Test
+    public void testGetObjectCustomQueryParameters() {
+        System.out.println("Running testGetObjectCustomQueryParameters...");
+        testCustomQueryParameters((nativeClient, key, customQueryParameters) -> nativeClient.getObject(
+                GetObjectRequest.builder().bucket(BUCKET).key(key).customQueryParameters(customQueryParameters).build(),
+                null));
+    }
 
-    // @Test
-    // public void testPutObjectCustomQueryParameters() {
-    //     testCustomQueryParameters(
-    //             (nativeClient, key,
-    //                     customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
-    //                             .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
-    //                             null));
-    // }
+    @Test
+    public void testPutObjectCustomQueryParameters() {
+        System.out.println("Running testPutObjectCustomQueryParameters...");
+        testCustomQueryParameters(
+                (nativeClient, key,
+                        customQueryParameters) -> nativeClient.putObject(PutObjectRequest.builder().bucket(BUCKET)
+                                .key(key).contentLength(0L).customQueryParameters(customQueryParameters).build(),
+                                null));
+    }
 
 
-    // @Test
-    // public void testPutObjectWithUserDefinedMetadataSinglePart() throws Exception {
-    //     testPutObjectWithUserDefinedMetadata(false);
-    // }
+    @Test
+    public void testPutObjectWithUserDefinedMetadataSinglePart() throws Exception {
+        System.out.println("Running testPutObjectWithUserDefinedMetadataSinglePart...");
+        testPutObjectWithUserDefinedMetadata(false);
+    }
 
-    // @Test
-    // public void testPutObjectWithUserDefinedMetadataMultiPart() throws Exception {
-    //     testPutObjectWithUserDefinedMetadata(true);
-    // }
+    @Test
+    public void testPutObjectWithUserDefinedMetadataMultiPart() throws Exception {
+        System.out.println("Running testPutObjectWithUserDefinedMetadataMultiPart...");
+        testPutObjectWithUserDefinedMetadata(true);
+    }
 
     private void testPutObjectWithUserDefinedMetadata(boolean doMultipart) throws Exception {
         skipIfNetworkUnavailable();

@@ -182,16 +182,19 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testSerialRequests() throws Exception {
+        System.out.println("Running testSerialRequests...");
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        System.out.println("Running testMaxParallelRequests...");
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 
     @Test
     public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        System.out.println("Running testPendingAcquisitionsDuringShutdown...");
         skipIfNetworkUnavailable();
         HttpClientConnection firstConnection = null;
         CompletableFuture<HttpClientConnection> firstAcquisition;
@@ -210,6 +213,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testCancelAcquire() throws Exception {
+        System.out.println("Running testCancelAcquire...");
         // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
         skipIfNetworkUnavailable();
 

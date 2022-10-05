@@ -31,6 +31,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionGetVersion() throws Exception {
+        System.out.println("About to run testHttp2ConnectionGetVersion...");
         skipIfNetworkUnavailable();
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -56,6 +57,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionUpdateSettings() throws Exception {
+        System.out.println("About to run testHttp2ConnectionUpdateSettings...");
         skipIfNetworkUnavailable();
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -87,6 +89,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionUpdateSettingsEmpty() throws Exception {
+        System.out.println("About to run testHttp2ConnectionUpdateSettingsEmpty...");
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
 
@@ -115,6 +118,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionPing() throws Exception {
+        System.out.println("About to run testHttp2ConnectionPing...");
         skipIfNetworkUnavailable();
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -145,6 +149,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionPingExceptionPingDataLength() throws Exception {
+        System.out.println("About to run testHttp2ConnectionPingExceptionPingDataLength...");
         skipIfNetworkUnavailable();
 
         CompletableFuture<Void> shutdownComplete = null;
@@ -180,6 +185,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionSendGoAway() throws Exception {
+        System.out.println("About to run testHttp2ConnectionSendGoAway...");
         /*
          * Test that the binding works not the actual functionality. C part has the test
          * for functionality
@@ -211,6 +217,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttp2ConnectionUpdateConnectionWindow() throws Exception {
+        System.out.println("About to run testHttp2ConnectionUpdateConnectionWindow...");
         /*
          * Test that the binding works not the actual functionality. C part has the test
          * for functionality

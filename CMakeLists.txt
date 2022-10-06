@@ -154,8 +154,7 @@ file(GLOB CRT_JAVA_SRC
         )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    execute_process(COMMAND "ldd" "--version" OUTPUT_VARIABLE AWS_LDD_OUTPUT)
-    message(STATUS "LDD Output=${AWS_LDD_OUTPUT}")
+    execute_process(COMMAND "ldd" "--version" OUTPUT_VARIABLE AWS_LDD_OUTPUT ERROR_VARIABLE AWS_LDD_OUTPUT)
     string(FIND "${AWS_LDD_OUTPUT}" "musl" AWS_MUSL_INDEX)
     string(FIND "${AWS_LDD_OUTPUT}" "GLIBC" AWS_GLIBC_INDEX)
     if (NOT(${AWS_MUSL_INDEX} EQUAL -1))

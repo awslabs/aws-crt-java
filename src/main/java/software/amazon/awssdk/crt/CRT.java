@@ -145,9 +145,15 @@ public final class CRT {
             BufferedReader stdInput = new BufferedReader(new
                     InputStreamReader(proc.getInputStream()));
 
+            BufferedReader stdError = new BufferedReader(new
+                    InputStreamReader(proc.getErrorStream()));
+
             StringBuilder outputBuilder = new StringBuilder();
             String line;
             while ((line = stdInput.readLine()) != null) {
+                outputBuilder.append(line);
+            }
+            while ((line = stdError.readLine()) != null) {
                 outputBuilder.append(line);
             }
 

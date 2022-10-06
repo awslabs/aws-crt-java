@@ -142,23 +142,28 @@ public final class CRT {
         try {
             java.lang.Process proc = rt.exec(commands);
 
-            BufferedReader stdInput = new BufferedReader(new
+            // the "normal" input stream of the proc is the stdout of the invoked command
+            BufferedReader stdOutput = new BufferedReader(new
                     InputStreamReader(proc.getInputStream()));
 
+            // sometimes, ldd's output goes to stderr, so capture that too
             BufferedReader stdError = new BufferedReader(new
                     InputStreamReader(proc.getErrorStream()));
 
-            StringBuilder outputBuilder = new StringBuilder();
             String line;
-            while ((line = stdInput.readLine()) != null) {
-                outputBuilder.append(line);
-            }
-            while ((line = stdError.readLine()) != null) {
+            StringBuilder outputBuilder = new StringBuilder();
+            while ((line = stdOutput.readLine()) != null) {
                 outputBuilder.append(line);
             }
 
+            StringBuilder errorBuilder = new StringBuilder();
+            while ((line = stdError.readLine()) != null) {
+                errorBuilder.append(line);
+            }
+
             String lddOutput = outputBuilder.toString();
-            if (lddOutput.contains("musl")) {
+            String lddError = errorBuilder.toString();
+            if (lddOutput.contains("musl") || lddError.contains("musl")) {
                 return MUSL_RUNTIME_TAG;
             } else {
                 return GLIBC_RUNTIME_TAG;

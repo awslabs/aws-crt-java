@@ -153,10 +153,30 @@ file(GLOB CRT_JAVA_SRC
         ${AWS_CRT_JAVA_OS_SRC}
         )
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    execute_process(COMMAND "ldd" "--version" OUTPUT_VARIABLE AWS_LDD_OUTPUT)
+    message(STATUS "LDD Output=${AWS_LDD_OUTPUT}")
+    string(FIND "${AWS_LDD_OUTPUT}" "musl" AWS_MUSL_INDEX)
+    string(FIND "${AWS_LDD_OUTPUT}" "GLIBC" AWS_GLIBC_INDEX)
+    if (NOT(${AWS_MUSL_INDEX} EQUAL -1))
+        message(STATUS "MUSL libc detected")
+        set(AWS_C_RUNTIME "musl")
+    else()
+        if (NOT(${AWS_GLIBC_INDEX} EQUAL -1))
+            message(STATUS "Gnu libc detected")
+        else()
+            message(STATUS "Could not determine C runtime, defaulting to gnu libc")
+        endif()
+        set(AWS_C_RUNTIME "glibc")
+    endif()
+else()
+    set(AWS_C_RUNTIME "sys")
+endif()
+
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
 message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
-set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}/${AWS_C_RUNTIME}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})

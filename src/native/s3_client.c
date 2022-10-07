@@ -664,8 +664,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
-        aws_jni_throw_illegal_argument_exception(
-            env, "S3MetaRequest.s3MetaRequestIncrementReadWindow: Invalid/null meta request");
         return;
     }
 

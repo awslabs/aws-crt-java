@@ -444,9 +444,11 @@ static struct aws_error_info_list s_crt_error_list = {
 
 static struct aws_log_subject_info s_crt_log_subject_infos[] = {
     DEFINE_LOG_SUBJECT_INFO(
-        AWS_LS_JAVA_CRT_GENERAL,
-        "JavaCrtGeneral",
-        "Subject for aws-crt-java logging that defies categorization."),
+        AWS_LS_JAVA_CRT_GENERAL, "JavaCrtGeneral", "Subject for aws-crt-java logging that defies categorization"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_RESOURCE, "JavaCrtResource", "Subject for CrtResource"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_S3, "JavaCrtS3", "Subject for the layer binding aws-c-s3 to Java"),
 };
 
 static struct aws_log_subject_info_list s_crt_log_subject_list = {

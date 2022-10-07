@@ -617,8 +617,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestCancel: Invalid/null meta request");
+        /* It's fine if this particular function does nothing when it's called
+         * after CrtResource is closed and the handle is NULL */
         return;
     }
 
@@ -664,6 +664,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
+        /* It's fine if this particular function does nothing when it's called
+         * after CrtResource is closed and the handle is NULL */
         return;
     }
 

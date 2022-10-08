@@ -613,6 +613,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     JNIEnv *env,
     jclass jni_class,
     jlong jni_s3_meta_request) {
+
+    (void)env;
     (void)jni_class;
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;

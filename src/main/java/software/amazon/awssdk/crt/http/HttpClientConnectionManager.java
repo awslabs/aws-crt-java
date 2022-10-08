@@ -10,6 +10,8 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -34,6 +36,8 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final HttpVersion expectedHttpVersion;
+    private final AtomicInteger pendingAcquires = new AtomicInteger();
+    private final AtomicInteger leasedConnections = new AtomicInteger();
 
     /**
      * Factory function for HttpClientConnectionManager instances
@@ -135,6 +139,7 @@ public class HttpClientConnectionManager extends CrtResource {
          }
     }
 
+
     /**
      * Request a HttpClientConnection from the Connection Pool.
      * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.
@@ -144,10 +149,26 @@ public class HttpClientConnectionManager extends CrtResource {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
 
-        CompletableFuture<HttpClientConnection> connRequest = new CompletableFuture<>();
+        this.pendingAcquires.incrementAndGet();
 
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), connRequest);
-        return connRequest;
+        CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
+        CompletableFuture<HttpClientConnection> thumpFuture = new CompletableFuture<>();
+
+        thumpFuture.whenComplete((connection, error) -> {
+            // technically pendingAcquires and leadedConnections can temporarily be out of sync.
+            // they're metrics and it doesn't really matter.
+            // If you're looking for why they're out of sync, this is why.
+            this.pendingAcquires.decrementAndGet();
+
+            if (error != null) {
+                returnedFuture.completeExceptionally(error);
+            } else {
+                this.leasedConnections.incrementAndGet();
+                returnedFuture.complete(connection);
+            }
+        });
+        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), thumpFuture);
+        return returnedFuture;
     }
 
     /**
@@ -155,6 +176,7 @@ public class HttpClientConnectionManager extends CrtResource {
      * @param conn Connection to release
      */
     public void releaseConnection(HttpClientConnection conn) {
+        this.leasedConnections.decrementAndGet();
         conn.close();
     }
 
@@ -200,6 +222,41 @@ public class HttpClientConnectionManager extends CrtResource {
      */
     public int getMaxConnections() {
         return maxConnections;
+    }
+
+    /**
+     * @return number of connections currently vended out for use.
+     */
+    public int getLeasedConnections() {
+        return this.leasedConnections.get();
+    }
+
+    /**
+     * @return number of subscribers waiting for a connection from this manager.
+     */
+    public int getPendingConnectionAcquisitions() {
+        return this.pendingAcquires.get();
+    }
+
+    /**
+     * @return Really close estimate (the counters are atomic, but not locked) of the number of "available" connections.
+     *
+     * If for some reason you find yourself really needing this number to be accurate 100% of the time, you'll need
+     * a lock around the counters rather than atomics. However, I do not believe it matters enough that this number
+     * is always perfect and am siding with avoiding the locking overhead.
+     */
+    public int getAvailableConnections() {
+        int leasedConns = this.leasedConnections.get();
+        int pendingAcquires = this.pendingAcquires.get();
+
+        // if we've got pending acquires (unless this is during a scale up scenario), the availabe conns is likely
+        // zero with several pending acquires. If we're in the scale up modality,
+        // this number will still be semantically accurate. Suppose 25 connections are requested
+        // on a pool of 50. Even though the pool technically has space for 50 connections, 25 of them
+        // are already spoken for. The information a user cares about is "how many remaining units of concurrency",
+        // which this calculates.
+        int availableConns = this.maxConnections - (leasedConns + pendingAcquires);
+        return Math.max(availableConns, 0);
     }
 
     /**

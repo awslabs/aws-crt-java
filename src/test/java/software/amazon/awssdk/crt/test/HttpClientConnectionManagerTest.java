@@ -241,12 +241,12 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             HttpClientConnection conn = receivedClientConnections.remove(0);
             connectionPool.releaseConnection(conn);
 
-            connectionAcquire.get(3, TimeUnit.SECONDS);
+            conn = connectionAcquire.get(3, TimeUnit.SECONDS);
+
             Assert.assertEquals(3, connectionPool.getLeasedConnections());
             Assert.assertEquals(0, connectionPool.getAvailableConnections());
             Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
 
-            conn = receivedClientConnections.remove(0);
             connectionPool.releaseConnection(conn);
             Assert.assertEquals(2, connectionPool.getLeasedConnections());
             Assert.assertEquals(1, connectionPool.getAvailableConnections());

@@ -101,11 +101,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                         .whenComplete((conn, throwable) -> {
                             if (throwable != null) {
                                 numConnectionFailures.incrementAndGet();
-                                // this next line should be completely impossible to be valid.
-                                // but this test AFAIK hasn't segfaulted and there's no way
-                                // a connection setup has never failed. Conn should always be null though.
-                                // commenting out for now.
-                                //connPool.releaseConnection(conn);
+                                connPool.releaseConnection(conn);
                                 requestCompleteFuture.completeExceptionally(throwable);
                             }
 

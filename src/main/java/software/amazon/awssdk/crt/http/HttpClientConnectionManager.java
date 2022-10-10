@@ -162,6 +162,14 @@ public class HttpClientConnectionManager extends CrtResource {
                 returnedFuture.complete(connection);
             }
         });
+
+        // Chain the cancel call on the returned future so the future passed to JNI actually gets
+        // canceled upon the user canceling.
+        returnedFuture.whenComplete((connection, error) -> {
+            if (returnedFuture.isCancelled()) {
+                thumpFuture.cancel(false);
+            }
+        });
         httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), thumpFuture);
         return returnedFuture;
     }

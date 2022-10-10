@@ -149,28 +149,15 @@ public class HttpClientConnectionManager extends CrtResource {
         }
 
         CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
-        CompletableFuture<HttpClientConnection> thumpFuture = new CompletableFuture<>();
 
-        thumpFuture.whenComplete((connection, error) -> {
-            // technically pendingAcquires and leadedConnections can temporarily be out of sync.
-            // they're metrics and it doesn't really matter.
-            // If you're looking for why they're out of sync, this is why.
-            if (error != null) {
-                returnedFuture.completeExceptionally(error);
-            } else {
-                this.leasedConnections.incrementAndGet();
-                returnedFuture.complete(connection);
-            }
-        });
-
-        // Chain the cancel call on the returned future so the future passed to JNI actually gets
-        // canceled upon the user canceling.
+        // completable future's whenComplete functions are chained, so we can just chain on the one the user will use.
         returnedFuture.whenComplete((connection, error) -> {
-            if (returnedFuture.isCancelled()) {
-                thumpFuture.cancel(false);
+            if (connection != null && error == null) {
+                this.leasedConnections.incrementAndGet();
             }
         });
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), thumpFuture);
+
+        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
         return returnedFuture;
     }
 

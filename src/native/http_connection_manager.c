@@ -461,7 +461,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
 }
 
 JNIEXPORT jobject JNICALL
-    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpConnectionManagerFetchMetrics(JNIEnv *env, jclass jni_class, jlong jni_conn_manager_binding) {
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpConnectionManagerFetchMetrics(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager_binding) {
     (void)jni_class;
 
     struct http_connection_manager_binding *manager_binding =
@@ -476,7 +479,12 @@ JNIEXPORT jobject JNICALL
     struct aws_http_manager_metrics metrics;
     aws_http_connection_manager_fetch_metrics(conn_manager, &metrics);
 
-    return (*env)->NewObject(env, http_manager_metrics_properties.http_manager_metrics_class, http_manager_metrics_properties.constructor_method_id, (jlong)metrics.available_concurrency, (jlong)metrics.pending_concurrency_acquires);
+    return (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)metrics.available_concurrency,
+        (jlong)metrics.pending_concurrency_acquires);
 }
 
 #if UINTPTR_MAX == 0xffffffff

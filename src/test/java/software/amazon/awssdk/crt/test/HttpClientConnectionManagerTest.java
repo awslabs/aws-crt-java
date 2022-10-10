@@ -204,7 +204,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, maxConns)) {
             Assert.assertEquals(maxConns, connectionPool.getMaxConnections());
-            Assert.assertEquals(3, connectionPool.getAvailableConnections());
+            Assert.assertEquals(0, connectionPool.getAvailableConnections());
             Assert.assertEquals(0, connectionPool.getLeasedConnections());
             Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
 
@@ -212,12 +212,12 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             int giveUpCtr = 99;
 
             while(receivedClientConnections.size() < maxConns && giveUpCtr-- > 0) {
-                    CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
-                    try {
-                        HttpClientConnection connection = connectionAcquire.get(3, TimeUnit.SECONDS);
-                        receivedClientConnections.add(connection);
-                    } catch (CrtRuntimeException ignored) {
-                    }
+                CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
+                try {
+                    HttpClientConnection connection = connectionAcquire.get(3, TimeUnit.SECONDS);
+                    receivedClientConnections.add(connection);
+                } catch (CrtRuntimeException ignored) {
+                }
             }
 
             if (giveUpCtr < 0) {

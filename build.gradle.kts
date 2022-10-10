@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("commons-cli:commons-cli:1.5.0")
     testImplementation("org.mockito:mockito-core:3.11.2")
 }
 

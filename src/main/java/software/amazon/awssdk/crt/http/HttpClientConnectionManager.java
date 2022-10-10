@@ -36,7 +36,6 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final HttpVersion expectedHttpVersion;
-    private final AtomicInteger pendingAcquires = new AtomicInteger();
     private final AtomicInteger leasedConnections = new AtomicInteger();
 
     /**
@@ -149,8 +148,6 @@ public class HttpClientConnectionManager extends CrtResource {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
 
-        this.pendingAcquires.incrementAndGet();
-
         CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
         CompletableFuture<HttpClientConnection> thumpFuture = new CompletableFuture<>();
 
@@ -158,8 +155,6 @@ public class HttpClientConnectionManager extends CrtResource {
             // technically pendingAcquires and leadedConnections can temporarily be out of sync.
             // they're metrics and it doesn't really matter.
             // If you're looking for why they're out of sync, this is why.
-            this.pendingAcquires.decrementAndGet();
-
             if (error != null) {
                 returnedFuture.completeExceptionally(error);
             } else {
@@ -235,28 +230,23 @@ public class HttpClientConnectionManager extends CrtResource {
      * @return number of subscribers waiting for a connection from this manager.
      */
     public int getPendingConnectionAcquisitions() {
-        return this.pendingAcquires.get();
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        HttpManagerMetrics metrics = httpConnectionManagerFetchMetrics(getNativeHandle());
+        return (int)metrics.getPendingConcurrencyAcquires();
     }
 
     /**
-     * @return Really close estimate (the counters are atomic, but not locked) of the number of "available" connections.
-     *
-     * If for some reason you find yourself really needing this number to be accurate 100% of the time, you'll need
-     * a lock around the counters rather than atomics. However, I do not believe it matters enough that this number
-     * is always perfect and am siding with avoiding the locking overhead.
+     * @return Really number of "available" connections.
      */
     public int getAvailableConnections() {
-        int leasedConns = this.leasedConnections.get();
-        int pendingAcquires = this.pendingAcquires.get();
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        HttpManagerMetrics metrics = httpConnectionManagerFetchMetrics(getNativeHandle());
 
-        // if we've got pending acquires (unless this is during a scale up scenario), the availabe conns is likely
-        // zero with several pending acquires. If we're in the scale up modality,
-        // this number will still be semantically accurate. Suppose 25 connections are requested
-        // on a pool of 50. Even though the pool technically has space for 50 connections, 25 of them
-        // are already spoken for. The information a user cares about is "how many remaining units of concurrency",
-        // which this calculates.
-        int availableConns = this.maxConnections - (leasedConns + pendingAcquires);
-        return Math.max(availableConns, 0);
+        return (int)metrics.getAvailableConcurrency();
     }
 
     /**
@@ -302,5 +292,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerAcquireConnection(long conn_manager, CompletableFuture<HttpClientConnection> acquireFuture) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics httpConnectionManagerFetchMetrics(long conn_manager) throws CrtRuntimeException;
 
 }

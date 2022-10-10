@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import java.util.concurrent.CompletableFuture;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages a Pool of HTTP/2 Streams. Creates and manages HTTP/2 connections
@@ -29,6 +30,7 @@ public class Http2StreamManager extends CrtResource {
     private final int maxConnections;
     private final int idealConcurrentStreamsPerConnection;
     private final int maxConcurrentStreamsPerConnection;
+    private final AtomicInteger leasedStreams = new AtomicInteger();
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
 
     /**
@@ -160,6 +162,13 @@ public class Http2StreamManager extends CrtResource {
 
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
+
+        completionFuture.whenComplete((stream, exception) -> {
+           if (stream != null && exception == null) {
+               this.leasedStreams.incrementAndGet();
+           }
+        });
+
         if (isNull()) {
             completionFuture.completeExceptionally(new IllegalStateException(
                     "Http2StreamManager has been closed, can't acquire new streams"));
@@ -176,6 +185,51 @@ public class Http2StreamManager extends CrtResource {
         }
         return completionFuture;
     }
+
+    /**
+     * @return maximum number of connections this connection manager will pool
+     */
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+
+    /**
+     * @return max possible concurrency. This is maxConnections * maxStreams
+     */
+    public int getMaxConcurrency() {
+        return this.maxConnections * this.maxConcurrentStreamsPerConnection;
+    }
+
+    /**
+     * @return number of streams currently vended out for use.
+     */
+    public int getLeasedStreams() {
+        return this.leasedStreams.get();
+    }
+
+    /**
+     * @return number of subscribers waiting for a stream from this manager.
+     */
+    public int getPendingStreamAcquisitions() {
+        if (isNull()) {
+            throw new IllegalStateException("Http2StreamManager has been closed, can't fetch metrics");
+        }
+        HttpManagerMetrics metrics = http2StreamManagerFetchMetrics(getNativeHandle());
+        return (int)metrics.getPendingConcurrencyAcquires();
+    }
+
+    /**
+     * @return Really number of "available" streams.
+     */
+    public int getAvailableStreams() {
+        if (isNull()) {
+            throw new IllegalStateException("Http2StreamManager has been closed, can't fetch metrics");
+        }
+        HttpManagerMetrics metrics = http2StreamManagerFetchMetrics(getNativeHandle());
+
+        return (int)metrics.getAvailableConcurrency();
+    }
+
 
     /**
      * Called from Native when all Streams from this Stream manager have finished
@@ -205,6 +259,7 @@ public class Http2StreamManager extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
+            this.leasedStreams.decrementAndGet();
             /*
              * Release our Native pointer and schedule tasks on the Native Event Loop to
              * start sending HTTP/TLS/TCP
@@ -255,4 +310,6 @@ public class Http2StreamManager extends CrtResource {
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
             AsyncCallback completedCallback) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics http2StreamManagerFetchMetrics(long stream_manager) throws CrtRuntimeException;
 }

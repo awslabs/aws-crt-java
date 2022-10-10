@@ -107,6 +107,10 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             threadPool.execute(() -> {
                 // Request a connection from the connection pool
                 int requestId = numRequestsMade.incrementAndGet();
+                // put the calls here. We already know it works, and we really just want to make sure the JNI calls don't
+                // explode.
+                streamManager.getPendingStreamAcquisitions();
+                streamManager.getAvailableStreams();
                 streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,

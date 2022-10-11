@@ -58,8 +58,6 @@
             <id>continuous-integration</id>
             <properties>
                 <cmake.warningsareerrors>ON</cmake.warningsareerrors>
-                <cmake.buildconfig>Debug</cmake.buildconfig>
-                <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
         <profile>

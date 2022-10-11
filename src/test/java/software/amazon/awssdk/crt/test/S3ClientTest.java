@@ -17,8 +17,6 @@ import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
-import software.amazon.awssdk.crt.test.CrtMemoryLeakDetector;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;

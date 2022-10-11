@@ -22,9 +22,6 @@ import java.io.File;
 import org.junit.Before;
 import org.junit.After;
 import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import java.util.Optional;
 

@@ -11,7 +11,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import java.util.concurrent.CompletableFuture;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages a Pool of HTTP/2 Streams. Creates and manages HTTP/2 connections

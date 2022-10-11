@@ -311,7 +311,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             firstConnection.close();
 
             // should succeed, will timeout if the second acquisition doesn't return the unused/abandoned conn to the pool
-            HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.SECONDS);
+            HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
             conn.close();
         }
     }

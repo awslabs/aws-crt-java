@@ -11,7 +11,7 @@ echo "Using builder version ${BUILDER_VERSION}"
 
 aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
 
-DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/raspbian-bullseye-arm7l:light
+DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/raspbian-bullseye-arm7l:latest
 
 $(aws --region us-east-1 ecr get-login --no-include-email)
 

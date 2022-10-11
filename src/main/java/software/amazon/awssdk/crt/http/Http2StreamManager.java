@@ -186,13 +186,6 @@ public class Http2StreamManager extends CrtResource {
     }
 
     /**
-     * @return max possible concurrency. This is maxConnections * maxStreams
-     */
-    public int getMaxConcurrency() {
-        return this.maxConnections * this.maxConcurrentStreamsPerConnection;
-    }
-
-    /**
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {

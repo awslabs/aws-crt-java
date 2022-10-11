@@ -755,7 +755,7 @@ static void s_cache_http_manager_metrics(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     http_manager_metrics_properties.http_manager_metrics_class = (*env)->NewGlobalRef(env, cls);
 
-    http_manager_metrics_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "(JJ)V");
+    http_manager_metrics_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "(JJJ)V");
     AWS_FATAL_ASSERT(http_manager_metrics_properties.constructor_method_id);
 }
 

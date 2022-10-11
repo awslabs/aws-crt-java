@@ -19,14 +19,7 @@ import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -204,9 +197,11 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, maxConns)) {
             Assert.assertEquals(maxConns, connectionPool.getMaxConnections());
-            Assert.assertEquals(0, connectionPool.getAvailableConnections());
-            Assert.assertEquals(0, connectionPool.getLeasedConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
+            HttpManagerMetrics metrics = connectionPool.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
             List<HttpClientConnection> receivedClientConnections = new ArrayList<>();
             int giveUpCtr = 99;
@@ -224,17 +219,18 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                 Assert.fail("test connections where not acquired. Most likely you don't have a network connection.");
             }
 
+            metrics = connectionPool.getManagerMetrics();
             // case pool of 3, 3 vended connections, none in flight.
-            Assert.assertEquals(maxConns, connectionPool.getLeasedConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
-            Assert.assertEquals(0, connectionPool.getAvailableConnections());
+            Assert.assertEquals(maxConns, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
             // case acquire 1, pool of 3, 3 vended, thus 1 in flight
             CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
-            Assert.assertEquals(1, connectionPool.getPendingConnectionAcquisitions());
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
             // should still be 0
-            Assert.assertEquals(0, connectionPool.getAvailableConnections());
-
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
             // case release one, pool of 3, 3 vended, 1 in flight, 0 available. When we return 1, the other should be
             // able to complete. Pending should go back to 0.
@@ -243,26 +239,30 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
             conn = connectionAcquire.get(3, TimeUnit.SECONDS);
 
-            Assert.assertEquals(3, connectionPool.getLeasedConnections());
-            Assert.assertEquals(0, connectionPool.getAvailableConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(3, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
             connectionPool.releaseConnection(conn);
-            Assert.assertEquals(2, connectionPool.getLeasedConnections());
-            Assert.assertEquals(1, connectionPool.getAvailableConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
-
-            conn = receivedClientConnections.remove(0);
-            connectionPool.releaseConnection(conn);
-            Assert.assertEquals(1, connectionPool.getLeasedConnections());
-            Assert.assertEquals(2, connectionPool.getAvailableConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(2, metrics.getLeasedConcurrency());
+            Assert.assertEquals(1, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
             conn = receivedClientConnections.remove(0);
             connectionPool.releaseConnection(conn);
-            Assert.assertEquals(0, connectionPool.getLeasedConnections());
-            Assert.assertEquals(3, connectionPool.getAvailableConnections());
-            Assert.assertEquals(0, connectionPool.getPendingConnectionAcquisitions());
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getLeasedConcurrency());
+            Assert.assertEquals(2, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(3, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
         }
 
         CrtResource.logNativeResources();

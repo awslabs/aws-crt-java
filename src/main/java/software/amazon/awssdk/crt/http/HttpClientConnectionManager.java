@@ -9,8 +9,6 @@ import java.nio.charset.Charset;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -36,7 +34,6 @@ public class HttpClientConnectionManager extends CrtResource {
     private final int maxConnections;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final HttpVersion expectedHttpVersion;
-    private final AtomicInteger leasedConnections = new AtomicInteger();
 
     /**
      * Factory function for HttpClientConnectionManager instances
@@ -149,14 +146,6 @@ public class HttpClientConnectionManager extends CrtResource {
         }
 
         CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
-
-        // completable future's whenComplete functions are chained, so we can just chain on the one the user will use.
-        returnedFuture.whenComplete((connection, error) -> {
-            if (connection != null && error == null) {
-                this.leasedConnections.incrementAndGet();
-            }
-        });
-
         httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
         return returnedFuture;
     }
@@ -166,7 +155,6 @@ public class HttpClientConnectionManager extends CrtResource {
      * @param conn Connection to release
      */
     public void releaseConnection(HttpClientConnection conn) {
-        this.leasedConnections.decrementAndGet();
         conn.close();
     }
 
@@ -215,33 +203,13 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     /**
-     * @return number of connections currently vended out for use.
+     * @return concurrency metrics for the current manager
      */
-    public int getLeasedConnections() {
-        return this.leasedConnections.get();
-    }
-
-    /**
-     * @return number of subscribers waiting for a connection from this manager.
-     */
-    public int getPendingConnectionAcquisitions() {
+    public HttpManagerMetrics getManagerMetrics() {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
         }
-        HttpManagerMetrics metrics = httpConnectionManagerFetchMetrics(getNativeHandle());
-        return (int)metrics.getPendingConcurrencyAcquires();
-    }
-
-    /**
-     * @return Really number of "available" connections.
-     */
-    public int getAvailableConnections() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
-        }
-        HttpManagerMetrics metrics = httpConnectionManagerFetchMetrics(getNativeHandle());
-
-        return (int)metrics.getAvailableConcurrency();
+        return httpConnectionManagerFetchMetrics(getNativeHandle());
     }
 
     /**

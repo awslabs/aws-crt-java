@@ -13,6 +13,7 @@ struct aws_http_message;
 struct aws_http_stream;
 struct aws_byte_buf;
 struct aws_atomic_var;
+struct aws_http2_stream_manager;
 
 struct http_stream_binding {
     JavaVM *jvm;
@@ -26,7 +27,6 @@ struct http_stream_binding {
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
-
     /* For the native http stream and the Java stream object */
     struct aws_atomic_var ref;
 };

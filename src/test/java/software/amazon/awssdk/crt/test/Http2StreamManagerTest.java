@@ -9,29 +9,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.Http2StreamManager;
-import software.amazon.awssdk.crt.http.Http2Request;
-import software.amazon.awssdk.crt.http.Http2Stream;
-import software.amazon.awssdk.crt.http.Http2StreamManagerOptions;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStreamBase;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -52,7 +38,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
 
-    private Http2StreamManager createStreamManager(URI uri, int numConnections) {
+    private Http2StreamManager createStreamManager(URI uri, int numConnections, int maxStreams) {
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -61,6 +47,10 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
                 TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
                 TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
             Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            if (maxStreams != 0) {
+                options.withMaxConcurrentStreamsPerConnection(maxStreams)
+                        .withIdealConcurrentStreamsPerConnection(maxStreams);
+            }
             HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
             connectionManagerOptions.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
@@ -107,10 +97,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             threadPool.execute(() -> {
                 // Request a connection from the connection pool
                 int requestId = numRequestsMade.incrementAndGet();
-                // put the calls here. We already know it works, and we really just want to make sure the JNI calls don't
-                // explode.
-                streamManager.getPendingStreamAcquisitions();
-                streamManager.getAvailableStreams();
+
                 streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
@@ -159,7 +146,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         URI uri = new URI(endpoint);
 
-        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
             Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
             testParallelStreams(streamManager, request, 1, numRequests);
         }
@@ -198,7 +185,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     public void testSanitizer() throws Exception {
         skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
-        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
         }
 
         CrtResource.logNativeResources();
@@ -215,5 +202,67 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     public void testMaxParallelRequests() throws Exception {
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+    }
+
+    @Test
+    public void testStreamManagerMetrics() throws Exception {
+        skipIfNetworkUnavailable();
+        URI uri = new URI(endpoint);
+        int maxStreams = 3;
+
+        HttpStreamBaseResponseHandler nullHandler = new HttpStreamBaseResponseHandler() {
+            @Override
+            public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                //do nothing, we're not going to make a request.
+            }
+
+            @Override
+            public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                //do nothing, we're not going to make a request.
+            }
+        };
+
+        Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
+
+        try (Http2StreamManager streamManager = createStreamManager(uri, 1, maxStreams)) {
+            HttpManagerMetrics metrics = streamManager.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            List<Http2Stream> receivedStreams = new ArrayList<>();
+            int giveUpCtr = 99;
+
+            while(receivedStreams.size() < maxStreams && giveUpCtr-- > 0) {
+
+                CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
+                try {
+                    Http2Stream stream = streamFuture.get(3, TimeUnit.SECONDS);
+                    receivedStreams.add(stream);
+                } catch (CrtRuntimeException ignored) {
+                }
+            }
+
+            if (giveUpCtr < 0) {
+                Assert.fail("test streams were not acquired. Most likely you don't have a network connection.");
+            }
+
+            metrics = streamManager.getManagerMetrics();
+            // case pool of 3, 3 vended connections, none in flight.
+            Assert.assertEquals(maxStreams, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+
+            // case acquire 1, pool of 3, 3 vended, thus 1 in flight
+            CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
+            metrics = streamManager.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
+            // should still be 0
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 }

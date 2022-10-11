@@ -314,6 +314,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
     } else {
         /* Acquire for the native stream. The destroy callback for native stream will release the ref. */
         aws_http_stream_binding_acquire(callback_data->stream_binding);
+
         callback_data->stream_binding->native_stream = stream;
         jobject j_http_stream =
             aws_java_http_stream_from_native_new(env, callback_data->stream_binding, AWS_HTTP_VERSION_2);
@@ -448,5 +449,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManage
         http_manager_metrics_properties.http_manager_metrics_class,
         http_manager_metrics_properties.constructor_method_id,
         (jlong)metrics.available_concurrency,
-        (jlong)metrics.pending_concurrency_acquires);
+        (jlong)metrics.pending_concurrency_acquires,
+        (jlong)metrics.leased_concurrency);
 }

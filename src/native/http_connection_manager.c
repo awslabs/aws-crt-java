@@ -484,7 +484,8 @@ JNIEXPORT jobject JNICALL
         http_manager_metrics_properties.http_manager_metrics_class,
         http_manager_metrics_properties.constructor_method_id,
         (jlong)metrics.available_concurrency,
-        (jlong)metrics.pending_concurrency_acquires);
+        (jlong)metrics.pending_concurrency_acquires,
+        (jlong)metrics.leased_concurrency);
 }
 
 #if UINTPTR_MAX == 0xffffffff

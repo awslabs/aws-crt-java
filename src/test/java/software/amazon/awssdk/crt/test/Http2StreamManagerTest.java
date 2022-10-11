@@ -260,6 +260,13 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
             // should still be 0
             Assert.assertEquals(0, metrics.getAvailableConcurrency());
+
+            Http2Stream stream = streamFuture.get();
+            stream.close();
+
+            for (Http2Stream h2Stream: receivedStreams) {
+                h2Stream.close();
+            }
         }
 
         CrtResource.logNativeResources();

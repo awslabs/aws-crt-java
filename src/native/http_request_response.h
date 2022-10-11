@@ -13,7 +13,6 @@ struct aws_http_message;
 struct aws_http_stream;
 struct aws_byte_buf;
 struct aws_atomic_var;
-struct aws_http2_stream_manager;
 
 struct http_stream_binding {
     JavaVM *jvm;

@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,14 +18,8 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -99,7 +94,11 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                         .whenComplete((conn, throwable) -> {
                             if (throwable != null) {
                                 numConnectionFailures.incrementAndGet();
-                                connPool.releaseConnection(conn);
+                                // this next line should be completely impossible to be valid.
+                                // but this test AFAIK hasn't segfaulted and there's no way
+                                // a connection setup has never failed. Conn should always be null though.
+                                // commenting out for now.
+                                //connPool.releaseConnection(conn);
                                 requestCompleteFuture.completeExceptionally(throwable);
                             }
 
@@ -183,6 +182,91 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     @Test
     public void testSerialRequests() throws Exception {
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+    }
+
+    /**
+     * Test that the counters for the connection manager are correct (at least when used serially).
+     */
+    @Test
+    public void testConnectionCounters() throws Exception {
+        skipIfNetworkUnavailable();
+
+        URI uri = new URI(endpoint);
+
+        int maxConns = 3;
+
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, maxConns)) {
+            Assert.assertEquals(maxConns, connectionPool.getMaxConnections());
+            HttpManagerMetrics metrics = connectionPool.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            List<HttpClientConnection> receivedClientConnections = new ArrayList<>();
+            int giveUpCtr = 99;
+
+            while(receivedClientConnections.size() < maxConns && giveUpCtr-- > 0) {
+                CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
+                try {
+                    HttpClientConnection connection = connectionAcquire.get(3, TimeUnit.SECONDS);
+                    receivedClientConnections.add(connection);
+                } catch (CrtRuntimeException ignored) {
+                }
+            }
+
+            if (giveUpCtr < 0) {
+                Assert.fail("test connections where not acquired. Most likely you don't have a network connection.");
+            }
+
+            metrics = connectionPool.getManagerMetrics();
+            // case pool of 3, 3 vended connections, none in flight.
+            Assert.assertEquals(maxConns, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+
+            // case acquire 1, pool of 3, 3 vended, thus 1 in flight
+            CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
+            // should still be 0
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+
+            // case release one, pool of 3, 3 vended, 1 in flight, 0 available. When we return 1, the other should be
+            // able to complete. Pending should go back to 0.
+            HttpClientConnection conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+
+            conn = connectionAcquire.get(3, TimeUnit.SECONDS);
+
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(3, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(2, metrics.getLeasedConcurrency());
+            Assert.assertEquals(1, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getLeasedConcurrency());
+            Assert.assertEquals(2, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+
+            conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(3, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 
     @Test

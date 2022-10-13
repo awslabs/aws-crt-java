@@ -2,8 +2,8 @@
 #run build-wheels script in manylinux2014 docker image
 set -ex
 
-
-LIB_PATH=target/cmake-build/lib
+# Set LIB_PATH as cross compiles as raspbery pi would be handled as linux-armv7
+LIB_PATH=target/cmake-build/aws-crt-java/lib
 
 # Pry the builder version this CRT is using out of ci.yml
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
@@ -21,8 +21,13 @@ docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 docker run --rm \
     --privileged \
     --mount type=bind,source=`pwd`,target=/aws-crt-java \
+    -v $HOME/.aws/credentials:/root/.aws/credentials:ro \
     --workdir /aws-crt-java \
     --entrypoint /bin/bash \
     --platform linux/arm/v7 \
     $DOCKER_IMAGE \
     codebuild/cd/raspberry-bullseye-arm7l.sh
+
+# Upload the lib to S3
+GIT_TAG=$(git describe --tags)
+aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib

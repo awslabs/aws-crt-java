@@ -111,7 +111,6 @@ public class ServerListenerTest extends CrtTestFixture {
             }
         });
         } catch (CrtRuntimeException ex) {
-            assertTrue(ex.getMessage().contains("AWS_IO_SOCKET_ADDRESS_IN_USE(1054), Socket address already in use."));
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);

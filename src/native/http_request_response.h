@@ -26,7 +26,6 @@ struct http_stream_binding {
     struct aws_http_stream *native_stream;
     struct aws_byte_buf headers_buf;
     int response_status;
-
     /* For the native http stream and the Java stream object */
     struct aws_atomic_var ref;
 };

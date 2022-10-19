@@ -749,6 +749,16 @@ static void s_cache_http_header(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_header_properties.constructor_method_id);
 }
 
+struct java_http_manager_metrics_properties http_manager_metrics_properties;
+static void s_cache_http_manager_metrics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpManagerMetrics");
+    AWS_FATAL_ASSERT(cls);
+    http_manager_metrics_properties.http_manager_metrics_class = (*env)->NewGlobalRef(env, cls);
+
+    http_manager_metrics_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "(JJJ)V");
+    AWS_FATAL_ASSERT(http_manager_metrics_properties.constructor_method_id);
+}
+
 struct java_aws_exponential_backoff_retry_options_properties exponential_backoff_retry_options_properties;
 
 static void s_cache_exponential_backoff_retry_options(JNIEnv *env) {
@@ -916,6 +926,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_crt(env);
     s_cache_aws_signing_result(env);
     s_cache_http_header(env);
+    s_cache_http_manager_metrics(env);
     s_cache_exponential_backoff_retry_options(env);
     s_cache_standard_retry_options(env);
     s_cache_directory_traversal_handler(env);

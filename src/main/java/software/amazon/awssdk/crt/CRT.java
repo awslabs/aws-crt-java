@@ -21,6 +21,9 @@ import java.util.*;
  * load the shared lib
  */
 public final class CRT {
+    private static final String CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY = "aws.crt.arch";
+    private static final String CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE = "AWS_CRT_ARCH";
+
     private static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
     private static final CrtPlatform s_platform;
@@ -106,6 +109,16 @@ public final class CRT {
      * @return a string describing the detected architecture the CRT is executing on
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
+        String systemPropertyOverride = System.getProperty(CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY);
+        if (systemPropertyOverride != null && systemPropertyOverride.length() > 0) {
+            return systemPropertyOverride;
+        }
+
+        String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
+        if (environmentOverride != null && environmentOverride.length() > 0) {
+            return environmentOverride;
+        }
+
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
 
@@ -121,7 +134,9 @@ public final class CRT {
             }
         } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
             return "armv8";
-        } else if (arch.equals("arm")) {
+        } else if (arch.equals("armv7l")) {
+            return "armv7";
+        } else if (arch.startsWith("arm")) {
             return "armv6";
         }
 

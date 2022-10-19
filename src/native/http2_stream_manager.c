@@ -22,6 +22,7 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include <aws/http/connection.h>
+#include <aws/http/connection_manager.h>
 #include <aws/http/http.h>
 #include <aws/http/http2_stream_manager.h>
 #include <aws/http/proxy.h>
@@ -313,6 +314,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
     } else {
         /* Acquire for the native stream. The destroy callback for native stream will release the ref. */
         aws_http_stream_binding_acquire(callback_data->stream_binding);
+
         callback_data->stream_binding->native_stream = stream;
         jobject j_http_stream =
             aws_java_http_stream_from_native_new(env, callback_data->stream_binding, AWS_HTTP_VERSION_2);
@@ -423,4 +425,30 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION, "Releasing StreamManager: id: %p", (void *)stream_manager);
     aws_http2_stream_manager_release(stream_manager);
+}
+
+JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_http2StreamManagerFetchMetrics(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_stream_manager) {
+    (void)jni_class;
+
+    struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
+    struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
+
+    if (!stream_manager) {
+        aws_jni_throw_runtime_exception(env, "Stream Manager can't be null");
+        return NULL;
+    }
+
+    struct aws_http_manager_metrics metrics;
+    aws_http2_stream_manager_fetch_metrics(stream_manager, &metrics);
+
+    return (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)metrics.available_concurrency,
+        (jlong)metrics.pending_concurrency_acquires,
+        (jlong)metrics.leased_concurrency);
 }

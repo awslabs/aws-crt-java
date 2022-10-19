@@ -460,6 +460,34 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     s_destroy_connection_binding(binding, env);
 }
 
+JNIEXPORT jobject JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpConnectionManagerFetchMetrics(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager_binding) {
+    (void)jni_class;
+
+    struct http_connection_manager_binding *manager_binding =
+        (struct http_connection_manager_binding *)jni_conn_manager_binding;
+    struct aws_http_connection_manager *conn_manager = manager_binding->manager;
+
+    if (!conn_manager) {
+        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        return NULL;
+    }
+
+    struct aws_http_manager_metrics metrics;
+    aws_http_connection_manager_fetch_metrics(conn_manager, &metrics);
+
+    return (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)metrics.available_concurrency,
+        (jlong)metrics.pending_concurrency_acquires,
+        (jlong)metrics.leased_concurrency);
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

@@ -143,7 +143,7 @@ public final class CRT {
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
-    private static final String NON_LINUX_RUNTIME_TAG = "sys";
+    private static final String NON_LINUX_RUNTIME_TAG = "cruntime";
     private static final String MUSL_RUNTIME_TAG = "musl";
     private static final String GLIBC_RUNTIME_TAG = "glibc";
 

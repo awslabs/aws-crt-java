@@ -169,7 +169,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         set(AWS_C_RUNTIME "glibc")
     endif()
 else()
-    set(AWS_C_RUNTIME "sys")
+    set(AWS_C_RUNTIME "cruntime")
 endif()
 
 # figure out the target platform info and output the lib there

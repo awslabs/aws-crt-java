@@ -50,7 +50,7 @@ public class DefaultChainCredentialsProvider extends CredentialsProvider {
         super();
         ClientBootstrap clientBootstrap = builder.getClientBootstrap();
         if (clientBootstrap == null) {
-            throw new IllegalArgumentException("DefaultChainCredentialsProvider: clientBootstrap must be non-null");
+            clientBootstrap = ClientBootstrap.getOrCreateStaticDefault();
         }
 
         long nativeHandle = defaultChainCredentialsProviderNew(this, clientBootstrap.getNativeHandle());

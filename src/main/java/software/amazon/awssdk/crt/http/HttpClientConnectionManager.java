@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -135,6 +135,7 @@ public class HttpClientConnectionManager extends CrtResource {
          }
     }
 
+
     /**
      * Request a HttpClientConnection from the Connection Pool.
      * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.
@@ -144,10 +145,9 @@ public class HttpClientConnectionManager extends CrtResource {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
 
-        CompletableFuture<HttpClientConnection> connRequest = new CompletableFuture<>();
-
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), connRequest);
-        return connRequest;
+        CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
+        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
+        return returnedFuture;
     }
 
     /**
@@ -203,6 +203,16 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        return httpConnectionManagerFetchMetrics(getNativeHandle());
+    }
+
+    /**
      * @return size of the per-connection streaming read window for response handling
      */
     public int getWindowSize() {
@@ -245,5 +255,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerAcquireConnection(long conn_manager, CompletableFuture<HttpClientConnection> acquireFuture) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics httpConnectionManagerFetchMetrics(long conn_manager) throws CrtRuntimeException;
 
 }

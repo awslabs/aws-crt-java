@@ -24,6 +24,7 @@ import java.net.URI;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -218,6 +219,150 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (Exception ex /*InterruptedException | ExecutionException ex*/) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * Test read-backpressure by repeatedly:
+     * - letting the download stall
+     * - incrementing the read window
+     * - repeat...
+     */
+    @Test
+    public void testS3GetWithBackpressure() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        final String filePath = "/get_object_test_1MB.txt";
+        final long fileSize = 1 * 1024 * 1024;
+        S3ClientOptions clientOptions = new S3ClientOptions()
+                .withEndpoint(ENDPOINT)
+                .withRegion(REGION)
+                .withReadBackpressureEnabled(true)
+                .withInitialReadWindowSize(1024)
+                .withPartSize(fileSize / 4);
+        final long windowIncrementSize = clientOptions.getPartSize() / 2;
+
+        // how long to wait after download stalls, before incrementing read window again
+        final Duration ifNothingHappensAfterThisLongItStalled = Duration.ofSeconds(1);
+        int stallCount = 0;
+        Clock clock = Clock.systemUTC();
+        Instant lastTimeSomethingHappened = clock.instant();
+        AtomicLong downloadSizeDelta = new AtomicLong(0);
+
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    int numBytes = bodyBytesIn.remaining();
+                    downloadSizeDelta.addAndGet(numBytes);
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response numBytes:" + numBytes);
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", filePath, headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+
+                while (!onFinishedFuture.isDone()) {
+                    // Check if we've received data since last loop
+                    long lastDownloadSizeDelta = downloadSizeDelta.getAndSet(0);
+
+                    // Figure out how long it's been since we last received data
+                    Instant currentTime = clock.instant();
+                    if (lastDownloadSizeDelta != 0) {
+                        lastTimeSomethingHappened = clock.instant();
+                    }
+
+                    Duration timeSinceSomethingHappened = Duration.between(lastTimeSomethingHappened, currentTime);
+
+                    // If it seems like data has stopped flowing, then we know a stall happened due to backpressure.
+                    if (timeSinceSomethingHappened.compareTo(ifNothingHappensAfterThisLongItStalled) >= 0) {
+                        stallCount += 1;
+                        lastTimeSomethingHappened = currentTime;
+
+                        // Increment window so that download continues...
+                        metaRequest.incrementReadWindow(windowIncrementSize);
+                    }
+
+                    // Sleep a moment and loop again...
+                    Thread.sleep(100);
+                }
+
+                // Assert that download stalled due to backpressure at some point
+                Assert.assertTrue(stallCount > 0);
+
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    // Test that we can increment the flow-control window by returning a number from
+    // the onResponseBody callback
+    @Test
+    public void testS3GetWithBackpressureIncrementViaOnResponseBody() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        final String filePath = "/get_object_test_1MB.txt";
+        final long fileSize = 1 * 1024 * 1024;
+        S3ClientOptions clientOptions = new S3ClientOptions()
+                .withEndpoint(ENDPOINT)
+                .withRegion(REGION)
+                .withReadBackpressureEnabled(true)
+                .withInitialReadWindowSize(1024)
+                .withPartSize(fileSize / 4);
+
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    int numBytes = bodyBytesIn.remaining();
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response numBytes:" + numBytes);
+                    return numBytes;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", filePath, headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get(60, TimeUnit.SECONDS));
+            }
+        } catch (InterruptedException | ExecutionException | TimeoutException ex) {
             Assert.fail(ex.getMessage());
         }
     }
@@ -426,12 +571,12 @@ public class S3ClientTest extends CrtTestFixture {
 
             String resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                
+
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
 
-                Throwable thrown = Assert.assertThrows(Throwable.class, 
+                Throwable thrown = Assert.assertThrows(Throwable.class,
                     () -> onFinishedFuture.get());
 
                 Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtS3RuntimeException)thrown.getCause()).errorName);
@@ -584,7 +729,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpGetRequest)
                     .withResponseHandler(getResponseHandler)
                     .withValidateChecksum(true);
-            
+
             try (S3MetaRequest metaRequest = client.makeMetaRequest(getRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onGetFinishedFuture.get());
             }

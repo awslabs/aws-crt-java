@@ -207,7 +207,7 @@ public class HttpClientConnectionManagerOptions {
     public boolean isManualWindowManagement() { return manualWindowManagement; }
 
     /**
-     * If set to true, then you must manage the TCP read backpressure mechanism. You should
+     * If set to true, then you must manage the read backpressure mechanism. You should
      * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
      * putting the data into a queue for another thread to process and need to make sure the memory
      * usage is bounded (e.g. reactive streams).

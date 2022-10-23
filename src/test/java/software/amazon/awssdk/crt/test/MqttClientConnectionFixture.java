@@ -166,21 +166,24 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     MqttClientConnectionFixture() {
     }
 
-    boolean connect( AUTH_KEY_TYPE type) {
-        return connect(false, 0, 0, null, type);
+    boolean connect() {
+        return connect(false, 0, 0, null);
     }
 
-    boolean connect(Consumer<MqttMessage> anyMessageHandler,  AUTH_KEY_TYPE type) {
-        return connect(false, 0, 0, anyMessageHandler, type);
+    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
+        return connect(false, 0, 0, anyMessageHandler);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout,  AUTH_KEY_TYPE type) {
-        return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null, type);
+    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout) {
+        return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type) {
-        Assume.assumeTrue(findCredentials(type));
+    boolean connectECC() {
+        return connectWithKeyType(false, 0, 0, null, AUTH_KEY_TYPE.ECC);
+    }
 
+    boolean connectDirect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
+    {
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
             @Override
             public void onConnectionResumed(boolean sessionPresent) {
@@ -241,6 +244,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             fail("Exception during connect: " + ex.toString());
         }
         return false;
+    }
+
+    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
+    {
+        Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
+        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
+    }
+
+    boolean connectWithKeyType(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type) {
+        Assume.assumeTrue(findCredentials(type));
+        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
     }
 
     void disconnect() {

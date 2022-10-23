@@ -7,9 +7,9 @@
 #include "http_connection_manager.h"
 #include "java_class_ids.h"
 
+#include <http_proxy_options.h>
 #include <jni.h>
 #include <string.h>
-#include <http_proxy_options.h>
 
 #include <aws/auth/credentials.h>
 #include <aws/common/clock.h>

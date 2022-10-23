@@ -9,9 +9,9 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
+#include <http_proxy_options.h>
 #include <jni.h>
 #include <string.h>
-#include <http_proxy_options.h>
 
 #include <aws/common/condition_variable.h>
 #include <aws/common/string.h>

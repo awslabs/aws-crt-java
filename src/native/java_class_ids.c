@@ -880,25 +880,25 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
         (*env)->GetFieldID(env, cls, "bytesTransferred", "J");
     s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
 }
-struct java_aws_s3_tcp_keep_alive_options_properties tcp_keep_alive_options_properties;
+struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;
 
-static void s_cache_tcp_keep_alive_options(JNIEnv *env) {
+static void s_cache_s3_tcp_keep_alive_options(JNIEnv *env) {
     (void)env;
 
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3TcpKeepAliveOptions");
     AWS_FATAL_ASSERT(cls);
-    tcp_keep_alive_options_properties.tcp_keep_alive_options_class = (*env)->NewGlobalRef(env, cls);
+    s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_class = (*env)->NewGlobalRef(env, cls);
 
-    tcp_keep_alive_options_properties.tcp_keep_alive_options_constructor_method_id =
-        (*env)->GetMethodID(env, tcp_keep_alive_options_properties.tcp_keep_alive_options_class, "<init>", "()V");
+    s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_constructor_method_id =
+        (*env)->GetMethodID(env, s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_class, "<init>", "()V");
 
-    tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id =
+    s3_tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id =
         (*env)->GetFieldID(env, cls, "keepAliveIntervalSec", "S");
 
-    tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id =
+    s3_tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id =
         (*env)->GetFieldID(env, cls, "keepAliveTimeoutSec", "S");
 
-    tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id =
+    s3_tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id =
         (*env)->GetFieldID(env, cls, "keepAliveMaxFailedProbes", "S");
 }
 
@@ -952,5 +952,6 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_standard_retry_options(env);
     s_cache_directory_traversal_handler(env);
     s_cache_directory_entry(env);
-    s_cache_s3_meta_request_progress(env), s_cache_tcp_keep_alive_options(env);
+    s_cache_s3_meta_request_progress(env),
+    s_cache_s3_tcp_keep_alive_options(env);
 }

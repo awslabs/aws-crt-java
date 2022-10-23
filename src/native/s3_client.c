@@ -48,25 +48,25 @@ struct s3_client_make_meta_request_callback_data {
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
 static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data);
 
-int aws_tcp_keep_alive_options_from_java(
+int aws_s3_tcp_keep_alive_options_from_java(
     JNIEnv *env,
-    jobject jni_tcp_keep_alive_options,
-    struct aws_s3_tcp_keep_alive_options *tcp_keep_alive_options) {
+    jobject jni_s3_tcp_keep_alive_options,
+    struct aws_s3_tcp_keep_alive_options *s3_tcp_keep_alive_options) {
 
     uint16_t jni_keep_alive_interval_sec = (*env)->GetShortField(
-        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id);
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id);
 
     uint16_t jni_keep_alive_timeout_sec = (*env)->GetShortField(
-        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id);
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id);
 
     uint16_t jni_keep_alive_max_failed_probes = (*env)->GetShortField(
-        env, jni_tcp_keep_alive_options, tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id);
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id);
 
-    AWS_ZERO_STRUCT(*tcp_keep_alive_options);
+    AWS_ZERO_STRUCT(*s3_tcp_keep_alive_options);
 
-    tcp_keep_alive_options->keep_alive_interval_sec = jni_keep_alive_interval_sec;
-    tcp_keep_alive_options->keep_alive_timeout_sec = jni_keep_alive_timeout_sec;
-    tcp_keep_alive_options->keep_alive_max_failed_probes = jni_keep_alive_max_failed_probes;
+    s3_tcp_keep_alive_options->keep_alive_interval_sec = jni_keep_alive_interval_sec;
+    s3_tcp_keep_alive_options->keep_alive_timeout_sec = jni_keep_alive_timeout_sec;
+    s3_tcp_keep_alive_options->keep_alive_max_failed_probes = jni_keep_alive_max_failed_probes;
 
     return AWS_OP_SUCCESS;
 }
@@ -98,7 +98,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_environment_variable_proxy_tls_connection_options,
     jint jni_environment_variable_type,
     int connect_timeout_ms,
-    jobject jni_tcp_keep_alive_options,
+    jobject jni_s3_tcp_keep_alive_options,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds) {
     (void)jni_class;
@@ -148,11 +148,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
             return (jlong)NULL;
         }
     }
-    struct aws_s3_tcp_keep_alive_options *tcp_keep_alive_options = NULL;
+    struct aws_s3_tcp_keep_alive_options *s3_tcp_keep_alive_options = NULL;
 
-    if (jni_tcp_keep_alive_options != NULL) {
-        tcp_keep_alive_options = aws_mem_calloc(allocator, 1, sizeof(struct aws_s3_tcp_keep_alive_options));
-        if (aws_tcp_keep_alive_options_from_java(env, jni_tcp_keep_alive_options, tcp_keep_alive_options)) {
+    if (jni_s3_tcp_keep_alive_options != NULL) {
+        s3_tcp_keep_alive_options = aws_mem_calloc(allocator, 1, sizeof(struct aws_s3_tcp_keep_alive_options));
+        if (aws_s3_tcp_keep_alive_options_from_java(env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options)) {
             aws_jni_throw_runtime_exception(env, "Could not create s3_tcp_keep_alive_options");
             return (jlong)NULL;
         }
@@ -199,7 +199,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .shutdown_callback_user_data = callback_data,
         .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
         .connect_timeout_ms = connect_timeout_ms,
-        .tcp_keep_alive_options = tcp_keep_alive_options,
+        .tcp_keep_alive_options = s3_tcp_keep_alive_options,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;
@@ -263,7 +263,7 @@ clean_up:
 
     aws_http_proxy_environment_variable_setting_jni_clean_up(&proxy_ev_settings);
 
-    aws_mem_release(aws_jni_get_allocator(), tcp_keep_alive_options);
+    aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
 
     return (jlong)client;
 }

@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -171,13 +172,16 @@ public class S3ClientTest extends CrtTestFixture {
     @Test
     public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
         skipIfNetworkUnavailable();
-
-        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
-
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+             TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
+        ) {
             HttpProxyEnvironmentVariableSetting environmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
+            environmentVariableSetting.setTlsConnectionOptions(tlsConnectionOptions);
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {
-
             }
         }
     }

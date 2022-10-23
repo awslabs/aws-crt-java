@@ -15,9 +15,8 @@ struct aws_tls_ctx;
 void aws_http_proxy_environment_variable_setting_jni_init(
     struct proxy_env_var_settings *options,
     jint environment_variable_proxy_connection_type,
-    struct aws_tls_connection_options *tls_options,
     jint environment_variable_type,
-    struct aws_tls_ctx *proxy_tls_ctx);
+    struct aws_tls_connection_options *proxy_tls_connection_options);
 
 void aws_http_proxy_environment_variable_setting_jni_clean_up(struct proxy_env_var_settings *options);
 

@@ -13,6 +13,7 @@ import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
 import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableSetting;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
@@ -48,12 +49,12 @@ public class S3Client extends CrtResource {
         }
 
         int environmentVariableProxyConnectionType = 0;
-        TlsContext environmentVariableProxyTlsContext = null;
+        TlsConnectionOptions environmentVariableProxyTlsConnectionOptions = null;
         int environmentVariableType = 1;
         HttpProxyEnvironmentVariableSetting environmentVariableSetting = options.getHttpProxyEnvironmentVariableSetting();
         if (environmentVariableSetting != null) {
             environmentVariableProxyConnectionType = environmentVariableSetting.getConnectionType().getValue();
-            environmentVariableProxyTlsContext = environmentVariableSetting.getTlsContext();
+            environmentVariableProxyTlsConnectionOptions = environmentVariableSetting.getTlsConnectionOptions();
             environmentVariableType = environmentVariableSetting.getEnvironmentVariableType().getValue();
         }
 
@@ -79,7 +80,8 @@ public class S3Client extends CrtResource {
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
                 environmentVariableProxyConnectionType,
-                environmentVariableProxyTlsContext != null ? environmentVariableProxyTlsContext.getNativeHandle()
+                environmentVariableProxyTlsConnectionOptions != null
+                        ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
                         : 0,
                 environmentVariableType,
                 options.getConnectTimeoutMs(),
@@ -184,7 +186,7 @@ public class S3Client extends CrtResource {
             byte[] proxyAuthorizationUsername,
             byte[] proxyAuthorizationPassword,
             int environmentVariableProxyConnectionType,
-            long environmentVariableProxyTlsContext,
+            long environmentVariableProxyTlsConnectionOptions,
             int environmentVariableSetting,
             int connectTimeoutMs,
             S3TcpKeepAliveOptions tcpKeepAliveOptions,

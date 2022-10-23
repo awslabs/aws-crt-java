@@ -4,8 +4,7 @@
  */
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 
 /**
@@ -14,7 +13,7 @@ import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
  */
 public class HttpProxyEnvironmentVariableSetting {
 
-    private TlsContext tlsContext;
+    private TlsConnectionOptions tlsConnectionOptions;
     private HttpProxyEnvironmentVariableType environmentVariableType;
     private HttpProxyConnectionType connectionType;
 
@@ -85,19 +84,19 @@ public class HttpProxyEnvironmentVariableSetting {
     }
 
     /**
-     * Sets the tls context for the proxy connection
+     * Sets the tls connection options for the proxy connection
      *
-     * @param tlsContext tls context for the proxy connection
+     * @param tlsConnectionOptions tls connection options for the proxy connection
      */
-    public void setTlsContext(TlsContext tlsContext) {
-        this.tlsContext = tlsContext;
+    public void setTlsConnectionOptions(TlsConnectionOptions tlsConnectionOptions) {
+        this.tlsConnectionOptions = tlsConnectionOptions;
     }
 
     /**
-     * @return the tls context for the proxy connection
+     * @return the tls connection options for the proxy connection
      */
-    public TlsContext getTlsContext() {
-        return tlsContext;
+    public TlsConnectionOptions getTlsConnectionOptions() {
+        return tlsConnectionOptions;
     }
 
 }

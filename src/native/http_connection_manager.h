@@ -6,7 +6,6 @@
 #ifndef AWS_JNI_CRT_HTTP_CONNECTION_MANAGER_H
 #define AWS_JNI_CRT_HTTP_CONNECTION_MANAGER_H
 
-#include <http_proxy_options.h>
 #include <jni.h>
 
 struct aws_http_connection;

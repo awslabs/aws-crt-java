@@ -93,7 +93,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
     jint jni_environment_variable_proxy_connection_type,
-    jlong jni_environment_variable_proxy_tls_context,
+    jlong jni_environment_variable_proxy_tls_connection_options,
     jint jni_environment_variable_type,
     int connect_timeout_ms,
     jobject jni_tcp_keep_alive_options,
@@ -223,15 +223,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct proxy_env_var_settings proxy_ev_settings;
     AWS_ZERO_STRUCT(proxy_ev_settings);
 
-    struct aws_tls_connection_options proxy_env_tls_conn_options;
-    AWS_ZERO_STRUCT(proxy_env_tls_conn_options);
-
     aws_http_proxy_environment_variable_setting_jni_init(
         &proxy_ev_settings,
         jni_environment_variable_proxy_connection_type,
-        &proxy_env_tls_conn_options,
         jni_environment_variable_type,
-        (struct aws_tls_ctx *)jni_environment_variable_proxy_tls_context);
+        (struct aws_tls_connection_options *)jni_environment_variable_proxy_tls_connection_options);
 
     if (jni_proxy_host != NULL) {
         client_config.proxy_ev_settings = &proxy_ev_settings;

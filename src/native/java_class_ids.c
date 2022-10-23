@@ -952,6 +952,5 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_standard_retry_options(env);
     s_cache_directory_traversal_handler(env);
     s_cache_directory_entry(env);
-    s_cache_s3_meta_request_progress(env),
-    s_cache_s3_tcp_keep_alive_options(env);
+    s_cache_s3_meta_request_progress(env), s_cache_s3_tcp_keep_alive_options(env);
 }

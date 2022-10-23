@@ -13,6 +13,10 @@ public class CrtTestContext {
     public byte[] iotClientCertificate = null;
     // IoT Thing private key for testing
     public byte[] iotClientPrivateKey = null;
+    // IoT Thing ecc certificate for testing
+    public byte[] iotClientECCCertificate = null;
+    // IoT Thing ecc private key for testing
+    public byte[] iotClientECCPrivateKey = null;
     // IoT ATS endpoint for testing
     public String iotEndpoint = null;
     // IoT CA Root

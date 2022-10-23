@@ -17,7 +17,15 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     @Test
     public void testConnectDisconnect() {
         skipIfNetworkUnavailable();
-        connect();
+        connect(AUTH_KEY_TYPE.RSA);
+        disconnect();
+        close();
+    }
+
+    @Test
+    public void testECCKeyConnectDisconnect() {
+        skipIfNetworkUnavailable();
+        connect(AUTH_KEY_TYPE.ECC);
         disconnect();
         close();
     }

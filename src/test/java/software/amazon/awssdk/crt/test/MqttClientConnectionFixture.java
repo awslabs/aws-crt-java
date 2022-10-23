@@ -123,7 +123,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
                 ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
             }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientPrivateKey == null) {
+            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientECCPrivateKey == null) {
                 pathToKey = TEST_ECC_PRIVATEKEY != null? Paths.get(TEST_ECC_PRIVATEKEY) : null;
                 if (pathToKey == null || pathToKey.toString().equals("")) {
                     throw new MissingCredentialsException("Private key not provided");

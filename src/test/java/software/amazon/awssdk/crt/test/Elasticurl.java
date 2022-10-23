@@ -334,12 +334,13 @@ public class Elasticurl {
                             }
                         };
                         HttpRequestBase request = buildHttpRequest(cli, conn.getVersion(), uri);
-                        HttpStreamBase stream = conn.makeRequest(request, streamHandler);
-                        stream.activate();
+                        try (HttpStreamBase stream = conn.makeRequest(request, streamHandler)) {
+                            stream.activate();
 
-                        // Give the request up to 60 seconds to complete, otherwise throw a
-                        // TimeoutException
-                        reqCompleted.get(60, TimeUnit.SECONDS);
+                            // Give the request up to 60 seconds to complete, otherwise throw a
+                            // TimeoutException
+                            reqCompleted.get(60, TimeUnit.SECONDS);
+                        }
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);

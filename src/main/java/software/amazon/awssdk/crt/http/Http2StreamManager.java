@@ -160,6 +160,7 @@ public class Http2StreamManager extends CrtResource {
 
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
+
         if (isNull()) {
             completionFuture.completeExceptionally(new IllegalStateException(
                     "Http2StreamManager has been closed, can't acquire new streams"));
@@ -175,6 +176,23 @@ public class Http2StreamManager extends CrtResource {
             completionFuture.completeExceptionally(ex);
         }
         return completionFuture;
+    }
+
+    /**
+     * @return maximum number of connections this connection manager will pool
+     */
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        return http2StreamManagerFetchMetrics(getNativeHandle());
     }
 
     /**
@@ -255,4 +273,6 @@ public class Http2StreamManager extends CrtResource {
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
             AsyncCallback completedCallback) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics http2StreamManagerFetchMetrics(long stream_manager) throws CrtRuntimeException;
 }

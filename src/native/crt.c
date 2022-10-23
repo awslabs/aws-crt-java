@@ -265,6 +265,25 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     return exception_pending;
 }
 
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix) {
+    if (java_long < 0) {
+        aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
+        goto error;
+    }
+
+    if ((uint64_t)java_long > (uint64_t)SIZE_MAX) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "%s cannot exceed %zu when running 32bit", errmsg_prefix, SIZE_MAX);
+        goto error;
+    }
+
+    *out_size = (size_t)java_long;
+    return AWS_OP_SUCCESS;
+error:
+    *out_size = 0;
+    return AWS_OP_ERR;
+}
+
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;
@@ -341,7 +360,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jst
 }
 
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {
-    (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
@@ -361,7 +382,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
 }
 
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
-    (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {
@@ -420,10 +443,14 @@ static struct aws_error_info_list s_crt_error_list = {
 };
 
 static struct aws_log_subject_info s_crt_log_subject_infos[] = {
+    /* clang-format off */
     DEFINE_LOG_SUBJECT_INFO(
-        AWS_LS_JAVA_CRT_GENERAL,
-        "JavaCrtGeneral",
-        "Subject for aws-crt-java logging that defies categorization."),
+        AWS_LS_JAVA_CRT_GENERAL, "JavaCrtGeneral", "Subject for aws-crt-java logging that defies categorization"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_RESOURCE, "JavaCrtResource", "Subject for CrtResource"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_S3, "JavaCrtS3", "Subject for the layer binding aws-c-s3 to Java"),
+    /* clang-format on */
 };
 
 static struct aws_log_subject_info_list s_crt_log_subject_list = {

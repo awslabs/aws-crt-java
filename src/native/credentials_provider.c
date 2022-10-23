@@ -462,7 +462,7 @@ JNIEXPORT jlong JNICALL
     struct aws_credentials_provider *provider = aws_credentials_provider_new_x509(allocator, &options);
     if (provider == NULL) {
         s_callback_data_clean_up(env, allocator, callback_data);
-        aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
+        aws_jni_throw_runtime_exception(env, "Failed to create X509 credentials provider");
     } else {
         callback_data->provider = provider;
     }
@@ -516,7 +516,7 @@ JNIEXPORT jlong JNICALL
     struct aws_credentials_provider *provider = aws_credentials_provider_new_cached(allocator, &options);
     if (provider == NULL) {
         s_callback_data_clean_up(env, allocator, callback_data);
-        aws_jni_throw_runtime_exception(env, "Failed to create static credentials provider");
+        aws_jni_throw_runtime_exception(env, "Failed to create cached credentials provider");
     } else {
         callback_data->provider = provider;
     }
@@ -652,9 +652,161 @@ JNIEXPORT jlong JNICALL
     struct aws_credentials_provider *provider = aws_credentials_provider_new_delegate(allocator, &options);
     if (provider == NULL) {
         s_callback_data_clean_up(env, allocator, callback_data);
-        aws_jni_throw_runtime_exception(env, "Failed to create default credentials provider chain");
+        aws_jni_throw_runtime_exception(env, "Failed to create delegate credentials provider");
     } else {
         callback_data->provider = provider;
+    }
+
+    return (jlong)provider;
+}
+
+static int s_fill_in_logins(struct aws_array_list *logins, struct aws_byte_cursor marshalled_logins) {
+    struct aws_byte_cursor logins_cursor = marshalled_logins;
+    uint32_t field_len = 0;
+
+    while (logins_cursor.len > 0) {
+        if (!aws_byte_cursor_read_be32(&logins_cursor, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor identity_provider_name = aws_byte_cursor_advance(&logins_cursor, field_len);
+
+        if (!aws_byte_cursor_read_be32(&logins_cursor, &field_len)) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        struct aws_byte_cursor identity_provider_token = aws_byte_cursor_advance(&logins_cursor, field_len);
+
+        struct aws_cognito_identity_provider_token_pair login_pair = {
+            .identity_provider_name = identity_provider_name,
+            .identity_provider_token = identity_provider_token,
+        };
+
+        aws_array_list_push_back(logins, &login_pair);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+JNIEXPORT
+jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredentialsProvider_cognitoCredentialsProviderNew(
+    JNIEnv *env,
+    jclass jni_class,
+    jobject crt_credentials_provider,
+    jlong native_bootstrap,
+    jlong native_tls_context,
+    jstring endpoint,
+    jstring identity,
+    jstring custom_role_arn,
+    jbyteArray marshalled_logins,
+    jint proxy_connection_type,
+    jbyteArray proxy_host,
+    jint proxy_port,
+    jlong native_proxy_tls_context,
+    jint proxy_authorization_type,
+    jbyteArray proxy_authorization_username,
+    jbyteArray proxy_authorization_password) {
+
+    (void)jni_class;
+    (void)env;
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_credentials_provider *provider = NULL;
+    struct aws_credentials_provider_callback_data *callback_data = NULL;
+
+    struct aws_tls_connection_options proxy_tls_connection_options;
+    AWS_ZERO_STRUCT(proxy_tls_connection_options);
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    struct aws_byte_cursor endpoint_cursor;
+    AWS_ZERO_STRUCT(endpoint_cursor);
+    struct aws_byte_cursor identity_cursor;
+    AWS_ZERO_STRUCT(identity_cursor);
+    struct aws_byte_cursor custom_role_arn_cursor;
+    AWS_ZERO_STRUCT(custom_role_arn_cursor);
+    struct aws_byte_cursor logins_cursor;
+    AWS_ZERO_STRUCT(logins_cursor);
+
+    struct aws_array_list logins;
+    aws_array_list_init_dynamic(&logins, allocator, 0, sizeof(struct aws_cognito_identity_provider_token_pair));
+
+    if (endpoint == NULL || identity == NULL) {
+        goto done;
+    }
+
+    endpoint_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, endpoint);
+    identity_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, identity);
+
+    callback_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_credentials_provider_callback_data));
+
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+    callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, crt_credentials_provider);
+
+    struct aws_credentials_provider_cognito_options options = {
+        .shutdown_options =
+            {
+                .shutdown_callback = s_on_shutdown_complete,
+                .shutdown_user_data = callback_data,
+            },
+        .endpoint = endpoint_cursor,
+        .identity = identity_cursor,
+        .bootstrap = (void *)native_bootstrap,
+        .tls_ctx = (void *)native_tls_context,
+    };
+
+    if (custom_role_arn != NULL) {
+        custom_role_arn_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, custom_role_arn);
+        options.custom_role_arn = &custom_role_arn_cursor;
+    }
+
+    if (marshalled_logins != NULL) {
+        logins_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, marshalled_logins);
+        if (s_fill_in_logins(&logins, logins_cursor)) {
+            goto done;
+        }
+
+        options.logins = logins.data;
+        options.login_count = aws_array_list_length(&logins);
+    }
+
+    if (proxy_host != NULL) {
+        aws_http_proxy_options_jni_init(
+            env,
+            &proxy_options,
+            proxy_connection_type,
+            &proxy_tls_connection_options,
+            proxy_host,
+            (uint16_t)proxy_port,
+            proxy_authorization_username,
+            proxy_authorization_password,
+            proxy_authorization_type,
+            (struct aws_tls_ctx *)native_proxy_tls_context);
+
+        options.http_proxy_options = &proxy_options;
+    }
+
+    provider = aws_credentials_provider_new_cognito(allocator, &options);
+    if (provider != NULL) {
+        callback_data->provider = provider;
+    }
+
+done:
+
+    aws_jni_byte_cursor_from_jstring_release(env, endpoint, endpoint_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, identity, identity_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, custom_role_arn, custom_role_arn_cursor);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, marshalled_logins, logins_cursor);
+
+    aws_http_proxy_options_jni_clean_up(
+        env, &proxy_options, proxy_host, proxy_authorization_username, proxy_authorization_password);
+
+    aws_array_list_clean_up(&logins);
+
+    if (provider == NULL) {
+        s_callback_data_clean_up(env, allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "Failed to create native cognito credentials provider");
     }
 
     return (jlong)provider;

@@ -130,7 +130,6 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
-                        stream.close();
                     }
                 };
                 HttpStreamBase stream = conn.makeRequest(request, streamHandler);
@@ -143,6 +142,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                 // Give the request up to 60 seconds to complete, otherwise throw a
                 // TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);
+                stream.close();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

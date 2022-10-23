@@ -352,6 +352,13 @@ struct java_http_header_properties {
 };
 extern struct java_http_header_properties http_header_properties;
 
+/* HtppConnectionManagerMetrics */
+struct java_http_manager_metrics_properties {
+    jclass http_manager_metrics_class;
+    jmethodID constructor_method_id;
+};
+extern struct java_http_manager_metrics_properties http_manager_metrics_properties;
+
 /* ExponentialBackoffRetryOptions */
 struct java_aws_exponential_backoff_retry_options_properties {
     jclass exponential_backoff_retry_options_class;

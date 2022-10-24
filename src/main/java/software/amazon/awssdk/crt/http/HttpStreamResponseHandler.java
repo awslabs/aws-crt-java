@@ -38,25 +38,20 @@ public interface HttpStreamResponseHandler {
     /**
      * Called when new Response Body bytes have been received. Note that this function may be called multiple times over
      * the lifetime of an HttpClientConnection as bytes are received.
-     *
-     * Users must read all data from bodyBytesIn before returning. If "bodyBytesIn.remaining() &gt; 0" after this method
-     * returns, then Native will assume there was a processing failure and abort the connection.
-     *
-     * Do NOT keep a reference to this ByteBuffer past the lifetime of this function call. The CommonRuntime reserves
-     * the right to use DirectByteBuffers pointing to memory that only lives as long as the function call.
-     *
-     * Sliding Window:
-     * The Native HttpClientConnection EventLoop will keep sending data until the end of the sliding Window is reached.
-     * The user application is responsible for setting the initial Window size appropriately when creating the
-     * HttpClientConnection, and for incrementing the sliding window appropriately throughout the lifetime of the HttpStream.
-     *
-     * For more info, see:
-     *  - https://en.wikipedia.org/wiki/Sliding_window_protocol
+     * <p>
+     * Note that if {@link HttpClientConnectionManagerOptions#withManualWindowManagement} was set true,
+     * you must manage the flow-control window.
+     * The flow-control window shrinks as you receive body data via this callback.
+     * Whenever the flow-control window reaches zero, data will stop downloading.
+     * To keep data flowing, you must increment the window by returning a number
+     * from this method, or by calling {@link HttpStreamBase#incrementWindow}.
      *
      * @param stream The HTTP Stream the body was delivered to
      * @param bodyBytesIn The HTTP Body Bytes received in the last IO Event.
-     * @return The number of bytes to move the sliding window by. Repeatedly returning zero will eventually cause the
-     *          sliding window to fill up and data to stop flowing until the user slides the window back open.
+     * @return The number of bytes to increment the window by
+     *          (calling {@link HttpStreamBase#incrementWindow} has the same effect).
+     *          This value is ignored if "manual window management" is disabled.
+     * @see HttpClientConnectionManagerOptions#withManualWindowManagement
      */
     default int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
         /* Optional Callback, ignore incoming response body by default unless user wants to capture it. */

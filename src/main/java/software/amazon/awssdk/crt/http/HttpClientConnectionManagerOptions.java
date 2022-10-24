@@ -106,9 +106,12 @@ public class HttpClientConnectionManagerOptions {
     public TlsConnectionOptions getTlsConnectionOptions() { return tlsConnectionOptions; }
 
     /**
-     * Sets the IO channel window size to use for connections in the connection pool
-     * @param windowSize The initial window size to use for each connection
+     * Sets the starting size of each HTTP stream's flow-control window.
+     * This is only used when "manual window management" is enabled.
+     *
+     * @param windowSize The initial window size for each HTTP stream
      * @return this
+     * @see #withManualWindowManagement
      */
     public HttpClientConnectionManagerOptions withWindowSize(int windowSize) {
         this.windowSize = windowSize;
@@ -116,7 +119,7 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * @return the IO channel window size to use for connections in the connection pool
+     * @return The starting size of each HTTP stream's flow-control window.
      */
     public int getWindowSize() { return windowSize; }
 
@@ -198,23 +201,25 @@ public class HttpClientConnectionManagerOptions {
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
 
     /**
-     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
-     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
-     * putting the data into a queue for another thread to process and need to make sure the memory
-     * usage is bounded (e.g. reactive streams).
-     * If this is enabled, you must call HttpStream.UpdateWindow() for every
-     * byte read from the OnIncomingBody callback.
      * @return true if manual window management is used, false otherwise
+     * @see #withManualWindowManagement
      */
     public boolean isManualWindowManagement() { return manualWindowManagement; }
 
     /**
-     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * If set to true, then you must manage the read backpressure mechanism. You should
      * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
      * putting the data into a queue for another thread to process and need to make sure the memory
      * usage is bounded (e.g. reactive streams).
-     * If this is enabled, you must call HttpStream.UpdateWindow() for every
-     * byte read from the OnIncomingBody callback.
+     * <p>
+     * When enabled, each HttpStream has a flow-control window that shrinks as response body data is downloaded
+     * (headers do not affect the window). {@link #withWindowSize} determines the starting size of each
+     * HttpStream's window, in bytes. Data stops downloading whenever the window reaches zero.
+     * Increment the window to keep data flowing by calling {@link HttpStreamBase#incrementWindow},
+     * or by returning a size from {@link HttpStreamResponseHandler#onResponseBody}.
+     * Maintain a larger window to keep up a high download throughput,
+     * or use a smaller window to limit how much data could get buffered in memory.
+     *
      * @param manualWindowManagement true to enable manual window management, false to use automatic window management
      * @return this
      */

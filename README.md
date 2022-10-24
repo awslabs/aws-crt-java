@@ -78,6 +78,8 @@ Full list of test arguments:
 - `certificate`: Path to the IoT thing certificate
 - `privatekey`: Path to the IoT thing private key
 - `privatekey_p8`: Path to the IoT thing private key in PKCS#8 format
+- `ecc_certificate`: Path to the IoT thing with EC-based certificate
+- `ecc_privatekey`: Path to the IoT thing with ECC private key (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
 - `rootca`: Path to the root certificate
 - `proxyhost`: Hostname of proxy
 - `proxyport`: Port of proxy

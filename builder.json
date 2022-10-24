@@ -49,45 +49,7 @@
             ],
             "!test_steps": [
                 "aws-crt-java-test"
-            ],
-            "architectures": {
-                "armv6": {
-                    "!packages": [],
-                    "!build_steps": [
-                        "build"
-                    ],
-                    "!test_steps": [],
-                    "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF"
-                    ]
-                },
-                "armv7": {
-                    "!packages": [],
-                    "!build_steps": [
-                        "build"
-                    ],
-                    "!test_steps": [],
-                    "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF"
-                    ]
-                },
-                "arm64": {
-                    "!packages": [],
-                    "!build_steps": [
-                        "build"
-                    ],
-                    "!test_steps": [],
-                    "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF"
-                    ]
-                }
-            }
+            ]
         },
         "android": {
             "imports": [

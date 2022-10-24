@@ -114,10 +114,11 @@ jobs:
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
-  # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm
-  # at build time we can properly figure out that we're targeting armv7
-  # at run time we have to force armv7 (via environment variable) in order to achieve proper resource path
-  # resolution
+  # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
+  #
+  # At build time we can properly figure out that we're targeting armv7.
+  # At run time we have to force armv7 (via environment variable) in order to achieve proper resource path
+  # resolution.
   linux-musl-armv7:
     runs-on: ubuntu-20.04 # latest
     steps:

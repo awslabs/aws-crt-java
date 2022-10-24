@@ -17,6 +17,8 @@
 
 enum aws_java_crt_log_subject {
     AWS_LS_JAVA_CRT_GENERAL = AWS_LOG_SUBJECT_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+    AWS_LS_JAVA_CRT_RESOURCE,
+    AWS_LS_JAVA_CRT_S3,
 
     AWS_LS_JAVA_CRT_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 };
@@ -55,6 +57,13 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
  * the pending exception was cleared.
  ******************************************************************************/
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
+
+/*******************************************************************************
+ * Set a size_t based on a jlong.
+ * If conversion fails, a java IllegalArgumentException is thrown like
+ * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.
+ ******************************************************************************/
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix);
 
 /*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]

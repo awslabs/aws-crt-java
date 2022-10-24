@@ -80,19 +80,6 @@ jobs:
             hs_err_pid*
             target/surefire-reports/*stream
 
-  linux-arm:
-    name: ARM (${{ matrix.arch }})
-    runs-on: ubuntu-20.04 # latest
-    strategy:
-      matrix:
-        arch: [armv6, armv7, arm64]
-    steps:
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-          chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
-
   linux-musl:
     runs-on: ubuntu-20.04 # latest
     strategy:

@@ -569,6 +569,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     success = true;
 
 done:
+    aws_array_list_clean_up(&response_checksum_list);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     if (signing_config) {
         aws_mem_release(allocator, signing_config);

@@ -137,7 +137,7 @@ public class S3MetaRequestOptions {
      * The checksumValidated field passed in parameter of the finished callback will inform
      * the user if validation occured. A mismatch will result in a AWS_ERROR_S3_RESPONSE_CHECKSUM_MISMATCH error
      *
-     * @param checksumAlgorithm Validate the checksum of response if server provides.
+     * @param validateChecksum Validate the checksum of response if server provides.
      * @return this
      */
     public S3MetaRequestOptions withValidateChecksum(boolean validateChecksum) {

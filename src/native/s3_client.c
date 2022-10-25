@@ -532,6 +532,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     struct aws_array_list response_checksum_list;
+    AWS_ZERO_STRUCT(response_checksum_list);
     if (jni_marshalled_validate_algorithms != NULL) {
         jint *marshalled_algorithms = (*env)->GetIntArrayElements(env, jni_marshalled_validate_algorithms, NULL);
         const size_t marshalled_len = (*env)->GetArrayLength(env, jni_marshalled_validate_algorithms);

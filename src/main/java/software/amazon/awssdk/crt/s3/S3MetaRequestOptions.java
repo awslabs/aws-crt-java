@@ -74,8 +74,7 @@ public class S3MetaRequestOptions {
     }
 
     private MetaRequestType metaRequestType;
-    private ChecksumAlgorithm checksumAlgorithm;
-    private boolean validateChecksum;
+    private ChecksumConfig checksumConfig;
     private HttpRequest httpRequest;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
@@ -91,31 +90,56 @@ public class S3MetaRequestOptions {
         return metaRequestType;
     }
 
-    /*
-     * Specify the checksum algorithm to use use for put requests, if unset defaults to NONE and no checksum will be calculated.
+    /**
+     * The config related to checksum used for the meta request. See {@link ChecksumConfig} for details.
+     * @param checksumConfig The checksum config used for the meta request
+     * @return this
      */
-    public S3MetaRequestOptions withChecksumAlgorithm(ChecksumAlgorithm checksumAlgorithm) {
-        this.checksumAlgorithm = checksumAlgorithm;
+    public S3MetaRequestOptions withChecksumConfig(ChecksumConfig checksumConfig) {
+        this.checksumConfig = checksumConfig;
         return this;
     }
 
-    public ChecksumAlgorithm getChecksumAlgorithm() {
-        return checksumAlgorithm;
+    public ChecksumConfig getChecksumConfig() {
+        return this.checksumConfig;
     }
 
-    /*
-     * validateChecksum defaults to false, if set to true, it will cause the client to compare a streamed 
+    /**
+     * @deprecated Please use {@link #withChecksumConfig(ChecksumConfig)} instead.
+     * Specify the checksum algorithm to use use for put requests, if unset defaults to NONE and no checksum will be calculated.
+     * The location of the checksum will be default to trailer.
+     */
+    public S3MetaRequestOptions withChecksumAlgorithm(ChecksumAlgorithm checksumAlgorithm) {
+        ChecksumConfig config = new ChecksumConfig().withChecksumAlgorithm(checksumAlgorithm).withChecksumLocation(ChecksumConfig.ChecksumLocation.TRAILER);
+        this.checksumConfig = config;
+        return this;
+    }
+
+    /**
+     * @deprecated
+     */
+    public ChecksumAlgorithm getChecksumAlgorithm() {
+        return this.checksumConfig.getChecksumAlgorithm();
+    }
+
+    /**
+     * @deprecated  Please use {@link #withChecksumConfig(ChecksumConfig)} instead.
+     * validateChecksum defaults to false, if set to true, it will cause the client to compare a streamed
      * calculation of the objects checksum to a remotely stored checksum assigned to the object if one exists.
      * The checksumValidated field passed in parameter of the finished callback will inform
      * the user if validation occured. A mismatch will result in a AWS_ERROR_S3_RESPONSE_CHECKSUM_MISMATCH error
      */
     public S3MetaRequestOptions withValidateChecksum(boolean validateChecksum) {
-        this.validateChecksum = validateChecksum;
+        ChecksumConfig config = new ChecksumConfig().withValidateChecksum(validateChecksum);
+        this.checksumConfig = config;
         return this;
     }
 
+    /**
+     * @deprecated
+     */
     public boolean getValidateChecksum() {
-        return validateChecksum;
+        return checksumConfig.getValidateChecksum();
     }
 
     public S3MetaRequestOptions withHttpRequest(HttpRequest httpRequest) {

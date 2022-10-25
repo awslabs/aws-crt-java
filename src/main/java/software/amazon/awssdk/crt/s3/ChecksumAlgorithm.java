@@ -2,6 +2,7 @@ package software.amazon.awssdk.crt.s3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public enum ChecksumAlgorithm {
 
@@ -45,4 +46,27 @@ public enum ChecksumAlgorithm {
     private int nativeValue;
 
     private static Map<Integer, ChecksumAlgorithm> enumMapping = buildEnumMapping();
+
+    /**
+     * @hidden Marshals a list of algorithm into an array for Jni to deal with
+     *
+     * @param algorithms list of algorithms
+     * @return a int[] that with the [algorithms.nativeValue, *]
+     */
+    public static int[] marshallAlgorithmsForJNI(final List<ChecksumAlgorithm> algorithms) {
+        if (algorithms == null) {
+            return null;
+        }
+        /* Each setting is two long */
+        int totalLength = algorithms.size();
+
+        int marshalledSettings[] = new int[totalLength];
+
+        for (int i = 0; i < totalLength; i++) {
+            marshalledSettings[i] = algorithms.get(i).getNativeValue();
+        }
+
+        return marshalledSettings;
+    }
+
 }

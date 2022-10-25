@@ -461,8 +461,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_s3_meta_request_jobject,
     jbyteArray jni_region,
     jint meta_request_type,
+    jint checksum_location,
     jint checksum_algorithm,
     jboolean validate_response,
+    jintArray jni_marshalled_validate_algorithms,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
     jlong jni_credentials_provider,
@@ -523,10 +525,27 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         resume_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_resume_token);
     }
 
+    struct aws_s3_checksum_config checksum_config = {
+        .location = checksum_location,
+        .checksum_algorithm = checksum_algorithm,
+        .validate_response_checksum = validate_response,
+    };
+
+    struct aws_array_list response_checksum_list;
+    if (jni_marshalled_validate_algorithms != NULL) {
+        jint *marshalled_algorithms = (*env)->GetIntArrayElements(env, jni_marshalled_validate_algorithms, NULL);
+        const size_t marshalled_len = (*env)->GetArrayLength(env, jni_marshalled_validate_algorithms);
+        aws_array_list_init_dynamic(&response_checksum_list, allocator, marshalled_len, sizeof(int));
+        for (size_t i = 0; i < marshalled_len; ++i) {
+            enum aws_s3_checksum_algorithm algorithm = (int)marshalled_algorithms[i];
+            aws_array_list_push_back(&response_checksum_list, &algorithm);
+        }
+        checksum_config.validate_checksum_algorithms = &response_checksum_list;
+    }
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
-        .checksum_algorithm = checksum_algorithm,
-        .validate_get_response_checksum = validate_response,
+        .checksum_config = &checksum_config,
         .message = request_message,
         .user_data = callback_data,
         .signing_config = signing_config,

@@ -64,13 +64,13 @@ public enum ChecksumAlgorithm {
         /* Each setting is two long */
         int totalLength = algorithms.size();
 
-        int marshalledSettings[] = new int[totalLength];
+        int marshallAlgorithms[] = new int[totalLength];
 
         for (int i = 0; i < totalLength; i++) {
-            marshalledSettings[i] = algorithms.get(i).getNativeValue();
+            marshallAlgorithms[i] = algorithms.get(i).getNativeValue();
         }
 
-        return marshalledSettings;
+        return marshallAlgorithms;
     }
 
 }

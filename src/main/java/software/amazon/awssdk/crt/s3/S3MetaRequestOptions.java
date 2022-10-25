@@ -112,6 +112,9 @@ public class S3MetaRequestOptions {
      * @deprecated Please use {@link #withChecksumConfig(ChecksumConfig)} instead.
      * Specify the checksum algorithm to use use for put requests, if unset defaults to NONE and no checksum will be calculated.
      * The location of the checksum will be default to trailer.
+     *
+     * @param checksumAlgorithm the checksum algorithm to use use for put requests
+     * @return this
      */
     public S3MetaRequestOptions withChecksumAlgorithm(ChecksumAlgorithm checksumAlgorithm) {
         ChecksumConfig config = new ChecksumConfig().withChecksumAlgorithm(checksumAlgorithm).withChecksumLocation(ChecksumConfig.ChecksumLocation.TRAILER);
@@ -121,6 +124,7 @@ public class S3MetaRequestOptions {
 
     /**
      * @deprecated
+     * @return the checksum algorithm to use use for put requests
      */
     public ChecksumAlgorithm getChecksumAlgorithm() {
         return this.checksumConfig.getChecksumAlgorithm();
@@ -132,6 +136,9 @@ public class S3MetaRequestOptions {
      * calculation of the objects checksum to a remotely stored checksum assigned to the object if one exists.
      * The checksumValidated field passed in parameter of the finished callback will inform
      * the user if validation occured. A mismatch will result in a AWS_ERROR_S3_RESPONSE_CHECKSUM_MISMATCH error
+     *
+     * @param checksumAlgorithm Validate the checksum of response if server provides.
+     * @return this
      */
     public S3MetaRequestOptions withValidateChecksum(boolean validateChecksum) {
         ChecksumConfig config = new ChecksumConfig().withValidateChecksum(validateChecksum);
@@ -141,6 +148,7 @@ public class S3MetaRequestOptions {
 
     /**
      * @deprecated
+     * @return Validate the checksum of response if server provides.
      */
     public boolean getValidateChecksum() {
         return checksumConfig.getValidateChecksum();

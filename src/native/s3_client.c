@@ -560,6 +560,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
+    /* We are done using the list, it can be safely cleaned up now. */
+    aws_array_list_clean_up(&response_checksum_list);
 
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
@@ -570,7 +572,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     success = true;
 
 done:
-    aws_array_list_clean_up(&response_checksum_list);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     if (signing_config) {
         aws_mem_release(allocator, signing_config);

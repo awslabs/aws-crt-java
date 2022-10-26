@@ -35,9 +35,9 @@ public class ChecksumConfig {
     }
 
     /**
-     * If NONE. No request payload checksum will be add and calculated.
+     * If NONE. No request payload checksum will be added and calculated.
      *
-     * If HEADER, the checksum will be calculated by client and added related header
+     * If HEADER, the checksum will be calculated by client and related header added
      * to the request sent.
      *
      * If TRAILER, the payload will be aws_chunked encoded, The checksum will be
@@ -88,9 +88,9 @@ public class ChecksumConfig {
      * Enable checksum mode header will be attached to get requests, this will tell
      * s3 to send back checksums headers if they exist.
      *
-     * For object has checksum for the whole object, the checksum of whole object
-     * will be calculated and validated. The result will finish with a did validate
-     * field.
+     * For object that has checksum, the checksum of whole object will be calculated
+     * and validated. The result will finish with a did validate field.
+     *
      * For object has checksum for parts, if ALL the parts have been validated, the
      * result will finish with a did validate field. If any part failed the
      * validation, AWS_ERROR_S3_RESPONSE_CHECKSUM_MISMATCH will be raised.

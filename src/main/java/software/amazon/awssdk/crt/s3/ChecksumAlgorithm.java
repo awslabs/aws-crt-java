@@ -61,7 +61,7 @@ public enum ChecksumAlgorithm {
         if (algorithms == null) {
             return null;
         }
-        /* Each setting is two long */
+
         int totalLength = algorithms.size();
 
         int marshallAlgorithms[] = new int[totalLength];

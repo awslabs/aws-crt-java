@@ -15,6 +15,7 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
+import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -626,7 +628,7 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3PutChecksums() {
+    public void testS3PutTrailerChecksums() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -678,10 +680,11 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
 
             HttpRequest httpRequest = new HttpRequest("PUT", "/java_round_trip_test_fc.txt", headers, payloadStream);
+            ChecksumConfig config = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.CRC32).withChecksumLocation(ChecksumLocation.TRAILER);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler)
-                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32);
+                    .withChecksumConfig(config);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onPutFinishedFuture.get());
@@ -713,22 +716,24 @@ public class S3ClientTest extends CrtTestFixture {
                     }
                     if(!context.isChecksumValidated()) {
                         onGetFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                                new RuntimeException("Checksum was not validated"));
                         return;
                     }
                     if(context.getChecksumAlgorithm() != ChecksumAlgorithm.CRC32) {
                         onGetFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                                new RuntimeException("Checksum was not validated via CRC32"));
                         return;
                     }
                     onGetFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
                 }
             };
-
+            ArrayList<ChecksumAlgorithm> algorList = new  ArrayList<ChecksumAlgorithm>();
+            algorList.add(ChecksumAlgorithm.CRC32);
+            ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true).withValidateChecksumAlgorithmList(algorList);
             S3MetaRequestOptions getRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpGetRequest)
                     .withResponseHandler(getResponseHandler)
-                    .withValidateChecksum(true);
+                    .withChecksumConfig(validateChecksumConfig);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(getRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onGetFinishedFuture.get());
@@ -757,12 +762,12 @@ public class S3ClientTest extends CrtTestFixture {
                     }
                     if(!context.isChecksumValidated()) {
                         onFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                                new RuntimeException("Checksum was not validated"));
                         return;
                     }
                     if(context.getChecksumAlgorithm() != ChecksumAlgorithm.CRC32) {
                         onFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                                new RuntimeException("Checksum was not validated via CRC32"));
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
@@ -772,7 +777,6 @@ public class S3ClientTest extends CrtTestFixture {
                 public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
                     return 0;
                 }
             };
@@ -780,11 +784,17 @@ public class S3ClientTest extends CrtTestFixture {
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
             HttpRequest httpRequest = new HttpRequest("GET", "/java_get_test_fc.txt", headers, null);
+            ArrayList<ChecksumAlgorithm> algorList = new  ArrayList<ChecksumAlgorithm>();
+            algorList.add(ChecksumAlgorithm.CRC32);
+            algorList.add(ChecksumAlgorithm.CRC32C);
+            algorList.add(ChecksumAlgorithm.SHA1);
+            algorList.add(ChecksumAlgorithm.SHA256);
+            ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true).withValidateChecksumAlgorithmList(algorList);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler)
-                    .withValidateChecksum(true);
+                    .withChecksumConfig(validateChecksumConfig);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());

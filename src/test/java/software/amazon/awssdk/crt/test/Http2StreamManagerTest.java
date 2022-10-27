@@ -97,7 +97,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             threadPool.execute(() -> {
                 // Request a connection from the connection pool
                 int requestId = numRequestsMade.incrementAndGet();
-
                 streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,

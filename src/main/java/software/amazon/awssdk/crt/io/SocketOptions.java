@@ -92,7 +92,7 @@ public final class SocketOptions extends CrtResource {
      * Creates a new set of socket options
      */
     public SocketOptions() {
-        
+
     }
 
     @Override
@@ -104,7 +104,7 @@ public final class SocketOptions extends CrtResource {
                 connectTimeoutMs,
                 keepAliveIntervalSecs,
                 keepAliveTimeoutSecs
-            ));   
+            ));
         }
         return super.getNativeHandle();
     }

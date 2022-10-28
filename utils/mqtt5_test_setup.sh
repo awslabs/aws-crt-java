@@ -2,16 +2,17 @@
 
 # Get the S3 URL containing all of the MQTT5 testing environment variables passed in to the bash script
 testing_env_bucket=$1
+region=$2
 
 # Make sure we have something:
-if [ "${testing_env_bucket}" != "" ]; then
-    echo "S3 bucket for environment variables found"
+if [ "${testing_env_bucket}" != "" ] && [ "${region}" != "" ]; then
+    echo "S3 bucket for environment variables found and region"
 else
-    echo "Could not get S3 bucket for environment variables."
+    echo "Could not get S3 bucket for environment variables and/or region."
     echo "You need to run this script and pass the S3 URL of the file containing"
     echo "all of the environment variables to set, as well as the secrets for certificates and private keys"
     echo ""
-    echo "Example: mqtt5_test_setup.sh s3://<bucket>/<file>"
+    echo "Example: mqtt5_test_setup.sh s3://<bucket>/<file> <region>"
     echo ""
     echo "When finished, run 'cleanup' to remove the files downloaded:"
     echo ""
@@ -22,7 +23,7 @@ fi
 
 # Is this just a request to clean up?
 # NOTE: This blindly assumes there is a environment_files.txt file
-if [ "$2" != "cleanup" ]; then
+if [ "${region}" != "cleanup" ]; then
     sleep 0.1 # we have to do something to do an else...
 else
     echo "Undoing environment variables"
@@ -60,8 +61,8 @@ export $(grep -v '^#' environment_files.txt | xargs)
 
 # CRT/non-builder certificate and key processing
 # Get the certificate and key secrets (dumps straight to a file)
-crt_cert_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_CERTIFICATE_FILE_SECRET}" --query "SecretString" --region us-east-1 | cut -f2 -d":" | cut -f2 -d\") && echo "$crt_cert_file" > ${PWD}/crt_certificate.pem
-crt_key_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_KEY_FILE_SECRET}" --query "SecretString" --region us-east-1 | cut -f2 -d":" | cut -f2 -d\") && echo "$crt_key_file" > ${PWD}/crt_privatekey.pem
+crt_cert_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_CERTIFICATE_FILE_SECRET}" --query "SecretString" --region ${region} | cut -f2 -d":" | cut -f2 -d\") && echo "$crt_cert_file" > ${PWD}/crt_certificate.pem
+crt_key_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_KEY_FILE_SECRET}" --query "SecretString" --region ${region} | cut -f2 -d":" | cut -f2 -d\") && echo "$crt_key_file" > ${PWD}/crt_privatekey.pem
 # Does the certificate file have data? If not, then abort!
 if [ "${crt_cert_file}" != "" ]; then
     echo "CRT Certificate secret found"
@@ -97,8 +98,8 @@ export AWS_TEST_MQTT5_KEY_FILE="${PWD}/crt_privatekey.pem"
 
 # IoT/Builder certificate and key processing
 # Get the certificate and key secrets (dumps straight to a file)
-iot_cert_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_IOT_CERTIFICATE_PATH_SECRET}" --query "SecretString" --region us-east-1 | cut -f2 -d":" | cut -f2 -d\") && echo "$iot_cert_file" > ./iot_certificate.pem
-iot_key_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_IOT_KEY_PATH_SECRET}" --query "SecretString" --region us-east-1 | cut -f2 -d":" | cut -f2 -d\") && echo "$iot_key_file" > ./iot_privatekey.pem
+iot_cert_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_IOT_CERTIFICATE_PATH_SECRET}" --query "SecretString" --region ${region} | cut -f2 -d":" | cut -f2 -d\") && echo "$iot_cert_file" > ./iot_certificate.pem
+iot_key_file=$(aws secretsmanager get-secret-value --secret-id "${AWS_TEST_MQTT5_IOT_KEY_PATH_SECRET}" --query "SecretString" --region ${region} | cut -f2 -d":" | cut -f2 -d\") && echo "$iot_key_file" > ./iot_privatekey.pem
 # Does the certificate file have data? If not, then abort!
 if [ "${iot_cert_file}" != "" ]; then
     echo "IoT Certificate secret found"

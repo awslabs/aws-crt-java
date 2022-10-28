@@ -83,11 +83,6 @@ public class Mqtt5Canary {
             "  --help            This message\n"+
             "  --endpoint        MQTT5 endpoint hostname (optional, default=localhost)\n"+
             "  --port            MQTT5 endpoint port to use (optional, default=1883)\n"+
-            "    * Sample ports\n"+
-            "    * 1883 = direct connect\n"+
-            "    * 8080 = websockets\n"+
-            "    * 8883 = direct connect with TLS\n"+
-            "    * 8081 = websockets with TLS\n"+
             "  --ca_file         A path to a CA certificate file (optional)\n"+
             "  --cert            A path to a certificate file (optional, will use mTLS if defined)\n" +
             "  --key             A path to a private key file (optional, will use mTLS if defined)\n" +

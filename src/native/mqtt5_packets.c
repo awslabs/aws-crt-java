@@ -1455,8 +1455,8 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     if (jni_topic_filter_size_check < 0) {
         s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: No topic filters found");
         return NULL;
-    } else if ((unsigned long)jni_topic_filter_size_check > SIZE_T_MAX) {
-        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: topic filter size is more than SIZE_T_MAX");
+    } else if ((unsigned long)jni_topic_filter_size_check > SIZE_MAX) {
+        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: topic filter size is more than SIZE_MAX");
         return NULL;
     } else {
         topic_filter_size = (size_t)jni_topic_filter_size;

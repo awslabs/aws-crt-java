@@ -19,6 +19,11 @@ class Pkcs11TestSetup(Builder.Action):
     def run(self, env):
         self.env = env
 
+        # run on arm for Raspberry Pi
+        if os.uname()[4][:3] == 'arm':
+            print(f"PKCS#11 on 'ARM' is not currently supported. PKCS#11 tests are disabled")
+            return
+
         # try to install softhsm
         try:
             softhsm_install_acion = Builder.InstallPackages(['softhsm'])

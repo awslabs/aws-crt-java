@@ -24,11 +24,19 @@ public class S3Client extends CrtResource {
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
-        acquireNativeHandle(s3ClientNew(this, region.getBytes(UTF8),
+        acquireNativeHandle(s3ClientNew(
+                this,
+                region.getBytes(UTF8),
                 options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
-                options.getClientBootstrap().getNativeHandle(), tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
-                options.getCredentialsProvider().getNativeHandle(), options.getPartSize(),
-                options.getThroughputTargetGbps(), options.getMaxConnections(), options.getStandardRetryOptions(),
+                options.getClientBootstrap().getNativeHandle(),
+                tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
+                options.getCredentialsProvider().getNativeHandle(),
+                options.getPartSize(),
+                options.getThroughputTargetGbps(),
+                options.getReadBackpressureEnabled(),
+                options.getInitialReadWindowSize(),
+                options.getMaxConnections(),
+                options.getStandardRetryOptions(),
                 options.getComputeContentMd5()));
 
         addReferenceTo(options.getClientBootstrap());
@@ -65,15 +73,19 @@ public class S3Client extends CrtResource {
             credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
         }
         URI endpoint = options.getEndpoint();
-        
+
         byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
 
-        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue() : ChecksumAlgorithm.NONE.getNativeValue();
+        ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
+                : new ChecksumConfig();
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(), httpRequestBytes,
-                options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8), resumeToken);
+                options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
+                checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                resumeToken);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
@@ -115,13 +127,16 @@ public class S3Client extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
-            long tlsContext, long signingConfig, long partSize, double throughputTargetGbps, int maxConnections,
+            long tlsContext, long signingConfig, long partSize, double throughputTargetGbps,
+            boolean enableReadBackpressure, long initialReadWindow, int maxConnections,
             StandardRetryOptions standardRetryOptions, boolean computeContentMd5) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
-            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
+            int[] validateAlgorithms, byte[] httpRequestBytes,
+            HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, byte[] resumeToken);
 }

@@ -8,12 +8,11 @@ class LocalhostTest(Builder.Action):
     def run(self, env):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
-        for i in range(10):
-            if os.system("mvn -Dtest=Http2ClientLocalHostTest test -DredirectTestOutputToFile=true -DforkCount=0 \
-                -Daws.crt.memory.tracing=2 \
-                -Daws.crt.debugnative=true \
-                -Daws.crt.localhost=true"):
-                # Failed
-                actions.append("exit 1")
+        if os.system("mvn -Dtest=Http2ClientLocalHostTest test -DredirectTestOutputToFile=true -DforkCount=0 \
+            -Daws.crt.memory.tracing=2 \
+            -Daws.crt.debugnative=true \
+            -Daws.crt.localhost=true"):
+            # Failed
+            actions.append("exit 1")
 
         return Builder.Script(actions, name='aws-crt-java-test')

@@ -132,7 +132,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testParallelRequestsStress() throws Exception {
         skipIfLocalhostUnavailable();
         URI uri = new URI("https://localhost:8443/echo");
-        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, 50)) {
             int numberToAcquire = 500 * 100;
 
             Http2Request request = createHttp2Request("GET", uri, 0);
@@ -178,17 +178,8 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
     public void testParallelRequestsStressWithBody() throws Exception {
         skipIfLocalhostUnavailable();
         URI uri = new URI("https://localhost:8443/uploadTest");
-        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, 50)) {
             int numberToAcquire = 500 * 100;
-            if (CRT.getOSIdentifier() == "linux") {
-                /*
-                 * Using Python hyper h2 server frame work, met a weird upload performance issue
-                 * on Linux. Our client against nginx platform has not met the same issue.
-                 * We assume it's because the server framework implementation.
-                 * Use lower number of linux
-                 */
-                numberToAcquire = 500;
-            }
             int bodyLength = 2000;
 
             List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();

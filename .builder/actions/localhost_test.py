@@ -12,7 +12,6 @@ class LocalhostTest(Builder.Action):
             if os.system("mvn -Dtest=Http2ClientLocalHostTest test -DredirectTestOutputToFile=true -DforkCount=0 \
                 -Daws.crt.memory.tracing=2 \
                 -Daws.crt.debugnative=true \
-                -Daws.crt.log.level=Debug \
                 -Daws.crt.localhost=true"):
                 # Failed
                 actions.append("exit 1")

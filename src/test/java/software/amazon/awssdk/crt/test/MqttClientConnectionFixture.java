@@ -40,6 +40,8 @@ class MissingCredentialsException extends RuntimeException {
 
 public class MqttClientConnectionFixture extends CrtTestFixture {
 
+    static final boolean IS_CI = System.getProperty("aws.crt.ci") != null;
+
     MqttClientConnection connection = null;
     private boolean disconnecting = false;
 
@@ -113,6 +115,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         } catch (InvalidPathException ex) {
             return false;
         } catch (MissingCredentialsException ex) {
+            if (IS_CI) {
+                throw ex;
+            }
             return false;
         } catch (IOException ex) {
             return false;

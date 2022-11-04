@@ -2,17 +2,33 @@
 import Builder
 import sys
 import os
-
+import tempfile
 
 class AWSCrtJavaTest(Builder.Action):
+
+    def _write_secret_to_temp_file(self, env, secret_name):
+        secret_value = env.shell.get_secret(secret_name)
+
+        temp_file = tempfile.NamedTemporaryFile()
+        temp_file.write(str.encode(secret_value))
+        temp_file.flush()
+
+        return temp_file
 
     def run(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
 
-        all_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
-            -DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true")
+        endpoint = env.shell.get_secret("unit-test/endpoint")
+
+        with self._write_secret_to_temp_file(env, "unit-test/rootca") as root_ca_file, self._write_secret_to_temp_file(env, "unit-test/certificate") as cert_file, self._write_secret_to_temp_file(env, "unit-test/privatekey") as key_file:
+
+            test_command = "mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
+                "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
+                "-Dendpoint={} -Dcertificate={} -Dprivatekey={} -Drootca={}".format(endpoint, cert_file.name, key_file.name, root_ca_file.name)
+
+            all_test_result = os.system(test_command)
 
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         shutdown_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \

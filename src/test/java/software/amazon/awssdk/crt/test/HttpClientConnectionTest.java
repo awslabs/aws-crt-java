@@ -14,6 +14,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
+import software.amazon.awssdk.crt.http.HttpException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -23,6 +24,9 @@ import software.amazon.awssdk.crt.io.TlsContext;
 
 import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class HttpClientConnectionTest extends HttpClientTestFixture {
 
@@ -133,5 +137,16 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
         }
+    }
+
+    @Test
+    public void testRetryableErrorCheck() {
+        // AWS_ERROR_HTTP_HEADER_NOT_FOUND should not be retryable
+        HttpException exception = new HttpException(0x0801);
+        assertFalse(HttpClientConnection.isErrorRetryable(exception));
+
+        // AWS_ERROR_HTTP_CONNECTION_CLOSED should be retryable
+        exception = new HttpException(0x080a);
+        assertTrue(HttpClientConnection.isErrorRetryable(exception));
     }
 }

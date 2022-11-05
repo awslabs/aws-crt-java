@@ -128,6 +128,17 @@ public class HttpClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Returns true if the error that generated exception is retryable,
+     * returns false otherwise.
+     */
+    public static boolean isErrorRetryable(HttpException exception) {
+        // why take an exception rather than an error code directly?
+        // to give us breathing room for changing our mind later about how we convey
+        // retry information on the exceptions we throw.
+        return isErrorRetryable(exception.getErrorCode());
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -140,4 +151,6 @@ public class HttpClientConnection extends CrtResource {
 
     private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
     private static native short httpClientConnectionGetVersion(long connectionBinding) throws CrtRuntimeException;
+
+    private static native boolean isErrorRetryable(int errorCode);
 }

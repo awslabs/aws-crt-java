@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.s3;
 
 public class S3FinishedResponseContext {
@@ -27,7 +31,7 @@ public class S3FinishedResponseContext {
     }
 
     /*
-     * If the request didn't receive a response due to a connection 
+     * If the request didn't receive a response due to a connection
      * failure or some othe issue the response status will be 0.
      */
     public int getResponseStatus () {

@@ -695,6 +695,35 @@ JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnecti
     }
     return (jshort)aws_http_connection_get_version(native_conn);
 }
+
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_isErrorRetryable(
+    JNIEnv *env,
+    jclass jni_class,
+    jint error_code) {
+
+    (void)jni_class;
+    (void)env;
+
+    switch (error_code) {
+        case AWS_ERROR_HTTP_HEADER_NOT_FOUND:
+        case AWS_ERROR_HTTP_INVALID_HEADER_FIELD:
+        case AWS_ERROR_HTTP_INVALID_HEADER_NAME:
+        case AWS_ERROR_HTTP_INVALID_HEADER_VALUE:
+        case AWS_ERROR_HTTP_INVALID_METHOD:
+        case AWS_ERROR_HTTP_INVALID_PATH:
+        case AWS_ERROR_HTTP_INVALID_STATUS_CODE:
+        case AWS_ERROR_HTTP_MISSING_BODY_STREAM:
+        case AWS_ERROR_HTTP_INVALID_BODY_STREAM:
+        case AWS_ERROR_HTTP_OUTGOING_STREAM_LENGTH_INCORRECT:
+        case AWS_ERROR_HTTP_CALLBACK_FAILURE:
+        case AWS_ERROR_HTTP_STREAM_MANAGER_SHUTTING_DOWN:
+        case AWS_HTTP2_ERR_CANCEL:
+            return false;
+        default:
+            return true;
+    }
+}
+
 struct aws_http2_callback_data {
     JavaVM *jvm;
     jobject async_callback;

@@ -23,6 +23,10 @@ import java.util.function.Consumer;
 
 /**
  * Configuration for the creation of Mqtt5Clients
+ *
+ * !! Developer Preview !! - This class is currently in developer preview.
+ * The interface is not guaranteed to be stable yet.
+ * Please report any issues or make suggestions in https://github.com/awslabs/aws-crt-java/issues
  */
 public class Mqtt5ClientOptions {
 
@@ -547,6 +551,10 @@ public class Mqtt5ClientOptions {
     /**
      * All of the options for a Mqtt5Client. This includes the settings to make a connection, as well as the
      * event callbacks, publish callbacks, and more.
+     *
+     * !! Developer Preview !! - This class is currently in developer preview.
+     * The interface is not guaranteed to be stable yet.
+     * Please report any issues or make suggestions in https://github.com/awslabs/aws-crt-java/issues
      */
     static final public class Mqtt5ClientOptionsBuilder {
 

@@ -29,6 +29,10 @@ import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuild
  * via the AWS Common Runtime
  *
  * One Mqtt5Client class creates one connection.
+ *
+ * !! Developer Preview !! - This class is currently in developer preview.
+ * The interface is not guaranteed to be stable yet.
+ * Please report any issues or make suggestions in https://github.com/awslabs/aws-crt-java/issues
  */
 public class Mqtt5Client extends CrtResource {
 

@@ -104,7 +104,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
                 ctx.iotClientCertificate = Files.readAllBytes(pathToCert);
             }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientECCCertificate == null) {
+            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccCertificate == null) {
                 pathToCert = TEST_ECC_CERTIFICATE != null? Paths.get(TEST_ECC_CERTIFICATE) : null;
                 if (pathToCert == null || pathToCert.toString().equals("")) {
                     throw new MissingCredentialsException("Certificate not provided");
@@ -112,7 +112,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 if (!pathToCert.toFile().exists()) {
                     throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
                 }
-                ctx.iotClientECCCertificate = Files.readAllBytes(pathToCert);
+                ctx.iotClientEccCertificate = Files.readAllBytes(pathToCert);
             }
 
             if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientPrivateKey == null) {
@@ -125,7 +125,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
                 ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
             }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientECCPrivateKey == null) {
+            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccPrivateKey == null) {
                 pathToKey = TEST_ECC_PRIVATEKEY != null? Paths.get(TEST_ECC_PRIVATEKEY) : null;
                 if (pathToKey == null || pathToKey.toString().equals("")) {
                     throw new MissingCredentialsException("Private key not provided");
@@ -133,13 +133,13 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 if (!pathToKey.toFile().exists()) {
                     throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
                 }
-                ctx.iotClientECCPrivateKey = Files.readAllBytes(pathToKey);
+                ctx.iotClientEccPrivateKey = Files.readAllBytes(pathToKey);
             }
 
             if( key_type == AUTH_KEY_TYPE.ECC)
             {
-                certificatePem = new String(ctx.iotClientECCCertificate);
-                privateKeyPem = new String(ctx.iotClientECCPrivateKey);
+                certificatePem = new String(ctx.iotClientEccCertificate);
+                privateKeyPem = new String(ctx.iotClientEccPrivateKey);
             }
             else if(key_type == AUTH_KEY_TYPE.RSA)
             {

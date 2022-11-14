@@ -41,8 +41,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
-        <cmake.s2nNoPq>OFF</cmake.s2nNoPq>
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
+        <crt.surefire.version>2.21.0</crt.surefire.version>
     </properties>
 
     <profiles>
@@ -140,16 +140,12 @@
             </properties>
         </profile>
         <profile>
-            <id>s2n-no-pq</id>
-            <activation>
-                <property>
-                    <name>s2n.nopq</name>
-                </property>
-            </activation>
+            <id>alpine</id>
             <properties>
-                <cmake.s2nNoPq>ON</cmake.s2nNoPq>
+                <crt.surefire.version>3.0.0-M4</crt.surefire.version>
             </properties>
         </profile>
+
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>
@@ -188,7 +184,6 @@
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
                                         <argument>${cmake.osx_arch}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
-                                        <argument>-DS2N_NO_PQ=${cmake.s2nNoPq}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
                                         <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
@@ -415,7 +410,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M4</version>
+                <version>${crt.surefire.version}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <certificate>${crt.test.certificate}</certificate>

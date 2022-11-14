@@ -36,6 +36,9 @@
         "alpine": {
             "packages": [
                 "openjdk8"
+            ],
+            "!build_steps": [
+                "mvn -P continuous-integration -P alpine -B compile"
             ]
         }
     },

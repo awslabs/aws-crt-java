@@ -47,13 +47,15 @@
                 "{source_dir}/gradlew :s3-native-client:build -x test",
                 "mvn -P continuous-integration -B compile"
             ],
-            "!test_steps": [
-                "aws-crt-java-test"
-            ],
             "hosts": {
                 "alpine": {
                     "!build_steps": [
                         "mvn -P continuous-integration -P alpine -B compile"
+                    ]
+                },
+                "raspbian": {
+                    "!build_steps": [
+                        "mvn -P continuous-integration -B compile"
                     ]
                 }
             }

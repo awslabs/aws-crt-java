@@ -55,7 +55,13 @@
                 },
                 "raspbian": {
                     "!build_steps": [
-                        "mvn -P continuous-integration -B compile"
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
                     ]
                 }
             }

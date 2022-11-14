@@ -415,6 +415,8 @@
                     <systemPropertyVariables>
                         <certificate>${crt.test.certificate}</certificate>
                         <privatekey>${crt.test.privatekey}</privatekey>
+                        <ecc_certificate>${crt.test.ecc_certificate}</ecc_certificate>
+                        <ecc_privatekey>${crt.test.ecc_privatekey}</ecc_privatekey>
                         <endpoint>${crt.test.endpoint}</endpoint>
                         <rootca>${crt.test.rootca}</rootca>
                         <privatekey_p8>${crt.test.privatekey_p8}</privatekey_p8>

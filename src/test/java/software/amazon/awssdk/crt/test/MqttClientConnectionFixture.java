@@ -48,6 +48,8 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String TEST_ENDPOINT = System.getProperty("endpoint");
     static final String TEST_CERTIFICATE = System.getProperty("certificate");
     static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
+    static final String TEST_ECC_CERTIFICATE = System.getProperty("ecc_certificate");
+    static final String TEST_ECC_PRIVATEKEY = System.getProperty("ecc_privatekey");
     static final String TEST_ROOTCA = System.getProperty("rootca");
     static final short TEST_PORT = 8883;
     static final short TEST_PORT_ALPN = 443;
@@ -62,13 +64,18 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     String caRoot = null;
     String iotEndpoint = null;
 
+    enum AUTH_KEY_TYPE {
+        RSA,
+        ECC
+    }
+
     Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
 
     protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
         this.connectionConfigTransformer = connectionConfigTransformer;
     }
 
-    private boolean findCredentials() {
+    private boolean findCredentials(AUTH_KEY_TYPE key_type) {
         CrtTestContext ctx = getContext();
 
         // For each parameter, check the context first, then check the file system/system properties
@@ -87,7 +94,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             }
             iotEndpoint = ctx.iotEndpoint;
 
-            if (ctx.iotClientCertificate == null) {
+            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientCertificate == null) {
                 pathToCert = TEST_CERTIFICATE != null? Paths.get(TEST_CERTIFICATE) : null;
                 if (pathToCert == null || pathToCert.toString().equals("")) {
                     throw new MissingCredentialsException("Certificate not provided");
@@ -97,10 +104,19 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
                 ctx.iotClientCertificate = Files.readAllBytes(pathToCert);
             }
-            certificatePem = new String(ctx.iotClientCertificate);
+            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccCertificate == null) {
+                pathToCert = TEST_ECC_CERTIFICATE != null? Paths.get(TEST_ECC_CERTIFICATE) : null;
+                if (pathToCert == null || pathToCert.toString().equals("")) {
+                    throw new MissingCredentialsException("Certificate not provided");
+                }
+                if (!pathToCert.toFile().exists()) {
+                    throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
+                }
+                ctx.iotClientEccCertificate = Files.readAllBytes(pathToCert);
+            }
 
-            if (ctx.iotClientPrivateKey == null) {
-                pathToKey = TEST_PRIVATEKEY != null ? Paths.get(TEST_PRIVATEKEY) : null;
+            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientPrivateKey == null) {
+                pathToKey = TEST_PRIVATEKEY != null? Paths.get(TEST_PRIVATEKEY) : null;
                 if (pathToKey == null || pathToKey.toString().equals("")) {
                     throw new MissingCredentialsException("Private key not provided");
                 }
@@ -109,7 +125,27 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
                 ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
             }
-            privateKeyPem = new String(ctx.iotClientPrivateKey);
+            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccPrivateKey == null) {
+                pathToKey = TEST_ECC_PRIVATEKEY != null? Paths.get(TEST_ECC_PRIVATEKEY) : null;
+                if (pathToKey == null || pathToKey.toString().equals("")) {
+                    throw new MissingCredentialsException("Private key not provided");
+                }
+                if (!pathToKey.toFile().exists()) {
+                    throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
+                }
+                ctx.iotClientEccPrivateKey = Files.readAllBytes(pathToKey);
+            }
+
+            if( key_type == AUTH_KEY_TYPE.ECC)
+            {
+                certificatePem = new String(ctx.iotClientEccCertificate);
+                privateKeyPem = new String(ctx.iotClientEccPrivateKey);
+            }
+            else if(key_type == AUTH_KEY_TYPE.RSA)
+            {
+                certificatePem = new String(ctx.iotClientCertificate);
+                privateKeyPem = new String(ctx.iotClientPrivateKey);
+            }
 
             return true;
         } catch (InvalidPathException ex) {
@@ -147,9 +183,12 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null);
     }
 
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler) {
-        Assume.assumeTrue(findCredentials());
+    boolean connectECC() {
+        return connectWithKeyType(false, 0, 0, null, AUTH_KEY_TYPE.ECC);
+    }
 
+    boolean connectDirect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
+    {
         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
             @Override
             public void onConnectionResumed(boolean sessionPresent) {
@@ -210,6 +249,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             fail("Exception during connect: " + ex.toString());
         }
         return false;
+    }
+
+    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
+    {
+        Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
+        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
+    }
+
+    boolean connectWithKeyType(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type) {
+        Assume.assumeTrue(findCredentials(type));
+        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
     }
 
     void disconnect() {

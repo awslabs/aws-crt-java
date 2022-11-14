@@ -34,7 +34,7 @@ class AWSCrtJavaTest(Builder.Action):
 
             test_command = "mvn -P continuous-integration {} -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
                 "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
-                "-Dendpoint={} -Dcertificate={} -Dprivatekey={} -Drootca={} -Decc_certificate={} -Decc_privatekey={}".format(endpoint, \
+                "-Dendpoint={} -Dcertificate={} -Dprivatekey={} -Drootca={} -Decc_certificate={} -Decc_privatekey={}".format(additional_profiles, endpoint, \
                 cert_file.name, key_file.name, root_ca_file.name, ecc_cert_file.name, ecc_key_file.name)
 
             all_test_result = os.system(test_command)

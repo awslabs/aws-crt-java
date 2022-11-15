@@ -358,11 +358,13 @@ public final class TlsContextOptions extends CrtResource {
 
     /**
      * Helper which creates mutual TLS (mTLS) options using a certificate and private key
-     * stored in a Java keystore. Will fail if there is no certificate and key at the given certificate alias.
+     * stored in a Java keystore.
+     * Will throw an exception if there is no certificate and key at the given certificate alias, or there is some other
+     * error accessing or using the passed-in Java keystore.
      *
-     * Note: function assumes the passed keystore has already been loaded from a file by calling "keystore.load()" or similar"
+     * Note: function assumes the passed keystore has already been loaded from a file by calling "keystore.load()" or similar.
      *
-     * @param keyStore The Java keystore to use. Assumed to be loaded with certificates and keys
+     * @param keyStore The Java keystore to use. Assumed to be loaded with the desired certificate and key
      * @param certificateAlias The alias of the certificate and key to use.
      * @param certificatePassword The password of the certificate and key to use.
      * @throws CrtRuntimeException if an error occurs, like the keystore cannot be opened or the certificate is not found.

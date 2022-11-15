@@ -356,6 +356,53 @@ public final class TlsContextOptions extends CrtResource {
         return options;
     }
 
+    /**
+     * Helper which creates mutual TLS (mTLS) options using a certificate and private key
+     * stored in a Java keystore. Will fail if there is no certificate and key at the given certificate alias.
+     *
+     * Note: function assumes the passed keystore has already been loaded from a file by calling "keystore.load()" or similar"
+     *
+     * @param keyStore The Java keystore to use. Assumed to be loaded with certificates and keys
+     * @param certificateAlias The alias of the certificate and key to use.
+     * @param certificatePassword The password of the certificate and key to use.
+     * @throws CrtRuntimeException if an error occurs, like the keystore cannot be opened or the certificate is not found.
+     * @return A set of options for setting up an mTLS connection
+     */
+    public static TlsContextOptions createWithMtlsJavaKeystore(
+        java.security.KeyStore keyStore, String certificateAlias, String certificatePassword) {
+
+        TlsContextOptions options = new TlsContextOptions();
+        String certificate;
+        try {
+            java.security.cert.Certificate certificateData = keyStore.getCertificate(certificateAlias);
+            if (certificateData == null) {
+                throw new CrtRuntimeException("Certificate at given certificate alias is empty");
+            }
+            certificate = "-----BEGIN CERTIFICATE-----\n" +
+                          java.util.Base64.getEncoder().encodeToString(certificateData.getEncoded()) +
+                          "-----END CERTIFICATE-----\n";
+        } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
+            throw new CrtRuntimeException("Could not get certificate from Java keystore");
+        }
+        String privateKey;
+        try {
+            java.security.Key keyData = keyStore.getKey(certificateAlias, certificatePassword.toCharArray());
+            if (keyData == null) {
+                throw new CrtRuntimeException("Private key at given certificate alias is empty");
+            }
+            privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" +
+                         java.util.Base64.getEncoder().encodeToString(keyData.getEncoded()) +
+                         "-----END RSA PRIVATE KEY-----\n";
+        } catch (java.security.KeyStoreException | java.security.NoSuchAlgorithmException ex) {
+            throw new CrtRuntimeException("Could not get key from Java keystore");
+        } catch (java.security.UnrecoverableKeyException ex) {
+            throw new CrtRuntimeException("Could not get key from Java keystore due to key being unrecoverable");
+        }
+        options.initMtls(certificate, privateKey);
+        options.verifyPeer = true;
+        return options;
+    }
+
     /*******************************************************************************
      * .with() methods
      ******************************************************************************/

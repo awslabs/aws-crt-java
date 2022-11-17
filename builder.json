@@ -63,6 +63,9 @@
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
+                },
+                "openwrt": {
+                    "!packages": []
                 }
             }
         },

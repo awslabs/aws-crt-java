@@ -32,16 +32,15 @@ class AWSCrtJavaTest(Builder.Action):
         self._write_secret_to_temp_file(env, "unit-test/privatekey") as key_file, self._write_secret_to_temp_file(env, "ecc-test/certificate") as ecc_cert_file, \
         self._write_secret_to_temp_file(env, "ecc-test/privatekey") as ecc_key_file:
 
-            test_command = "mvn -P continuous-integration {} -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
+            test_command = f"mvn -P continuous-integration {additional_profiles} -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
                 "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
-                "-Dendpoint={} -Dcertificate={} -Dprivatekey={} -Drootca={} -Decc_certificate={} -Decc_privatekey={}".format(additional_profiles, endpoint, \
-                cert_file.name, key_file.name, root_ca_file.name, ecc_cert_file.name, ecc_key_file.name)
+                "-Dendpoint={endpoint} -Dcertificate={cert_file.name} -Dprivatekey={key_file.name} -Drootca={root_ca_file.name} -Decc_certificate={ecc_cert_file.name} -Decc_privatekey={ecc_key_file.name}"
 
             all_test_result = os.system(test_command)
 
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        shutdown_test_result = os.system("mvn -P continuous-integration {} -B test -DredirectTestOutputToFile=true -DreuseForks=false \
-            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest".format(additional_profiles))
+        shutdown_test_result = os.system(f"mvn -P continuous-integration {additional_profiles} -B test -DredirectTestOutputToFile=true -DreuseForks=false \
+            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest")
 
         if shutdown_test_result or all_test_result:
             # Failed

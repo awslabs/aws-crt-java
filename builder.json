@@ -51,6 +51,10 @@
                 "alpine": {
                     "!build_steps": [
                         "mvn -P continuous-integration -P alpine -B compile"
+                    ],
+                    "!test_steps": [
+                        "crt-ci-prep",
+                        "aws-crt-java-test"
                     ]
                 },
                 "raspbian": {

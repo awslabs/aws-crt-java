@@ -30,20 +30,30 @@ public class StringUtils {
     private final static char[] BASE64_VALID_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
     public static String simpleBase64Encode(byte[] data) {
 
+        // Empty array? Return an empty string
+        if (data.length == 0) {
+            return new String();
+        }
+
         String result = "";
         // Base64 REQUIRES each data block be 24 bits in length. This means that if the data we want to encode
         // is too short, we need to add some special padding to it.
         String padding_string = "";
         int length_remainder = data.length % 3;
-        byte[] data_padded = new byte[data.length + (3 - length_remainder)];
-        System.arraycopy(data, 0, data_padded, 0, data.length);
+        byte[] data_padded;
 
         // Add the proper amount of padding to the padding string and set the data in the data_padded array.
         if (length_remainder > 0) {
+            // Make extra room for padding. Not ideal to do a copy, but we cannot just append to an already made array
+            data_padded = new byte[data.length + (3 - length_remainder)];
+            System.arraycopy(data, 0, data_padded, 0, data.length);
+
             for (; length_remainder < 3; length_remainder++) {
                 padding_string += "=";
-                data_padded[(data.length-1) + length_remainder] = '\0';
+                data_padded[(data.length-1) + padding_string.length()] = '\0';
             }
+        } else {
+            data_padded = data;
         }
 
         // Variables we will use and override as we go through the data in the byte[] array

@@ -380,7 +380,7 @@ public final class TlsContextOptions extends CrtResource {
             if (certificateData == null) {
                 throw new CrtRuntimeException("Certificate at given certificate alias is empty");
             }
-            String certificateString = StringUtils.simpleBase64ToString(certificateData.getEncoded());
+            String certificateString = StringUtils.simpleBase64Encode(certificateData.getEncoded());
             certificate = "-----BEGIN CERTIFICATE-----\n" + certificateString + "-----END CERTIFICATE-----\n";
         } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
             throw new CrtRuntimeException("Could not get certificate from Java keystore");
@@ -391,7 +391,7 @@ public final class TlsContextOptions extends CrtResource {
             if (keyData == null) {
                 throw new CrtRuntimeException("Private key at given certificate alias is empty");
             }
-            String keyString = StringUtils.simpleBase64ToString(keyData.getEncoded());
+            String keyString = StringUtils.simpleBase64Encode(keyData.getEncoded());
             privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" + keyString + "-----END RSA PRIVATE KEY-----\n";
         } catch (java.security.KeyStoreException | java.security.NoSuchAlgorithmException ex) {
             throw new CrtRuntimeException("Could not get key from Java keystore");

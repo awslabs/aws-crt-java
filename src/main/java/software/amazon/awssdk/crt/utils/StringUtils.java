@@ -25,30 +25,46 @@ public class StringUtils {
     }
 
     /**
-     * Decode Base64 byte[] array into a String in pure Java for Android and Java 7+ support.
-     * Based on: https://stackoverflow.com/a/4265472
-    */
-    private final static char[] BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
-    public static String simpleBase64ToString(byte[] buf){
-        int size = buf.length;
-        char[] ar = new char[((size + 2) / 3) * 4];
-        int a = 0;
-        int i=0;
-        while(i < size){
-            byte b0 = buf[i++];
-            byte b1 = (i < size) ? buf[i++] : 0;
-            byte b2 = (i < size) ? buf[i++] : 0;
+     * Encode a byte[] array into a Base64 String in pure Java
+     */
+    private final static char[] BASE64_VALID_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
+    public static String simpleBase64Encode(byte[] data) {
 
-            int mask = 0x3F;
-            ar[a++] = BASE64_ALPHABET[(b0 >> 2) & mask];
-            ar[a++] = BASE64_ALPHABET[((b0 << 4) | ((b1 & 0xFF) >> 4)) & mask];
-            ar[a++] = BASE64_ALPHABET[((b1 << 2) | ((b2 & 0xFF) >> 6)) & mask];
-            ar[a++] = BASE64_ALPHABET[b2 & mask];
+        String result = "";
+        // Base64 REQUIRES each data block be 24 bits in length. This means that if the data we want to encode
+        // is too short, we need to add some special padding to it.
+        String padding_string = "";
+        int length_remainder = data.length % 3;
+        byte[] data_padded = new byte[data.length + (3 - length_remainder)];
+        System.arraycopy(data, 0, data_padded, 0, data.length);
+
+        // Add the proper amount of padding to the padding string and set the data in the data_padded array.
+        if (length_remainder > 0) {
+            for (; length_remainder < 3; length_remainder++) {
+                padding_string += "=";
+                data_padded[(data.length-1) + length_remainder] = '\0';
+            }
         }
-        switch(size % 3){
-            case 1: ar[--a]  = '=';
-            case 2: ar[--a]  = '=';
+
+        // Variables we will use and override as we go through the data in the byte[] array
+        int character = 0;
+        int mask_offset = 63;
+        int byte_offset = 255;
+        byte byte_1 = 0;
+        byte byte_2 = 0;
+        byte byte_3 = 0;
+
+        for (character = 0; character < data_padded.length; character += 3) {
+            byte_1 = data_padded[character];
+            byte_2 = data_padded[character+1];
+            byte_3 = data_padded[character+2];
+            result += BASE64_VALID_CHARACTERS[(byte_1 >> 2) & mask_offset];
+            result += BASE64_VALID_CHARACTERS[((byte_1 << 4) | ((byte_2 & byte_offset) >> 4)) & mask_offset];
+            result += BASE64_VALID_CHARACTERS[((byte_2 << 2) | ((byte_3 & byte_offset) >> 6)) & mask_offset];
+            result += BASE64_VALID_CHARACTERS[byte_3 & mask_offset];
         }
-        return new String(ar);
+        // The data we added for padding purposes ('\0') is not part of the data we were given and so we need to remove it.
+        // We can replace it with '=', which is a special character in Base64 that tells Base64 decoders this is simply padding.
+        return result.substring(0, result.length() - padding_string.length()) + padding_string;
     }
 }

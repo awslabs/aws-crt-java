@@ -4,11 +4,10 @@
  */
 #include <jni.h>
 
-#include <aws/common/string.h>
 #include <aws/common/encoding.h>
+#include <aws/common/string.h>
 
 #include "crt.h"
-
 
 JNIEXPORT
 jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtilsBase64Encode(

@@ -140,7 +140,7 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  osx:
+  osx:  # With integration tests
     runs-on: macos-11 # latest
     steps:
       - name: Checkout Sources
@@ -151,10 +151,7 @@ jobs:
         run: |
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream -cmake-extra=-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
-      - name: verify backward compatibility
-        run: |
-          python3 codebuild/macos_compatibility_check.py
+          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   osx-arm64:
     runs-on: macos-11 # latest
@@ -170,6 +167,19 @@ jobs:
         run: |
           python3 codebuild/macos_compatibility_check.py armv8
 
+  osx-x64:
+    runs-on: macos-11
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          mvn -B compile -P mac-x64
+      - name: verify backward compatibility
+        run: |
+          python3 codebuild/macos_compatibility_check.py
 
   android:
     name: Android

@@ -152,7 +152,8 @@ jobs:
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
       - name: verify backward compatibility
-          if: ${{(otool -l target/classes/osx/x86_64/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds) == '10.9'}}
+        run: |
+          python3 codebuild/macos_compatibility_check.py
 
   osx-arm64:
     runs-on: macos-11 # latest
@@ -165,8 +166,8 @@ jobs:
         run: |
           mvn -B compile -P mac-arm64
       - name: verify backward compatibility
-          # The oldest version we can target on arm64 is 11
-          if: ${{(otool -l target/classes/osx/armv8/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds) == '11.0'}}
+        run: |
+          python3 codebuild/macos_compatibility_check.py
 
 
   android:

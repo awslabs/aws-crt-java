@@ -380,7 +380,7 @@ public final class TlsContextOptions extends CrtResource {
             if (certificateData == null) {
                 throw new CrtRuntimeException("Certificate at given certificate alias does not exist or does not contain a certificate");
             }
-            String certificateString = StringUtils.simpleBase64Encode(certificateData.getEncoded());
+            String certificateString = new String(StringUtils.base64Encode(certificateData.getEncoded()));
             certificate = "-----BEGIN CERTIFICATE-----\n" + certificateString + "-----END CERTIFICATE-----\n";
         } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
             throw new RuntimeException(ex);
@@ -391,7 +391,7 @@ public final class TlsContextOptions extends CrtResource {
             if (keyData == null) {
                 throw new CrtRuntimeException("Private key at given certificate alias does not exist or does not identify a key-related entity");
             }
-            String keyString = StringUtils.simpleBase64Encode(keyData.getEncoded());
+            String keyString = new String(StringUtils.base64Encode(keyData.getEncoded()));
             privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" + keyString + "-----END RSA PRIVATE KEY-----\n";
         } catch (java.security.KeyStoreException | java.security.NoSuchAlgorithmException | java.security.UnrecoverableKeyException ex) {
             throw new RuntimeException(ex);

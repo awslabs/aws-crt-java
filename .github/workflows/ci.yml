@@ -168,7 +168,7 @@ jobs:
           mvn -B compile -P mac-arm64
       - name: verify backward compatibility
         run: |
-          python3 codebuild/macos_compatibility_check.py
+          python3 codebuild/macos_compatibility_check.py armv8
 
 
   android:

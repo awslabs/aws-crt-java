@@ -31,7 +31,7 @@ def main():
     result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
     if result != supported_version:
         # Failed
-        print("Failed the compatibility validation on MacOS architecture {}, expected {} and built {}".format(supported_version, arch))
+        print("Failed the compatibility validation on MacOS architecture {}, expected {} and built {}".format(arch, supported_version, result))
         sys.exit(1)
 
     print("Pass the compatibility validation on MacOS architecture {} with min supported os version '{}'".format(arch,result))

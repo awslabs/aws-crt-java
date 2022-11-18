@@ -26,12 +26,13 @@ def main():
         supported_version = "11.0"
 
     otool_cmd = "otool -l target/classes/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
-    result = subprocess.check_output(otool_cmd, shell=True)
-    if result.decode("utf-8") != supported_version:
+    result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
+    if result != supported_version:
         # Failed
-        sys.exit(False)
+        print()
+        sys.exit(1)
 
-    sys.exit(True)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

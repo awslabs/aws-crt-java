@@ -24,20 +24,24 @@ public class StringUtils {
         return sb.toString();
     }
 
-    /**
-     * Encode a byte[] array into a Base64 byte[] array
-     */
+     /**
+      * Encode a byte array into a Base64 byte array.
+      * @param data The byte array to encode
+      * @return The byte array encoded as Byte64
+      */
     public static byte[] base64Encode(byte[] data) {
         return stringUtilsBase64Encode(data);
     }
 
-    /**
-     * Encode a byte[] array into a Base64 byte[] array
-     */
+     /**
+      * Decode a Base64 byte array into a non-Base64 byte array.
+      * @param data The byte array to decode.
+      * @return Byte array decoded from Base64.
+      */
     public static byte[] base64Decode(byte[] data) {
         return stringUtilsBase64Decode(data);
     }
 
-    public static native byte[] stringUtilsBase64Encode(byte[] data_to_encode);
+    private static native byte[] stringUtilsBase64Encode(byte[] data_to_encode);
     private static native byte[] stringUtilsBase64Decode(byte[] data_to_decode);
 }

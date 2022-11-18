@@ -25,13 +25,16 @@ def main():
         # The oldest version we can target on arm64 is 11.0
         supported_version = "11.0"
 
+    print("Start to validate the build binary for MacOS with architecture {}, expected min os version: {}".format(arch,supported_version))
+
     otool_cmd = "otool -l target/classes/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
     result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
     if result != supported_version:
         # Failed
-        print()
+        print("Failed the compatibility validation on MacOS architecture {}, expected {} and built {}".format(supported_version, arch))
         sys.exit(1)
 
+    print("Pass the compatibility validation on MacOS architecture {} with min supported os version '{}'".format(arch,result))
     sys.exit(0)
 
 if __name__ == "__main__":

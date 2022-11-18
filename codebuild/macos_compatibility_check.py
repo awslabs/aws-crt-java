@@ -13,7 +13,7 @@ def main():
     supported_version = "10.9"
     arch = "x86_64"
 
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         # Parsing the macos archtecture
         arch = sys.argv[1]
     else:

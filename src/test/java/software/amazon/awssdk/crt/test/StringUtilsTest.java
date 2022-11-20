@@ -1,12 +1,14 @@
 package software.amazon.awssdk.crt.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.StringUtils;
 
 
@@ -27,28 +29,8 @@ public class StringUtilsTest extends CrtTestFixture {
     }
 
     @Test
-    public void testBase64EncodeCaseF() {
-        assertEquals("Zg==", new String(StringUtils.base64Encode("f".getBytes())));
-    }
-
-    @Test
-    public void testBase64EncodeCaseFo() {
-        assertEquals("Zm8=", new String(StringUtils.base64Encode("fo".getBytes())));
-    }
-
-    @Test
-    public void testBase64EncodeCaseFoo() {
-        assertEquals("Zm9v", new String(StringUtils.base64Encode("foo".getBytes())));
-    }
-
-    @Test
-    public void testBase64EncodeCaseFoob() {
-        assertEquals("Zm9vYg==", new String(StringUtils.base64Encode("foob".getBytes())));
-    }
-
-    @Test
-    public void testBase64EncodeCaseFooba() {
-        assertEquals("Zm9vYmE=", new String(StringUtils.base64Encode("fooba".getBytes())));
+    public void testBase64EncodeNull() {
+        assertEquals(null, StringUtils.base64Encode(null));
     }
 
     @Test
@@ -57,16 +39,13 @@ public class StringUtilsTest extends CrtTestFixture {
     }
 
     @Test
-    public void testBase64EncodeCase32bytes() {
-        assertEquals(
-            "dGhpcyBpcyBhIDMyIGJ5dGUgbG9uZyBzdHJpbmchISE=",
-            new String(StringUtils.base64Encode("this is a 32 byte long string!!!".getBytes())));
-    }
-
-    @Test
-    public void testBase64EncodeCaseZeros() {
-        byte[] data = new byte[6];
-        assertEquals("AAAAAAAA", new String(StringUtils.base64Encode(data)));
+    public void testBase64EncodeExtremelyLargeString() {
+        StringBuilder test_input = new StringBuilder();
+        for (int i = 0; i < 50000; i++) {
+            test_input.append('A');
+        }
+        byte[] output = StringUtils.base64Encode(test_input.toString().getBytes());
+        assertTrue(output != null);
     }
 
     @Test
@@ -90,28 +69,8 @@ public class StringUtilsTest extends CrtTestFixture {
     }
 
     @Test
-    public void testBase64DecodeCaseF() {
-        assertEquals("f", new String(StringUtils.base64Decode("Zg==".getBytes())));
-    }
-
-    @Test
-    public void testBase64DecodeCaseFo() {
-        assertEquals("fo", new String(StringUtils.base64Decode("Zm8=".getBytes())));
-    }
-
-    @Test
-    public void testBase64DecodeCaseFoo() {
-        assertEquals("foo", new String(StringUtils.base64Decode("Zm9v".getBytes())));
-    }
-
-    @Test
-    public void testBase64DecodeCaseFoob() {
-        assertEquals("foob", new String(StringUtils.base64Decode("Zm9vYg==".getBytes())));
-    }
-
-    @Test
-    public void testBase64DecodeCaseFooba() {
-        assertEquals("fooba", new String(StringUtils.base64Decode("Zm9vYmE=".getBytes())));
+    public void testBase64DecodeNull() {
+        assertEquals(null, StringUtils.base64Decode(null));
     }
 
     @Test
@@ -120,10 +79,13 @@ public class StringUtilsTest extends CrtTestFixture {
     }
 
     @Test
-    public void testBase64DecodeCase32bytes() {
-        assertEquals(
-            "this is a 32 byte long string!!!",
-            new String(StringUtils.base64Decode("dGhpcyBpcyBhIDMyIGJ5dGUgbG9uZyBzdHJpbmchISE=".getBytes())));
+    public void testBase64DecodeExtremelyLargeString() {
+        StringBuilder test_input = new StringBuilder();
+        for (int i = 0; i < 50000; i++) {
+            test_input.append('A');
+        }
+        byte[] output = StringUtils.base64Decode(test_input.toString().getBytes());
+        assertTrue(output != null);
     }
 
     @Test

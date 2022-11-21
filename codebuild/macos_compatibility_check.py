@@ -24,7 +24,7 @@ def main():
     #   version 10.9
     #       sdk 12.1
     # Load command 9
-    otool_cmd = "otool -L target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -A3 \'LC_VERSION_MIN_MACOSX\' | grep -E version | cut -f2 -ds | tr -d '[:space:]'".format(arch)
+    otool_cmd = "otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -A3 \'LC_VERSION_MIN_MACOSX\' | grep -E version | cut -f2 -ds | tr -d '[:space:]'".format(arch)
 
     if len(sys.argv) > 1:
         # Parsing the macos archtecture
@@ -38,7 +38,7 @@ def main():
         arch = "armv8"
         # The oldest version we can target on arm64 is 11.0
         supported_version = "11.0"
-        otool_cmd = "otool -L target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
+        otool_cmd = "otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
 
     print("Start to validate the build binary for MacOS with architecture {}, expected min os version: {}".format(arch,supported_version))
 

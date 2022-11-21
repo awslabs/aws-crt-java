@@ -1471,9 +1471,9 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
     mqtt5_client_options_properties.connack_timeout_ms_field_id = (*env)->GetFieldID(
         env, mqtt5_client_options_properties.client_options_class, "connackTimeoutMs", "Ljava/lang/Long;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.connack_timeout_ms_field_id);
-    mqtt5_client_options_properties.operation_timeout_seconds_field_id = (*env)->GetFieldID(
-        env, mqtt5_client_options_properties.client_options_class, "operationTimeoutSeconds", "Ljava/lang/Long;");
-    AWS_FATAL_ASSERT(mqtt5_client_options_properties.operation_timeout_seconds_field_id);
+    mqtt5_client_options_properties.ack_timeout_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "ackTimeoutSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.ack_timeout_seconds_field_id);
     mqtt5_client_options_properties.publish_events_field_id = (*env)->GetFieldID(
         env,
         mqtt5_client_options_properties.client_options_class,

@@ -46,7 +46,7 @@ public class Mqtt5ClientOptions {
     private Long minConnectedTimeToResetReconnectDelayMs;
     private Long pingTimeoutMs;
     private Long connackTimeoutMs;
-    private Long operationTimeoutSeconds;
+    private Long ackTimeoutSeconds;
     private LifecycleEvents lifecycleEvents;
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
@@ -225,8 +225,8 @@ public class Mqtt5ClientOptions {
      * @return the time interval to wait for an ack after sending a QoS 1+ PUBLISH, SUBSCRIBE, or UNSUBSCRIBE before
      * failing the operation.
      */
-    public Long getOperationTimeoutSeconds() {
-        return this.operationTimeoutSeconds;
+    public Long getAckTimeoutSeconds() {
+        return this.ackTimeoutSeconds;
     }
 
     /**
@@ -280,7 +280,7 @@ public class Mqtt5ClientOptions {
         this.minConnectedTimeToResetReconnectDelayMs = builder.minConnectedTimeToResetReconnectDelayMs;
         this.pingTimeoutMs = builder.pingTimeoutMs;
         this.connackTimeoutMs = builder.connackTimeoutMs;
-        this.operationTimeoutSeconds = builder.operationTimeoutSeconds;
+        this.ackTimeoutSeconds = builder.ackTimeoutSeconds;
         this.lifecycleEvents = builder.lifecycleEvents;
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
@@ -574,7 +574,7 @@ public class Mqtt5ClientOptions {
         private Long minConnectedTimeToResetReconnectDelayMs;
         private Long pingTimeoutMs;
         private Long connackTimeoutMs;
-        private Long operationTimeoutSeconds;
+        private Long ackTimeoutSeconds;
         private LifecycleEvents lifecycleEvents;
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
@@ -787,14 +787,14 @@ public class Mqtt5ClientOptions {
          * Sets the time interval to wait for an ack after sending a QoS 1+ PUBLISH, SUBSCRIBE, or UNSUBSCRIBE before
          * failing the operation.
          *
-         * @param operationTimeoutSeconds The time interval to wait for an ack after sending a QoS 1+ PUBLISH, SUBSCRIBE, or UNSUBSCRIBE before
+         * @param ackTimeoutSeconds The time interval to wait for an ack after sending a QoS 1+ PUBLISH, SUBSCRIBE, or UNSUBSCRIBE before
          * failing the operation.
          * @return The Mqtt5ClientOptionsBuilder after setting the timeout in milliseconds for getting an ACK packet
          * from the server when performing an operation
          */
-        public Mqtt5ClientOptionsBuilder withOperationTimeoutSeconds(Long operationTimeoutSeconds)
+        public Mqtt5ClientOptionsBuilder withAckTimeoutSeconds(Long ackTimeoutSeconds)
         {
-            this.operationTimeoutSeconds = operationTimeoutSeconds;
+            this.ackTimeoutSeconds = ackTimeoutSeconds;
             return this;
         }
 

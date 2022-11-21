@@ -611,7 +611,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID min_connected_time_to_reset_reconnect_delay_ms_field_id;
     jfieldID ping_timeout_ms_field_id;
     jfieldID connack_timeout_ms_field_id;
-    jfieldID operation_timeout_seconds_field_id;
+    jfieldID ack_timeout_seconds_field_id;
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
 };

@@ -266,7 +266,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
             .withMinReconnectDelayMs(1000L)
             .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-            .withOperationTimeoutSeconds(1000L)
+            .withAckTimeoutSeconds(1000L)
             .withPingTimeoutMs(1000L)
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
@@ -369,7 +369,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
             .withMinReconnectDelayMs(1000L)
             .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-            .withOperationTimeoutSeconds(1000L)
+            .withAckTimeoutSeconds(1000L)
             .withPingTimeoutMs(1000L)
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
@@ -589,7 +589,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
             .withMinReconnectDelayMs(1000L)
             .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-            .withOperationTimeoutSeconds(1000L)
+            .withAckTimeoutSeconds(1000L)
             .withPingTimeoutMs(1000L)
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
@@ -767,8 +767,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
-    /* Skipping ConnWS-UC4, websockets with Sigv4 signing, until we are testing against IoT Core */
-
     /* Websocket connection with HttpProxyOptions */
     /* TODO - get this test working in Codebuild CI */
     // @Test
@@ -876,7 +874,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
             .withMinReconnectDelayMs(1000L)
             .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-            .withOperationTimeoutSeconds(1000L)
+            .withAckTimeoutSeconds(1000L)
             .withPingTimeoutMs(1000L)
             .withPort(mqtt5WSMqttPort)
             .withPublishEvents(new PublishEvents() {

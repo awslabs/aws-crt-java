@@ -2545,20 +2545,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     }
     client_options.connack_timeout_ms = *pointer_connack_timeout;
 
-    uint32_t operation_timeout = 0;
-    uint32_t *pointer_operation_timeout = &client_options.operation_timeout_seconds;
+    uint32_t ack_timeout = 0;
+    uint32_t *pointer_ack_timeout = &client_options.ack_timeout_seconds;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
-            mqtt5_client_options_properties.operation_timeout_seconds_field_id,
+            mqtt5_client_options_properties.ack_timeout_seconds_field_id,
             s_client_string,
-            "Operation timeout",
-            &operation_timeout,
-            &pointer_operation_timeout,
+            "Ack timeout",
+            &ack_timeout,
+            &pointer_ack_timeout,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.operation_timeout_seconds = *pointer_operation_timeout;
+    client_options.ack_timeout_seconds = *pointer_ack_timeout;
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_client->jvm);
     if (jvmresult != 0) {

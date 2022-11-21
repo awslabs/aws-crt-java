@@ -26,6 +26,7 @@ jobs:
       matrix:
         image:
           - manylinux2014-x64
+          - manylinux2014-x86
           - al2-x64
           - fedora-34-x64
           - opensuse-leap

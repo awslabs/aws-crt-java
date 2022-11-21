@@ -27,6 +27,7 @@ def main():
 
     print("Start to validate the build binary for MacOS with architecture {}, expected min os version: {}".format(arch,supported_version))
 
+    os.system("otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib".format(arch))
     otool_cmd = "otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
     result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
     if result != supported_version:

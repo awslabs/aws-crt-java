@@ -7,7 +7,8 @@ import re
 def main():
     if sys.platform != 'darwin':
         print("WARNING: Not running on macos. Skip the compatibility validation.")
-        sys.exit(True)
+        # Exit quietly if run on a non-darwin machine.
+        sys.exit(0)
 
     # Default target macos version setup in pom.xml > ${cmake.min_osx_version}
     supported_version = "10.9"

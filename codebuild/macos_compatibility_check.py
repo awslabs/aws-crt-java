@@ -13,6 +13,19 @@ def main():
     supported_version = "10.9"
     arch = "x86_64"
 
+
+    # otool result has a different format between arm and x64
+    # for arm: we check for "minos"
+    # for x64: The format will be:
+    #
+    # Load command 8
+    # cmd LC_VERSION_MIN_MACOSX
+    #   cmdsize 16
+    #   version 10.9
+    #       sdk 12.1
+    # Load command 9
+    otool_cmd = "otool -L target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -A3 \'LC_VERSION_MIN_MACOSX\' | grep -E version | cut -f2 -ds | tr -d '[:space:]'".format(arch)
+
     if len(sys.argv) > 1:
         # Parsing the macos archtecture
         arch = sys.argv[1]
@@ -25,11 +38,10 @@ def main():
         arch = "armv8"
         # The oldest version we can target on arm64 is 11.0
         supported_version = "11.0"
+        otool_cmd = "otool -L target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
 
     print("Start to validate the build binary for MacOS with architecture {}, expected min os version: {}".format(arch,supported_version))
 
-    os.system("otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib".format(arch))
-    otool_cmd = "otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -E minos | cut -f2 -ds | tr -d '[:space:]'".format(arch)
     result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
     if result != supported_version:
         # Failed

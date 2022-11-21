@@ -19,6 +19,7 @@ def main():
     else:
         # If the archtecture is not set, set from system call
         arch = os.uname().machine
+        print("uname result {}".format(arch))
 
     if re.match(r'^(aarch64|armv[6-8]|arm64)', arch):
         arch = "armv8"

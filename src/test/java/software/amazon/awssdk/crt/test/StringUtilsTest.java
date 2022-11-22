@@ -1,14 +1,15 @@
 package software.amazon.awssdk.crt.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.utils.StringUtils;
 
 
@@ -30,7 +31,12 @@ public class StringUtilsTest extends CrtTestFixture {
 
     @Test
     public void testBase64EncodeNull() {
-        assertEquals(null, StringUtils.base64Encode(null));
+        ThrowingRunnable test_runnable = new ThrowingRunnable() {
+            public void run() {
+                StringUtils.base64Encode(null);
+            }
+        };
+        assertThrows(NullPointerException.class, test_runnable);
     }
 
     @Test
@@ -70,7 +76,12 @@ public class StringUtilsTest extends CrtTestFixture {
 
     @Test
     public void testBase64DecodeNull() {
-        assertEquals(null, StringUtils.base64Decode(null));
+        ThrowingRunnable test_runnable = new ThrowingRunnable() {
+            public void run() {
+                StringUtils.base64Decode(null);
+            }
+        };
+        assertThrows(NullPointerException.class, test_runnable);
     }
 
     @Test

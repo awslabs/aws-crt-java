@@ -22,11 +22,6 @@ jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtils
     AWS_ZERO_STRUCT(formatted_data);
     jbyteArray return_data = NULL;
 
-    // Explicitly return NULL if the data we get is null to avoid an exception. NULL should return NULL
-    if (jni_data == NULL) {
-        return return_data;
-    }
-
     data_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_data);
     if (data_cursor.ptr == NULL) {
         return return_data;
@@ -67,11 +62,6 @@ jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtils
     struct aws_byte_buf formatted_data;
     AWS_ZERO_STRUCT(formatted_data);
     jbyteArray return_data = NULL;
-
-    // Explicitly return NULL if the data we get is null to avoid an exception. NULL should return NULL
-    if (jni_data == NULL) {
-        return return_data;
-    }
 
     data_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_data);
     if (data_cursor.ptr == NULL) {

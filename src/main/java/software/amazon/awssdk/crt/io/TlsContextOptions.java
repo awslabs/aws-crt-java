@@ -383,7 +383,7 @@ public final class TlsContextOptions extends CrtResource {
             String certificateString = new String(StringUtils.base64Encode(certificateData.getEncoded()));
             certificate = "-----BEGIN CERTIFICATE-----\n" + certificateString + "-----END CERTIFICATE-----\n";
         } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("Failed to get certificate from Java keystore", ex);
         }
         String privateKey;
         try {
@@ -394,7 +394,7 @@ public final class TlsContextOptions extends CrtResource {
             String keyString = new String(StringUtils.base64Encode(keyData.getEncoded()));
             privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" + keyString + "-----END RSA PRIVATE KEY-----\n";
         } catch (java.security.KeyStoreException | java.security.NoSuchAlgorithmException | java.security.UnrecoverableKeyException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("Failed to get private key from Java keystore", ex);
         }
         options.initMtls(certificate, privateKey);
         options.verifyPeer = true;

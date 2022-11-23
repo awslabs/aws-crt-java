@@ -12,7 +12,7 @@
 	url = https://github.com/awslabs/aws-c-cal.git
 [submodule "aws-common-runtime/aws-c-auth"]
 	path = crt/aws-c-auth
-	url = git@github.com:awslabs/aws-c-auth.git
+	url = https://github.com/awslabs/aws-c-auth.git
 [submodule "aws-common-runtime/aws-c-http"]
 	path = crt/aws-c-http
 	url = https://github.com/awslabs/aws-c-http.git
@@ -31,7 +31,6 @@
 [submodule "crt/aws-c-s3"]
 	path = crt/aws-c-s3
 	url = https://github.com/awslabs/aws-c-s3.git
-
 [submodule "aws-lc"]
 	path = crt/aws-lc
 	url = https://github.com/awslabs/aws-lc.git

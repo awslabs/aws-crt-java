@@ -15,12 +15,27 @@ class AWSCrtJavaTest(Builder.Action):
 
         return temp_file
 
+    # TEST: Run MQTT5 tests as part of Builder action?
+    def setup_mqtt5_tests(self, env):
+        os.system("source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt us-east-1")
+        with open("environment_files.txt", 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                line = line.rstrip('\n')
+                if "#" in line:
+                    continue
+                line_data = line.split("=")
+                if (len(line_data) == 2):
+                    env.shell.setenv(line_data[0], line_data[1])
+
     def run(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
         actions = []
 
         endpoint = env.shell.get_secret("unit-test/endpoint")
+
+        self.setup_mqtt5_tests(env)
 
         with self._write_secret_to_temp_file(env, "unit-test/rootca") as root_ca_file, self._write_secret_to_temp_file(env, "unit-test/certificate") as cert_file, \
         self._write_secret_to_temp_file(env, "unit-test/privatekey") as key_file, self._write_secret_to_temp_file(env, "ecc-test/certificate") as ecc_cert_file, \
@@ -36,6 +51,9 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         shutdown_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
             -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest")
+
+        # Cleanup MQTT5
+        os.system("source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt cleanup")
 
         if shutdown_test_result or all_test_result:
             # Failed

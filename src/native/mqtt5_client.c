@@ -1322,6 +1322,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
     void *user_data) {
 
     int exception_error_code = error_code;
+    JavaVM *jvm = NULL;
     JNIEnv *env = NULL;
 
     struct aws_mqtt5_client_publish_return_data *return_data = (struct aws_mqtt5_client_publish_return_data *)user_data;
@@ -1337,7 +1338,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
     }
 
     /********** JNI ENV ACQUIRE **********/
-    JavaVM *jvm = java_client->jvm;
+    jvm = java_client->jvm;
     env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -1462,6 +1463,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
 
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
+    JavaVM *jvm = NULL;
 
     struct aws_mqtt5_client_subscribe_return_data *return_data =
         (struct aws_mqtt5_client_subscribe_return_data *)user_data;
@@ -1476,7 +1478,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
     }
 
     /********** JNI ENV ACQUIRE **********/
-    JavaVM *jvm = java_client->jvm;
+    jvm = java_client->jvm;
     env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
@@ -1613,6 +1615,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
 
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
+    JavaVM *jvm = NULL;
 
     struct aws_mqtt5_client_unsubscribe_return_data *return_data =
         (struct aws_mqtt5_client_unsubscribe_return_data *)user_data;
@@ -1628,7 +1631,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
     }
 
     /********** JNI ENV ACQUIRE **********/
-    JavaVM *jvm = java_client->jvm;
+    jvm = java_client->jvm;
     env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */

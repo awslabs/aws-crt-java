@@ -8,17 +8,10 @@ phases:
       - add-apt-repository ppa:ubuntu-toolchain-r/test
       - apt-get update -y
       - sudo apt-get install cmake -y
-      # - git submodule update --init --recursive
+      - git submodule update --init --recursive
   build:
     commands:
       - echo Build started on `date`
-
-      # Normally we'd rely on Codebuild to download (code above),
-      # but for testing in staging, we will just download the source from S3
-      - aws s3 cp s3://mqtt5-staging-source-dump-bucket/aws-crt-java-staging.zip aws-crt-java-staging.zip
-      - unzip aws-crt-java-staging.zip
-      - cd aws-crt-java-staging
-
       - mvn install -DskipTests
       - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt us-east-1
       - mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false

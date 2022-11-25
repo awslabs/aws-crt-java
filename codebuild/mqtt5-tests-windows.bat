@@ -11,6 +11,8 @@ pushd %~dp0\..\
 choco install adoptopenjdk8 maven -y
 :: Install Cmake
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+:: Try installing Visual studio via Chocolatey
+choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 

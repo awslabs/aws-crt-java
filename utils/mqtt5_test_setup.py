@@ -19,9 +19,14 @@ def main():
     client = None
     try:
         client = boto3.client('s3')
+    except:
+        print ("ERROR - could not make client! Credentials may be missing")
+        sys.exit(1)
+
+    try:
         client.download_file(parsed_commands.s3_bucket, parsed_commands.s3_file, "environment_files.txt")
     except:
-        print ("ERROR - could not download S3 file! Credentials may not be set or S3 URL is incorrect!")
+        print ("ERROR - could not download S3 file! Credentials may not allow access to file or S3 URL is incorrect!")
         sys.exit(1)
 
     with open ("environment_files.txt", 'r') as file:

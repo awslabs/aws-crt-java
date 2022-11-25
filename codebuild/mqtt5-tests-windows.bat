@@ -12,7 +12,8 @@ choco install adoptopenjdk8 maven -y
 :: Install Cmake
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
 :: Install Visual Studio Community via Chocolately so we can use MSVC
-choco install visualcpp-build-tools  -y
+choco install visualstudio2019community
+choco install visualstudio2019-workload-nativedesktop
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 

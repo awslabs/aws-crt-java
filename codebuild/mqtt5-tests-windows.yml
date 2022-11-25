@@ -3,7 +3,7 @@ version: 0.2
 phases:
   build:
     commands:
-      - ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt us-east-1
+      - python .\utils\mqtt5_test_setup.py --s3_bucket aws-crt-test-stuff --s3_file CodeBuildIotProdMQTT5EnvironmentVariables.txt --cleanup false
       - git submodule update --init --recursive
       - .\codebuild\mqtt5-tests-windows.bat
-      - ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt cleanup
+      - python .\utils\mqtt5_test_setup.py --s3_bucket aws-crt-test-stuff --s3_file CodeBuildIotProdMQTT5EnvironmentVariables.txt --cleanup true

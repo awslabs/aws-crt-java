@@ -11,13 +11,15 @@ pushd %~dp0\..\
 choco install adoptopenjdk8 maven -y
 :: Install Cmake
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+:: Install Visual Studio to get MSVC
+choco install visualstudio2019community -y
+choco install visualstudio2019-workload-nativedesktop -y
 
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 
 cd %CODEBUILD_SRC_DIR%
 call mvn install -DskipTests
-call utils\mqtt5_test_setup.sh "s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt" "us-east-1"
-call mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
-call utils\mqtt5_test_setup.sh "s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt" "cleanup"
-
+:: call utils\mqtt5_test_setup.sh "s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt" "us-east-1"
+mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
+:: call utils\mqtt5_test_setup.sh "s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt" "cleanup"

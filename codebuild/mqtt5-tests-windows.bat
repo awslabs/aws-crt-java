@@ -11,8 +11,6 @@ pushd %~dp0\..\
 choco install adoptopenjdk8 maven -y
 :: Install Cmake
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
-:: Install MSVC via NPM?
-npm install --global windows-build-tools@4.0.0
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 

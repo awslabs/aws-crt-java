@@ -1,0 +1,10 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_CMAKE_GENERATOR: Visual Studio 15 2017 Win64
+
+phases:
+  build:
+    commands:
+      - .\codebuild\mqtt5-tests-windows.bat

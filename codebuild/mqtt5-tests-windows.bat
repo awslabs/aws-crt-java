@@ -11,8 +11,6 @@ pushd %~dp0\..\
 choco install adoptopenjdk8 maven -y
 :: Install Cmake
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
-:: Install MSVC via winget
-winget install -e --id Microsoft.VisualStudio.2022.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Workload.NativeDesktop;includeRecommended"
 call RefreshEnv.cmd
 echo JAVA_HOME=%JAVA_HOME%
 

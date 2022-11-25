@@ -8,3 +8,4 @@ phases:
       - git submodule update --init --recursive
       - .\codebuild\mqtt5-tests-windows.bat
       - python .\utils\mqtt5_test_setup.py --s3_bucket aws-crt-test-stuff --s3_file CodeBuildIotProdMQTT5EnvironmentVariables.txt --cleanup true
+

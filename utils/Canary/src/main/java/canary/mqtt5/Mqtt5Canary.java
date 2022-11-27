@@ -75,7 +75,7 @@ public class Mqtt5Canary {
     static Random random = new Random();
     static java.time.LocalDateTime startDateTime;
 
-    static int operationFutureWaitTime = 4;
+    static int operationFutureWaitTime = 30;
 
     static void printUsage() {
         System.out.println(
@@ -223,7 +223,7 @@ public class Mqtt5Canary {
         OPERATION_SUBSCRIBE,
         OPERATION_UNSUBSCRIBE,
         OPERATION_UNSUBSCRIBE_BAD,
-        OPEARTION_PUBLISH_QOS0,
+        OPERATION_PUBLISH_QOS0,
         OPERATION_PUBLISH_QOS1,
         OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS0,
         OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS1,
@@ -286,7 +286,7 @@ public class Mqtt5Canary {
     // ================================================================================
 
     public static void setupClients() {
-        // Make the builder
+        // Create the builder
         Mqtt5ClientOptionsBuilder clientOptionsBuilder = new Mqtt5ClientOptionsBuilder(configEndpoint, configPort);
 
         clientsEventLoopGroup = new EventLoopGroup(configThreads);
@@ -296,7 +296,7 @@ public class Mqtt5Canary {
 
         clientsSocketOptions = new SocketOptions();
         clientsSocketOptions.type = SocketOptions.SocketType.STREAM;
-        clientsSocketOptions.connectTimeoutMs = 3000;
+        clientsSocketOptions.connectTimeoutMs = 60000;
         clientsSocketOptions.keepAliveTimeoutSecs = 0;
         clientsSocketOptions.keepAliveIntervalSecs = 0;
         clientOptionsBuilder.withSocketOptions(clientsSocketOptions);
@@ -304,10 +304,10 @@ public class Mqtt5Canary {
         clientOptionsBuilder.withSessionBehavior(Mqtt5ClientOptions.ClientSessionBehavior.CLEAN);
         clientOptionsBuilder.withLifecycleEvents(clientsLifecycleEvents);
         clientOptionsBuilder.withRetryJitterMode(JitterMode.None);
-        clientOptionsBuilder.withMinReconnectDelayMs(1000L);
+        clientOptionsBuilder.withMinReconnectDelayMs(60000L);
         clientOptionsBuilder.withMaxReconnectDelayMs(120000L);
         clientOptionsBuilder.withMinConnectedTimeToResetReconnectDelayMs(30000L);
-        clientOptionsBuilder.withPingTimeoutMs(10000L);
+        clientOptionsBuilder.withPingTimeoutMs(20000L);
         clientOptionsBuilder.withPublishEvents(clientsPublishEvents);
 
         if (configUseTls == true || configCertFile != null || configKeyFile != null) {
@@ -353,7 +353,7 @@ public class Mqtt5Canary {
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_SUBSCRIBE);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE_BAD);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPEARTION_PUBLISH_QOS0);
+        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_QOS0);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_QOS1);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS0);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS1);
@@ -558,7 +558,7 @@ public class Mqtt5Canary {
             case OPERATION_UNSUBSCRIBE_BAD:
                 OperationUnsubscribeBad(clientIdx);
                 break;
-            case OPEARTION_PUBLISH_QOS0:
+            case OPERATION_PUBLISH_QOS0:
                 OperationPublishQoS0(clientIdx);
                 break;
             case OPERATION_PUBLISH_QOS1:
@@ -640,10 +640,15 @@ public class Mqtt5Canary {
         long secondsDifference = 0;
         long operationsExecuted = 0;
         while (!done) {
-            nowDateTime = java.time.LocalDateTime.now();
-            secondsDifference = startDateTime.until(java.time.LocalDateTime.now(), ChronoUnit.SECONDS);
-            if (secondsDifference >= configSeconds) {
-                done = true;
+            try {
+                nowDateTime = java.time.LocalDateTime.now();
+                secondsDifference = startDateTime.until(java.time.LocalDateTime.now(), ChronoUnit.SECONDS);
+                if (secondsDifference >= configSeconds) {
+                    done = true;
+                }
+            } catch (ArithmeticException ex) {
+                // Time overflow - exit with an error!
+                exitWithError(1);
             }
 
             operationsExecuted += 1;

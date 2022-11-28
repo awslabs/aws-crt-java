@@ -91,7 +91,7 @@ public class Mqtt5Sample {
         }
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection success...");
             connectedFuture.complete(null);
         }

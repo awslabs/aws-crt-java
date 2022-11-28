@@ -1862,8 +1862,7 @@ static void s_cache_mqtt5_lifecycle_events_properties(JNIEnv *env) {
         env,
         mqtt5_lifecycle_events_properties.lifecycle_events_class,
         "onConnectionSuccess",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/packets/"
-        "ConnAckPacket;Lsoftware/amazon/awssdk/crt/mqtt5/NegotiatedSettings;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnConnectionSuccessReturn;)V");
     AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_connection_success_id);
     mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id = (*env)->GetMethodID(
         env,
@@ -1951,6 +1950,22 @@ static void s_cache_mqtt5_on_attempting_connect_return(JNIEnv *env) {
         "<init>",
         "()V");
     AWS_FATAL_ASSERT(mqtt5_on_attempting_connect_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_connection_success_return_properties mqtt5_on_connection_success_return_properties;
+
+static void s_cache_mqtt5_on_connection_success_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnConnectionSuccessReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_connection_success_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_connection_success_return_properties.return_class);
+    // Functions
+    mqtt5_on_connection_success_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_on_connection_success_return_properties.return_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket;Lsoftware/amazon/awssdk/crt/mqtt5/NegotiatedSettings;)V");
+    AWS_FATAL_ASSERT(mqtt5_on_connection_success_return_properties.return_constructor_id);
 }
 
 struct java_boxed_integer_properties boxed_integer_properties;
@@ -2102,6 +2117,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_mqtt5_publish_return(env);
     s_cache_mqtt5_on_stopped_return(env);
     s_cache_mqtt5_on_attempting_connect_return(env);
+    s_cache_mqtt5_on_connection_success_return(env);
     s_cache_boxed_integer(env);
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);

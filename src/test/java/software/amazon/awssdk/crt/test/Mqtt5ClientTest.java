@@ -124,7 +124,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
+            NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             connectSuccessPacket = connAckData;
             connectSuccessSettings = negotiatedSettings;
             connectedFuture.complete(null);
@@ -250,8 +252,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
                 @Override
-                public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData,
-                        NegotiatedSettings negotiatedSettings) {}
+                public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
                 public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
@@ -353,8 +354,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
                 @Override
-                public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData,
-                        NegotiatedSettings negotiatedSettings) {}
+                public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
                 public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
@@ -1280,7 +1280,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             connectedFuture.complete(null);
         }
 

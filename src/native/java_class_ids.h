@@ -809,6 +809,13 @@ struct java_aws_mqtt5_on_attempting_connect_return_properties {
 };
 extern struct java_aws_mqtt5_on_attempting_connect_return_properties mqtt5_on_attempting_connect_return_properties;
 
+/* mqtt5.OnConnectionSuccessReturn */
+struct java_aws_mqtt5_on_connection_success_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_connection_success_return_properties mqtt5_on_connection_success_return_properties;
+
 /* java/lang/Integer */
 struct java_boxed_integer_properties {
     jclass integer_class;

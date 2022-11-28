@@ -1048,18 +1048,32 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 java_lifecycle_return_data);
             break;
         case AWS_MQTT5_CLET_CONNECTION_SUCCESS:
+
+            /* Make the OnConnectionSuccessReturn struct */
+            java_lifecycle_return_data = (*env)->NewObject(
+                env,
+                mqtt5_on_connection_success_return_properties.return_class,
+                mqtt5_on_connection_success_return_properties.return_constructor_id,
+                connack_data,
+                negotiated_settings_data);
+            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+
+            // Set OnConnected BEFORE calling the callback so it is accurate in the callback itself.
+            (*env)->CallBooleanMethod(
+                env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
+
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_connection_success_id,
                 java_client->jni_client,
-                connack_data,
-                negotiated_settings_data);
-            (*env)->CallBooleanMethod(
-                env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
+                java_lifecycle_return_data);
             break;
         case AWS_MQTT5_CLET_CONNECTION_FAILURE: {
             jint error_code = (jint)event->error_code;
+
+            /* TODO: Make the OnConnectionFailureReturn struct */
+
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
@@ -1070,6 +1084,13 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
             break;
         }
         case AWS_MQTT5_CLET_DISCONNECTION: {
+
+            /* TODO: Make the OnDisconnectionReturn struct */
+
+            // Set OnConnected BEFORE calling the callback so it is accurate in the callback itself.
+            (*env)->CallBooleanMethod(
+                env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, false);
+
             jint error_code = (jint)event->error_code;
             (*env)->CallObjectMethod(
                 env,
@@ -1078,8 +1099,6 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 java_client->jni_client,
                 error_code,
                 disconnect_data);
-            (*env)->CallBooleanMethod(
-                env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, false);
             break;
         }
         case AWS_MQTT5_CLET_STOPPED:

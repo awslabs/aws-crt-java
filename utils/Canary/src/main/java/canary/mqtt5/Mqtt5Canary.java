@@ -237,7 +237,9 @@ public class Mqtt5Canary {
         public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
+            NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
             clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();

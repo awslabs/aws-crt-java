@@ -309,7 +309,7 @@ public class Mqtt5ClientOptions {
          * @param connAckData The ConnAckPacket for the connection
          * @param negotiatedSettings The NegotiatedSettings for the connection
          */
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings);
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn);
 
         /**
          * Called when the client fails to establish an MQTT connection

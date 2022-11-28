@@ -86,7 +86,7 @@ public class Mqtt5Sample {
         CompletableFuture<Void> stopFuture = new CompletableFuture<>();
 
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {
             System.out.println("[Lifecycle event] Client attempting connection...");
         }
 
@@ -108,7 +108,7 @@ public class Mqtt5Sample {
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             System.out.println("[Lifecycle event] Client stopped...");
             stopFuture.complete(null);
         }

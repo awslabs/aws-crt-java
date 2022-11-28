@@ -795,6 +795,20 @@ struct java_aws_mqtt5_publish_return_properties {
 };
 extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
 
+/* mqtt5.OnStoppedReturn */
+struct java_aws_mqtt5_on_stopped_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;
+
+/* mqtt5.OnAttemptingConnectReturn */
+struct java_aws_mqtt5_on_attempting_connect_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_attempting_connect_return_properties mqtt5_on_attempting_connect_return_properties;
+
 /* java/lang/Integer */
 struct java_boxed_integer_properties {
     jclass integer_class;

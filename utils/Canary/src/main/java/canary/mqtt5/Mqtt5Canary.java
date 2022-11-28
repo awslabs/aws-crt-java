@@ -234,7 +234,7 @@ public class Mqtt5Canary {
 
     static final class CanaryLifecycleEvents implements Mqtt5ClientOptions.LifecycleEvents {
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {}
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
         public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
@@ -262,7 +262,7 @@ public class Mqtt5Canary {
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection stopped...");
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();

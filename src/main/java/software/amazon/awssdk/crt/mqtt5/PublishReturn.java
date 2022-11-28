@@ -7,7 +7,7 @@ package software.amazon.awssdk.crt.mqtt5;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket;
 
 /**
- * The type of data returned when a publish is made to a topic the MQTT5 client is subscribed to.
+ * The data returned when a publish is made to a topic the MQTT5 client is subscribed to.
  * The data contained within can be gotten using the <code>getResult</code> functions.
  * For example, <code>getResultPublishPacket</code> will return the PublishPacket from the server.
  */

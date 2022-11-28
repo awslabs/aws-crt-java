@@ -945,8 +945,8 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
         return;
     }
 
-    /* Calculate the number of references needed */
-    size_t references_needed = 0;
+    /* Calculate the number of references needed (1 is always needed for the return struct) */
+    size_t references_needed = 1;
     if (event->connack_data != NULL) {
         /* A ConnAck packet will need 2 references at minimum */
         references_needed += 2;
@@ -1028,13 +1028,24 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
         goto clean_up;
     }
 
+    jobject java_lifecycle_return_data;
+
     switch (event->event_type) {
         case AWS_MQTT5_CLET_ATTEMPTING_CONNECT:
+
+            /* Make the OnAttemptingConnectReturn struct */
+            java_lifecycle_return_data = (*env)->NewObject(
+                env,
+                mqtt5_on_attempting_connect_return_properties.return_class,
+                mqtt5_on_attempting_connect_return_properties.return_constructor_id);
+            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_attempting_connect_id,
-                java_client->jni_client);
+                java_client->jni_client,
+                java_lifecycle_return_data);
             break;
         case AWS_MQTT5_CLET_CONNECTION_SUCCESS:
             (*env)->CallObjectMethod(
@@ -1072,11 +1083,20 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
             break;
         }
         case AWS_MQTT5_CLET_STOPPED:
+
+            /* Make the OnStopped struct */
+            java_lifecycle_return_data = (*env)->NewObject(
+                env,
+                mqtt5_on_stopped_return_properties.return_class,
+                mqtt5_on_stopped_return_properties.return_constructor_id);
+            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_stopped_id,
-                java_client->jni_client);
+                java_client->jni_client,
+                java_lifecycle_return_data);
             break;
         default:
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "LifecycleEvent: unsupported event type: %i", event->event_type);

@@ -298,8 +298,9 @@ public class Mqtt5ClientOptions {
          * Called when the client begins a connection attempt
          *
          * @param client The client associated with the event
+         * @param onAttemptingConnectReturn The data associated with the onAttemptingConnect event.
          */
-        public void onAttemptingConnect(Mqtt5Client client);
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn);
 
         /**
          * Called when the client successfully establishes an MQTT connection
@@ -336,8 +337,9 @@ public class Mqtt5ClientOptions {
          * Called when the client reaches the 'Stopped' state as a result of the user invoking .stop()
          *
          * @param client The client associated with the event
+         * @param onStoppedReturn The data associated with the onStopped event.
          */
-        public void onStopped(Mqtt5Client client);
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn);
     }
 
     /**

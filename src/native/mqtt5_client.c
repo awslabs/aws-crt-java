@@ -1120,6 +1120,9 @@ static void s_aws_mqtt5_client_java_publish_received(
     /* Calculate the number of references needed */
     size_t references_needed = 0;
     {
+        /* One reference is needed for the PublishReturn */
+        references_needed += 1;
+
         /* A Publish packet will need 5 references at minimum */
         references_needed += 5;
         /* Optionals */
@@ -1150,6 +1153,14 @@ static void s_aws_mqtt5_client_java_publish_received(
         goto clean_up;
     }
 
+    /* The return result */
+    jobject publish_packet_return_data;
+
+    /**
+     * Making the PublishPacket
+     * (Should this be a function? Probably...)
+     * ================================================
+     */
     jobject publish_packet_data = (*env)->NewObject(
         env,
         mqtt5_publish_packet_properties.publish_packet_class,
@@ -1281,13 +1292,23 @@ static void s_aws_mqtt5_client_java_publish_received(
         goto clean_up;
     }
 
+    /* ================================================ (end of PublishPacket making) */
+
+    /* Make the PublishReturn struct that will hold all of the data that is passed to Java */
+    publish_packet_return_data = (*env)->NewObject(
+        env,
+        mqtt5_publish_return_properties.return_class,
+        mqtt5_publish_return_properties.return_constructor_id,
+        publish_packet_data);
+    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+
     if (java_client->jni_publish_events) {
         (*env)->CallObjectMethod(
             env,
             java_client->jni_publish_events,
             mqtt5_publish_events_properties.publish_events_publish_received_id,
             java_client->jni_client,
-            publish_packet_data);
+            publish_packet_return_data);
         aws_jni_check_and_clear_exception(env); // To hide JNI warning
     }
     goto clean_up;

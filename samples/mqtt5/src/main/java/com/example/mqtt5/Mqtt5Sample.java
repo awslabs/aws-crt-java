@@ -116,7 +116,8 @@ public class Mqtt5Sample {
 
     static final class SamplePublishEvents implements Mqtt5ClientOptions.PublishEvents {
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+            PublishPacket publishPacket = publishResult.getPublishPacket();
             System.out.println(
                 "Message received:\n"+
                 "  Topic: " + publishPacket.getTopic() + "\n" +

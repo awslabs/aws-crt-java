@@ -1840,7 +1840,7 @@ static void s_cache_mqtt5_publish_events_properties(JNIEnv *env) {
         env,
         mqtt5_publish_events_properties.publish_events_class,
         "onMessageReceived",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/PublishReturn;)V");
     AWS_FATAL_ASSERT(mqtt5_publish_events_properties.publish_events_publish_received_id);
 }
 
@@ -1903,6 +1903,22 @@ static void s_cache_mqtt5_puback_result(JNIEnv *env) {
         "<init>",
         "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PubAckPacket;)V");
     AWS_FATAL_ASSERT(mqtt5_publish_result_properties.result_puback_constructor_id);
+}
+
+struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
+
+static void s_cache_mqtt5_puback_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/PublishReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_publish_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_class);
+    // Functions
+    mqtt5_publish_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_return_properties.return_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
 }
 
 struct java_boxed_integer_properties boxed_integer_properties;
@@ -2051,6 +2067,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_mqtt5_publish_events_properties(env);
     s_cache_mqtt5_lifecycle_events_properties(env);
     s_cache_mqtt5_puback_result(env);
+    s_cache_mqtt5_puback_return(env);
     s_cache_boxed_integer(env);
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);

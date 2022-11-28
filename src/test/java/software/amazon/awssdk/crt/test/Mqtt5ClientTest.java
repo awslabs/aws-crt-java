@@ -154,8 +154,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         PublishPacket publishPacket = null;
 
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket result) {
-            publishPacket = result;
+        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
+            publishPacket = result.getPublishPacket();
             publishReceivedFuture.complete(null);
         }
     }
@@ -167,7 +167,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         List<PublishPacket> publishPacketsRecieved = new ArrayList<PublishPacket>();
 
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket result) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
             currentPublishCount += 1;
             if (currentPublishCount == desiredPublishCount) {
                 publishReceivedFuture.complete(null);
@@ -178,7 +178,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (publishPacketsRecieved.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
-            publishPacketsRecieved.add(result);
+            publishPacketsRecieved.add(result.getPublishPacket());
         }
     }
 
@@ -271,7 +271,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -374,7 +374,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -594,7 +594,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -879,7 +879,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5WSMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)

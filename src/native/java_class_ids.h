@@ -788,6 +788,13 @@ struct java_aws_mqtt5_publish_result_properties {
 };
 extern struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_properties;
 
+/* mqtt5.PublishReturn */
+struct java_aws_mqtt5_publish_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
+
 /* java/lang/Integer */
 struct java_boxed_integer_properties {
     jclass integer_class;

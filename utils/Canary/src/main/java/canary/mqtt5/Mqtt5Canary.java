@@ -273,7 +273,8 @@ public class Mqtt5Canary {
 
     static final class CanaryPublishEvents implements Mqtt5ClientOptions.PublishEvents {
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+            PublishPacket publishPacket = publishReturn.getPublishPacket();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
                     "  Topic: " + publishPacket.getTopic() + "\n" +

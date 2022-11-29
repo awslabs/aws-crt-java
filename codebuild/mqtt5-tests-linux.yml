@@ -13,10 +13,9 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn install -DskipTests
-      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt us-east-1
+      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
       - mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
-      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodeBuildIotProdMQTT5EnvironmentVariables.txt cleanup
+      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
   post_build:
     commands:
       - echo Build completed on `date`
-

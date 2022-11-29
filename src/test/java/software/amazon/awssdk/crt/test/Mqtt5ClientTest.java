@@ -133,16 +133,16 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
-            connectFailureCode = failureCode;
-            connectFailurePacket = connAckData;
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
+            connectFailureCode = onConnectionFailureReturn.getErrorCode();
+            connectFailurePacket = onConnectionFailureReturn.getConnAckPacket();
             connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
-            disconnectFailureCode = failureCode;
-            disconnectPacket = disconnectData;
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
+            disconnectFailureCode = onDisconnectionReturn.getErrorCode();
+            disconnectPacket = onDisconnectionReturn.getDisconnectPacket();
         }
 
         @Override
@@ -255,10 +255,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
-                public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
+                public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
 
                 @Override
-                public void onDisconnection(Mqtt5Client client, int disconnectCode, DisconnectPacket disconnectData) {}
+                public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
 
                 @Override
                 public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
@@ -357,10 +357,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
-                public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
+                public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
 
                 @Override
-                public void onDisconnection(Mqtt5Client client, int disconnectCode, DisconnectPacket disconnectData) {}
+                public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
 
                 @Override
                 public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
@@ -1285,12 +1285,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             disconnectedFuture.complete(null);
         }
 

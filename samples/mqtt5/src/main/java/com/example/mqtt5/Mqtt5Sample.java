@@ -97,13 +97,13 @@ public class Mqtt5Sample {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection failed...");
             connectedFuture.completeExceptionally(new Exception("Connection failure"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             System.out.println("[Lifecycle event] Client disconnected...");
         }
 

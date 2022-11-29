@@ -1072,33 +1072,45 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
         case AWS_MQTT5_CLET_CONNECTION_FAILURE: {
             jint error_code = (jint)event->error_code;
 
-            /* TODO: Make the OnConnectionFailureReturn struct */
+            /* Make the OnConnectionFailureReturn struct */
+            java_lifecycle_return_data = (*env)->NewObject(
+                env,
+                mqtt5_on_connection_failure_return_properties.return_class,
+                mqtt5_on_connection_failure_return_properties.return_constructor_id,
+                error_code,
+                connack_data);
+            aws_jni_check_and_clear_exception(env); // To hide JNI warning
 
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id,
                 java_client->jni_client,
-                error_code,
-                connack_data);
+                java_lifecycle_return_data);
             break;
         }
         case AWS_MQTT5_CLET_DISCONNECTION: {
+            jint error_code = (jint)event->error_code;
 
-            /* TODO: Make the OnDisconnectionReturn struct */
+            /* Make the OnDisconnectionReturn struct */
+            java_lifecycle_return_data = (*env)->NewObject(
+                env,
+                mqtt5_on_disconnection_return_properties.return_class,
+                mqtt5_on_disconnection_return_properties.return_constructor_id,
+                error_code,
+                disconnect_data);
+            aws_jni_check_and_clear_exception(env); // To hide JNI warning
 
             // Set OnConnected BEFORE calling the callback so it is accurate in the callback itself.
             (*env)->CallBooleanMethod(
                 env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, false);
 
-            jint error_code = (jint)event->error_code;
             (*env)->CallObjectMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_disconnection_id,
                 java_client->jni_client,
-                error_code,
-                disconnect_data);
+                java_lifecycle_return_data);
             break;
         }
         case AWS_MQTT5_CLET_STOPPED:

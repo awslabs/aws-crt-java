@@ -306,8 +306,7 @@ public class Mqtt5ClientOptions {
          * Called when the client successfully establishes an MQTT connection
          *
          * @param client The client associated with the event
-         * @param connAckData The ConnAckPacket for the connection
-         * @param negotiatedSettings The NegotiatedSettings for the connection
+         * @param onConnectionSuccessReturn The data associated with the onConnectionSuccess event.
          */
         public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn);
 
@@ -315,23 +314,17 @@ public class Mqtt5ClientOptions {
          * Called when the client fails to establish an MQTT connection
          *
          * @param client The client associated with the event
-         * @param errorCode The error code that represents the reason why the connection failed.
-         * Pass to {@link software.amazon.awssdk.crt.CRT#awsErrorString(int)} for a human readable error.
-         * @param connAckData The ConnAckPacket for the failed connection.
-         * May be null if the connection failure did not involve a ConnAckPacket.
+         * @param onConnectionFailureReturn The data associated with the onConnectionFailure event.
          */
-        public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData);
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn);
 
         /**
          * Called when the client's current MQTT connection is closed
          *
          * @param client The client associated with the event
-         * @param errorCode The code that represents why the disconnection occurred
-         * Pass to {@link software.amazon.awssdk.crt.CRT#awsErrorString(int)} for a human readable error.
-         * @param disconnectData The DisconnectPacket for the disconnection.
-         * May be null if the disconnection did not involve a DisconnectPacket.
+         * @param onDisconnectionReturn The data associated with the onDisconnection event.
          */
-        public void onDisconnection(Mqtt5Client client, int errorCode, DisconnectPacket disconnectData);
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn);
 
         /**
          * Called when the client reaches the 'Stopped' state as a result of the user invoking .stop()

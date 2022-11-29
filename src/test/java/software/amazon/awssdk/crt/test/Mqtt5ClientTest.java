@@ -467,7 +467,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
-            TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+            // TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(mqtt5CertificateFile, mqtt5KeyFile);
             tlsOptions.withVerifyPeer(false);
             TlsContext tlsContext = new TlsContext(tlsOptions);
 

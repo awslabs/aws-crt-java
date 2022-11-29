@@ -908,6 +908,143 @@ static jobject s_aws_mqtt5_client_create_jni_puback_packet_from_native(
     return puback_packet_data;
 }
 
+static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
+    JNIEnv *env,
+    const struct aws_mqtt5_packet_publish_view *publish) {
+    jobject publish_packet_data = (*env)->NewObject(
+        env,
+        mqtt5_publish_packet_properties.publish_packet_class,
+        mqtt5_publish_packet_properties.publish_constructor_id);
+
+    jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &publish->payload);
+    (*env)->SetObjectField(
+        env, publish_packet_data, mqtt5_publish_packet_properties.publish_payload_field_id, jni_payload);
+
+    int publish_qos_int = (int)publish->qos;
+    if (s_set_int_enum_in_packet(
+            env,
+            &publish_qos_int,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_native_set_qos_id,
+            false) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Error when creating PublishPacket from native: Could not set QOS", AWS_ERROR_INVALID_STATE);
+        return NULL;
+    }
+
+    if (s_set_jni_bool_field_in_packet(
+            env,
+            &publish->retain,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_retain_field_id,
+            "retain",
+            false) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Error when creating PublishPacket from native: Could not set retain", AWS_ERROR_INVALID_STATE);
+        return NULL;
+    }
+
+    jstring jni_topic = aws_jni_string_from_cursor(env, &publish->topic);
+    (*env)->SetObjectField(env, publish_packet_data, mqtt5_publish_packet_properties.publish_topic_field_id, jni_topic);
+
+    if (publish->payload_format) {
+        if (s_set_int_enum_in_packet(
+                env,
+                (int *)publish->payload_format,
+                publish_packet_data,
+                mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id,
+                true) != AWS_OP_SUCCESS) {
+            s_aws_mqtt5_client_log_and_throw_exception(
+                env,
+                "Error when creating PublishPacket from native: Could not set payload format",
+                AWS_ERROR_INVALID_STATE);
+            return NULL;
+        }
+    }
+
+    if (s_set_jni_uint32_t_field_in_packet(
+            env,
+            publish->message_expiry_interval_seconds,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id,
+            "message expiry interval seconds",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
+    if (s_set_jni_string_field_in_packet(
+            env,
+            publish->response_topic,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_response_topic_field_id,
+            "response topic",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
+    if (s_set_jni_byte_array_field_in_packet(
+            env,
+            publish->correlation_data,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_correlation_data_field_id,
+            "correlation data",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
+    if (s_set_jni_string_field_in_packet(
+            env,
+            publish->content_type,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_content_type_field_id,
+            "content type",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
+    if (publish->subscription_identifier_count && publish->subscription_identifiers) {
+        jobject jni_subscription_identifiers = (*env)->NewObject(
+            env, boxed_array_list_properties.list_class, boxed_array_list_properties.list_constructor_id);
+        (*env)->SetObjectField(
+            env,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id,
+            jni_subscription_identifiers);
+
+        for (size_t i = 0; i < publish->subscription_identifier_count; i++) {
+            const uint32_t *identifier = publish->subscription_identifiers + i;
+            jobject jni_identifier_obj = (*env)->NewObject(
+                env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*identifier);
+            jboolean jni_add_result = (*env)->CallBooleanMethod(
+                env, jni_subscription_identifiers, boxed_list_properties.list_add_id, jni_identifier_obj);
+            if (aws_jni_check_and_clear_exception(env)) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT,
+                    "When creating PublishPacket from native could not add subscription identifier!");
+                return NULL;
+            }
+            if ((bool)jni_add_result == false) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT,
+                    "When creating PublishPacket from native could not add subscription identifier!");
+                return NULL;
+            }
+        }
+    }
+
+    if (s_set_user_properties_field(
+            env,
+            publish->user_property_count,
+            publish->user_properties,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_user_properties_field_id) == AWS_OP_ERR) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PublishPacket from native could not add user properties!");
+        return NULL;
+    }
+
+    return publish_packet_data;
+}
+
 static void s_complete_future_with_exception(JNIEnv *env, jobject future, int error_code) {
     jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
     (*env)->CallBooleanMethod(
@@ -1207,143 +1344,11 @@ static void s_aws_mqtt5_client_java_publish_received(
     /* The return result */
     jobject publish_packet_return_data;
 
-    /**
-     * Making the PublishPacket
-     * (Should this be a function? Probably...)
-     * ================================================
-     */
-    jobject publish_packet_data = (*env)->NewObject(
-        env,
-        mqtt5_publish_packet_properties.publish_packet_class,
-        mqtt5_publish_packet_properties.publish_constructor_id);
-
-    jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &publish->payload);
-    (*env)->SetObjectField(
-        env, publish_packet_data, mqtt5_publish_packet_properties.publish_payload_field_id, jni_payload);
-
-    int publish_qos_int = (int)publish->qos;
-    if (s_set_int_enum_in_packet(
-            env,
-            &publish_qos_int,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_native_set_qos_id,
-            false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating PublishPacket from native: Could not set QOS", AWS_ERROR_INVALID_STATE);
+    /* Make the PublishPacket */
+    jobject publish_packet_data = s_aws_mqtt5_client_create_jni_publish_packet_from_native(env, publish);
+    if (publish_packet_data == NULL) {
         goto clean_up;
     }
-
-    if (s_set_jni_bool_field_in_packet(
-            env,
-            &publish->retain,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_retain_field_id,
-            "retain",
-            false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating PublishPacket from native: Could not set retain", AWS_ERROR_INVALID_STATE);
-        goto clean_up;
-    }
-
-    jstring jni_topic = aws_jni_string_from_cursor(env, &publish->topic);
-    (*env)->SetObjectField(env, publish_packet_data, mqtt5_publish_packet_properties.publish_topic_field_id, jni_topic);
-
-    if (publish->payload_format) {
-        if (s_set_int_enum_in_packet(
-                env,
-                (int *)publish->payload_format,
-                publish_packet_data,
-                mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id,
-                true) != AWS_OP_SUCCESS) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env,
-                "Error when creating PublishPacket from native: Could not set payload format",
-                AWS_ERROR_INVALID_STATE);
-            goto clean_up;
-        }
-    }
-
-    if (s_set_jni_uint32_t_field_in_packet(
-            env,
-            publish->message_expiry_interval_seconds,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id,
-            "message expiry interval seconds",
-            true) != AWS_OP_SUCCESS) {
-        goto clean_up;
-    }
-
-    if (s_set_jni_string_field_in_packet(
-            env,
-            publish->response_topic,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_response_topic_field_id,
-            "response topic",
-            true) != AWS_OP_SUCCESS) {
-        goto clean_up;
-    }
-
-    if (s_set_jni_byte_array_field_in_packet(
-            env,
-            publish->correlation_data,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_correlation_data_field_id,
-            "correlation data",
-            true) != AWS_OP_SUCCESS) {
-        goto clean_up;
-    }
-
-    if (s_set_jni_string_field_in_packet(
-            env,
-            publish->content_type,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_content_type_field_id,
-            "content type",
-            true) != AWS_OP_SUCCESS) {
-        goto clean_up;
-    }
-
-    if (publish->subscription_identifier_count && publish->subscription_identifiers) {
-        jobject jni_subscription_identifiers = (*env)->NewObject(
-            env, boxed_array_list_properties.list_class, boxed_array_list_properties.list_constructor_id);
-        (*env)->SetObjectField(
-            env,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id,
-            jni_subscription_identifiers);
-
-        for (size_t i = 0; i < publish->subscription_identifier_count; i++) {
-            const uint32_t *identifier = publish->subscription_identifiers + i;
-            jobject jni_identifier_obj = (*env)->NewObject(
-                env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*identifier);
-            jboolean jni_add_result = (*env)->CallBooleanMethod(
-                env, jni_subscription_identifiers, boxed_list_properties.list_add_id, jni_identifier_obj);
-            if (aws_jni_check_and_clear_exception(env)) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_MQTT_CLIENT,
-                    "When creating PublishPacket from native could not add subscription identifier!");
-                goto clean_up;
-            }
-            if ((bool)jni_add_result == false) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_MQTT_CLIENT,
-                    "When creating PublishPacket from native could not add subscription identifier!");
-                goto clean_up;
-            }
-        }
-    }
-
-    if (s_set_user_properties_field(
-            env,
-            publish->user_property_count,
-            publish->user_properties,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_user_properties_field_id) == AWS_OP_ERR) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PublishPacket from native could not add user properties!");
-        goto clean_up;
-    }
-
-    /* ================================================ (end of PublishPacket making) */
 
     /* Make the PublishReturn struct that will hold all of the data that is passed to Java */
     publish_packet_return_data = (*env)->NewObject(

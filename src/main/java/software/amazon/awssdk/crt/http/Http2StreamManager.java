@@ -160,7 +160,6 @@ public class Http2StreamManager extends CrtResource {
 
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
-
         if (isNull()) {
             completionFuture.completeExceptionally(new IllegalStateException(
                     "Http2StreamManager has been closed, can't acquire new streams"));

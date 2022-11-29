@@ -142,6 +142,6 @@ fi
 export AWS_TEST_MQTT5_IOT_CERTIFICATE_PATH="${PWD}/iot_certificate.pem"
 export AWS_TEST_MQTT5_IOT_KEY_PATH="${PWD}/iot_privatekey.pem"
 
-# Everything is set
+# Everything is set and ready
 echo "Success: Environment variables set!"
 return 0

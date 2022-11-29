@@ -1856,19 +1856,22 @@ static void s_cache_mqtt5_lifecycle_events_properties(JNIEnv *env) {
         env,
         mqtt5_lifecycle_events_properties.lifecycle_events_class,
         "onAttemptingConnect",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnAttemptingConnectReturn;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnAttemptingConnectReturn;)V");
     AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_attempting_connect_id);
     mqtt5_lifecycle_events_properties.lifecycle_connection_success_id = (*env)->GetMethodID(
         env,
         mqtt5_lifecycle_events_properties.lifecycle_events_class,
         "onConnectionSuccess",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnConnectionSuccessReturn;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnConnectionSuccessReturn;)V");
     AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_connection_success_id);
     mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id = (*env)->GetMethodID(
         env,
         mqtt5_lifecycle_events_properties.lifecycle_events_class,
         "onConnectionFailure",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnConnectionFailureReturn;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnConnectionFailureReturn;)V");
     AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id);
     mqtt5_lifecycle_events_properties.lifecycle_disconnection_id = (*env)->GetMethodID(
         env,
@@ -1927,11 +1930,8 @@ static void s_cache_mqtt5_on_stopped_return(JNIEnv *env) {
     mqtt5_on_stopped_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_on_stopped_return_properties.return_class);
     // Functions
-    mqtt5_on_stopped_return_properties.return_constructor_id = (*env)->GetMethodID(
-        env,
-        mqtt5_on_stopped_return_properties.return_class,
-        "<init>",
-        "()V");
+    mqtt5_on_stopped_return_properties.return_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_on_stopped_return_properties.return_class, "<init>", "()V");
     AWS_FATAL_ASSERT(mqtt5_on_stopped_return_properties.return_constructor_id);
 }
 
@@ -1943,11 +1943,8 @@ static void s_cache_mqtt5_on_attempting_connect_return(JNIEnv *env) {
     mqtt5_on_attempting_connect_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_on_attempting_connect_return_properties.return_class);
     // Functions
-    mqtt5_on_attempting_connect_return_properties.return_constructor_id = (*env)->GetMethodID(
-        env,
-        mqtt5_on_attempting_connect_return_properties.return_class,
-        "<init>",
-        "()V");
+    mqtt5_on_attempting_connect_return_properties.return_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_on_attempting_connect_return_properties.return_class, "<init>", "()V");
     AWS_FATAL_ASSERT(mqtt5_on_attempting_connect_return_properties.return_constructor_id);
 }
 
@@ -1963,7 +1960,8 @@ static void s_cache_mqtt5_on_connection_success_return(JNIEnv *env) {
         env,
         mqtt5_on_connection_success_return_properties.return_class,
         "<init>",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket;Lsoftware/amazon/awssdk/crt/mqtt5/NegotiatedSettings;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "NegotiatedSettings;)V");
     AWS_FATAL_ASSERT(mqtt5_on_connection_success_return_properties.return_constructor_id);
 }
 

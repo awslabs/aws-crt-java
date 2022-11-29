@@ -234,10 +234,12 @@ public class Mqtt5Canary {
 
     static final class CanaryLifecycleEvents implements Mqtt5ClientOptions.LifecycleEvents {
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {}
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
+            NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
             clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
@@ -246,7 +248,7 @@ public class Mqtt5Canary {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed...");
             clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
@@ -254,7 +256,7 @@ public class Mqtt5Canary {
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
@@ -262,7 +264,7 @@ public class Mqtt5Canary {
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection stopped...");
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
@@ -273,7 +275,8 @@ public class Mqtt5Canary {
 
     static final class CanaryPublishEvents implements Mqtt5ClientOptions.PublishEvents {
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+            PublishPacket publishPacket = publishReturn.getPublishPacket();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
                     "  Topic: " + publishPacket.getTopic() + "\n" +

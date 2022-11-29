@@ -86,29 +86,29 @@ public class Mqtt5Sample {
         CompletableFuture<Void> stopFuture = new CompletableFuture<>();
 
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {
             System.out.println("[Lifecycle event] Client attempting connection...");
         }
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection success...");
             connectedFuture.complete(null);
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection failed...");
             connectedFuture.completeExceptionally(new Exception("Connection failure"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             System.out.println("[Lifecycle event] Client disconnected...");
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             System.out.println("[Lifecycle event] Client stopped...");
             stopFuture.complete(null);
         }
@@ -116,7 +116,8 @@ public class Mqtt5Sample {
 
     static final class SamplePublishEvents implements Mqtt5ClientOptions.PublishEvents {
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+            PublishPacket publishPacket = publishResult.getPublishPacket();
             System.out.println(
                 "Message received:\n"+
                 "  Topic: " + publishPacket.getTopic() + "\n" +

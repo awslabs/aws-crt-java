@@ -52,7 +52,7 @@ public class PublishResult {
         } else if (type == PublishResultType.PUBACK) {
             return getResultPubAck();
         } else {
-            Log.log(LogLevel.Error, LogSubject.MqttClient, "Cannot get value - unknown type of: " + type);
+            Log.log(LogLevel.Error, LogSubject.MqttClient, "PublishResult: Cannot get value - unknown type of: " + type);
             return null;
         }
     }

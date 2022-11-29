@@ -121,30 +121,32 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         DisconnectPacket disconnectPacket = null;
 
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {}
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
+            NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             connectSuccessPacket = connAckData;
             connectSuccessSettings = negotiatedSettings;
             connectedFuture.complete(null);
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
-            connectFailureCode = failureCode;
-            connectFailurePacket = connAckData;
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
+            connectFailureCode = onConnectionFailureReturn.getErrorCode();
+            connectFailurePacket = onConnectionFailureReturn.getConnAckPacket();
             connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
-            disconnectFailureCode = failureCode;
-            disconnectPacket = disconnectData;
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
+            disconnectFailureCode = onDisconnectionReturn.getErrorCode();
+            disconnectPacket = onDisconnectionReturn.getDisconnectPacket();
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             stopFuture.complete(null);
         }
     }
@@ -154,8 +156,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         PublishPacket publishPacket = null;
 
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket result) {
-            publishPacket = result;
+        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
+            publishPacket = result.getPublishPacket();
             publishReceivedFuture.complete(null);
         }
     }
@@ -167,7 +169,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         List<PublishPacket> publishPacketsRecieved = new ArrayList<PublishPacket>();
 
         @Override
-        public void onMessageReceived(Mqtt5Client client, PublishPacket result) {
+        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
             currentPublishCount += 1;
             if (currentPublishCount == desiredPublishCount) {
                 publishReceivedFuture.complete(null);
@@ -178,7 +180,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (publishPacketsRecieved.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
-            publishPacketsRecieved.add(result);
+            publishPacketsRecieved.add(result.getPublishPacket());
         }
     }
 
@@ -247,20 +249,19 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withHostName(mqtt5DirectMqttHost)
             .withLifecycleEvents(new LifecycleEvents() {
                 @Override
-                public void onAttemptingConnect(Mqtt5Client client) {}
+                public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
                 @Override
-                public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData,
-                        NegotiatedSettings negotiatedSettings) {}
+                public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
-                public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
+                public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
 
                 @Override
-                public void onDisconnection(Mqtt5Client client, int disconnectCode, DisconnectPacket disconnectData) {}
+                public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
 
                 @Override
-                public void onStopped(Mqtt5Client client) {}
+                public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
             })
             .withMaxReconnectDelayMs(1000L)
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
@@ -271,7 +272,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -350,20 +351,19 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withHostName(mqtt5DirectMqttHost)
             .withLifecycleEvents(new LifecycleEvents() {
                 @Override
-                public void onAttemptingConnect(Mqtt5Client client) {}
+                public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
                 @Override
-                public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData,
-                        NegotiatedSettings negotiatedSettings) {}
+                public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
                 @Override
-                public void onConnectionFailure(Mqtt5Client client, int errorCode, ConnAckPacket connAckData) {}
+                public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
 
                 @Override
-                public void onDisconnection(Mqtt5Client client, int disconnectCode, DisconnectPacket disconnectData) {}
+                public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
 
                 @Override
-                public void onStopped(Mqtt5Client client) {}
+                public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
             })
             .withMaxReconnectDelayMs(1000L)
             .withMinConnectedTimeToResetReconnectDelayMs(1000L)
@@ -374,7 +374,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -594,7 +594,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5DirectMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -879,7 +879,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             .withPort(mqtt5WSMqttPort)
             .withPublishEvents(new PublishEvents() {
                 @Override
-                public void onMessageReceived(Mqtt5Client client, PublishPacket publishPacket) {}
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
             })
             .withRetryJitterMode(JitterMode.Default)
             .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -1265,25 +1265,25 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
 
         @Override
-        public void onAttemptingConnect(Mqtt5Client client) {}
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
         @Override
-        public void onConnectionSuccess(Mqtt5Client client, ConnAckPacket connAckData, NegotiatedSettings negotiatedSettings) {
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
             connectedFuture.complete(null);
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, int failureCode, ConnAckPacket connAckData) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
 
         @Override
-        public void onDisconnection(Mqtt5Client client, int failureCode, DisconnectPacket disconnectData) {
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             disconnectedFuture.complete(null);
         }
 
         @Override
-        public void onStopped(Mqtt5Client client) {}
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
     }
 
     /* Double Client ID failure test */

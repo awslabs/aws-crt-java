@@ -92,7 +92,7 @@ public class Mqtt5Canary {
             "\n"+
             " --threads          The number of EventLoop group threads to use (optional, default=8)\n"+
             " --clients          The number of clients to use (optional, default=3, max=50)\n"+
-            " --tps              The number of seconds to wait after performing an operation (optional, default=12)\n"+
+            " --tps              The number of seconds to wait after performing an operation (optional, default=6)\n"+
             " --seconds          The number of seconds to run the Canary test (optional, default=600)\n"+
             " --log_console      If defined, logging will print to stdout (optional, default=true, type=boolean)\n"+
             " --log_aws          If defined, logging will occur using the AWS Logger (optional, type=boolean) \n"+

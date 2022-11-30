@@ -51,7 +51,7 @@ public class Mqtt5Canary {
     static boolean configUseTls = false;
     static Integer configThreads = 8;
     static Integer configClients = 3;
-    static Integer configTps = 6;
+    static Integer configTps = 12;
     static Long configSeconds = 600L;
     static boolean configShowHelp = false;
     static boolean configLogStdout = true;
@@ -91,7 +91,7 @@ public class Mqtt5Canary {
             "\n"+
             " --threads          The number of EventLoop group threads to use (optional, default=8)\n"+
             " --clients          The number of clients to use (optional, default=3, max=50)\n"+
-            " --tps              The number of seconds to wait after performing an operation (optional, default=6)\n"+
+            " --tps              The number of seconds to wait after performing an operation (optional, default=12)\n"+
             " --seconds          The number of seconds to run the Canary test (optional, default=600)\n"+
             " --log_console      If defined, logging will print to stdout (optional, default=true, type=boolean)\n"+
             " --log_aws          If defined, logging will occur using the AWS Logger (optional, type=boolean) \n"+
@@ -248,7 +248,7 @@ public class Mqtt5Canary {
                 clientsData.get(clientIdx).connectedFuture.complete(null);
                 clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
             } else {
-                PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnACK code: " + connAckData.getReasonCode().toString());
+                PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnAckPacket code: " + connAckData.getReasonCode().toString());
                 clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
             }
         }
@@ -265,7 +265,6 @@ public class Mqtt5Canary {
         public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
-            // Print why we were disconnected
             PrintLog("[Lifecycle event]] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()) + " - " + CRT.awsErrorString(onDisconnectionReturn.getErrorCode()));
             if (onDisconnectionReturn.getDisconnectPacket() != null) {
                 PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnect packet reason: " + onDisconnectionReturn.getDisconnectPacket().getReasonString());

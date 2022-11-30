@@ -41,7 +41,6 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingTy
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;
 
 public class Mqtt5Canary {
-
     static String configEndpoint = "localhost";
     static Long configPort = 1883L;
     static String configCaFile = null;

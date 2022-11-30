@@ -102,12 +102,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         mqtt5CertificateFile = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
         mqtt5KeyFile = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
 
-        mqtt5IoTCoreMqttHost = System.getenv("AWS_TEST_MQTT5_IOT_CORE_MQTT_HOST");
-        if (System.getenv("AWS_TEST_MQTT5_IOT_CORE_MQTT_PORT") != null) {
-            mqtt5IoTCoreMqttPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_IOT_CORE_MQTT_PORT"));
+        // Use the same variables as the MQTT3 test
+        mqtt5IoTCoreMqttHost = System.getProperty("endpoint");
+        if (System.getenv("port") != null) {
+            mqtt5IoTCoreMqttPort = Long.parseLong(System.getProperty("port"));
+        } else {
+            mqtt5IoTCoreMqttPort = 8883L;
         }
-        mqtt5IoTCoreMqttCertificateFile = System.getenv("AWS_TEST_MQTT5_IOT_CORE_MQTT_CERTIFICATE_FILE");
-        mqtt5IoTCoreMqttKeyFile = System.getenv("AWS_TEST_MQTT5_IOT_CORE_MQTT_KEY_FILE");
+        mqtt5IoTCoreMqttCertificateFile = System.getProperty("certificate");
+        mqtt5IoTCoreMqttKeyFile = System.getProperty("privatekey");
     }
 
     public Mqtt5ClientTest() {

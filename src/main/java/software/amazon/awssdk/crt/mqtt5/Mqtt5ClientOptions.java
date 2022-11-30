@@ -547,9 +547,9 @@ public class Mqtt5ClientOptions {
      * All of the options for a Mqtt5Client. This includes the settings to make a connection, as well as the
      * event callbacks, publish callbacks, and more.
      *
-     * !! Developer Preview !! - This class is currently in developer preview.
-     * The interface is not guaranteed to be stable yet.
-     * Please report any issues or make suggestions in https://github.com/awslabs/aws-crt-java/issues
+     * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
+     * preview window is especially valuable in shaping the final product.  During the preview period we may make
+     * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
      */
     static final public class Mqtt5ClientOptionsBuilder {
 

@@ -33,11 +33,21 @@ class AWSCrtJavaTest(Builder.Action):
 
             all_test_result = os.system(test_command)
 
+        with self._write_secret_to_temp_file(env, "unit-test/rootca") as root_ca_file, self._write_secret_to_temp_file(env, "unit-test/certificate") as cert_file, \
+        self._write_secret_to_temp_file(env, "unit-test/privatekey") as key_file:
+
+            test_command = "mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
+                "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
+                "-DAWS_TEST_MQTT5_IOT_CORE_MQTT_HOST={} -DAWS_TEST_MQTT5_IOT_CORE_MQTT_PORT=8883 " \
+                "-DAWS_TEST_MQTT5_IOT_CORE_MQTT_CERTIFICATE_FILE={} -DAWS_TEST_MQTT5_IOT_CORE_MQTT_KEY_FILE={}".format(
+                    endpoint, cert_file.name, key_file.name)
+            mqtt5_test_result = os.system(test_command)
+
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         shutdown_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
             -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest")
 
-        if shutdown_test_result or all_test_result:
+        if shutdown_test_result or all_test_result or mqtt5_test_result:
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

@@ -197,7 +197,7 @@ def application_thread():
     start_email_body += "\nThe wrapper will run for the length the MQTT5 Canary application is set to run for, which is determined by "
     start_email_body += "the arguments set. The arguments used for this run are listed below:"
     start_email_body += "\n  Arguments: " + command_parser_arguments.canary_arguments
-    snapshot_monitor.send_email(email_body=start_email_body, email_subject_text_append="Started")
+    # snapshot_monitor.send_email(email_body=start_email_body, email_subject_text_append="Started")
 
     # Start the application going
     snapshot_monitor.start_monitoring()
@@ -317,11 +317,11 @@ def application_thread():
         print ("\n Codebuild log path: " + command_parser_arguments.codebuild_log_path + "\n")
 
     # Send the finish email
-    if (send_finished_email == True):
-        if (wrapper_error_occurred == True):
-            snapshot_monitor.send_email(email_body=finished_email_body, email_subject_text_append="Had an error")
-        else:
-            snapshot_monitor.send_email(email_body=finished_email_body, email_subject_text_append="Finished")
+    # if (send_finished_email == True):
+    #     if (wrapper_error_occurred == True):
+    #         snapshot_monitor.send_email(email_body=finished_email_body, email_subject_text_append="Had an error")
+    #     else:
+    #         snapshot_monitor.send_email(email_body=finished_email_body, email_subject_text_append="Finished")
 
     exit (application_monitor.error_code)
 

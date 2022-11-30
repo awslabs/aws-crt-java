@@ -241,10 +241,16 @@ public class Mqtt5Canary {
             ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
             NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
-            clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
-            clientsData.get(clientIdx).connectedFuture.complete(null);
-            clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
+
+            if (connAckData.getReasonCode() == ConnAckPacket.ConnectReasonCode.SUCCESS) {
+                PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
+                clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
+                clientsData.get(clientIdx).connectedFuture.complete(null);
+                clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
+            } else {
+                PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnACK code: " + connAckData.getReasonCode().toString());
+                clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
+            }
         }
 
         @Override

@@ -331,6 +331,11 @@ public class Mqtt5Canary {
             } else {
                 tlsContextOptions.withVerifyPeer(false);
             }
+
+            if (configCaFile != null) {
+                tlsContextOptions.overrideDefaultTrustStoreFromPath(null, configCaFile);
+            }
+
             clientsContext = new TlsContext(tlsContextOptions);
             clientOptionsBuilder.withTlsContext(clientsContext);
         }

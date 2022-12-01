@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -128,7 +129,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
         // Use the same variables as the MQTT3 test
         mqtt5IoTCoreMqttHost = System.getProperty("endpoint");
-        if (System.getenv("port") != null) {
+        if (System.getProperty("port") != null) {
             mqtt5IoTCoreMqttPort = Long.parseLong(System.getProperty("port"));
         } else {
             mqtt5IoTCoreMqttPort = 8883L;
@@ -2139,6 +2140,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        // Temporarily set error logging
+        Log.initLoggingToStdout(LogLevel.Error);
 
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());

@@ -898,7 +898,8 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
         (*env)->GetFieldID(env, cls, "totalNumParts", "J");
     s3_meta_request_resume_token_properties.num_parts_completed_field_id =
         (*env)->GetFieldID(env, cls, "numPartsCompleted", "J");
-    s3_meta_request_resume_token_properties.upload_id_field_id = (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
+    s3_meta_request_resume_token_properties.upload_id_field_id =
+        (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
 }
 
 void cache_java_class_ids(JNIEnv *env) {

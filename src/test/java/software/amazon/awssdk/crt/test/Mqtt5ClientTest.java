@@ -1419,7 +1419,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withConnectOptions(connectOptions.build());
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1470,7 +1470,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withConnectOptions(connectOptions.build());
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1485,7 +1485,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builderTwo.withConnectOptions(connectOptions.build());
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1545,7 +1545,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             connectOptions.withKeepAliveIntervalSeconds(-100L);
             builder.withConnectOptions(connectOptions.build());
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1639,7 +1639,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             connectOptions.withKeepAliveIntervalSeconds(2147483647L);
             builder.withConnectOptions(connectOptions.build());
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1718,7 +1718,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1762,7 +1762,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1806,7 +1806,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1852,7 +1852,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1898,7 +1898,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1944,7 +1944,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -1995,7 +1995,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2035,7 +2035,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2094,7 +2094,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2157,7 +2157,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2183,7 +2183,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builderTwo.withPublishEvents(publishEvents);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2232,7 +2232,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2293,7 +2293,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2337,7 +2337,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2381,7 +2381,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2425,7 +2425,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2469,7 +2469,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2513,7 +2513,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2609,7 +2609,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2627,7 +2627,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builderTwo.withPublishEvents(publishEvents);
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
@@ -2685,7 +2685,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
 
             // Only needed for IoT Core
-            if (getMinimumDirectCert() == mqtt5IoTCoreMqttCertificateBytes && mqtt5IoTCoreMqttCertificateBytes != null) {
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());

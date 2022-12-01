@@ -232,27 +232,31 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     private boolean checkMinimumDirectHostAndPort() {
-        if (mqtt5IoTCoreMqttHost != null && mqtt5IoTCoreMqttPort != null) {
+        if (mqtt5IoTCoreMqttHost != null && mqtt5IoTCoreMqttHost != "" && mqtt5IoTCoreMqttPort != null) {
             return true;
-        } else if (mqtt5DirectMqttHost != null && mqtt5DirectMqttPort != null) {
+        } else if (mqtt5DirectMqttHost != null && mqtt5DirectMqttHost != "" && mqtt5DirectMqttPort != null) {
             return true;
         }
         return false;
     }
 
     private String getMinimumDirectHost() {
-        if (mqtt5IoTCoreMqttHost != null) {
+        if (mqtt5IoTCoreMqttHost != null && mqtt5IoTCoreMqttHost != "") {
             return mqtt5IoTCoreMqttHost;
-        } else {
+        } else if (mqtt5DirectMqttHost != null && mqtt5DirectMqttHost != "") {
             return mqtt5DirectMqttHost;
+        } else {
+            return null;
         }
     }
 
     private Long getMinimumDirectPort() {
         if (mqtt5IoTCoreMqttPort != null) {
             return mqtt5IoTCoreMqttPort;
-        } else {
+        } else if (mqtt5DirectMqttPort != null) {
             return mqtt5DirectMqttPort;
+        } else {
+            return null;
         }
     }
 
@@ -2142,7 +2146,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
 
         if (getMinimumDirectHost() == null) {
-            System.out.println("DIRECT HOST IS NULL! ERROR");
+            System.out.println("DIRECT HOST IS NULL! SKIP");
+            Assume.assumeTrue(false);
+        }
+        if (getMinimumDirectHost() == "") {
+            System.out.println("DIRECT HOST IS EMPTY! SKIP");
             Assume.assumeTrue(false);
         }
 

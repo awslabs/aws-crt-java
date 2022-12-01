@@ -892,6 +892,7 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
         (*env)->GetMethodID(env, s3_meta_request_progress_properties.s3_meta_request_progress_class, "<init>", "()V");
 
     s3_meta_request_resume_token_properties.native_type_field_id = (*env)->GetFieldID(env, cls, "nativeType", "I");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.native_type_field_id);
     s3_meta_request_resume_token_properties.part_size_field_id = (*env)->GetFieldID(env, cls, "partSize", "J");
     s3_meta_request_resume_token_properties.total_num_parts_field_id =
         (*env)->GetFieldID(env, cls, "totalNumParts", "J");

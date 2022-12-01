@@ -458,6 +458,10 @@ static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_
     JNIEnv *env,
     jobject resume_token_jni) {
 
+    if (resume_token_jni == NULL) {
+        return NULL;
+    }
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     jint native_type =

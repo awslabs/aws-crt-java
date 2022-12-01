@@ -723,13 +723,13 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
             s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id);
         if ((*env)->ExceptionCheck(env) || resume_token_jni == NULL) {
             aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to create ResumeToken.");
-            return NULL;
+            goto on_done;
         }
 
         enum aws_s3_meta_request_type type = aws_s3_meta_request_resume_token_type(resume_token);
         if (type != AWS_S3_META_REQUEST_TYPE_PUT_OBJECT) {
             aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to convert resume token.");
-            return NULL;
+            goto on_done;
         }
 
         (*env)->SetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id, type);
@@ -757,6 +757,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         (*env)->DeleteLocalRef(env, upload_id_jni);
     }
 
+on_done:
+    aws_s3_meta_request_resume_token_release(resume_token);
     return resume_token_jni;
 }
 

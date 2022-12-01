@@ -2145,15 +2145,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
 
-        if (getMinimumDirectHost() == null) {
-            System.out.println("DIRECT HOST IS NULL! SKIP");
-            Assume.assumeTrue(false);
-        }
-        if (getMinimumDirectHost() == "") {
-            System.out.println("DIRECT HOST IS EMPTY! SKIP");
-            Assume.assumeTrue(false);
-        }
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();

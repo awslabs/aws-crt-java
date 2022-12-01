@@ -39,6 +39,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -268,6 +269,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         } else {
             return new String(mqtt5KeyBytes);
         }
+    }
+
+    private TlsContext getIoTCoreTlsContext() {
+        TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
+        TlsContext tlsContext = new TlsContext(tlsOptions);
+        tlsOptions.close();
+        return tlsContext;
     }
 
     /**
@@ -1419,11 +1427,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withConnectOptions(connectOptions.build());
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -1449,6 +1457,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             clientOne.close();
             clientTwo.close();
 
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1470,11 +1482,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withConnectOptions(connectOptions.build());
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -1488,8 +1500,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
                 builderTwo.withTlsContext(tlsContext);
             }
 
@@ -1520,6 +1530,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             clientOne.close();
             clientTwo.close();
 
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1545,11 +1559,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             connectOptions.withKeepAliveIntervalSeconds(-100L);
             builder.withConnectOptions(connectOptions.build());
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             clientCreationFailed = false;
@@ -1620,6 +1634,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             }
             connectOptions.withWillDelayIntervalSeconds(100L);
 
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1639,11 +1657,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             connectOptions.withKeepAliveIntervalSeconds(2147483647L);
             builder.withConnectOptions(connectOptions.build());
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             clientCreationFailed = false;
@@ -1702,6 +1720,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             // WillDelayIntervalSeconds is an unsigned 64 bit Long, so it cannot overflow it from Java
 
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1718,11 +1740,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1745,6 +1767,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1762,11 +1787,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1789,6 +1814,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1806,11 +1834,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1835,6 +1863,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1852,11 +1883,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1881,6 +1912,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1898,11 +1932,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1927,6 +1961,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1944,11 +1981,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             Mqtt5Client client = new Mqtt5Client(builder.build());
@@ -1973,6 +2010,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1990,16 +2030,21 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     public void Negotiated_UC1() {
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
 
+        // SKIP in IoT Core for now
+        if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+            Assume.assumeTrue(false);
+        }
+
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
             ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
@@ -2013,11 +2058,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             assertEquals(
                 "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                events.connectSuccessSettings.getSessionExpiryInterval(),
-                600000L);
+                600000L,
+                events.connectSuccessSettings.getSessionExpiryInterval());
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2034,12 +2082,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2069,6 +2118,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2094,11 +2146,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2138,6 +2190,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2151,17 +2206,22 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
 
+        // SKIP in IoT Core for now
+        if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+            Assume.assumeTrue(false);
+        }
+
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2182,13 +2242,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builderTwo.withPublishEvents(publishEvents);
 
-            // Only needed for IoT Core
+            // // Only needed for IoT Core
+            TlsContext tlsContextTwo = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
-                builderTwo.withTlsContext(tlsContext);
+                tlsContextTwo = getIoTCoreTlsContext();
+                builderTwo.withTlsContext(tlsContextTwo);
             }
 
             SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder();
@@ -2205,14 +2265,28 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             DisconnectPacketBuilder disconnectOptions = new DisconnectPacketBuilder();
             disconnectOptions.withReasonCode(DisconnectReasonCode.DISCONNECT_WITH_WILL_MESSAGE);
             clientOne.stop(disconnectOptions.build());
+            events.stopFuture.get(60, TimeUnit.SECONDS);
 
             // Did we get a publish message?
-            publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+            try {
+                publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+            } catch (TimeoutException ex) {
+                fail("Never got will packet from MQTT broker!");
+            }
             assertTrue(publishEvents.publishPacket != null);
 
             clientTwo.stop(new DisconnectPacketBuilder().build());
+            eventsTwo.stopFuture.get(60, TimeUnit.SECONDS);
+
             clientOne.close();
             clientTwo.close();
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+            if (tlsContextTwo != null) {
+                tlsContextTwo.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2232,11 +2306,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2269,6 +2343,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             client.stop(new DisconnectPacketBuilder().build());
             events.stopFuture.get(60, TimeUnit.SECONDS);
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2293,11 +2370,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2319,6 +2396,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2337,11 +2417,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2363,6 +2443,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2381,11 +2464,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2407,6 +2490,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2425,11 +2511,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2451,6 +2537,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2469,11 +2558,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2495,6 +2584,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2513,11 +2605,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2539,6 +2631,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             client.stop(new DisconnectPacketBuilder().build());
             client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2609,11 +2704,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
 
@@ -2630,8 +2725,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
                 builderTwo.withTlsContext(tlsContext);
             }
 
@@ -2662,6 +2755,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             publisher.stop(new DisconnectPacketBuilder().build());
             subscriber.close();
             publisher.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2685,11 +2781,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
 
             // Only needed for IoT Core
+            TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(getMinimumDirectCert(), getMinimumDirectKey());
-                TlsContext tlsContext = new TlsContext(tlsOptions);
+                tlsContext = getIoTCoreTlsContext();
                 clientBuilder.withTlsContext(tlsContext);
             }
 
@@ -2785,6 +2881,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             publisher.close();;
             successSubscriber.close();
             unsuccessfulSubscriber.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
         } catch (Exception ex) {
             fail(ex.getMessage());

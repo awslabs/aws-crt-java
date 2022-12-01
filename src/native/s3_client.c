@@ -454,27 +454,32 @@ static void s_s3_meta_request_callback_cleanup(
     }
 }
 
-static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_new(JNIEnv *env,
+static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_new(
+    JNIEnv *env,
     jobject resume_token_jni) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    jint native_type = (*env)->GetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id);
-    
+    jint native_type =
+        (*env)->GetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id);
+
     if (native_type != AWS_S3_META_REQUEST_TYPE_PUT_OBJECT) {
         aws_jni_throw_illegal_argument_exception(
             env, "ResumeToken: Operations other than PutObject are not supported for resume.");
         return NULL;
     }
 
-    jlong part_size_jni = (*env)->GetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.part_size_field_id);
-    jlong total_num_parts_jni = (*env)->GetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.total_num_parts_field_id);
-    jlong num_parts_completed_jni = (*env)->GetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.num_parts_completed_field_id);
+    jlong part_size_jni =
+        (*env)->GetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.part_size_field_id);
+    jlong total_num_parts_jni =
+        (*env)->GetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.total_num_parts_field_id);
+    jlong num_parts_completed_jni = (*env)->GetLongField(
+        env, resume_token_jni, s3_meta_request_resume_token_properties.num_parts_completed_field_id);
 
-    jstring upload_id_jni = (*env)->GetObjectField(env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id);
+    jstring upload_id_jni =
+        (*env)->GetObjectField(env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id);
     if (upload_id_jni == NULL) {
-        aws_jni_throw_illegal_argument_exception(
-            env, "ResumeToken: UploadId must not be NULL.");
+        aws_jni_throw_illegal_argument_exception(env, "ResumeToken: UploadId must not be NULL.");
         return NULL;
     }
 
@@ -487,7 +492,7 @@ static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_
         .upload_id = aws_byte_cursor_from_string(upload_id),
     };
 
-    struct aws_s3_meta_request_resume_token *resume_token = 
+    struct aws_s3_meta_request_resume_token *resume_token =
         aws_s3_meta_request_resume_token_new_upload(allocator, &upload_options);
     aws_string_destroy(upload_id);
 
@@ -516,7 +521,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
-    struct aws_s3_meta_request_resume_token *resume_token = s_native_resume_token_from_java_new(env, java_resume_token_jobject);
+    struct aws_s3_meta_request_resume_token *resume_token =
+        s_native_resume_token_from_java_new(env, java_resume_token_jobject);
     struct aws_signing_config_aws *signing_config = NULL;
     struct aws_s3_meta_request *meta_request = NULL;
     bool success = false;
@@ -707,7 +713,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
 
     jobject resume_token_jni = NULL;
     if (resume_token != NULL) {
-        resume_token_jni = (*env)->NewObject(env,
+        resume_token_jni = (*env)->NewObject(
+            env,
             s3_meta_request_resume_token_properties.s3_meta_request_resume_token_class,
             s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id);
         if ((*env)->ExceptionCheck(env) || resume_token_jni == NULL) {
@@ -722,16 +729,26 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         }
 
         (*env)->SetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id, type);
-        (*env)->SetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.part_size_field_id, 
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.part_size_field_id,
             aws_s3_meta_request_resume_token_part_size(resume_token));
-        (*env)->SetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.total_num_parts_field_id, 
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.total_num_parts_field_id,
             aws_s3_meta_request_resume_token_total_num_parts(resume_token));
-        (*env)->SetLongField(env, resume_token_jni, s3_meta_request_resume_token_properties.num_parts_completed_field_id, 
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.num_parts_completed_field_id,
             aws_s3_meta_request_resume_token_num_parts_completed(resume_token));
 
         struct aws_byte_cursor upload_id_cur = aws_s3_meta_request_resume_token_upload_id(resume_token);
         jstring upload_id_jni = aws_jni_string_from_cursor(env, &upload_id_cur);
-        (*env)->SetObjectField(env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id, upload_id_jni);
+        (*env)->SetObjectField(
+            env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id, upload_id_jni);
 
         (*env)->DeleteLocalRef(env, upload_id_jni);
     }

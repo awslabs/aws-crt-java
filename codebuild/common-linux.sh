@@ -33,7 +33,8 @@ mvn -B test $* \
     -Drootca=/tmp/AmazonRootCA1.pem \
     -Dprivatekey_p8=/tmp/privatekey_p8.pem \
     -Daws.crt.debugnative=true \
-    -Dcmake.s2nNoPqAsm=ON
+    -Dcmake.s2nNoPqAsm=ON \
+    -DskipMqtt5="skip"
 
 # Run MQTT5 tests
 source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1

@@ -571,7 +571,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
-            String resumeToken;
+            ResumeToken resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
 
                 onProgressFuture.get();

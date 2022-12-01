@@ -881,6 +881,23 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
     s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
 }
 
+struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
+
+static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/RequestToken");
+    AWS_FATAL_ASSERT(cls);
+    s3_meta_request_resume_token_properties.s3_meta_request_resume_token_class = (*env)->NewGlobalRef(env, cls);
+
+    s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id =
+        (*env)->GetMethodID(env, s3_meta_request_progress_properties.s3_meta_request_progress_class, "<init>", "()V");
+
+    s3_meta_request_resume_token_properties.native_type_field_id = (*env)->GetFieldID(env, cls, "nativeType", "J");
+    s3_meta_request_resume_token_properties.part_size_field_id = (*env)->GetFieldID(env, cls, "partSize", "J");
+    s3_meta_request_resume_token_properties.total_num_parts_field_id = (*env)->GetFieldID(env, cls, "totalNumParts", "J");
+    s3_meta_request_resume_token_properties.num_parts_completed_field_id = (*env)->GetFieldID(env, cls, "numPartsCompleted", "J");
+    s3_meta_request_resume_token_properties.upload_id_field_id = (*env)->GetFieldID(env, cls, "uploadId", "J");
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -932,4 +949,5 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_directory_traversal_handler(env);
     s_cache_directory_entry(env);
     s_cache_s3_meta_request_progress(env);
+    s_cache_s3_meta_request_resume_token(env);
 }

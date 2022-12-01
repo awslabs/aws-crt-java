@@ -411,6 +411,18 @@ struct java_aws_s3_meta_request_progress {
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
+/* ResumeToken */
+struct java_aws_s3_meta_request_resume_token {
+    jclass s3_meta_request_resume_token_class;
+    jmethodID s3_meta_request_resume_token_constructor_method_id;
+    jfieldID native_type_field_id;
+    jfieldID part_size_field_id;
+    jfieldID total_num_parts_field_id;
+    jfieldID num_parts_completed_field_id;
+    jfieldID upload_id_field_id;
+};
+extern struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

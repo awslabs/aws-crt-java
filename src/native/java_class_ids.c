@@ -902,6 +902,1185 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
         (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
 }
 
+struct java_aws_mqtt5_connack_packet_properties mqtt5_connack_packet_properties;
+
+static void s_cache_mqtt5_connack_packet(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_connack_packet_properties.connack_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_packet_class);
+
+    // Functions
+    mqtt5_connack_packet_properties.connack_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_connack_packet_properties.connack_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_constructor_id);
+    mqtt5_connack_packet_properties.connack_native_add_maximum_qos_id =
+        (*env)->GetMethodID(env, mqtt5_connack_packet_properties.connack_packet_class, "nativeAddMaximumQOS", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_native_add_maximum_qos_id);
+    mqtt5_connack_packet_properties.connack_native_add_reason_code_id =
+        (*env)->GetMethodID(env, mqtt5_connack_packet_properties.connack_packet_class, "nativeAddReasonCode", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_native_add_reason_code_id);
+    // Field IDs
+    mqtt5_connack_packet_properties.connack_session_present_field_id =
+        (*env)->GetFieldID(env, mqtt5_connack_packet_properties.connack_packet_class, "sessionPresent", "Z");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_session_present_field_id);
+    mqtt5_connack_packet_properties.connack_reason_code_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connack_packet_properties.connack_packet_class,
+        "reasonCode",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket$ConnectReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_reason_code_field_id);
+    mqtt5_connack_packet_properties.connack_session_expiry_interval_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "sessionExpiryIntervalSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_session_expiry_interval_field_id);
+    mqtt5_connack_packet_properties.connack_receive_maximum_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "receiveMaximum", "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_receive_maximum_field_id);
+    mqtt5_connack_packet_properties.connack_maximum_qos_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connack_packet_properties.connack_packet_class,
+        "maximumQOS",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_maximum_qos_field_id);
+    mqtt5_connack_packet_properties.connack_retain_available_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "retainAvailable", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_retain_available_field_id);
+    mqtt5_connack_packet_properties.connack_maximum_packet_size_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "maximumPacketSize", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_maximum_packet_size_field_id);
+    mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "assignedClientIdentifier", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id);
+    mqtt5_connack_packet_properties.connack_reason_string_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "reasonString", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_reason_string_field_id);
+    mqtt5_connack_packet_properties.connack_wildcard_subscriptions_available_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connack_packet_properties.connack_packet_class,
+        "wildcardSubscriptionsAvailable",
+        "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_wildcard_subscriptions_available_field_id);
+    mqtt5_connack_packet_properties.connack_subscription_identifiers_available_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connack_packet_properties.connack_packet_class,
+        "subscriptionIdentifiersAvailable",
+        "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_subscription_identifiers_available_field_id);
+    mqtt5_connack_packet_properties.connack_shared_subscriptions_available_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connack_packet_properties.connack_packet_class,
+        "sharedSubscriptionsAvailable",
+        "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_shared_subscriptions_available_field_id);
+    mqtt5_connack_packet_properties.connack_server_keep_alive_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "serverKeepAlive", "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_server_keep_alive_field_id);
+    mqtt5_connack_packet_properties.connack_response_information_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "responseInformation", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_response_information_field_id);
+    mqtt5_connack_packet_properties.connack_server_reference_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "serverReference", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_server_reference_field_id);
+    mqtt5_connack_packet_properties.connack_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_connect_reason_code_properties mqtt5_connect_reason_code_properties;
+
+static void s_cache_mqtt5_connect_reason_code(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket$ConnectReasonCode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_connect_reason_code_properties.reason_code_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_connect_reason_code_properties.reason_code_class);
+    // Functions
+    mqtt5_connect_reason_code_properties.code_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_connect_reason_code_properties.reason_code_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_connect_reason_code_properties.code_get_value_id);
+    // Static functions
+    mqtt5_connect_reason_code_properties.code_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_connect_reason_code_properties.reason_code_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket$ConnectReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_connect_reason_code_properties.code_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_connect_packet_properties mqtt5_connect_packet_properties;
+
+static void s_cache_mqtt5_connect_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/ConnectPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_connect_packet_properties.connect_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_packet_class);
+    // Field IDs
+    mqtt5_connect_packet_properties.connect_keep_alive_interval_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "keepAliveIntervalSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_keep_alive_interval_seconds_field_id);
+    mqtt5_connect_packet_properties.connect_client_id_field_id =
+        (*env)->GetFieldID(env, mqtt5_connect_packet_properties.connect_packet_class, "clientId", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_client_id_field_id);
+    mqtt5_connect_packet_properties.connect_username_field_id =
+        (*env)->GetFieldID(env, mqtt5_connect_packet_properties.connect_packet_class, "username", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_username_field_id);
+    mqtt5_connect_packet_properties.connect_password_field_id =
+        (*env)->GetFieldID(env, mqtt5_connect_packet_properties.connect_packet_class, "password", "[B");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_password_field_id);
+    mqtt5_connect_packet_properties.connect_session_expiry_interval_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "sessionExpiryIntervalSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_session_expiry_interval_seconds_field_id);
+    mqtt5_connect_packet_properties.connect_request_response_information_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "requestResponseInformation", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_request_response_information_field_id);
+    mqtt5_connect_packet_properties.connect_request_problem_information_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "requestProblemInformation", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_request_problem_information_field_id);
+    mqtt5_connect_packet_properties.connect_receive_maximum_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "receiveMaximum", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_receive_maximum_field_id);
+    mqtt5_connect_packet_properties.connect_maximum_packet_size_bytes_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "maximumPacketSizeBytes", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_maximum_packet_size_bytes_field_id);
+    mqtt5_connect_packet_properties.connect_will_delay_interval_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "willDelayIntervalSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_will_delay_interval_seconds_field_id);
+    mqtt5_connect_packet_properties.connect_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_connect_packet_properties.connect_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_user_properties_field_id);
+    mqtt5_connect_packet_properties.connect_will_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_connect_packet_properties.connect_packet_class,
+        "will",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;");
+    AWS_FATAL_ASSERT(mqtt5_connect_packet_properties.connect_will_field_id);
+}
+
+struct java_aws_mqtt5_disconnect_packet_properties mqtt5_disconnect_packet_properties;
+
+static void s_cache_mqtt5_disconnect_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_disconnect_packet_properties.disconnect_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_packet_class);
+    // Functions
+    mqtt5_disconnect_packet_properties.disconnect_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_disconnect_packet_properties.disconnect_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_constructor_id);
+    mqtt5_disconnect_packet_properties.disconnect_native_add_disconnect_reason_code_id = (*env)->GetMethodID(
+        env, mqtt5_disconnect_packet_properties.disconnect_packet_class, "nativeAddDisconnectReasonCode", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_native_add_disconnect_reason_code_id);
+    mqtt5_disconnect_packet_properties.disconnect_get_reason_code_id = (*env)->GetMethodID(
+        env,
+        mqtt5_disconnect_packet_properties.disconnect_packet_class,
+        "getReasonCode",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket$DisconnectReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_get_reason_code_id);
+    // Field IDs
+    mqtt5_disconnect_packet_properties.disconnect_reason_code_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_disconnect_packet_properties.disconnect_packet_class,
+        "reasonCode",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket$DisconnectReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_reason_code_field_id);
+    mqtt5_disconnect_packet_properties.disconnect_session_expiry_interval_seconds_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_disconnect_packet_properties.disconnect_packet_class,
+        "sessionExpiryIntervalSeconds",
+        "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_session_expiry_interval_seconds_field_id);
+    mqtt5_disconnect_packet_properties.disconnect_reason_string_field_id = (*env)->GetFieldID(
+        env, mqtt5_disconnect_packet_properties.disconnect_packet_class, "reasonString", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_reason_string_field_id);
+    mqtt5_disconnect_packet_properties.disconnect_session_server_reference_field_id = (*env)->GetFieldID(
+        env, mqtt5_disconnect_packet_properties.disconnect_packet_class, "serverReference", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_session_server_reference_field_id);
+    mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_disconnect_packet_properties.disconnect_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_disconnect_reason_code_properties mqtt5_disconnect_reason_code_properties;
+
+static void s_cache_mqtt5_disconnect_reason_code(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket$DisconnectReasonCode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_disconnect_reason_code_properties.reason_code_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_disconnect_reason_code_properties.reason_code_class);
+    // Functions
+    mqtt5_disconnect_reason_code_properties.code_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_disconnect_reason_code_properties.reason_code_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_reason_code_properties.code_get_value_id);
+    // Static functions
+    mqtt5_disconnect_reason_code_properties.code_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_disconnect_reason_code_properties.reason_code_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket$DisconnectReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_disconnect_reason_code_properties.code_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_puback_packet_properties mqtt5_puback_packet_properties;
+
+static void s_cache_mqtt5_puback_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/PubAckPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_puback_packet_properties.puback_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_packet_class);
+    // Functions
+    mqtt5_puback_packet_properties.puback_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_puback_packet_properties.puback_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_constructor_id);
+    mqtt5_puback_packet_properties.puback_native_add_reason_code_id =
+        (*env)->GetMethodID(env, mqtt5_puback_packet_properties.puback_packet_class, "nativeAddReasonCode", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_native_add_reason_code_id);
+    // Field IDs
+    mqtt5_puback_packet_properties.puback_reason_code_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_puback_packet_properties.puback_packet_class,
+        "reasonCode",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/packets/PubAckPacket$PubAckReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_reason_code_field_id);
+    mqtt5_puback_packet_properties.puback_reason_string_field_id = (*env)->GetFieldID(
+        env, mqtt5_puback_packet_properties.puback_packet_class, "reasonString", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_reason_string_field_id);
+    mqtt5_puback_packet_properties.puback_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_puback_packet_properties.puback_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_puback_packet_properties.puback_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_puback_reason_code_properties mqtt5_puback_reason_code_properties;
+
+static void s_cache_mqtt5_puback_reason_code(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/PubAckPacket$PubAckReasonCode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_puback_reason_code_properties.reason_code_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_puback_reason_code_properties.reason_code_class);
+    // Functions
+    mqtt5_puback_reason_code_properties.code_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_puback_reason_code_properties.reason_code_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_puback_reason_code_properties.code_get_value_id);
+    // Static functions
+    mqtt5_puback_reason_code_properties.code_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_puback_reason_code_properties.reason_code_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/PubAckPacket$PubAckReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_puback_reason_code_properties.code_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_publish_packet_properties mqtt5_publish_packet_properties;
+
+static void s_cache_mqtt5_publish_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/PublishPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_publish_packet_properties.publish_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_packet_class);
+    // Functions
+    mqtt5_publish_packet_properties.publish_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_publish_packet_properties.publish_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_constructor_id);
+
+    mqtt5_publish_packet_properties.publish_native_set_qos_id =
+        (*env)->GetMethodID(env, mqtt5_publish_packet_properties.publish_packet_class, "nativeSetQOS", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_native_set_qos_id);
+    mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id = (*env)->GetMethodID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "nativeSetPayloadFormatIndicator", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id);
+    mqtt5_publish_packet_properties.publish_get_qos_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_packet_properties.publish_packet_class,
+        "getQOS",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_get_qos_id);
+
+    mqtt5_publish_packet_properties.publish_get_payload_format_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_packet_properties.publish_packet_class,
+        "getPayloadFormat",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket$PayloadFormatIndicator;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_get_payload_format_id);
+
+    // FieldIDs
+    mqtt5_publish_packet_properties.publish_payload_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "payload", "[B");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_payload_field_id);
+    mqtt5_publish_packet_properties.publish_qos_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_publish_packet_properties.publish_packet_class,
+        "packetQOS",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_qos_field_id);
+    mqtt5_publish_packet_properties.publish_retain_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "retain", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_retain_field_id);
+    mqtt5_publish_packet_properties.publish_topic_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "topic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_topic_field_id);
+    mqtt5_publish_packet_properties.publish_payload_format_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_publish_packet_properties.publish_packet_class,
+        "payloadFormat",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket$PayloadFormatIndicator;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_payload_format_field_id);
+    mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "messageExpiryIntervalSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id);
+    mqtt5_publish_packet_properties.publish_response_topic_field_id = (*env)->GetFieldID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "responseTopic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_response_topic_field_id);
+    mqtt5_publish_packet_properties.publish_correlation_data_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "correlationData", "[B");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_correlation_data_field_id);
+    mqtt5_publish_packet_properties.publish_content_type_field_id = (*env)->GetFieldID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "contentType", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_content_type_field_id);
+    mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id = (*env)->GetFieldID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "subscriptionIdentifiers", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id);
+    mqtt5_publish_packet_properties.publish_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_publish_packet_properties.publish_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_payload_format_indicator_properties mqtt5_payload_format_indicator_properties;
+
+static void s_cache_mqtt5_payload_format_indicator(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/PublishPacket$PayloadFormatIndicator");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_payload_format_indicator_properties.payload_format_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_payload_format_indicator_properties.payload_format_class);
+    // Functions
+    mqtt5_payload_format_indicator_properties.format_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_payload_format_indicator_properties.payload_format_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_payload_format_indicator_properties.format_get_value_id);
+    // Static functions
+    mqtt5_payload_format_indicator_properties.format_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_payload_format_indicator_properties.payload_format_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket$PayloadFormatIndicator;");
+    AWS_FATAL_ASSERT(mqtt5_payload_format_indicator_properties.format_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_negotiated_settings_properties mqtt5_negotiated_settings_properties;
+
+static void s_cache_mqtt5_negotiated_settings(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/NegotiatedSettings");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_negotiated_settings_properties.negotiated_settings_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_class);
+    // Functions
+    mqtt5_negotiated_settings_properties.negotiated_settings_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_constructor_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_native_set_qos_id = (*env)->GetMethodID(
+        env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "nativeSetQOS", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_native_set_qos_id);
+    // Field IDs
+    mqtt5_negotiated_settings_properties.negotiated_settings_maximum_qos_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_negotiated_settings_properties.negotiated_settings_class,
+        "maximumQOS",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_maximum_qos_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_session_expiry_interval_field_id = (*env)->GetFieldID(
+        env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "sessionExpiryInterval", "J");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_session_expiry_interval_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_receive_maximum_from_server_field_id = (*env)->GetFieldID(
+        env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "receiveMaximumFromServer", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_receive_maximum_from_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_maximum_packet_size_to_server_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "maximumPacketSizeToServer", "J");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_maximum_packet_size_to_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id =
+        (*env)->GetFieldID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "serverKeepAlive", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_retain_available_field_id =
+        (*env)->GetFieldID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "retainAvailable", "Z");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_retain_available_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_wildcard_subscriptions_available_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "wildcardSubscriptionsAvailable", "Z");
+    AWS_FATAL_ASSERT(
+        mqtt5_negotiated_settings_properties.negotiated_settings_wildcard_subscriptions_available_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_subscription_identifiers_available_field_id =
+        (*env)->GetFieldID(
+            env,
+            mqtt5_negotiated_settings_properties.negotiated_settings_class,
+            "subscriptionIdentifiersAvailable",
+            "Z");
+    AWS_FATAL_ASSERT(
+        mqtt5_negotiated_settings_properties.negotiated_settings_subscription_identifiers_available_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_shared_subscriptions_available_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "sharedSubscriptionsAvailable", "Z");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_shared_subscriptions_available_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_rejoined_session_field_id =
+        (*env)->GetFieldID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "rejoinedSession", "Z");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_rejoined_session_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_assigned_client_id_field_id = (*env)->GetFieldID(
+        env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "assignedClientID", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_assigned_client_id_field_id);
+}
+
+struct java_aws_http_proxy_options_properties http_proxy_options_properties;
+
+static void s_cache_http_proxy_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpProxyOptions");
+    AWS_FATAL_ASSERT(cls);
+    http_proxy_options_properties.http_proxy_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(http_proxy_options_properties.http_proxy_options_class);
+    // Functions
+    http_proxy_options_properties.proxy_get_connection_type_id = (*env)->GetMethodID(
+        env,
+        http_proxy_options_properties.http_proxy_options_class,
+        "getConnectionType",
+        "()Lsoftware/amazon/awssdk/crt/http/HttpProxyOptions$HttpProxyConnectionType;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_connection_type_id);
+    http_proxy_options_properties.proxy_get_proxy_host_id = (*env)->GetMethodID(
+        env, http_proxy_options_properties.http_proxy_options_class, "getHost", "()Ljava/lang/String;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_proxy_host_id);
+    http_proxy_options_properties.proxy_get_proxy_port_id =
+        (*env)->GetMethodID(env, http_proxy_options_properties.http_proxy_options_class, "getPort", "()I");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_proxy_port_id);
+    http_proxy_options_properties.proxy_get_proxy_tls_context_id = (*env)->GetMethodID(
+        env,
+        http_proxy_options_properties.http_proxy_options_class,
+        "getTlsContext",
+        "()Lsoftware/amazon/awssdk/crt/io/TlsContext;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_proxy_tls_context_id);
+    http_proxy_options_properties.proxy_get_proxy_authorization_type_id = (*env)->GetMethodID(
+        env,
+        http_proxy_options_properties.http_proxy_options_class,
+        "getAuthorizationType",
+        "()Lsoftware/amazon/awssdk/crt/http/HttpProxyOptions$HttpProxyAuthorizationType;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_proxy_authorization_type_id);
+    http_proxy_options_properties.proxy_get_authorization_username_id = (*env)->GetMethodID(
+        env,
+        http_proxy_options_properties.http_proxy_options_class,
+        "getAuthorizationUsername",
+        "()Ljava/lang/String;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_authorization_username_id);
+    http_proxy_options_properties.proxy_get_authorization_password_id = (*env)->GetMethodID(
+        env,
+        http_proxy_options_properties.http_proxy_options_class,
+        "getAuthorizationPassword",
+        "()Ljava/lang/String;");
+    AWS_FATAL_ASSERT(http_proxy_options_properties.proxy_get_authorization_password_id);
+}
+
+struct java_aws_http_proxy_connection_type_properties http_proxy_connection_type_properties;
+
+static void s_cache_http_proxy_connection_type(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpProxyOptions$HttpProxyConnectionType");
+    AWS_FATAL_ASSERT(cls);
+    http_proxy_connection_type_properties.http_proxy_connection_type_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(http_proxy_connection_type_properties.http_proxy_connection_type_class);
+    // Functions
+    http_proxy_connection_type_properties.proxy_get_value_id = (*env)->GetMethodID(
+        env, http_proxy_connection_type_properties.http_proxy_connection_type_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(http_proxy_connection_type_properties.proxy_get_value_id);
+}
+
+struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
+
+static void s_cache_mqtt5_client_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_options_properties.client_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.client_options_class);
+    // Functions
+    mqtt5_client_options_properties.options_get_bootstrap_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getBootstrap",
+        "()Lsoftware/amazon/awssdk/crt/io/ClientBootstrap;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_bootstrap_id);
+    mqtt5_client_options_properties.options_get_socket_options_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getSocketOptions",
+        "()Lsoftware/amazon/awssdk/crt/io/SocketOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_socket_options_id);
+    mqtt5_client_options_properties.options_get_tls_options_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getTlsContext",
+        "()Lsoftware/amazon/awssdk/crt/io/TlsContext;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_tls_options_id);
+    mqtt5_client_options_properties.options_get_session_behavior_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getSessionBehavior",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientSessionBehavior;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_session_behavior_id);
+    mqtt5_client_options_properties.options_get_extended_validation_and_flow_control_options_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getExtendedValidationAndFlowControlOptions",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ExtendedValidationAndFlowControlOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_extended_validation_and_flow_control_options_id);
+    mqtt5_client_options_properties.options_get_offline_queue_behavior_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getOfflineQueueBehavior",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientOfflineQueueBehavior;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_offline_queue_behavior_id);
+    mqtt5_client_options_properties.options_get_retry_jitter_mode_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "getRetryJitterMode",
+        "()Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_get_retry_jitter_mode_id);
+    // Field IDs
+    mqtt5_client_options_properties.options_host_name_field_id =
+        (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "hostName", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_host_name_field_id);
+    mqtt5_client_options_properties.options_port_field_id =
+        (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "port", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.options_port_field_id);
+    mqtt5_client_options_properties.http_proxy_options_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "httpProxyOptions",
+        "Lsoftware/amazon/awssdk/crt/http/HttpProxyOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.http_proxy_options_field_id);
+    mqtt5_client_options_properties.session_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "sessionBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientSessionBehavior;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.session_behavior_field_id);
+    mqtt5_client_options_properties.extended_validation_and_flow_control_options_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "extendedValidationAndFlowControlOptions",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ExtendedValidationAndFlowControlOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.extended_validation_and_flow_control_options_field_id);
+    mqtt5_client_options_properties.offline_queue_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "offlineQueueBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientOfflineQueueBehavior;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.offline_queue_behavior_field_id);
+    mqtt5_client_options_properties.retry_jitter_mode_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "retryJitterMode",
+        "Lsoftware/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.retry_jitter_mode_field_id);
+    mqtt5_client_options_properties.min_reconnect_delay_ms_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "minReconnectDelayMs", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.min_reconnect_delay_ms_field_id);
+    mqtt5_client_options_properties.max_reconnect_delay_ms_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "maxReconnectDelayMs", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.max_reconnect_delay_ms_field_id);
+    mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "minConnectedTimeToResetReconnectDelayMs",
+        "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id);
+    mqtt5_client_options_properties.ping_timeout_ms_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "pingTimeoutMs", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.ping_timeout_ms_field_id);
+    mqtt5_client_options_properties.connack_timeout_ms_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "connackTimeoutMs", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.connack_timeout_ms_field_id);
+    mqtt5_client_options_properties.ack_timeout_seconds_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_options_properties.client_options_class, "ackTimeoutSeconds", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.ack_timeout_seconds_field_id);
+    mqtt5_client_options_properties.publish_events_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "publishEvents",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$PublishEvents;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.publish_events_field_id);
+    mqtt5_client_options_properties.lifecycle_events_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "lifecycleEvents",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$LifecycleEvents;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.lifecycle_events_field_id);
+}
+
+struct java_aws_mqtt5_client_properties mqtt5_client_properties;
+
+static void s_cache_mqtt5_client_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5Client");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_properties.client_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_properties.client_class);
+    // Functions
+    mqtt5_client_properties.client_on_websocket_handshake_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_properties.client_class,
+        "onWebsocketHandshake",
+        "(Lsoftware/amazon/awssdk/crt/http/HttpRequest;J)V");
+    AWS_FATAL_ASSERT(mqtt5_client_properties.client_on_websocket_handshake_id);
+
+    mqtt5_client_properties.client_set_is_connected =
+        (*env)->GetMethodID(env, mqtt5_client_properties.client_class, "setIsConnected", "(Z)V");
+    AWS_FATAL_ASSERT(mqtt5_client_properties.client_set_is_connected);
+    // Field IDs
+    mqtt5_client_properties.websocket_handshake_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_properties.client_class, "websocketHandshakeTransform", "Ljava/util/function/Consumer;");
+    AWS_FATAL_ASSERT(mqtt5_client_properties.websocket_handshake_field_id);
+}
+
+struct java_aws_mqtt5_client_operation_statistics_properties mqtt5_client_operation_statistics_properties;
+
+static void s_cache_mqtt5_client_operation_statistics_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOperationStatistics");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_operation_statistics_properties.statistics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.statistics_class);
+    // Functions
+    mqtt5_client_operation_statistics_properties.statistics_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_client_operation_statistics_properties.statistics_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.statistics_constructor_id);
+    // Field IDs
+    mqtt5_client_operation_statistics_properties.incomplete_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_operation_statistics_properties.statistics_class, "incompleteOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.incomplete_operation_count_field_id);
+    mqtt5_client_operation_statistics_properties.incomplete_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_operation_statistics_properties.statistics_class, "incompleteOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.incomplete_operation_size_field_id);
+    mqtt5_client_operation_statistics_properties.unacked_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_operation_statistics_properties.statistics_class, "unackedOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.unacked_operation_count_field_id);
+    mqtt5_client_operation_statistics_properties.unacked_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt5_client_operation_statistics_properties.statistics_class, "unackedOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt5_client_operation_statistics_properties.unacked_operation_size_field_id);
+}
+
+struct java_aws_mqtt5_client_session_behavior_type_properties mqtt5_client_session_behavior_properties;
+
+static void s_cache_mqtt5_client_session_behavior(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientSessionBehavior");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_session_behavior_properties.mqtt5_client_session_behavior_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_session_behavior_properties.mqtt5_client_session_behavior_class);
+    // Functions
+    mqtt5_client_session_behavior_properties.client_get_value_id = (*env)->GetMethodID(
+        env, mqtt5_client_session_behavior_properties.mqtt5_client_session_behavior_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_client_session_behavior_properties.client_get_value_id);
+}
+
+struct java_aws_mqtt5_client_extended_validation_and_flow_control_options
+    mqtt5_client_extended_validation_and_flow_control_options;
+
+static void s_cache_mqtt5_client_extended_validation_and_flow_control_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(
+        env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ExtendedValidationAndFlowControlOptions");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_extended_validation_and_flow_control_options
+        .mqtt5_client_extended_validation_and_flow_control_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_extended_validation_and_flow_control_options
+                         .mqtt5_client_extended_validation_and_flow_control_options_class);
+    // Functions
+    mqtt5_client_extended_validation_and_flow_control_options.client_get_value_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_extended_validation_and_flow_control_options
+            .mqtt5_client_extended_validation_and_flow_control_options_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_client_extended_validation_and_flow_control_options.client_get_value_id);
+}
+
+struct java_aws_mqtt5_client_offline_queue_behavior_type_properties mqtt5_client_offline_queue_behavior_type_properties;
+
+static void s_cache_mqtt5_client_offline_queue_behavior_type(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$ClientOfflineQueueBehavior");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_offline_queue_behavior_type_properties.mqtt5_client_offline_queue_behavior_type_class =
+        (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(
+        mqtt5_client_offline_queue_behavior_type_properties.mqtt5_client_offline_queue_behavior_type_class);
+    // Functions
+    mqtt5_client_offline_queue_behavior_type_properties.client_get_value_id = (*env)->GetMethodID(
+        env,
+        mqtt5_client_offline_queue_behavior_type_properties.mqtt5_client_offline_queue_behavior_type_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_client_offline_queue_behavior_type_properties.client_get_value_id);
+}
+
+struct java_aws_mqtt5_client_jitter_mode_properties mqtt5_client_jitter_mode_properties;
+
+static void s_cache_mqtt5_client_jitter_mode(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/io/ExponentialBackoffRetryOptions$JitterMode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_client_jitter_mode_properties.mqtt5_client_jitter_mode_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_client_jitter_mode_properties.mqtt5_client_jitter_mode_class);
+    // Functions
+    mqtt5_client_jitter_mode_properties.client_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_client_jitter_mode_properties.mqtt5_client_jitter_mode_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_client_jitter_mode_properties.client_get_value_id);
+}
+
+struct java_aws_mqtt5_subscribe_packet_properties mqtt5_subscribe_packet_properties;
+
+static void s_cache_mqtt5_subscribe_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/SubscribePacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_subscribe_packet_properties.subscribe_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_subscribe_packet_properties.subscribe_packet_class);
+    // Functions
+    mqtt5_subscribe_packet_properties.subscribe_subscriptions_field_id = (*env)->GetFieldID(
+        env, mqtt5_subscribe_packet_properties.subscribe_packet_class, "subscriptions", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_subscribe_packet_properties.subscribe_subscriptions_field_id);
+    mqtt5_subscribe_packet_properties.subscribe_subscription_identifier_field_id = (*env)->GetFieldID(
+        env, mqtt5_subscribe_packet_properties.subscribe_packet_class, "subscriptionIdentifier", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_subscribe_packet_properties.subscribe_subscription_identifier_field_id);
+    mqtt5_subscribe_packet_properties.subscribe_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_subscribe_packet_properties.subscribe_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_subscribe_packet_properties.subscribe_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_subscription_properties mqtt5_subscription_properties;
+
+static void s_cache_mqtt5_subscribe_subscription(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/SubscribePacket$Subscription");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_subscription_properties.subscribe_subscription_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_subscription_class);
+
+    // Field IDs
+    mqtt5_subscription_properties.subscribe_no_local_field_id = (*env)->GetFieldID(
+        env, mqtt5_subscription_properties.subscribe_subscription_class, "noLocal", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_no_local_field_id);
+    mqtt5_subscription_properties.subscribe_retain_as_published_field_id = (*env)->GetFieldID(
+        env, mqtt5_subscription_properties.subscribe_subscription_class, "retainAsPublished", "Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_retain_as_published_field_id);
+    // Functions
+    mqtt5_subscription_properties.subscribe_get_topic_filter_id = (*env)->GetMethodID(
+        env, mqtt5_subscription_properties.subscribe_subscription_class, "getTopicFilter", "()Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_get_topic_filter_id);
+    mqtt5_subscription_properties.subscribe_get_qos_id = (*env)->GetMethodID(
+        env,
+        mqtt5_subscription_properties.subscribe_subscription_class,
+        "getQOS",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_get_qos_id);
+    mqtt5_subscription_properties.subscribe_get_no_local_id = (*env)->GetMethodID(
+        env, mqtt5_subscription_properties.subscribe_subscription_class, "getNoLocal", "()Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_get_no_local_id);
+    mqtt5_subscription_properties.subscribe_get_retain_as_published_id = (*env)->GetMethodID(
+        env,
+        mqtt5_subscription_properties.subscribe_subscription_class,
+        "getRetainAsPublished",
+        "()Ljava/lang/Boolean;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_get_retain_as_published_id);
+    mqtt5_subscription_properties.subscribe_get_retain_handling_type_id = (*env)->GetMethodID(
+        env,
+        mqtt5_subscription_properties.subscribe_subscription_class,
+        "getRetainHandlingType",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/packets/SubscribePacket$RetainHandlingType;");
+    AWS_FATAL_ASSERT(mqtt5_subscription_properties.subscribe_get_retain_handling_type_id);
+}
+
+struct java_aws_mqtt5_packet_qos_properties mqtt5_packet_qos_properties;
+
+static void s_cache_mqtt5_packet_qos(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/QOS");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_packet_qos_properties.packet_qos_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_packet_qos_properties.packet_qos_class);
+    // Functions
+    mqtt5_packet_qos_properties.qos_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_packet_qos_properties.packet_qos_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_packet_qos_properties.qos_get_value_id);
+    // Static functions
+    mqtt5_packet_qos_properties.qos_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_packet_qos_properties.packet_qos_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/QOS;");
+    AWS_FATAL_ASSERT(mqtt5_packet_qos_properties.qos_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_retain_handling_type_properties mqtt5_retain_handling_type_properties;
+
+static void s_cache_mqtt5_retain_handling_type(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/SubscribePacket$RetainHandlingType");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_retain_handling_type_properties.retain_handling_type_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_retain_handling_type_properties.retain_handling_type_class);
+    // Functions
+    mqtt5_retain_handling_type_properties.retain_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_retain_handling_type_properties.retain_handling_type_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_retain_handling_type_properties.retain_get_value_id);
+}
+
+struct java_aws_mqtt5_suback_reason_code_properties mqtt5_suback_reason_code_properties;
+
+static void s_cache_mqtt5_suback_reason_code(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/SubAckPacket$SubAckReasonCode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_suback_reason_code_properties.reason_code_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_suback_reason_code_properties.reason_code_class);
+    // Functions
+    mqtt5_suback_reason_code_properties.reason_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_suback_reason_code_properties.reason_code_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_suback_reason_code_properties.reason_get_value_id);
+    // Static functions
+    mqtt5_suback_reason_code_properties.reason_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_suback_reason_code_properties.reason_code_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/SubAckPacket$SubAckReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_suback_reason_code_properties.reason_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_packet_suback_properties mqtt5_suback_packet_properties;
+
+static void s_cache_mqtt5_suback_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/SubAckPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_suback_packet_properties.suback_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_packet_class);
+    // Functions
+    mqtt5_suback_packet_properties.suback_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_suback_packet_properties.suback_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_constructor_id);
+
+    mqtt5_suback_packet_properties.suback_native_add_suback_code_id =
+        (*env)->GetMethodID(env, mqtt5_suback_packet_properties.suback_packet_class, "nativeAddSubackCode", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_native_add_suback_code_id);
+    // Field IDs
+    mqtt5_suback_packet_properties.suback_reason_string_field_id = (*env)->GetFieldID(
+        env, mqtt5_suback_packet_properties.suback_packet_class, "reasonString", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_reason_string_field_id);
+    mqtt5_suback_packet_properties.suback_reason_codes_field_id =
+        (*env)->GetFieldID(env, mqtt5_suback_packet_properties.suback_packet_class, "reasonCodes", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_reason_codes_field_id);
+    mqtt5_suback_packet_properties.suback_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_suback_packet_properties.suback_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_suback_packet_properties.suback_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_packet_unsubscribe_properties mqtt5_unsubscribe_packet_properties;
+
+static void s_cache_mqtt5_unsubscribe_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/UnsubscribePacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_unsubscribe_packet_properties.unsubscribe_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_unsubscribe_packet_properties.unsubscribe_packet_class);
+    // Field IDs
+    mqtt5_unsubscribe_packet_properties.unsubscribe_subscriptions_field_id = (*env)->GetFieldID(
+        env, mqtt5_unsubscribe_packet_properties.unsubscribe_packet_class, "subscriptions", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_unsubscribe_packet_properties.unsubscribe_subscriptions_field_id);
+    mqtt5_unsubscribe_packet_properties.unsubscribe_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_unsubscribe_packet_properties.unsubscribe_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_unsubscribe_packet_properties.unsubscribe_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_packet_unsuback_properties mqtt5_unsuback_packet_properties;
+
+static void s_cache_mqtt5_unsuback_packet(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/UnsubAckPacket");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_unsuback_packet_properties.unsuback_packet_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_packet_class);
+    // Functions
+    mqtt5_unsuback_packet_properties.unsuback_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_unsuback_packet_properties.unsuback_packet_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_constructor_id);
+
+    mqtt5_unsuback_packet_properties.unsuback_native_add_unsuback_code_id = (*env)->GetMethodID(
+        env, mqtt5_unsuback_packet_properties.unsuback_packet_class, "nativeAddUnsubackCode", "(I)V");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_native_add_unsuback_code_id);
+    // Field IDs
+    mqtt5_unsuback_packet_properties.unsuback_reason_string_field_id = (*env)->GetFieldID(
+        env, mqtt5_unsuback_packet_properties.unsuback_packet_class, "reasonString", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_reason_string_field_id);
+    mqtt5_unsuback_packet_properties.unsuback_reason_codes_field_id = (*env)->GetFieldID(
+        env, mqtt5_unsuback_packet_properties.unsuback_packet_class, "reasonCodes", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_reason_codes_field_id);
+    mqtt5_unsuback_packet_properties.unsuback_user_properties_field_id = (*env)->GetFieldID(
+        env, mqtt5_unsuback_packet_properties.unsuback_packet_class, "userProperties", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_packet_properties.unsuback_user_properties_field_id);
+}
+
+struct java_aws_mqtt5_unsuback_reason_code_properties mqtt5_unsuback_reason_code_properties;
+
+static void s_cache_mqtt5_unsuback_reason_code(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/UnsubAckPacket$UnsubAckReasonCode");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_unsuback_reason_code_properties.reason_code_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_unsuback_reason_code_properties.reason_code_class);
+    // Functions
+    mqtt5_unsuback_reason_code_properties.reason_get_value_id =
+        (*env)->GetMethodID(env, mqtt5_unsuback_reason_code_properties.reason_code_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_reason_code_properties.reason_get_value_id);
+    // Static functions
+    mqtt5_unsuback_reason_code_properties.reason_s_get_enum_value_from_integer_id = (*env)->GetStaticMethodID(
+        env,
+        mqtt5_unsuback_reason_code_properties.reason_code_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/mqtt5/packets/UnsubAckPacket$UnsubAckReasonCode;");
+    AWS_FATAL_ASSERT(mqtt5_unsuback_reason_code_properties.reason_s_get_enum_value_from_integer_id);
+}
+
+struct java_aws_mqtt5_user_property_properties mqtt5_user_property_properties;
+
+static void s_cache_mqtt5_user_property(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/packets/UserProperty");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_user_property_properties.user_property_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_user_property_properties.user_property_class);
+    // Functions
+    mqtt5_user_property_properties.property_constructor_id = (*env)->GetMethodID(
+        env, mqtt5_user_property_properties.user_property_class, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
+    AWS_FATAL_ASSERT(mqtt5_user_property_properties.property_constructor_id);
+    // Field IDs
+    mqtt5_user_property_properties.property_key_id =
+        (*env)->GetFieldID(env, mqtt5_user_property_properties.user_property_class, "key", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_user_property_properties.property_key_id);
+    mqtt5_user_property_properties.property_value_id =
+        (*env)->GetFieldID(env, mqtt5_user_property_properties.user_property_class, "value", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt5_user_property_properties.property_value_id);
+}
+
+struct java_aws_mqtt5_publish_events mqtt5_publish_events_properties;
+
+static void s_cache_mqtt5_publish_events_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$PublishEvents");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_publish_events_properties.publish_events_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_publish_events_properties.publish_events_class);
+    // Functions
+    mqtt5_publish_events_properties.publish_events_publish_received_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_events_properties.publish_events_class,
+        "onMessageReceived",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/PublishReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_events_properties.publish_events_publish_received_id);
+}
+
+struct java_aws_mqtt5_lifecycle_events mqtt5_lifecycle_events_properties;
+
+static void s_cache_mqtt5_lifecycle_events_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$LifecycleEvents");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_lifecycle_events_properties.lifecycle_events_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_events_class);
+    // Functions
+    mqtt5_lifecycle_events_properties.lifecycle_attempting_connect_id = (*env)->GetMethodID(
+        env,
+        mqtt5_lifecycle_events_properties.lifecycle_events_class,
+        "onAttemptingConnect",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnAttemptingConnectReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_attempting_connect_id);
+    mqtt5_lifecycle_events_properties.lifecycle_connection_success_id = (*env)->GetMethodID(
+        env,
+        mqtt5_lifecycle_events_properties.lifecycle_events_class,
+        "onConnectionSuccess",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnConnectionSuccessReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_connection_success_id);
+    mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id = (*env)->GetMethodID(
+        env,
+        mqtt5_lifecycle_events_properties.lifecycle_events_class,
+        "onConnectionFailure",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "OnConnectionFailureReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id);
+    mqtt5_lifecycle_events_properties.lifecycle_disconnection_id = (*env)->GetMethodID(
+        env,
+        mqtt5_lifecycle_events_properties.lifecycle_events_class,
+        "onDisconnection",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnDisconnectionReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_disconnection_id);
+    mqtt5_lifecycle_events_properties.lifecycle_stopped_id = (*env)->GetMethodID(
+        env,
+        mqtt5_lifecycle_events_properties.lifecycle_events_class,
+        "onStopped",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5Client;Lsoftware/amazon/awssdk/crt/mqtt5/OnStoppedReturn;)V");
+    AWS_FATAL_ASSERT(mqtt5_lifecycle_events_properties.lifecycle_stopped_id);
+}
+
+struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_properties;
+
+static void s_cache_mqtt5_puback_result(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/PublishResult");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_publish_result_properties.result_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_publish_result_properties.result_class);
+    // Functions
+    mqtt5_publish_result_properties.result_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_publish_result_properties.result_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_publish_result_properties.result_constructor_id);
+    mqtt5_publish_result_properties.result_puback_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_result_properties.result_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PubAckPacket;)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_result_properties.result_puback_constructor_id);
+}
+
+struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
+
+static void s_cache_mqtt5_publish_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/PublishReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_publish_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_class);
+    // Functions
+    mqtt5_publish_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_return_properties.return_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;)V");
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;
+
+static void s_cache_mqtt5_on_stopped_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnStoppedReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_stopped_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_stopped_return_properties.return_class);
+    // Functions
+    mqtt5_on_stopped_return_properties.return_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_on_stopped_return_properties.return_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_on_stopped_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_attempting_connect_return_properties mqtt5_on_attempting_connect_return_properties;
+
+static void s_cache_mqtt5_on_attempting_connect_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnAttemptingConnectReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_attempting_connect_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_attempting_connect_return_properties.return_class);
+    // Functions
+    mqtt5_on_attempting_connect_return_properties.return_constructor_id =
+        (*env)->GetMethodID(env, mqtt5_on_attempting_connect_return_properties.return_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt5_on_attempting_connect_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_connection_success_return_properties mqtt5_on_connection_success_return_properties;
+
+static void s_cache_mqtt5_on_connection_success_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnConnectionSuccessReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_connection_success_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_connection_success_return_properties.return_class);
+    // Functions
+    mqtt5_on_connection_success_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_on_connection_success_return_properties.return_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket;Lsoftware/amazon/awssdk/crt/mqtt5/"
+        "NegotiatedSettings;)V");
+    AWS_FATAL_ASSERT(mqtt5_on_connection_success_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_connection_failure_return_properties mqtt5_on_connection_failure_return_properties;
+
+static void s_cache_mqtt5_on_connection_failure_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnConnectionFailureReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_connection_failure_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_connection_failure_return_properties.return_class);
+    // Functions
+    mqtt5_on_connection_failure_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_on_connection_failure_return_properties.return_class,
+        "<init>",
+        "(ILsoftware/amazon/awssdk/crt/mqtt5/packets/ConnAckPacket;)V");
+    AWS_FATAL_ASSERT(mqtt5_on_connection_failure_return_properties.return_constructor_id);
+}
+
+struct java_aws_mqtt5_on_disconnection_return_properties mqtt5_on_disconnection_return_properties;
+
+static void s_cache_mqtt5_on_disconnection_return(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/OnDisconnectionReturn");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_on_disconnection_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_on_disconnection_return_properties.return_class);
+    // Functions
+    mqtt5_on_disconnection_return_properties.return_constructor_id = (*env)->GetMethodID(
+        env,
+        mqtt5_on_disconnection_return_properties.return_class,
+        "<init>",
+        "(ILsoftware/amazon/awssdk/crt/mqtt5/packets/DisconnectPacket;)V");
+    AWS_FATAL_ASSERT(mqtt5_on_disconnection_return_properties.return_constructor_id);
+}
+
+struct java_boxed_integer_properties boxed_integer_properties;
+
+static void s_cache_boxed_integer(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/lang/Integer");
+    AWS_FATAL_ASSERT(cls);
+    boxed_integer_properties.integer_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(boxed_integer_properties.integer_class);
+    // functions
+    boxed_integer_properties.integer_constructor_id =
+        (*env)->GetMethodID(env, boxed_integer_properties.integer_class, "<init>", "(I)V");
+    AWS_FATAL_ASSERT(boxed_integer_properties.integer_constructor_id);
+    boxed_integer_properties.integer_get_value_id =
+        (*env)->GetMethodID(env, boxed_integer_properties.integer_class, "intValue", "()I");
+    AWS_FATAL_ASSERT(boxed_integer_properties.integer_get_value_id);
+}
+
+struct java_boxed_boolean_properties boxed_boolean_properties;
+
+static void s_cache_boxed_boolean(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/lang/Boolean");
+    AWS_FATAL_ASSERT(cls);
+    boxed_boolean_properties.boolean_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(boxed_boolean_properties.boolean_class);
+    // functions
+    boxed_boolean_properties.boolean_constructor_id =
+        (*env)->GetMethodID(env, boxed_boolean_properties.boolean_class, "<init>", "(Z)V");
+    AWS_FATAL_ASSERT(boxed_boolean_properties.boolean_constructor_id);
+    boxed_boolean_properties.boolean_get_value_id =
+        (*env)->GetMethodID(env, boxed_boolean_properties.boolean_class, "booleanValue", "()Z");
+    AWS_FATAL_ASSERT(boxed_boolean_properties.boolean_get_value_id);
+}
+
+struct java_boxed_list_properties boxed_list_properties;
+
+static void s_cache_boxed_list(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/util/List");
+    AWS_FATAL_ASSERT(cls);
+    boxed_list_properties.list_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(boxed_list_properties.list_class);
+    // functions
+    boxed_list_properties.list_size_id = (*env)->GetMethodID(env, boxed_list_properties.list_class, "size", "()I");
+    AWS_FATAL_ASSERT(boxed_list_properties.list_size_id);
+    boxed_list_properties.list_get_id =
+        (*env)->GetMethodID(env, boxed_list_properties.list_class, "get", "(I)Ljava/lang/Object;");
+    AWS_FATAL_ASSERT(boxed_list_properties.list_get_id);
+    boxed_list_properties.list_add_id =
+        (*env)->GetMethodID(env, boxed_list_properties.list_class, "add", "(Ljava/lang/Object;)Z");
+    AWS_FATAL_ASSERT(boxed_list_properties.list_add_id);
+}
+
+struct java_boxed_array_list_properties boxed_array_list_properties;
+
+static void s_cache_boxed_array_list(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/util/ArrayList");
+    AWS_FATAL_ASSERT(cls);
+    boxed_array_list_properties.list_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(boxed_array_list_properties.list_class);
+    // functions
+    boxed_array_list_properties.list_constructor_id =
+        (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
+}
+
 void cache_java_class_ids(JNIEnv *env) {
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
@@ -954,4 +2133,46 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_directory_entry(env);
     s_cache_s3_meta_request_progress(env);
     s_cache_s3_meta_request_resume_token(env);
+    s_cache_mqtt5_connack_packet(env);
+    s_cache_mqtt5_connect_packet(env);
+    s_cache_mqtt5_connect_reason_code(env);
+    s_cache_mqtt5_disconnect_packet(env);
+    s_cache_mqtt5_disconnect_reason_code(env);
+    s_cache_mqtt5_puback_packet(env);
+    s_cache_mqtt5_puback_reason_code(env);
+    s_cache_mqtt5_publish_packet(env);
+    s_cache_mqtt5_payload_format_indicator(env);
+    s_cache_mqtt5_negotiated_settings(env);
+    s_cache_http_proxy_options(env);
+    s_cache_http_proxy_connection_type(env);
+    s_cache_mqtt5_client_options(env);
+    s_cache_mqtt5_client_properties(env);
+    s_cache_mqtt5_client_operation_statistics_properties(env);
+    s_cache_mqtt5_client_session_behavior(env);
+    s_cache_mqtt5_client_extended_validation_and_flow_control_options(env);
+    s_cache_mqtt5_client_offline_queue_behavior_type(env);
+    s_cache_mqtt5_client_jitter_mode(env);
+    s_cache_mqtt5_subscribe_packet(env);
+    s_cache_mqtt5_subscribe_subscription(env);
+    s_cache_mqtt5_packet_qos(env);
+    s_cache_mqtt5_retain_handling_type(env);
+    s_cache_mqtt5_suback_reason_code(env);
+    s_cache_mqtt5_suback_packet(env);
+    s_cache_mqtt5_unsubscribe_packet(env);
+    s_cache_mqtt5_unsuback_packet(env);
+    s_cache_mqtt5_unsuback_reason_code(env);
+    s_cache_mqtt5_user_property(env);
+    s_cache_mqtt5_publish_events_properties(env);
+    s_cache_mqtt5_lifecycle_events_properties(env);
+    s_cache_mqtt5_puback_result(env);
+    s_cache_mqtt5_publish_return(env);
+    s_cache_mqtt5_on_stopped_return(env);
+    s_cache_mqtt5_on_attempting_connect_return(env);
+    s_cache_mqtt5_on_connection_success_return(env);
+    s_cache_mqtt5_on_connection_failure_return(env);
+    s_cache_mqtt5_on_disconnection_return(env);
+    s_cache_boxed_integer(env);
+    s_cache_boxed_boolean(env);
+    s_cache_boxed_list(env);
+    s_cache_boxed_array_list(env);
 }

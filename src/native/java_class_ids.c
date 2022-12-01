@@ -891,13 +891,13 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
     s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id =
         (*env)->GetMethodID(env, s3_meta_request_progress_properties.s3_meta_request_progress_class, "<init>", "()V");
 
-    s3_meta_request_resume_token_properties.native_type_field_id = (*env)->GetFieldID(env, cls, "nativeType", "J");
+    s3_meta_request_resume_token_properties.native_type_field_id = (*env)->GetFieldID(env, cls, "nativeType", "I");
     s3_meta_request_resume_token_properties.part_size_field_id = (*env)->GetFieldID(env, cls, "partSize", "J");
     s3_meta_request_resume_token_properties.total_num_parts_field_id =
         (*env)->GetFieldID(env, cls, "totalNumParts", "J");
     s3_meta_request_resume_token_properties.num_parts_completed_field_id =
         (*env)->GetFieldID(env, cls, "numPartsCompleted", "J");
-    s3_meta_request_resume_token_properties.upload_id_field_id = (*env)->GetFieldID(env, cls, "uploadId", "J");
+    s3_meta_request_resume_token_properties.upload_id_field_id = (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
 }
 
 void cache_java_class_ids(JNIEnv *env) {

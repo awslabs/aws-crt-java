@@ -1465,18 +1465,28 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make two clients...");
+
             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
             Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
 
+            System.out.println("About to start client one...");
+
             clientOne.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to start client two (which will disconnect client 1)...");
 
             clientTwo.start();
             events.connectedFuture = new CompletableFuture<>();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
 
+            System.out.println("About to wait for confirmation of disconnect...");
+
             // Make sure a disconnection happened
             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to stop both clients...");
 
             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
             // attempt to reconnect endlessly, making a never ending loop.
@@ -1484,8 +1494,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             clientOne.stop(disconnect);
             clientTwo.stop(disconnect);
 
+            System.out.println("About to close both clients...");
+
             clientOne.close();
             clientTwo.close();
+
+            System.out.println("About to close TLS context...");
 
             if (tlsContext != null) {
                 tlsContext.close();
@@ -1521,6 +1535,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make client 1...");
+
             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -1534,18 +1550,31 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builderTwo.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make client 2...");
+
             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
+
+            System.out.println("About to connect client 1...");
 
             clientOne.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
 
+            System.out.println("About to connect client 2 (which will disconnect client 1)...");
+
             clientTwo.start();
             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
 
+            System.out.println("About to ensure client 1 was disconnected...");
+
             // Make sure the first client was disconnected
             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to disconnect client 2...");
+
             // Disconnect the second client so the first can reconnect
             clientTwo.stop(new DisconnectPacketBuilder().build());
+
+            System.out.println("About to wait for client 1 to connect...");
 
             // Wait until the first client has reconnected
             events.connectedFuture = new CompletableFuture<>();
@@ -1553,13 +1582,19 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             assertTrue(clientOne.getIsConnected() == true);
 
+            System.out.println("About to stop both clients...");
+
             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
             // attempt to reconnect endlessly, making a never ending loop.
             DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
             clientOne.stop(disconnect);
 
+            System.out.println("About to close both clients...");
+
             clientOne.close();
             clientTwo.close();
+
+            System.out.println("About to close TLS context...");
 
             if (tlsContext != null) {
                 tlsContext.close();

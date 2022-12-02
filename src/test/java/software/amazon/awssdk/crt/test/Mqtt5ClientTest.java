@@ -2392,52 +2392,52 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      */
 
     /* Null Publish Test */
-    // @Test
-    // public void ErrorOp_UC1() {
-    //     System.out.println("Test:ErrorOp_UC1");
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
+    @Test
+    public void ErrorOp_UC1() {
+        System.out.println("Test:ErrorOp_UC1");
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
 
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
 
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
 
-    //         Mqtt5Client client = new Mqtt5Client(builder.build());
+            Mqtt5Client client = new Mqtt5Client(builder.build());
 
-    //         client.start();
-    //         events.connectedFuture.get(60, TimeUnit.SECONDS);
+            client.start();
+            events.connectedFuture.get(60, TimeUnit.SECONDS);
 
-    //         try {
-    //             System.out.println("NOTE: Exception due to null publish packet may be printed below!");
-    //             client.publish(null).get(60, TimeUnit.SECONDS);
-    //         } catch (Exception ex) {
-    //             didExceptionOccur = true;
-    //         }
+            try {
+                System.out.println("NOTE: Exception due to null publish packet may be printed below!");
+                client.publish(null).get(60, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                didExceptionOccur = true;
+            }
 
-    //         if (didExceptionOccur == false) {
-    //             fail("Null publish packet did not cause exception with error!");
-    //         }
+            if (didExceptionOccur == false) {
+                fail("Null publish packet did not cause exception with error!");
+            }
 
-    //         client.stop(new DisconnectPacketBuilder().build());
-    //         client.close();
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
+            client.stop(new DisconnectPacketBuilder().build());
+            client.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 
     /* Publish with empty builder test */
     @Test

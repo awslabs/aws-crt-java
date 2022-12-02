@@ -2414,8 +2414,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
+            System.out.println("Made a client...");
+
             client.start();
             events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            System.out.println("About to make null publish...");
 
             try {
                 System.out.println("NOTE: Exception due to null publish packet may be printed below!");
@@ -2424,15 +2428,22 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 didExceptionOccur = true;
             }
 
+            System.out.println("Made null publish...");
+
             if (didExceptionOccur == false) {
                 fail("Null publish packet did not cause exception with error!");
             }
 
+            System.out.println("About to stop client...");
+
             client.stop(new DisconnectPacketBuilder().build());
+            System.out.println("About to close client...");
             client.close();
+            System.out.println("About to (possibly) close tlsContext...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
+            System.out.println("Test finished!");
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2460,10 +2471,16 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make a client...");
+
             Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            System.out.println("About to start a client...");
 
             client.start();
             events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            System.out.println("About to publish...");
 
             try {
                 System.out.println("NOTE: Exception due to empty publish packet may be printed below!");
@@ -2476,8 +2493,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty publish packet did not cause exception with error!");
             }
 
+            System.out.println("About to stop...");
+
             client.stop(new DisconnectPacketBuilder().build());
+            System.out.println("About to close...");
             client.close();
+            System.out.println("About to close tlsContext...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2556,10 +2577,16 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make client...");
+
             Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            System.out.println("About to start client...");
 
             client.start();
             events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            System.out.println("About to subscribe...");
 
             try {
                 System.out.println("NOTE: Exception due to empty subscribe packet may be printed below!");
@@ -2572,8 +2599,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty subscribe packet did not cause exception with error!");
             }
 
+            System.out.println("About to stop...");
+
             client.stop(new DisconnectPacketBuilder().build());
+            System.out.println("About to close...");
             client.close();
+            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2652,10 +2683,16 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make client...");
+
             Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            System.out.println("About to start...");
 
             client.start();
             events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            System.out.println("About to unsubscribe...");
 
             try {
                 System.out.println("NOTE: Exception due to empty unsubscribe packet may be printed below!");
@@ -2668,8 +2705,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty unsubscribe packet did not cause exception with error!");
             }
 
+            System.out.println("About to stop...");
+
             client.stop(new DisconnectPacketBuilder().build());
+            System.out.println("About to close...");
             client.close();
+            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }

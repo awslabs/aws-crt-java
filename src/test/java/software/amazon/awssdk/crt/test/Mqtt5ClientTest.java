@@ -522,7 +522,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
             client.close();
@@ -553,7 +553,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
             client.close();
@@ -585,7 +585,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -622,7 +622,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -669,7 +669,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -748,7 +748,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -800,7 +800,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -849,7 +849,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -898,7 +898,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -958,7 +958,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     //         Mqtt5Client client = new Mqtt5Client(builder.build());
 
     //         client.start();
-    //         events.connectedFuture.get(60, TimeUnit.SECONDS);
+    //         events.connectedFuture.get(180, TimeUnit.SECONDS);
     //         DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
     //         client.stop(disconnect.build());
 
@@ -1044,7 +1044,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
@@ -1085,7 +1085,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             client.start();
 
             try {
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 1059) {
@@ -1126,7 +1126,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to using incorrect port may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 1047) {
@@ -1165,7 +1165,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to invalid port for protocol used may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 5149) {
@@ -1218,7 +1218,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to using non-existent port may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 1047) {
@@ -1275,7 +1275,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to invalid port may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 46) {
@@ -1326,7 +1326,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to socket timeout may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 1048) {
@@ -1387,7 +1387,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 System.out.println("NOTE: Exception due to websocket handshake failure may be printed below!");
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 3) {
@@ -1469,14 +1469,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
 
             clientOne.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             clientTwo.start();
             events.connectedFuture = new CompletableFuture<>();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             // Make sure a disconnection happened
-            events.disconnectedFuture.get(60, TimeUnit.SECONDS);
+            events.disconnectedFuture.get(180, TimeUnit.SECONDS);
 
             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
             // attempt to reconnect endlessly, making a never ending loop.
@@ -1537,19 +1537,19 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
 
             clientOne.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             clientTwo.start();
-            eventsTwo.connectedFuture.get(60, TimeUnit.SECONDS);
+            eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
 
             // Make sure the first client was disconnected
-            events.disconnectedFuture.get(60, TimeUnit.SECONDS);
+            events.disconnectedFuture.get(180, TimeUnit.SECONDS);
             // Disconnect the second client so the first can reconnect
             clientTwo.stop(new DisconnectPacketBuilder().build());
 
             // Wait until the first client has reconnected
             events.connectedFuture = new CompletableFuture<>();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             assertTrue(clientOne.getIsConnected() == true);
 
@@ -1784,7 +1784,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
             disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
@@ -1832,7 +1832,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
             disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
@@ -1880,7 +1880,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
             publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
@@ -1888,7 +1888,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             try {
                 System.out.println("NOTE: Exception due to negative interval seconds may be printed below!");
                 CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
-                future.get(60, TimeUnit.SECONDS);
+                future.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 clientPublishFailed = true;
             }
@@ -1935,7 +1935,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("About to start client...");
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             System.out.println("About to publish...");
 
@@ -1945,7 +1945,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             try {
                 System.out.println("NOTE: Exception due to expiry interval seconds being too large may be printed below!");
                 CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
-                future.get(60, TimeUnit.SECONDS);
+                future.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 clientPublishFailed = true;
             }
@@ -1991,7 +1991,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
             subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
@@ -1999,7 +1999,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             try {
                 System.out.println("NOTE: Exception due to negative subscription identifier may be printed below!");
                 CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
-                future.get(60, TimeUnit.SECONDS);
+                future.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 clientSubscribeFailed = true;
             }
@@ -2041,7 +2041,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
             subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
@@ -2049,7 +2049,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             try {
                 System.out.println("NOTE: Exception due to subscription identifier being too large may be printed below!");
                 CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
-                future.get(60, TimeUnit.SECONDS);
+                future.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 clientSubscribeFailed = true;
             }
@@ -2100,7 +2100,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             // TODO - add support for this in the future.
             // assertEquals(
@@ -2149,7 +2149,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             assertEquals(
                 "Negotiated Settings client ID does not match sent client ID",
@@ -2220,17 +2220,17 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            client.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-            client.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
-            publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+            client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
             publishEvents.publishReceivedFuture = new CompletableFuture<>();
             publishEvents.publishPacket = null;
-            client.unsubscribe(unsubscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
-            client.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            client.unsubscribe(unsubscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
             assertEquals(
                 "Publish after unsubscribe still arrived!",
@@ -2301,25 +2301,25 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
 
             clientOne.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             clientTwo.start();
-            eventsTwo.connectedFuture.get(60, TimeUnit.SECONDS);
+            eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            clientTwo.subscribe(subscribeOptions.build()).get(60, TimeUnit.SECONDS);
+            clientTwo.subscribe(subscribeOptions.build()).get(180, TimeUnit.SECONDS);
 
             clientOne.stop(null);
-            events.stopFuture.get(60, TimeUnit.SECONDS);
+            events.stopFuture.get(180, TimeUnit.SECONDS);
 
             // Did we get a publish message?
             try {
-                publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+                publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
             } catch (TimeoutException ex) {
                 fail("Never got will packet from MQTT broker!");
             }
             assertTrue(publishEvents.publishPacket != null);
 
             clientTwo.stop(new DisconnectPacketBuilder().build());
-            eventsTwo.stopFuture.get(60, TimeUnit.SECONDS);
+            eventsTwo.stopFuture.get(180, TimeUnit.SECONDS);
 
             clientOne.close();
             clientTwo.close();
@@ -2375,17 +2375,17 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            client.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-            client.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
-            publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+            client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
             assertTrue(java.util.Arrays.equals(publishEvents.publishPacket.getPayload(), randomBytes));
 
             client.stop(new DisconnectPacketBuilder().build());
-            events.stopFuture.get(60, TimeUnit.SECONDS);
+            events.stopFuture.get(180, TimeUnit.SECONDS);
             client.close();
             if (tlsContext != null) {
                 tlsContext.close();
@@ -2428,12 +2428,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("Made a client...");
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             System.out.println("About to make null publish...");
             try {
                 System.out.println("NOTE: Exception due to null publish packet may be printed below!");
-                client.publish(null).get(60, TimeUnit.SECONDS);
+                client.publish(null).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2488,13 +2488,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("About to start a client...");
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             System.out.println("About to publish...");
 
             try {
                 System.out.println("NOTE: Exception due to empty publish packet may be printed below!");
-                client.publish(new PublishPacketBuilder().build()).get(60, TimeUnit.SECONDS);
+                client.publish(new PublishPacketBuilder().build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2542,11 +2542,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             try {
                 System.out.println("NOTE: Exception due to null subscribe packet may be printed below!");
-                client.subscribe(null).get(60, TimeUnit.SECONDS);
+                client.subscribe(null).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2594,13 +2594,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("About to start client...");
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             System.out.println("About to subscribe...");
 
             try {
                 System.out.println("NOTE: Exception due to empty subscribe packet may be printed below!");
-                client.subscribe(new SubscribePacketBuilder().build()).get(60, TimeUnit.SECONDS);
+                client.subscribe(new SubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2648,11 +2648,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             try {
                 System.out.println("NOTE: Exception due to null unsubscribe packet may be printed below!");
-                client.unsubscribe(null).get(60, TimeUnit.SECONDS);
+                client.unsubscribe(null).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2700,13 +2700,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("About to start...");
 
             client.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
 
             System.out.println("About to unsubscribe...");
 
             try {
                 System.out.println("NOTE: Exception due to empty unsubscribe packet may be printed below!");
-                client.unsubscribe(new UnsubscribePacketBuilder().build()).get(60, TimeUnit.SECONDS);
+                client.unsubscribe(new UnsubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2756,7 +2756,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try {
                 client.start();
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2822,13 +2822,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build());
 
             publisher.start();
-            events.connectedFuture.get(60, TimeUnit.SECONDS);
+            events.connectedFuture.get(180, TimeUnit.SECONDS);
             subscriber.start();
-            eventsTwo.connectedFuture.get(60, TimeUnit.SECONDS);
+            eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-            subscriber.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
             publishPacketBuilder.withTopic(testTopic);
@@ -2836,11 +2836,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
 
             for (int i = 0; i < messageCount; i++) {
-                publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
             }
 
             // Did we get all the messages?
-            publishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+            publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
             subscriber.stop(new DisconnectPacketBuilder().build());
             publisher.stop(new DisconnectPacketBuilder().build());
@@ -2899,13 +2899,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             // Connect and publish a retained message
             publisher.start();
-            publisherEvents.connectedFuture.get(60, TimeUnit.SECONDS);
+            publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
             publishPacketBuilder.withTopic(testTopic)
                 .withPayload("Hello World".getBytes())
                 .withQOS(QOS.AT_LEAST_ONCE)
                 .withRetain(true);
-            publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
             // Setup for clearing the retained message
             publishPacketBuilder.withPayload(null);
@@ -2913,10 +2913,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             // Connect the successful subscriber
             successSubscriber.start();
             try {
-                successSubscriberEvents.connectedFuture.get(60, TimeUnit.SECONDS);
+                successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
                 fail("Success subscriber could not connect!");
             }
 
@@ -2924,30 +2924,30 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
             try {
-                successSubscriber.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
+                successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
                 fail("Success subscriber could not subscribe!");
             }
             try {
-                successSubscriberPublishEvents.publishReceivedFuture.get(60, TimeUnit.SECONDS);
+                successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
                 fail("Success subscriber did not get retained message!");
             }
 
             // Clear the retained message
-            publisher.publish(publishPacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
             // Wait 5 seconds to give the server time to clear everything out
             Thread.sleep(5000);
 
             // Connect the unsuccessful subscriber
             unsuccessfulSubscriber.start();
-            unsuccessfulSubscriberEvents.connectedFuture.get(60, TimeUnit.SECONDS);
-            unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);
+            unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+            unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
             // Make sure we do NOT get a publish
             boolean didExceptionOccur = false;
             try {
@@ -2963,11 +2963,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             // Disconnect all clients
             DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
             publisher.stop(disconnectPacketBuilder.build());
-            publisherEvents.stopFuture.get(60, TimeUnit.SECONDS);
+            publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
             successSubscriber.stop(disconnectPacketBuilder.build());
-            successSubscriberEvents.stopFuture.get(60, TimeUnit.SECONDS);
+            successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
             unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
-            unsuccessfulSubscriberEvents.stopFuture.get(60, TimeUnit.SECONDS);
+            unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
 
             // Close all clients
             publisher.close();;

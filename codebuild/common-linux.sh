@@ -29,16 +29,16 @@ mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false -Daws.crt.debugnative=t
 source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
 
 # Build and run all the tests!
-# ulimit -c unlimited
-# mvn -B test $* \
-#     -DredirectTestOutputToFile=true \
-#     -DreuseForks=false \
-#     -Dendpoint=$ENDPOINT \
-#     -Dcertificate=/tmp/certificate.pem \
-#     -Dprivatekey=/tmp/privatekey.pem \
-#     -Decc_certificate=/tmp/ecc_certificate.pem \
-#     -Decc_privatekey=/tmp/ecc_privatekey.pem \
-#     -Drootca=/tmp/AmazonRootCA1.pem \
-#     -Dprivatekey_p8=/tmp/privatekey_p8.pem \
-#     -Daws.crt.debugnative=true \
-#     -Dcmake.s2nNoPqAsm=ON
+ulimit -c unlimited
+mvn -B test $* \
+    -DredirectTestOutputToFile=true \
+    -DreuseForks=false \
+    -Dendpoint=$ENDPOINT \
+    -Dcertificate=/tmp/certificate.pem \
+    -Dprivatekey=/tmp/privatekey.pem \
+    -Decc_certificate=/tmp/ecc_certificate.pem \
+    -Decc_privatekey=/tmp/ecc_privatekey.pem \
+    -Drootca=/tmp/AmazonRootCA1.pem \
+    -Dprivatekey_p8=/tmp/privatekey_p8.pem \
+    -Daws.crt.debugnative=true \
+    -Dcmake.s2nNoPqAsm=ON

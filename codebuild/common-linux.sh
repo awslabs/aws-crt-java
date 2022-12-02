@@ -37,6 +37,6 @@ mvn -B test $* \
     -Dcmake.s2nNoPqAsm=ON
 
 # Run ALL MQTT5 tests (using Codebuild)
-source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
-mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
-source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
+# source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
+# mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
+# source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup

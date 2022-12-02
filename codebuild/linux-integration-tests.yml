@@ -20,9 +20,9 @@ phases:
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
       # Run the MQTT5 tests again, but connecting to Codebuild
-      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
-      - mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
-      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
+      # - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
+      # - mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
+      # - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
   post_build:
     commands:
       - echo Build completed on `date`

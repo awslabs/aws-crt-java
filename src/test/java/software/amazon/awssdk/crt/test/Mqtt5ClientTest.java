@@ -2431,7 +2431,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             events.connectedFuture.get(60, TimeUnit.SECONDS);
 
             System.out.println("About to make null publish...");
-
             try {
                 System.out.println("NOTE: Exception due to null publish packet may be printed below!");
                 client.publish(null).get(60, TimeUnit.SECONDS);

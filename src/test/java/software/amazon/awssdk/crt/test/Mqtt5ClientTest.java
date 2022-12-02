@@ -1927,10 +1927,17 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
             }
+
+            System.out.println("About to make client...");
+
             Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            System.out.println("About to start client...");
 
             client.start();
             events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            System.out.println("About to publish...");
 
             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
             publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
@@ -1947,8 +1954,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Client publish did not fail!");
             }
 
+            System.out.println("About to stop client...");
+
             client.stop(new DisconnectPacketBuilder().build());
+            System.out.println("About to close client...");
             client.close();
+            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }

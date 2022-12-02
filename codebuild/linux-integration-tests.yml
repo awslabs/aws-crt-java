@@ -16,15 +16,9 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      # - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
-      # - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
-      # - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
-
-      # Run the MQTT5 tests again, but connecting to Codebuild
-      - source $CODEBUILD_SRC_DIR/utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
-      - cd $CODEBUILD_SRC_DIR
-      - mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
-      - source $CODEBUILD_SRC_DIR/utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
+      - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
+      - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
+      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
   post_build:
     commands:
       - echo Build completed on `date`

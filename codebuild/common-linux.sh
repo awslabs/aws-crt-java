@@ -21,17 +21,24 @@ ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" 
 # Go to repository root directory
 cd $CODEBUILD_SRC_DIR
 
-# Build and run all the tests!
 ulimit -c unlimited
-mvn -B test $* \
-    -DredirectTestOutputToFile=true \
-    -DreuseForks=false \
-    -Dendpoint=$ENDPOINT \
-    -Dcertificate=/tmp/certificate.pem \
-    -Dprivatekey=/tmp/privatekey.pem \
-    -Decc_certificate=/tmp/ecc_certificate.pem \
-    -Decc_privatekey=/tmp/ecc_privatekey.pem \
-    -Drootca=/tmp/AmazonRootCA1.pem \
-    -Dprivatekey_p8=/tmp/privatekey_p8.pem \
-    -Daws.crt.debugnative=true \
-    -Dcmake.s2nNoPqAsm=ON
+
+# Run the MQTT5 tests again, but connecting to Codebuild
+source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
+mvn -B test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false -Daws.crt.debugnative=true -DreuseForks=false -DredirectTestOutputToFile=true
+source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
+
+# Build and run all the tests!
+# ulimit -c unlimited
+# mvn -B test $* \
+#     -DredirectTestOutputToFile=true \
+#     -DreuseForks=false \
+#     -Dendpoint=$ENDPOINT \
+#     -Dcertificate=/tmp/certificate.pem \
+#     -Dprivatekey=/tmp/privatekey.pem \
+#     -Decc_certificate=/tmp/ecc_certificate.pem \
+#     -Decc_privatekey=/tmp/ecc_privatekey.pem \
+#     -Drootca=/tmp/AmazonRootCA1.pem \
+#     -Dprivatekey_p8=/tmp/privatekey_p8.pem \
+#     -Daws.crt.debugnative=true \
+#     -Dcmake.s2nNoPqAsm=ON

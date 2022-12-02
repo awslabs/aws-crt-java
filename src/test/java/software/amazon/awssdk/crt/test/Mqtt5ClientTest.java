@@ -295,6 +295,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Minimal creation and cleanup */
     @Test
     public void New_UC1() {
+        System.out.println("Test: New_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -309,6 +310,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum creation and cleanup */
     @Test
     public void New_UC2() {
+        System.out.println("Test: New_UC2");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -397,6 +399,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Minimal memory check */
     @Test
     public void New_UC3() {
+        System.out.println("Test: New_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -412,6 +415,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum memory test */
     @Test
     public void New_UC4() {
+        System.out.println("Test: New_UC4");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -506,6 +510,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Direct connection with minimal configuration */
     @Test
     public void ConnDC_UC1() {
+        System.out.println("Test: ConnDC_UC1");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         try {
@@ -529,6 +534,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with basic authentication */
     @Test
     public void ConnDC_UC2() {
+        System.out.println("Test: ConnDC_UC2");
         Assume.assumeTrue(mqtt5DirectMqttBasicAuthHost != null);
         Assume.assumeTrue(mqtt5DirectMqttBasicAuthPort != null);
         Assume.assumeTrue(mqtt5BasicAuthUsername != null);
@@ -559,6 +565,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with TLS */
     @Test
     public void ConnDC_UC3() {
+        System.out.println("Test: ConnDC_UC3");
         Assume.assumeTrue(mqtt5DirectMqttTlsHost != null);
         Assume.assumeTrue(mqtt5DirectMqttTlsPort != null);
         Assume.assumeTrue(mqtt5CertificateFile != null);
@@ -593,6 +600,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with mTLS */
     @Test
     public void ConnDC_UC4() {
+        System.out.println("Test: ConnDC_UC4");
         /* Only works on IoT Core */
         Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
         Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
@@ -629,6 +637,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with HttpProxyOptions */
     @Test
     public void ConnDC_UC5() {
+        System.out.println("Test: ConnDC_UC5");
         Assume.assumeTrue(mqtt5DirectMqttTlsHost != null);
         Assume.assumeTrue(mqtt5DirectMqttTlsPort != null);
         Assume.assumeTrue(mqtt5ProxyHost != null);
@@ -679,6 +688,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum options set connection test */
     @Test
     public void ConnDC_UC6() {
+        System.out.println("Test: ConnDC_UC6");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -764,6 +774,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Websocket connection with minimal configuration */
     @Test
     public void ConnWS_UC1() {
+        System.out.println("Test: ConnWS_UC1");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         try {
@@ -806,6 +817,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with basic authentication */
     @Test
     public void ConnWS_UC2() {
+        System.out.println("Test: ConnWS_UC2");
         Assume.assumeTrue(mqtt5WSMqttBasicAuthHost != null);
         Assume.assumeTrue(mqtt5WSMqttBasicAuthPort != null);
         Assume.assumeTrue(mqtt5BasicAuthUsername != null);
@@ -853,6 +865,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with TLS */
     @Test
     public void ConnWS_UC3() {
+        System.out.println("Test: ConnWS_UC3");
         Assume.assumeTrue(mqtt5WSMqttTlsHost != null);
         Assume.assumeTrue(mqtt5WSMqttTlsPort != null);
         Assume.assumeTrue(mqtt5CertificateFile != null);
@@ -964,6 +977,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with all options set */
     @Test
     public void ConnWS_UC6() {
+        System.out.println("Test: ConnWS_UC6");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -1055,6 +1069,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid host name */
     @Test
     public void ConnNegativeID_UC1() {
+        System.out.println("Test: ConnNegativeID_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1097,6 +1112,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid, nonexistent port for direct connection */
     @Test
     public void ConnNegativeID_UC2() {
+        System.out.println("Test: ConnNegativeID_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1134,6 +1150,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid protocol port for direct connection */
     @Test
     public void ConnNegativeID_UC2_ALT() {
+        System.out.println("Test: ConnNegativeID_UC2_ALT");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         boolean foundExpectedError = false;
@@ -1172,6 +1189,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid, nonexistent port for websocket connection */
     @Test
     public void ConnNegativeID_UC3() {
+        System.out.println("Test: ConnNegativeID_UC3");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1227,6 +1245,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid protocol port for websocket connection */
     @Test
     public void ConnNegativeID_UC3_ALT() {
+        System.out.println("Test: ConnNegativeID_UC3_ALT");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         boolean foundExpectedError = false;
@@ -1283,6 +1302,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with socket timeout */
     @Test
     public void ConnNegativeID_UC4() {
+        System.out.println("Test: ConnNegativeID_UC4");
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1335,6 +1355,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket handshake failure test */
     @Test
     public void ConnNegativeID_UC6() {
+        System.out.println("Test: ConnNegativeID_UC6");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         boolean foundExpectedError = false;
@@ -1423,6 +1444,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Double Client ID failure test */
     @Test
     public void ConnNegativeID_UC7() {
+        System.out.println("Test: ConnNegativeID_UC7");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -1477,6 +1499,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Double Client ID disconnect and then reconnect test */
     @Test
     public void ConnNegativeID_UC7_ALT() {
+        System.out.println("Test: ConnNegativeID_UC7_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -1556,6 +1579,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Connect Packet Properties */
     @Test
     public void NewNegative_UC1() {
+        System.out.println("Test: NewNegative_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientCreationFailed = false;
 
@@ -1654,6 +1678,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Connect Packet Properties */
     @Test
     public void NewNegative_UC1_ALT() {
+        System.out.println("Test: NewNegative_UC1_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientCreationFailed = false;
 
@@ -1740,6 +1765,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Disconnect Packet Properties */
     @Test
     public void NewNegative_UC2() {
+        System.out.println("Test: NewNegative_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientDisconnectFailed = false;
 
@@ -1787,6 +1813,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Disconnect Packet Properties */
     @Test
     public void NewNegative_UC2_ALT() {
+        System.out.println("Test: NewNegative_UC2_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientDisconnectFailed = false;
 
@@ -1834,6 +1861,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Publish Packet Properties */
     @Test
     public void NewNegative_UC3() {
+        System.out.println("Test: NewNegative_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientPublishFailed = false;
 
@@ -1883,6 +1911,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Publish Packet Properties */
     @Test
     public void NewNegative_UC3_ALT() {
+        System.out.println("Test: NewNegative_UC3_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientPublishFailed = false;
 
@@ -1932,6 +1961,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Subscribe Packet Properties */
     @Test
     public void NewNegative_UC4() {
+        System.out.println("Test: NewNegative_UC4");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientSubscribeFailed = false;
 
@@ -1981,6 +2011,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Subscribe Packet Properties */
     @Test
     public void NewNegative_UC4_ALT() {
+        System.out.println("Test: NewNegative_UC4_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientSubscribeFailed = false;
 
@@ -2036,6 +2067,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path, minimal success test */
     @Test
     public void Negotiated_UC1() {
+        System.out.println("Test: Negotiated_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
 
         try {
@@ -2079,6 +2111,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum success test */
     @Test
     public void Negotiated_UC2() {
+        System.out.println("Test:Negotiated_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -2140,6 +2173,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Sub-UnSub happy path */
     @Test
     public void Op_UC1() {
+        System.out.println("Test:Op_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2206,6 +2240,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Sub-UnSub happy path */
     @Test
     public void Op_UC2() {
+        System.out.println("Test:Op_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2293,6 +2328,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Binary Publish Test */
     @Test
     public void Op_UC3() {
+        System.out.println("Test:Op_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2358,6 +2394,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Publish Test */
     @Test
     public void ErrorOp_UC1() {
+        System.out.println("Test:ErrorOp_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2405,6 +2442,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Publish with empty builder test */
     @Test
     public void ErrorOp_UC1_ALT() {
+        System.out.println("Test:ErrorOp_UC1_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2452,6 +2490,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Subscribe Test */
     @Test
     public void ErrorOp_UC2() {
+        System.out.println("Test:ErrorOp_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2499,6 +2538,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Empty Subscribe Test */
     @Test
     public void ErrorOp_UC2_ALT() {
+        System.out.println("Test:ErrorOp_UC2_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2546,6 +2586,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Unsubscribe Test */
     @Test
     public void ErrorOp_UC3() {
+        System.out.println("Test:ErrorOp_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2593,6 +2634,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Empty Unsubscribe Test */
     @Test
     public void ErrorOp_UC3_ALT() {
+        System.out.println("Test:ErrorOp_UC3_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2690,6 +2732,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. No drop in connection, no retry, no reconnect */
     @Test
     public void QoS1_UC1() {
+        System.out.println("Test:QoS1_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         int messageCount = 10;
         String testUUID = UUID.randomUUID().toString();
@@ -2770,6 +2813,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      /* Happy path. No drop in connection, no retry, no reconnect */
     @Test
     public void Retain_UC1() {
+        System.out.println("Test:Retain_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;

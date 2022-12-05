@@ -848,17 +848,17 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
         java_packet->packet.will = &java_packet->will_publish_packet->packet;
     }
 
-    if (s_get_user_properties_from_packet_optional(
-            env,
-            java_connect_packet,
-            mqtt5_connect_packet_properties.connect_user_properties_field_id,
-            s_connect_packet_string,
-            &java_packet->packet.user_property_count,
-            &java_packet->jni_user_properties_holder,
-            &java_packet->jni_user_properties_struct_holder,
-            &java_packet->packet.user_properties) == AWS_OP_ERR) {
-        goto on_error;
-    }
+    // if (s_get_user_properties_from_packet_optional(
+    //         env,
+    //         java_connect_packet,
+    //         mqtt5_connect_packet_properties.connect_user_properties_field_id,
+    //         s_connect_packet_string,
+    //         &java_packet->packet.user_property_count,
+    //         &java_packet->jni_user_properties_holder,
+    //         &java_packet->jni_user_properties_struct_holder,
+    //         &java_packet->packet.user_properties) == AWS_OP_ERR) {
+    //     goto on_error;
+    // }
 
     return java_packet;
 
@@ -971,17 +971,17 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
         goto on_error;
     }
 
-    if (s_get_user_properties_from_packet_optional(
-            env,
-            java_disconnect_packet,
-            mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id,
-            s_disconnect_packet_string,
-            &java_packet->packet.user_property_count,
-            &java_packet->jni_user_properties_holder,
-            &java_packet->jni_user_properties_struct_holder,
-            &java_packet->packet.user_properties) == AWS_OP_ERR) {
-        goto on_error;
-    }
+    // if (s_get_user_properties_from_packet_optional(
+    //         env,
+    //         java_disconnect_packet,
+    //         mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id,
+    //         s_disconnect_packet_string,
+    //         &java_packet->packet.user_property_count,
+    //         &java_packet->jni_user_properties_holder,
+    //         &java_packet->jni_user_properties_struct_holder,
+    //         &java_packet->packet.user_properties) == AWS_OP_ERR) {
+    //     goto on_error;
+    // }
 
     return java_packet;
 
@@ -1176,17 +1176,17 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
         goto on_error;
     }
 
-    if (s_get_user_properties_from_packet_optional(
-            env,
-            java_publish_packet,
-            mqtt5_publish_packet_properties.publish_user_properties_field_id,
-            s_publish_packet_string,
-            &java_packet->packet.user_property_count,
-            &java_packet->jni_user_properties_holder,
-            &java_packet->jni_user_properties_struct_holder,
-            &java_packet->packet.user_properties) == AWS_OP_ERR) {
-        goto on_error;
-    }
+    // if (s_get_user_properties_from_packet_optional(
+    //         env,
+    //         java_publish_packet,
+    //         mqtt5_publish_packet_properties.publish_user_properties_field_id,
+    //         s_publish_packet_string,
+    //         &java_packet->packet.user_property_count,
+    //         &java_packet->jni_user_properties_holder,
+    //         &java_packet->jni_user_properties_struct_holder,
+    //         &java_packet->packet.user_properties) == AWS_OP_ERR) {
+    //     goto on_error;
+    // }
 
     return java_packet;
 
@@ -1379,17 +1379,17 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
     }
     java_packet->packet.subscriptions = (struct aws_mqtt5_subscription_view *)java_packet->topic_filters.data;
 
-    if (s_get_user_properties_from_packet_optional(
-            env,
-            java_subscribe_packet,
-            mqtt5_subscribe_packet_properties.subscribe_user_properties_field_id,
-            s_subscribe_packet_string,
-            &java_packet->packet.user_property_count,
-            &java_packet->jni_user_properties_holder,
-            &java_packet->jni_user_properties_struct_holder,
-            &java_packet->packet.user_properties) == AWS_OP_ERR) {
-        goto on_error;
-    }
+    // if (s_get_user_properties_from_packet_optional(
+    //         env,
+    //         java_subscribe_packet,
+    //         mqtt5_subscribe_packet_properties.subscribe_user_properties_field_id,
+    //         s_subscribe_packet_string,
+    //         &java_packet->packet.user_property_count,
+    //         &java_packet->jni_user_properties_holder,
+    //         &java_packet->jni_user_properties_struct_holder,
+    //         &java_packet->packet.user_properties) == AWS_OP_ERR) {
+    //     goto on_error;
+    // }
 
     return java_packet;
 
@@ -1500,17 +1500,17 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     }
     java_packet->packet.topic_filters = (struct aws_byte_cursor *)java_packet->topic_filters.data;
 
-    if (s_get_user_properties_from_packet_optional(
-            env,
-            java_unsubscribe_packet,
-            mqtt5_unsubscribe_packet_properties.unsubscribe_user_properties_field_id,
-            s_unsubscribe_packet_string,
-            &java_packet->packet.user_property_count,
-            &java_packet->jni_user_properties_holder,
-            &java_packet->jni_user_properties_struct_holder,
-            &java_packet->packet.user_properties) == AWS_OP_ERR) {
-        goto on_error;
-    }
+    // if (s_get_user_properties_from_packet_optional(
+    //         env,
+    //         java_unsubscribe_packet,
+    //         mqtt5_unsubscribe_packet_properties.unsubscribe_user_properties_field_id,
+    //         s_unsubscribe_packet_string,
+    //         &java_packet->packet.user_property_count,
+    //         &java_packet->jni_user_properties_holder,
+    //         &java_packet->jni_user_properties_struct_holder,
+    //         &java_packet->packet.user_properties) == AWS_OP_ERR) {
+    //     goto on_error;
+    // }
 
     return java_packet;
 

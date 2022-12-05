@@ -714,18 +714,18 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
         return NULL;
     }
 
-    if (s_set_user_properties_field(
-            env,
-            native_connack_data->user_property_count,
-            native_connack_data->user_properties,
-            connack_data,
-            mqtt5_connack_packet_properties.connack_user_properties_field_id) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env,
-            "Error when creating ConnAckPacket from native: could not add user property!",
-            AWS_ERROR_INVALID_STATE);
-        return NULL;
-    }
+    // if (s_set_user_properties_field(
+    //         env,
+    //         native_connack_data->user_property_count,
+    //         native_connack_data->user_properties,
+    //         connack_data,
+    //         mqtt5_connack_packet_properties.connack_user_properties_field_id) != AWS_OP_SUCCESS) {
+    //     s_aws_mqtt5_client_log_and_throw_exception(
+    //         env,
+    //         "Error when creating ConnAckPacket from native: could not add user property!",
+    //         AWS_ERROR_INVALID_STATE);
+    //     return NULL;
+    // }
 
     return connack_data;
 }
@@ -781,16 +781,16 @@ static jobject s_aws_mqtt5_client_create_jni_disconnect_packet_from_native(
         return NULL;
     }
 
-    if (s_set_user_properties_field(
-            env,
-            native_disconnect_data->user_property_count,
-            native_disconnect_data->user_properties,
-            disconnect_packet_data,
-            mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(
-            AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: could not add user property!");
-        return NULL;
-    }
+    // if (s_set_user_properties_field(
+    //         env,
+    //         native_disconnect_data->user_property_count,
+    //         native_disconnect_data->user_properties,
+    //         disconnect_packet_data,
+    //         mqtt5_disconnect_packet_properties.disconnect_user_properties_field_id) != AWS_OP_SUCCESS) {
+    //     AWS_LOGF_ERROR(
+    //         AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: could not add user property!");
+    //     return NULL;
+    // }
 
     return disconnect_packet_data;
 }
@@ -896,15 +896,15 @@ static jobject s_aws_mqtt5_client_create_jni_puback_packet_from_native(
             true) != AWS_OP_SUCCESS) {
         return NULL;
     }
-    if (s_set_user_properties_field(
-            env,
-            puback_packet->user_property_count,
-            puback_packet->user_properties,
-            puback_packet_data,
-            mqtt5_puback_packet_properties.puback_user_properties_field_id) == AWS_OP_ERR) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PubAckPacket from native could not add user property!");
-        return NULL;
-    }
+    // if (s_set_user_properties_field(
+    //         env,
+    //         puback_packet->user_property_count,
+    //         puback_packet->user_properties,
+    //         puback_packet_data,
+    //         mqtt5_puback_packet_properties.puback_user_properties_field_id) == AWS_OP_ERR) {
+    //     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PubAckPacket from native could not add user property!");
+    //     return NULL;
+    // }
     return puback_packet_data;
 }
 
@@ -1032,15 +1032,15 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
         }
     }
 
-    if (s_set_user_properties_field(
-            env,
-            publish->user_property_count,
-            publish->user_properties,
-            publish_packet_data,
-            mqtt5_publish_packet_properties.publish_user_properties_field_id) == AWS_OP_ERR) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PublishPacket from native could not add user properties!");
-        return NULL;
-    }
+    // if (s_set_user_properties_field(
+    //         env,
+    //         publish->user_property_count,
+    //         publish->user_properties,
+    //         publish_packet_data,
+    //         mqtt5_publish_packet_properties.publish_user_properties_field_id) == AWS_OP_ERR) {
+    //     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PublishPacket from native could not add user properties!");
+    //     return NULL;
+    // }
 
     return publish_packet_data;
 }
@@ -1638,16 +1638,16 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
             }
         }
 
-        if (s_set_user_properties_field(
-                env,
-                suback->user_property_count,
-                suback->user_properties,
-                suback_packet_data,
-                mqtt5_suback_packet_properties.suback_user_properties_field_id) == AWS_OP_ERR) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PubAckPacket from native could not add user property!");
-            exception_error_code = AWS_ERROR_INVALID_STATE;
-            goto exception;
-        }
+        // if (s_set_user_properties_field(
+        //         env,
+        //         suback->user_property_count,
+        //         suback->user_properties,
+        //         suback_packet_data,
+        //         mqtt5_suback_packet_properties.suback_user_properties_field_id) == AWS_OP_ERR) {
+        //     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating PubAckPacket from native could not add user property!");
+        //     exception_error_code = AWS_ERROR_INVALID_STATE;
+        //     goto exception;
+        // }
     }
 
     /* Complete the promise */
@@ -1787,16 +1787,16 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
         }
     }
 
-    if (s_set_user_properties_field(
-            env,
-            unsuback->user_property_count,
-            unsuback->user_properties,
-            unsuback_packet_data,
-            mqtt5_unsuback_packet_properties.unsuback_user_properties_field_id) == AWS_OP_ERR) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating UnsubAckPacket from native could not add user property!");
-        exception_error_code = AWS_ERROR_INVALID_STATE;
-        goto exception;
-    }
+    // if (s_set_user_properties_field(
+    //         env,
+    //         unsuback->user_property_count,
+    //         unsuback->user_properties,
+    //         unsuback_packet_data,
+    //         mqtt5_unsuback_packet_properties.unsuback_user_properties_field_id) == AWS_OP_ERR) {
+    //     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "When creating UnsubAckPacket from native could not add user property!");
+    //     exception_error_code = AWS_ERROR_INVALID_STATE;
+    //     goto exception;
+    // }
 
     /* Complete the promise */
     (*env)->CallBooleanMethod(

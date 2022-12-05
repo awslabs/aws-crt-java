@@ -576,6 +576,7 @@ public class S3ClientTest extends CrtTestFixture {
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
+                assertNotNull(resumeToken);
 
                 Throwable thrown = Assert.assertThrows(Throwable.class,
                     () -> onFinishedFuture.get());

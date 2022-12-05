@@ -42,6 +42,7 @@
         <cmake.warningsareerrors>OFF</cmake.warningsareerrors>
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
+        <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
     </properties>
 
     <profiles>
@@ -99,7 +100,7 @@
             </activation>
             <properties>
                 <cmake.cflags/>
-                <cmake.min_osx_version>10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=x86_64</cmake.osx_arch>
             </properties>
         </profile>
@@ -112,7 +113,7 @@
                     </os>
                 </activation>
             <properties>
-                <cmake.min_osx_version>10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=arm64</cmake.osx_arch>
             </properties>
         </profile>
@@ -176,7 +177,7 @@
                                         <argument>-DCMAKE_PREFIX_PATH=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_INSTALL_PREFIX=${cmake.binaries}/install</argument>
                                         <argument>-DCMAKE_C_FLAGS=${cmake.cflags}</argument>
-                                        <argument>-DCMAKE_OSX_DEPLOYMENT_TARGET=${cmake.min_osx_version}</argument>
+                                        <argument>${cmake.min_osx_version}</argument>
                                         <argument>${cmake.osx_arch}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>

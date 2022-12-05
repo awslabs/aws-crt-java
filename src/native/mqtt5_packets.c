@@ -127,81 +127,81 @@ static void s_log_and_throw_exception(JNIEnv *env, const char *message) {
     aws_jni_throw_runtime_exception(env, "%s", message);
 }
 
-static int s_populate_user_properties(
-    JNIEnv *env,
-    jobject jni_user_properties_list,
-    size_t java_packet_native_user_property_count,
-    const struct aws_mqtt5_user_property **java_packet_native_user_properties,
-    /* Contains jstring_array_holder_struct pointers */
-    struct aws_array_list *java_packet_user_properties_holder,
-    /* Contains aws_mqtt5_user_property pointers */
-    struct aws_array_list *java_packet_user_properties_struct_holder) {
+// static int s_populate_user_properties(
+//     JNIEnv *env,
+//     jobject jni_user_properties_list,
+//     size_t java_packet_native_user_property_count,
+//     const struct aws_mqtt5_user_property **java_packet_native_user_properties,
+//     /* Contains jstring_array_holder_struct pointers */
+//     struct aws_array_list *java_packet_user_properties_holder,
+//     /* Contains aws_mqtt5_user_property pointers */
+//     struct aws_array_list *java_packet_user_properties_struct_holder) {
 
-    if (jni_user_properties_list) {
-        for (size_t i = 0; i < java_packet_native_user_property_count; i++) {
-            jobject jni_property =
-                (*env)->CallObjectMethod(env, jni_user_properties_list, boxed_list_properties.list_get_id, (jint)i);
-            if (!jni_property || aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to being unable to get property in list from Java");
-                return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-            }
+//     if (jni_user_properties_list) {
+//         for (size_t i = 0; i < java_packet_native_user_property_count; i++) {
+//             jobject jni_property =
+//                 (*env)->CallObjectMethod(env, jni_user_properties_list, boxed_list_properties.list_get_id, (jint)i);
+//             if (!jni_property || aws_jni_check_and_clear_exception(env)) {
+//                 s_log_and_throw_exception(
+//                     env, "Could not populate user properties due to being unable to get property in list from Java");
+//                 return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+//             }
 
-            jstring jni_property_key =
-                (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_key_id);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to exception when getting property key");
-                return aws_raise_error(AWS_ERROR_INVALID_STATE);
-            }
-            jstring jni_property_value =
-                (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_value_id);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to exception when getting property value");
-                return aws_raise_error(AWS_ERROR_INVALID_STATE);
-            }
+//             jstring jni_property_key =
+//                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_key_id);
+//             if (aws_jni_check_and_clear_exception(env)) {
+//                 s_log_and_throw_exception(
+//                     env, "Could not populate user properties due to exception when getting property key");
+//                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//             }
+//             jstring jni_property_value =
+//                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_value_id);
+//             if (aws_jni_check_and_clear_exception(env)) {
+//                 s_log_and_throw_exception(
+//                     env, "Could not populate user properties due to exception when getting property value");
+//                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//             }
 
-            struct jstring_array_holder_struct holder_property_key = {
-                .jni_string = jni_property_key,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key),
-            };
+//             struct jstring_array_holder_struct holder_property_key = {
+//                 .jni_string = jni_property_key,
+//                 .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key),
+//             };
 
-            struct jstring_array_holder_struct holder_property_value = {
-                .jni_string = jni_property_value,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value),
-            };
-            aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
-            aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_value);
+//             struct jstring_array_holder_struct holder_property_value = {
+//                 .jni_string = jni_property_value,
+//                 .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value),
+//             };
+//             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
+//             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_value);
 
-            struct aws_mqtt5_user_property jni_property_struct = {
-                .name = holder_property_key.cursor,
-                .value = holder_property_value.cursor,
-            };
-            aws_array_list_push_back(java_packet_user_properties_struct_holder, (void *)&jni_property_struct);
-        }
-        *java_packet_native_user_properties =
-            (struct aws_mqtt5_user_property *)java_packet_user_properties_struct_holder->data;
-    }
-    return AWS_OP_SUCCESS;
-}
+//             struct aws_mqtt5_user_property jni_property_struct = {
+//                 .name = holder_property_key.cursor,
+//                 .value = holder_property_value.cursor,
+//             };
+//             aws_array_list_push_back(java_packet_user_properties_struct_holder, (void *)&jni_property_struct);
+//         }
+//         *java_packet_native_user_properties =
+//             (struct aws_mqtt5_user_property *)java_packet_user_properties_struct_holder->data;
+//     }
+//     return AWS_OP_SUCCESS;
+// }
 
-static int s_allocate_user_properties_array_holders(
-    struct aws_allocator *allocator,
-    /* Contains jstring_array_holder_struct pointers */
-    struct aws_array_list *holder_array,
-    /* Contains aws_mqtt5_user_property pointers */
-    struct aws_array_list *user_property_array,
-    size_t init_entries) {
-    if (aws_array_list_init_dynamic(
-            holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
-        aws_array_list_init_dynamic(
-            user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
-            AWS_OP_SUCCESS) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    return AWS_OP_SUCCESS;
-}
+// static int s_allocate_user_properties_array_holders(
+//     struct aws_allocator *allocator,
+//     /* Contains jstring_array_holder_struct pointers */
+//     struct aws_array_list *holder_array,
+//     /* Contains aws_mqtt5_user_property pointers */
+//     struct aws_array_list *user_property_array,
+//     size_t init_entries) {
+//     if (aws_array_list_init_dynamic(
+//             holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
+//         aws_array_list_init_dynamic(
+//             user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
+//             AWS_OP_SUCCESS) {
+//         return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//     }
+//     return AWS_OP_SUCCESS;
+// }
 
 static void s_cleanup_two_aws_array(
     JNIEnv *env,
@@ -550,63 +550,63 @@ int aws_get_enum_from_jobject(
     }
 }
 
-static int s_get_user_properties_from_packet_optional(
-    JNIEnv *env,
-    jobject packet,
-    jfieldID packet_field,
-    char *packet_name,
-    size_t *packet_user_property_count,
-    /* Contains jstring_array_holder_struct pointers */
-    struct aws_array_list *jni_user_properties_holder,
-    /* Contains aws_mqtt5_user_property pointers */
-    struct aws_array_list *jni_user_properties_struct_holder,
-    const struct aws_mqtt5_user_property **packet_properties) {
+// static int s_get_user_properties_from_packet_optional(
+//     JNIEnv *env,
+//     jobject packet,
+//     jfieldID packet_field,
+//     char *packet_name,
+//     size_t *packet_user_property_count,
+//     /* Contains jstring_array_holder_struct pointers */
+//     struct aws_array_list *jni_user_properties_holder,
+//     /* Contains aws_mqtt5_user_property pointers */
+//     struct aws_array_list *jni_user_properties_struct_holder,
+//     const struct aws_mqtt5_user_property **packet_properties) {
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+//     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    jobject jni_list = (*env)->GetObjectField(env, packet, packet_field);
-    if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list", packet_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting user properties list", packet_name);
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    if (jni_list) {
-        jint jni_user_properties_size = (*env)->CallIntMethod(env, jni_list, boxed_list_properties.list_size_id);
-        if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list size", packet_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting user properties list size", packet_name);
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        }
-        *packet_user_property_count = (size_t)jni_user_properties_size;
-        if (AWS_OP_SUCCESS != s_allocate_user_properties_array_holders(
-                                  allocator,
-                                  jni_user_properties_holder,
-                                  jni_user_properties_struct_holder,
-                                  *packet_user_property_count)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Could not create user properties array", packet_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Could not create user properties array", packet_name);
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        }
-        int populate_result = s_populate_user_properties(
-            env,
-            jni_list,
-            *packet_user_property_count,
-            packet_properties,
-            jni_user_properties_holder,
-            jni_user_properties_struct_holder);
-        if (populate_result != AWS_OP_SUCCESS) {
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        }
-    }
-    return AWS_OP_SUCCESS;
-}
+//     jobject jni_list = (*env)->GetObjectField(env, packet, packet_field);
+//     if (aws_jni_check_and_clear_exception(env)) {
+//         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
+//         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list", packet_name);
+//         aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting user properties list", packet_name);
+//         return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//     }
+//     if (jni_list) {
+//         jint jni_user_properties_size = (*env)->CallIntMethod(env, jni_list, boxed_list_properties.list_size_id);
+//         if (aws_jni_check_and_clear_exception(env)) {
+//             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
+//             AWS_LOGF_ERROR(
+//                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list size", packet_name);
+//             aws_jni_throw_runtime_exception(
+//                 env, "%s create_from_java: Error getting user properties list size", packet_name);
+//             return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//         }
+//         *packet_user_property_count = (size_t)jni_user_properties_size;
+//         if (AWS_OP_SUCCESS != s_allocate_user_properties_array_holders(
+//                                   allocator,
+//                                   jni_user_properties_holder,
+//                                   jni_user_properties_struct_holder,
+//                                   *packet_user_property_count)) {
+//             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
+//             AWS_LOGF_ERROR(
+//                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Could not create user properties array", packet_name);
+//             aws_jni_throw_runtime_exception(
+//                 env, "%s create_from_java: Could not create user properties array", packet_name);
+//             return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//         }
+//         int populate_result = s_populate_user_properties(
+//             env,
+//             jni_list,
+//             *packet_user_property_count,
+//             packet_properties,
+//             jni_user_properties_holder,
+//             jni_user_properties_struct_holder);
+//         if (populate_result != AWS_OP_SUCCESS) {
+//             return aws_raise_error(AWS_ERROR_INVALID_STATE);
+//         }
+//     }
+//     return AWS_OP_SUCCESS;
+// }
 
 static int s_get_qos_from_packet(
     JNIEnv *env,
@@ -655,7 +655,7 @@ static char s_connect_packet_string[] = "ConnectPacket";
 static char s_disconnect_packet_string[] = "DisconnectPacket";
 static char s_publish_packet_string[] = "PublishPacket";
 static char s_subscribe_packet_string[] = "SubscribePacket";
-static char s_unsubscribe_packet_string[] = "UnsubscribePacket";
+// static char s_unsubscribe_packet_string[] = "UnsubscribePacket";
 
 /*******************************************************************************
  * CONNECT PACKET FUNCTIONS

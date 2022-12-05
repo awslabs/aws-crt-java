@@ -475,65 +475,65 @@ static int s_set_jni_byte_array_field_in_packet(
     }
 }
 
-static int s_set_user_properties_field(
-    JNIEnv *env,
-    const size_t user_property_count,
-    const struct aws_mqtt5_user_property *packet_properties,
-    jobject packet,
-    jfieldID user_property_field_id) {
-    // No properties - nothing to do
-    if (packet_properties == NULL) {
-        return AWS_OP_SUCCESS;
-    }
+// static int s_set_user_properties_field(
+//     JNIEnv *env,
+//     const size_t user_property_count,
+//     const struct aws_mqtt5_user_property *packet_properties,
+//     jobject packet,
+//     jfieldID user_property_field_id) {
+//     // No properties - nothing to do
+//     if (packet_properties == NULL) {
+//         return AWS_OP_SUCCESS;
+//     }
 
-    if (user_property_count > 0) {
-        jobject jni_user_properties_list = (*env)->NewObject(
-            env, boxed_array_list_properties.list_class, boxed_array_list_properties.list_constructor_id);
-        if (aws_jni_check_and_clear_exception(env)) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "Could not make new user properties list", AWS_ERROR_INVALID_STATE);
-            return AWS_OP_ERR;
-        }
+//     if (user_property_count > 0) {
+//         jobject jni_user_properties_list = (*env)->NewObject(
+//             env, boxed_array_list_properties.list_class, boxed_array_list_properties.list_constructor_id);
+//         if (aws_jni_check_and_clear_exception(env)) {
+//             s_aws_mqtt5_client_log_and_throw_exception(
+//                 env, "Could not make new user properties list", AWS_ERROR_INVALID_STATE);
+//             return AWS_OP_ERR;
+//         }
 
-        (*env)->SetObjectField(env, packet, user_property_field_id, jni_user_properties_list);
-        if (aws_jni_check_and_clear_exception(env)) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "Could not make set new user properties list", AWS_ERROR_INVALID_STATE);
-            return AWS_OP_ERR;
-        }
+//         (*env)->SetObjectField(env, packet, user_property_field_id, jni_user_properties_list);
+//         if (aws_jni_check_and_clear_exception(env)) {
+//             s_aws_mqtt5_client_log_and_throw_exception(
+//                 env, "Could not make set new user properties list", AWS_ERROR_INVALID_STATE);
+//             return AWS_OP_ERR;
+//         }
 
-        for (size_t i = 0; i < user_property_count; i++) {
-            const struct aws_mqtt5_user_property *property = packet_properties + i;
-            jstring jni_new_property_name = aws_jni_string_from_cursor(env, &property->name);
-            jstring jni_new_property_value = aws_jni_string_from_cursor(env, &property->value);
+//         for (size_t i = 0; i < user_property_count; i++) {
+//             const struct aws_mqtt5_user_property *property = packet_properties + i;
+//             jstring jni_new_property_name = aws_jni_string_from_cursor(env, &property->name);
+//             jstring jni_new_property_value = aws_jni_string_from_cursor(env, &property->value);
 
-            jobject jni_new_property = (*env)->NewObject(
-                env,
-                mqtt5_user_property_properties.user_property_class,
-                mqtt5_user_property_properties.property_constructor_id,
-                jni_new_property_name,
-                jni_new_property_value);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env, "Could not make new user property", AWS_ERROR_INVALID_STATE);
-                return AWS_OP_ERR;
-            }
+//             jobject jni_new_property = (*env)->NewObject(
+//                 env,
+//                 mqtt5_user_property_properties.user_property_class,
+//                 mqtt5_user_property_properties.property_constructor_id,
+//                 jni_new_property_name,
+//                 jni_new_property_value);
+//             if (aws_jni_check_and_clear_exception(env)) {
+//                 s_aws_mqtt5_client_log_and_throw_exception(
+//                     env, "Could not make new user property", AWS_ERROR_INVALID_STATE);
+//                 return AWS_OP_ERR;
+//             }
 
-            jboolean jni_add_result = (*env)->CallBooleanMethod(
-                env, jni_user_properties_list, boxed_list_properties.list_add_id, jni_new_property);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env, "Could not add new user property", AWS_ERROR_INVALID_STATE);
-                return AWS_OP_ERR;
-            }
+//             jboolean jni_add_result = (*env)->CallBooleanMethod(
+//                 env, jni_user_properties_list, boxed_list_properties.list_add_id, jni_new_property);
+//             if (aws_jni_check_and_clear_exception(env)) {
+//                 s_aws_mqtt5_client_log_and_throw_exception(
+//                     env, "Could not add new user property", AWS_ERROR_INVALID_STATE);
+//                 return AWS_OP_ERR;
+//             }
 
-            if ((bool)jni_add_result == false) {
-                return AWS_OP_ERR;
-            }
-        }
-    }
-    return AWS_OP_SUCCESS;
-}
+//             if ((bool)jni_add_result == false) {
+//                 return AWS_OP_ERR;
+//             }
+//         }
+//     }
+//     return AWS_OP_SUCCESS;
+// }
 
 static int s_set_int_enum_in_packet(
     JNIEnv *env,

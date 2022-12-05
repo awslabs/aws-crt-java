@@ -15,6 +15,7 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
+import software.amazon.awssdk.crt.s3.ResumeToken;
 import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
@@ -576,7 +577,7 @@ public class S3ClientTest extends CrtTestFixture {
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
-                assertNotNull(resumeToken);
+                Assert.assertNotNull(resumeToken);
 
                 Throwable thrown = Assert.assertThrows(Throwable.class,
                     () -> onFinishedFuture.get());
@@ -616,7 +617,12 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
                     .withHttpRequest(httpRequestResume)
                     .withResponseHandler(responseHandlerResume)
-                    .withResumeToken(resumeToken);
+                    .withResumeToken(new ResumeToken.PutResumeTokenBuilder()
+                                        .withPartSize(resumeToken.getPartSize())
+                                        .withTotalNumParts(resumeToken.getTotalNumParts())
+                                        .withNumPartsCompleted(resumeToken.getNumPartsCompleted())
+                                        .withUploadId(resumeToken.getUploadId())
+                                        .build());
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptionsResume)) {
                 Integer finish = onFinishedFutureResume.get();

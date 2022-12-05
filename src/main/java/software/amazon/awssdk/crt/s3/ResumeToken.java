@@ -53,7 +53,7 @@ public class ResumeToken {
             return this;
         }
 
-        ResumeToken build() {
+        public ResumeToken build() {
             return new ResumeToken(this);
         } 
     };

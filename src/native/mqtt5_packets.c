@@ -655,7 +655,7 @@ static char s_connect_packet_string[] = "ConnectPacket";
 static char s_disconnect_packet_string[] = "DisconnectPacket";
 static char s_publish_packet_string[] = "PublishPacket";
 static char s_subscribe_packet_string[] = "SubscribePacket";
-// static char s_unsubscribe_packet_string[] = "UnsubscribePacket";
+static char s_unsubscribe_packet_string[] = "UnsubscribePacket";
 
 /*******************************************************************************
  * CONNECT PACKET FUNCTIONS

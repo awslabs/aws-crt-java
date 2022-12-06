@@ -2897,125 +2897,124 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      */
 
      /* Happy path. No drop in connection, no retry, no reconnect */
-    @Test
-    public void Retain_UC1() {
-        System.out.println("Test:Retain_UC1");
-        Assume.assumeTrue(checkMinimumDirectHostAndPort());
-        String testUUID = UUID.randomUUID().toString();
-        String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
+    // @Test
+    // public void Retain_UC1() {
+    //     System.out.println("Test:Retain_UC1");
+    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
+    //     String testUUID = UUID.randomUUID().toString();
+    //     String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
 
-        try {
-            Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+    //     try {
+    //         Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
 
-            // Only needed for IoT Core
-            TlsContext tlsContext = null;
-            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-                Assume.assumeTrue(getMinimumDirectCert() != null);
-                Assume.assumeTrue(getMinimumDirectKey() != null);
-                tlsContext = getIoTCoreTlsContext();
-                clientBuilder.withTlsContext(tlsContext);
-            }
+    //         // Only needed for IoT Core
+    //         TlsContext tlsContext = null;
+    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+    //             Assume.assumeTrue(getMinimumDirectCert() != null);
+    //             Assume.assumeTrue(getMinimumDirectKey() != null);
+    //             tlsContext = getIoTCoreTlsContext();
+    //             clientBuilder.withTlsContext(tlsContext);
+    //         }
 
-            LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
-            clientBuilder.withLifecycleEvents(publisherEvents);
-            Mqtt5Client publisher = new Mqtt5Client(clientBuilder.build());
+    //         LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
+    //         clientBuilder.withLifecycleEvents(publisherEvents);
+    //         Mqtt5Client publisher = new Mqtt5Client(clientBuilder.build());
 
-            LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
-            PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
-            clientBuilder.withLifecycleEvents(successSubscriberEvents);
-            clientBuilder.withPublishEvents(successSubscriberPublishEvents);
-            Mqtt5Client successSubscriber = new Mqtt5Client(clientBuilder.build());
+    //         LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
+    //         PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
+    //         clientBuilder.withLifecycleEvents(successSubscriberEvents);
+    //         clientBuilder.withPublishEvents(successSubscriberPublishEvents);
+    //         Mqtt5Client successSubscriber = new Mqtt5Client(clientBuilder.build());
 
-            LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
-            PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
-            clientBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
-            clientBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
-            Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(clientBuilder.build());
+    //         LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
+    //         PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
+    //         clientBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
+    //         clientBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
+    //         Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(clientBuilder.build());
 
-            // Connect and publish a retained message
-            publisher.start();
-            publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-            publishPacketBuilder.withTopic(testTopic)
-                .withPayload("Hello World".getBytes())
-                .withQOS(QOS.AT_LEAST_ONCE)
-                .withRetain(true);
-            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //         // Connect and publish a retained message
+    //         publisher.start();
+    //         publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+    //         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+    //         publishPacketBuilder.withTopic(testTopic)
+    //             .withPayload("Hello World".getBytes())
+    //             .withQOS(QOS.AT_LEAST_ONCE)
+    //             .withRetain(true);
+    //         publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-            // Setup for clearing the retained message
-            publishPacketBuilder.withPayload(null);
+    //         // Setup for clearing the retained message
+    //         publishPacketBuilder.withPayload(null);
 
-            // Connect the successful subscriber
-            successSubscriber.start();
-            try {
-                successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-                fail("Success subscriber could not connect!");
-            }
+    //         // Connect the successful subscriber
+    //         successSubscriber.start();
+    //         try {
+    //             successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+    //         } catch (Exception ex) {
+    //             // Clear the retained message
+    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //             fail("Success subscriber could not connect!");
+    //         }
 
-            // Subscribe and verify the retained message
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
-            try {
-                successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-                fail("Success subscriber could not subscribe!");
-            }
-            try {
-                successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                // Clear the retained message
-                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-                fail("Success subscriber did not get retained message!");
-            }
+    //         // Subscribe and verify the retained message
+    //         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+    //         subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+    //         try {
+    //             successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //         } catch (Exception ex) {
+    //             // Clear the retained message
+    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //             fail("Success subscriber could not subscribe!");
+    //         }
+    //         try {
+    //             successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+    //         } catch (Exception ex) {
+    //             // Clear the retained message
+    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //             fail("Success subscriber did not get retained message!");
+    //         }
 
-            // Clear the retained message
-            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //         // Clear the retained message
+    //         publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-            // Wait 5 seconds to give the server time to clear everything out
-            Thread.sleep(5000);
+    //         // Wait 5 seconds to give the server time to clear everything out
+    //         Thread.sleep(5000);
 
-            // Connect the unsuccessful subscriber
-            unsuccessfulSubscriber.start();
-            unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-            unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-            // Make sure we do NOT get a publish
-            boolean didExceptionOccur = false;
-            try {
-                unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                didExceptionOccur = true;
-            }
+    //         // Connect the unsuccessful subscriber
+    //         unsuccessfulSubscriber.start();
+    //         unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+    //         unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+    //         // Make sure we do NOT get a publish
+    //         boolean didExceptionOccur = false;
+    //         try {
+    //             unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
+    //         } catch (Exception ex) {
+    //             didExceptionOccur = true;
+    //         }
 
-            if (didExceptionOccur == false) {
-                fail("Unsuccessful subscriber got retained message even though it should be cleared!");
-            }
+    //         if (didExceptionOccur == false) {
+    //             fail("Unsuccessful subscriber got retained message even though it should be cleared!");
+    //         }
 
-            // Disconnect all clients
-            DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
-            publisher.stop(disconnectPacketBuilder.build());
-            publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
-            successSubscriber.stop(disconnectPacketBuilder.build());
-            successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
-            unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
-            unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+    //         // Disconnect all clients
+    //         DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
+    //         publisher.stop(disconnectPacketBuilder.build());
+    //         publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
+    //         successSubscriber.stop(disconnectPacketBuilder.build());
+    //         successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+    //         unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
+    //         unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
 
-            // Close all clients
-            publisher.close();;
-            successSubscriber.close();
-            unsuccessfulSubscriber.close();
-            if (tlsContext != null) {
-                tlsContext.close();
-            }
+    //         // Close all clients
+    //         publisher.close();;
+    //         successSubscriber.close();
+    //         unsuccessfulSubscriber.close();
+    //         if (tlsContext != null) {
+    //             tlsContext.close();
+    //         }
 
-        } catch (Exception ex) {
-            fail(ex.getMessage());
-        }
-    }
-
+    //     } catch (Exception ex) {
+    //         fail(ex.getMessage());
+    //     }
+    // }
 
 }

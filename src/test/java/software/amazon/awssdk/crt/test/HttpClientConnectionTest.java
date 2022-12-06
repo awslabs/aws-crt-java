@@ -97,56 +97,56 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         }
     }
 
-    @Test
-    public void testHttpConnection() throws Exception {
-        skipIfNetworkUnavailable();
-        // S3
-        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
-        testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+    // @Test
+    // public void testHttpConnection() throws Exception {
+    //     skipIfNetworkUnavailable();
+    //     // S3
+    //     testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+    //     testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
+    //     testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:80"), true, null);
+    //     testConnectionWithAllCiphers(new URI("http://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
+    //     testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com:443"), true, null);
 
-        // KMS
-        testConnectionWithAllCiphers(new URI("https://kms.us-east-1.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
-        testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
+    //     // KMS
+    //     testConnectionWithAllCiphers(new URI("https://kms.us-east-1.amazonaws.com:443"), true, null);
+    //     testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
+    //     testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
+    //     testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
 
-        // BadSSL
-        testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
-        testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
-    }
+    //     // BadSSL
+    //     testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
+    //     testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
+    // }
 
-    @Test
-    public void testStaticDefaults() throws Exception {
-        skipIfNetworkUnavailable();
+    // @Test
+    // public void testStaticDefaults() throws Exception {
+    //     skipIfNetworkUnavailable();
 
-        URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
-        try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
-                SocketOptions socketOptions = new SocketOptions();
-                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
-                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+    //     URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+    //     try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
+    //             SocketOptions socketOptions = new SocketOptions();
+    //             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+    //             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
-            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);
+    //         HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+    //         options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);
 
-            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
-                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                    ;
-                }
-            }
-        }
-    }
+    //         try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+    //             try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+    //                 ;
+    //             }
+    //         }
+    //     }
+    // }
 
-    @Test
-    public void testRetryableErrorCheck() {
-        // AWS_ERROR_HTTP_HEADER_NOT_FOUND should not be retryable
-        HttpException exception = new HttpException(0x0801);
-        assertFalse(HttpClientConnection.isErrorRetryable(exception));
+    // @Test
+    // public void testRetryableErrorCheck() {
+    //     // AWS_ERROR_HTTP_HEADER_NOT_FOUND should not be retryable
+    //     HttpException exception = new HttpException(0x0801);
+    //     assertFalse(HttpClientConnection.isErrorRetryable(exception));
 
-        // AWS_ERROR_HTTP_CONNECTION_CLOSED should be retryable
-        exception = new HttpException(0x080a);
-        assertTrue(HttpClientConnection.isErrorRetryable(exception));
-    }
+    //     // AWS_ERROR_HTTP_CONNECTION_CLOSED should be retryable
+    //     exception = new HttpException(0x080a);
+    //     assertTrue(HttpClientConnection.isErrorRetryable(exception));
+    // }
 }

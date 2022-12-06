@@ -111,107 +111,107 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         return response;
     }
 
-    @Test
-    public void testHttp2Get() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
-    }
+    // @Test
+    // public void testHttp2Get() throws Exception {
+    //     Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+    //     testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
+    //     testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
+    //     testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
+    //     testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
+    // }
 
-    @Test
-    public void testHttp2Post() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
-    }
+    // @Test
+    // public void testHttp2Post() throws Exception {
+    //     skipIfNetworkUnavailable();
+    //     testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
+    //     testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
+    //     testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
+    //     testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
+    // }
 
-    @Test
-    public void testHttp2Put() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
-    }
+    // @Test
+    // public void testHttp2Put() throws Exception {
+    //     skipIfNetworkUnavailable();
+    //     testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
+    //     testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
+    //     testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
+    //     testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
+    // }
 
-    @Test
-    public void testHttp2ResponseStatusCodes() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
-        testHttp2Request("GET", HOST, "/status/400", EMPTY_BODY, 400);
-        testHttp2Request("GET", HOST, "/status/500", EMPTY_BODY, 500);
-    }
+    // @Test
+    // public void testHttp2ResponseStatusCodes() throws Exception {
+    //     skipIfNetworkUnavailable();
+    //     testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
+    //     testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
+    //     testHttp2Request("GET", HOST, "/status/400", EMPTY_BODY, 400);
+    //     testHttp2Request("GET", HOST, "/status/500", EMPTY_BODY, 500);
+    // }
 
-    @Test
-    public void testHttp2Download() throws Exception {
-        skipIfNetworkUnavailable();
-        /* cloudfront uses HTTP/2 */
-        TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
-                "/http_test_doc.txt", EMPTY_BODY, 200);
+    // @Test
+    // public void testHttp2Download() throws Exception {
+    //     skipIfNetworkUnavailable();
+    //     /* cloudfront uses HTTP/2 */
+    //     TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
+    //             "/http_test_doc.txt", EMPTY_BODY, 200);
 
-        ByteBuffer body = response.bodyBuffer;
-        body.flip(); // Flip from Write mode to Read mode
+    //     ByteBuffer body = response.bodyBuffer;
+    //     body.flip(); // Flip from Write mode to Read mode
 
-        Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
-    }
+    //     Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
+    // }
 
-    @Test
-    public void testHttp2ResetStream() throws Exception {
-        /*
-         * Test that the binding works not the actual functionality. C part has the test
-         * for functionality
-         */
-        skipIfNetworkUnavailable();
+    // @Test
+    // public void testHttp2ResetStream() throws Exception {
+    //     /*
+    //      * Test that the binding works not the actual functionality. C part has the test
+    //      * for functionality
+    //      */
+    //     skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+    //     CompletableFuture<Void> shutdownComplete = null;
+    //     boolean actuallyConnected = false;
+    //     URI uri = new URI(HOST);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                CompletableFuture<Void> streamComplete = new CompletableFuture<>();
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        Http2Stream h2Stream = (Http2Stream) stream;
-                        h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
-                    }
+    //     try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+    //         shutdownComplete = connPool.getShutdownCompleteFuture();
+    //         try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+    //                 TimeUnit.SECONDS);) {
+    //             actuallyConnected = true;
+    //             CompletableFuture<Void> streamComplete = new CompletableFuture<>();
+    //             Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+    //             HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+    //                 @Override
+    //                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+    //                         HttpHeader[] nextHeaders) {
+    //                     Http2Stream h2Stream = (Http2Stream) stream;
+    //                     h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
+    //                 }
 
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                        stream.close();
-                        if (errorCode != 0) {
-                            streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
-                        } else {
-                            streamComplete.complete(null);
-                        }
-                    }
-                };
-                Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
-                try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
-                    h2Stream.activate();
-                    streamComplete.get();
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    //                 @Override
+    //                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+    //                     stream.close();
+    //                     if (errorCode != 0) {
+    //                         streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
+    //                     } else {
+    //                         streamComplete.complete(null);
+    //                     }
+    //                 }
+    //             };
+    //             Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
+    //             try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
+    //                 h2Stream.activate();
+    //                 streamComplete.get();
+    //             }
+    //         }
+    //     } catch (Exception e) {
+    //         throw new RuntimeException(e);
+    //     }
 
-        Assert.assertTrue(actuallyConnected);
+    //     Assert.assertTrue(actuallyConnected);
 
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+    //     shutdownComplete.get(60, TimeUnit.SECONDS);
 
-        CrtResource.waitForNoResources();
-    }
+    //     CrtResource.waitForNoResources();
+    // }
 
 }

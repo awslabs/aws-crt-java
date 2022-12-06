@@ -525,7 +525,13 @@ public class S3ClientTest extends CrtTestFixture {
 
             @Override
             public void onProgress(final S3MetaRequestProgress progress) {
-                onProgressFuture.complete(null);
+                
+                
+                
+                
+                """
+                        ""
+                        """;.complete(null);
             }
         };
     }
@@ -569,6 +575,7 @@ public class S3ClientTest extends CrtTestFixture {
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 

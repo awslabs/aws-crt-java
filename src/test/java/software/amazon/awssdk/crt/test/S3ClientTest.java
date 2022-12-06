@@ -617,6 +617,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
                     .withHttpRequest(httpRequestResume)
                     .withResponseHandler(responseHandlerResume)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
                     .withResumeToken(new ResumeToken.PutResumeTokenBuilder()
                                         .withPartSize(resumeToken.getPartSize())
                                         .withTotalNumParts(resumeToken.getTotalNumParts())

@@ -220,7 +220,8 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
 void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    char buf[1024];
+    // char buf[1024];
+    char buf[4096];
     vsnprintf(buf, sizeof(buf), msg, args);
     va_end(args);
 

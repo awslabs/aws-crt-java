@@ -236,33 +236,36 @@ int aws_get_uint16_from_jobject(
     uint16_t **destination,
     bool optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint16");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint16");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint16");
+            aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint16");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: uint16 is less than 0");
+            aws_jni_throw_runtime_exception(env, "create_from_java: uint16 is less than 0");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         } else if (jlong_value_check > UINT16_MAX) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is more than UINT16_MAX", object_name, field_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: uint16 is more than UINT16_MAX");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: %s is more than UINT16_MAX", object_name, field_name);
+                env, "create_from_java: uint16 is more than UINT16_MAX");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint16_t)jlong_value;
@@ -290,33 +293,36 @@ int aws_get_uint32_from_jobject(
     uint32_t **destination,
     bool optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint32");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint32");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint32");
+            aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint32");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: uint32 is less than 0");
+            aws_jni_throw_runtime_exception(env, "create_from_java: uint32 is less than 0");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         } else if (jlong_value_check > UINT32_MAX) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is more than UINT32_MAX", object_name, field_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: uint32 is more than UINT32_MAX");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: %s is more than UINT32_MAX", object_name, field_name);
+                env, "create_from_java: uint32 is more than UINT32_MAX");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint32_t)jlong_value_check;
@@ -343,26 +349,29 @@ int aws_get_uint64_from_jobject(
     uint64_t **destination,
     bool optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint64");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint64");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting uint64");
+            aws_jni_throw_runtime_exception(env, "create_from_java: Error getting uint64");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: uint64 is less than 0");
+            aws_jni_throw_runtime_exception(env, "create_from_java: uint64 is less than 0");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint64_t)jlong_value_check;
@@ -390,11 +399,14 @@ int aws_get_string_from_jobject(
     struct aws_byte_cursor **destination,
     bool is_optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jstring jstring_value = (jstring)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting string");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting string");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jstring_value) {
@@ -423,11 +435,14 @@ int aws_get_byte_array_from_jobject(
     struct aws_byte_cursor **destination,
     bool optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jbyteArray jbyte_array_value = (jbyteArray)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting byte array");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting byte array");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jbyte_array_value) {
@@ -455,11 +470,14 @@ int aws_get_boolean_from_jobject(
     uint8_t **destination,
     bool optional) {
 
+    (void)object_name;
+    (void)field_name;
+
     jobject jboolean_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting boolean");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting boolean");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jboolean_obj) {
@@ -468,9 +486,9 @@ int aws_get_boolean_from_jobject(
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from %s", object_name, field_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: Error getting native value from boolean");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from %s", object_name, field_name);
+                env, "create_from_java: Error getting native value from boolean");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *result_boolean_int = (uint8_t)jboolean_value;
@@ -497,45 +515,44 @@ int aws_get_enum_from_jobject(
     uint32_t *enum_value_destination,
     bool optional) {
 
+    (void)object_name;
+    (void)enum_name;
+
     if (enum_value_destination == NULL) {
         AWS_LOGF_ERROR(
             AWS_LS_MQTT_CLIENT,
-            "%s create_from_java: Error getting %s due to null destination",
-            object_name,
-            enum_name);
+            "create_from_java: Error getting enum due to null destination");
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     jobject jni_retain_handling_type = (*env)->CallObjectMethod(env, object, object_enum_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, enum_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, enum_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting enum");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting enum");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jni_retain_handling_type) {
         jint enum_value = (*env)->CallIntMethod(env, jni_retain_handling_type, enum_value_field);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from %s", object_name, enum_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: Error getting native value from enum");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from %s", object_name, enum_name);
+                env, "create_from_java: Error getting native value from enum");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         if (enum_value < 0) {
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: Native value from enum is less than 0");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
+                env, "create_from_java: Native value from enum is less than 0");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         } else if ((uint64_t)enum_value > UINT16_MAX) {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT,
-                "%s create_from_java: Native value from %s is more than UINT16_MAX",
-                object_name,
-                enum_name);
+                "create_from_java: Native value from enum is more than UINT16_MAX");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Native value from %s is more than UINT16_MAX", object_name, enum_name);
+                env, "create_from_java: Native value from enum is more than UINT16_MAX");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *enum_value_destination = (uint32_t)enum_value;
@@ -563,12 +580,13 @@ static int s_get_user_properties_from_packet_optional(
     const struct aws_mqtt5_user_property **packet_properties) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
+    (void)packet_name;
 
     jobject jni_list = (*env)->GetObjectField(env, packet, packet_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list", packet_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting user properties list", packet_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting user properties list");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting user properties list");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jni_list) {
@@ -576,9 +594,9 @@ static int s_get_user_properties_from_packet_optional(
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list size", packet_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: Error getting user properties list size");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting user properties list size", packet_name);
+                env, "create_from_java: Error getting user properties list size");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_user_property_count = (size_t)jni_user_properties_size;
@@ -589,9 +607,9 @@ static int s_get_user_properties_from_packet_optional(
                                   *packet_user_property_count)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT, "%s create_from_java: Could not create user properties array", packet_name);
+                AWS_LS_MQTT_CLIENT, "create_from_java: Could not create user properties array");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Could not create user properties array", packet_name);
+                env, "create_from_java: Could not create user properties array");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int populate_result = s_populate_user_properties(
@@ -616,20 +634,21 @@ static int s_get_qos_from_packet(
     enum aws_mqtt5_qos *packet_qos,
     bool optional) {
 
+    (void)packet_name;
     jobject jni_qos = (*env)->CallObjectMethod(env, packet, packet_field);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting QoS", packet_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting QoS", packet_name);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting QoS");
+        aws_jni_throw_runtime_exception(env, "create_from_java: Error getting QoS");
         return AWS_OP_ERR;
     }
     if (jni_qos) {
         jint jni_qos_value = (*env)->CallIntMethod(env, jni_qos, mqtt5_packet_qos_properties.qos_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from QoS", packet_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: Error getting native value from QoS");
             aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from QoS", packet_name);
+                env, "create_from_java: Error getting native value from QoS");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_qos = (enum aws_mqtt5_qos)jni_qos_value;
@@ -639,8 +658,8 @@ static int s_get_qos_from_packet(
     } else {
         if (!optional) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: QoS not found", packet_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: QoS not found", packet_name);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "create_from_java: QoS not found");
+            aws_jni_throw_runtime_exception(env, "create_from_java: QoS not found");
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
     }

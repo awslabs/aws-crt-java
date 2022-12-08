@@ -1043,6 +1043,10 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
 }
 
 static void s_complete_future_with_exception(JNIEnv *env, jobject future, int error_code) {
+    if (!env || !future) {
+        return;
+    }
+
     jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
     (*env)->CallBooleanMethod(
         env, future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
@@ -1376,13 +1380,10 @@ static void s_aws_mqtt5_client_java_publish_callback_destructor(
     struct aws_mqtt5_client_publish_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        (*env)->PopLocalFrame(env, NULL);
-        if (callback_return_data->jni_publish_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_publish_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_publish_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }
@@ -1518,12 +1519,10 @@ static void s_aws_mqtt5_client_java_subscribe_callback_destructor(
     struct aws_mqtt5_client_subscribe_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        if (callback_return_data->jni_subscribe_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_subscribe_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_subscribe_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }
@@ -1668,12 +1667,10 @@ static void s_aws_mqtt5_client_java_unsubscribe_callback_destructor(
     struct aws_mqtt5_client_unsubscribe_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        if (callback_return_data->jni_unsubscribe_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_unsubscribe_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_unsubscribe_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }

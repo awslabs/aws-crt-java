@@ -2527,9 +2527,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             System.out.println("About to publish...");
 
+            PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
             try {
                 System.out.println("NOTE: Exception due to empty publish packet may be printed below!");
-                client.publish(new PublishPacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                client.publish(publishBuilder.build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2633,9 +2634,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             System.out.println("About to subscribe...");
 
+            SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
             try {
                 System.out.println("NOTE: Exception due to empty subscribe packet may be printed below!");
-                client.subscribe(new SubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                client.subscribe(subscribeBuilder.build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }
@@ -2739,9 +2741,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             System.out.println("About to unsubscribe...");
 
+            UnsubscribePacketBuilder unsubscribeBuilder = new UnsubscribePacketBuilder();
             try {
                 System.out.println("NOTE: Exception due to empty unsubscribe packet may be printed below!");
-                client.unsubscribe(new UnsubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                client.unsubscribe(unsubscribeBuilder.build()).get(180, TimeUnit.SECONDS);
             } catch (Exception ex) {
                 didExceptionOccur = true;
             }

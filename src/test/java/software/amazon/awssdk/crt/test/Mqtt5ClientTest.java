@@ -2291,6 +2291,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     public void Op_UC3() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
 
         try {

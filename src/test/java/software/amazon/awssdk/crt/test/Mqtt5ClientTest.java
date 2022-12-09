@@ -2844,6 +2844,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
+            System.out.println("About to make TLS context 1");
+
             // Only needed for IoT Core
             TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
@@ -2853,7 +2855,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
+            System.out.println("About to make publisher");
+
             Mqtt5Client publisher = new Mqtt5Client(builder.build());
+
+            System.out.println("About to make subscriber setup");
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
@@ -2862,42 +2868,72 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             publishEvents.desiredPublishCount = messageCount;
             builderTwo.withPublishEvents(publishEvents);
 
+            System.out.println("About to make TLS context 2");
+
             // Only needed for IoT Core
+            TlsContext tlsContext2;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);
-                builderTwo.withTlsContext(tlsContext);
+                tlsContext2 = getIoTCoreTlsContext();
+                builderTwo.withTlsContext(tlsContext2);
             }
+
+            System.out.println("About to make subscriber");
 
             Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build());
 
+            System.out.println("About to connect publisher");
+
             publisher.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to connect subscriber");
+
             subscriber.start();
             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to make subscription and subscribe");
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
             subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+            System.out.println("About to make publish and publish");
 
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
             publishPacketBuilder.withTopic(testTopic);
             publishPacketBuilder.withPayload("Hello World".getBytes());
             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
 
+            System.out.println("About to publish 10 times");
+
             for (int i = 0; i < messageCount; i++) {
                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
             }
 
+            System.out.println("About to make sure we got all 10 times");
+
             // Did we get all the messages?
             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
+            System.out.println("About to stop and disconnect both clients");
+
             subscriber.stop(new DisconnectPacketBuilder().build());
             publisher.stop(new DisconnectPacketBuilder().build());
+
+            System.out.println("About to close both clients");
+
             subscriber.close();
             publisher.close();
+
+            System.out.println("About to close both TLS contexts");
+
             if (tlsContext != null) {
                 tlsContext.close();
+            }
+            if (tlsContext2 != null) {
+                tlsContext2.close();
             }
 
         } catch (Exception ex) {

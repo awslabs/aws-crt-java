@@ -2262,10 +2262,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 clientTwo.subscribe(subscribeOptions.build()).get(180, TimeUnit.SECONDS);
-
-                DisconnectPacketBuilder disconnectOptions = new DisconnectPacketBuilder();
-                disconnectOptions.withReasonCode(DisconnectReasonCode.DISCONNECT_WITH_WILL_MESSAGE);
-                clientOne.stop(disconnectOptions.build());
+                clientOne.stop(null);
 
                 // Did we get a publish message?
                 publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);

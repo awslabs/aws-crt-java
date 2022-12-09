@@ -2871,7 +2871,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             System.out.println("About to make TLS context 2");
 
             // Only needed for IoT Core
-            TlsContext tlsContext2;
+            TlsContext tlsContext2 = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
                 Assume.assumeTrue(getMinimumDirectCert() != null);
                 Assume.assumeTrue(getMinimumDirectKey() != null);

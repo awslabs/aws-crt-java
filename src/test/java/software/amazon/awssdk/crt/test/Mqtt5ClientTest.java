@@ -2512,5 +2512,133 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
+    /**
+     * ============================================================
+     * Operation Interrupt Tests
+     * ============================================================
+     */
+
+    // Subscribe interrupt test
+    @Test
+    public void Interrupt_Sub_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5DirectMqttHost != null);
+        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            client.start();
+            events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            try {
+                CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());
+                client.stop(new DisconnectPacketBuilder().build());
+                SubAckPacket packet = subscribeResult.get(60, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                    CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                    if (exCrt.errorCode != 5153) {
+                        System.out.println("Exception ocurred when stopping subscribe" +
+                            "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                    }
+                }
+            }
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    // Unsubscribe interrupt test
+    @Test
+    public void Interrupt_Unsub_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5DirectMqttHost != null);
+        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            client.start();
+            events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
+            unsubscribePacketBuilder.withSubscription(testTopic);
+
+            try {
+                CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());
+                client.stop(new DisconnectPacketBuilder().build());
+                UnsubAckPacket packet = unsubscribeResult.get(60, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                    CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                    if (exCrt.errorCode != 5153) {
+                        System.out.println("Exception ocurred when stopping unsubscribe" +
+                            "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                    }
+                }
+            }
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    // Publish interrupt test
+    @Test
+    public void Interrupt_Publish_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5DirectMqttHost != null);
+        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+
+            client.start();
+            events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic).withQOS(QOS.AT_LEAST_ONCE).withPayload("null".getBytes());
+
+            try {
+                CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
+                client.stop(new DisconnectPacketBuilder().build());
+                PublishResult publishData = publishResult.get(60, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                    CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                    if (exCrt.errorCode != 5153) {
+                        System.out.println("Exception ocurred when stopping publish" +
+                            "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                    }
+                }
+            }
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 
 }

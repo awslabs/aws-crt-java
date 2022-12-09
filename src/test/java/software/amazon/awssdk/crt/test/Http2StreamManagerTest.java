@@ -180,95 +180,95 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         }
     }
 
-    // @Test
-    // public void testSanitizer() throws Exception {
-    //     skipIfNetworkUnavailable();
-    //     URI uri = new URI(endpoint);
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
-    //     }
+    @Test
+    public void testSanitizer() throws Exception {
+        skipIfNetworkUnavailable();
+        URI uri = new URI(endpoint);
+        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
+        }
 
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 
-    // @Test
-    // public void testSerialRequests() throws Exception {
-    //     skipIfNetworkUnavailable();
-    //     testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-    // }
+    @Test
+    public void testSerialRequests() throws Exception {
+        skipIfNetworkUnavailable();
+        testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+    }
 
-    // @Test
-    // public void testMaxParallelRequests() throws Exception {
-    //     skipIfNetworkUnavailable();
-    //     testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-    // }
+    @Test
+    public void testMaxParallelRequests() throws Exception {
+        skipIfNetworkUnavailable();
+        testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+    }
 
-    // @Test
-    // public void testStreamManagerMetrics() throws Exception {
-    //     skipIfNetworkUnavailable();
-    //     URI uri = new URI(endpoint);
-    //     int maxStreams = 3;
+    @Test
+    public void testStreamManagerMetrics() throws Exception {
+        skipIfNetworkUnavailable();
+        URI uri = new URI(endpoint);
+        int maxStreams = 3;
 
-    //     HttpStreamBaseResponseHandler nullHandler = new HttpStreamBaseResponseHandler() {
-    //         @Override
-    //         public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
-    //             //do nothing, we're not going to make a request.
-    //         }
+        HttpStreamBaseResponseHandler nullHandler = new HttpStreamBaseResponseHandler() {
+            @Override
+            public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                //do nothing, we're not going to make a request.
+            }
 
-    //         @Override
-    //         public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-    //             //do nothing, we're not going to make a request.
-    //         }
-    //     };
+            @Override
+            public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                //do nothing, we're not going to make a request.
+            }
+        };
 
-    //     Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
+        Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
 
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, 1, maxStreams)) {
-    //         HttpManagerMetrics metrics = streamManager.getManagerMetrics();
-    //         Assert.assertNotNull(metrics);
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+        try (Http2StreamManager streamManager = createStreamManager(uri, 1, maxStreams)) {
+            HttpManagerMetrics metrics = streamManager.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
-    //         List<Http2Stream> receivedStreams = new ArrayList<>();
-    //         int giveUpCtr = 99;
+            List<Http2Stream> receivedStreams = new ArrayList<>();
+            int giveUpCtr = 99;
 
-    //         while(receivedStreams.size() < maxStreams && giveUpCtr-- > 0) {
+            while(receivedStreams.size() < maxStreams && giveUpCtr-- > 0) {
 
-    //             CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
-    //             try {
-    //                 Http2Stream stream = streamFuture.get(3, TimeUnit.SECONDS);
-    //                 receivedStreams.add(stream);
-    //             } catch (CrtRuntimeException ignored) {
-    //             }
-    //         }
+                CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
+                try {
+                    Http2Stream stream = streamFuture.get(3, TimeUnit.SECONDS);
+                    receivedStreams.add(stream);
+                } catch (CrtRuntimeException ignored) {
+                }
+            }
 
-    //         if (giveUpCtr < 0) {
-    //             Assert.fail("test streams were not acquired. Most likely you don't have a network connection.");
-    //         }
+            if (giveUpCtr < 0) {
+                Assert.fail("test streams were not acquired. Most likely you don't have a network connection.");
+            }
 
-    //         metrics = streamManager.getManagerMetrics();
-    //         // case pool of 3, 3 vended connections, none in flight.
-    //         Assert.assertEquals(maxStreams, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            metrics = streamManager.getManagerMetrics();
+            // case pool of 3, 3 vended connections, none in flight.
+            Assert.assertEquals(maxStreams, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
-    //         // case acquire 1, pool of 3, 3 vended, thus 1 in flight
-    //         CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
-    //         metrics = streamManager.getManagerMetrics();
-    //         Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
-    //         // should still be 0
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            // case acquire 1, pool of 3, 3 vended, thus 1 in flight
+            CompletableFuture<Http2Stream> streamFuture = streamManager.acquireStream(request, nullHandler);
+            metrics = streamManager.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
+            // should still be 0
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
-    //         Http2Stream stream = streamFuture.get();
-    //         stream.close();
+            Http2Stream stream = streamFuture.get();
+            stream.close();
 
-    //         for (Http2Stream h2Stream: receivedStreams) {
-    //             h2Stream.close();
-    //         }
-    //     }
+            for (Http2Stream h2Stream: receivedStreams) {
+                h2Stream.close();
+            }
+        }
 
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

@@ -128,218 +128,218 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         return request;
     }
 
-    // @Test
-    // public void testParallelRequestsStress() throws Exception {
-    //     skipIfLocalhostUnavailable();
-    //     URI uri = new URI("https://localhost:8443/echo");
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-    //         int numberToAcquire = 500 * 100;
+    @Test
+    public void testParallelRequestsStress() throws Exception {
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/echo");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            int numberToAcquire = 500 * 100;
 
-    //         Http2Request request = createHttp2Request("GET", uri, 0);
-    //         List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
-    //         List<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
-    //         final AtomicInteger numStreamsFailures = new AtomicInteger(0);
-    //         for (int i = 0; i < numberToAcquire; i++) {
-    //             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-    //             requestCompleteFutures.add(requestCompleteFuture);
-    //             acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-    //                 @Override
-    //                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-    //                         HttpHeader[] nextHeaders) {
-    //                     if (responseStatusCode != 200) {
-    //                         numStreamsFailures.incrementAndGet();
-    //                     }
-    //                 }
+            Http2Request request = createHttp2Request("GET", uri, 0);
+            List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
+            List<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
+            final AtomicInteger numStreamsFailures = new AtomicInteger(0);
+            for (int i = 0; i < numberToAcquire; i++) {
+                final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+                requestCompleteFutures.add(requestCompleteFuture);
+                acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        if (responseStatusCode != 200) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                    }
 
-    //                 @Override
-    //                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-    //                     if (errorCode != CRT.AWS_CRT_SUCCESS) {
-    //                         numStreamsFailures.incrementAndGet();
-    //                     }
-    //                     stream.close();
-    //                     requestCompleteFuture.complete(null);
-    //                 }
-    //             }));
-    //         }
-    //         for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
-    //             f.get(30, TimeUnit.SECONDS);
-    //         }
-    //         // Wait for all Requests to complete
-    //         for (CompletableFuture<Void> f : requestCompleteFutures) {
-    //             f.get(30, TimeUnit.SECONDS);
-    //         }
-    //         Assert.assertTrue(numStreamsFailures.get() == 0);
-    //     }
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+                    @Override
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                        stream.close();
+                        requestCompleteFuture.complete(null);
+                    }
+                }));
+            }
+            for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            // Wait for all Requests to complete
+            for (CompletableFuture<Void> f : requestCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            Assert.assertTrue(numStreamsFailures.get() == 0);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 
-    // @Test
-    // public void testParallelRequestsStressWithBody() throws Exception {
-    //     skipIfLocalhostUnavailable();
-    //     URI uri = new URI("https://localhost:8443/uploadTest");
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-    //         int numberToAcquire = 500 * 100;
-    //         if (CRT.getOSIdentifier() == "linux") {
-    //             /*
-    //              * Using Python hyper h2 server frame work, met a weird upload performance issue
-    //              * on Linux. Our client against nginx platform has not met the same issue.
-    //              * We assume it's because the server framework implementation.
-    //              * Use lower number of linux
-    //              */
-    //             numberToAcquire = 500;
-    //         }
-    //         int bodyLength = 2000;
+    @Test
+    public void testParallelRequestsStressWithBody() throws Exception {
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/uploadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            int numberToAcquire = 500 * 100;
+            if (CRT.getOSIdentifier() == "linux") {
+                /*
+                 * Using Python hyper h2 server frame work, met a weird upload performance issue
+                 * on Linux. Our client against nginx platform has not met the same issue.
+                 * We assume it's because the server framework implementation.
+                 * Use lower number of linux
+                 */
+                numberToAcquire = 500;
+            }
+            int bodyLength = 2000;
 
-    //         List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
-    //         List<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
-    //         final AtomicInteger numStreamsFailures = new AtomicInteger(0);
-    //         for (int i = 0; i < numberToAcquire; i++) {
-    //             Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+            List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
+            List<CompletableFuture<Http2Stream>> acquireCompleteFutures = new ArrayList<>();
+            final AtomicInteger numStreamsFailures = new AtomicInteger(0);
+            for (int i = 0; i < numberToAcquire; i++) {
+                Http2Request request = createHttp2Request("PUT", uri, bodyLength);
 
-    //             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-    //             final int expectedLength = bodyLength;
-    //             requestCompleteFutures.add(requestCompleteFuture);
-    //             acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-    //                 @Override
-    //                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-    //                         HttpHeader[] nextHeaders) {
-    //                     if (responseStatusCode != 200) {
-    //                         numStreamsFailures.incrementAndGet();
-    //                     }
-    //                 }
+                final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+                final int expectedLength = bodyLength;
+                requestCompleteFutures.add(requestCompleteFuture);
+                acquireCompleteFutures.add(streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        if (responseStatusCode != 200) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                    }
 
-    //                 @Override
-    //                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-    //                     String bodyString = new String(bodyBytesIn);
-    //                     int receivedLength = Integer.parseInt(bodyString);
+                    @Override
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                        String bodyString = new String(bodyBytesIn);
+                        int receivedLength = Integer.parseInt(bodyString);
 
-    //                     Assert.assertTrue(receivedLength == expectedLength);
-    //                     if(receivedLength!=expectedLength) {
-    //                         numStreamsFailures.incrementAndGet();
-    //                     }
-    //                     return bodyString.length();
-    //                 }
+                        Assert.assertTrue(receivedLength == expectedLength);
+                        if(receivedLength!=expectedLength) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                        return bodyString.length();
+                    }
 
-    //                 @Override
-    //                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-    //                     if (errorCode != CRT.AWS_CRT_SUCCESS) {
-    //                         numStreamsFailures.incrementAndGet();
-    //                     }
-    //                     stream.close();
-    //                     requestCompleteFuture.complete(null);
-    //                 }
-    //             }));
-    //         }
-    //         for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
-    //             f.get(30, TimeUnit.SECONDS);
-    //         }
-    //         // Wait for all Requests to complete
-    //         for (CompletableFuture<Void> f : requestCompleteFutures) {
-    //             f.get(30, TimeUnit.SECONDS);
-    //         }
-    //         Assert.assertTrue(numStreamsFailures.get() == 0);
-    //     }
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+                    @Override
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                            numStreamsFailures.incrementAndGet();
+                        }
+                        stream.close();
+                        requestCompleteFuture.complete(null);
+                    }
+                }));
+            }
+            for (CompletableFuture<Http2Stream> f : acquireCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            // Wait for all Requests to complete
+            for (CompletableFuture<Void> f : requestCompleteFutures) {
+                f.get(30, TimeUnit.SECONDS);
+            }
+            Assert.assertTrue(numStreamsFailures.get() == 0);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 
-    // @Test
-    // public void testRequestsUploadStress() throws Exception {
-    //     /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
-    //     skipIfLocalhostUnavailable();
+    @Test
+    public void testRequestsUploadStress() throws Exception {
+        /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
+        skipIfLocalhostUnavailable();
 
-    //     URI uri = new URI("https://localhost:8443/uploadTest");
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-    //         long bodyLength = 2500000000L;
-    //         if (CRT.getOSIdentifier() == "linux") {
-    //             /*
-    //              * Using Python hyper h2 server frame work, met a weird upload performance issue
-    //              * on Linux. Our client against nginx platform has not met the same issue.
-    //              * We assume it's because the server framework implementation.
-    //              * Use lower number of linux
-    //              */
-    //             bodyLength = 250000000L;
-    //         }
+        URI uri = new URI("https://localhost:8443/uploadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            long bodyLength = 2500000000L;
+            if (CRT.getOSIdentifier() == "linux") {
+                /*
+                 * Using Python hyper h2 server frame work, met a weird upload performance issue
+                 * on Linux. Our client against nginx platform has not met the same issue.
+                 * We assume it's because the server framework implementation.
+                 * Use lower number of linux
+                 */
+                bodyLength = 250000000L;
+            }
 
-    //         Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+            Http2Request request = createHttp2Request("PUT", uri, bodyLength);
 
-    //         final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-    //         final long expectedLength = bodyLength;
-    //         CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-    //             @Override
-    //             public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-    //                     HttpHeader[] nextHeaders) {
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            final long expectedLength = bodyLength;
+            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
 
-    //                 Assert.assertTrue(responseStatusCode == 200);
-    //             }
+                    Assert.assertTrue(responseStatusCode == 200);
+                }
 
-    //             @Override
-    //             public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-    //                 String bodyString = new String(bodyBytesIn);
-    //                 long receivedLength = Long.parseLong(bodyString);
-    //                 Assert.assertTrue(receivedLength == expectedLength);
-    //                 return bodyString.length();
-    //             }
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    String bodyString = new String(bodyBytesIn);
+                    long receivedLength = Long.parseLong(bodyString);
+                    Assert.assertTrue(receivedLength == expectedLength);
+                    return bodyString.length();
+                }
 
-    //             @Override
-    //             public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-    //                 Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-    //                 stream.close();
-    //                 requestCompleteFuture.complete(null);
-    //             }
-    //         });
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                    stream.close();
+                    requestCompleteFuture.complete(null);
+                }
+            });
 
-    //         acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-    //         requestCompleteFuture.get(5, TimeUnit.MINUTES);
+            acquireCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
-    //     }
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 
-    // @Test
-    // public void testRequestsDownloadStress() throws Exception {
-    //     /* Test that download a 2.5GB data from local server */
-    //     skipIfLocalhostUnavailable();
-    //     URI uri = new URI("https://localhost:8443/downloadTest");
-    //     try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-    //         long bodyLength = 2500000000L;
+    @Test
+    public void testRequestsDownloadStress() throws Exception {
+        /* Test that download a 2.5GB data from local server */
+        skipIfLocalhostUnavailable();
+        URI uri = new URI("https://localhost:8443/downloadTest");
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            long bodyLength = 2500000000L;
 
-    //         Http2Request request = createHttp2Request("GET", uri, 0);
+            Http2Request request = createHttp2Request("GET", uri, 0);
 
-    //         final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-    //         final AtomicLong receivedLength = new AtomicLong(0);
-    //         CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-    //             @Override
-    //             public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-    //                     HttpHeader[] nextHeaders) {
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            final AtomicLong receivedLength = new AtomicLong(0);
+            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
 
-    //                 Assert.assertTrue(responseStatusCode == 200);
-    //             }
+                    Assert.assertTrue(responseStatusCode == 200);
+                }
 
-    //             @Override
-    //             public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-    //                 receivedLength.addAndGet(bodyBytesIn.length);
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    receivedLength.addAndGet(bodyBytesIn.length);
 
-    //                 return bodyBytesIn.length;
-    //             }
+                    return bodyBytesIn.length;
+                }
 
-    //             @Override
-    //             public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
 
-    //                 Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-    //                 stream.close();
-    //                 requestCompleteFuture.complete(null);
-    //             }
-    //         });
+                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                    stream.close();
+                    requestCompleteFuture.complete(null);
+                }
+            });
 
-    //         acquireCompleteFuture.get(30, TimeUnit.SECONDS);
-    //         requestCompleteFuture.get(5, TimeUnit.MINUTES);
+            acquireCompleteFuture.get(30, TimeUnit.SECONDS);
+            requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
-    //         Assert.assertTrue(receivedLength.get() == bodyLength);
-    //     }
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+            Assert.assertTrue(receivedLength.get() == bodyLength);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

@@ -179,140 +179,140 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
     }
 
-    // @Test
-    // public void testSerialRequests() throws Exception {
-    //     testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
-    // }
+    @Test
+    public void testSerialRequests() throws Exception {
+        testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+    }
 
-    // /**
-    //  * Test that the counters for the connection manager are correct (at least when used serially).
-    //  */
-    // @Test
-    // public void testConnectionCounters() throws Exception {
-    //     skipIfNetworkUnavailable();
+    /**
+     * Test that the counters for the connection manager are correct (at least when used serially).
+     */
+    @Test
+    public void testConnectionCounters() throws Exception {
+        skipIfNetworkUnavailable();
 
-    //     URI uri = new URI(endpoint);
+        URI uri = new URI(endpoint);
 
-    //     int maxConns = 3;
+        int maxConns = 3;
 
-    //     try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, maxConns)) {
-    //         Assert.assertEquals(maxConns, connectionPool.getMaxConnections());
-    //         HttpManagerMetrics metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertNotNull(metrics);
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, maxConns)) {
+            Assert.assertEquals(maxConns, connectionPool.getMaxConnections());
+            HttpManagerMetrics metrics = connectionPool.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
-    //         List<HttpClientConnection> receivedClientConnections = new ArrayList<>();
-    //         int giveUpCtr = 99;
+            List<HttpClientConnection> receivedClientConnections = new ArrayList<>();
+            int giveUpCtr = 99;
 
-    //         while(receivedClientConnections.size() < maxConns && giveUpCtr-- > 0) {
-    //             CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
-    //             try {
-    //                 HttpClientConnection connection = connectionAcquire.get(3, TimeUnit.SECONDS);
-    //                 receivedClientConnections.add(connection);
-    //             } catch (CrtRuntimeException ignored) {
-    //             }
-    //         }
+            while(receivedClientConnections.size() < maxConns && giveUpCtr-- > 0) {
+                CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
+                try {
+                    HttpClientConnection connection = connectionAcquire.get(3, TimeUnit.SECONDS);
+                    receivedClientConnections.add(connection);
+                } catch (CrtRuntimeException ignored) {
+                }
+            }
 
-    //         if (giveUpCtr < 0) {
-    //             Assert.fail("test connections where not acquired. Most likely you don't have a network connection.");
-    //         }
+            if (giveUpCtr < 0) {
+                Assert.fail("test connections where not acquired. Most likely you don't have a network connection.");
+            }
 
-    //         metrics = connectionPool.getManagerMetrics();
-    //         // case pool of 3, 3 vended connections, none in flight.
-    //         Assert.assertEquals(maxConns, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            metrics = connectionPool.getManagerMetrics();
+            // case pool of 3, 3 vended connections, none in flight.
+            Assert.assertEquals(maxConns, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
-    //         // case acquire 1, pool of 3, 3 vended, thus 1 in flight
-    //         CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
-    //         metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
-    //         // should still be 0
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            // case acquire 1, pool of 3, 3 vended, thus 1 in flight
+            CompletableFuture<HttpClientConnection> connectionAcquire = connectionPool.acquireConnection();
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getPendingConcurrencyAcquires());
+            // should still be 0
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
 
-    //         // case release one, pool of 3, 3 vended, 1 in flight, 0 available. When we return 1, the other should be
-    //         // able to complete. Pending should go back to 0.
-    //         HttpClientConnection conn = receivedClientConnections.remove(0);
-    //         connectionPool.releaseConnection(conn);
+            // case release one, pool of 3, 3 vended, 1 in flight, 0 available. When we return 1, the other should be
+            // able to complete. Pending should go back to 0.
+            HttpClientConnection conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
 
-    //         conn = connectionAcquire.get(3, TimeUnit.SECONDS);
+            conn = connectionAcquire.get(3, TimeUnit.SECONDS);
 
-    //         metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertEquals(3, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(0, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(3, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
-    //         connectionPool.releaseConnection(conn);
-    //         metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertEquals(2, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(1, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(2, metrics.getLeasedConcurrency());
+            Assert.assertEquals(1, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
-    //         conn = receivedClientConnections.remove(0);
-    //         connectionPool.releaseConnection(conn);
-    //         metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertEquals(1, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(2, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+            conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(1, metrics.getLeasedConcurrency());
+            Assert.assertEquals(2, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
 
-    //         conn = receivedClientConnections.remove(0);
-    //         connectionPool.releaseConnection(conn);
-    //         metrics = connectionPool.getManagerMetrics();
-    //         Assert.assertEquals(0, metrics.getLeasedConcurrency());
-    //         Assert.assertEquals(3, metrics.getAvailableConcurrency());
-    //         Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
-    //     }
+            conn = receivedClientConnections.remove(0);
+            connectionPool.releaseConnection(conn);
+            metrics = connectionPool.getManagerMetrics();
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(3, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+        }
 
-    //     CrtResource.logNativeResources();
-    //     CrtResource.waitForNoResources();
-    // }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 
-    // @Test
-    // public void testMaxParallelRequests() throws Exception {
-    //     testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-    // }
+    @Test
+    public void testMaxParallelRequests() throws Exception {
+        testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+    }
 
-    // @Test
-    // public void testPendingAcquisitionsDuringShutdown() throws Exception {
-    //     skipIfNetworkUnavailable();
-    //     HttpClientConnection firstConnection = null;
-    //     CompletableFuture<HttpClientConnection> firstAcquisition;
-    //     CompletableFuture<HttpClientConnection> secondAcquisition;
+    @Test
+    public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        skipIfNetworkUnavailable();
+        HttpClientConnection firstConnection = null;
+        CompletableFuture<HttpClientConnection> firstAcquisition;
+        CompletableFuture<HttpClientConnection> secondAcquisition;
 
-    //     try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
 
-    //         firstAcquisition = connectionPool.acquireConnection();
-    //         secondAcquisition = connectionPool.acquireConnection();
+            firstAcquisition = connectionPool.acquireConnection();
+            secondAcquisition = connectionPool.acquireConnection();
 
-    //         firstConnection = firstAcquisition.get();
-    //     }
+            firstConnection = firstAcquisition.get();
+        }
 
-    //     firstConnection.close();
-    // }
+        firstConnection.close();
+    }
 
-    // @Test
-    // public void testCancelAcquire() throws Exception {
-    //     // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
-    //     skipIfNetworkUnavailable();
+    @Test
+    public void testCancelAcquire() throws Exception {
+        // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
+        skipIfNetworkUnavailable();
 
-    //     try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
-    //         CompletableFuture<HttpClientConnection> firstAcquisition = connectionPool.acquireConnection();
-    //         CompletableFuture<HttpClientConnection> secondAcquisition = connectionPool.acquireConnection();
-    //         CompletableFuture<HttpClientConnection> thirdAcquisition = connectionPool.acquireConnection();
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
+            CompletableFuture<HttpClientConnection> firstAcquisition = connectionPool.acquireConnection();
+            CompletableFuture<HttpClientConnection> secondAcquisition = connectionPool.acquireConnection();
+            CompletableFuture<HttpClientConnection> thirdAcquisition = connectionPool.acquireConnection();
 
-    //         HttpClientConnection firstConnection = firstAcquisition.get();
+            HttpClientConnection firstConnection = firstAcquisition.get();
 
-    //         // cancel acquisition and abandon it
-    //         secondAcquisition.cancel(false);
+            // cancel acquisition and abandon it
+            secondAcquisition.cancel(false);
 
-    //         // return the first conn to the pool, future acquisitions should succeed
-    //         firstConnection.close();
+            // return the first conn to the pool, future acquisitions should succeed
+            firstConnection.close();
 
-    //         // should succeed, will timeout if the second acquisition doesn't return the unused/abandoned conn to the pool
-    //         HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
-    //         conn.close();
-    //     }
-    // }
+            // should succeed, will timeout if the second acquisition doesn't return the unused/abandoned conn to the pool
+            HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
+            conn.close();
+        }
+    }
 }

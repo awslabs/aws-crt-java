@@ -2334,6 +2334,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.stopFuture.get(180, TimeUnit.SECONDS);
             }
 
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2910,6 +2914,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
@@ -2931,6 +2944,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     }
                 }
             }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2949,6 +2967,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -2971,6 +2998,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     }
                 }
             }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2989,6 +3021,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -3011,6 +3052,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     }
                 }
             }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

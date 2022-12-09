@@ -74,8 +74,6 @@ public class S3Client extends CrtResource {
         }
         URI endpoint = options.getEndpoint();
 
-        byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
-
         ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
                 : new ChecksumConfig();
 
@@ -85,7 +83,7 @@ public class S3Client extends CrtResource {
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
                 httpRequestBytes, options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                resumeToken);
+                options.getResumeToken());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
@@ -138,5 +136,5 @@ public class S3Client extends CrtResource {
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
-            byte[] endpoint, byte[] resumeToken);
+            byte[] endpoint, ResumeToken resumeToken);
 }

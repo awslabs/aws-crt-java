@@ -881,6 +881,27 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
     s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
 }
 
+struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
+
+static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/ResumeToken");
+    AWS_FATAL_ASSERT(cls);
+    s3_meta_request_resume_token_properties.s3_meta_request_resume_token_class = (*env)->NewGlobalRef(env, cls);
+
+    s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id =
+        (*env)->GetMethodID(env, s3_meta_request_progress_properties.s3_meta_request_progress_class, "<init>", "()V");
+
+    s3_meta_request_resume_token_properties.native_type_field_id = (*env)->GetFieldID(env, cls, "nativeType", "I");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.native_type_field_id);
+    s3_meta_request_resume_token_properties.part_size_field_id = (*env)->GetFieldID(env, cls, "partSize", "J");
+    s3_meta_request_resume_token_properties.total_num_parts_field_id =
+        (*env)->GetFieldID(env, cls, "totalNumParts", "J");
+    s3_meta_request_resume_token_properties.num_parts_completed_field_id =
+        (*env)->GetFieldID(env, cls, "numPartsCompleted", "J");
+    s3_meta_request_resume_token_properties.upload_id_field_id =
+        (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
+}
+
 struct java_aws_mqtt5_connack_packet_properties mqtt5_connack_packet_properties;
 
 static void s_cache_mqtt5_connack_packet(JNIEnv *env) {
@@ -2111,6 +2132,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_directory_traversal_handler(env);
     s_cache_directory_entry(env);
     s_cache_s3_meta_request_progress(env);
+    s_cache_s3_meta_request_resume_token(env);
     s_cache_mqtt5_connack_packet(env);
     s_cache_mqtt5_connect_packet(env);
     s_cache_mqtt5_connect_reason_code(env);

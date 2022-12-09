@@ -287,11 +287,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     assertNotNull(client);
                 }
-
-                elg.close();
-                hr.close();
-                bootstrap.close();
-                socketOptions.close();
             }
 
         } catch (Exception ex) {
@@ -426,7 +421,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(60, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                 client.stop(disconnect.build());
-                client.close();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -457,7 +451,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(60, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                 client.stop(disconnect.build());
-                client.close();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1313,9 +1306,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
                 clientOne.stop(disconnect);
                 clientTwo.stop(disconnect);
-
-                clientOne.close();
-                clientTwo.close();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());

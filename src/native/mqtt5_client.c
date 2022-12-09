@@ -128,8 +128,10 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
                 goto on_error;
             } else if (jni_proxy_connection_type_value_check > AWS_HPCT_HTTP_TUNNEL) { // The (current) maximum enum
                                                                                        // value
-                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is more than maximum allowed value");
-                aws_jni_throw_runtime_exception(env, "HTTP Proxy Options connection type is more than maximum allowed value");
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is more than maximum allowed value");
+                aws_jni_throw_runtime_exception(
+                    env, "HTTP Proxy Options connection type is more than maximum allowed value");
                 goto on_error;
             } else {
                 http_options->options.connection_type =
@@ -620,8 +622,10 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
                 connack_data,
                 mqtt5_connack_packet_properties.connack_native_add_maximum_qos_id,
                 true) != AWS_OP_SUCCESS) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
-            aws_jni_throw_runtime_exception(env, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
+            aws_jni_throw_runtime_exception(
+                env, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
             return NULL;
         }
     }
@@ -723,8 +727,10 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
             native_connack_data->user_properties,
             connack_data,
             mqtt5_connack_packet_properties.connack_user_properties_field_id) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: could not add user property!");
-        aws_jni_throw_runtime_exception(env, "Error when creating ConnAckPacket from native: could not add user property!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: could not add user property!");
+        aws_jni_throw_runtime_exception(
+            env, "Error when creating ConnAckPacket from native: could not add user property!");
         return NULL;
     }
 
@@ -747,8 +753,10 @@ static jobject s_aws_mqtt5_client_create_jni_disconnect_packet_from_native(
             disconnect_packet_data,
             mqtt5_disconnect_packet_properties.disconnect_native_add_disconnect_reason_code_id,
             false) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: Could not set reason code");
-        aws_jni_throw_runtime_exception(env, "Error when creating DisconnectPacket from native: Could not set reason code");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: Could not set reason code");
+        aws_jni_throw_runtime_exception(
+            env, "Error when creating DisconnectPacket from native: Could not set reason code");
         return NULL;
     }
 
@@ -883,7 +891,8 @@ static jobject s_aws_mqtt5_client_create_jni_puback_packet_from_native(
             mqtt5_puback_packet_properties.puback_native_add_reason_code_id,
             false) != AWS_OP_SUCCESS) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PubAck result from native: Could not set reason code");
-        aws_jni_throw_runtime_exception(env, "Error when creating PubAck result from native: Could not set reason code");
+        aws_jni_throw_runtime_exception(
+            env, "Error when creating PubAck result from native: Could not set reason code");
         return NULL;
     }
     if (s_set_jni_string_field_in_packet(
@@ -953,8 +962,10 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
                 publish_packet_data,
                 mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id,
                 true) != AWS_OP_SUCCESS) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set payload format");
-            aws_jni_throw_runtime_exception(env, "Error when creating PublishPacket from native: Could not set payload format");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set payload format");
+            aws_jni_throw_runtime_exception(
+                env, "Error when creating PublishPacket from native: Could not set payload format");
             return NULL;
         }
     }
@@ -1060,8 +1071,6 @@ static void s_aws_count_allocation(const void *pointer, size_t *counter) {
     }
 }
 
-static char s_client_string[] = "MQTT5 Client";
-
 /*******************************************************************************
  * MQTT5 CALLBACK FUNCTIONS
  ******************************************************************************/
@@ -1128,8 +1137,10 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
     /* Make a local frame so we can clean memory */
     jint local_frame_result = (*env)->PushLocalFrame(env, (jint)references_needed);
     if (local_frame_result != 0) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "LifecycleEvent: could not push local JNI frame with 14 allocation minimum!");
-        aws_jni_throw_runtime_exception(env, "LifecycleEvent: could not push local JNI frame with 14 allocation minimum!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "LifecycleEvent: could not push local JNI frame with 14 allocation minimum!");
+        aws_jni_throw_runtime_exception(
+            env, "LifecycleEvent: could not push local JNI frame with 14 allocation minimum!");
         aws_jni_release_thread_env(jvm, env);
         return;
     }
@@ -1335,8 +1346,10 @@ static void s_aws_mqtt5_client_java_publish_received(
      */
     jint local_frame_result = (*env)->PushLocalFrame(env, (jint)references_needed);
     if (local_frame_result != 0) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "publishReceived function: could not push local JNI frame with 12 allocation minimum!");
-        aws_jni_throw_runtime_exception(env, "publishReceived function: could not push local JNI frame with 12 allocation minimum!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "publishReceived function: could not push local JNI frame with 12 allocation minimum!");
+        aws_jni_throw_runtime_exception(
+            env, "publishReceived function: could not push local JNI frame with 12 allocation minimum!");
         goto clean_up;
     }
 
@@ -1621,8 +1634,11 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
                             suback_packet_data,
                             mqtt5_suback_packet_properties.suback_native_add_suback_code_id,
                             false) != AWS_OP_SUCCESS) {
-                        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating SubAckPacket from native: Could not set reason code");
-                        aws_jni_throw_runtime_exception(env, "Error when creating SubAckPacket from native: Could not set reason code");
+                        AWS_LOGF_ERROR(
+                            AWS_LS_MQTT_CLIENT,
+                            "Error when creating SubAckPacket from native: Could not set reason code");
+                        aws_jni_throw_runtime_exception(
+                            env, "Error when creating SubAckPacket from native: Could not set reason code");
                         exception_error_code = AWS_ERROR_INVALID_STATE;
                         goto exception;
                     }
@@ -1766,8 +1782,11 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
                         unsuback_packet_data,
                         mqtt5_unsuback_packet_properties.unsuback_native_add_unsuback_code_id,
                         false) != AWS_OP_SUCCESS) {
-                    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating UnsubAckPacket from native: Could not set reason code");
-                    aws_jni_throw_runtime_exception(env, "Error when creating UnsubAckPacket from native: Could not set reason code");
+                    AWS_LOGF_ERROR(
+                        AWS_LS_MQTT_CLIENT,
+                        "Error when creating UnsubAckPacket from native: Could not set reason code");
+                    aws_jni_throw_runtime_exception(
+                        env, "Error when creating UnsubAckPacket from native: Could not set reason code");
                     exception_error_code = AWS_ERROR_INVALID_STATE;
                     goto exception;
                 }
@@ -1856,8 +1875,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_start(java_client->client);
 
     if (return_result != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.start: aws_mqtt5_client_start returned a non AWS_OP_SUCCESS code!");
-        aws_jni_throw_runtime_exception(env, "Mqtt5Client.start: aws_mqtt5_client_start returned a non AWS_OP_SUCCESS code!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Mqtt5Client.start: aws_mqtt5_client_start returned a non AWS_OP_SUCCESS code!");
+        aws_jni_throw_runtime_exception(
+            env, "Mqtt5Client.start: aws_mqtt5_client_start returned a non AWS_OP_SUCCESS code!");
     }
 }
 
@@ -1898,8 +1919,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_result = aws_mqtt5_client_stop(
         java_client->client, aws_mqtt5_packet_disconnect_view_get_packet(java_disconnect_packet), NULL);
     if (return_result != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!");
-        aws_jni_throw_runtime_exception(env, "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!");
+        aws_jni_throw_runtime_exception(
+            env, "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!");
     }
 
 clean_up:
@@ -2330,8 +2353,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
      */
     jint local_frame_result = (*env)->PushLocalFrame(env, (jint)21);
     if (local_frame_result != 0) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "MQTT5 client new: could not push local JNI frame with 21 allocation minimum");
-        aws_jni_throw_runtime_exception(env, "MQTT5 client new: could not push local JNI frame with 21 allocation minimum");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "MQTT5 client new: could not push local JNI frame with 21 allocation minimum");
+        aws_jni_throw_runtime_exception(
+            env, "MQTT5 client new: could not push local JNI frame with 21 allocation minimum");
         return (jlong)NULL;
     }
 
@@ -2350,8 +2375,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_host_name_field_id,
-            s_client_string,
-            "Host Name",
             jni_host_name,
             pointer_host_name,
             &pointer_host_name,
@@ -2366,8 +2389,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_port_field_id,
-            s_client_string,
-            "port",
             &client_port,
             &pointer_client_port,
             false) != AWS_OP_SUCCESS) {
@@ -2457,7 +2478,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
 
         if (client_options.http_proxy_options->connection_type != AWS_HPCT_HTTP_TUNNEL) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "MQTT5 client new: http proxy connection type has to be set to tunnel");
-            aws_jni_throw_runtime_exception(env, "MQTT5 client new: http proxy connection type has to be set to tunnel");
+            aws_jni_throw_runtime_exception(
+                env, "MQTT5 client new: http proxy connection type has to be set to tunnel");
             goto clean_up;
         }
     }
@@ -2478,8 +2500,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_get_session_behavior_id,
-            s_client_string,
-            "session behavior",
             mqtt5_client_session_behavior_properties.client_get_value_id,
             &session_behavior,
             true) == AWS_OP_ERR) {
@@ -2494,8 +2514,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_get_extended_validation_and_flow_control_options_id,
-            s_client_string,
-            "offline queue behavior",
             mqtt5_client_extended_validation_and_flow_control_options.client_get_value_id,
             &extended_validation_and_flow_control_options,
             true) == AWS_OP_ERR) {
@@ -2511,8 +2529,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_get_offline_queue_behavior_id,
-            s_client_string,
-            "offline queue behavior",
             mqtt5_client_offline_queue_behavior_type_properties.client_get_value_id,
             &offline_queue_enum,
             true) == AWS_OP_ERR) {
@@ -2527,8 +2543,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.options_get_retry_jitter_mode_id,
-            s_client_string,
-            "retry jitter mode",
             mqtt5_client_jitter_mode_properties.client_get_value_id,
             &retry_jitter_enum,
             true) == AWS_OP_ERR) {
@@ -2544,8 +2558,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.min_reconnect_delay_ms_field_id,
-            s_client_string,
-            "minimum reconnect delay",
             &min_reconnect_delay,
             &pointer_min_reconnect_delay,
             true) != AWS_OP_SUCCESS) {
@@ -2559,8 +2571,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.max_reconnect_delay_ms_field_id,
-            s_client_string,
-            "maximum reconnect delay",
             &max_reconnect_delay,
             &pointer_max_reconnect_delay,
             true) != AWS_OP_SUCCESS) {
@@ -2574,8 +2584,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id,
-            s_client_string,
-            "minimum connected time to reset reconnect delay",
             &min_connected_time_to_reset,
             &pointer_min_connected_time_to_reset,
             true) != AWS_OP_SUCCESS) {
@@ -2589,8 +2597,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.ping_timeout_ms_field_id,
-            s_client_string,
-            "ping timeout",
             &ping_timeout,
             &pointer_ping_timeout,
             true) != AWS_OP_SUCCESS) {
@@ -2604,8 +2610,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.connack_timeout_ms_field_id,
-            s_client_string,
-            "ConnAck timeout",
             &connack_timeout,
             &pointer_connack_timeout,
             true) != AWS_OP_SUCCESS) {
@@ -2619,8 +2623,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env,
             jni_options,
             mqtt5_client_options_properties.ack_timeout_seconds_field_id,
-            s_client_string,
-            "Ack timeout",
             &ack_timeout,
             &pointer_ack_timeout,
             true) != AWS_OP_SUCCESS) {
@@ -2684,8 +2686,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     java_client->client = aws_mqtt5_client_new(allocator, &client_options);
     /* Did we successfully make a client? If not, then throw an exception */
     if (java_client->client == NULL) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "MQTT5 client new: Was unable to create client due to option configuration! Enable error logging to see reason");
-        aws_jni_throw_runtime_exception(env, "MQTT5 client new: Was unable to create client due to option configuration! Enable error logging to see reason");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT,
+            "MQTT5 client new: Was unable to create client due to option configuration! Enable error logging to see "
+            "reason");
+        aws_jni_throw_runtime_exception(
+            env,
+            "MQTT5 client new: Was unable to create client due to option configuration! Enable error logging to see "
+            "reason");
         goto clean_up;
     }
 

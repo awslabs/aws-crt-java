@@ -295,7 +295,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Minimal creation and cleanup */
     @Test
     public void New_UC1() {
-        System.out.println("Test: New_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -310,7 +309,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum creation and cleanup */
     @Test
     public void New_UC2() {
-        System.out.println("Test: New_UC2");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -399,7 +397,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Minimal memory check */
     @Test
     public void New_UC3() {
-        System.out.println("Test: New_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -415,7 +412,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum memory test */
     @Test
     public void New_UC4() {
-        System.out.println("Test: New_UC4");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -510,7 +506,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Direct connection with minimal configuration */
     @Test
     public void ConnDC_UC1() {
-        System.out.println("Test: ConnDC_UC1");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         try {
@@ -534,7 +529,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with basic authentication */
     @Test
     public void ConnDC_UC2() {
-        System.out.println("Test: ConnDC_UC2");
         Assume.assumeTrue(mqtt5DirectMqttBasicAuthHost != null);
         Assume.assumeTrue(mqtt5DirectMqttBasicAuthPort != null);
         Assume.assumeTrue(mqtt5BasicAuthUsername != null);
@@ -565,7 +559,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with TLS */
     @Test
     public void ConnDC_UC3() {
-        System.out.println("Test: ConnDC_UC3");
         Assume.assumeTrue(mqtt5DirectMqttTlsHost != null);
         Assume.assumeTrue(mqtt5DirectMqttTlsPort != null);
         Assume.assumeTrue(mqtt5CertificateFile != null);
@@ -600,7 +593,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with mTLS */
     @Test
     public void ConnDC_UC4() {
-        System.out.println("Test: ConnDC_UC4");
         /* Only works on IoT Core */
         Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
         Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
@@ -637,7 +629,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with HttpProxyOptions */
     @Test
     public void ConnDC_UC5() {
-        System.out.println("Test: ConnDC_UC5");
         Assume.assumeTrue(mqtt5DirectMqttTlsHost != null);
         Assume.assumeTrue(mqtt5DirectMqttTlsPort != null);
         Assume.assumeTrue(mqtt5ProxyHost != null);
@@ -688,7 +679,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum options set connection test */
     @Test
     public void ConnDC_UC6() {
-        System.out.println("Test: ConnDC_UC6");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -774,7 +764,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. Websocket connection with minimal configuration */
     @Test
     public void ConnWS_UC1() {
-        System.out.println("Test: ConnWS_UC1");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         try {
@@ -817,7 +806,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with basic authentication */
     @Test
     public void ConnWS_UC2() {
-        System.out.println("Test: ConnWS_UC2");
         Assume.assumeTrue(mqtt5WSMqttBasicAuthHost != null);
         Assume.assumeTrue(mqtt5WSMqttBasicAuthPort != null);
         Assume.assumeTrue(mqtt5BasicAuthUsername != null);
@@ -865,7 +853,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with TLS */
     @Test
     public void ConnWS_UC3() {
-        System.out.println("Test: ConnWS_UC3");
         Assume.assumeTrue(mqtt5WSMqttTlsHost != null);
         Assume.assumeTrue(mqtt5WSMqttTlsPort != null);
         Assume.assumeTrue(mqtt5CertificateFile != null);
@@ -977,7 +964,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket connection with all options set */
     @Test
     public void ConnWS_UC6() {
-        System.out.println("Test: ConnWS_UC6");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         Assume.assumeTrue(mqtt5BasicAuthPassword != null);
@@ -1069,7 +1055,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid host name */
     @Test
     public void ConnNegativeID_UC1() {
-        System.out.println("Test: ConnNegativeID_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1090,9 +1075,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 exceptionOccurred = true;
                 if (events.connectFailureCode == 1059) {
                     foundExpectedError = true;
-                } else {
-                    System.out.println("EXCEPTION: " + ex);
-                    System.out.println(ex.getMessage() + " \n");
                 }
             }
 
@@ -1112,7 +1094,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid, nonexistent port for direct connection */
     @Test
     public void ConnNegativeID_UC2() {
-        System.out.println("Test: ConnNegativeID_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1150,7 +1131,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid protocol port for direct connection */
     @Test
     public void ConnNegativeID_UC2_ALT() {
-        System.out.println("Test: ConnNegativeID_UC2_ALT");
         Assume.assumeTrue(mqtt5DirectMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         boolean foundExpectedError = false;
@@ -1189,7 +1169,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid, nonexistent port for websocket connection */
     @Test
     public void ConnNegativeID_UC3() {
-        System.out.println("Test: ConnNegativeID_UC3");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
@@ -1245,7 +1224,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with invalid protocol port for websocket connection */
     @Test
     public void ConnNegativeID_UC3_ALT() {
-        System.out.println("Test: ConnNegativeID_UC3_ALT");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5DirectMqttPort != null);
         boolean foundExpectedError = false;
@@ -1302,7 +1280,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Client connect with socket timeout */
     @Test
     public void ConnNegativeID_UC4() {
-        System.out.println("Test: ConnNegativeID_UC4");
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1355,7 +1332,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Websocket handshake failure test */
     @Test
     public void ConnNegativeID_UC6() {
-        System.out.println("Test: ConnNegativeID_UC6");
         Assume.assumeTrue(mqtt5WSMqttHost != null);
         Assume.assumeTrue(mqtt5WSMqttPort != null);
         boolean foundExpectedError = false;
@@ -1444,7 +1420,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Double Client ID failure test */
     @Test
     public void ConnNegativeID_UC7() {
-        System.out.println("Test: ConnNegativeID_UC7");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -1465,28 +1440,18 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make two clients...");
-
             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
             Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
 
-            System.out.println("About to start client one...");
-
             clientOne.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to start client two (which will disconnect client 1)...");
 
             clientTwo.start();
             events.connectedFuture = new CompletableFuture<>();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            System.out.println("About to wait for confirmation of disconnect...");
-
             // Make sure a disconnection happened
             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to stop both clients...");
 
             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
             // attempt to reconnect endlessly, making a never ending loop.
@@ -1494,12 +1459,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             clientOne.stop(disconnect);
             clientTwo.stop(disconnect);
 
-            System.out.println("About to close both clients...");
-
             clientOne.close();
             clientTwo.close();
-
-            System.out.println("About to close TLS context...");
 
             if (tlsContext != null) {
                 tlsContext.close();
@@ -1513,7 +1474,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Double Client ID disconnect and then reconnect test */
     @Test
     public void ConnNegativeID_UC7_ALT() {
-        System.out.println("Test: ConnNegativeID_UC7_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -1535,8 +1495,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make client 1...");
-
             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
@@ -1550,31 +1508,19 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builderTwo.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make client 2...");
-
             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
-
-            System.out.println("About to connect client 1...");
 
             clientOne.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            System.out.println("About to connect client 2 (which will disconnect client 1)...");
-
             clientTwo.start();
             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to ensure client 1 was disconnected...");
 
             // Make sure the first client was disconnected
             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
 
-            System.out.println("About to disconnect client 2...");
-
             // Disconnect the second client so the first can reconnect
             clientTwo.stop(new DisconnectPacketBuilder().build());
-
-            System.out.println("About to wait for client 1 to connect...");
 
             // Wait until the first client has reconnected
             events.connectedFuture = new CompletableFuture<>();
@@ -1582,19 +1528,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             assertTrue(clientOne.getIsConnected() == true);
 
-            System.out.println("About to stop both clients...");
-
             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
             // attempt to reconnect endlessly, making a never ending loop.
             DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
             clientOne.stop(disconnect);
 
-            System.out.println("About to close both clients...");
-
             clientOne.close();
             clientTwo.close();
-
-            System.out.println("About to close TLS context...");
 
             if (tlsContext != null) {
                 tlsContext.close();
@@ -1614,7 +1554,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Connect Packet Properties */
     @Test
     public void NewNegative_UC1() {
-        System.out.println("Test: NewNegative_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientCreationFailed = false;
 
@@ -1713,7 +1652,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Connect Packet Properties */
     @Test
     public void NewNegative_UC1_ALT() {
-        System.out.println("Test: NewNegative_UC1_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientCreationFailed = false;
 
@@ -1800,7 +1738,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Disconnect Packet Properties */
     @Test
     public void NewNegative_UC2() {
-        System.out.println("Test: NewNegative_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientDisconnectFailed = false;
 
@@ -1848,7 +1785,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Disconnect Packet Properties */
     @Test
     public void NewNegative_UC2_ALT() {
-        System.out.println("Test: NewNegative_UC2_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientDisconnectFailed = false;
 
@@ -1896,7 +1832,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Publish Packet Properties */
     @Test
     public void NewNegative_UC3() {
-        System.out.println("Test: NewNegative_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientPublishFailed = false;
 
@@ -1946,7 +1881,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Publish Packet Properties */
     @Test
     public void NewNegative_UC3_ALT() {
-        System.out.println("Test: NewNegative_UC3_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientPublishFailed = false;
 
@@ -1963,16 +1897,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make client...");
-
             Mqtt5Client client = new Mqtt5Client(builder.build());
-
-            System.out.println("About to start client...");
 
             client.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to publish...");
 
             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
             publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
@@ -1989,12 +1917,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Client publish did not fail!");
             }
 
-            System.out.println("About to stop client...");
-
             client.stop(new DisconnectPacketBuilder().build());
-            System.out.println("About to close client...");
             client.close();
-            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2007,7 +1931,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Negative Subscribe Packet Properties */
     @Test
     public void NewNegative_UC4() {
-        System.out.println("Test: NewNegative_UC4");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientSubscribeFailed = false;
 
@@ -2057,7 +1980,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Overflow Subscribe Packet Properties */
     @Test
     public void NewNegative_UC4_ALT() {
-        System.out.println("Test: NewNegative_UC4_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean clientSubscribeFailed = false;
 
@@ -2113,7 +2035,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path, minimal success test */
     @Test
     public void Negotiated_UC1() {
-        System.out.println("Test: Negotiated_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
 
         try {
@@ -2157,7 +2078,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Maximum success test */
     @Test
     public void Negotiated_UC2() {
-        System.out.println("Test:Negotiated_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
@@ -2219,7 +2139,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Sub-UnSub happy path */
     @Test
     public void Op_UC1() {
-        System.out.println("Test:Op_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2286,7 +2205,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Sub-UnSub happy path */
     @Test
     public void Op_UC2() {
-        System.out.println("Test:Op_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2374,7 +2292,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Binary Publish Test */
     @Test
     public void Op_UC3() {
-        System.out.println("Test:Op_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2440,7 +2357,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Publish Test */
     @Test
     public void ErrorOp_UC1() {
-        System.out.println("Test:ErrorOp_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2460,12 +2376,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             Mqtt5Client client = new Mqtt5Client(builder.build());
 
-            System.out.println("Made a client...");
-
             client.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to make null publish...");
             try {
                 System.out.println("NOTE: Exception due to null publish packet may be printed below!");
                 client.publish(null).get(180, TimeUnit.SECONDS);
@@ -2473,22 +2385,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 didExceptionOccur = true;
             }
 
-            System.out.println("Made null publish...");
-
             if (didExceptionOccur == false) {
                 fail("Null publish packet did not cause exception with error!");
             }
 
-            System.out.println("About to stop client...");
-
             client.stop(new DisconnectPacketBuilder().build());
-            System.out.println("About to close client...");
             client.close();
-            System.out.println("About to (possibly) close tlsContext...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
-            System.out.println("Test finished!");
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2501,7 +2406,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /*
     @Test
     public void ErrorOp_UC1_ALT() {
-        System.out.println("Test:ErrorOp_UC1_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2519,16 +2423,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make a client...");
-
             Mqtt5Client client = new Mqtt5Client(builder.build());
-
-            System.out.println("About to start a client...");
 
             client.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to publish...");
 
             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
             try {
@@ -2542,12 +2440,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty publish packet did not cause exception with error!");
             }
 
-            System.out.println("About to stop...");
-
             client.stop(new DisconnectPacketBuilder().build());
-            System.out.println("About to close...");
             client.close();
-            System.out.println("About to close tlsContext...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2561,7 +2455,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Subscribe Test */
     @Test
     public void ErrorOp_UC2() {
-        System.out.println("Test:ErrorOp_UC2");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2612,7 +2505,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /*
     @Test
     public void ErrorOp_UC2_ALT() {
-        System.out.println("Test:ErrorOp_UC2_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2630,16 +2522,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make client...");
-
             Mqtt5Client client = new Mqtt5Client(builder.build());
-
-            System.out.println("About to start client...");
 
             client.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to subscribe...");
 
             SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
             try {
@@ -2653,12 +2539,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty subscribe packet did not cause exception with error!");
             }
 
-            System.out.println("About to stop...");
-
             client.stop(new DisconnectPacketBuilder().build());
-            System.out.println("About to close...");
             client.close();
-            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2672,7 +2554,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Null Unsubscribe Test */
     @Test
     public void ErrorOp_UC3() {
-        System.out.println("Test:ErrorOp_UC3");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2723,7 +2604,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /*
     @Test
     public void ErrorOp_UC3_ALT() {
-        System.out.println("Test:ErrorOp_UC3_ALT");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         boolean didExceptionOccur = false;
 
@@ -2741,16 +2621,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make client...");
-
             Mqtt5Client client = new Mqtt5Client(builder.build());
-
-            System.out.println("About to start...");
 
             client.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to unsubscribe...");
 
             UnsubscribePacketBuilder unsubscribeBuilder = new UnsubscribePacketBuilder();
             try {
@@ -2764,12 +2638,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 fail("Empty unsubscribe packet did not cause exception with error!");
             }
 
-            System.out.println("About to stop...");
-
             client.stop(new DisconnectPacketBuilder().build());
-            System.out.println("About to close...");
             client.close();
-            System.out.println("About to close TLS...");
             if (tlsContext != null) {
                 tlsContext.close();
             }
@@ -2833,7 +2703,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Happy path. No drop in connection, no retry, no reconnect */
     @Test
     public void QoS1_UC1() {
-        System.out.println("Test:QoS1_UC1");
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         int messageCount = 10;
         String testUUID = UUID.randomUUID().toString();
@@ -2844,8 +2713,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
-            System.out.println("About to make TLS context 1");
-
             // Only needed for IoT Core
             TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
@@ -2855,11 +2722,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
             }
 
-            System.out.println("About to make publisher");
-
             Mqtt5Client publisher = new Mqtt5Client(builder.build());
-
-            System.out.println("About to make subscriber setup");
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
@@ -2867,8 +2730,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
             publishEvents.desiredPublishCount = messageCount;
             builderTwo.withPublishEvents(publishEvents);
-
-            System.out.println("About to make TLS context 2");
 
             // Only needed for IoT Core
             TlsContext tlsContext2 = null;
@@ -2879,55 +2740,35 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builderTwo.withTlsContext(tlsContext2);
             }
 
-            System.out.println("About to make subscriber");
-
             Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build());
-
-            System.out.println("About to connect publisher");
 
             publisher.start();
             events.connectedFuture.get(180, TimeUnit.SECONDS);
 
-            System.out.println("About to connect subscriber");
-
             subscriber.start();
             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to make subscription and subscribe");
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
             subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to make publish and publish");
 
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
             publishPacketBuilder.withTopic(testTopic);
             publishPacketBuilder.withPayload("Hello World".getBytes());
             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
 
-            System.out.println("About to publish 10 times");
-
             for (int i = 0; i < messageCount; i++) {
                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
             }
 
-            System.out.println("About to make sure we got all 10 times");
-
             // Did we get all the messages?
             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-
-            System.out.println("About to stop and disconnect both clients");
 
             subscriber.stop(new DisconnectPacketBuilder().build());
             publisher.stop(new DisconnectPacketBuilder().build());
 
-            System.out.println("About to close both clients");
-
             subscriber.close();
             publisher.close();
-
-            System.out.println("About to close both TLS contexts");
 
             if (tlsContext != null) {
                 tlsContext.close();
@@ -2948,124 +2789,124 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      */
 
      /* Happy path. No drop in connection, no retry, no reconnect */
-    // @Test
-    // public void Retain_UC1() {
-    //     System.out.println("Test:Retain_UC1");
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
+    @Test
+    public void Retain_UC1() {
+        System.out.println("Test:Retain_UC1");
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
 
-    //     try {
-    //         Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+        try {
+            Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
 
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             clientBuilder.withTlsContext(tlsContext);
-    //         }
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                clientBuilder.withTlsContext(tlsContext);
+            }
 
-    //         LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
-    //         clientBuilder.withLifecycleEvents(publisherEvents);
-    //         Mqtt5Client publisher = new Mqtt5Client(clientBuilder.build());
+            LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
+            clientBuilder.withLifecycleEvents(publisherEvents);
+            Mqtt5Client publisher = new Mqtt5Client(clientBuilder.build());
 
-    //         LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
-    //         PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
-    //         clientBuilder.withLifecycleEvents(successSubscriberEvents);
-    //         clientBuilder.withPublishEvents(successSubscriberPublishEvents);
-    //         Mqtt5Client successSubscriber = new Mqtt5Client(clientBuilder.build());
+            LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
+            PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
+            clientBuilder.withLifecycleEvents(successSubscriberEvents);
+            clientBuilder.withPublishEvents(successSubscriberPublishEvents);
+            Mqtt5Client successSubscriber = new Mqtt5Client(clientBuilder.build());
 
-    //         LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
-    //         PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
-    //         clientBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
-    //         clientBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
-    //         Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(clientBuilder.build());
+            LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
+            PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
+            clientBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
+            clientBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
+            Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(clientBuilder.build());
 
-    //         // Connect and publish a retained message
-    //         publisher.start();
-    //         publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //         publishPacketBuilder.withTopic(testTopic)
-    //             .withPayload("Hello World".getBytes())
-    //             .withQOS(QOS.AT_LEAST_ONCE)
-    //             .withRetain(true);
-    //         publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            // Connect and publish a retained message
+            publisher.start();
+            publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic)
+                .withPayload("Hello World".getBytes())
+                .withQOS(QOS.AT_LEAST_ONCE)
+                .withRetain(true);
+            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-    //         // Setup for clearing the retained message
-    //         publishPacketBuilder.withPayload(null);
+            // Setup for clearing the retained message
+            publishPacketBuilder.withPayload(null);
 
-    //         // Connect the successful subscriber
-    //         successSubscriber.start();
-    //         try {
-    //             successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //         } catch (Exception ex) {
-    //             // Clear the retained message
-    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             fail("Success subscriber could not connect!");
-    //         }
+            // Connect the successful subscriber
+            successSubscriber.start();
+            try {
+                successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                // Clear the retained message
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                fail("Success subscriber could not connect!");
+            }
 
-    //         // Subscribe and verify the retained message
-    //         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //         subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
-    //         try {
-    //             successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //         } catch (Exception ex) {
-    //             // Clear the retained message
-    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             fail("Success subscriber could not subscribe!");
-    //         }
-    //         try {
-    //             successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-    //         } catch (Exception ex) {
-    //             // Clear the retained message
-    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             fail("Success subscriber did not get retained message!");
-    //         }
+            // Subscribe and verify the retained message
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+            try {
+                successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                // Clear the retained message
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                fail("Success subscriber could not subscribe!");
+            }
+            try {
+                successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                // Clear the retained message
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                fail("Success subscriber did not get retained message!");
+            }
 
-    //         // Clear the retained message
-    //         publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            // Clear the retained message
+            publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-    //         // Wait 5 seconds to give the server time to clear everything out
-    //         Thread.sleep(5000);
+            // Wait 5 seconds to give the server time to clear everything out
+            Thread.sleep(5000);
 
-    //         // Connect the unsuccessful subscriber
-    //         unsuccessfulSubscriber.start();
-    //         unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //         unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //         // Make sure we do NOT get a publish
-    //         boolean didExceptionOccur = false;
-    //         try {
-    //             unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
-    //         } catch (Exception ex) {
-    //             didExceptionOccur = true;
-    //         }
+            // Connect the unsuccessful subscriber
+            unsuccessfulSubscriber.start();
+            unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+            unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+            // Make sure we do NOT get a publish
+            boolean didExceptionOccur = false;
+            try {
+                unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                didExceptionOccur = true;
+            }
 
-    //         if (didExceptionOccur == false) {
-    //             fail("Unsuccessful subscriber got retained message even though it should be cleared!");
-    //         }
+            if (didExceptionOccur == false) {
+                fail("Unsuccessful subscriber got retained message even though it should be cleared!");
+            }
 
-    //         // Disconnect all clients
-    //         DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
-    //         publisher.stop(disconnectPacketBuilder.build());
-    //         publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
-    //         successSubscriber.stop(disconnectPacketBuilder.build());
-    //         successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
-    //         unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
-    //         unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+            // Disconnect all clients
+            DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
+            publisher.stop(disconnectPacketBuilder.build());
+            publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
+            successSubscriber.stop(disconnectPacketBuilder.build());
+            successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+            unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
+            unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
 
-    //         // Close all clients
-    //         publisher.close();;
-    //         successSubscriber.close();
-    //         unsuccessfulSubscriber.close();
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
+            // Close all clients
+            publisher.close();;
+            successSubscriber.close();
+            unsuccessfulSubscriber.close();
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
 
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 
 }

@@ -177,7 +177,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_tls_context) {
-        jlong jni_proxy_tls_context_long = (jlong)(*env)->CallLongMethod(
+        jlong jni_proxy_tls_context_long = (*env)->CallLongMethod(
             env, jni_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
 
         struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context_long;
@@ -2402,7 +2402,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         goto clean_up;
     }
     jlong jni_bootstrap_pointer =
-        (jlong)(*env)->CallObjectMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
+        (*env)->CallLongMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "MQTT5 client new: could not get native handle for bootstrap");
         aws_jni_throw_runtime_exception(env, "MQTT5 client new: could not get native handle for bootstrap");

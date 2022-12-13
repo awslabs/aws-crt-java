@@ -61,11 +61,11 @@ struct aws_mqtt5_client_unsubscribe_return_data {
 struct aws_http_proxy_options_java_jni {
     struct aws_http_proxy_options options;
 
-    jstring jni_proxy_host;
+    jstring *jni_proxy_host;
     struct aws_byte_cursor proxy_host_cursor;
-    jstring jni_proxy_authorization_username;
+    jstring *jni_proxy_authorization_username;
     struct aws_byte_cursor authorization_username_cursor;
-    jstring jni_proxy_authorization_password;
+    jstring *jni_proxy_authorization_password;
     struct aws_byte_cursor authorization_password_cursor;
 };
 
@@ -83,15 +83,16 @@ static void s_aws_mqtt5_http_proxy_options_java_destroy(
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying JavaHttpProxyOptions", (void *)http_options);
 
     if (http_options->jni_proxy_host) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, http_options->jni_proxy_host, http_options->proxy_host_cursor);
+        aws_jni_byte_cursor_from_jbyteArray_release(
+            env, *http_options->jni_proxy_host, http_options->proxy_host_cursor);
     }
     if (http_options->jni_proxy_authorization_username) {
         aws_jni_byte_cursor_from_jbyteArray_release(
-            env, http_options->jni_proxy_authorization_username, http_options->authorization_username_cursor);
+            env, *http_options->jni_proxy_authorization_username, http_options->authorization_username_cursor);
     }
     if (http_options->jni_proxy_authorization_password) {
         aws_jni_byte_cursor_from_jbyteArray_release(
-            env, http_options->jni_proxy_authorization_password, http_options->authorization_password_cursor);
+            env, *http_options->jni_proxy_authorization_password, http_options->authorization_password_cursor);
     }
 
     /* Frees all allocated memory */
@@ -146,8 +147,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_host) {
-        http_options->jni_proxy_host = jni_proxy_host;
-        http_options->proxy_host_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, http_options->jni_proxy_host);
+        http_options->jni_proxy_host = &jni_proxy_host;
+        http_options->proxy_host_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_host);
         http_options->options.host = http_options->proxy_host_cursor;
     }
 
@@ -209,9 +210,9 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_authorization_username) {
-        http_options->jni_proxy_authorization_username = jni_proxy_authorization_username;
+        http_options->jni_proxy_authorization_username = &jni_proxy_authorization_username;
         http_options->authorization_username_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, http_options->jni_proxy_authorization_username);
+            aws_jni_byte_cursor_from_jbyteArray_acquire(env, *http_options->jni_proxy_authorization_username);
         http_options->options.auth_username = http_options->authorization_username_cursor;
     }
 
@@ -221,9 +222,9 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_authorization_password) {
-        http_options->jni_proxy_authorization_password = jni_proxy_authorization_password;
+        http_options->jni_proxy_authorization_password = &jni_proxy_authorization_password;
         http_options->authorization_password_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, http_options->jni_proxy_authorization_password);
+            aws_jni_byte_cursor_from_jbyteArray_acquire(env, *http_options->jni_proxy_authorization_password);
         http_options->options.auth_password = http_options->authorization_password_cursor;
     }
 

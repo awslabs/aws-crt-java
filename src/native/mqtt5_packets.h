@@ -44,7 +44,7 @@ int aws_get_string_from_jobject(
     JNIEnv *env,
     jobject packet,
     jfieldID packet_field,
-    jstring result_jstring,
+    jstring *result_jstring,
     struct aws_byte_cursor *result_cursor,
     struct aws_byte_cursor **destination,
     bool is_optional);
@@ -53,7 +53,7 @@ int aws_get_byte_array_from_jobject(
     JNIEnv *env,
     jobject packet,
     jfieldID packet_field,
-    jbyteArray result_jbyte_array,
+    jbyteArray *result_jbyte_array,
     struct aws_byte_cursor *result_cursor,
     struct aws_byte_cursor **destination,
     bool optional);

@@ -177,8 +177,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_tls_context) {
-        jlong jni_proxy_tls_context_long = (*env)->CallLongMethod(
-            env, jni_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
+        jlong jni_proxy_tls_context_long =
+            (*env)->CallLongMethod(env, jni_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
 
         struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context_long;
         if (tls_ctx) {
@@ -2370,31 +2370,26 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     }
 
     jstring jni_host_name = NULL;
-    struct aws_byte_cursor *pointer_host_name = &client_options.host_name;
     if (aws_get_string_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_host_name_field_id,
-            jni_host_name,
-            pointer_host_name,
-            &pointer_host_name,
+            &jni_host_name,
+            &client_options.host_name,
+            NULL,
             false) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.host_name = *pointer_host_name;
 
-    uint16_t client_port = 0;
-    uint16_t *pointer_client_port = &client_options.port;
     if (aws_get_uint16_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_port_field_id,
-            &client_port,
-            &pointer_client_port,
+            &client_options.port,
+            NULL,
             false) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.port = *pointer_client_port;
 
     if (!jni_bootstrap) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "MQTT5 client new: no bootstrap found");
@@ -2552,83 +2547,60 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         client_options.retry_jitter_mode = (enum aws_exponential_backoff_jitter_mode)retry_jitter_enum;
     }
 
-    uint64_t min_reconnect_delay = 0;
-    uint64_t *pointer_min_reconnect_delay = &client_options.min_reconnect_delay_ms;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_reconnect_delay_ms_field_id,
-            &min_reconnect_delay,
-            &pointer_min_reconnect_delay,
+            &client_options.min_reconnect_delay_ms,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.min_reconnect_delay_ms = *pointer_min_reconnect_delay;
-
-    uint64_t max_reconnect_delay = 0;
-    uint64_t *pointer_max_reconnect_delay = &client_options.max_reconnect_delay_ms;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.max_reconnect_delay_ms_field_id,
-            &max_reconnect_delay,
-            &pointer_max_reconnect_delay,
+            &client_options.max_reconnect_delay_ms,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.max_reconnect_delay_ms = *pointer_max_reconnect_delay;
-
-    uint64_t min_connected_time_to_reset = 0;
-    uint64_t *pointer_min_connected_time_to_reset = &client_options.min_connected_time_to_reset_reconnect_delay_ms;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id,
-            &min_connected_time_to_reset,
-            &pointer_min_connected_time_to_reset,
+            &client_options.min_connected_time_to_reset_reconnect_delay_ms,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.min_connected_time_to_reset_reconnect_delay_ms = *pointer_min_connected_time_to_reset;
-
-    uint32_t ping_timeout = 0;
-    uint32_t *pointer_ping_timeout = &client_options.ping_timeout_ms;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.ping_timeout_ms_field_id,
-            &ping_timeout,
-            &pointer_ping_timeout,
+            &client_options.ping_timeout_ms,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.ping_timeout_ms = *pointer_ping_timeout;
-
-    uint32_t connack_timeout = 0;
-    uint32_t *pointer_connack_timeout = &client_options.connack_timeout_ms;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.connack_timeout_ms_field_id,
-            &connack_timeout,
-            &pointer_connack_timeout,
+            &client_options.connack_timeout_ms,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.connack_timeout_ms = *pointer_connack_timeout;
-
-    uint32_t ack_timeout = 0;
-    uint32_t *pointer_ack_timeout = &client_options.ack_timeout_seconds;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.ack_timeout_seconds_field_id,
-            &ack_timeout,
-            &pointer_ack_timeout,
+            &client_options.ack_timeout_seconds,
+            NULL,
             true) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.ack_timeout_seconds = *pointer_ack_timeout;
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_client->jvm);
     if (jvmresult != 0) {

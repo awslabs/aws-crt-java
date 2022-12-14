@@ -511,8 +511,8 @@ static int s_set_user_properties_field(
             return AWS_OP_ERR;
         }
 
-        for (size_t i = 0; i < user_property_count; i++) {
-            const struct aws_mqtt5_user_property *property = packet_properties + i;
+        for (size_t i = 0; i < user_property_count; ++i) {
+            const struct aws_mqtt5_user_property *property = &packet_properties[i];
             jstring jni_new_property_name = aws_jni_string_from_cursor(env, &property->name);
             jstring jni_new_property_value = aws_jni_string_from_cursor(env, &property->value);
 
@@ -1021,8 +1021,8 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id,
             jni_subscription_identifiers);
 
-        for (size_t i = 0; i < publish->subscription_identifier_count; i++) {
-            const uint32_t *identifier = publish->subscription_identifiers + i;
+        for (size_t i = 0; i < publish->subscription_identifier_count; ++i) {
+            const uint32_t *identifier = publish->subscription_identifiers[i];
             jobject jni_identifier_obj = (*env)->NewObject(
                 env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*identifier);
             jboolean jni_add_result = (*env)->CallBooleanMethod(
@@ -1628,8 +1628,8 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
 
         if (suback->reason_codes != NULL) {
             if (suback->reason_code_count > 0) {
-                for (size_t i = 0; i < suback->reason_code_count; i++) {
-                    const enum aws_mqtt5_suback_reason_code *reason_code_data = suback->reason_codes + i;
+                for (size_t i = 0; i < suback->reason_code_count; ++i) {
+                    const enum aws_mqtt5_suback_reason_code *reason_code_data = &suback->reason_codes[i];
                     if (s_set_int_enum_in_packet(
                             env,
                             (int *)reason_code_data,
@@ -1776,8 +1776,8 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
 
     if (unsuback->reason_codes) {
         if (unsuback->reason_code_count > 0) {
-            for (size_t i = 0; i < unsuback->reason_code_count; i++) {
-                const enum aws_mqtt5_unsuback_reason_code *reason_code_data = unsuback->reason_codes + i;
+            for (size_t i = 0; i < unsuback->reason_code_count; ++i) {
+                const enum aws_mqtt5_unsuback_reason_code *reason_code_data = &unsuback->reason_codes[i];
                 if (s_set_int_enum_in_packet(
                         env,
                         (int *)reason_code_data,

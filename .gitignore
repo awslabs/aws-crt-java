@@ -75,7 +75,7 @@ cmake-build*
 target/
 
 # Test resources/certs/logs
-# *.log
+*.log
 *.pem
 *.key
 *.crt

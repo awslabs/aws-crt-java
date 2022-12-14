@@ -343,9 +343,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 .withWill(willPacketBuilder.build())
                 .withWillDelayIntervalSeconds(1000L);
 
-                ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
-                userProperties.add(new UserProperty("Hello", "World"));
-                connectBuilder.withUserProperties(userProperties);
+                // ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+                // userProperties.add(new UserProperty("Hello", "World"));
+                // connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
                 builder.withBootstrap(bootstrap)
@@ -443,9 +443,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 connectBuilder.withWill(willPacketBuilder.build());
                 connectBuilder.withWillDelayIntervalSeconds(1000L);
 
-                ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
-                userProperties.add(new UserProperty("Hello", "World"));
-                connectBuilder.withUserProperties(userProperties);
+                // ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+                // userProperties.add(new UserProperty("Hello", "World"));
+                // connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
                 builder.withBootstrap(bootstrap)
@@ -705,9 +705,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 connectBuilder.withWill(willPacketBuilder.build());
                 connectBuilder.withWillDelayIntervalSeconds(1000L);
 
-                ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
-                userProperties.add(new UserProperty("Hello", "World"));
-                connectBuilder.withUserProperties(userProperties);
+                // ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+                // userProperties.add(new UserProperty("Hello", "World"));
+                // connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
                 builder.withBootstrap(bootstrap)
@@ -984,9 +984,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 connectBuilder.withWill(willPacketBuilder.build());
                 connectBuilder.withWillDelayIntervalSeconds(1000L);
 
-                ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
-                userProperties.add(new UserProperty("Hello", "World"));
-                connectBuilder.withUserProperties(userProperties);
+                // ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+                // userProperties.add(new UserProperty("Hello", "World"));
+                // connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5WSMqttPort);
                 builder.withBootstrap(bootstrap)

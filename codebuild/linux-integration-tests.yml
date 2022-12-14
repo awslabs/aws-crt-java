@@ -19,6 +19,8 @@ phases:
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
+      # TMP - print any segfault dumps
+      - find . -type f -name "*.log" -exec cat {} +
   post_build:
     commands:
       - echo Build completed on `date`
@@ -27,5 +29,5 @@ artifacts:
   discard-paths: yes
   files:
     - "target/surefire-reports/**"
-    - "hs_err_pid*"
+    - "*hs_err_pid*"
     - "core*"

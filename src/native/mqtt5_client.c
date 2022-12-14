@@ -1022,7 +1022,7 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             jni_subscription_identifiers);
 
         for (size_t i = 0; i < publish->subscription_identifier_count; ++i) {
-            const uint32_t *identifier = publish->subscription_identifiers[i];
+            const uint32_t *identifier = &publish->subscription_identifiers[i];
             jobject jni_identifier_obj = (*env)->NewObject(
                 env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*identifier);
             jboolean jni_add_result = (*env)->CallBooleanMethod(

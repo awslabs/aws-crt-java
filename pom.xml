@@ -323,6 +323,14 @@
                 <directory>src/test/resources</directory>
             </testResource>
         </testResources>
+        <extensions>
+        <!-- Generate os.detected.classifier property -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.2</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -341,6 +349,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <classifier>${os.detected.classifier}</classifier>
                     <archive>
                         <manifest>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>

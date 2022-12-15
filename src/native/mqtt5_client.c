@@ -2344,6 +2344,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     struct aws_mqtt5_client_options client_options;
     AWS_ZERO_STRUCT(client_options);
     struct aws_http_proxy_options_java_jni *java_http_proxy_options = NULL;
+    jstring jni_host_name = NULL;
 
     /**
      * Push a new local frame so any local allocations we make are tied to it. Then we can pop it to free memory.
@@ -2371,7 +2372,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         return (jlong)NULL;
     }
 
-    jstring jni_host_name = NULL;
     if (aws_get_string_from_jobject(
             env,
             jni_options,
@@ -2677,6 +2677,9 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
+    if (jni_host_name != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
+    }
     (*env)->PopLocalFrame(env, NULL);
 
     if (java_client->client != NULL) {

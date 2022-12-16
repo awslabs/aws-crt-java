@@ -357,7 +357,7 @@ static int s_set_jni_uint16_t_field_in_packet(
     if (native_integer != NULL) {
         jint conversion = (jint)*native_integer;
         jobject jni_int = (*env)->NewObject(
-            env, boxed_integer_properties.long_class, boxed_integer_properties.constructor, conversion);
+            env, boxed_integer_properties.integer_class, boxed_integer_properties.integer_constructor_id, conversion);
         if (aws_jni_check_and_clear_exception(env)) {
             /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint16 field");

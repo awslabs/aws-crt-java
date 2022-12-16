@@ -14,6 +14,7 @@ phases:
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
       - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B install -DskipTests
+      - ls target
   post_build:
     commands:
       # get the shared libs from the native build
@@ -21,8 +22,7 @@ phases:
       - cp -rv target/cmake-build/lib ../dist/
       # get the platform specific jar with classifier
       - cp target/*.jar ../dist/
-      - aws s3 cp --recursive --exclude "*" --include "*.dll" .\target\cmake-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
-      - aws s3 cp --recursive --exclude "*" --include "*.jar" .\target s3://aws-crt-java-pipeline/%GIT_TAG%/jar
+      - ls ../dist
 
 artifacts:
   files:

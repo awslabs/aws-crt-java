@@ -26,10 +26,17 @@ BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed '
 echo "Using builder version ${BUILDER_VERSION}"
 
 aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
-
 chmod a+x builder
-./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)
+PKG_VERSION=$(git describe --tags | cut -f2 -dv)
+
+mvn versions:set -DnewVersion=${PKG_VERSION}
+./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
+
+# the install after compile failed.
+mvn install -DskipTests
+
 aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp --exclude "*" --include "*.jar" target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar

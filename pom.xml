@@ -102,6 +102,7 @@
                 <cmake.cflags/>
                 <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=x86_64</cmake.osx_arch>
+                <configured.classifier>mac-x86_64</configured.classifier>
             </properties>
         </profile>
         <profile>
@@ -115,6 +116,7 @@
             <properties>
                 <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=arm64</cmake.osx_arch>
+                <configured.classifier>mac-arm64</configured.classifier>
             </properties>
         </profile>
         <!-- 32-bit Unix -->
@@ -128,6 +130,37 @@
             </activation>
             <properties>
                 <cmake.cflags>-m32</cmake.cflags>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>windows-64</id>
+            <properties>
+                <configured.classifier>windows-x86_64</configured.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>windows-32</id>
+            <properties>
+                <configured.classifier>windows-x86_32</configured.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-armv6</id>
+            <properties>
+                <configured.classifier>linux-armv6</configured.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-armv7</id>
+            <properties>
+                <configured.classifier>linux-armv7</configured.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-armv8</id>
+            <properties>
+                <configured.classifier>linux-armv8</configured.classifier>
             </properties>
         </profile>
         <profile>
@@ -220,6 +253,10 @@
                     <url>https://aws.oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
             </distributionManagement>
+            <properties>
+                <!-- Release only used for uber jar that don't have classifier.-->
+                <configured.classifier></configured.classifier>
+            </properties>
             <build>
                 <plugins>
                     <!-- staging/release to Sonatype -->
@@ -323,14 +360,6 @@
                 <directory>src/test/resources</directory>
             </testResource>
         </testResources>
-        <extensions>
-        <!-- Generate os.detected.classifier property -->
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.6.2</version>
-            </extension>
-        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -349,7 +378,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <classifier>${os.detected.classifier}</classifier>
+                    <classifier>${configured.classifier}</classifier>
                     <archive>
                         <manifest>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>

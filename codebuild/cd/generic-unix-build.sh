@@ -35,8 +35,5 @@ PKG_VERSION=$(git describe --tags | cut -f2 -dv)
 mvn versions:set -DnewVersion=${PKG_VERSION}
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
-# the install after compile failed.
-mvn install -DskipTests
-
 aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp --exclude "*" --include "*.jar" target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar

@@ -27,9 +27,9 @@ chmod a+x builder
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)
-PKG_VERSION=$(git describe --tags | cut -f2 -dv)
 
-mvn versions:set -DnewVersion=${PKG_VERSION}
+# use a fix deploy version for platform specific jar
+mvn versions:set -DnewVersion=deploy
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
 aws s3 cp --recursive --exclude "*.a" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib

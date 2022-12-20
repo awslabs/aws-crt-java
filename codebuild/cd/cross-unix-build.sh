@@ -7,8 +7,8 @@ set -ex
 cd `dirname $0`/../..
 
 GIT_TAG=$(git describe --tags)
-PKG_VERSION=$(git describe --tags | cut -f2 -dv)
-mvn versions:set -DnewVersion=${PKG_VERSION}
+# use a fix deploy version for platform specific jar
+mvn versions:set -DnewVersion=deploy
 
 python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?date=`date +%s`', 'builder')"
 chmod a+x builder

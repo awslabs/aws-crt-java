@@ -11,8 +11,8 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
-      - mvn -B versions:set -DnewVersion=${PKG_VERSION}-SNAPSHOT
+      # use a fix deploy version for platform specific jar
+      - mvn versions:set -DnewVersion=deploy
       - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B install -DskipTests -Punix-x86
       - ls ./target
   post_build:

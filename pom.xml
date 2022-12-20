@@ -269,6 +269,7 @@
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://aws.oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
                         </configuration>
                     </plugin>
                     <!-- source jar -->

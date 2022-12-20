@@ -15,7 +15,6 @@ mvn -B install -DskipTests -P mac-x64
 # Copy artifacts to dist
 mkdir -p ../dist
 cp -rv target/cmake-build/lib ../dist/
-cp target/*.jar ../dist/
 
 aws s3 cp --recursive --exclude "*" --include "*.dll" ./target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp --recursive --exclude "*" --include "*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar

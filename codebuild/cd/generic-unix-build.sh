@@ -12,13 +12,10 @@ if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
 fi
 
-LIB_PATH=target/cmake-build/lib
 SKIP_INSTALL=
 
-# Cross compiles do not need local installs, and they have a different lib output path
 if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
     SKIP_INSTALL=--skip-install
-    LIB_PATH=target/cmake-build/aws-crt-java/lib
 fi
 
 # Pry the builder version this CRT is using out of ci.yml
@@ -35,5 +32,5 @@ PKG_VERSION=$(git describe --tags | cut -f2 -dv)
 mvn versions:set -DnewVersion=${PKG_VERSION}
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
-aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib
-aws s3 cp --exclude "*" --include "*.jar" target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar
+aws s3 cp --recursive --exclude "*.a" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

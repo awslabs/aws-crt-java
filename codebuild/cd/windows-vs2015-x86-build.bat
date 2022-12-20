@@ -12,9 +12,8 @@ for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
 
-set PKG_VERSION=%GIT_TAG:~1,100%
-
-mvn -X versions:set -DnewVersion=%PKG_VERSION%-SNAPSHOT
+@REM use a fix deploy version for platform specific jar
+mvn -X versions:set -DnewVersion=deploy
 
 mvn -X install -DskipTests -P windows-32 || goto error
 

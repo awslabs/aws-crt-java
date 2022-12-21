@@ -60,7 +60,6 @@ phases:
       # upload the platform specific jar to staging repo and close the staging repo.
       - bash ./codebuild/cd/deploy-platform-specific-jar.sh
       - mvn nexus-staging:close -Prelease -DstagingRepositoryId=$STAGING_REPO_ID
-      - mvn --version
       # deploy android
       - bash ./codebuild/cd/deploy-snapshot-android.sh
   post_build:

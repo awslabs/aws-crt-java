@@ -14,7 +14,6 @@ phases:
       # use a fix deploy version for platform specific jar
       - mvn versions:set -DnewVersion=deploy
       - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B install -DskipTests -Punix-x86
-      - ls ./target
   post_build:
     commands:
       # get the shared libs from the native build
@@ -22,7 +21,6 @@ phases:
       - cp -rv target/cmake-build/lib ../dist/
       # get the platform specific jar with classifier
       - cp target/*.jar ../dist/
-      - ls ../dist/
 
 artifacts:
   files:

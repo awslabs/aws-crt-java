@@ -50,7 +50,7 @@
                     "!build_steps": [
                         "build",
                         "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B install -DskipTests -Plinux-armv6 -Dshared-lib.skip=true"
+                        "mvn -B install -DskipTests -Plinux-armv6 -Dshared-lib.skip=true"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
@@ -64,7 +64,7 @@
                     "!build_steps": [
                         "build",
                         "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B install -DskipTests -Plinux-armv7 -Dshared-lib.skip=true"
+                        "mvn -B install -DskipTests -Plinux-armv7 -Dshared-lib.skip=true"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
@@ -78,7 +78,7 @@
                     "!build_steps": [
                         "build",
                         "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B install -DskipTests -Plinux-armv8 -Dshared-lib.skip=true"
+                        "mvn -B install -DskipTests -Plinux-armv8 -Dshared-lib.skip=true"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [

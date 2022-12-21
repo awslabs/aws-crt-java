@@ -48,9 +48,7 @@
                 "armv6": {
                     "!packages": [],
                     "!build_steps": [
-                        "build",
-                        "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "mvn -B install -DskipTests -Plinux-armv6 -Dshared-lib.skip=true"
+                        "build"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
@@ -62,9 +60,7 @@
                 "armv7": {
                     "!packages": [],
                     "!build_steps": [
-                        "build",
-                        "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "mvn -B install -DskipTests -Plinux-armv7 -Dshared-lib.skip=true"
+                        "build"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
@@ -76,9 +72,7 @@
                 "arm64": {
                     "!packages": [],
                     "!build_steps": [
-                        "build",
-                        "mv target/cmake-build/aws-crt-java/* target/cmake-build/",
-                        "mvn -B install -DskipTests -Plinux-armv8 -Dshared-lib.skip=true"
+                        "build"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [

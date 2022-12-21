@@ -130,6 +130,7 @@
             </activation>
             <properties>
                 <cmake.cflags>-m32</cmake.cflags>
+                <configured.classifier>linux-x86_32</configured.classifier>
             </properties>
         </profile>
 
@@ -161,6 +162,12 @@
             <id>linux-armv8</id>
             <properties>
                 <configured.classifier>linux-armv8</configured.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-x64</id>
+            <properties>
+                <configured.classifier>linux-x86_64</configured.classifier>
             </properties>
         </profile>
         <profile>

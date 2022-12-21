@@ -22,20 +22,16 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
+      - echo $PKG_VERSION
       - mkdir -p target/cmake-build/lib
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
       # mv all the classified jar to target/
-      - mv $CODEBUILD_SRC_DIR_linux_x64/dist/*.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
-      - mv $CODEBUILD_SRC_DIR_linux_x86/dist/*.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
-      - mv $CODEBUILD_SRC_DIR_osx_x64/*.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
-      - mv $CODEBUILD_SRC_DIR_osx_arm64/*.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
-      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/
+      - mv $CODEBUILD_SRC_DIR_linux_x64/dist/aws-crt-deploy-linux-x86_64.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
+      - mv $CODEBUILD_SRC_DIR_linux_x86/dist/aws-crt-deploy-linux-x86_32.jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
       # cp all the shared lib to cmake-build
       - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       - cp -rv $CODEBUILD_SRC_DIR_linux_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
-      - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
-      - cp -rv $CODEBUILD_SRC_DIR_osx_arm64/* $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
@@ -55,11 +51,16 @@ phases:
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
+      - bash ./codebuild/cd/deploy-platform-specific-jar.sh
       # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
       - export DEPLOY_VERSION=${PKG_VERSION}
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
       - export STAGING_REPO_ID=$(cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt)
+      # upload the platform specific jar to staging repo and close the staging repo.
+      - bash ./codebuild/cd/deploy-platform-specific-jar.sh
+      - mvn nexus-staging:close -Prelease -DstagingRepositoryId=$STAGING_REPO_ID
+      - mvn --version
       # deploy android
       - bash ./codebuild/cd/deploy-snapshot-android.sh
   post_build:

@@ -13,7 +13,7 @@ phases:
       - git submodule update --init
       # use a fix deploy version for platform specific jar
       - mvn versions:set -DnewVersion=deploy
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B install -DskipTests
+      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B install -DskipTests -Plinux-x64
       - ls target
   post_build:
     commands:

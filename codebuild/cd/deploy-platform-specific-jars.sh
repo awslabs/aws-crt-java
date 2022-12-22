@@ -17,13 +17,13 @@ CLASSIFIERS_ARRAY=("linux-armv6" "linux-armv7" "linux-aarch_64" "linux-x86_32" "
 
 for str in ${CLASSIFIERS_ARRAY[@]}; do
   FILES="${FILES}target/aws-crt-1.0.0-SNAPSHOT-$str.jar,"
-  CLASSIFIERS="${CLASSIFIER}${str},"
+  CLASSIFIERS="${CLASSIFIERS}${str},"
   TYPES="${TYPES}jar,"
 done
 
 # remove the last ","
 FILES=${FILES::-1}
-CLASSIFIERS=${CLASSIFIER::-1}
+CLASSIFIERS=${CLASSIFIERS::-1}
 TYPES=${TYPES::-1}
 
 

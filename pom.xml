@@ -342,9 +342,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <systemPropertyVariables>
-                        <classifier>${crt.classifier}</classifier>
-                    </systemPropertyVariables>
+                    <classifier>${crt.classifier}</classifier>
                     <archive>
                         <manifest>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
@@ -413,6 +411,7 @@
                 <version>2.21.0</version>
                 <configuration>
                     <systemPropertyVariables>
+                        <crt.classifier>${crt.classifier}</crt.classifier>
                         <certificate>${crt.test.certificate}</certificate>
                         <privatekey>${crt.test.privatekey}</privatekey>
                         <ecc_certificate>${crt.test.ecc_certificate}</ecc_certificate>

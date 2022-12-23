@@ -2392,8 +2392,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env, "MQTT5 client new: no bootstrap found", AWS_ERROR_INVALID_ARGUMENT);
         goto clean_up;
     }
+
     jlong jni_bootstrap_pointer =
-        (jlong)(*env)->CallObjectMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
+        (*env)->CallLongMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "MQTT5 client new: could not get native handle for bootstrap", AWS_ERROR_INVALID_ARGUMENT);

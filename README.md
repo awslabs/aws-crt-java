@@ -57,6 +57,69 @@ From the aws-crt-java directory:
 ```mvn install```
 From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-crt/)
 
+## Platform-Specific JARs [experimental]
+
+The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
+
+``` xml
+        <!-- Platform-specific Linux x86_64 JAR -->
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+            <classifier>linux-x86_64</classifier>
+        </dependency>
+```
+
+``` xml
+        <!-- "Uber" JAR that works on all platforms -->
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+        </dependency>
+```
+
+### Available platform classifiers
+
+- linux-armv6
+- linux-armv7
+- linux-aarch_64
+- linux-x86_32
+- linux-x86_64
+- osx-aarch_64
+- osx-x86_64
+- windows-x86_32
+- windows-x86_64
+
+### Auto-detect
+
+The [os-maven-plugin](https://github.com/trustin/os-maven-plugin) can automatically detect your platform's classifier at build time.
+
+**NOTES**: The auto-detected `linux-arm_32` platform classifier is not supported, you must specify `linux-armv6` or `linux-armv7`.
+
+``` xml
+<build>
+        <extensions>
+            <!-- Generate os.detected.classifier property -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.0</version>
+            </extension>
+        </extensions>
+ </build>
+
+ <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+            <classifier>${os.detected.classifier}</classifier>
+        </dependency>
+  <dependencies>
+```
+
 ## Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
@@ -130,62 +193,3 @@ To debug native code with VSCode or CLion or any other IDE:
 3. Set the parameters to be the ones used by the ```mvn``` script, as per above
 4. Set the working directory to the `aws-crt-java` directory
 5. On windows, you will need to manually load the PDB via the Modules window in Visual Studio, as it is not embedded in the JAR. It will be in the ```target/cmake-build/lib/windows/<arch>``` folder.
-
-## Platform-Specific JARs
-
-Since v0.20.5, platform-specific JARs are available to reduce the size of the artificts. To consume the platform-specific JAR of aws-crt-java, you can use Maven classifier (https://maven.apache.org/pom.html) property to specify the platform. Without classifier, you will get the uber jar to support all distributions.
-
-``` xml
-        <!-- Linux x86_64 distribution  -->
-        <dependency>
-            <groupId>software.amazon.awssdk.crt</groupId>
-            <artifactId>aws-crt</artifactId>
-            <version>0.20.5</version>
-            <classifier>linux-x86_64</classifier>
-        </dependency>
-
-        <!-- Uber JAR with all distributions -->
-        <dependency>
-            <groupId>software.amazon.awssdk.crt</groupId>
-            <artifactId>aws-crt</artifactId>
-            <version>0.20.5</version>
-        </dependency>
-```
-
-### Available classifier
-- linux-armv6
-- linux-armv7
-- linux-aarch_64
-- linux-x86_32
-- linux-x86_64
-- osx-aarch_64
-- osx-x86_64
-- windows-x86_32
-- windows-x86_64
-
-### Auto-detected
-There are build plugins such as os-maven-plugin (https://github.com/trustin/os-maven-plugin) that help project automatically determine the OS at build time.
-
-**NOTES**: For auto-detected `linux-arm_32` archtecture, you need to specific `linux-armv6` or `linux-armv7` to consume the excat platform-specific jar.
-
-``` xml
-<build>
-        <extensions>
-            <!-- Generate os.detected.classifier property -->
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.0</version>
-            </extension>
-        </extensions>
- </build>
-
- <dependencies>
-        <dependency>
-            <groupId>software.amazon.awssdk.crt</groupId>
-            <artifactId>aws-crt</artifactId>
-            <version>0.20.5</version>
-            <classifier>${os.detected.classifier}</classifier>
-        </dependency>
-  <dependencies>
-```

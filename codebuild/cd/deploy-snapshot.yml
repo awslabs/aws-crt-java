@@ -51,14 +51,14 @@ phases:
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
-      - bash ./codebuild/cd/deploy-platform-specific-jar.sh
+      - bash ./codebuild/cd/deploy-platform-specific-jars.sh
       # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
       - export DEPLOY_VERSION=${PKG_VERSION}
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
       - export STAGING_REPO_ID=$(cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt)
-      # upload the platform specific jar to staging repo and close the staging repo.
-      - bash ./codebuild/cd/deploy-platform-specific-jar.sh
+      # upload the platform specific jars to staging repo and close the staging repo.
+      - bash ./codebuild/cd/deploy-platform-specific-jars.sh
       - mvn nexus-staging:close -Prelease -DstagingRepositoryId=$STAGING_REPO_ID
       # deploy android
       - bash ./codebuild/cd/deploy-snapshot-android.sh

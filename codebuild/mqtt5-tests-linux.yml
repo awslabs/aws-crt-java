@@ -20,8 +20,4 @@ phases:
     commands:
       - echo Build completed on `date`
       - find /codebuild/output -name "hs_err*.log" -type f -exec cat {} +
-artifacts:
-  files:
-    - "**/output/*"
-    - "/output/**/*"
 

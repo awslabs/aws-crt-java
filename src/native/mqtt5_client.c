@@ -2481,7 +2481,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         }
     }
 
-    uint32_t session_behavior;
+    uint32_t session_behavior = UINT32_MAX;
     if (aws_get_enum_from_jobject(
             env,
             jni_options,
@@ -2498,7 +2498,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         client_options.session_behavior = (enum aws_mqtt5_client_session_behavior_type)session_behavior;
     }
 
-    uint32_t extended_validation_and_flow_control_options;
+    uint32_t extended_validation_and_flow_control_options = UINT32_MAX;
     if (aws_get_enum_from_jobject(
             env,
             jni_options,
@@ -2516,7 +2516,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             (enum aws_mqtt5_extended_validation_and_flow_control_options)extended_validation_and_flow_control_options;
     }
 
-    uint32_t offline_queue_enum;
+    uint32_t offline_queue_enum = UINT32_MAX;
     if (aws_get_enum_from_jobject(
             env,
             jni_options,
@@ -2533,7 +2533,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         client_options.offline_queue_behavior = (enum aws_mqtt5_client_operation_queue_behavior_type)offline_queue_enum;
     }
 
-    uint32_t retry_jitter_enum;
+    uint32_t retry_jitter_enum = UINT32_MAX;
     if (aws_get_enum_from_jobject(
             env,
             jni_options,
@@ -2691,9 +2691,9 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
-    // if (jni_host_name != NULL) {
-    //     aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
-    // }
+    if (jni_host_name != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
+    }
     (*env)->PopLocalFrame(env, NULL);
 
     if (java_client->client != NULL) {

@@ -2320,6 +2320,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 client.stop(new DisconnectPacketBuilder().build());
             }
 
+            elg.close();
+            hr.close();
+            bootstrap.close();
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

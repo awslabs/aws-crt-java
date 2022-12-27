@@ -52,7 +52,7 @@ public class Mqtt5Canary {
     static boolean configUseTls = false;
     static Integer configThreads = 8;
     static Integer configClients = 3;
-    static Integer configTps = 6;
+    static Integer configTps = 12;
     static Long configSeconds = 600L;
     static boolean configShowHelp = false;
     static boolean configLogStdout = true;
@@ -241,10 +241,16 @@ public class Mqtt5Canary {
             ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
             NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
-            clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
-            clientsData.get(clientIdx).connectedFuture.complete(null);
-            clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
+
+            if (connAckData.getReasonCode() == ConnAckPacket.ConnectReasonCode.SUCCESS) {
+                PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
+                clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
+                clientsData.get(clientIdx).connectedFuture.complete(null);
+                clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
+            } else {
+                PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnAckPacket code: " + connAckData.getReasonCode().toString());
+                clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
+            }
         }
 
         @Override
@@ -259,6 +265,7 @@ public class Mqtt5Canary {
         public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
+            PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()));
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
             clientsData.get(clientIdx).subscribedToTopics = false;
         }
@@ -320,6 +327,11 @@ public class Mqtt5Canary {
             } else {
                 tlsContextOptions.withVerifyPeer(false);
             }
+
+            if (configCaFile != null) {
+                tlsContextOptions.overrideDefaultTrustStoreFromPath(null, configCaFile);
+            }
+
             clientsContext = new TlsContext(tlsContextOptions);
             clientOptionsBuilder.withTlsContext(clientsContext);
         }
@@ -341,6 +353,8 @@ public class Mqtt5Canary {
         clientOptionsBuilder.withConnectOptions(connectPacketBuilder.build());
 
         for (int i = 0; i < configClients; i++) {
+            connectPacketBuilder.withClientId(configClientID + "_" + Integer.toString(i));
+            clientOptionsBuilder.withConnectOptions(connectPacketBuilder.build());
             Mqtt5Client newClient = new Mqtt5Client(clientOptionsBuilder.build());
             clients.add(newClient);
             ClientsData newData = new ClientsData();
@@ -386,6 +400,10 @@ public class Mqtt5Canary {
             clientsData.get(clientIdx).connectedFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Start had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         PrintLog("[OP] Started client ID " + clientIdx);
@@ -403,6 +421,10 @@ public class Mqtt5Canary {
             clientsData.get(clientIdx).stopFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Stop had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         PrintLog("[OP] Stopped client ID " + clientIdx);
@@ -426,6 +448,10 @@ public class Mqtt5Canary {
             client.subscribe(subscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Subscribe had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = true;
@@ -450,6 +476,10 @@ public class Mqtt5Canary {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
@@ -470,6 +500,10 @@ public class Mqtt5Canary {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Unsubscribe (bad) had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
@@ -500,6 +534,10 @@ public class Mqtt5Canary {
             client.publish(publishPacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
             PrintLog("[OP] Publish with QoS " + qos + " with topic " + topic + " had an exception! Exception: " + ex);
+            ex.printStackTrace();
+            if (configFilePrinter != null) {
+                ex.printStackTrace(configFilePrinter);
+            }
             exitWithError(1);
         }
         PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);

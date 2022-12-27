@@ -30,11 +30,11 @@
 struct aws_mqtt5_packet_connect_view_java_jni {
     struct aws_mqtt5_packet_connect_view packet;
 
-    jstring jni_client_id;
+    jstring *jni_client_id;
     struct aws_byte_cursor client_id_cursor;
-    jstring jni_username;
+    jstring *jni_username;
     struct aws_byte_cursor username_cursor;
-    jbyteArray jni_password;
+    jbyteArray *jni_password;
     struct aws_byte_cursor password_cursor;
     uint32_t session_expiry_interval_seconds;
     uint8_t request_response_information;
@@ -43,6 +43,7 @@ struct aws_mqtt5_packet_connect_view_java_jni {
     uint16_t topic_alias_maximum;
     uint32_t maximum_packet_size_bytes;
     uint32_t will_delay_interval_seconds;
+    uint16_t keep_alive_interval_seconds;
     /* Contains jstring_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
@@ -53,9 +54,9 @@ struct aws_mqtt5_packet_connect_view_java_jni {
 struct aws_mqtt5_packet_disconnect_view_java_jni {
     struct aws_mqtt5_packet_disconnect_view packet;
 
-    jstring jni_reason_string;
+    jstring *jni_reason_string;
     struct aws_byte_cursor reason_string_cursor;
-    jstring jni_server_reference;
+    jstring *jni_server_reference;
     struct aws_byte_cursor server_reference_cursor;
     uint32_t session_expiry_interval_seconds;
     /* Contains jstring_array_holder_struct pointers */
@@ -67,18 +68,18 @@ struct aws_mqtt5_packet_disconnect_view_java_jni {
 struct aws_mqtt5_packet_publish_view_java_jni {
     struct aws_mqtt5_packet_publish_view packet;
 
-    jbyteArray jni_payload;
+    jbyteArray *jni_payload;
     struct aws_byte_cursor payload_cursor;
-    jstring jni_topic;
+    jstring *jni_topic;
     struct aws_byte_cursor topic_cursor;
     enum aws_mqtt5_payload_format_indicator payload_format;
     uint32_t message_expiry_interval_seconds;
     uint16_t topic_alias;
-    jstring jni_response_topic;
+    jstring *jni_response_topic;
     struct aws_byte_cursor response_topic_cursor;
-    jbyteArray jni_correlation_data;
+    jbyteArray *jni_correlation_data;
     struct aws_byte_cursor correlation_data_cursor;
-    jstring jni_content_type;
+    jstring *jni_content_type;
     struct aws_byte_cursor content_type_cursor;
     /* Contains jstring_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
@@ -114,7 +115,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni {
 };
 
 struct jstring_array_holder_struct {
-    jstring jni_string;
+    jstring *jni_string;
     struct aws_byte_cursor cursor;
 };
 
@@ -163,12 +164,12 @@ static int s_populate_user_properties(
             }
 
             struct jstring_array_holder_struct holder_property_key = {
-                .jni_string = jni_property_key,
+                .jni_string = &jni_property_key,
                 .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key),
             };
 
             struct jstring_array_holder_struct holder_property_value = {
-                .jni_string = jni_property_value,
+                .jni_string = &jni_property_value,
                 .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value),
             };
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
@@ -217,7 +218,7 @@ static void s_cleanup_two_aws_array(
         for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
             struct jstring_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            aws_jni_byte_cursor_from_jstring_release(env, holder.jni_string, holder.cursor);
+            aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
         }
         aws_array_list_clean_up(user_properties_holder);
     }
@@ -233,8 +234,12 @@ int aws_get_uint16_from_jobject(
     char *object_name,
     char *field_name,
     uint16_t *result,
-    uint16_t **destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -266,7 +271,10 @@ int aws_get_uint16_from_jobject(
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint16_t)jlong_value;
-        *destination = result;
+
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
 
         if (!optional) {
             return AWS_OP_SUCCESS;
@@ -287,8 +295,12 @@ int aws_get_uint32_from_jobject(
     char *object_name,
     char *field_name,
     uint32_t *result,
-    uint32_t **destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -320,7 +332,11 @@ int aws_get_uint32_from_jobject(
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint32_t)jlong_value_check;
-        *destination = result;
+
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
+
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -340,8 +356,12 @@ int aws_get_uint64_from_jobject(
     char *object_name,
     char *field_name,
     uint64_t *result,
-    uint64_t **destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -366,7 +386,11 @@ int aws_get_uint64_from_jobject(
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint64_t)jlong_value_check;
-        *destination = result;
+
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
+
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -385,10 +409,14 @@ int aws_get_string_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jstring result_jstring,
+    jstring *result_jstring,
     struct aws_byte_cursor *result_cursor,
-    struct aws_byte_cursor **destination,
-    bool is_optional) {
+    bool is_optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jstring jstring_value = (jstring)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -398,9 +426,13 @@ int aws_get_string_from_jobject(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jstring_value) {
-        result_jstring = jstring_value;
-        *result_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, result_jstring);
-        *destination = result_cursor;
+        result_jstring = &jstring_value;
+        *result_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *result_jstring);
+
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
+
         if (!is_optional) {
             return AWS_OP_SUCCESS;
         }
@@ -418,10 +450,14 @@ int aws_get_byte_array_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jbyteArray result_jbyte_array,
+    jbyteArray *result_jbyte_array,
     struct aws_byte_cursor *result_cursor,
-    struct aws_byte_cursor **destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jbyteArray jbyte_array_value = (jbyteArray)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -431,9 +467,13 @@ int aws_get_byte_array_from_jobject(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jbyte_array_value) {
-        result_jbyte_array = jbyte_array_value;
-        *result_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, result_jbyte_array);
-        *destination = result_cursor;
+        result_jbyte_array = &jbyte_array_value;
+        *result_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, *result_jbyte_array);
+
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
+
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -452,8 +492,12 @@ int aws_get_boolean_from_jobject(
     char *object_name,
     char *field_name,
     uint8_t *result_boolean_int,
-    uint8_t **destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jobject jboolean_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -474,7 +518,9 @@ int aws_get_boolean_from_jobject(
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *result_boolean_int = (uint8_t)jboolean_value;
-        *destination = result_boolean_int;
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -495,7 +541,12 @@ int aws_get_enum_from_jobject(
     char *enum_name,
     jmethodID enum_value_field,
     uint32_t *enum_value_destination,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     if (enum_value_destination == NULL) {
         AWS_LOGF_ERROR(
@@ -539,6 +590,9 @@ int aws_get_enum_from_jobject(
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *enum_value_destination = (uint32_t)enum_value;
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -614,7 +668,12 @@ static int s_get_qos_from_packet(
     jmethodID packet_field,
     char *packet_name,
     enum aws_mqtt5_qos *packet_qos,
-    bool optional) {
+    bool optional,
+    bool *was_value_set) {
+
+    if (was_value_set != NULL) {
+        *was_value_set = false;
+    }
 
     jobject jni_qos = (*env)->CallObjectMethod(env, packet, packet_field);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -633,6 +692,9 @@ static int s_get_qos_from_packet(
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_qos = (enum aws_mqtt5_qos)jni_qos_value;
+        if (was_value_set != NULL) {
+            *was_value_set = true;
+        }
         if (!optional) {
             return AWS_OP_SUCCESS;
         }
@@ -671,13 +733,13 @@ void aws_mqtt5_packet_connect_view_java_destroy(
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying ConnectPacket", (void *)java_packet);
 
     if (java_packet->jni_client_id) {
-        aws_jni_byte_cursor_from_jstring_release(env, java_packet->jni_client_id, java_packet->client_id_cursor);
+        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_client_id, java_packet->client_id_cursor);
     }
     if (java_packet->jni_username) {
-        aws_jni_byte_cursor_from_jstring_release(env, java_packet->jni_username, java_packet->username_cursor);
+        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_username, java_packet->username_cursor);
     }
     if (java_packet->jni_password) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, java_packet->jni_password, java_packet->password_cursor);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_password, java_packet->password_cursor);
     }
 
     if (java_packet->will_publish_packet) {
@@ -704,22 +766,24 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
         return NULL;
     }
 
-    uint16_t keep_alive_interval_seconds = 0;
-    uint16_t *pointer_keep_alive_interval_seconds = &java_packet->packet.keep_alive_interval_seconds;
+    /* Needed to track if optionals are set or not */
+    bool was_value_set = false;
+
     if (aws_get_uint16_from_jobject(
             env,
             java_connect_packet,
             mqtt5_connect_packet_properties.connect_keep_alive_interval_seconds_field_id,
             s_connect_packet_string,
             "keep alive interval seconds",
-            &keep_alive_interval_seconds,
-            &pointer_keep_alive_interval_seconds,
-            true) == AWS_OP_ERR) {
+            &java_packet->keep_alive_interval_seconds,
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    java_packet->packet.keep_alive_interval_seconds = *pointer_keep_alive_interval_seconds;
+    if (was_value_set) {
+        java_packet->packet.keep_alive_interval_seconds = java_packet->keep_alive_interval_seconds;
+    }
 
-    struct aws_byte_cursor *pointer_client_id_cursor = &java_packet->packet.client_id;
     if (aws_get_string_from_jobject(
             env,
             java_connect_packet,
@@ -728,11 +792,13 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             "client ID",
             java_packet->jni_client_id,
             &java_packet->client_id_cursor,
-            &pointer_client_id_cursor,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    java_packet->packet.client_id = *pointer_client_id_cursor;
+    if (was_value_set) {
+        java_packet->packet.client_id = java_packet->client_id_cursor;
+    }
 
     if (aws_get_string_from_jobject(
             env,
@@ -742,9 +808,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             "username",
             java_packet->jni_username,
             &java_packet->username_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.username,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.username = &java_packet->username_cursor;
     }
 
     if (aws_get_byte_array_from_jobject(
@@ -755,9 +824,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             "password",
             java_packet->jni_password,
             &java_packet->password_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.password,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.password = &java_packet->password_cursor;
     }
 
     if (aws_get_uint32_from_jobject(
@@ -767,9 +839,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "session expiry interval seconds",
             &java_packet->session_expiry_interval_seconds,
-            (uint32_t **)&java_packet->packet.session_expiry_interval_seconds,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.session_expiry_interval_seconds = &java_packet->session_expiry_interval_seconds;
     }
 
     if (aws_get_boolean_from_jobject(
@@ -779,9 +854,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "request response information",
             &java_packet->request_response_information,
-            (uint8_t **)&java_packet->packet.request_response_information,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.request_response_information = &java_packet->request_response_information;
     }
 
     if (aws_get_boolean_from_jobject(
@@ -791,9 +869,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "request problem information",
             &java_packet->request_problem_information,
-            (uint8_t **)&java_packet->packet.request_problem_information,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.request_problem_information = &java_packet->request_problem_information;
     }
 
     if (aws_get_uint16_from_jobject(
@@ -803,9 +884,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "receive maximum",
             &java_packet->receive_maximum,
-            (uint16_t **)&java_packet->packet.receive_maximum,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.receive_maximum = &java_packet->receive_maximum;
     }
 
     if (aws_get_uint32_from_jobject(
@@ -815,9 +899,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "maximum packet size",
             &java_packet->maximum_packet_size_bytes,
-            (uint32_t **)&java_packet->packet.maximum_packet_size_bytes,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.maximum_packet_size_bytes = &java_packet->maximum_packet_size_bytes;
     }
 
     if (aws_get_uint32_from_jobject(
@@ -827,9 +914,12 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             s_connect_packet_string,
             "will delay interval",
             &java_packet->will_delay_interval_seconds,
-            (uint32_t **)&java_packet->packet.will_delay_interval_seconds,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.will_delay_interval_seconds = &java_packet->will_delay_interval_seconds;
     }
 
     jobject jni_will_packet =
@@ -864,7 +954,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -893,11 +983,11 @@ void aws_mqtt5_packet_disconnect_view_java_destroy(
 
     if (java_packet->jni_reason_string) {
         aws_jni_byte_cursor_from_jstring_release(
-            env, java_packet->jni_reason_string, java_packet->reason_string_cursor);
+            env, *java_packet->jni_reason_string, java_packet->reason_string_cursor);
     }
     if (java_packet->jni_server_reference) {
         aws_jni_byte_cursor_from_jstring_release(
-            env, java_packet->jni_server_reference, java_packet->server_reference_cursor);
+            env, *java_packet->jni_server_reference, java_packet->server_reference_cursor);
     }
 
     s_cleanup_two_aws_array(
@@ -917,7 +1007,10 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
         return NULL;
     }
 
-    uint32_t reason_code_enum = UINT32_MAX;
+    /* Needed to track if optionals are set or not */
+    bool was_value_set = false;
+
+    uint32_t reason_code_enum;
     if (aws_get_enum_from_jobject(
             env,
             java_disconnect_packet,
@@ -926,10 +1019,11 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             "reason code",
             mqtt5_disconnect_reason_code_properties.code_get_value_id,
             &reason_code_enum,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    if (reason_code_enum != UINT32_MAX) {
+    if (was_value_set) {
         java_packet->packet.reason_code = (enum aws_mqtt5_disconnect_reason_code)reason_code_enum;
     }
 
@@ -940,9 +1034,12 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             s_disconnect_packet_string,
             "session expiry interval seconds",
             &java_packet->session_expiry_interval_seconds,
-            (uint32_t **)&java_packet->packet.session_expiry_interval_seconds,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.session_expiry_interval_seconds = &java_packet->session_expiry_interval_seconds;
     }
 
     if (aws_get_string_from_jobject(
@@ -953,9 +1050,12 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             "reason string",
             java_packet->jni_reason_string,
             &java_packet->reason_string_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.reason_string,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.reason_string = &java_packet->reason_string_cursor;
     }
 
     if (aws_get_string_from_jobject(
@@ -966,9 +1066,12 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             "server reference",
             java_packet->jni_server_reference,
             &java_packet->server_reference_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.server_reference,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.server_reference = &java_packet->server_reference_cursor;
     }
 
     if (s_get_user_properties_from_packet_optional(
@@ -987,7 +1090,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_disconnect_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1015,21 +1118,21 @@ void aws_mqtt5_packet_publish_view_java_destroy(
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying PublishPacket", (void *)java_packet);
 
     if (java_packet->jni_payload) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, java_packet->jni_payload, java_packet->payload_cursor);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_payload, java_packet->payload_cursor);
     }
     if (java_packet->jni_topic) {
-        aws_jni_byte_cursor_from_jstring_release(env, java_packet->jni_topic, java_packet->topic_cursor);
+        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_topic, java_packet->topic_cursor);
     }
     if (java_packet->jni_response_topic) {
         aws_jni_byte_cursor_from_jstring_release(
-            env, java_packet->jni_response_topic, java_packet->response_topic_cursor);
+            env, *java_packet->jni_response_topic, java_packet->response_topic_cursor);
     }
     if (java_packet->jni_correlation_data) {
         aws_jni_byte_cursor_from_jbyteArray_release(
-            env, java_packet->jni_correlation_data, java_packet->correlation_data_cursor);
+            env, *java_packet->jni_correlation_data, java_packet->correlation_data_cursor);
     }
     if (java_packet->jni_content_type) {
-        aws_jni_byte_cursor_from_jstring_release(env, java_packet->jni_content_type, java_packet->content_type_cursor);
+        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_content_type, java_packet->content_type_cursor);
     }
 
     s_cleanup_two_aws_array(
@@ -1049,7 +1152,9 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
         return NULL;
     }
 
-    struct aws_byte_cursor *pointer_payload = &java_packet->packet.payload;
+    /* Needed to track if optionals are set or not */
+    bool was_value_set = false;
+
     if (aws_get_byte_array_from_jobject(
             env,
             java_publish_packet,
@@ -1058,11 +1163,13 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "payload",
             java_packet->jni_payload,
             &java_packet->payload_cursor,
-            &pointer_payload,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    java_packet->packet.payload = *pointer_payload;
+    if (was_value_set) {
+        java_packet->packet.payload = java_packet->payload_cursor;
+    }
 
     if (s_get_qos_from_packet(
             env,
@@ -1070,13 +1177,13 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_get_qos_id,
             s_publish_packet_string,
             &java_packet->packet.qos,
-            false) == AWS_OP_ERR) {
+            false,
+            NULL) == AWS_OP_ERR) {
         s_log_and_throw_exception(env, "PublishPacket create_from_java: QOS not found");
         goto on_error;
     }
 
-    uint8_t packet_retain = UINT8_MAX;
-    uint8_t *pointer_packet_retain = &packet_retain;
+    uint8_t packet_retain;
     if (aws_get_boolean_from_jobject(
             env,
             java_publish_packet,
@@ -1084,15 +1191,14 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             s_publish_packet_string,
             "retain",
             &packet_retain,
-            &pointer_packet_retain,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    if (packet_retain != UINT8_MAX) {
+    if (was_value_set) {
         java_packet->packet.retain = (bool)packet_retain;
     }
 
-    struct aws_byte_cursor *pointer_topic = &java_packet->packet.topic;
     if (aws_get_string_from_jobject(
             env,
             java_publish_packet,
@@ -1101,14 +1207,14 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "topic",
             java_packet->jni_topic,
             &java_packet->topic_cursor,
-            &pointer_topic,
-            false) == AWS_OP_ERR) {
+            false,
+            NULL) == AWS_OP_ERR) {
         s_log_and_throw_exception(env, "PublishPacket create_from_java: No topic found");
         goto on_error;
     }
-    java_packet->packet.topic = *pointer_topic;
+    java_packet->packet.topic = java_packet->topic_cursor;
 
-    uint32_t format_enum = UINT32_MAX;
+    uint32_t format_enum;
     if (aws_get_enum_from_jobject(
             env,
             java_publish_packet,
@@ -1117,10 +1223,11 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "payload format",
             mqtt5_payload_format_indicator_properties.format_get_value_id,
             &format_enum,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    if (format_enum != UINT32_MAX) {
+    if (was_value_set) {
         java_packet->payload_format = (enum aws_mqtt5_payload_format_indicator)format_enum;
         java_packet->packet.payload_format = &java_packet->payload_format;
     }
@@ -1132,9 +1239,12 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             s_publish_packet_string,
             "message expiry interval seconds",
             &java_packet->message_expiry_interval_seconds,
-            (uint32_t **)&java_packet->packet.message_expiry_interval_seconds,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.message_expiry_interval_seconds = &java_packet->message_expiry_interval_seconds;
     }
 
     if (aws_get_string_from_jobject(
@@ -1145,9 +1255,12 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "response topic",
             java_packet->jni_response_topic,
             &java_packet->response_topic_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.response_topic,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.response_topic = &java_packet->response_topic_cursor;
     }
 
     if (aws_get_byte_array_from_jobject(
@@ -1158,9 +1271,12 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "correlation data",
             java_packet->jni_correlation_data,
             &java_packet->correlation_data_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.correlation_data,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.correlation_data = &java_packet->correlation_data_cursor;
     }
 
     if (aws_get_string_from_jobject(
@@ -1171,9 +1287,12 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             "content type",
             java_packet->jni_content_type,
             &java_packet->content_type_cursor,
-            (struct aws_byte_cursor **)&java_packet->packet.content_type,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.content_type = &java_packet->content_type_cursor;
     }
 
     if (s_get_user_properties_from_packet_optional(
@@ -1192,7 +1311,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1273,6 +1392,9 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
         goto on_error;
     }
 
+    /* Needed to track if optionals are set or not */
+    bool was_value_set = false;
+
     if (aws_get_uint32_from_jobject(
             env,
             java_subscribe_packet,
@@ -1280,14 +1402,17 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
             s_subscribe_packet_string,
             "subscription identifier",
             &java_packet->subscription_identifier,
-            (uint32_t **)&java_packet->packet.subscription_identifier,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto on_error;
     }
-    java_packet->packet.subscription_count = subscriptions_filter_size;
+    if (was_value_set) {
+        java_packet->packet.subscription_identifier = &java_packet->subscription_identifier;
+    }
 
+    java_packet->packet.subscription_count = subscriptions_filter_size;
     for (size_t i = 0; i < subscriptions_filter_size; i++) {
-        // Populate
+        /* Populate */
         struct aws_mqtt5_subscription_view subscription_view;
         struct jstring_array_holder_struct holder;
 
@@ -1305,8 +1430,8 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, holder.jni_string);
+            holder.jni_string = &jni_topic_filter;
+            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
             subscription_view.topic_filter = holder.cursor;
         } else {
             s_log_and_throw_exception(env, "SubscribePacket create_from_java: subscription topic filter is required");
@@ -1319,13 +1444,13 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 mqtt5_subscription_properties.subscribe_get_qos_id,
                 s_subscribe_packet_string,
                 &subscription_view.qos,
-                false) == AWS_OP_ERR) {
+                false,
+                NULL) == AWS_OP_ERR) {
             s_log_and_throw_exception(env, "SubscribePacket create_from_java: subscription QoS is required");
             goto on_error;
         }
 
-        uint8_t subscription_no_local = UINT8_MAX;
-        uint8_t *pointer_subscription_no_local = &subscription_no_local;
+        uint8_t subscription_no_local;
         if (aws_get_boolean_from_jobject(
                 env,
                 jni_packet_subscribe_subscription,
@@ -1333,16 +1458,15 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 s_subscribe_packet_string,
                 "no local",
                 &subscription_no_local,
-                &pointer_subscription_no_local,
-                true) != AWS_OP_SUCCESS) {
+                true,
+                &was_value_set) != AWS_OP_SUCCESS) {
             goto on_error;
         }
-        if (subscription_no_local != UINT8_MAX) {
+        if (was_value_set) {
             subscription_view.no_local = (bool)subscription_no_local;
         }
 
-        uint8_t retain_as_published = UINT8_MAX;
-        uint8_t *pointer_retain_as_published = &retain_as_published;
+        uint8_t retain_as_published;
         if (aws_get_boolean_from_jobject(
                 env,
                 jni_packet_subscribe_subscription,
@@ -1350,15 +1474,15 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 s_subscribe_packet_string,
                 "no local",
                 &retain_as_published,
-                &pointer_retain_as_published,
-                true) != AWS_OP_SUCCESS) {
+                true,
+                &was_value_set) != AWS_OP_SUCCESS) {
             goto on_error;
         }
-        if (retain_as_published != UINT8_MAX) {
+        if (was_value_set) {
             subscription_view.retain_as_published = (bool)retain_as_published;
         }
 
-        uint32_t retain_enum = UINT32_MAX;
+        uint32_t retain_enum;
         if (aws_get_enum_from_jobject(
                 env,
                 jni_packet_subscribe_subscription,
@@ -1367,10 +1491,11 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 "subscription retain handling type",
                 mqtt5_retain_handling_type_properties.retain_get_value_id,
                 &retain_enum,
-                true) == AWS_OP_ERR) {
+                true,
+                &was_value_set) == AWS_OP_ERR) {
             goto on_error;
         }
-        if (retain_enum != UINT32_MAX) {
+        if (was_value_set) {
             subscription_view.retain_handling_type = (enum aws_mqtt5_retain_handling_type)retain_enum;
         }
 
@@ -1395,7 +1520,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1481,7 +1606,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     java_packet->packet.topic_filter_count = topic_filter_size;
 
     for (size_t i = 0; i < topic_filter_size; i++) {
-        // Populate
+        /* Populate */
         struct jstring_array_holder_struct holder;
 
         jstring jni_topic_filter =
@@ -1492,8 +1617,8 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, holder.jni_string);
+            holder.jni_string = &jni_topic_filter;
+            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
         }
         aws_array_list_push_back(&java_packet->topic_filters, (void *)&holder.cursor);
         aws_array_list_push_back(&java_packet->jni_topic_filters, (void *)&holder);
@@ -1516,7 +1641,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }

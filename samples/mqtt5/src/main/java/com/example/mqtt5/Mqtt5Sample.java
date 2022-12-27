@@ -97,7 +97,7 @@ public class Mqtt5Sample {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection failed...");
             connectedFuture.completeExceptionally(new Exception("Connection failure"));
         }
@@ -117,7 +117,7 @@ public class Mqtt5Sample {
     static final class SamplePublishEvents implements Mqtt5ClientOptions.PublishEvents {
         @Override
         public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-            PublishPacket publishPacket = publishResult.getPublishPacket();
+            PublishPacket publishPacket = publishReturn.getPublishPacket();
             System.out.println(
                 "Message received:\n"+
                 "  Topic: " + publishPacket.getTopic() + "\n" +

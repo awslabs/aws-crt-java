@@ -23,8 +23,8 @@ int aws_get_uint16_from_jobject(
     char *packet_name,
     char *field_name,
     uint16_t *result,
-    uint16_t **destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 int aws_get_uint32_from_jobject(
     JNIEnv *env,
@@ -33,8 +33,8 @@ int aws_get_uint32_from_jobject(
     char *packet_name,
     char *field_name,
     uint32_t *result,
-    uint32_t **destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 int aws_get_uint64_from_jobject(
     JNIEnv *env,
@@ -43,8 +43,8 @@ int aws_get_uint64_from_jobject(
     char *packet_name,
     char *field_name,
     uint64_t *result,
-    uint64_t **destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 int aws_get_string_from_jobject(
     JNIEnv *env,
@@ -52,10 +52,10 @@ int aws_get_string_from_jobject(
     jfieldID packet_field,
     char *packet_name,
     char *field_name,
-    jstring result_jstring,
+    jstring *result_jstring,
     struct aws_byte_cursor *result_cursor,
-    struct aws_byte_cursor **destination,
-    bool is_optional);
+    bool is_optional,
+    bool *was_value_set);
 
 int aws_get_byte_array_from_jobject(
     JNIEnv *env,
@@ -63,10 +63,10 @@ int aws_get_byte_array_from_jobject(
     jfieldID packet_field,
     char *packet_name,
     char *field_name,
-    jbyteArray result_jbyte_array,
+    jbyteArray *result_jbyte_array,
     struct aws_byte_cursor *result_cursor,
-    struct aws_byte_cursor **destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 int aws_get_boolean_from_jobject(
     JNIEnv *env,
@@ -75,8 +75,8 @@ int aws_get_boolean_from_jobject(
     char *packet_name,
     char *field_name,
     uint8_t *result_boolean_int,
-    uint8_t **destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 int aws_get_enum_from_jobject(
     JNIEnv *env,
@@ -86,7 +86,8 @@ int aws_get_enum_from_jobject(
     char *enum_name,
     jmethodID enum_value_vield,
     uint32_t *enum_value_destination,
-    bool optional);
+    bool optional,
+    bool *was_value_set);
 
 void aws_mqtt5_packet_connect_view_java_destroy(
     JNIEnv *env,

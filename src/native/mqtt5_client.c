@@ -61,11 +61,11 @@ struct aws_mqtt5_client_unsubscribe_return_data {
 struct aws_http_proxy_options_java_jni {
     struct aws_http_proxy_options options;
 
-    jstring jni_proxy_host;
+    jstring *jni_proxy_host;
     struct aws_byte_cursor proxy_host_cursor;
-    jstring jni_proxy_authorization_username;
+    jstring *jni_proxy_authorization_username;
     struct aws_byte_cursor authorization_username_cursor;
-    jstring jni_proxy_authorization_password;
+    jstring *jni_proxy_authorization_password;
     struct aws_byte_cursor authorization_password_cursor;
 };
 
@@ -92,15 +92,15 @@ static void s_aws_mqtt5_http_proxy_options_java_destroy(
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying JavaHttpProxyOptions", (void *)http_options);
 
     if (http_options->jni_proxy_host) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, http_options->jni_proxy_host, http_options->proxy_host_cursor);
+        aws_jni_byte_cursor_from_jstring_release(env, *http_options->jni_proxy_host, http_options->proxy_host_cursor);
     }
     if (http_options->jni_proxy_authorization_username) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
-            env, http_options->jni_proxy_authorization_username, http_options->authorization_username_cursor);
+        aws_jni_byte_cursor_from_jstring_release(
+            env, *http_options->jni_proxy_authorization_username, http_options->authorization_username_cursor);
     }
     if (http_options->jni_proxy_authorization_password) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
-            env, http_options->jni_proxy_authorization_password, http_options->authorization_password_cursor);
+        aws_jni_byte_cursor_from_jstring_release(
+            env, *http_options->jni_proxy_authorization_password, http_options->authorization_password_cursor);
     }
 
     /* Frees all allocated memory */
@@ -135,8 +135,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
                 s_aws_mqtt5_client_log_and_throw_exception(
                     env, "HTTP Proxy Options connection type is less than 0", AWS_ERROR_INVALID_ARGUMENT);
                 goto on_error;
-            } else if (jni_proxy_connection_type_value_check > AWS_HPCT_HTTP_TUNNEL) { // The (current) maximum enum
-                                                                                       // value
+            } else if (jni_proxy_connection_type_value_check > AWS_HPCT_HTTP_TUNNEL) { /* The (current) maximum enum */
+                                                                                       /* value */
                 s_aws_mqtt5_client_log_and_throw_exception(
                     env,
                     "HTTP Proxy Options connection type is more than maximum allowed value",
@@ -155,8 +155,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_host) {
-        http_options->jni_proxy_host = jni_proxy_host;
-        http_options->proxy_host_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, http_options->jni_proxy_host);
+        http_options->jni_proxy_host = &jni_proxy_host;
+        http_options->proxy_host_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_host);
         http_options->options.host = http_options->proxy_host_cursor;
     }
 
@@ -186,8 +186,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_tls_context) {
-        jlong jni_proxy_tls_context_long = (jlong)(*env)->CallLongMethod(
-            env, jni_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
+        jlong jni_proxy_tls_context_long =
+            (*env)->CallLongMethod(env, jni_proxy_tls_context, crt_resource_properties.get_native_handle_method_id);
 
         struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_proxy_tls_context_long;
         if (tls_ctx) {
@@ -218,9 +218,9 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_authorization_username) {
-        http_options->jni_proxy_authorization_username = jni_proxy_authorization_username;
+        http_options->jni_proxy_authorization_username = &jni_proxy_authorization_username;
         http_options->authorization_username_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, http_options->jni_proxy_authorization_username);
+            aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_authorization_username);
         http_options->options.auth_username = http_options->authorization_username_cursor;
     }
 
@@ -230,9 +230,9 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_authorization_password) {
-        http_options->jni_proxy_authorization_password = jni_proxy_authorization_password;
+        http_options->jni_proxy_authorization_password = &jni_proxy_authorization_password;
         http_options->authorization_password_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, http_options->jni_proxy_authorization_password);
+            aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_authorization_password);
         http_options->options.auth_password = http_options->authorization_password_cursor;
     }
 
@@ -481,7 +481,7 @@ static int s_set_user_properties_field(
     const struct aws_mqtt5_user_property *packet_properties,
     jobject packet,
     jfieldID user_property_field_id) {
-    // No properties - nothing to do
+    /* No properties - nothing to do */
     if (packet_properties == NULL) {
         return AWS_OP_SUCCESS;
     }
@@ -502,8 +502,8 @@ static int s_set_user_properties_field(
             return AWS_OP_ERR;
         }
 
-        for (size_t i = 0; i < user_property_count; i++) {
-            const struct aws_mqtt5_user_property *property = packet_properties + i;
+        for (size_t i = 0; i < user_property_count; ++i) {
+            const struct aws_mqtt5_user_property *property = &packet_properties[i];
             jstring jni_new_property_name = aws_jni_string_from_cursor(env, &property->name);
             jstring jni_new_property_value = aws_jni_string_from_cursor(env, &property->value);
 
@@ -809,7 +809,7 @@ static jobject s_aws_mqtt5_client_create_jni_negotiated_settings_from_native(
         negotiated_settings_data,
         mqtt5_negotiated_settings_properties.negotiated_settings_native_set_qos_id,
         (jint)native_negotiated_settings_data->maximum_qos);
-    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     (*env)->SetLongField(
         env,
@@ -1011,8 +1011,8 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             mqtt5_publish_packet_properties.publish_subscription_identifiers_field_id,
             jni_subscription_identifiers);
 
-        for (size_t i = 0; i < publish->subscription_identifier_count; i++) {
-            const uint32_t *identifier = publish->subscription_identifiers + i;
+        for (size_t i = 0; i < publish->subscription_identifier_count; ++i) {
+            const uint32_t *identifier = &publish->subscription_identifiers[i];
             jobject jni_identifier_obj = (*env)->NewObject(
                 env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*identifier);
             jboolean jni_add_result = (*env)->CallBooleanMethod(
@@ -1046,6 +1046,10 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
 }
 
 static void s_complete_future_with_exception(JNIEnv *env, jobject future, int error_code) {
+    if (!env || !future) {
+        return;
+    }
+
     jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
     (*env)->CallBooleanMethod(
         env, future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
@@ -1175,7 +1179,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 env,
                 mqtt5_on_attempting_connect_return_properties.return_class,
                 mqtt5_on_attempting_connect_return_properties.return_constructor_id);
-            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+            aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
             (*env)->CallObjectMethod(
                 env,
@@ -1193,9 +1197,9 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 mqtt5_on_connection_success_return_properties.return_constructor_id,
                 connack_data,
                 negotiated_settings_data);
-            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+            aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-            // Set OnConnected BEFORE calling the callback so it is accurate in the callback itself.
+            /* Set OnConnected BEFORE calling the callback so it is accurate in the callback itself. */
             (*env)->CallBooleanMethod(
                 env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
 
@@ -1216,7 +1220,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 mqtt5_on_connection_failure_return_properties.return_constructor_id,
                 error_code,
                 connack_data);
-            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+            aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
             (*env)->CallObjectMethod(
                 env,
@@ -1236,9 +1240,9 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 mqtt5_on_disconnection_return_properties.return_constructor_id,
                 error_code,
                 disconnect_data);
-            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+            aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-            // Set OnConnected BEFORE calling the callback so it is accurate in the callback itself.
+            /* Set OnConnected BEFORE calling the callback so it is accurate in the callback itself. */
             (*env)->CallBooleanMethod(
                 env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, false);
 
@@ -1257,7 +1261,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 env,
                 mqtt5_on_stopped_return_properties.return_class,
                 mqtt5_on_stopped_return_properties.return_constructor_id);
-            aws_jni_check_and_clear_exception(env); // To hide JNI warning
+            aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
             (*env)->CallObjectMethod(
                 env,
@@ -1274,7 +1278,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
 
 clean_up:
 
-    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     (*env)->PopLocalFrame(env, NULL);
     /********** JNI ENV RELEASE **********/
@@ -1356,7 +1360,7 @@ static void s_aws_mqtt5_client_java_publish_received(
         mqtt5_publish_return_properties.return_class,
         mqtt5_publish_return_properties.return_constructor_id,
         publish_packet_data);
-    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     if (java_client->jni_publish_events) {
         (*env)->CallObjectMethod(
@@ -1365,7 +1369,7 @@ static void s_aws_mqtt5_client_java_publish_received(
             mqtt5_publish_events_properties.publish_events_publish_received_id,
             java_client->jni_client,
             publish_packet_return_data);
-        aws_jni_check_and_clear_exception(env); // To hide JNI warning
+        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
     }
     goto clean_up;
 
@@ -1381,13 +1385,10 @@ static void s_aws_mqtt5_client_java_publish_callback_destructor(
     struct aws_mqtt5_client_publish_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        (*env)->PopLocalFrame(env, NULL);
-        if (callback_return_data->jni_publish_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_publish_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_publish_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }
@@ -1467,7 +1468,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
         /* QoS 0 */
         publish_packet_result_data = (*env)->NewObject(
             env, mqtt5_publish_result_properties.result_class, mqtt5_publish_result_properties.result_constructor_id);
-        aws_jni_check_and_clear_exception(env); // To hide JNI warning
+        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     } else if (packet_type == AWS_MQTT5_PT_PUBACK) {
         /* QoS 1 */
@@ -1486,7 +1487,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
             mqtt5_publish_result_properties.result_class,
             mqtt5_publish_result_properties.result_puback_constructor_id,
             puback_packet_data);
-        aws_jni_check_and_clear_exception(env); // To hide JNI warning
+        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     } else {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "PublishCompletion function called with unknown packet type!");
@@ -1523,12 +1524,10 @@ static void s_aws_mqtt5_client_java_subscribe_callback_destructor(
     struct aws_mqtt5_client_subscribe_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        if (callback_return_data->jni_subscribe_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_subscribe_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_subscribe_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }
@@ -1619,8 +1618,8 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
 
         if (suback->reason_codes != NULL) {
             if (suback->reason_code_count > 0) {
-                for (size_t i = 0; i < suback->reason_code_count; i++) {
-                    const enum aws_mqtt5_suback_reason_code *reason_code_data = suback->reason_codes + i;
+                for (size_t i = 0; i < suback->reason_code_count; ++i) {
+                    const enum aws_mqtt5_suback_reason_code *reason_code_data = &suback->reason_codes[i];
                     if (s_set_int_enum_in_packet(
                             env,
                             (int *)reason_code_data,
@@ -1653,7 +1652,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
     /* Complete the promise */
     (*env)->CallBooleanMethod(
         env, jni_subscribe_future, completable_future_properties.complete_method_id, suback_packet_data);
-    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     goto clean_up;
 
@@ -1675,12 +1674,10 @@ static void s_aws_mqtt5_client_java_unsubscribe_callback_destructor(
     struct aws_mqtt5_client_unsubscribe_return_data *callback_return_data) {
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    if (env != NULL) {
-        if (callback_return_data->jni_unsubscribe_future) {
+    if (callback_return_data != NULL) {
+        if (callback_return_data->jni_unsubscribe_future && env != NULL) {
             (*env)->DeleteGlobalRef(env, callback_return_data->jni_unsubscribe_future);
         }
-    }
-    if (callback_return_data != NULL) {
         aws_mem_release(allocator, callback_return_data);
     }
 }
@@ -1768,8 +1765,8 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
 
     if (unsuback->reason_codes) {
         if (unsuback->reason_code_count > 0) {
-            for (size_t i = 0; i < unsuback->reason_code_count; i++) {
-                const enum aws_mqtt5_unsuback_reason_code *reason_code_data = unsuback->reason_codes + i;
+            for (size_t i = 0; i < unsuback->reason_code_count; ++i) {
+                const enum aws_mqtt5_unsuback_reason_code *reason_code_data = &unsuback->reason_codes[i];
                 if (s_set_int_enum_in_packet(
                         env,
                         (int *)reason_code_data,
@@ -1801,7 +1798,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
     /* Complete the promise */
     (*env)->CallBooleanMethod(
         env, jni_unsubscribe_future, completable_future_properties.complete_method_id, unsuback_packet_data);
-    aws_jni_check_and_clear_exception(env); // To hide JNI warning
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     goto clean_up;
 
@@ -2142,7 +2139,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt
         return NULL;
     }
 
-    // Construct Java object
+    /* Construct Java object */
     jobject jni_operation_statistics = (*env)->NewObject(
         env,
         mqtt5_client_operation_statistics_properties.statistics_class,
@@ -2329,6 +2326,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     struct aws_mqtt5_client_options client_options;
     AWS_ZERO_STRUCT(client_options);
     struct aws_http_proxy_options_java_jni *java_http_proxy_options = NULL;
+    jstring jni_host_name = NULL;
+
+    /* Needed to track if optionals are set or not */
+    bool was_value_set = false;
 
     /**
      * Push a new local frame so any local allocations we make are tied to it. Then we can pop it to free memory.
@@ -2356,43 +2357,40 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         return (jlong)NULL;
     }
 
-    jstring jni_host_name = NULL;
-    struct aws_byte_cursor *pointer_host_name = &client_options.host_name;
     if (aws_get_string_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_host_name_field_id,
             s_client_string,
             "Host Name",
-            jni_host_name,
-            pointer_host_name,
-            &pointer_host_name,
-            false) != AWS_OP_SUCCESS) {
+            &jni_host_name,
+            &client_options.host_name,
+            false,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.host_name = *pointer_host_name;
 
-    uint16_t client_port = 0;
-    uint16_t *pointer_client_port = &client_options.port;
+    uint16_t port = 0;
     if (aws_get_uint16_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_port_field_id,
             s_client_string,
             "port",
-            &client_port,
-            &pointer_client_port,
-            false) != AWS_OP_SUCCESS) {
+            &port,
+            false,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.port = *pointer_client_port;
+    if (was_value_set) {
+        client_options.port = port;
+    }
 
     if (!jni_bootstrap) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "MQTT5 client new: no bootstrap found", AWS_ERROR_INVALID_ARGUMENT);
         goto clean_up;
     }
-
     jlong jni_bootstrap_pointer =
         (*env)->CallLongMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
@@ -2495,10 +2493,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             "session behavior",
             mqtt5_client_session_behavior_properties.client_get_value_id,
             &session_behavior,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto clean_up;
     }
-    if (session_behavior != UINT32_MAX) {
+    if (was_value_set) {
         client_options.session_behavior = (enum aws_mqtt5_client_session_behavior_type)session_behavior;
     }
 
@@ -2511,10 +2510,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             "offline queue behavior",
             mqtt5_client_extended_validation_and_flow_control_options.client_get_value_id,
             &extended_validation_and_flow_control_options,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto clean_up;
     }
-    if (extended_validation_and_flow_control_options != UINT32_MAX) {
+    if (was_value_set) {
         client_options.extended_validation_and_flow_control_options =
             (enum aws_mqtt5_extended_validation_and_flow_control_options)extended_validation_and_flow_control_options;
     }
@@ -2528,10 +2528,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             "offline queue behavior",
             mqtt5_client_offline_queue_behavior_type_properties.client_get_value_id,
             &offline_queue_enum,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto clean_up;
     }
-    if (offline_queue_enum != UINT32_MAX) {
+    if (was_value_set) {
         client_options.offline_queue_behavior = (enum aws_mqtt5_client_operation_queue_behavior_type)offline_queue_enum;
     }
 
@@ -2544,60 +2545,63 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             "retry jitter mode",
             mqtt5_client_jitter_mode_properties.client_get_value_id,
             &retry_jitter_enum,
-            true) == AWS_OP_ERR) {
+            true,
+            &was_value_set) == AWS_OP_ERR) {
         goto clean_up;
     }
-    if (retry_jitter_enum != UINT32_MAX) {
+    if (was_value_set) {
         client_options.retry_jitter_mode = (enum aws_exponential_backoff_jitter_mode)retry_jitter_enum;
     }
 
-    uint64_t min_reconnect_delay = 0;
-    uint64_t *pointer_min_reconnect_delay = &client_options.min_reconnect_delay_ms;
+    uint64_t min_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_reconnect_delay_ms_field_id,
             s_client_string,
             "minimum reconnect delay",
-            &min_reconnect_delay,
-            &pointer_min_reconnect_delay,
-            true) != AWS_OP_SUCCESS) {
+            &min_reconnect_delay_ms,
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.min_reconnect_delay_ms = *pointer_min_reconnect_delay;
+    if (was_value_set) {
+        client_options.min_reconnect_delay_ms = min_reconnect_delay_ms;
+    }
 
-    uint64_t max_reconnect_delay = 0;
-    uint64_t *pointer_max_reconnect_delay = &client_options.max_reconnect_delay_ms;
+    uint64_t max_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.max_reconnect_delay_ms_field_id,
             s_client_string,
             "maximum reconnect delay",
-            &max_reconnect_delay,
-            &pointer_max_reconnect_delay,
-            true) != AWS_OP_SUCCESS) {
+            &max_reconnect_delay_ms,
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.max_reconnect_delay_ms = *pointer_max_reconnect_delay;
+    if (was_value_set) {
+        client_options.max_reconnect_delay_ms = max_reconnect_delay_ms;
+    }
 
-    uint64_t min_connected_time_to_reset = 0;
-    uint64_t *pointer_min_connected_time_to_reset = &client_options.min_connected_time_to_reset_reconnect_delay_ms;
+    uint64_t min_connected_time_to_reset_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id,
             s_client_string,
             "minimum connected time to reset reconnect delay",
-            &min_connected_time_to_reset,
-            &pointer_min_connected_time_to_reset,
-            true) != AWS_OP_SUCCESS) {
+            &min_connected_time_to_reset_reconnect_delay_ms,
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.min_connected_time_to_reset_reconnect_delay_ms = *pointer_min_connected_time_to_reset;
+    if (was_value_set) {
+        client_options.min_connected_time_to_reset_reconnect_delay_ms = min_connected_time_to_reset_reconnect_delay_ms;
+    }
 
     uint32_t ping_timeout = 0;
-    uint32_t *pointer_ping_timeout = &client_options.ping_timeout_ms;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
@@ -2605,14 +2609,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             s_client_string,
             "ping timeout",
             &ping_timeout,
-            &pointer_ping_timeout,
-            true) != AWS_OP_SUCCESS) {
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.ping_timeout_ms = *pointer_ping_timeout;
+    if (was_value_set) {
+        client_options.ping_timeout_ms = ping_timeout;
+    }
 
     uint32_t connack_timeout = 0;
-    uint32_t *pointer_connack_timeout = &client_options.connack_timeout_ms;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
@@ -2620,14 +2625,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             s_client_string,
             "ConnAck timeout",
             &connack_timeout,
-            &pointer_connack_timeout,
-            true) != AWS_OP_SUCCESS) {
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.connack_timeout_ms = *pointer_connack_timeout;
+    if (was_value_set) {
+        client_options.connack_timeout_ms = connack_timeout;
+    }
 
     uint32_t ack_timeout = 0;
-    uint32_t *pointer_ack_timeout = &client_options.ack_timeout_seconds;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
@@ -2635,11 +2641,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             s_client_string,
             "Ack timeout",
             &ack_timeout,
-            &pointer_ack_timeout,
-            true) != AWS_OP_SUCCESS) {
+            true,
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
-    client_options.ack_timeout_seconds = *pointer_ack_timeout;
+    if (was_value_set) {
+        client_options.ack_timeout_seconds = ack_timeout;
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_client->jvm);
     if (jvmresult != 0) {
@@ -2710,6 +2718,9 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
+    if (jni_host_name != NULL) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
+    }
     (*env)->PopLocalFrame(env, NULL);
 
     if (java_client->client != NULL) {

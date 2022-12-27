@@ -232,6 +232,7 @@
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://aws.oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
                         </configuration>
                     </plugin>
                     <!-- source jar -->
@@ -341,6 +342,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <classifier>${crt.classifier}</classifier>
                     <archive>
                         <manifest>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
@@ -409,6 +411,7 @@
                 <version>2.21.0</version>
                 <configuration>
                     <systemPropertyVariables>
+                        <crt.classifier>${crt.classifier}</crt.classifier>
                         <certificate>${crt.test.certificate}</certificate>
                         <privatekey>${crt.test.privatekey}</privatekey>
                         <ecc_certificate>${crt.test.ecc_certificate}</ecc_certificate>

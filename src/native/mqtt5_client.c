@@ -220,7 +220,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
     if (jni_proxy_authorization_username) {
         http_options->jni_proxy_authorization_username = &jni_proxy_authorization_username;
         http_options->authorization_username_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, *http_options->jni_proxy_authorization_username);
+            aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_authorization_username);
         http_options->options.auth_username = http_options->authorization_username_cursor;
     }
 
@@ -232,7 +232,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
     if (jni_proxy_authorization_password) {
         http_options->jni_proxy_authorization_password = &jni_proxy_authorization_password;
         http_options->authorization_password_cursor =
-            aws_jni_byte_cursor_from_jbyteArray_acquire(env, *http_options->jni_proxy_authorization_password);
+            aws_jni_byte_cursor_from_jstring_acquire(env, *http_options->jni_proxy_authorization_password);
         http_options->options.auth_password = http_options->authorization_password_cursor;
     }
 

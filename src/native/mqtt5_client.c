@@ -2691,9 +2691,9 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
-    if (jni_host_name != NULL) {
-        aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
-    }
+    // if (jni_host_name != NULL) {
+    //     aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
+    // }
     (*env)->PopLocalFrame(env, NULL);
 
     if (java_client->client != NULL) {

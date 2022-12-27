@@ -19,7 +19,7 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-  artifacts:
-    files:
-      - "**/output/*"
-      - "/output/**/*"
+artifacts:
+  files:
+    - "**/output/*"
+    - "/output/**/*"

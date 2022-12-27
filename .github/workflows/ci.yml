@@ -43,7 +43,7 @@ jobs:
       - name: "Print error report (if it exists)"
         if: failure()
         run: |
-          find /root/aws-crt-java/** -name "hs_err*.log" -type f -exec cat {} +
+          sudo find /root/aws-crt-java/** -name "hs_err*.log" -type f -exec cat {} +
 
   linux-compiler-compat:
     runs-on: ubuntu-20.04 # latest
@@ -73,7 +73,7 @@ jobs:
       - name: "Print error report (if it exists)"
         if: failure()
         run: |
-          find /root/aws-crt-java/** -name "hs_err*.log" -type f -exec cat {} +
+          sudo find /root/aws-crt-java/** -name "hs_err*.log" -type f -exec cat {} +
 
   linux-arm:
     name: ARM (${{ matrix.arch }})

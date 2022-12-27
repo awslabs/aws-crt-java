@@ -2312,6 +2312,74 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     "Negotiated Settings keep alive result does not match sent keep alive",
                     events.connectSuccessSettings.getServerKeepAlive(),
                     360);
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        false,
+                        events.connectSuccessSettings.getRejoinedSession());
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Rejoin always session resumption test */
+    @Test
+    public void Negotiated_Rejoin_Always() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5DirectMqttHost != null);
+        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        String testUUID = UUID.randomUUID().toString();
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
+            optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            optionsBuilder.withSessionExpiryIntervalSeconds(3600L);
+            optionsBuilder.withKeepAliveIntervalSeconds(360L);
+            builder.withConnectOptions(optionsBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(60, TimeUnit.SECONDS);
+
+                assertEquals(
+                        "Negotiated Settings client ID does not match sent client ID",
+                        events.connectSuccessSettings.getAssignedClientID(),
+                        "test/MQTT5_Binding_Java_" + testUUID);
+                assertEquals(
+                        "Negotiated Settings session expiry interval does not match sent session expiry interval",
+                        events.connectSuccessSettings.getSessionExpiryInterval(),
+                        3600L);
+                assertEquals(
+                        "Negotiated Settings keep alive result does not match sent keep alive",
+                        events.connectSuccessSettings.getServerKeepAlive(),
+                        360);
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        false,
+                        events.connectSuccessSettings.getRejoinedSession());
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
+            LifecycleEvents_Futured rejoinEvents = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(rejoinEvents);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                rejoinEvents.connectedFuture.get(60, TimeUnit.SECONDS);
+
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        true,
+                        rejoinEvents.connectSuccessSettings.getRejoinedSession());
 
                 client.stop(new DisconnectPacketBuilder().build());
             }

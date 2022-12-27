@@ -2398,6 +2398,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         aws_jni_throw_runtime_exception(env, "MQTT5 client new: no bootstrap found");
         goto clean_up;
     }
+
     jlong jni_bootstrap_pointer =
         (*env)->CallLongMethod(env, jni_bootstrap, crt_resource_properties.get_native_handle_method_id);
     if (aws_jni_check_and_clear_exception(env)) {

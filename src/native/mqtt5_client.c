@@ -91,8 +91,6 @@ static void s_aws_mqtt5_http_proxy_options_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying JavaHttpProxyOptions", (void *)http_options);
 
-    (void)env;
-
     if (http_options->jni_proxy_host) {
         aws_jni_byte_cursor_from_jstring_release(env, *http_options->jni_proxy_host, http_options->proxy_host_cursor);
     }

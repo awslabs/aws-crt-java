@@ -766,7 +766,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
         return NULL;
     }
 
-    // Needed to track if optionals are set or not
+    /* Needed to track if optionals are set or not */
     bool was_value_set = false;
 
     if (aws_get_uint16_from_jobject(
@@ -954,7 +954,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1007,7 +1007,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
         return NULL;
     }
 
-    // Needed to track if optionals are set or not
+    /* Needed to track if optionals are set or not */
     bool was_value_set = false;
 
     uint32_t reason_code_enum;
@@ -1090,7 +1090,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_disconnect_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1152,7 +1152,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
         return NULL;
     }
 
-    // Needed to track if optionals are set or not
+    /* Needed to track if optionals are set or not */
     bool was_value_set = false;
 
     if (aws_get_byte_array_from_jobject(
@@ -1311,7 +1311,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1392,7 +1392,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
         goto on_error;
     }
 
-    // Needed to track if optionals are set or not
+    /* Needed to track if optionals are set or not */
     bool was_value_set = false;
 
     if (aws_get_uint32_from_jobject(
@@ -1412,7 +1412,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
 
     java_packet->packet.subscription_count = subscriptions_filter_size;
     for (size_t i = 0; i < subscriptions_filter_size; i++) {
-        // Populate
+        /* Populate */
         struct aws_mqtt5_subscription_view subscription_view;
         struct jstring_array_holder_struct holder;
 
@@ -1520,7 +1520,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }
@@ -1606,7 +1606,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     java_packet->packet.topic_filter_count = topic_filter_size;
 
     for (size_t i = 0; i < topic_filter_size; i++) {
-        // Populate
+        /* Populate */
         struct jstring_array_holder_struct holder;
 
         jstring jni_topic_filter =
@@ -1641,7 +1641,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
 
 on_error:
 
-    // Clean up
+    /* Clean up */
     aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_packet);
     return NULL;
 }

@@ -57,6 +57,69 @@ From the aws-crt-java directory:
 ```mvn install```
 From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-crt/)
 
+## Platform-Specific JARs [experimental]
+
+The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
+
+``` xml
+        <!-- Platform-specific Linux x86_64 JAR -->
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+            <classifier>linux-x86_64</classifier>
+        </dependency>
+```
+
+``` xml
+        <!-- "Uber" JAR that works on all platforms -->
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+        </dependency>
+```
+
+### Available platform classifiers
+
+- linux-armv6
+- linux-armv7
+- linux-aarch_64
+- linux-x86_32
+- linux-x86_64
+- osx-aarch_64
+- osx-x86_64
+- windows-x86_32
+- windows-x86_64
+
+### Auto-detect
+
+The [os-maven-plugin](https://github.com/trustin/os-maven-plugin) can automatically detect your platform's classifier at build time.
+
+**NOTES**: The auto-detected `linux-arm_32` platform classifier is not supported, you must specify `linux-armv6` or `linux-armv7`.
+
+``` xml
+<build>
+        <extensions>
+            <!-- Generate os.detected.classifier property -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.0</version>
+            </extension>
+        </extensions>
+ </build>
+
+ <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk.crt</groupId>
+            <artifactId>aws-crt</artifactId>
+            <version>0.20.5</version>
+            <classifier>${os.detected.classifier}</classifier>
+        </dependency>
+  <dependencies>
+```
+
 ## Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:

@@ -11,16 +11,19 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B compile
+      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B install -DskipTests -Dcrt.classifier=linux-x86_64
+
   post_build:
     commands:
       # get the shared libs from the native build
       - mkdir -p ../dist
       - cp -rv target/cmake-build/lib ../dist/
+      # get the platform specific jar with classifier
+      - cp target/*.jar ../dist/
 
 artifacts:
   files:
-    - 'dist/**/*' 
+    - 'dist/**/*'
 
 cache:
   paths:

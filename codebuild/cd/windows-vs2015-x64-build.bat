@@ -8,13 +8,15 @@ set AWS_CMAKE_GENERATOR=Visual Studio 14 2015 Win64
 
 git submodule update --init
 
-mvn -X compile || goto error
-
 for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
 
+mvn -X install -DskipTests -Dcrt.classifier=windows-x86_64 || goto error
+
 aws s3 cp --recursive --exclude "*" --include "*.dll" .\target\cmake-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
+aws s3 cp --recursive --exclude "*" --include "*.jar" .\target s3://aws-crt-java-pipeline/%GIT_TAG%/jar
+
 
 @endlocal
 goto :EOF

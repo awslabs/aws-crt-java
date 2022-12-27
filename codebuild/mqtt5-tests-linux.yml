@@ -16,9 +16,10 @@ phases:
       - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
       - mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
       - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
-  artifacts:
-    files:
-      - "**/output/*"
   post_build:
     commands:
       - echo Build completed on `date`
+  artifacts:
+    files:
+      - "**/output/*"
+      - "/output/**/*"

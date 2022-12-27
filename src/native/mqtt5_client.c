@@ -91,16 +91,18 @@ static void s_aws_mqtt5_http_proxy_options_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying JavaHttpProxyOptions", (void *)http_options);
 
+    (void)env;
+
     if (http_options->jni_proxy_host) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
+        aws_jni_byte_cursor_from_jstring_release(
             env, *http_options->jni_proxy_host, http_options->proxy_host_cursor);
     }
     if (http_options->jni_proxy_authorization_username) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
+        aws_jni_byte_cursor_from_jstring_release(
             env, *http_options->jni_proxy_authorization_username, http_options->authorization_username_cursor);
     }
     if (http_options->jni_proxy_authorization_password) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
+        aws_jni_byte_cursor_from_jstring_release(
             env, *http_options->jni_proxy_authorization_password, http_options->authorization_password_cursor);
     }
 
@@ -2367,20 +2369,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &jni_host_name,
             &client_options.host_name,
             false,
-            NULL) != AWS_OP_SUCCESS) {
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
 
+    uint16_t port = 0;
     if (aws_get_uint16_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_port_field_id,
             s_client_string,
             "port",
-            &client_options.port,
+            &port,
             false,
-            NULL) != AWS_OP_SUCCESS) {
+            &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
+    }
+    if (was_value_set) {
+        client_options.port = port;
     }
 
     if (!jni_bootstrap) {
@@ -2550,76 +2556,100 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         client_options.retry_jitter_mode = (enum aws_exponential_backoff_jitter_mode)retry_jitter_enum;
     }
 
+    uint64_t min_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_reconnect_delay_ms_field_id,
             s_client_string,
             "minimum reconnect delay",
-            &client_options.min_reconnect_delay_ms,
+            &min_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
+    if (was_value_set) {
+        client_options.min_reconnect_delay_ms = min_reconnect_delay_ms;
+    }
 
+    uint64_t max_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.max_reconnect_delay_ms_field_id,
             s_client_string,
             "maximum reconnect delay",
-            &client_options.max_reconnect_delay_ms,
+            &max_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
+    if (was_value_set) {
+        client_options.max_reconnect_delay_ms = max_reconnect_delay_ms;
+    }
 
+    uint64_t min_connected_time_to_reset_reconnect_delay_ms = 0;
     if (aws_get_uint64_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.min_connected_time_to_reset_reconnect_delay_ms_field_id,
             s_client_string,
             "minimum connected time to reset reconnect delay",
-            &client_options.min_connected_time_to_reset_reconnect_delay_ms,
+            &min_connected_time_to_reset_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
+    if (was_value_set) {
+        client_options.min_connected_time_to_reset_reconnect_delay_ms = min_connected_time_to_reset_reconnect_delay_ms;
+    }
 
+    uint32_t ping_timeout = 0;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.ping_timeout_ms_field_id,
             s_client_string,
             "ping timeout",
-            &client_options.ping_timeout_ms,
+            &ping_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
+    if (was_value_set) {
+        client_options.ping_timeout_ms = ping_timeout;
+    }
 
+    uint32_t connack_timeout = 0;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.connack_timeout_ms_field_id,
             s_client_string,
             "ConnAck timeout",
-            &client_options.connack_timeout_ms,
+            &connack_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
     }
+    if (was_value_set) {
+        client_options.connack_timeout_ms = connack_timeout;
+    }
 
+    uint32_t ack_timeout = 0;
     if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.ack_timeout_seconds_field_id,
             s_client_string,
             "Ack timeout",
-            &client_options.ack_timeout_seconds,
+            &ack_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
         goto clean_up;
+    }
+    if (was_value_set) {
+        client_options.ack_timeout_seconds = ack_timeout;
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_client->jvm);

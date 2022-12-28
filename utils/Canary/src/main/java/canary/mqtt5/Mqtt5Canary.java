@@ -265,10 +265,7 @@ public class Mqtt5Canary {
         public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             int clientIdx = clients.indexOf(client);
             PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
-            PrintLog("[Lifecycle event]] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()) + " - " + CRT.awsErrorString(onDisconnectionReturn.getErrorCode()));
-            if (onDisconnectionReturn.getDisconnectPacket() != null) {
-                PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnect packet reason: " + onDisconnectionReturn.getDisconnectPacket().getReasonString());
-            }
+            PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()));
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
             clientsData.get(clientIdx).subscribedToTopics = false;
         }

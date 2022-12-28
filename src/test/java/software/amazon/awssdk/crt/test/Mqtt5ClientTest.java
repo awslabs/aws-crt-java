@@ -1589,7 +1589,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
                 // Wait until the first client has reconnected
                 events.connectedFuture = new CompletableFuture<>();
-                events.connectedFuture.get(180, TimeUnit.SECONDS);
+                events.connectedFuture.get(360, TimeUnit.SECONDS);
 
                 assertTrue(clientOne.getIsConnected() == true);
 

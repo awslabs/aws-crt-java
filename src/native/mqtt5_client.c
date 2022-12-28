@@ -1897,7 +1897,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         java_disconnect_packet =
             aws_mqtt5_packet_disconnect_view_create_from_java(env, allocator, jni_disconnect_packet);
         if (!java_disconnect_packet) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s - error code: %i", "Mqtt5Client.stop: Invalid/null disconnect packet", aws_last_error());
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT,
+                "%s - error code: %i",
+                "Mqtt5Client.stop: Invalid/null disconnect packet",
+                aws_last_error());
             goto clean_up;
         }
     }
@@ -1905,7 +1909,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_result = aws_mqtt5_client_stop(
         java_client->client, aws_mqtt5_packet_disconnect_view_get_packet(java_disconnect_packet), NULL);
     if (return_result != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s - error code: %i", "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!", return_result);
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT,
+            "%s - error code: %i",
+            "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!",
+            return_result);
     }
     goto clean_up;
 

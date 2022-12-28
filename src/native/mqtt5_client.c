@@ -1912,7 +1912,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
 clean_up:
-    aws_mqtt5_packet_disconnect_view_java_destroy(env, allocator, java_disconnect_packet);
+    if (java_disconnect_packet) {
+        aws_mqtt5_packet_disconnect_view_java_destroy(env, allocator, java_disconnect_packet);
+    }
     return;
 }
 
@@ -1960,8 +1962,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_mqtt5_packet_publish_view_java_jni *java_publish_packet =
         aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
     if (!java_publish_packet) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.publish: Could not create publish packet", AWS_ERROR_INVALID_STATE);
         goto exception;
     }
 
@@ -1969,19 +1969,25 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_publish(
         java_client->client, aws_mqtt5_packet_publish_view_get_packet(java_publish_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(env, "Mqtt5Client.publish: Unsuccessful publish", return_result);
         goto exception;
     }
     goto clean_up;
 
 exception:
     s_complete_future_with_exception(env, jni_publish_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
-    aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
-    s_aws_mqtt5_client_java_publish_callback_destructor(env, return_data);
+    if (java_publish_packet) {
+        aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
+    }
+    if (return_data) {
+        s_aws_mqtt5_client_java_publish_callback_destructor(env, return_data);
+    }
+    s_aws_mqtt5_client_log_and_throw_exception(env, "Mqtt5Client.publish: Unsuccessful publish", AWS_ERROR_INVALID_STATE);
     return;
 
 clean_up:
-    aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
+    if (java_publish_packet) {
+        aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
+    }
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5ClientInternalSubscribe(
@@ -2027,8 +2033,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_mqtt5_packet_subscribe_view_java_jni *java_subscribe_packet =
         aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
     if (java_subscribe_packet == NULL) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.subscribe: Could not create subscribe packet", AWS_ERROR_INVALID_STATE);
         goto exception;
     }
 
@@ -2036,19 +2040,25 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_subscribe(
         java_client->client, aws_mqtt5_packet_subscribe_view_get_packet(java_subscribe_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(env, "Mqtt5Client.subscribe: Unsuccessful subscribe", return_result);
         goto exception;
     }
     goto clean_up;
 
 exception:
     s_complete_future_with_exception(env, jni_subscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
-    aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
-    s_aws_mqtt5_client_java_subscribe_callback_destructor(env, return_data);
+    if (java_subscribe_packet) {
+        aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
+    }
+    if (return_data) {
+        s_aws_mqtt5_client_java_subscribe_callback_destructor(env, return_data);
+    }
+    s_aws_mqtt5_client_log_and_throw_exception(env, "Mqtt5Client.subscribe: Unsuccessful subscribe", AWS_ERROR_INVALID_STATE);
     return;
 
 clean_up:
-    aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
+    if (java_subscribe_packet) {
+        aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
+    }
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5ClientInternalUnsubscribe(
@@ -2094,8 +2104,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_unsubscribe_packet =
         aws_mqtt5_packet_unsubscribe_view_create_from_java(env, allocator, jni_unsubscribe_packet);
     if (!java_unsubscribe_packet) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.unsubscribe: Could not create unsubscribe packet", AWS_ERROR_INVALID_STATE);
         goto exception;
     }
 
@@ -2105,20 +2113,25 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         aws_mqtt5_packet_unsubscribe_view_get_packet(java_unsubscribe_packet),
         &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.unsubscribe: Unsuccessful unsubscribe", return_result);
         goto exception;
     }
     goto clean_up;
 
 exception:
     s_complete_future_with_exception(env, jni_unsubscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
-    aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
-    s_aws_mqtt5_client_java_unsubscribe_callback_destructor(env, return_data);
+    if (java_unsubscribe_packet) {
+        aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
+    }
+    if (return_data) {
+        s_aws_mqtt5_client_java_unsubscribe_callback_destructor(env, return_data);
+    }
+    s_aws_mqtt5_client_log_and_throw_exception(env, "Mqtt5Client.unsubscribe: Unsuccessful unsubscribe", AWS_ERROR_INVALID_STATE);
     return;
 
 clean_up:
-    aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
+    if (java_unsubscribe_packet) {
+        aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
+    }
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5ClientInternalGetOperationStatistics(

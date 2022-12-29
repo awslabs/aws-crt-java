@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -28,7 +27,6 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.PublishEvents;
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectPacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectReasonCode;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket.PublishPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.SubscribePacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;
@@ -40,10 +38,8 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -1146,7 +1142,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 client.start();
 
                 try {
-                    System.out.println("NOTE: Exception due to using incorrect port expected below!");
+                    System.out.println("NOTE: Exception due to using incorrect port may be below!");
                     events.connectedFuture.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     exceptionOccurred = true;
@@ -1195,7 +1191,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 client.start();
 
                 try {
-                    System.out.println("NOTE: Exception due to invalid port for protocol used expected below!");
+                    System.out.println("NOTE: Exception due to invalid port for protocol used may be below!");
                     events.connectedFuture.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     exceptionOccurred = true;
@@ -1253,7 +1249,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     client.start();
 
                     try {
-                        System.out.println("NOTE: Exception due to using non-existent port expected below!");
+                        System.out.println("NOTE: Exception due to using non-existent port may be below!");
                         events.connectedFuture.get(180, TimeUnit.SECONDS);
                     } catch (Exception ex) {
                         exceptionOccurred = true;
@@ -1308,7 +1304,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     try {
-                        System.out.println("NOTE: Exception due to invalid port expected below!");
+                        System.out.println("NOTE: Exception due to invalid port may be below!");
                         events.connectedFuture.get(180, TimeUnit.SECONDS);
                     } catch (Exception ex) {
                         exceptionOccurred = true;
@@ -1357,7 +1353,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     client.start();
 
                     try {
-                        System.out.println("NOTE: Exception due to socket timeout expected below!");
+                        System.out.println("NOTE: Exception due to socket timeout may be below!");
                         events.connectedFuture.get(180, TimeUnit.SECONDS);
                     } catch (Exception ex) {
                         exceptionOccurred = true;
@@ -1414,7 +1410,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     client.start();
 
                     try {
-                        System.out.println("NOTE: Exception due to websocket handshake failure expected below!");
+                        System.out.println("NOTE: Exception due to websocket handshake failure may be below!");
                         events.connectedFuture.get(180, TimeUnit.SECONDS);
                     } catch (Exception ex) {
                         exceptionOccurred = true;
@@ -1860,7 +1856,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
                 disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
                 try {
-                    System.out.println("NOTE: Exception due to negative session expiry expected below!");
+                    System.out.println("NOTE: Exception due to negative session expiry may be below!");
                     client.stop(disconnectBuilder.build());
                 } catch (Exception ex) {
                     clientDisconnectFailed = true;
@@ -1919,7 +1915,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
                 disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
                 try {
-                    System.out.println("NOTE: Exception due to session expiry interval being too large expected below!");
+                    System.out.println("NOTE: Exception due to session expiry interval being too large may be below!");
                     client.stop(disconnectBuilder.build());
                 } catch (Exception ex) {
                     clientDisconnectFailed = true;
@@ -1979,7 +1975,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
                 publishBuilder.withMessageExpiryIntervalSeconds(-100L);
                 try {
-                    System.out.println("NOTE: Exception due to negative interval seconds expected below!");
+                    System.out.println("NOTE: Exception due to negative interval seconds may be below!");
                     CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
                     future.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2040,7 +2036,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic").withQOS(QOS.AT_LEAST_ONCE);
                 publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
                 try {
-                    System.out.println("NOTE: Exception due to expiry interval seconds being too large expected below!");
+                    System.out.println("NOTE: Exception due to expiry interval seconds being too large may be below!");
                     CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
                     future.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2101,7 +2097,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
                 subscribeBuilder.withSubscriptionIdentifier(-100L);
                 try {
-                    System.out.println("NOTE: Exception due to negative subscription identifier expected below!");
+                    System.out.println("NOTE: Exception due to negative subscription identifier may be below!");
                     CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
                     future.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2162,7 +2158,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
                 subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
                 try {
-                    System.out.println("NOTE: Exception due to subscription identifier being too large expected below!");
+                    System.out.println("NOTE: Exception due to subscription identifier being too large may be below!");
                     CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
                     future.get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2658,7 +2654,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to null publish packet expected below!");
+                    System.out.println("NOTE: Exception due to null publish packet may be below!");
                     client.publish(null).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2684,9 +2680,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     /* Publish with empty builder test */
-    // NOTE: For now, just skip these tests since it crashes Codebuild and Fedora Linux with Memory issues.
-    // Get the rest of the improvements added, then come back to it.
-    /*
     @Test
     public void ErrorOp_UC1_ALT() {
         skipIfNetworkUnavailable();
@@ -2697,6 +2690,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2712,7 +2710,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to empty publish packet expected below!");
+                    System.out.println("NOTE: Exception due to empty publish packet may be below!");
                     client.publish(new PublishPacketBuilder().build()).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2721,7 +2719,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Empty publish packet did not cause exception with error!");
                 }
-
                 client.stop(new DisconnectPacketBuilder().build());
             }
 
@@ -2729,11 +2726,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
+            elg.close();
+            hr.close();
+            bootstrap.close();
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
     }
-    */
 
     /* Null Subscribe Test */
     @Test
@@ -2766,7 +2766,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to null subscribe packet expected below!");
+                    System.out.println("NOTE: Exception due to null subscribe packet may be below!");
                     client.subscribe(null).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2792,9 +2792,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     /* Empty Subscribe Test */
-    // NOTE: For now, just skip these tests since it crashes Codebuild and Fedora Linux with Memory issues.
-    // Get the rest of the improvements added, then come back to it.
-    /*
     @Test
     public void ErrorOp_UC2_ALT() {
         skipIfNetworkUnavailable();
@@ -2805,6 +2802,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2820,7 +2822,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to empty subscribe packet expected below!");
+                    System.out.println("NOTE: Exception due to empty subscribe packet may be below!");
                     client.subscribe(new SubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2836,11 +2838,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
+            elg.close();
+            hr.close();
+            bootstrap.close();
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
     }
-    */
 
     /* Null Unsubscribe Test */
     @Test
@@ -2873,7 +2878,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to null unsubscribe packet expected below!");
+                    System.out.println("NOTE: Exception due to null unsubscribe packet may be below!");
                     client.unsubscribe(null).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2899,9 +2904,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     /* Empty Unsubscribe Test */
-    // NOTE: For now, just skip these tests since it crashes Codebuild and Fedora Linux with Memory issues.
-    // Get the rest of the improvements added, then come back to it.
-    /*
     @Test
     public void ErrorOp_UC3_ALT() {
         skipIfNetworkUnavailable();
@@ -2912,6 +2914,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2927,7 +2934,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    System.out.println("NOTE: Exception due to empty unsubscribe packet expected below!");
+                    System.out.println("NOTE: Exception due to empty unsubscribe packet may be below!");
                     client.unsubscribe(new UnsubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     didExceptionOccur = true;
@@ -2943,11 +2950,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
+            elg.close();
+            hr.close();
+            bootstrap.close();
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
     }
-    */
 
     /* TODO: Adjust and enable this test using IoT Core. */
     /* Unsupported Connect packet data sent */

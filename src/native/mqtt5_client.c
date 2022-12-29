@@ -1418,6 +1418,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
         exception_error_code = AWS_ERROR_INVALID_STATE;
         goto exception;
     }
+    has_pushed_frame = true;
 
     /* The result */
     jobject publish_packet_result_data;

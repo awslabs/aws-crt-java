@@ -2146,14 +2146,22 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Negotiated_Rejoin_Always() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(mqtt5DirectMqttHost != null);
-        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
 
         try {
-            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
 
             ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
             optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
@@ -2200,6 +2208,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
                 client.stop(new DisconnectPacketBuilder().build());
             }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

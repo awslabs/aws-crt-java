@@ -132,15 +132,11 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         if (jni_proxy_connection_type_value) {
             int64_t jni_proxy_connection_type_value_check = (int64_t)jni_proxy_connection_type_value;
             if (jni_proxy_connection_type_value_check < 0) {
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env, "HTTP Proxy Options connection type is less than 0", AWS_ERROR_INVALID_ARGUMENT);
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is less than 0");
                 goto on_error;
             } else if (jni_proxy_connection_type_value_check > AWS_HPCT_HTTP_TUNNEL) { /* The (current) maximum enum */
                                                                                        /* value */
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env,
-                    "HTTP Proxy Options connection type is more than maximum allowed value",
-                    AWS_ERROR_INVALID_ARGUMENT);
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is more than maximum allowed value");
                 goto on_error;
             } else {
                 http_options->options.connection_type =
@@ -168,12 +164,10 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
     if (jni_proxy_port) {
         int64_t jni_proxy_port_check = (int64_t)jni_proxy_port;
         if (jni_proxy_port_check < 0) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "HTTP Proxy Options port is less than 0", AWS_ERROR_INVALID_ARGUMENT);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options port is less than 0");
             goto on_error;
         } else if (jni_proxy_port_check > UINT16_MAX) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "HTTP Proxy Options port is more than UINT16_MAX", AWS_ERROR_INVALID_ARGUMENT);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options port is more than UINT16_MAX");
             goto on_error;
         } else {
             http_options->options.port = (uint16_t)jni_proxy_port;
@@ -287,16 +281,12 @@ static int s_set_jni_uint64_t_field_in_packet(
         jobject jni_int = (*env)->NewObject(
             env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*native_integer);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint64 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not create uint64 field %s", field_name);
             return AWS_OP_ERR;
         }
         (*env)->SetObjectField(env, packet, field_id, jni_int);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set uint64 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set uint64 field %s", field_name);
             return AWS_OP_ERR;
         }
         if (!optional) {
@@ -322,16 +312,12 @@ static int s_set_jni_uint32_t_field_in_packet(
         jobject jni_int = (*env)->NewObject(
             env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*native_integer);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint32 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not create uint32 field %s", field_name);
             return AWS_OP_ERR;
         }
         (*env)->SetObjectField(env, packet, field_id, jni_int);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set uint32 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set uint32 field %s", field_name);
             return AWS_OP_ERR;
         }
         if (!optional) {
@@ -359,16 +345,12 @@ static int s_set_jni_uint16_t_field_in_packet(
             boxed_integer_properties.integer_constructor_id,
             (jint)*native_integer);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint16 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not create uint16 field %s", field_name);
             return AWS_OP_ERR;
         }
         (*env)->SetObjectField(env, packet, field_id, jni_int);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set uint16 field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set uint16 field %s", field_name);
             return AWS_OP_ERR;
         }
         if (!optional) {
@@ -396,17 +378,13 @@ static int s_set_jni_bool_field_in_packet(
             boxed_boolean_properties.boolean_constructor_id,
             (jboolean)*native_boolean);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create boolean field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not create boolean field %s", field_name);
             return AWS_OP_ERR;
         }
 
         (*env)->SetObjectField(env, packet, field_id, jni_boolean);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set boolean field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set boolean field %s", field_name);
             return AWS_OP_ERR;
         }
 
@@ -432,9 +410,7 @@ static int s_set_jni_string_field_in_packet(
         jstring jni_string = aws_jni_string_from_cursor(env, native_cursor);
         (*env)->SetObjectField(env, packet, field_id, jni_string);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set string field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set string field %s", field_name);
             return AWS_OP_ERR;
         }
         if (!optional) {
@@ -459,9 +435,7 @@ static int s_set_jni_byte_array_field_in_packet(
         jbyteArray jni_byte = aws_jni_byte_array_from_cursor(env, native_cursor);
         (*env)->SetObjectField(env, packet, field_id, jni_byte);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set string field %s", field_name);
-            aws_jni_throw_runtime_exception(env, "Could not set string field %s", field_name);
             return AWS_OP_ERR;
         }
         if (!optional) {
@@ -490,15 +464,13 @@ static int s_set_user_properties_field(
         jobject jni_user_properties_list = (*env)->NewObject(
             env, boxed_array_list_properties.list_class, boxed_array_list_properties.list_constructor_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "Could not make new user properties list", AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not make new user properties list");
             return AWS_OP_ERR;
         }
 
         (*env)->SetObjectField(env, packet, user_property_field_id, jni_user_properties_list);
         if (aws_jni_check_and_clear_exception(env)) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "Could not make set new user properties list", AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set new user properties list");
             return AWS_OP_ERR;
         }
 
@@ -514,16 +486,14 @@ static int s_set_user_properties_field(
                 jni_new_property_name,
                 jni_new_property_value);
             if (aws_jni_check_and_clear_exception(env)) {
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env, "Could not make new user property", AWS_ERROR_INVALID_STATE);
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not make new user property");
                 return AWS_OP_ERR;
             }
 
             jboolean jni_add_result = (*env)->CallBooleanMethod(
                 env, jni_user_properties_list, boxed_list_properties.list_add_id, jni_new_property);
             if (aws_jni_check_and_clear_exception(env)) {
-                s_aws_mqtt5_client_log_and_throw_exception(
-                    env, "Could not add new user property", AWS_ERROR_INVALID_STATE);
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not add new user property");
                 return AWS_OP_ERR;
             }
 
@@ -580,8 +550,7 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
 
     int reason_code_int = (int)native_connack_data->reason_code;
     if (reason_code_int < 0) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating ConnAckPacket from native: Reason code is negative!", AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Reason code is negative!");
         return NULL;
     }
     (*env)->CallIntMethod(
@@ -615,10 +584,7 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
                 connack_data,
                 mqtt5_connack_packet_properties.connack_native_add_maximum_qos_id,
                 true) != AWS_OP_SUCCESS) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env,
-                "Error when creating ConnAckPacket from native: Could not set maximum QOS",
-                AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
             return NULL;
         }
     }
@@ -720,10 +686,7 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
             native_connack_data->user_properties,
             connack_data,
             mqtt5_connack_packet_properties.connack_user_properties_field_id) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env,
-            "Error when creating ConnAckPacket from native: could not add user property!",
-            AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: could not add user property!");
         return NULL;
     }
 
@@ -746,10 +709,7 @@ static jobject s_aws_mqtt5_client_create_jni_disconnect_packet_from_native(
             disconnect_packet_data,
             mqtt5_disconnect_packet_properties.disconnect_native_add_disconnect_reason_code_id,
             false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env,
-            "Error when creating DisconnectPacket from native: Could not set reason code",
-            AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: Could not set reason code");
         return NULL;
     }
 
@@ -883,8 +843,7 @@ static jobject s_aws_mqtt5_client_create_jni_puback_packet_from_native(
             puback_packet_data,
             mqtt5_puback_packet_properties.puback_native_add_reason_code_id,
             false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating PubAck result from native: Could not set reason code", AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PubAck result from native: Could not set reason code");
         return NULL;
     }
     if (s_set_jni_string_field_in_packet(
@@ -927,8 +886,7 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             publish_packet_data,
             mqtt5_publish_packet_properties.publish_native_set_qos_id,
             false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating PublishPacket from native: Could not set QOS", AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set QOS");
         return NULL;
     }
 
@@ -939,8 +897,7 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             mqtt5_publish_packet_properties.publish_retain_field_id,
             "retain",
             false) != AWS_OP_SUCCESS) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Error when creating PublishPacket from native: Could not set retain", AWS_ERROR_INVALID_STATE);
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set retain");
         return NULL;
     }
 
@@ -954,10 +911,7 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
                 publish_packet_data,
                 mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id,
                 true) != AWS_OP_SUCCESS) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env,
-                "Error when creating PublishPacket from native: Could not set payload format",
-                AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set payload format");
             return NULL;
         }
     }
@@ -1141,8 +1095,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
     if (event->connack_data != NULL) {
         connack_data = s_aws_mqtt5_client_create_jni_connack_packet_from_native(env, event->connack_data);
         if (connack_data == NULL) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "LifecycleEvent: creating ConnAck packet failed!", AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "LifecycleEvent: creating ConnAck packet failed!");
             goto clean_up;
         }
     }
@@ -1151,8 +1104,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
     if (event->disconnect_data != NULL) {
         disconnect_data = s_aws_mqtt5_client_create_jni_disconnect_packet_from_native(env, event->disconnect_data);
         if (disconnect_data == NULL) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "LifecycleEvent: creating Disconnect packet failed!", AWS_ERROR_INVALID_STATE);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "LifecycleEvent: creating Disconnect packet failed!");
             goto clean_up;
         }
     }
@@ -1631,10 +1583,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
                             suback_packet_data,
                             mqtt5_suback_packet_properties.suback_native_add_suback_code_id,
                             false) != AWS_OP_SUCCESS) {
-                        s_aws_mqtt5_client_log_and_throw_exception(
-                            env,
-                            "Error when creating SubAckPacket from native: Could not set reason code",
-                            AWS_ERROR_INVALID_STATE);
+                        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating SubAckPacket from native: Could not set reason code");
                         exception_error_code = AWS_ERROR_INVALID_STATE;
                         goto exception;
                     }
@@ -1782,10 +1731,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
                         unsuback_packet_data,
                         mqtt5_unsuback_packet_properties.unsuback_native_add_unsuback_code_id,
                         false) != AWS_OP_SUCCESS) {
-                    s_aws_mqtt5_client_log_and_throw_exception(
-                        env,
-                        "Error when creating UnsubAckPacket from native: Could not set reason code",
-                        AWS_ERROR_INVALID_STATE);
+                    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating UnsubAckPacket from native: Could not set reason code");
                     exception_error_code = AWS_ERROR_INVALID_STATE;
                     goto exception;
                 }

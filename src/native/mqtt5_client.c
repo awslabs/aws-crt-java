@@ -1932,20 +1932,14 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_publish_future) {
     (void)jni_class;
 
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_mqtt5_packet_publish_view_java_jni *java_publish_packet = NULL;
+    struct aws_mqtt5_client_publish_return_data *return_data = NULL;
+
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "Mqtt5Client.publish: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!java_client->client) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.publish: Invalid/null native client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!jni_publish_packet) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.publish: Invalid/null publish packet", AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
     if (!jni_publish_future) {
@@ -1954,20 +1948,26 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         return;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    if (!java_client->client) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Invalid/null native client");
+        goto exception;
+    }
+    if (!jni_publish_packet) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Invalid/Null publish packet!");
+        goto exception;
+    }
 
     /* Cannot fail */
-    struct aws_mqtt5_client_publish_return_data *return_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_publish_return_data));
+    return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_publish_return_data));
     return_data->java_client = java_client;
 
     struct aws_mqtt5_publish_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_publish_completion;
     completion_options.completion_user_data = (void *)return_data;
 
-    struct aws_mqtt5_packet_publish_view_java_jni *java_publish_packet =
-        aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
+    java_publish_packet = aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
     if (!java_publish_packet) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Could not create native publish packet!");
         goto exception;
     }
 
@@ -1975,6 +1975,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_publish(
         java_client->client, aws_mqtt5_packet_publish_view_get_packet(java_publish_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Could not publish packet! Error code: %i", return_result);
         goto exception;
     }
     goto clean_up;
@@ -1987,7 +1989,6 @@ exception:
     if (return_data) {
         s_aws_mqtt5_client_java_publish_callback_destructor(env, return_data);
     }
-    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Publish failed!");
     return;
 
 clean_up:
@@ -2004,20 +2005,14 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_subscribe_future) {
     (void)jni_class;
 
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_mqtt5_client_subscribe_return_data *return_data = NULL;
+    struct aws_mqtt5_packet_subscribe_view_java_jni *java_subscribe_packet = NULL;
+
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "Mqtt5Client.subscribe: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!java_client->client) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.subscribe: Invalid/null native client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!jni_subscribe_packet) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.subscribe: Invalid/null subscribe packet", AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
     if (!jni_subscribe_future) {
@@ -2026,19 +2021,26 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         return;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    if (!java_client->client) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Invalid/null native client");
+        goto exception;
+    }
+    if (!jni_subscribe_packet) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Invalid/Null subscribe packet!");
+        goto exception;
+    }
+
     /* Cannot fail */
-    struct aws_mqtt5_client_subscribe_return_data *return_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_subscribe_return_data));
+    return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_subscribe_return_data));
     return_data->java_client = java_client;
 
     struct aws_mqtt5_subscribe_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_subscribe_completion;
     completion_options.completion_user_data = (void *)return_data;
 
-    struct aws_mqtt5_packet_subscribe_view_java_jni *java_subscribe_packet =
-        aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
+    java_subscribe_packet = aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
     if (java_subscribe_packet == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Could not create native subscribe packet!");
         goto exception;
     }
 
@@ -2046,6 +2048,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_subscribe(
         java_client->client, aws_mqtt5_packet_subscribe_view_get_packet(java_subscribe_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Subscribe failed! Error code: %i", return_result);
         goto exception;
     }
     goto clean_up;
@@ -2058,7 +2061,6 @@ exception:
     if (return_data) {
         s_aws_mqtt5_client_java_subscribe_callback_destructor(env, return_data);
     }
-    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Subscribe failed!");
     return;
 
 clean_up:
@@ -2075,20 +2077,14 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_unsubscribe_future) {
     (void)jni_class;
 
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_mqtt5_client_unsubscribe_return_data *return_data = NULL;
+    struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_unsubscribe_packet = NULL;
+
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "Mqtt5Client.unsubscribe: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!java_client->client) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.unsubscribe: Invalid/null native client", AWS_ERROR_INVALID_ARGUMENT);
-        return;
-    }
-    if (!jni_unsubscribe_packet) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "Mqtt5Client.unsubscribe: Invalid/null unsubscribe packet", AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
     if (!jni_unsubscribe_future) {
@@ -2097,19 +2093,27 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         return;
     }
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
+    if (!java_client->client) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Invalid/null native client");
+        goto exception;
+    }
+    if (!jni_unsubscribe_packet) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Invalid/Null unsubscribe packet!");
+        goto exception;
+    }
+
     /* Cannot fail */
-    struct aws_mqtt5_client_unsubscribe_return_data *return_data =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_unsubscribe_return_data));
+    return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_unsubscribe_return_data));
     return_data->java_client = java_client;
 
     struct aws_mqtt5_unsubscribe_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_unsubscribe_completion;
     completion_options.completion_user_data = (void *)return_data;
 
-    struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_unsubscribe_packet =
+    java_unsubscribe_packet =
         aws_mqtt5_packet_unsubscribe_view_create_from_java(env, allocator, jni_unsubscribe_packet);
     if (!java_unsubscribe_packet) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Could not create native unsubscribe packet!");
         goto exception;
     }
 
@@ -2119,6 +2123,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         aws_mqtt5_packet_unsubscribe_view_get_packet(java_unsubscribe_packet),
         &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Unsubscribe failed! Error code: %i", return_result);
         goto exception;
     }
     goto clean_up;
@@ -2131,7 +2137,6 @@ exception:
     if (return_data) {
         s_aws_mqtt5_client_java_unsubscribe_callback_destructor(env, return_data);
     }
-    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Unsubscribe failed!");
     return;
 
 clean_up:

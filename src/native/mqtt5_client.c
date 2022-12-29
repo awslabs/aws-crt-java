@@ -1402,6 +1402,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
     int exception_error_code = error_code;
     JavaVM *jvm = NULL;
     JNIEnv *env = NULL;
+    bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_publish_return_data *return_data = (struct aws_mqtt5_client_publish_return_data *)user_data;
     if (!return_data) {
@@ -1512,7 +1513,9 @@ exception:
 clean_up:
     s_aws_mqtt5_client_java_publish_callback_destructor(env, return_data);
     if (env != NULL) {
-        (*env)->PopLocalFrame(env, NULL);
+        if (has_pushed_frame) {
+            (*env)->PopLocalFrame(env, NULL);
+        }
         /********** JNI ENV RELEASE **********/
         aws_jni_release_thread_env(jvm, env);
     }
@@ -1540,6 +1543,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
     JavaVM *jvm = NULL;
+    bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_subscribe_return_data *return_data =
         (struct aws_mqtt5_client_subscribe_return_data *)user_data;
@@ -1596,6 +1600,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
         exception_error_code = AWS_ERROR_INVALID_STATE;
         goto exception;
     }
+    has_pushed_frame = true;
 
     /* The SubAck to return (if present) */
     jobject suback_packet_data = NULL;
@@ -1663,7 +1668,9 @@ exception:
 clean_up:
     s_aws_mqtt5_client_java_subscribe_callback_destructor(env, return_data);
     if (env != NULL) {
-        (*env)->PopLocalFrame(env, NULL);
+        if (has_pushed_frame) {
+            (*env)->PopLocalFrame(env, NULL);
+        }
         /********** JNI ENV RELEASE **********/
         aws_jni_release_thread_env(jvm, env);
     }
@@ -1690,6 +1697,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
     JavaVM *jvm = NULL;
+    bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_unsubscribe_return_data *return_data =
         (struct aws_mqtt5_client_unsubscribe_return_data *)user_data;
@@ -1742,6 +1750,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
         exception_error_code = AWS_ERROR_INVALID_STATE;
         goto exception;
     }
+    has_pushed_frame = true;
 
     if (error_code != AWS_OP_SUCCESS) {
         exception_error_code = error_code;
@@ -1809,7 +1818,9 @@ exception:
 clean_up:
     s_aws_mqtt5_client_java_unsubscribe_callback_destructor(env, return_data);
     if (env != NULL) {
-        (*env)->PopLocalFrame(env, NULL);
+        if (has_pushed_frame) {
+            (*env)->PopLocalFrame(env, NULL);
+        }
         /********** JNI ENV RELEASE **********/
         aws_jni_release_thread_env(jvm, env);
     }

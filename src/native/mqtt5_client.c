@@ -1045,14 +1045,14 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
     return publish_packet_data;
 }
 
-static void s_complete_future_with_exception(JNIEnv *env, jobject future, int error_code) {
+static void s_complete_future_with_exception(JNIEnv *env, jobject *future, int error_code) {
     if (!env || !future) {
         return;
     }
 
     jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, error_code);
     (*env)->CallBooleanMethod(
-        env, future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
+        env, *future, completable_future_properties.complete_exceptionally_method_id, crt_exception);
     aws_jni_check_and_clear_exception(env);
     (*env)->DeleteLocalRef(env, crt_exception);
 }
@@ -1506,7 +1506,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_publish_future, exception_error_code);
+    s_complete_future_with_exception(env, &jni_publish_future, exception_error_code);
     goto clean_up;
 
 clean_up:
@@ -1657,7 +1657,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_subscribe_future, exception_error_code);
+    s_complete_future_with_exception(env, &jni_subscribe_future, exception_error_code);
     goto clean_up;
 
 clean_up:
@@ -1803,7 +1803,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_unsubscribe_future, exception_error_code);
+    s_complete_future_with_exception(env, &jni_unsubscribe_future, exception_error_code);
     goto clean_up;
 
 clean_up:
@@ -1960,6 +1960,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     /* Cannot fail */
     return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_publish_return_data));
     return_data->java_client = java_client;
+    return_data->jni_publish_future = (*env)->NewGlobalRef(env, jni_publish_future);
 
     struct aws_mqtt5_publish_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_publish_completion;
@@ -1971,7 +1972,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         goto exception;
     }
 
-    return_data->jni_publish_future = (*env)->NewGlobalRef(env, jni_publish_future);
     int return_result = aws_mqtt5_client_publish(
         java_client->client, aws_mqtt5_packet_publish_view_get_packet(java_publish_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
@@ -1982,7 +1982,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_publish_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(env, &jni_publish_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
     if (java_publish_packet) {
         aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
     }
@@ -2033,6 +2033,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     /* Cannot fail */
     return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_subscribe_return_data));
     return_data->java_client = java_client;
+    return_data->jni_subscribe_future = (*env)->NewGlobalRef(env, jni_subscribe_future);
 
     struct aws_mqtt5_subscribe_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_subscribe_completion;
@@ -2044,7 +2045,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         goto exception;
     }
 
-    return_data->jni_subscribe_future = (*env)->NewGlobalRef(env, jni_subscribe_future);
     int return_result = aws_mqtt5_client_subscribe(
         java_client->client, aws_mqtt5_packet_subscribe_view_get_packet(java_subscribe_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
@@ -2054,7 +2054,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_subscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(env, &jni_subscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
     if (java_subscribe_packet) {
         aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
     }
@@ -2105,6 +2105,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     /* Cannot fail */
     return_data = aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_unsubscribe_return_data));
     return_data->java_client = java_client;
+    return_data->jni_unsubscribe_future = (*env)->NewGlobalRef(env, jni_unsubscribe_future);
 
     struct aws_mqtt5_unsubscribe_completion_options completion_options;
     completion_options.completion_callback = &s_aws_mqtt5_client_java_unsubscribe_completion;
@@ -2117,7 +2118,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         goto exception;
     }
 
-    return_data->jni_unsubscribe_future = (*env)->NewGlobalRef(env, jni_unsubscribe_future);
     int return_result = aws_mqtt5_client_unsubscribe(
         java_client->client,
         aws_mqtt5_packet_unsubscribe_view_get_packet(java_unsubscribe_packet),
@@ -2130,7 +2130,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, jni_unsubscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(env, &jni_unsubscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
     if (java_unsubscribe_packet) {
         aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
     }

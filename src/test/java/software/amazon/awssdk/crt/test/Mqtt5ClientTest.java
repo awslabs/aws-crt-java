@@ -512,20 +512,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builder.withLifecycleEvents(events);
             builder.withPort(mqtt5DirectMqttPort);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                 client.stop(disconnect.build());
             }
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -547,11 +539,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttBasicAuthHost, mqtt5DirectMqttBasicAuthPort);
             builder.withLifecycleEvents(events);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(mqtt5BasicAuthUsername).withPassword(mqtt5BasicAuthPassword.getBytes());
             builder.withConnectOptions(connectOptions.build());
@@ -562,10 +549,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                 client.stop(disconnect.build());
             }
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -590,21 +573,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     builder.withLifecycleEvents(events);
                     builder.withTlsContext(tlsContext);
 
-                    EventLoopGroup elg = new EventLoopGroup(1);
-                    HostResolver hr = new HostResolver(elg);
-                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                    builder.withBootstrap(bootstrap);
-
                     try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                         client.start();
                         events.connectedFuture.get(180, TimeUnit.SECONDS);
                         DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                         client.stop(disconnect.build());
                     }
-
-                    elg.close();
-                    hr.close();
-                    bootstrap.close();
                 }
             }
         } catch (Exception ex) {
@@ -634,21 +608,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withLifecycleEvents(events);
                 builder.withTlsContext(tlsContext);
 
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                builder.withBootstrap(bootstrap);
-
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(180, TimeUnit.SECONDS);
                     DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
                     client.stop(disconnect.build());
                 }
-
-                elg.close();
-                hr.close();
-                bootstrap.close();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1016,9 +981,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 connectBuilder.withWill(willPacketBuilder.build());
                 connectBuilder.withWillDelayIntervalSeconds(1000L);
 
-                // ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
-                // userProperties.add(new UserProperty("Hello", "World"));
-                // connectBuilder.withUserProperties(userProperties);
+                ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+                userProperties.add(new UserProperty("Hello", "World"));
+                connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5WSMqttPort);
                 builder.withBootstrap(bootstrap)
@@ -1084,11 +1049,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("_test", getMinimumDirectPort());
             builder.withLifecycleEvents(events);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
 
@@ -1111,10 +1071,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     fail("No exception occurred!");
                 }
             }
-
-            bootstrap.close();
-            elg.close();
-            hr.close();
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1132,11 +1088,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), 65535L);
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -1159,10 +1110,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 }
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1181,11 +1128,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5WSMqttPort);
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -1207,10 +1149,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     fail("No exception occurred!");
                 }
             }
-
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -1476,11 +1414,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             // Only needed for IoT Core
             TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
@@ -1515,10 +1448,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1540,16 +1469,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builderTwo.withLifecycleEvents(eventsTwo);
             builderTwo.withConnectOptions(connectOptions.build());
-
-            builderTwo.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1592,10 +1514,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1618,11 +1536,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5Client client = null;
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             connectOptions.withKeepAliveIntervalSeconds(-100L);
             builder.withConnectOptions(connectOptions.build());
@@ -1712,10 +1625,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1735,11 +1644,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             connectOptions.withKeepAliveIntervalSeconds(2147483647L);
             builder.withConnectOptions(connectOptions.build());
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1814,10 +1718,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1834,11 +1734,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1873,10 +1768,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1893,11 +1784,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1932,10 +1818,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1952,11 +1834,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1993,10 +1870,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2013,11 +1886,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2054,10 +1922,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2074,11 +1938,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2115,10 +1974,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2135,11 +1990,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2176,10 +2026,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2201,11 +2047,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2236,10 +2077,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2256,11 +2093,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2304,10 +2136,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (tlsContext != null) {
                 tlsContext.close();
             }
-
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -2396,11 +2224,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             // Only needed for IoT Core
             TlsContext tlsContext = null;
             if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
@@ -2450,10 +2273,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2471,11 +2290,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2500,8 +2314,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             builderTwo.withLifecycleEvents(eventsTwo);
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builderTwo.withPublishEvents(publishEvents);
-
-            builderTwo.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContextTwo = null;
@@ -2539,10 +2351,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContextTwo.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2560,11 +2368,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2608,10 +2411,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2634,11 +2433,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2670,10 +2464,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2690,11 +2480,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2726,10 +2511,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2746,11 +2527,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2782,10 +2558,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2802,11 +2574,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2838,10 +2605,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2858,11 +2621,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2894,10 +2652,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -2914,11 +2668,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -2949,10 +2698,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (tlsContext != null) {
                 tlsContext.close();
             }
-
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -3024,19 +2769,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
-
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
             builderTwo.withLifecycleEvents(eventsTwo);
             PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
             publishEvents.desiredPublishCount = messageCount;
             builderTwo.withPublishEvents(publishEvents);
-
-            builderTwo.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -3080,9 +2818,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (tlsContext != null) {
                 tlsContext.close();
             }
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -3108,26 +2843,17 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
             publisherEventsBuilder.withLifecycleEvents(publisherEvents);
 
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            publisherEventsBuilder.withBootstrap(bootstrap);
-
             Mqtt5ClientOptionsBuilder successSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
             PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
             successSubscriberBuilder.withLifecycleEvents(successSubscriberEvents);
             successSubscriberBuilder.withPublishEvents(successSubscriberPublishEvents);
 
-            successSubscriberBuilder.withBootstrap(bootstrap);
-
             Mqtt5ClientOptionsBuilder unsuccessSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
             PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
             unsuccessSubscriberBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
             unsuccessSubscriberBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
-
-            unsuccessSubscriberBuilder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -3222,10 +2948,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -3249,11 +2971,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -3290,10 +3007,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -3311,11 +3024,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -3352,10 +3060,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
-            elg.close();
-            hr.close();
-            bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -3372,11 +3076,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
-
-            EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            builder.withBootstrap(bootstrap);
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -3412,10 +3111,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             if (tlsContext != null) {
                 tlsContext.close();
             }
-
-            elg.close();
-            hr.close();
-            bootstrap.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());

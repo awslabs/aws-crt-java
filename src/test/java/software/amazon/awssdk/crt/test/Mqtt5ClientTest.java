@@ -2037,7 +2037,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
-                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
+                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic").withQOS(QOS.AT_LEAST_ONCE);
                 publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
                 try {
                     System.out.println("NOTE: Exception due to expiry interval seconds being too large expected below!");

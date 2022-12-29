@@ -136,7 +136,8 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
                 goto on_error;
             } else if (jni_proxy_connection_type_value_check > AWS_HPCT_HTTP_TUNNEL) { /* The (current) maximum enum */
                                                                                        /* value */
-                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is more than maximum allowed value");
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is more than maximum allowed value");
                 goto on_error;
             } else {
                 http_options->options.connection_type =
@@ -584,7 +585,8 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
                 connack_data,
                 mqtt5_connack_packet_properties.connack_native_add_maximum_qos_id,
                 true) != AWS_OP_SUCCESS) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Could not set maximum QOS");
             return NULL;
         }
     }
@@ -686,7 +688,8 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
             native_connack_data->user_properties,
             connack_data,
             mqtt5_connack_packet_properties.connack_user_properties_field_id) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: could not add user property!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: could not add user property!");
         return NULL;
     }
 
@@ -709,7 +712,8 @@ static jobject s_aws_mqtt5_client_create_jni_disconnect_packet_from_native(
             disconnect_packet_data,
             mqtt5_disconnect_packet_properties.disconnect_native_add_disconnect_reason_code_id,
             false) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: Could not set reason code");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT, "Error when creating DisconnectPacket from native: Could not set reason code");
         return NULL;
     }
 
@@ -911,7 +915,8 @@ static jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
                 publish_packet_data,
                 mqtt5_publish_packet_properties.publish_native_set_payload_format_indicator_id,
                 true) != AWS_OP_SUCCESS) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set payload format");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "Error when creating PublishPacket from native: Could not set payload format");
             return NULL;
         }
     }
@@ -1583,7 +1588,9 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
                             suback_packet_data,
                             mqtt5_suback_packet_properties.suback_native_add_suback_code_id,
                             false) != AWS_OP_SUCCESS) {
-                        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating SubAckPacket from native: Could not set reason code");
+                        AWS_LOGF_ERROR(
+                            AWS_LS_MQTT_CLIENT,
+                            "Error when creating SubAckPacket from native: Could not set reason code");
                         exception_error_code = AWS_ERROR_INVALID_STATE;
                         goto exception;
                     }
@@ -1731,7 +1738,9 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
                         unsuback_packet_data,
                         mqtt5_unsuback_packet_properties.unsuback_native_add_unsuback_code_id,
                         false) != AWS_OP_SUCCESS) {
-                    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating UnsubAckPacket from native: Could not set reason code");
+                    AWS_LOGF_ERROR(
+                        AWS_LS_MQTT_CLIENT,
+                        "Error when creating UnsubAckPacket from native: Could not set reason code");
                     exception_error_code = AWS_ERROR_INVALID_STATE;
                     goto exception;
                 }
@@ -1854,11 +1863,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         java_disconnect_packet =
             aws_mqtt5_packet_disconnect_view_create_from_java(env, allocator, jni_disconnect_packet);
         if (!java_disconnect_packet) {
-            AWS_LOGF_ERROR(
-                AWS_LS_MQTT_CLIENT,
-                "%s - error code: %i",
-                "Mqtt5Client.stop: Invalid/null disconnect packet",
-                aws_last_error());
+            s_aws_mqtt5_client_log_and_throw_exception(
+                env, "Mqtt5Client.stop: Invalid/null disconnect packet", aws_last_error());
             goto clean_up;
         }
     }
@@ -1866,11 +1872,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_result = aws_mqtt5_client_stop(
         java_client->client, aws_mqtt5_packet_disconnect_view_get_packet(java_disconnect_packet), NULL);
     if (return_result != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(
-            AWS_LS_MQTT_CLIENT,
-            "%s - error code: %i",
-            "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!",
-            return_result);
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.stop: aws_mqtt5_client_stop returned a non AWS_OP_SUCCESS code!", return_result);
     }
     goto clean_up;
 

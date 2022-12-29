@@ -192,12 +192,15 @@ static int s_allocate_user_properties_array_holders(
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *user_property_array,
     size_t init_entries) {
-    if (aws_array_list_init_dynamic(
-            holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
-        aws_array_list_init_dynamic(
-            user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
-            AWS_OP_SUCCESS) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+
+    if (init_entries > 0) {
+        if (aws_array_list_init_dynamic(
+                holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
+            aws_array_list_init_dynamic(
+                user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
+                AWS_OP_SUCCESS) {
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
     }
     return AWS_OP_SUCCESS;
 }
@@ -213,10 +216,12 @@ static void s_cleanup_two_aws_array(
          * We want to keep the struct one in memory since it belongs to a packet or similar.
          * If both need to be freed, then we assume whomever is calling this will handle it.
          */
-        for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
+        for (size_t i = 0; i < aws_array_list_length(user_properties_holder); ++i) {
             struct jstring_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
+            if (holder.jni_string && holder.cursor.ptr) {
+                aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
+            }
         }
         aws_array_list_clean_up(user_properties_holder);
     }

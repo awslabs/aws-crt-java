@@ -3169,7 +3169,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     fail("Success subscriber could not subscribe!");
                 }
                 try {
-                    successSubscriberPublishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                    successSubscriberPublishEvents.publishReceivedFuture.get(360, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     // Clear the retained message
                     publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
@@ -3179,8 +3179,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 // Clear the retained message
                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
 
-                // Wait 5 seconds to give the server time to clear everything out
-                Thread.sleep(5000);
+                // Wait 15 seconds to give the server time to clear everything out
+                Thread.sleep(15000);
 
                 // Connect the unsuccessful subscriber
                 unsuccessfulSubscriber.start();

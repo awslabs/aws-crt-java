@@ -2171,7 +2171,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
-                events.connectedFuture.get(60, TimeUnit.SECONDS);
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 assertEquals(
                         "Negotiated Settings client ID does not match sent client ID",
@@ -2199,7 +2199,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
-                rejoinEvents.connectedFuture.get(60, TimeUnit.SECONDS);
+                rejoinEvents.connectedFuture.get(180, TimeUnit.SECONDS);
 
                 assertEquals(
                         "Negotiated Settings rejoined session does not match expected value",
@@ -2717,50 +2717,58 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
-    /* TODO: Adjust and enable this test using IoT Core. */
-    /* Unsupported Connect packet data sent */
-    /*
+    /* Unsupported Connect packet data sent (IoT Core only) */
     @Test
     public void ErrorOp_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(mqtt5DirectMqttHost != null);
-        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        /* Only works on IoT Core */
+        Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateBytes != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyBytes != null);
         boolean didExceptionOccur = false;
 
         try {
-            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5DirectMqttPort);
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, mqtt5IoTCoreMqttPort);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
+            TlsContext tlsContext = null;
+            tlsContext = getIoTCoreTlsContext();
+            builder.withTlsContext(tlsContext);
+
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             String clientIDString = "";
-            for (int i = 0; i < 130; i++) {
+            for (int i = 0; i < 256; i++) {
                 clientIDString += "a";
             }
             connectOptions.withClientId(clientIDString);
             builder.withConnectOptions(connectOptions.build());
 
-            Mqtt5Client client = new Mqtt5Client(builder.build());
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                try {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
 
-            try {
-                client.start();
-                events.connectedFuture.get(180, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                didExceptionOccur = true;
+                if (didExceptionOccur == false) {
+                    fail("Was able to connect with Client ID longer than 128 characters (AWS_IOT_CORE_MAXIMUM_CLIENT_ID_LENGTH)");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
             }
 
-            if (didExceptionOccur == false) {
-                fail("Was able to connect with Client ID longer than 128 characters (AWS_IOT_CORE_MAXIMUM_CLIENT_ID_LENGTH)");
+            if (tlsContext != null) {
+                tlsContext.close();
             }
-
-            client.stop(new DisconnectPacketBuilder().build());
-            client.close();
 
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
     }
-    */
 
     /**
      * ============================================================

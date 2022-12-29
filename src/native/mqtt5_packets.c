@@ -195,7 +195,8 @@ static int s_allocate_user_properties_array_holders(
 
     if (init_entries > 0) {
         if (aws_array_list_init_dynamic(
-                holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
+                holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) !=
+                AWS_OP_SUCCESS ||
             aws_array_list_init_dynamic(
                 user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
                 AWS_OP_SUCCESS) {

@@ -125,7 +125,8 @@ struct jstring_array_holder_struct {
 
 static void s_log_and_throw_exception(JNIEnv *env, const char *message) {
     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s", message);
-    aws_jni_throw_runtime_exception(env, "%s", message);
+    (void)env;
+    // aws_jni_throw_runtime_exception(env, "%s", message);
 }
 
 static int s_populate_user_properties(

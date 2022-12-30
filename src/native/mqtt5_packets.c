@@ -117,6 +117,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni {
 struct jstring_array_holder_struct {
     jstring *jni_string;
     struct aws_byte_cursor cursor;
+    struct aws_byte_buf buffer;
 };
 
 /*******************************************************************************
@@ -161,21 +162,22 @@ static int s_populate_user_properties(
                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
             }
 
-            struct jstring_array_holder_struct holder_property_key = {
-                .jni_string = &jni_property_key,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key),
-            };
+            struct jstring_array_holder_struct holder_property_key;
+            holder_property_key.jni_string = &jni_property_key;
+            holder_property_key.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_key.buffer, aws_jni_get_allocator(), holder_property_key.cursor);
 
-            struct jstring_array_holder_struct holder_property_value = {
-                .jni_string = &jni_property_value,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value),
-            };
+            struct jstring_array_holder_struct holder_property_value;
+            holder_property_value.jni_string = &jni_property_value;
+            holder_property_value.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_value.buffer, aws_jni_get_allocator(), holder_property_key.cursor);
+
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_value);
 
             struct aws_mqtt5_user_property jni_property_struct = {
-                .name = holder_property_key.cursor,
-                .value = holder_property_value.cursor,
+                .name = aws_byte_cursor_from_buf(&holder_property_key.buffer),
+                .value = aws_byte_cursor_from_buf(&holder_property_value.buffer),
             };
             aws_array_list_push_back(java_packet_user_properties_struct_holder, (void *)&jni_property_struct);
         }
@@ -211,6 +213,7 @@ static void s_cleanup_two_aws_array(
     struct aws_array_list *user_properties_holder,
     struct aws_array_list *user_properties_struct_holder) {
 
+    (void)env;
     if (aws_array_list_is_valid(user_properties_holder)) {
         /**
          * Note that this ONLY frees the array holders for the non-struct array.
@@ -220,8 +223,9 @@ static void s_cleanup_two_aws_array(
         for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
             struct jstring_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            if (holder.jni_string && holder.cursor.ptr) {
+            if (holder.jni_string) {
                 aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
+                aws_byte_buf_clean_up(&holder.buffer);
             }
         }
         aws_array_list_clean_up(user_properties_holder);
@@ -1381,7 +1385,8 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
         }
         if (jni_topic_filter) {
             holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
+            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), holder.cursor);
             subscription_view.topic_filter = holder.cursor;
         } else {
             AWS_LOGF_ERROR(
@@ -1571,7 +1576,8 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
         }
         if (jni_topic_filter) {
             holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
+            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), holder.cursor);
         }
         aws_array_list_push_back(&java_packet->topic_filters, (void *)&holder.cursor);
         aws_array_list_push_back(&java_packet->jni_topic_filters, (void *)&holder);

@@ -44,7 +44,7 @@ struct aws_mqtt5_packet_connect_view_java_jni {
     uint32_t maximum_packet_size_bytes;
     uint32_t will_delay_interval_seconds;
     uint16_t keep_alive_interval_seconds;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -59,7 +59,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni {
     jstring *jni_server_reference;
     struct aws_byte_cursor server_reference_cursor;
     uint32_t session_expiry_interval_seconds;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -81,7 +81,7 @@ struct aws_mqtt5_packet_publish_view_java_jni {
     struct aws_byte_cursor correlation_data_cursor;
     jstring *jni_content_type;
     struct aws_byte_cursor content_type_cursor;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -92,10 +92,10 @@ struct aws_mqtt5_packet_subscribe_view_java_jni {
 
     /* Contains aws_mqtt5_subscription_view pointers */
     struct aws_array_list topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_subscription_topic_filters;
     uint32_t subscription_identifier;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -106,16 +106,15 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni {
 
     /* Contains aws_byte_cursor pointers */
     struct aws_array_list topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
 };
 
-struct jstring_array_holder_struct {
-    jstring *jni_string;
+struct buffer_and_cursor_array_holder_struct {
     struct aws_byte_cursor cursor;
     struct aws_byte_buf buffer;
 };
@@ -129,7 +128,7 @@ static int s_populate_user_properties(
     jobject jni_user_properties_list,
     size_t java_packet_native_user_property_count,
     const struct aws_mqtt5_user_property **java_packet_native_user_properties,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *java_packet_user_properties_holder,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *java_packet_user_properties_struct_holder) {
@@ -147,7 +146,7 @@ static int s_populate_user_properties(
 
             jstring jni_property_key =
                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_key_id);
-            if (aws_jni_check_and_clear_exception(env)) {
+            if (aws_jni_check_and_clear_exception(env) || !jni_property_key) {
                 AWS_LOGF_ERROR(
                     AWS_LS_MQTT_CLIENT,
                     "Could not populate user properties due to exception when getting property key");
@@ -155,29 +154,46 @@ static int s_populate_user_properties(
             }
             jstring jni_property_value =
                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_value_id);
-            if (aws_jni_check_and_clear_exception(env)) {
+            if (aws_jni_check_and_clear_exception(env) || !jni_property_value) {
                 AWS_LOGF_ERROR(
                     AWS_LS_MQTT_CLIENT,
                     "Could not populate user properties due to exception when getting property value");
                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
             }
 
-            struct jstring_array_holder_struct holder_property_key;
-            holder_property_key.jni_string = &jni_property_key;
-            holder_property_key.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key);
-            aws_byte_buf_init_copy_from_cursor(&holder_property_key.buffer, aws_jni_get_allocator(), holder_property_key.cursor);
+            if (!jni_property_key) {
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error reading a user property: Key in user property was NULL!");
+                return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            }
+            if (!jni_property_value) {
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error reading a user property: Key in user property was NULL!");
+                return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            }
 
-            struct jstring_array_holder_struct holder_property_value;
-            holder_property_value.jni_string = &jni_property_value;
-            holder_property_value.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value);
-            aws_byte_buf_init_copy_from_cursor(&holder_property_value.buffer, aws_jni_get_allocator(), holder_property_key.cursor);
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct buffer_and_cursor_array_holder_struct holder_property_key;
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_key.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder_property_key.cursor = aws_byte_cursor_from_buf(&holder_property_key.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_property_key, tmp_cursor);
+            jni_property_key = NULL;
+
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct buffer_and_cursor_array_holder_struct holder_property_value;
+            tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_value.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder_property_value.cursor = aws_byte_cursor_from_buf(&holder_property_value.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_property_value, tmp_cursor);
+            jni_property_value = NULL;
 
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_value);
 
             struct aws_mqtt5_user_property jni_property_struct = {
-                .name = aws_byte_cursor_from_buf(&holder_property_key.buffer),
-                .value = aws_byte_cursor_from_buf(&holder_property_value.buffer),
+                .name = holder_property_key.cursor,
+                .value = holder_property_value.cursor,
             };
             aws_array_list_push_back(java_packet_user_properties_struct_holder, (void *)&jni_property_struct);
         }
@@ -189,7 +205,7 @@ static int s_populate_user_properties(
 
 static int s_allocate_user_properties_array_holders(
     struct aws_allocator *allocator,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *holder_array,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *user_property_array,
@@ -197,7 +213,7 @@ static int s_allocate_user_properties_array_holders(
 
     if (init_entries > 0) {
         if (aws_array_list_init_dynamic(
-                holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) !=
+                holder_array, allocator, 2 * init_entries, sizeof(struct buffer_and_cursor_array_holder_struct)) !=
                 AWS_OP_SUCCESS ||
             aws_array_list_init_dynamic(
                 user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
@@ -221,12 +237,9 @@ static void s_cleanup_two_aws_array(
          * If both need to be freed, then we assume whomever is calling this will handle it.
          */
         for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
-            struct jstring_array_holder_struct holder;
+            struct buffer_and_cursor_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            if (holder.jni_string) {
-                aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
-                aws_byte_buf_clean_up(&holder.buffer);
-            }
+            aws_byte_buf_clean_up(&holder.buffer);
         }
         aws_array_list_clean_up(user_properties_holder);
     }
@@ -577,7 +590,7 @@ static int s_get_user_properties_from_packet_optional(
     jfieldID packet_field,
     char *packet_name,
     size_t *packet_user_property_count,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *jni_user_properties_holder,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *jni_user_properties_struct_holder,
@@ -1339,7 +1352,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
         &java_packet->jni_subscription_topic_filters,
         allocator,
         subscriptions_filter_size,
-        sizeof(struct jstring_array_holder_struct));
+        sizeof(struct buffer_and_cursor_array_holder_struct));
     if (jni_array_init != AWS_OP_SUCCESS) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
         goto on_error;
@@ -1367,7 +1380,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
     for (size_t i = 0; i < subscriptions_filter_size; i++) {
         /* Populate */
         struct aws_mqtt5_subscription_view subscription_view;
-        struct jstring_array_holder_struct holder;
+        struct buffer_and_cursor_array_holder_struct holder;
 
         jobject jni_packet_subscribe_subscription =
             (*env)->CallObjectMethod(env, jni_subscriptions, boxed_list_properties.list_get_id, (jint)i);
@@ -1384,10 +1397,14 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
-            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), holder.cursor);
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder.cursor = aws_byte_cursor_from_buf(&holder.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_topic_filter, tmp_cursor);
             subscription_view.topic_filter = holder.cursor;
+            jni_topic_filter = NULL;
         } else {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: subscription topic filter is required");
@@ -1555,7 +1572,10 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
         goto on_error;
     }
     int jni_array_init = aws_array_list_init_dynamic(
-        &java_packet->jni_topic_filters, allocator, topic_filter_size, sizeof(struct jstring_array_holder_struct));
+        &java_packet->jni_topic_filters,
+        allocator,
+        topic_filter_size,
+        sizeof(struct buffer_and_cursor_array_holder_struct));
     if (jni_array_init != AWS_OP_SUCCESS) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         goto on_error;
@@ -1565,7 +1585,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
 
     for (size_t i = 0; i < topic_filter_size; i++) {
         /* Populate */
-        struct jstring_array_holder_struct holder;
+        struct buffer_and_cursor_array_holder_struct holder;
 
         jstring jni_topic_filter =
             (jstring)(*env)->CallObjectMethod(env, jni_topic_filters, boxed_list_properties.list_get_id, (jint)i);
@@ -1575,9 +1595,13 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
-            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), holder.cursor);
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder.cursor = aws_byte_cursor_from_buf(&holder.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_topic_filter, tmp_cursor);
+            jni_topic_filter = NULL;
         }
         aws_array_list_push_back(&java_packet->topic_filters, (void *)&holder.cursor);
         aws_array_list_push_back(&java_packet->jni_topic_filters, (void *)&holder);

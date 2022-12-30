@@ -41,6 +41,7 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingTy
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;
 
 public class Mqtt5Canary {
+
     static String configEndpoint = "localhost";
     static Long configPort = 1883L;
     static String configCaFile = null;
@@ -213,7 +214,6 @@ public class Mqtt5Canary {
         String sharedTopic = "test/shared_topic";
         String clientId = "";
         boolean subscribedToTopics = false;
-        boolean isWaitingForOperation = false;
     }
 
     enum CANARY_OPERATIONS {
@@ -390,16 +390,10 @@ public class Mqtt5Canary {
 
     public static void OperationStart(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Start called for client ID " + clientIdx + " but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == true) {
             PrintLog("[OP] Start called for client ID " + clientIdx + " but is already connected/started!");
             return;
         }
-
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to start client ID " + clientIdx);
         client.start();
         try {
@@ -413,21 +407,14 @@ public class Mqtt5Canary {
             exitWithError(1);
         }
         PrintLog("[OP] Started client ID " + clientIdx);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationStop(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Stop called for client ID " + clientIdx + " but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == false) {
             PrintLog("[OP] Stop called for client ID " + clientIdx + " but is already disconnected/stopped!");
             return;
         }
-
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to stop client ID " + clientIdx);
         client.stop(new DisconnectPacketBuilder().build());
         try {
@@ -441,15 +428,10 @@ public class Mqtt5Canary {
             exitWithError(1);
         }
         PrintLog("[OP] Stopped client ID " + clientIdx);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationSubscribe(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Subscribe called for client ID " + clientIdx + " but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == false) {
             OperationStart(clientIdx);
             return;
@@ -458,7 +440,6 @@ public class Mqtt5Canary {
             return;
         }
 
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to subscribe client ID " + clientIdx);
         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId, QOS.AT_LEAST_ONCE);
@@ -475,15 +456,10 @@ public class Mqtt5Canary {
         }
         clientsData.get(clientIdx).subscribedToTopics = true;
         PrintLog("[OP] Subscribed client ID " + clientIdx);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationUnsubscribe(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Unsubscribe called for client ID " + clientIdx + " but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == false) {
             OperationStart(clientIdx);
             return;
@@ -492,7 +468,6 @@ public class Mqtt5Canary {
             return;
         }
 
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to unsubscribe client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId);
@@ -509,21 +484,15 @@ public class Mqtt5Canary {
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
         PrintLog("[OP] Unsubscribed client ID " + clientIdx);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationUnsubscribeBad(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Unsubscribe bad called for client ID " + clientIdx + " but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == false) {
             OperationStart(clientIdx);
             return;
         }
 
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
         unsubscribePacketBuilder.withSubscription("Non_existent_topic_here");
@@ -538,22 +507,16 @@ public class Mqtt5Canary {
             exitWithError(1);
         }
         PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     // Note: Handles QoS 0, QoS 1, and topic filter based on passed-in input
     public static void OperationPublish(int clientIdx, QOS qos, String topic) {
         Mqtt5Client client = clients.get(clientIdx);
-        if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Publish called for client ID " + clientIdx + " with QoS" + qos + " with topic " + topic + " - but already has operation...");
-            return;
-        }
         if (client.getIsConnected() == false) {
             OperationStart(clientIdx);
             return;
         }
 
-        clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
         publishPacketBuilder.withQOS(qos);
@@ -578,7 +541,6 @@ public class Mqtt5Canary {
             exitWithError(1);
         }
         PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
-        clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationPublishQoS0(int clientIdx) {

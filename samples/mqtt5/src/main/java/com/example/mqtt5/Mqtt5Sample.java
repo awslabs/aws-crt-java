@@ -97,7 +97,7 @@ public class Mqtt5Sample {
         }
 
         @Override
-        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionSuccessReturn) {
             System.out.println("[Lifecycle event] Client connection failed...");
             connectedFuture.completeExceptionally(new Exception("Connection failure"));
         }

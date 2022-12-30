@@ -2311,7 +2311,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     struct aws_mqtt5_client_options client_options;
     AWS_ZERO_STRUCT(client_options);
     struct aws_http_proxy_options_java_jni *java_http_proxy_options = NULL;
-    jstring jni_host_name = NULL;
+    struct aws_byte_buf host_name_buf;
 
     /* Needed to track if optionals are set or not */
     bool was_value_set = false;
@@ -2348,7 +2348,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             mqtt5_client_options_properties.options_host_name_field_id,
             s_client_string,
             "Host Name",
-            &jni_host_name,
+            &host_name_buf,
             &client_options.host_name,
             false,
             &was_value_set) != AWS_OP_SUCCESS) {
@@ -2703,8 +2703,8 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
-    if (jni_host_name != NULL) {
-        aws_jni_byte_cursor_from_jstring_release(env, jni_host_name, client_options.host_name);
+    if (aws_byte_buf_is_valid(&host_name_buf)) {
+        aws_byte_buf_clean_up(&host_name_buf);
     }
     (*env)->PopLocalFrame(env, NULL);
 

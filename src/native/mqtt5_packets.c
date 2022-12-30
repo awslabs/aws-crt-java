@@ -30,11 +30,11 @@
 struct aws_mqtt5_packet_connect_view_java_jni {
     struct aws_mqtt5_packet_connect_view packet;
 
-    jstring *jni_client_id;
+    struct aws_byte_buf client_id_buf;
     struct aws_byte_cursor client_id_cursor;
-    jstring *jni_username;
+    struct aws_byte_buf username_buf;
     struct aws_byte_cursor username_cursor;
-    jbyteArray *jni_password;
+    struct aws_byte_buf password_buf;
     struct aws_byte_cursor password_cursor;
     uint32_t session_expiry_interval_seconds;
     uint8_t request_response_information;
@@ -54,9 +54,9 @@ struct aws_mqtt5_packet_connect_view_java_jni {
 struct aws_mqtt5_packet_disconnect_view_java_jni {
     struct aws_mqtt5_packet_disconnect_view packet;
 
-    jstring *jni_reason_string;
+    struct aws_byte_buf reason_string_buf;
     struct aws_byte_cursor reason_string_cursor;
-    jstring *jni_server_reference;
+    struct aws_byte_buf server_reference_buf;
     struct aws_byte_cursor server_reference_cursor;
     uint32_t session_expiry_interval_seconds;
     /* Contains buffer_and_cursor_array_holder_struct pointers */
@@ -68,18 +68,18 @@ struct aws_mqtt5_packet_disconnect_view_java_jni {
 struct aws_mqtt5_packet_publish_view_java_jni {
     struct aws_mqtt5_packet_publish_view packet;
 
-    jbyteArray *jni_payload;
+    struct aws_byte_buf payload_buf;
     struct aws_byte_cursor payload_cursor;
-    jstring *jni_topic;
+    struct aws_byte_buf topic_buf;
     struct aws_byte_cursor topic_cursor;
     enum aws_mqtt5_payload_format_indicator payload_format;
     uint32_t message_expiry_interval_seconds;
     uint16_t topic_alias;
-    jstring *jni_response_topic;
+    struct aws_byte_buf response_topic_buf;
     struct aws_byte_cursor response_topic_cursor;
-    jbyteArray *jni_correlation_data;
+    struct aws_byte_buf correlation_data_buf;
     struct aws_byte_cursor correlation_data_cursor;
-    jstring *jni_content_type;
+    struct aws_byte_buf content_type_buf;
     struct aws_byte_cursor content_type_cursor;
     /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
@@ -239,7 +239,9 @@ static void s_cleanup_two_aws_array(
         for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
             struct buffer_and_cursor_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            aws_byte_buf_clean_up(&holder.buffer);
+            if (aws_byte_buf_is_valid(&holder.buffer)) {
+                aws_byte_buf_clean_up(&holder.buffer);
+            }
         }
         aws_array_list_clean_up(user_properties_holder);
     }
@@ -406,7 +408,7 @@ int aws_get_string_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jstring *result_jstring,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool is_optional,
     bool *was_value_set) {
@@ -421,8 +423,11 @@ int aws_get_string_from_jobject(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jstring_value) {
-        result_jstring = &jstring_value;
-        *result_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *result_jstring);
+        // Get the data, copy it, and then release the JNI stuff
+        struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jstring_value);
+        aws_byte_buf_init_copy_from_cursor(result_buf, aws_jni_get_allocator(), tmp_cursor);
+        *result_cursor = aws_byte_cursor_from_buf(result_buf);
+        aws_jni_byte_cursor_from_jstring_release(env, jstring_value, tmp_cursor);
 
         if (was_value_set != NULL) {
             *was_value_set = true;
@@ -445,7 +450,7 @@ int aws_get_byte_array_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jbyteArray *result_jbyte_array,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool optional,
     bool *was_value_set) {
@@ -460,8 +465,11 @@ int aws_get_byte_array_from_jobject(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jbyte_array_value) {
-        result_jbyte_array = &jbyte_array_value;
-        *result_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, *result_jbyte_array);
+        // Get the data, copy it, and then release the JNI stuff
+        struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jbyte_array_value);
+        aws_byte_buf_init_copy_from_cursor(result_buf, aws_jni_get_allocator(), tmp_cursor);
+        *result_cursor = aws_byte_cursor_from_buf(result_buf);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jbyte_array_value, tmp_cursor);
 
         if (was_value_set != NULL) {
             *was_value_set = true;
@@ -697,16 +705,15 @@ void aws_mqtt5_packet_connect_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying ConnectPacket", (void *)java_packet);
 
-    if (java_packet->jni_client_id) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_client_id, java_packet->client_id_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->client_id_buf)) {
+        aws_byte_buf_clean_up(&java_packet->client_id_buf);
     }
-    if (java_packet->jni_username) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_username, java_packet->username_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->username_buf)) {
+        aws_byte_buf_clean_up(&java_packet->username_buf);
     }
-    if (java_packet->jni_password) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_password, java_packet->password_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->password_buf)) {
+        aws_byte_buf_clean_up(&java_packet->password_buf);
     }
-
     if (java_packet->will_publish_packet) {
         aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_packet->will_publish_packet);
     }
@@ -755,7 +762,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_client_id_field_id,
             s_connect_packet_string,
             "client ID",
-            java_packet->jni_client_id,
+            &java_packet->client_id_buf,
             &java_packet->client_id_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -771,7 +778,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_username_field_id,
             s_connect_packet_string,
             "username",
-            java_packet->jni_username,
+            &java_packet->username_buf,
             &java_packet->username_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -787,7 +794,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_password_field_id,
             s_connect_packet_string,
             "password",
-            java_packet->jni_password,
+            &java_packet->password_buf,
             &java_packet->password_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -946,13 +953,11 @@ void aws_mqtt5_packet_disconnect_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying DisconnectPacket", (void *)java_packet);
 
-    if (java_packet->jni_reason_string) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_reason_string, java_packet->reason_string_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->reason_string_buf)) {
+        aws_byte_buf_clean_up(&java_packet->reason_string_buf);
     }
-    if (java_packet->jni_server_reference) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_server_reference, java_packet->server_reference_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->server_reference_buf)) {
+        aws_byte_buf_clean_up(&java_packet->server_reference_buf);
     }
 
     s_cleanup_two_aws_array(
@@ -1013,7 +1018,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             mqtt5_disconnect_packet_properties.disconnect_reason_string_field_id,
             s_disconnect_packet_string,
             "reason string",
-            java_packet->jni_reason_string,
+            &java_packet->reason_string_buf,
             &java_packet->reason_string_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1029,7 +1034,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             mqtt5_disconnect_packet_properties.disconnect_session_server_reference_field_id,
             s_disconnect_packet_string,
             "server reference",
-            java_packet->jni_server_reference,
+            &java_packet->server_reference_buf,
             &java_packet->server_reference_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1082,22 +1087,20 @@ void aws_mqtt5_packet_publish_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying PublishPacket", (void *)java_packet);
 
-    if (java_packet->jni_payload) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_payload, java_packet->payload_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->payload_buf)) {
+        aws_byte_buf_clean_up(&java_packet->payload_buf);
     }
-    if (java_packet->jni_topic) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_topic, java_packet->topic_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->topic_buf)) {
+        aws_byte_buf_clean_up(&java_packet->topic_buf);
     }
-    if (java_packet->jni_response_topic) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_response_topic, java_packet->response_topic_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->response_topic_buf)) {
+        aws_byte_buf_clean_up(&java_packet->response_topic_buf);
     }
-    if (java_packet->jni_correlation_data) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
-            env, *java_packet->jni_correlation_data, java_packet->correlation_data_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->correlation_data_buf)) {
+        aws_byte_buf_clean_up(&java_packet->correlation_data_buf);
     }
-    if (java_packet->jni_content_type) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_content_type, java_packet->content_type_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->content_type_buf)) {
+        aws_byte_buf_clean_up(&java_packet->content_type_buf);
     }
 
     s_cleanup_two_aws_array(
@@ -1126,7 +1129,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_payload_field_id,
             s_publish_packet_string,
             "payload",
-            java_packet->jni_payload,
+            &java_packet->correlation_data_buf,
             &java_packet->payload_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1170,7 +1173,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_topic_field_id,
             s_publish_packet_string,
             "topic",
-            java_packet->jni_topic,
+            &java_packet->topic_buf,
             &java_packet->topic_cursor,
             false,
             NULL) == AWS_OP_ERR) {
@@ -1218,7 +1221,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_response_topic_field_id,
             s_publish_packet_string,
             "response topic",
-            java_packet->jni_response_topic,
+            &java_packet->response_topic_buf,
             &java_packet->response_topic_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1234,7 +1237,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_correlation_data_field_id,
             s_publish_packet_string,
             "correlation data",
-            java_packet->jni_correlation_data,
+            &java_packet->correlation_data_buf,
             &java_packet->correlation_data_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1250,7 +1253,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_content_type_field_id,
             s_publish_packet_string,
             "content type",
-            java_packet->jni_content_type,
+            &java_packet->content_type_buf,
             &java_packet->content_type_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {

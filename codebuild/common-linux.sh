@@ -21,8 +21,6 @@ ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" 
 # Go to repository root directory
 cd $CODEBUILD_SRC_DIR
 
-ulimit -c unlimited
-
 # Build and run all the tests!
 ulimit -c unlimited
 mvn -B test $* \

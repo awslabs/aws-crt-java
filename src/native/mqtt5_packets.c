@@ -217,7 +217,7 @@ static void s_cleanup_two_aws_array(
          * We want to keep the struct one in memory since it belongs to a packet or similar.
          * If both need to be freed, then we assume whomever is calling this will handle it.
          */
-        for (size_t i = 0; i < aws_array_list_length(user_properties_holder); ++i) {
+        for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
             struct jstring_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
             if (holder.jni_string && holder.cursor.ptr) {

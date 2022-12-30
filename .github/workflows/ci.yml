@@ -40,6 +40,13 @@ jobs:
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   linux-compiler-compat:
     runs-on: ubuntu-20.04 # latest
@@ -66,6 +73,13 @@ jobs:
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }}
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: logs
+          path: |
+            hs_err_pid*
+            target/surefire-reports/*stream
 
   linux-arm:
     name: ARM (${{ matrix.arch }})

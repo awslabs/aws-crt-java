@@ -24,10 +24,3 @@ phases:
       - echo Build completed on `date`
       # Print any error reports, should they exist
       - sudo find /codebuild/output/** -name "hs_err*.log" -type f -exec cat {} +
-
-artifacts:
-  discard-paths: yes
-  files:
-    - "target/surefire-reports/**"
-    - "/codebuild/output/**/hs_err_pid*.log"
-    - "core*"

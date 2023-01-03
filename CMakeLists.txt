@@ -33,6 +33,9 @@ if (NOT WIN32 AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
+# TMP - force building in Debug
+set(CMAKE_BUILD_TYPE "Debug")
+
 message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 # This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH

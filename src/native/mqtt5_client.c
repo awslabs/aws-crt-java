@@ -2745,11 +2745,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         return;
     }
 
-    // If the client is NOT null it can be shut down normally, otherwise it needs to be cleaned up directly.
+    // If the client is NOT null it can be shut down normally
     if (java_client->client) {
         java_client->client = aws_mqtt5_client_release(java_client->client);
-    } else {
-        aws_mqtt5_client_java_destroy(env, aws_jni_get_allocator(), java_client);
     }
 }
 

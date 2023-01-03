@@ -295,13 +295,13 @@ static int s_set_jni_uint64_t_field_in_packet(
     bool optional) {
 
     if (native_integer != NULL) {
-        jobject jni_int = (*env)->NewObject(
+        jobject jni_long = (*env)->NewObject(
             env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*native_integer);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint64 field %s", field_name);
             return AWS_OP_ERR;
         }
-        (*env)->SetObjectField(env, packet, field_id, jni_int);
+        (*env)->SetObjectField(env, packet, field_id, jni_long);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set uint64 field %s", field_name);
             return AWS_OP_ERR;
@@ -326,13 +326,13 @@ static int s_set_jni_uint32_t_field_in_packet(
     bool optional) {
 
     if (native_integer != NULL) {
-        jobject jni_int = (*env)->NewObject(
+        jobject jni_long = (*env)->NewObject(
             env, boxed_long_properties.long_class, boxed_long_properties.constructor, (jlong)*native_integer);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not create uint32 field %s", field_name);
             return AWS_OP_ERR;
         }
-        (*env)->SetObjectField(env, packet, field_id, jni_int);
+        (*env)->SetObjectField(env, packet, field_id, jni_long);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Could not set uint32 field %s", field_name);
             return AWS_OP_ERR;

@@ -569,7 +569,7 @@ int aws_get_enum_from_jobject(
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        } else if ((uint64_t)enum_value > UINT16_MAX) {
+        } else if ((int32_t)enum_value > UINT16_MAX) {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT,
                 "%s create_from_java: Native value from %s is more than UINT16_MAX",
@@ -577,7 +577,7 @@ int aws_get_enum_from_jobject(
                 enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
-        *enum_value_destination = (uint32_t)enum_value;
+        *enum_value_destination = (int32_t)enum_value;
         if (was_value_set != NULL) {
             *was_value_set = true;
         }
@@ -1554,7 +1554,7 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
             "UnsubscribePacket create_from_java: Created new UnsubscribePacket failed due to no topic filters");
         return NULL;
     }
-    int64_t jni_topic_filter_size_check = (int64_t)jni_topic_filter_size;
+    int32_t jni_topic_filter_size_check = (int32_t)jni_topic_filter_size;
     if (jni_topic_filter_size_check < 0) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: No topic filters found");
         return NULL;

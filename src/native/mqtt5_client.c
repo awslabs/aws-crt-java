@@ -130,7 +130,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
             goto on_error;
         }
         if (jni_proxy_connection_type_value) {
-            int64_t jni_proxy_connection_type_value_check = (int64_t)jni_proxy_connection_type_value;
+            int32_t jni_proxy_connection_type_value_check = (int32_t)jni_proxy_connection_type_value;
             if (jni_proxy_connection_type_value_check < 0) {
                 AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options connection type is less than 0");
                 goto on_error;
@@ -167,7 +167,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_port) {
-        int64_t jni_proxy_port_check = (int64_t)jni_proxy_port;
+        int32_t jni_proxy_port_check = (int32_t)jni_proxy_port;
         if (jni_proxy_port_check < 0) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options port is less than 0");
             goto on_error;

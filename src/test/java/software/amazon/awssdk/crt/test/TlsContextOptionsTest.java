@@ -224,6 +224,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
         Pkcs11LibTest.assumeEnvironmentSetUpForPkcs11Tests();
 
+        // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
                 TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
                         .withUserPin(Pkcs11LibTest.TEST_PKCS11_PIN)

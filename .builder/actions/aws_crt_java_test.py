@@ -33,8 +33,8 @@ class AWSCrtJavaTest(Builder.Action):
         self._write_secret_to_temp_file(env, "ecc-test/privatekey") as ecc_key_file:
 
             test_command = f"mvn -P continuous-integration {additional_profiles} -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
-                "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
-                "-Dendpoint={endpoint} -Dcertificate={cert_file.name} -Dprivatekey={key_file.name} -Drootca={root_ca_file.name} -Decc_certificate={ecc_cert_file.name} -Decc_privatekey={ecc_key_file.name}"
+                f"-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
+                f"-Dendpoint={endpoint} -Dcertificate={cert_file.name} -Dprivatekey={key_file.name} -Drootca={root_ca_file.name} -Decc_certificate={ecc_cert_file.name} -Decc_privatekey={ecc_key_file.name}"
 
             all_test_result = os.system(test_command)
 

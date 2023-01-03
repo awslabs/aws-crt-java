@@ -2224,6 +2224,10 @@ static void s_aws_mqtt5_client_java_websocket_handshake_transform(
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Websocket handshake function in JNI called without valid client");
         return;
     }
+    if (!java_client->jni_client || !java_client->client) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Websocket handshake function in JNI called with already freed client");
+        return;
+    }
 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(java_client->jvm);
@@ -2284,6 +2288,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     struct mqtt5_jni_ws_handshake *ws_handshake = (void *)jni_user_data;
     int error_code = AWS_ERROR_SUCCESS;
+
+    if (!ws_handshake) {
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Websocket handshake complete function in JNI called without handshake");
+        return;
+    }
 
     if (jni_throwable != NULL) {
         if ((*env)->IsInstanceOf(env, jni_throwable, crt_runtime_exception_properties.crt_runtime_exception_class)) {

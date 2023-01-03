@@ -1048,6 +1048,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("_test", getMinimumDirectPort());
             builder.withLifecycleEvents(events);
+            builder.withMinReconnectDelayMs(1000L);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();

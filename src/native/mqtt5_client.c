@@ -2744,7 +2744,13 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
             env, "MQTT5 client destroy: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
-    java_client->client = aws_mqtt5_client_release(java_client->client);
+
+    // If the client is NOT null it can be shut down normally, otherwise it needs to be cleaned up directly.
+    if (java_client->client) {
+        java_client->client = aws_mqtt5_client_release(java_client->client);
+    } else {
+        aws_mqtt5_client_java_destroy(env, aws_jni_get_allocator(), java_client);
+    }
 }
 
 #if UINTPTR_MAX == 0xffffffff

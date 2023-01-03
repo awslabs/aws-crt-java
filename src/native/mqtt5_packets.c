@@ -1448,7 +1448,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 jni_packet_subscribe_subscription,
                 mqtt5_subscription_properties.subscribe_retain_as_published_field_id,
                 s_subscribe_packet_string,
-                "no local",
+                "retain as published",
                 &retain_as_published,
                 true,
                 &was_value_set) != AWS_OP_SUCCESS) {

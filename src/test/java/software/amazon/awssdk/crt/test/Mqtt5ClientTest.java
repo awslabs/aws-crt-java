@@ -1460,7 +1460,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
-
         try {
             LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
             LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();

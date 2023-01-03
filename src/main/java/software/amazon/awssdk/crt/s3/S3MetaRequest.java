@@ -58,7 +58,7 @@ public class S3MetaRequest extends CrtResource {
      * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo.
      * @return token to resume request. might be null if request has not started executing yet
      */
-    public String pause() {
+    public ResumeToken pause() {
         return s3MetaRequestPause(getNativeHandle());
     }
 
@@ -96,7 +96,7 @@ public class S3MetaRequest extends CrtResource {
 
     private static native void s3MetaRequestCancel(long s3MetaRequest);
 
-    private static native String s3MetaRequestPause(long s3MetaRequest);
+    private static native ResumeToken s3MetaRequestPause(long s3MetaRequest);
 
     private static native void s3MetaRequestIncrementReadWindow(long s3MetaRequest, long bytes);
 }

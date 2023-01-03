@@ -25,6 +25,7 @@ jobs:
       matrix:
         image:
           - manylinux2014-x64
+          - manylinux2014-x86
           - al2-x64
           - fedora-34-x64
           - opensuse-leap
@@ -32,7 +33,7 @@ jobs:
           #- manylinux2014-x86 until we find 32-bit linux binaries we can use
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -65,7 +66,7 @@ jobs:
           - gcc-8
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -142,7 +143,7 @@ jobs:
     runs-on: windows-2022 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -157,7 +158,7 @@ jobs:
         arch: [x86, x64]
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -167,11 +168,11 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  osx:
+  osx:  # With integration tests
     runs-on: macos-11 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -184,12 +185,29 @@ jobs:
     runs-on: macos-11 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
           mvn -B compile -P mac-arm64
+      - name: verify backward compatibility
+        run: |
+          python3 codebuild/macos_compatibility_check.py armv8
+
+  osx-x64:
+    runs-on: macos-11
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          mvn -B compile -P mac-x64
+      - name: verify backward compatibility
+        run: |
+          python3 codebuild/macos_compatibility_check.py
 
   android:
     name: Android
@@ -197,7 +215,7 @@ jobs:
     runs-on: ubuntu-20.04 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -208,7 +226,7 @@ jobs:
   check-docs:
     runs-on: ubuntu-20.04 # latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
       - name: Check docs
@@ -219,7 +237,7 @@ jobs:
     runs-on: ubuntu-20.04 # latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0

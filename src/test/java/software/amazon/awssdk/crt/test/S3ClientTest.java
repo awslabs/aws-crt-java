@@ -15,6 +15,7 @@ import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
+import software.amazon.awssdk.crt.s3.ResumeToken;
 import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
@@ -568,15 +569,16 @@ public class S3ClientTest extends CrtTestFixture {
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
-            String resumeToken;
+            ResumeToken resumeToken;
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-
                 onProgressFuture.get();
 
                 resumeToken = metaRequest.pause();
+                Assert.assertNotNull(resumeToken);
 
                 Throwable thrown = Assert.assertThrows(Throwable.class,
                     () -> onFinishedFuture.get());
@@ -616,7 +618,13 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
                     .withHttpRequest(httpRequestResume)
                     .withResponseHandler(responseHandlerResume)
-                    .withResumeToken(resumeToken);
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
+                    .withResumeToken(new ResumeToken.PutResumeTokenBuilder()
+                                        .withPartSize(resumeToken.getPartSize())
+                                        .withTotalNumParts(resumeToken.getTotalNumParts())
+                                        .withNumPartsCompleted(resumeToken.getNumPartsCompleted())
+                                        .withUploadId(resumeToken.getUploadId())
+                                        .build());
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptionsResume)) {
                 Integer finish = onFinishedFutureResume.get();

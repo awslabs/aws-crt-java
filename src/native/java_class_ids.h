@@ -411,6 +411,469 @@ struct java_aws_s3_meta_request_progress {
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
+/* ResumeToken */
+struct java_aws_s3_meta_request_resume_token {
+    jclass s3_meta_request_resume_token_class;
+    jmethodID s3_meta_request_resume_token_constructor_method_id;
+    jfieldID native_type_field_id;
+    jfieldID part_size_field_id;
+    jfieldID total_num_parts_field_id;
+    jfieldID num_parts_completed_field_id;
+    jfieldID upload_id_field_id;
+};
+extern struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
+
+/* mqtt5.packets.ConnAckPacket */
+struct java_aws_mqtt5_connack_packet_properties {
+    jclass connack_packet_class;
+
+    jmethodID connack_constructor_id;
+    jmethodID connack_native_add_maximum_qos_id;
+    jmethodID connack_native_add_reason_code_id;
+
+    jfieldID connack_session_present_field_id;
+    jfieldID connack_reason_code_field_id;
+    jfieldID connack_session_expiry_interval_field_id;
+    jfieldID connack_receive_maximum_field_id;
+    jfieldID connack_maximum_qos_field_id;
+    jfieldID connack_retain_available_field_id;
+    jfieldID connack_maximum_packet_size_field_id;
+    jfieldID connack_assigned_client_identifier_field_id;
+    jfieldID connack_reason_string_field_id;
+    jfieldID connack_wildcard_subscriptions_available_field_id;
+    jfieldID connack_subscription_identifiers_available_field_id;
+    jfieldID connack_shared_subscriptions_available_field_id;
+    jfieldID connack_server_keep_alive_field_id;
+    jfieldID connack_response_information_field_id;
+    jfieldID connack_server_reference_field_id;
+    jfieldID connack_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_connack_packet_properties mqtt5_connack_packet_properties;
+
+/* mqtt5.packets.ConnAckPacket.ConnectReasonCode */
+struct java_aws_mqtt5_connect_reason_code_properties {
+    jclass reason_code_class;
+    jmethodID code_get_value_id;
+    jmethodID code_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_connect_reason_code_properties mqtt5_connect_reason_code_properties;
+
+/* mqtt5.packets.PacketConnnect */
+struct java_aws_mqtt5_connect_packet_properties {
+    jclass connect_packet_class;
+
+    jfieldID connect_keep_alive_interval_seconds_field_id;
+    jfieldID connect_client_id_field_id;
+    jfieldID connect_username_field_id;
+    jfieldID connect_password_field_id;
+    jfieldID connect_session_expiry_interval_seconds_field_id;
+    jfieldID connect_request_response_information_field_id;
+    jfieldID connect_request_problem_information_field_id;
+    jfieldID connect_receive_maximum_field_id;
+    jfieldID connect_maximum_packet_size_bytes_field_id;
+    jfieldID connect_will_delay_interval_seconds_field_id;
+    jfieldID connect_will_field_id;
+    jfieldID connect_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_connect_packet_properties mqtt5_connect_packet_properties;
+
+/* mqtt5.packets.PacketDisconnnect */
+struct java_aws_mqtt5_disconnect_packet_properties {
+    jclass disconnect_packet_class;
+
+    jmethodID disconnect_constructor_id;
+    jmethodID disconnect_native_add_disconnect_reason_code_id;
+    jmethodID disconnect_get_reason_code_id;
+
+    jfieldID disconnect_reason_code_field_id;
+    jfieldID disconnect_session_expiry_interval_seconds_field_id;
+    jfieldID disconnect_reason_string_field_id;
+    jfieldID disconnect_session_server_reference_field_id;
+    jfieldID disconnect_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_disconnect_packet_properties mqtt5_disconnect_packet_properties;
+
+/* mqtt5.packets.PacketDisconnnect.DisconnectReasonCode */
+struct java_aws_mqtt5_disconnect_reason_code_properties {
+    jclass reason_code_class;
+    jmethodID code_get_value_id;
+    jmethodID code_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_disconnect_reason_code_properties mqtt5_disconnect_reason_code_properties;
+
+/* mqtt5.packets.PubAckPacket */
+struct java_aws_mqtt5_puback_packet_properties {
+    jclass puback_packet_class;
+    jmethodID puback_constructor_id;
+    jmethodID puback_native_add_reason_code_id;
+
+    jfieldID puback_reason_code_field_id;
+    jfieldID puback_reason_string_field_id;
+    jfieldID puback_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_puback_packet_properties mqtt5_puback_packet_properties;
+
+/* mqtt5.packets.PubAckPacket.PubAckReasonCode */
+struct java_aws_mqtt5_puback_reason_code_properties {
+    jclass reason_code_class;
+    jmethodID code_get_value_id;
+    jmethodID code_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_puback_reason_code_properties mqtt5_puback_reason_code_properties;
+
+/* mqtt5.packets.PublishPacket */
+struct java_aws_mqtt5_publish_packet_properties {
+    jclass publish_packet_class;
+
+    jmethodID publish_constructor_id;
+    jmethodID publish_native_set_qos_id;
+    jmethodID publish_native_set_payload_format_indicator_id;
+    jmethodID publish_get_qos_id;
+    jmethodID publish_get_payload_format_id;
+
+    jfieldID publish_payload_field_id;
+    jfieldID publish_qos_field_id;
+    jfieldID publish_retain_field_id;
+    jfieldID publish_topic_field_id;
+    jfieldID publish_payload_format_field_id;
+    jfieldID publish_message_expiry_interval_seconds_field_id;
+    jfieldID publish_response_topic_field_id;
+    jfieldID publish_correlation_data_field_id;
+    jfieldID publish_content_type_field_id;
+    jfieldID publish_subscription_identifiers_field_id;
+    jfieldID publish_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_publish_packet_properties mqtt5_publish_packet_properties;
+
+/* mqtt5.packets.PublishPacket.PayloadFormatIndicator */
+struct java_aws_mqtt5_payload_format_indicator_properties {
+    jclass payload_format_class;
+    jmethodID format_get_value_id;
+    jmethodID format_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_payload_format_indicator_properties mqtt5_payload_format_indicator_properties;
+
+/* mqtt5.NegotiatedSettings */
+struct java_aws_mqtt5_negotiated_settings_properties {
+    jclass negotiated_settings_class;
+
+    jmethodID negotiated_settings_constructor_id;
+    jmethodID negotiated_settings_native_set_qos_id;
+
+    jfieldID negotiated_settings_maximum_qos_field_id;
+    jfieldID negotiated_settings_session_expiry_interval_field_id;
+    jfieldID negotiated_settings_receive_maximum_from_server_field_id;
+    jfieldID negotiated_settings_maximum_packet_size_to_server_field_id;
+    jfieldID negotiated_settings_server_keep_alive_field_id;
+    jfieldID negotiated_settings_retain_available_field_id;
+    jfieldID negotiated_settings_wildcard_subscriptions_available_field_id;
+    jfieldID negotiated_settings_subscription_identifiers_available_field_id;
+    jfieldID negotiated_settings_shared_subscriptions_available_field_id;
+    jfieldID negotiated_settings_rejoined_session_field_id;
+    jfieldID negotiated_settings_assigned_client_id_field_id;
+};
+extern struct java_aws_mqtt5_negotiated_settings_properties mqtt5_negotiated_settings_properties;
+
+/* http.HttpProxyOptions */
+struct java_aws_http_proxy_options_properties {
+    jclass http_proxy_options_class;
+
+    jmethodID proxy_get_connection_type_id;
+    jmethodID proxy_get_proxy_host_id;
+    jmethodID proxy_get_proxy_port_id;
+    jmethodID proxy_get_proxy_tls_context_id;
+    jmethodID proxy_get_proxy_authorization_type_id;
+    jmethodID proxy_get_authorization_username_id;
+    jmethodID proxy_get_authorization_password_id;
+};
+extern struct java_aws_http_proxy_options_properties http_proxy_options_properties;
+
+/* http.HttpProxyOptions.HttpProxyConnectionType */
+struct java_aws_http_proxy_connection_type_properties {
+    jclass http_proxy_connection_type_class;
+    jmethodID proxy_get_value_id;
+};
+extern struct java_aws_http_proxy_connection_type_properties http_proxy_connection_type_properties;
+
+/* mqtt5.ClientOptions */
+struct java_aws_mqtt5_client_options_properties {
+    jclass client_options_class;
+
+    // Functions for CRT resource references so we can
+    // better control them when they are not present
+    jmethodID options_get_bootstrap_id;
+    jmethodID options_get_socket_options_id;
+    jmethodID options_get_tls_options_id;
+    jmethodID options_get_session_behavior_id;
+    jmethodID options_get_extended_validation_and_flow_control_options_id;
+    jmethodID options_get_offline_queue_behavior_id;
+    jmethodID options_get_retry_jitter_mode_id;
+
+    jfieldID options_host_name_field_id;
+    jfieldID options_port_field_id;
+    jfieldID http_proxy_options_field_id;
+    // We skip connect options since that is passed in directly
+    // since it can be made outside of the builder
+    jfieldID session_behavior_field_id;
+    jfieldID extended_validation_and_flow_control_options_field_id;
+    jfieldID offline_queue_behavior_field_id;
+    jfieldID retry_jitter_mode_field_id;
+    jfieldID min_reconnect_delay_ms_field_id;
+    jfieldID max_reconnect_delay_ms_field_id;
+    jfieldID min_connected_time_to_reset_reconnect_delay_ms_field_id;
+    jfieldID ping_timeout_ms_field_id;
+    jfieldID connack_timeout_ms_field_id;
+    jfieldID ack_timeout_seconds_field_id;
+    jfieldID publish_events_field_id;
+    jfieldID lifecycle_events_field_id;
+};
+extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
+
+/* mqtt5.Client */
+struct java_aws_mqtt5_client_properties {
+    jclass client_class;
+    jmethodID client_on_websocket_handshake_id;
+    jmethodID client_set_is_connected;
+    jfieldID websocket_handshake_field_id;
+};
+extern struct java_aws_mqtt5_client_properties mqtt5_client_properties;
+
+/* mqtt5.Mqtt5ClientOperationStatistics */
+struct java_aws_mqtt5_client_operation_statistics_properties {
+    jclass statistics_class;
+    jmethodID statistics_constructor_id;
+    jfieldID incomplete_operation_count_field_id;
+    jfieldID incomplete_operation_size_field_id;
+    jfieldID unacked_operation_count_field_id;
+    jfieldID unacked_operation_size_field_id;
+};
+extern struct java_aws_mqtt5_client_operation_statistics_properties mqtt5_client_operation_statistics_properties;
+
+/* mqtt5.ClientOptions.ClientSessionBehavior */
+struct java_aws_mqtt5_client_session_behavior_type_properties {
+    jclass mqtt5_client_session_behavior_class;
+    jmethodID client_get_value_id;
+};
+extern struct java_aws_mqtt5_client_session_behavior_type_properties mqtt5_client_session_behavior_properties;
+
+/* mqtt5.ClientOptions.ExtendedValidationAndFlowControlOptions */
+struct java_aws_mqtt5_client_extended_validation_and_flow_control_options {
+    jclass mqtt5_client_extended_validation_and_flow_control_options_class;
+    jmethodID client_get_value_id;
+};
+extern struct java_aws_mqtt5_client_extended_validation_and_flow_control_options
+    mqtt5_client_extended_validation_and_flow_control_options;
+
+/* mqtt5.ClientOptions.ClientOfflineQueueBehavior */
+struct java_aws_mqtt5_client_offline_queue_behavior_type_properties {
+    jclass mqtt5_client_offline_queue_behavior_type_class;
+    jmethodID client_get_value_id;
+};
+extern struct java_aws_mqtt5_client_offline_queue_behavior_type_properties
+    mqtt5_client_offline_queue_behavior_type_properties;
+
+/* mqtt5.ClientOptions.JitterMode */
+struct java_aws_mqtt5_client_jitter_mode_properties {
+    jclass mqtt5_client_jitter_mode_class;
+    jmethodID client_get_value_id;
+};
+extern struct java_aws_mqtt5_client_jitter_mode_properties mqtt5_client_jitter_mode_properties;
+
+/* mqtt5.packets.SubscribePacket */
+struct java_aws_mqtt5_subscribe_packet_properties {
+    jclass subscribe_packet_class;
+    jfieldID subscribe_subscriptions_field_id;
+    jfieldID subscribe_subscription_identifier_field_id;
+    jfieldID subscribe_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_subscribe_packet_properties mqtt5_subscribe_packet_properties;
+
+/* mqtt5.packets.SubscribePacket.Subscription */
+struct java_aws_mqtt5_subscription_properties {
+    jclass subscribe_subscription_class;
+    jfieldID subscribe_no_local_field_id;
+    jfieldID subscribe_retain_as_published_field_id;
+
+    jmethodID subscribe_get_topic_filter_id;
+    jmethodID subscribe_get_qos_id;
+    jmethodID subscribe_get_no_local_id;
+    jmethodID subscribe_get_retain_as_published_id;
+    jmethodID subscribe_get_retain_handling_type_id;
+};
+extern struct java_aws_mqtt5_subscription_properties mqtt5_subscription_properties;
+
+/* mqtt5.QOS */
+struct java_aws_mqtt5_packet_qos_properties {
+    jclass packet_qos_class;
+    jmethodID qos_get_value_id;
+    jmethodID qos_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_packet_qos_properties mqtt5_packet_qos_properties;
+
+/* mqtt5.packets.SubscribePacket.RetainHandlingType */
+struct java_aws_mqtt5_retain_handling_type_properties {
+    jclass retain_handling_type_class;
+    jmethodID retain_get_value_id;
+};
+extern struct java_aws_mqtt5_retain_handling_type_properties mqtt5_retain_handling_type_properties;
+
+/* mqtt5.packets.SubAckPacket.SubAckReasonCode */
+struct java_aws_mqtt5_suback_reason_code_properties {
+    jclass reason_code_class;
+    jmethodID reason_get_value_id;
+    jmethodID reason_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_suback_reason_code_properties mqtt5_suback_reason_code_properties;
+
+/* mqtt5.packets.SubAckPacket */
+struct java_aws_mqtt5_packet_suback_properties {
+    jclass suback_packet_class;
+    jmethodID suback_constructor_id;
+    jmethodID suback_native_add_suback_code_id;
+
+    jfieldID suback_reason_string_field_id;
+    jfieldID suback_reason_codes_field_id;
+    jfieldID suback_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_packet_suback_properties mqtt5_suback_packet_properties;
+
+/* mqtt5.packets.UnsubscribePacket */
+struct java_aws_mqtt5_packet_unsubscribe_properties {
+    jclass unsubscribe_packet_class;
+    jfieldID unsubscribe_subscriptions_field_id;
+    jfieldID unsubscribe_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_packet_unsubscribe_properties mqtt5_unsubscribe_packet_properties;
+
+/* mqtt5.packets.UnsubAckPacket */
+struct java_aws_mqtt5_packet_unsuback_properties {
+    jclass unsuback_packet_class;
+    jmethodID unsuback_constructor_id;
+    jmethodID unsuback_native_add_unsuback_code_id;
+
+    jfieldID unsuback_reason_string_field_id;
+    jfieldID unsuback_reason_codes_field_id;
+    jfieldID unsuback_user_properties_field_id;
+};
+extern struct java_aws_mqtt5_packet_unsuback_properties mqtt5_unsuback_packet_properties;
+
+/* mqtt5.packets.UnsubAckPacket.UnsubAckReasonCode */
+struct java_aws_mqtt5_unsuback_reason_code_properties {
+    jclass reason_code_class;
+    jmethodID reason_get_value_id;
+    jmethodID reason_s_get_enum_value_from_integer_id;
+};
+extern struct java_aws_mqtt5_unsuback_reason_code_properties mqtt5_unsuback_reason_code_properties;
+
+/* mqtt5.packets.UserProperty */
+struct java_aws_mqtt5_user_property_properties {
+    jclass user_property_class;
+    jmethodID property_constructor_id;
+    jfieldID property_key_id;
+    jfieldID property_value_id;
+};
+extern struct java_aws_mqtt5_user_property_properties mqtt5_user_property_properties;
+
+/* mqtt5.Mqtt5ClientOptions.PublishEvents */
+struct java_aws_mqtt5_publish_events {
+    jclass publish_events_class;
+    jmethodID publish_events_publish_received_id;
+};
+extern struct java_aws_mqtt5_publish_events mqtt5_publish_events_properties;
+
+/* mqtt5.Mqtt5ClientOptions.LifecycleEvents */
+struct java_aws_mqtt5_lifecycle_events {
+    jclass lifecycle_events_class;
+    jmethodID lifecycle_attempting_connect_id;
+    jmethodID lifecycle_connection_success_id;
+    jmethodID lifecycle_connection_failure_id;
+    jmethodID lifecycle_disconnection_id;
+    jmethodID lifecycle_stopped_id;
+};
+extern struct java_aws_mqtt5_lifecycle_events mqtt5_lifecycle_events_properties;
+
+/* mqtt5.PublishResult */
+struct java_aws_mqtt5_publish_result_properties {
+    jclass result_class;
+    jmethodID result_constructor_id;
+    jmethodID result_puback_constructor_id;
+};
+extern struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_properties;
+
+/* mqtt5.PublishReturn */
+struct java_aws_mqtt5_publish_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
+
+/* mqtt5.OnStoppedReturn */
+struct java_aws_mqtt5_on_stopped_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;
+
+/* mqtt5.OnAttemptingConnectReturn */
+struct java_aws_mqtt5_on_attempting_connect_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_attempting_connect_return_properties mqtt5_on_attempting_connect_return_properties;
+
+/* mqtt5.OnConnectionSuccessReturn */
+struct java_aws_mqtt5_on_connection_success_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_connection_success_return_properties mqtt5_on_connection_success_return_properties;
+
+/* mqtt5.OnConnectionFailureReturn */
+struct java_aws_mqtt5_on_connection_failure_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_connection_failure_return_properties mqtt5_on_connection_failure_return_properties;
+
+/* mqtt5.OnDisconnectionReturn */
+struct java_aws_mqtt5_on_disconnection_return_properties {
+    jclass return_class;
+    jmethodID return_constructor_id;
+};
+extern struct java_aws_mqtt5_on_disconnection_return_properties mqtt5_on_disconnection_return_properties;
+
+/* java/lang/Integer */
+struct java_boxed_integer_properties {
+    jclass integer_class;
+    jmethodID integer_constructor_id;
+    jmethodID integer_get_value_id;
+};
+extern struct java_boxed_integer_properties boxed_integer_properties;
+
+/* java/lang/Boolean */
+struct java_boxed_boolean_properties {
+    jclass boolean_class;
+    jmethodID boolean_constructor_id;
+    jmethodID boolean_get_value_id;
+};
+extern struct java_boxed_boolean_properties boxed_boolean_properties;
+
+/* java/util/List */
+struct java_boxed_list_properties {
+    jclass list_class;
+    jmethodID list_size_id;
+    jmethodID list_get_id;
+    jmethodID list_add_id;
+};
+extern struct java_boxed_list_properties boxed_list_properties;
+
+/* java/util/ArrayList */
+struct java_boxed_array_list_properties {
+    jclass list_class;
+    jmethodID list_constructor_id;
+};
+extern struct java_boxed_array_list_properties boxed_array_list_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

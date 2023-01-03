@@ -1,0 +1,23 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    commands:
+      - add-apt-repository ppa:openjdk-r/ppa
+      - add-apt-repository ppa:ubuntu-toolchain-r/test
+      - apt-get update -y
+      - sudo apt-get install cmake -y
+      - git submodule update --init --recursive
+  build:
+    commands:
+      - echo Build started on `date`
+      - mvn install -DskipTests
+      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
+      - mvn test -Dtest=Mqtt5ClientTest -DfailIfNoTests=false
+      - source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - find /codebuild/output -name "hs_err*.log" -type f -exec cat {} +
+

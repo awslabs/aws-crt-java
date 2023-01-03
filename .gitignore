@@ -12,6 +12,7 @@ Release
 *#
 *.iml
 tags
+.vscode
 
 #vim swap file
 *.swp

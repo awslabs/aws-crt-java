@@ -39,7 +39,7 @@ GIT_TAG=$(git describe --tags)
 # Builder corss-compiles the shared lib to `target/cmake-build/aws-crt-java/`, move it to the expected path for mvn to generate the jar.
 mv target/cmake-build/aws-crt-java/* target/cmake-build/
 
-JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B install -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=$CLASSIFIER
+JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=$CLASSIFIER
 
 aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

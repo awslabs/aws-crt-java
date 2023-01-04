@@ -25,7 +25,7 @@ def main():
     #   version 10.9
     #       sdk 12.1
     # Load command 9
-    otool_cmd = "otool -l target/cmake-build/lib/osx/{}/libaws-crt-jni.dylib | grep -A3 \'LC_VERSION_MIN_MACOSX\' | grep -E version | tr -s ' ' | cut -f3 -d' ' | tr -d '[:space:]'".format(arch)
+    otool_cmd = "otool -l target/cmake-build/lib/osx/{}/cruntime/libaws-crt-jni.dylib | grep -A3 \'LC_VERSION_MIN_MACOSX\' | grep -E version | tr -s ' ' | cut -f3 -d' ' | tr -d '[:space:]'".format(arch)
 
     if len(sys.argv) > 1:
         # Parsing the macos archtecture

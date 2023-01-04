@@ -1129,7 +1129,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5WSMqttPort);
             builder.withLifecycleEvents(events);
-            builder.withMinReconnectDelayMs(1000L);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -1175,7 +1174,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, 444L);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
-                builder.withMinReconnectDelayMs(1000L);
 
                 Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                     @Override
@@ -1231,7 +1229,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5DirectMqttPort);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
-                builder.withMinReconnectDelayMs(1000L);
 
                 Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                     @Override
@@ -1284,7 +1281,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("www.example.com", 81L);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
-                builder.withMinReconnectDelayMs(1000L);
 
                 options.connectTimeoutMs = 100;
                 builder.withSocketOptions(options);
@@ -1335,7 +1331,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5WSMqttPort);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
-                builder.withMinReconnectDelayMs(1000L);
 
                 Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                     @Override

@@ -41,6 +41,8 @@ struct aws_mqtt5_client_java_jni {
 
     jobject jni_publish_events;
     jobject jni_lifecycle_events;
+
+    struct aws_atomic_var crt_ref_count;
 };
 
 struct aws_mqtt5_client_publish_return_data {
@@ -1817,6 +1819,15 @@ static void s_aws_mqtt5_client_java_termination(void *complete_ctx) {
 
     (*env)->CallVoidMethod(env, java_client->jni_client, crt_resource_properties.release_references);
 
+    // Add one and then subtract one, so the atomic value is not different but we can get the current value
+    size_t current_value = aws_atomic_fetch_add(&java_client->crt_ref_count, 1);
+    aws_atomic_fetch_sub(&java_client->crt_ref_count, 1);
+
+    if (current_value <= 0) {
+        struct aws_allocator *allocator = aws_jni_get_allocator();
+        aws_mqtt5_client_java_destroy(env, allocator, java_client);
+    }
+
     /********** JNI ENV RELEASE **********/
     aws_jni_release_thread_env(jvm, env);
 }
@@ -2363,6 +2374,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env, "MQTT5 client new: could not initialize new client", AWS_ERROR_INVALID_STATE);
         return (jlong)NULL;
     }
+    aws_atomic_store_int(&java_client->crt_ref_count, 1);
 
     if (aws_get_string_from_jobject(
             env,
@@ -2750,6 +2762,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
             env, "MQTT5 client destroy: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
         return;
     }
+
+    // Subtract one, so we know the CRT resource is freed
+    aws_atomic_fetch_sub(&java_client->crt_ref_count, 1);
 
     // If the client is NOT null it can be shut down normally
     struct aws_allocator *allocator = aws_jni_get_allocator();

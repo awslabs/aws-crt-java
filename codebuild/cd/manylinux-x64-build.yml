@@ -11,7 +11,7 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B install -DskipTests -Dcrt.classifier=linux-x86_64
+      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64
 
   post_build:
     commands:

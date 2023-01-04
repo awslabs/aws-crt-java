@@ -38,9 +38,6 @@ class AWSCrtJavaTest(Builder.Action):
             -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest")
 
         if shutdown_test_result or all_test_result:
-            # Print the error, if it happened
-            os.system("find /root/** -name \"hs_err*.log\" -type f -exec cat \{\} +")
-
             # Failed
             actions.append("exit 1")
         os.system("cat log.txt")

@@ -1817,9 +1817,6 @@ static void s_aws_mqtt5_client_java_termination(void *complete_ctx) {
 
     (*env)->CallVoidMethod(env, java_client->jni_client, crt_resource_properties.release_references);
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mqtt5_client_java_destroy(env, allocator, java_client);
-
     /********** JNI ENV RELEASE **********/
     aws_jni_release_thread_env(jvm, env);
 }
@@ -2755,8 +2752,16 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
     // If the client is NOT null it can be shut down normally
+    struct aws_allocator *allocator = aws_jni_get_allocator();
     if (java_client->client) {
-        java_client->client = aws_mqtt5_client_release(java_client->client);
+        aws_mqtt5_client_release(java_client->client);
+
+        // If the MQTT5 client was fully released (and is now null), then free the memory
+        if (!java_client->client) {
+            aws_mqtt5_client_java_destroy(env, allocator, java_client);
+        }
+    } else {
+        aws_mqtt5_client_java_destroy(env, allocator, java_client);
     }
 }
 

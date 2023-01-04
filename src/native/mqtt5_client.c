@@ -41,6 +41,9 @@ struct aws_mqtt5_client_java_jni {
 
     jobject jni_publish_events;
     jobject jni_lifecycle_events;
+
+    struct aws_atomic_var is_crt_closed;
+    struct aws_atomic_var is_mqtt5_alive;
 };
 
 struct aws_mqtt5_client_publish_return_data {
@@ -1816,9 +1819,19 @@ static void s_aws_mqtt5_client_java_termination(void *complete_ctx) {
     }
 
     (*env)->CallVoidMethod(env, java_client->jni_client, crt_resource_properties.release_references);
+    java_client->client = NULL;
+    // In case anything is running in parallel, we need to tell it there is no MQTT5 client anymore!
+    aws_atomic_store_int(&java_client->is_mqtt5_alive, 0);
 
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    aws_mqtt5_client_java_destroy(env, allocator, java_client);
+    /**
+     * Is the CrtResource closed? If so, then we need to perform full clean up here. If not, then let
+     * the CRT resource clean itself up.
+     */
+    uint64_t is_crt_closed = aws_atomic_load_int(&java_client->is_crt_closed);
+    if (is_crt_closed == 0) {
+        struct aws_allocator *allocator = aws_jni_get_allocator();
+        aws_mqtt5_client_java_destroy(env, allocator, java_client);
+    }
 
     /********** JNI ENV RELEASE **********/
     aws_jni_release_thread_env(jvm, env);
@@ -2366,6 +2379,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             env, "MQTT5 client new: could not initialize new client", AWS_ERROR_INVALID_STATE);
         return (jlong)NULL;
     }
+    aws_atomic_store_int(&java_client->is_crt_closed, 1);
 
     if (aws_get_string_from_jobject(
             env,
@@ -2721,6 +2735,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             AWS_ERROR_MQTT5_CLIENT_OPTIONS_VALIDATION);
         goto clean_up;
     }
+    aws_atomic_store_int(&java_client->is_mqtt5_alive, 1);
 
     goto clean_up;
 
@@ -2754,10 +2769,22 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         return;
     }
 
-    // If the client is NOT null it can be shut down normally
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    if (java_client->client) {
-        java_client->client = aws_mqtt5_client_release(java_client->client);
+
+    // Sanity check: Make sure the CrtResource has not already been closed somehow
+    uint64_t is_crt_closed = aws_atomic_fetch_sub(&java_client->is_crt_closed, 1);
+    if (is_crt_closed > 0) {
+        if (java_client->client) {
+            // Is there a MQTT5 client? If so, release it! Otherwise just clean up.
+            uint64_t is_mqtt5_alive = aws_atomic_load_int(&java_client->is_mqtt5_alive);
+            if (is_mqtt5_alive > 0) {
+                aws_mqtt5_client_release(java_client->client);
+            } else {
+                aws_mqtt5_client_java_destroy(env, allocator, java_client);
+            }
+        } else {
+            aws_mqtt5_client_java_destroy(env, allocator, java_client);
+        }
     } else {
         aws_mqtt5_client_java_destroy(env, allocator, java_client);
     }

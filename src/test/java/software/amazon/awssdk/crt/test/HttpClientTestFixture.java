@@ -29,7 +29,7 @@ public class HttpClientTestFixture extends CrtTestFixture {
                 TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                    .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(null).withUri(uri);
+                    .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
 
             return HttpClientConnectionManager.create(options);
         }

@@ -115,10 +115,10 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Get() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        //testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("GET", "http://httpbin.org", "/get", EMPTY_BODY, 200);
-//        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
-//        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
+        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
     }
 
     @Test

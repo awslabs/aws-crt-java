@@ -2197,5 +2197,4 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
->>>>>>> main
 }

@@ -7,7 +7,7 @@ cd `dirname $0`/../..
 git submodule update --init
 export GIT_TAG=$(git describe --tags)
 
-mvn -B install -DskipTests -P mac-arm64 -Dcrt.classifier=osx-aarch_64
+mvn -B package -DskipTests -P mac-arm64 -Dcrt.classifier=osx-aarch_64
 
 # Copy artifacts to dist
 mkdir -p ../dist

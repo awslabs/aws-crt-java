@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -21,8 +25,8 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         super(errorCode);
         this.statusCode = responseStatus;
         this.errorPayload = errorPayload;
-        this.awsErrorCode = GetElementFromPyload(errorPayload, codeBeginBlock, codeEndBlock);
-        this.awsErrorMessage = GetElementFromPyload(errorPayload, messageBeginBlock, messageEndBlock);
+        this.awsErrorCode = GetElementFromPayload(errorPayload, codeBeginBlock, codeEndBlock);
+        this.awsErrorMessage = GetElementFromPayload(errorPayload, messageBeginBlock, messageEndBlock);
     }
 
     public CrtS3RuntimeException(S3FinishedResponseContext context) {
@@ -30,8 +34,8 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         String errorString = new String(context.getErrorPayload(), java.nio.charset.StandardCharsets.UTF_8);
         this.statusCode = context.getResponseStatus();
         this.errorPayload = errorString;
-        this.awsErrorCode = GetElementFromPyload(this.errorPayload, codeBeginBlock, codeEndBlock);
-        this.awsErrorMessage = GetElementFromPyload(this.errorPayload, messageBeginBlock, messageEndBlock);
+        this.awsErrorCode = GetElementFromPayload(this.errorPayload, codeBeginBlock, codeEndBlock);
+        this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
     public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload) {
@@ -39,15 +43,15 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         String errorString = new String(errorPayload, java.nio.charset.StandardCharsets.UTF_8);
         this.statusCode = responseStatus;
         this.errorPayload = errorString;
-        this.awsErrorCode = GetElementFromPyload(this.errorPayload, codeBeginBlock, codeEndBlock);
-        this.awsErrorMessage = GetElementFromPyload(this.errorPayload, messageBeginBlock, messageEndBlock);
+        this.awsErrorCode = GetElementFromPayload(this.errorPayload, codeBeginBlock, codeEndBlock);
+        this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
     /**
      * Helper function to get the detail of an element from xml payload. If not
      * found, empty string will be returned.
      */
-    private String GetElementFromPyload(String errorPayload, String beginBlock, String endBlock) {
+    private String GetElementFromPayload(String errorPayload, String beginBlock, String endBlock) {
         Pattern regexFormat = Pattern.compile(beginBlock + ".*" + endBlock);
         Matcher matcher = regexFormat.matcher(errorPayload);
         String result = "";

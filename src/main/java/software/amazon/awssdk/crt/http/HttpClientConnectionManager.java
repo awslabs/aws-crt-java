@@ -135,7 +135,6 @@ public class HttpClientConnectionManager extends CrtResource {
          }
     }
 
-
     /**
      * Request a HttpClientConnection from the Connection Pool.
      * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.

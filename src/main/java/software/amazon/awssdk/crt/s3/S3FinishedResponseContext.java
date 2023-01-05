@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.s3;
 
 public class S3FinishedResponseContext {
@@ -11,7 +15,7 @@ public class S3FinishedResponseContext {
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
      * errorPayload body of the error response. Can be null if the request completed successfully
-     * checksumAlgorithm, the algorith used to validate the Body, None if not validated
+     * checksumAlgorithm, the algorithm used to validate the Body, None if not validated
      * didValidateChecksum which is true if the response was validated.
      */
     S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum) {
@@ -27,8 +31,8 @@ public class S3FinishedResponseContext {
     }
 
     /*
-     * If the request didn't receive a response due to a connection 
-     * failure or some othe issue the response status will be 0.
+     * If the request didn't receive a response due to a connection
+     * failure or some other issue the response status will be 0.
      */
     public int getResponseStatus () {
         return this.responseStatus;

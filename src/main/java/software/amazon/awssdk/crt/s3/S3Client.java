@@ -131,14 +131,16 @@ public class S3Client extends CrtResource {
         }
         URI endpoint = options.getEndpoint();
 
-        byte[] resumeToken = options.getResumeToken() == null ? null : options.getResumeToken().getBytes(UTF8);
-
-        int checksumAlgorithm = options.getChecksumAlgorithm() != null ? options.getChecksumAlgorithm().getNativeValue() : ChecksumAlgorithm.NONE.getNativeValue();
+        ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
+                : new ChecksumConfig();
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), checksumAlgorithm, options.getValidateChecksum(), httpRequestBytes,
-                options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8), resumeToken);
+                options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
+                checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                options.getResumeToken());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
         if (credentialsProviderNativeHandle != 0) {
@@ -201,7 +203,9 @@ public class S3Client extends CrtResource {
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
-            int metaRequestType, int checksumAlgorithm, boolean validateChecksum, byte[] httpRequestBytes, HttpRequestBodyStream httpRequestBodyStream,
+            int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
+            int[] validateAlgorithms, byte[] httpRequestBytes,
+            HttpRequestBodyStream httpRequestBodyStream,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
-            byte[] endpoint, byte[] resumeToken);
+            byte[] endpoint, ResumeToken resumeToken);
 }

@@ -21,4 +21,12 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         disconnect();
         close();
     }
+
+    @Test
+    public void testECCKeyConnectDisconnect() {
+        skipIfNetworkUnavailable();
+        connectECC();
+        disconnect();
+        close();
+    }
 };

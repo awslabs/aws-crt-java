@@ -12,13 +12,17 @@ if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
 fi
 
-LIB_PATH=target/cmake-build/lib
 SKIP_INSTALL=
 
-# Cross compiles do not need local installs, and they have a different lib output path
 if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
     SKIP_INSTALL=--skip-install
-    LIB_PATH=target/cmake-build/aws-crt-java/lib
+fi
+
+
+if [[ $AWS_CRT_TARGET == linux-armv8 ]]; then
+    CLASSIFIER=linux-aarch_64
+else
+    CLASSIFIER=$AWS_CRT_TARGET
 fi
 
 # Pry the builder version this CRT is using out of ci.yml
@@ -26,10 +30,16 @@ BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed '
 echo "Using builder version ${BUILDER_VERSION}"
 
 aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
-
 chmod a+x builder
-./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 
 # Upload the lib to S3
 GIT_TAG=$(git describe --tags)
-aws s3 cp --recursive $LIB_PATH s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+
+./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
+# Builder corss-compiles the shared lib to `target/cmake-build/aws-crt-java/`, move it to the expected path for mvn to generate the jar.
+mv target/cmake-build/aws-crt-java/* target/cmake-build/
+
+JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=$CLASSIFIER
+
+aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

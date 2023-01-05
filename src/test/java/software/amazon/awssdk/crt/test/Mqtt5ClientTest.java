@@ -1372,6 +1372,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     static final class LifecycleEvents_DoubleClientID implements Mqtt5ClientOptions.LifecycleEvents {
         CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
+        CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
 
         @Override
         public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
@@ -1392,7 +1393,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
 
         @Override
-        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
+            stoppedFuture.complete(null);
+        }
     }
 
     /* Double Client ID failure test */
@@ -1492,6 +1495,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 events.disconnectedFuture.get(180, TimeUnit.SECONDS);
                 // Disconnect the second client so the first can reconnect
                 clientTwo.stop(new DisconnectPacketBuilder().build());
+                // Confirm the second client has stopped
+                eventsTwo.stoppedFuture.get(180, TimeUnit.SECONDS);
 
                 // Wait until the first client has reconnected
                 events.connectedFuture = new CompletableFuture<>();
@@ -3067,6 +3072,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();

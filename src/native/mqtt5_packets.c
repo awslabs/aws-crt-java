@@ -30,11 +30,11 @@
 struct aws_mqtt5_packet_connect_view_java_jni {
     struct aws_mqtt5_packet_connect_view packet;
 
-    jstring *jni_client_id;
+    struct aws_byte_buf client_id_buf;
     struct aws_byte_cursor client_id_cursor;
-    jstring *jni_username;
+    struct aws_byte_buf username_buf;
     struct aws_byte_cursor username_cursor;
-    jbyteArray *jni_password;
+    struct aws_byte_buf password_buf;
     struct aws_byte_cursor password_cursor;
     uint32_t session_expiry_interval_seconds;
     uint8_t request_response_information;
@@ -44,7 +44,7 @@ struct aws_mqtt5_packet_connect_view_java_jni {
     uint32_t maximum_packet_size_bytes;
     uint32_t will_delay_interval_seconds;
     uint16_t keep_alive_interval_seconds;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -54,12 +54,12 @@ struct aws_mqtt5_packet_connect_view_java_jni {
 struct aws_mqtt5_packet_disconnect_view_java_jni {
     struct aws_mqtt5_packet_disconnect_view packet;
 
-    jstring *jni_reason_string;
+    struct aws_byte_buf reason_string_buf;
     struct aws_byte_cursor reason_string_cursor;
-    jstring *jni_server_reference;
+    struct aws_byte_buf server_reference_buf;
     struct aws_byte_cursor server_reference_cursor;
     uint32_t session_expiry_interval_seconds;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -68,20 +68,20 @@ struct aws_mqtt5_packet_disconnect_view_java_jni {
 struct aws_mqtt5_packet_publish_view_java_jni {
     struct aws_mqtt5_packet_publish_view packet;
 
-    jbyteArray *jni_payload;
+    struct aws_byte_buf payload_buf;
     struct aws_byte_cursor payload_cursor;
-    jstring *jni_topic;
+    struct aws_byte_buf topic_buf;
     struct aws_byte_cursor topic_cursor;
     enum aws_mqtt5_payload_format_indicator payload_format;
     uint32_t message_expiry_interval_seconds;
     uint16_t topic_alias;
-    jstring *jni_response_topic;
+    struct aws_byte_buf response_topic_buf;
     struct aws_byte_cursor response_topic_cursor;
-    jbyteArray *jni_correlation_data;
+    struct aws_byte_buf correlation_data_buf;
     struct aws_byte_cursor correlation_data_cursor;
-    jstring *jni_content_type;
+    struct aws_byte_buf content_type_buf;
     struct aws_byte_cursor content_type_cursor;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -92,10 +92,10 @@ struct aws_mqtt5_packet_subscribe_view_java_jni {
 
     /* Contains aws_mqtt5_subscription_view pointers */
     struct aws_array_list topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_subscription_topic_filters;
     uint32_t subscription_identifier;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
@@ -106,34 +106,29 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni {
 
     /* Contains aws_byte_cursor pointers */
     struct aws_array_list topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_topic_filters;
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list jni_user_properties_holder;
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list jni_user_properties_struct_holder;
 };
 
-struct jstring_array_holder_struct {
-    jstring *jni_string;
+struct buffer_and_cursor_array_holder_struct {
     struct aws_byte_cursor cursor;
+    struct aws_byte_buf buffer;
 };
 
 /*******************************************************************************
  * HELPER FUNCTIONS
  ******************************************************************************/
 
-static void s_log_and_throw_exception(JNIEnv *env, const char *message) {
-    AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s", message);
-    aws_jni_throw_runtime_exception(env, "%s", message);
-}
-
 static int s_populate_user_properties(
     JNIEnv *env,
     jobject jni_user_properties_list,
     size_t java_packet_native_user_property_count,
     const struct aws_mqtt5_user_property **java_packet_native_user_properties,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *java_packet_user_properties_holder,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *java_packet_user_properties_struct_holder) {
@@ -143,35 +138,56 @@ static int s_populate_user_properties(
             jobject jni_property =
                 (*env)->CallObjectMethod(env, jni_user_properties_list, boxed_list_properties.list_get_id, (jint)i);
             if (!jni_property || aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to being unable to get property in list from Java");
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT,
+                    "Could not populate user properties due to being unable to get property in list from Java");
                 return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
             }
 
             jstring jni_property_key =
                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_key_id);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to exception when getting property key");
+            if (aws_jni_check_and_clear_exception(env) || !jni_property_key) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT,
+                    "Could not populate user properties due to exception when getting property key");
                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
             }
             jstring jni_property_value =
                 (jstring)(*env)->GetObjectField(env, jni_property, mqtt5_user_property_properties.property_value_id);
-            if (aws_jni_check_and_clear_exception(env)) {
-                s_log_and_throw_exception(
-                    env, "Could not populate user properties due to exception when getting property value");
+            if (aws_jni_check_and_clear_exception(env) || !jni_property_value) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_MQTT_CLIENT,
+                    "Could not populate user properties due to exception when getting property value");
                 return aws_raise_error(AWS_ERROR_INVALID_STATE);
             }
 
-            struct jstring_array_holder_struct holder_property_key = {
-                .jni_string = &jni_property_key,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key),
-            };
+            if (!jni_property_key) {
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error reading a user property: Key in user property was NULL!");
+                return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            }
+            if (!jni_property_value) {
+                AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error reading a user property: Key in user property was NULL!");
+                return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            }
 
-            struct jstring_array_holder_struct holder_property_value = {
-                .jni_string = &jni_property_value,
-                .cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value),
-            };
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct buffer_and_cursor_array_holder_struct holder_property_key;
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_key);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_key.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder_property_key.cursor = aws_byte_cursor_from_buf(&holder_property_key.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_property_key, tmp_cursor);
+            jni_property_key = NULL;
+
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct buffer_and_cursor_array_holder_struct holder_property_value;
+            tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_property_value);
+            aws_byte_buf_init_copy_from_cursor(&holder_property_value.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder_property_value.cursor = aws_byte_cursor_from_buf(&holder_property_value.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_property_value, tmp_cursor);
+            jni_property_value = NULL;
+
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_key);
             aws_array_list_push_back(java_packet_user_properties_holder, (void *)&holder_property_value);
 
@@ -189,17 +205,21 @@ static int s_populate_user_properties(
 
 static int s_allocate_user_properties_array_holders(
     struct aws_allocator *allocator,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *holder_array,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *user_property_array,
     size_t init_entries) {
-    if (aws_array_list_init_dynamic(
-            holder_array, allocator, 2 * init_entries, sizeof(struct jstring_array_holder_struct)) != AWS_OP_SUCCESS ||
-        aws_array_list_init_dynamic(
-            user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
-            AWS_OP_SUCCESS) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+
+    if (init_entries > 0) {
+        if (aws_array_list_init_dynamic(
+                holder_array, allocator, 2 * init_entries, sizeof(struct buffer_and_cursor_array_holder_struct)) !=
+                AWS_OP_SUCCESS ||
+            aws_array_list_init_dynamic(
+                user_property_array, allocator, 2 * init_entries, sizeof(struct aws_mqtt5_user_property)) !=
+                AWS_OP_SUCCESS) {
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
     }
     return AWS_OP_SUCCESS;
 }
@@ -209,6 +229,7 @@ static void s_cleanup_two_aws_array(
     struct aws_array_list *user_properties_holder,
     struct aws_array_list *user_properties_struct_holder) {
 
+    (void)env;
     if (aws_array_list_is_valid(user_properties_holder)) {
         /**
          * Note that this ONLY frees the array holders for the non-struct array.
@@ -216,9 +237,11 @@ static void s_cleanup_two_aws_array(
          * If both need to be freed, then we assume whomever is calling this will handle it.
          */
         for (size_t i = 0; i < aws_array_list_length(user_properties_holder); i++) {
-            struct jstring_array_holder_struct holder;
+            struct buffer_and_cursor_array_holder_struct holder;
             aws_array_list_get_at(user_properties_holder, &holder, i);
-            aws_jni_byte_cursor_from_jstring_release(env, *holder.jni_string, holder.cursor);
+            if (aws_byte_buf_is_valid(&holder.buffer)) {
+                aws_byte_buf_clean_up(&holder.buffer);
+            }
         }
         aws_array_list_clean_up(user_properties_holder);
     }
@@ -243,31 +266,22 @@ int aws_get_uint16_from_jobject(
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         } else if (jlong_value_check > UINT16_MAX) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is more than UINT16_MAX", object_name, field_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: %s is more than UINT16_MAX", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint16_t)jlong_value;
@@ -304,31 +318,22 @@ int aws_get_uint32_from_jobject(
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         } else if (jlong_value_check > UINT32_MAX) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is more than UINT32_MAX", object_name, field_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: %s is more than UINT32_MAX", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint32_t)jlong_value_check;
@@ -365,24 +370,18 @@ int aws_get_uint64_from_jobject(
 
     jobject jlong_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jlong_obj) {
         jlong jlong_value = (*env)->CallLongMethod(env, jlong_obj, boxed_long_properties.long_value_method_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int64_t jlong_value_check = (int64_t)jlong_value;
         if (jlong_value_check < 0) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: %s is less than 0", object_name, field_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: %s is less than 0", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         *result = (uint64_t)jlong_value_check;
@@ -409,7 +408,7 @@ int aws_get_string_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jstring *result_jstring,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool is_optional,
     bool *was_value_set) {
@@ -420,14 +419,15 @@ int aws_get_string_from_jobject(
 
     jstring jstring_value = (jstring)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jstring_value) {
-        result_jstring = &jstring_value;
-        *result_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *result_jstring);
+        // Get the data, copy it, and then release the JNI stuff
+        struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jstring_value);
+        aws_byte_buf_init_copy_from_cursor(result_buf, aws_jni_get_allocator(), tmp_cursor);
+        *result_cursor = aws_byte_cursor_from_buf(result_buf);
+        aws_jni_byte_cursor_from_jstring_release(env, jstring_value, tmp_cursor);
 
         if (was_value_set != NULL) {
             *was_value_set = true;
@@ -450,7 +450,7 @@ int aws_get_byte_array_from_jobject(
     jfieldID object_field,
     char *object_name,
     char *field_name,
-    jbyteArray *result_jbyte_array,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool optional,
     bool *was_value_set) {
@@ -461,14 +461,15 @@ int aws_get_byte_array_from_jobject(
 
     jbyteArray jbyte_array_value = (jbyteArray)(*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jbyte_array_value) {
-        result_jbyte_array = &jbyte_array_value;
-        *result_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, *result_jbyte_array);
+        // Get the data, copy it, and then release the JNI stuff
+        struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jbyte_array_value);
+        aws_byte_buf_init_copy_from_cursor(result_buf, aws_jni_get_allocator(), tmp_cursor);
+        *result_cursor = aws_byte_cursor_from_buf(result_buf);
+        aws_jni_byte_cursor_from_jbyteArray_release(env, jbyte_array_value, tmp_cursor);
 
         if (was_value_set != NULL) {
             *was_value_set = true;
@@ -501,20 +502,15 @@ int aws_get_boolean_from_jobject(
 
     jobject jboolean_obj = (*env)->GetObjectField(env, object, object_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, field_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, field_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jboolean_obj) {
         jboolean jboolean_value =
             (*env)->CallBooleanMethod(env, jboolean_obj, boxed_boolean_properties.boolean_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from %s", object_name, field_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from %s", object_name, field_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *result_boolean_int = (uint8_t)jboolean_value;
@@ -559,9 +555,7 @@ int aws_get_enum_from_jobject(
 
     jobject jni_retain_handling_type = (*env)->CallObjectMethod(env, object, object_enum_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting %s", object_name, enum_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting %s", object_name, enum_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jni_retain_handling_type) {
@@ -569,27 +563,21 @@ int aws_get_enum_from_jobject(
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from %s", object_name, enum_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from %s", object_name, enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         if (enum_value < 0) {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        } else if ((uint64_t)enum_value > UINT16_MAX) {
+        } else if ((int32_t)enum_value > UINT16_MAX) {
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT,
                 "%s create_from_java: Native value from %s is more than UINT16_MAX",
                 object_name,
                 enum_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Native value from %s is more than UINT16_MAX", object_name, enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
-        *enum_value_destination = (uint32_t)enum_value;
+        *enum_value_destination = (int32_t)enum_value;
         if (was_value_set != NULL) {
             *was_value_set = true;
         }
@@ -610,7 +598,7 @@ static int s_get_user_properties_from_packet_optional(
     jfieldID packet_field,
     char *packet_name,
     size_t *packet_user_property_count,
-    /* Contains jstring_array_holder_struct pointers */
+    /* Contains buffer_and_cursor_array_holder_struct pointers */
     struct aws_array_list *jni_user_properties_holder,
     /* Contains aws_mqtt5_user_property pointers */
     struct aws_array_list *jni_user_properties_struct_holder,
@@ -620,19 +608,14 @@ static int s_get_user_properties_from_packet_optional(
 
     jobject jni_list = (*env)->GetObjectField(env, packet, packet_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list", packet_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting user properties list", packet_name);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (jni_list) {
         jint jni_user_properties_size = (*env)->CallIntMethod(env, jni_list, boxed_list_properties.list_size_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting user properties list size", packet_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting user properties list size", packet_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_user_property_count = (size_t)jni_user_properties_size;
@@ -641,11 +624,8 @@ static int s_get_user_properties_from_packet_optional(
                                   jni_user_properties_holder,
                                   jni_user_properties_struct_holder,
                                   *packet_user_property_count)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(
                 AWS_LS_MQTT_CLIENT, "%s create_from_java: Could not create user properties array", packet_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Could not create user properties array", packet_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         int populate_result = s_populate_user_properties(
@@ -677,18 +657,13 @@ static int s_get_qos_from_packet(
 
     jobject jni_qos = (*env)->CallObjectMethod(env, packet, packet_field);
     if (aws_jni_check_and_clear_exception(env)) {
-        /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting QoS", packet_name);
-        aws_jni_throw_runtime_exception(env, "%s create_from_java: Error getting QoS", packet_name);
         return AWS_OP_ERR;
     }
     if (jni_qos) {
         jint jni_qos_value = (*env)->CallIntMethod(env, jni_qos, mqtt5_packet_qos_properties.qos_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: Error getting native value from QoS", packet_name);
-            aws_jni_throw_runtime_exception(
-                env, "%s create_from_java: Error getting native value from QoS", packet_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_qos = (enum aws_mqtt5_qos)jni_qos_value;
@@ -700,9 +675,7 @@ static int s_get_qos_from_packet(
         }
     } else {
         if (!optional) {
-            /* Due to formatted string, easier to just call directly than use s_log_and_throw_exception */
             AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s create_from_java: QoS not found", packet_name);
-            aws_jni_throw_runtime_exception(env, "%s create_from_java: QoS not found", packet_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
     }
@@ -732,16 +705,15 @@ void aws_mqtt5_packet_connect_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying ConnectPacket", (void *)java_packet);
 
-    if (java_packet->jni_client_id) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_client_id, java_packet->client_id_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->client_id_buf)) {
+        aws_byte_buf_clean_up(&java_packet->client_id_buf);
     }
-    if (java_packet->jni_username) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_username, java_packet->username_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->username_buf)) {
+        aws_byte_buf_clean_up(&java_packet->username_buf);
     }
-    if (java_packet->jni_password) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_password, java_packet->password_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->password_buf)) {
+        aws_byte_buf_clean_up(&java_packet->password_buf);
     }
-
     if (java_packet->will_publish_packet) {
         aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_packet->will_publish_packet);
     }
@@ -762,7 +734,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
     struct aws_mqtt5_packet_connect_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_connect_view_java_jni));
     if (java_packet == NULL) {
-        s_log_and_throw_exception(env, "ConnectPacket create_from_java: Creating new ConnectPacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "ConnectPacket create_from_java: Creating new ConnectPacket failed");
         return NULL;
     }
 
@@ -790,7 +762,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_client_id_field_id,
             s_connect_packet_string,
             "client ID",
-            java_packet->jni_client_id,
+            &java_packet->client_id_buf,
             &java_packet->client_id_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -806,7 +778,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_username_field_id,
             s_connect_packet_string,
             "username",
-            java_packet->jni_username,
+            &java_packet->username_buf,
             &java_packet->username_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -822,7 +794,7 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
             mqtt5_connect_packet_properties.connect_password_field_id,
             s_connect_packet_string,
             "password",
-            java_packet->jni_password,
+            &java_packet->password_buf,
             &java_packet->password_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -925,14 +897,14 @@ struct aws_mqtt5_packet_connect_view_java_jni *aws_mqtt5_packet_connect_view_cre
     jobject jni_will_packet =
         (*env)->GetObjectField(env, java_connect_packet, mqtt5_connect_packet_properties.connect_will_field_id);
     if (aws_jni_check_and_clear_exception(env)) {
-        s_log_and_throw_exception(env, "ConnectPacket create_from_java: Error getting will packet");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "ConnectPacket create_from_java: Error getting will packet");
         goto on_error;
     }
     if (jni_will_packet) {
         java_packet->will_publish_packet =
             aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_will_packet);
         if (java_packet->will_publish_packet == NULL) {
-            s_log_and_throw_exception(env, "ConnectPacket create_from_java: Error creating will packet!");
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "ConnectPacket create_from_java: Error getting will packet");
             goto on_error;
         }
         java_packet->packet.will = &java_packet->will_publish_packet->packet;
@@ -981,13 +953,11 @@ void aws_mqtt5_packet_disconnect_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying DisconnectPacket", (void *)java_packet);
 
-    if (java_packet->jni_reason_string) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_reason_string, java_packet->reason_string_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->reason_string_buf)) {
+        aws_byte_buf_clean_up(&java_packet->reason_string_buf);
     }
-    if (java_packet->jni_server_reference) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_server_reference, java_packet->server_reference_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->server_reference_buf)) {
+        aws_byte_buf_clean_up(&java_packet->server_reference_buf);
     }
 
     s_cleanup_two_aws_array(
@@ -1003,7 +973,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
     struct aws_mqtt5_packet_disconnect_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_disconnect_view_java_jni));
     if (java_packet == NULL) {
-        s_log_and_throw_exception(env, "DisconnectPacket create_from_java: Creating new DisconnectPacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "DisconnectPacket create_from_java: Creating new DisconnectPacket failed");
         return NULL;
     }
 
@@ -1048,7 +1018,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             mqtt5_disconnect_packet_properties.disconnect_reason_string_field_id,
             s_disconnect_packet_string,
             "reason string",
-            java_packet->jni_reason_string,
+            &java_packet->reason_string_buf,
             &java_packet->reason_string_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1064,7 +1034,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
             mqtt5_disconnect_packet_properties.disconnect_session_server_reference_field_id,
             s_disconnect_packet_string,
             "server reference",
-            java_packet->jni_server_reference,
+            &java_packet->server_reference_buf,
             &java_packet->server_reference_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1117,22 +1087,20 @@ void aws_mqtt5_packet_publish_view_java_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "id=%p: Destroying PublishPacket", (void *)java_packet);
 
-    if (java_packet->jni_payload) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, *java_packet->jni_payload, java_packet->payload_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->payload_buf)) {
+        aws_byte_buf_clean_up(&java_packet->payload_buf);
     }
-    if (java_packet->jni_topic) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_topic, java_packet->topic_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->topic_buf)) {
+        aws_byte_buf_clean_up(&java_packet->topic_buf);
     }
-    if (java_packet->jni_response_topic) {
-        aws_jni_byte_cursor_from_jstring_release(
-            env, *java_packet->jni_response_topic, java_packet->response_topic_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->response_topic_buf)) {
+        aws_byte_buf_clean_up(&java_packet->response_topic_buf);
     }
-    if (java_packet->jni_correlation_data) {
-        aws_jni_byte_cursor_from_jbyteArray_release(
-            env, *java_packet->jni_correlation_data, java_packet->correlation_data_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->correlation_data_buf)) {
+        aws_byte_buf_clean_up(&java_packet->correlation_data_buf);
     }
-    if (java_packet->jni_content_type) {
-        aws_jni_byte_cursor_from_jstring_release(env, *java_packet->jni_content_type, java_packet->content_type_cursor);
+    if (aws_byte_buf_is_valid(&java_packet->content_type_buf)) {
+        aws_byte_buf_clean_up(&java_packet->content_type_buf);
     }
 
     s_cleanup_two_aws_array(
@@ -1148,7 +1116,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
     struct aws_mqtt5_packet_publish_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_publish_view_java_jni));
     if (java_packet == NULL) {
-        s_log_and_throw_exception(env, "PublishPacket create_from_java: Creating new PublishPacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "PublishPacket create_from_java: Creating new PublishPacket failed");
         return NULL;
     }
 
@@ -1161,7 +1129,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_payload_field_id,
             s_publish_packet_string,
             "payload",
-            java_packet->jni_payload,
+            &java_packet->correlation_data_buf,
             &java_packet->payload_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1179,7 +1147,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             &java_packet->packet.qos,
             false,
             NULL) == AWS_OP_ERR) {
-        s_log_and_throw_exception(env, "PublishPacket create_from_java: QOS not found");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "PublishPacket create_from_java: QOS not found");
         goto on_error;
     }
 
@@ -1205,11 +1173,11 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_topic_field_id,
             s_publish_packet_string,
             "topic",
-            java_packet->jni_topic,
+            &java_packet->topic_buf,
             &java_packet->topic_cursor,
             false,
             NULL) == AWS_OP_ERR) {
-        s_log_and_throw_exception(env, "PublishPacket create_from_java: No topic found");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "PublishPacket create_from_java: No topic found");
         goto on_error;
     }
     java_packet->packet.topic = java_packet->topic_cursor;
@@ -1253,7 +1221,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_response_topic_field_id,
             s_publish_packet_string,
             "response topic",
-            java_packet->jni_response_topic,
+            &java_packet->response_topic_buf,
             &java_packet->response_topic_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1269,7 +1237,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_correlation_data_field_id,
             s_publish_packet_string,
             "correlation data",
-            java_packet->jni_correlation_data,
+            &java_packet->correlation_data_buf,
             &java_packet->correlation_data_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1285,7 +1253,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_content_type_field_id,
             s_publish_packet_string,
             "content type",
-            java_packet->jni_content_type,
+            &java_packet->content_type_buf,
             &java_packet->content_type_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {
@@ -1355,8 +1323,9 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
         return NULL;
     }
     if (!jni_subscriptions) {
-        s_log_and_throw_exception(
-            env, "SubscribePacket create_from_java: Creating new SubscribePacket failed due to no subscriptions!");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT,
+            "SubscribePacket create_from_java: Creating new SubscribePacket failed due to no subscriptions!");
         return NULL;
     }
     jint jni_subscriptions_size = (*env)->CallIntMethod(env, jni_subscriptions, boxed_list_properties.list_size_id);
@@ -1366,29 +1335,29 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
     size_t subscriptions_filter_size = (size_t)jni_subscriptions_size;
 
     if (subscriptions_filter_size <= 0) {
-        s_log_and_throw_exception(env, "SubscribePacket create_from_java: subscriptions count is 0");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: subscriptions count is 0");
         return NULL;
     }
 
     struct aws_mqtt5_packet_subscribe_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_subscribe_view_java_jni));
     if (java_packet == NULL) {
-        s_log_and_throw_exception(env, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
         return NULL;
     }
     int array_init = aws_array_list_init_dynamic(
         &java_packet->topic_filters, allocator, subscriptions_filter_size, sizeof(struct aws_mqtt5_subscription_view));
     if (array_init != AWS_OP_SUCCESS) {
-        s_log_and_throw_exception(env, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
         goto on_error;
     }
     int jni_array_init = aws_array_list_init_dynamic(
         &java_packet->jni_subscription_topic_filters,
         allocator,
         subscriptions_filter_size,
-        sizeof(struct jstring_array_holder_struct));
+        sizeof(struct buffer_and_cursor_array_holder_struct));
     if (jni_array_init != AWS_OP_SUCCESS) {
-        s_log_and_throw_exception(env, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Creating new SubscribePacket failed");
         goto on_error;
     }
 
@@ -1414,27 +1383,34 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
     for (size_t i = 0; i < subscriptions_filter_size; i++) {
         /* Populate */
         struct aws_mqtt5_subscription_view subscription_view;
-        struct jstring_array_holder_struct holder;
+        struct buffer_and_cursor_array_holder_struct holder;
 
         jobject jni_packet_subscribe_subscription =
             (*env)->CallObjectMethod(env, jni_subscriptions, boxed_list_properties.list_get_id, (jint)i);
         if (aws_jni_check_and_clear_exception(env)) {
-            s_log_and_throw_exception(env, "SubscribePacket create_from_java: Error getting topic filters");
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Error getting topic filters");
             goto on_error;
         }
 
         jstring jni_topic_filter = (jstring)(*env)->CallObjectMethod(
             env, jni_packet_subscribe_subscription, mqtt5_subscription_properties.subscribe_get_topic_filter_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            s_log_and_throw_exception(env, "SubscribePacket create_from_java: Error getting subscription topic filter");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: Error getting subscription topic filter");
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder.cursor = aws_byte_cursor_from_buf(&holder.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_topic_filter, tmp_cursor);
             subscription_view.topic_filter = holder.cursor;
+            jni_topic_filter = NULL;
         } else {
-            s_log_and_throw_exception(env, "SubscribePacket create_from_java: subscription topic filter is required");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: subscription topic filter is required");
             goto on_error;
         }
 
@@ -1446,7 +1422,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 &subscription_view.qos,
                 false,
                 NULL) == AWS_OP_ERR) {
-            s_log_and_throw_exception(env, "SubscribePacket create_from_java: subscription QoS is required");
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "SubscribePacket create_from_java: subscription QoS is required");
             goto on_error;
         }
 
@@ -1472,7 +1448,7 @@ struct aws_mqtt5_packet_subscribe_view_java_jni *aws_mqtt5_packet_subscribe_view
                 jni_packet_subscribe_subscription,
                 mqtt5_subscription_properties.subscribe_retain_as_published_field_id,
                 s_subscribe_packet_string,
-                "no local",
+                "retain as published",
                 &retain_as_published,
                 true,
                 &was_value_set) != AWS_OP_SUCCESS) {
@@ -1564,21 +1540,23 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
         return NULL;
     }
     if (!jni_topic_filters) {
-        s_log_and_throw_exception(
-            env, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed due to no topic filters");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT,
+            "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed due to no topic filters");
         return NULL;
     }
 
     size_t topic_filter_size = 0;
     jint jni_topic_filter_size = (*env)->CallIntMethod(env, jni_topic_filters, boxed_list_properties.list_size_id);
     if (aws_jni_check_and_clear_exception(env)) {
-        s_log_and_throw_exception(
-            env, "UnsubscribePacket create_from_java: Created new UnsubscribePacket failed due to no topic filters");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT_CLIENT,
+            "UnsubscribePacket create_from_java: Created new UnsubscribePacket failed due to no topic filters");
         return NULL;
     }
-    int64_t jni_topic_filter_size_check = (int64_t)jni_topic_filter_size;
+    int32_t jni_topic_filter_size_check = (int32_t)jni_topic_filter_size;
     if (jni_topic_filter_size_check < 0) {
-        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: No topic filters found");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: No topic filters found");
         return NULL;
     } else {
         topic_filter_size = (size_t)jni_topic_filter_size;
@@ -1587,19 +1565,22 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_unsubscribe_view_java_jni));
     if (java_packet == NULL) {
-        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         return NULL;
     }
     int array_init = aws_array_list_init_dynamic(
         &java_packet->topic_filters, allocator, topic_filter_size, sizeof(struct aws_byte_cursor));
     if (array_init != AWS_OP_SUCCESS) {
-        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         goto on_error;
     }
     int jni_array_init = aws_array_list_init_dynamic(
-        &java_packet->jni_topic_filters, allocator, topic_filter_size, sizeof(struct jstring_array_holder_struct));
+        &java_packet->jni_topic_filters,
+        allocator,
+        topic_filter_size,
+        sizeof(struct buffer_and_cursor_array_holder_struct));
     if (jni_array_init != AWS_OP_SUCCESS) {
-        s_log_and_throw_exception(env, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         goto on_error;
     }
 
@@ -1607,18 +1588,23 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
 
     for (size_t i = 0; i < topic_filter_size; i++) {
         /* Populate */
-        struct jstring_array_holder_struct holder;
+        struct buffer_and_cursor_array_holder_struct holder;
 
         jstring jni_topic_filter =
             (jstring)(*env)->CallObjectMethod(env, jni_topic_filters, boxed_list_properties.list_get_id, (jint)i);
         if (aws_jni_check_and_clear_exception(env)) {
-            s_log_and_throw_exception(
-                env, "UnsubscribePacket create_from_java: Error getting subscription topic filter");
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT_CLIENT, "UnsubscribePacket create_from_java: Error getting subscription topic filter");
             goto on_error;
         }
         if (jni_topic_filter) {
-            holder.jni_string = &jni_topic_filter;
-            holder.cursor = aws_jni_byte_cursor_from_jstring_acquire(env, *holder.jni_string);
+            // Get a temporary cursor from JNI, copy it, and then destroy the JNI version, leaving the byte_buffer copy.
+            // This gets around JNI stuff going out of scope.
+            struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, jni_topic_filter);
+            aws_byte_buf_init_copy_from_cursor(&holder.buffer, aws_jni_get_allocator(), tmp_cursor);
+            holder.cursor = aws_byte_cursor_from_buf(&holder.buffer);
+            aws_jni_byte_cursor_from_jstring_release(env, jni_topic_filter, tmp_cursor);
+            jni_topic_filter = NULL;
         }
         aws_array_list_push_back(&java_packet->topic_filters, (void *)&holder.cursor);
         aws_array_list_push_back(&java_packet->jni_topic_filters, (void *)&holder);

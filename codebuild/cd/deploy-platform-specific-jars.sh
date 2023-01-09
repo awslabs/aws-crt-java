@@ -13,7 +13,7 @@ else
   DEPLOY_REPOSITORY_URL=https://aws.oss.sonatype.org:443/service/local/staging/deployByRepositoryId/${STAGING_REPO_ID}
 fi
 
-CLASSIFIERS_ARRAY=("linux-armv6" "linux-armv7" "linux-aarch_64" "linux-x86_32" "linux-x86_64" "osx-aarch_64" "osx-x86_64" "windows-x86_32" "windows-x86_64")
+CLASSIFIERS_ARRAY=("linux-armv6" "linux-armv7" "linux-aarch_64" "linux-x86_32" "linux-x86_64" "osx-aarch_64" "osx-x86_64" "windows-x86_32" "windows-x86_64" "linux-x86_64-musl")
 
 for str in ${CLASSIFIERS_ARRAY[@]}; do
   FILES="${FILES}target/aws-crt-1.0.0-SNAPSHOT-$str.jar,"

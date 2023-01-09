@@ -28,8 +28,7 @@ docker container prune -f
 docker volume rm artifacts
 
 # Upload the artifacts to S3
-#GIT_TAG=$(git describe --tags)
-export GIT_TAG="musl-testing"
+export GIT_TAG=$(git describe --tags)
 
 aws s3 cp --recursive --include "*.so" /tmp/artifacts/target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp /tmp/artifacts/target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

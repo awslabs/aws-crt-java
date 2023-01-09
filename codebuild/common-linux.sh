@@ -18,9 +18,10 @@ ecc_privatekey=$(aws secretsmanager get-secret-value --secret-id "ecc-test/priva
 key_p8=$(aws secretsmanager get-secret-value --secret-id "unit-test/privatekey-p8" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$key_p8" > /tmp/privatekey_p8.pem
 ENDPOINT=$(aws secretsmanager get-secret-value --secret-id "unit-test/endpoint" --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
 
-# build java package
+# Go to repository root directory
 cd $CODEBUILD_SRC_DIR
 
+# Build and run all the tests!
 ulimit -c unlimited
 mvn -B test $* \
     -DredirectTestOutputToFile=true \
@@ -34,3 +35,9 @@ mvn -B test $* \
     -Dprivatekey_p8=/tmp/privatekey_p8.pem \
     -Daws.crt.debugnative=true \
     -Dcmake.s2nNoPqAsm=ON
+
+# NOTE: Skip for now and just test against IoT Core.
+# Run the MQTT5 tests again, but connecting to Codebuild
+# source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt us-east-1
+# mvn -B test -Dtest=Mqtt5ClientTest -Daws.crt.debugnative=true -DreuseForks=false -DredirectTestOutputToFile=true
+# source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/TestIotProdMQTT5EnvironmentVariables.txt cleanup

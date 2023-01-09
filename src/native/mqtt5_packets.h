@@ -52,7 +52,7 @@ int aws_get_string_from_jobject(
     jfieldID packet_field,
     char *packet_name,
     char *field_name,
-    jstring *result_jstring,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool is_optional,
     bool *was_value_set);
@@ -63,7 +63,7 @@ int aws_get_byte_array_from_jobject(
     jfieldID packet_field,
     char *packet_name,
     char *field_name,
-    jbyteArray *result_jbyte_array,
+    struct aws_byte_buf *result_buf,
     struct aws_byte_cursor *result_cursor,
     bool optional,
     bool *was_value_set);

@@ -5,14 +5,20 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa
       - sudo apt-get update -y
       - sudo apt-get install gcc-7 cmake3 ninja-build -y
+      - sudo apt-get install mosquitto mosquitto-clients
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
   pre_build:
     commands:
       - export CC=gcc-7
+  mosquttio_setup:
+    commands:
+      - echo "TODO: Setup mosquttio certificate, key, and settings. For now, just test install"
+      - mosquttio -d # run mosquttio as a daemon
   build:
     commands:
       - echo Build started on `date`

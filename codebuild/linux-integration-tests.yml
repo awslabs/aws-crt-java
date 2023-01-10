@@ -20,10 +20,10 @@ phases:
       - echo Build started on `date`
 
       - echo "TODO - test running mosquitto"
-      - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh /tmp/setup_mosquitto_test_env.sh
-      - sudo chmod a+xr /tmp/setup_mosquitto_test_env.sh
+      - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
+      - sudo chmod a+xr ./setup_mosquitto_test_env.sh
       # Start mosquitto
-      - source /tmp/setup_mosquitto_test_env.sh
+      - source ./setup_mosquitto_test_env.sh
       - sudo service mosquitto start
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh

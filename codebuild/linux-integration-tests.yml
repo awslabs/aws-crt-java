@@ -24,6 +24,7 @@ phases:
       - sudo chmod a+xr ./setup_mosquitto_test_env.sh
       # Start mosquitto
       - ./setup_mosquitto_test_env.sh
+      - sudo service mosquitto stop
       - sudo service mosquitto start
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh

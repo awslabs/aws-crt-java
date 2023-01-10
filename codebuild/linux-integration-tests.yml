@@ -15,13 +15,13 @@ phases:
   pre_build:
     commands:
       - export CC=gcc-7
-  mosquttio_setup:
-    commands:
-      - echo "TODO: Setup mosquttio certificate, key, and settings. For now, just test install"
-      - mosquttio -d # run mosquttio as a daemon
   build:
     commands:
       - echo Build started on `date`
+
+      - echo "TODO - test running mosquttio"
+      - mosquttio -d # run mosquttio as a daemon
+
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh

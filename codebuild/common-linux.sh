@@ -6,6 +6,10 @@ if test -f "/tmp/setup_proxy_test_env.sh"; then
     source /tmp/setup_proxy_test_env.sh
 fi
 
+if test -f "/tmp/setup_mosquitto_test_env.sh"; then
+    source /tmp/setup_mosquitto_test_env.sh
+fi
+
 env
 
 git submodule update --init

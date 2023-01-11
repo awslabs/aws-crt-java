@@ -621,6 +621,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     /* Direct connection with HttpProxyOptions */
+    /* NOTE: Might not work initially on Codebuild Mosquitto - will need to test on its own */
     // @Test
     // public void ConnDC_UC5() {
     //     skipIfNetworkUnavailable();
@@ -1035,2086 +1036,2086 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      * ============================================================
      */
 
-    // /* Client connect with invalid host name */
-    // @Test
-    // public void ConnNegativeID_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("_test", getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-    //         builder.withMinReconnectDelayMs(1000L);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-
-    //             try {
-    //                 events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 exceptionOccurred = true;
-    //                 if (events.connectFailureCode == 1059) {
-    //                     foundExpectedError = true;
-    //                 } else {
-    //                     System.out.println("EXCEPTION: " + ex);
-    //                     System.out.println(ex.getMessage() + " \n");
-    //                 }
-    //             }
-
-    //             if (foundExpectedError == false) {
-    //                 System.out.println("Error code was not AWS_IO_DNS_INVALID_NAME like expected! There was an exception though");
-    //             }
-    //             if (exceptionOccurred == false) {
-    //                 fail("No exception occurred!");
-    //             }
-    //         }
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Client connect with invalid, nonexistent port for direct connection */
-    // @Test
-    // public void ConnNegativeID_UC2() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), 65535L);
-    //         builder.withLifecycleEvents(events);
-    //         builder.withMinReconnectDelayMs(1000L);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-
-    //             try {
-    //                 events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 exceptionOccurred = true;
-    //                 if (events.connectFailureCode == 1047) {
-    //                     foundExpectedError = true;
-    //                 }
-    //             }
-
-    //             if (foundExpectedError == false) {
-    //                 System.out.println("Error code was not AWS_IO_SOCKET_CONNECTION_REFUSED like expected! There was an exception though");
-    //             }
-    //             if (exceptionOccurred == false) {
-    //                 fail("No exception occurred!");
-    //             }
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Client connect with invalid protocol port for direct connection */
-    // @Test
-    // public void ConnNegativeID_UC2_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(mqtt5DirectMqttHost != null);
-    //     Assume.assumeTrue(mqtt5WSMqttPort != null);
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5WSMqttPort);
-    //         builder.withLifecycleEvents(events);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-
-    //             try {
-    //                 events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 exceptionOccurred = true;
-    //                 if (events.connectFailureCode == 5149) {
-    //                     foundExpectedError = true;
-    //                 }
-    //             }
-
-    //             if (foundExpectedError == false) {
-    //                 System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
-    //             }
-    //             if (exceptionOccurred == false) {
-    //                 fail("No exception occurred!");
-    //             }
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Client connect with invalid, nonexistent port for websocket connection */
-    // @Test
-    // public void ConnNegativeID_UC3() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(mqtt5WSMqttHost != null);
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-
-    //         try (
-    //             EventLoopGroup elg = new EventLoopGroup(1);
-    //             HostResolver hr = new HostResolver(elg);
-    //             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-    //         ) {
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, 444L);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withBootstrap(bootstrap);
-
-    //             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
-    //                 @Override
-    //                 public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
-    //                     t.complete(t.getHttpRequest());
-    //                 }
-    //             };
-    //             builder.withWebsocketHandshakeTransform(websocketTransform);
-
-    //             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                 client.start();
-
-    //                 try {
-    //                     events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //                 } catch (Exception ex) {
-    //                     exceptionOccurred = true;
-    //                     if (events.connectFailureCode == 1047) {
-    //                         foundExpectedError = true;
-    //                     }
-    //                 }
-
-    //                 if (foundExpectedError == false) {
-    //                     System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
-    //                 }
-    //                 if (exceptionOccurred == false) {
-    //                     fail("No exception occurred!");
-    //                 }
-    //             }
-    //         }
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Client connect with invalid protocol port for websocket connection */
-    // @Test
-    // public void ConnNegativeID_UC3_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(mqtt5WSMqttHost != null);
-    //     Assume.assumeTrue(mqtt5DirectMqttPort != null);
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-
-    //         try (
-    //             EventLoopGroup elg = new EventLoopGroup(1);
-    //             HostResolver hr = new HostResolver(elg);
-    //             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-    //         ) {
-
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5DirectMqttPort);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withBootstrap(bootstrap);
-
-    //             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
-    //                 @Override
-    //                 public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
-    //                     t.complete(t.getHttpRequest());
-    //                 }
-    //             };
-    //             builder.withWebsocketHandshakeTransform(websocketTransform);
-
-    //             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                 client.start();
-    //                 try {
-    //                     events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //                 } catch (Exception ex) {
-    //                     exceptionOccurred = true;
-    //                     if (events.connectFailureCode == 46) {
-    //                         foundExpectedError = true;
-    //                     }
-    //                 }
-
-    //                 if (foundExpectedError == false) {
-    //                     System.out.println("Error code was not AWS_ERROR_SYS_CALL_FAILURE (occurs right after AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR for Websockets) like expected! There was an exception though");
-    //                 }
-    //                 if (exceptionOccurred == false) {
-    //                     fail("No exception occurred!");
-    //                 }
-    //             }
-    //         }
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Client connect with socket timeout */
-    // @Test
-    // public void ConnNegativeID_UC4() {
-    //     skipIfNetworkUnavailable();
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-
-    //         try (
-    //             EventLoopGroup elg = new EventLoopGroup(1);
-    //             HostResolver hr = new HostResolver(elg);
-    //             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-    //             SocketOptions options = new SocketOptions();
-    //         ) {
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("www.example.com", 81L);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withBootstrap(bootstrap);
-
-    //             options.connectTimeoutMs = 100;
-    //             builder.withSocketOptions(options);
-
-    //             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                 client.start();
-
-    //                 try {
-    //                     events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //                 } catch (Exception ex) {
-    //                     exceptionOccurred = true;
-    //                     if (events.connectFailureCode == 1048) {
-    //                         foundExpectedError = true;
-    //                     }
-    //                 }
-    //                 if (foundExpectedError == false) {
-    //                     System.out.println("Error code was not AWS_IO_SOCKET_TIMEOUT like expected! There was an exception though");
-    //                 }
-    //                 if (exceptionOccurred == false) {
-    //                     fail("No exception occurred!");
-    //                 }
-    //             }
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Websocket handshake failure test */
-    // @Test
-    // public void ConnNegativeID_UC6() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(mqtt5WSMqttHost != null);
-    //     Assume.assumeTrue(mqtt5WSMqttPort != null);
-    //     boolean foundExpectedError = false;
-    //     boolean exceptionOccurred = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-
-    //         try (
-    //             EventLoopGroup elg = new EventLoopGroup(1);
-    //             HostResolver hr = new HostResolver(elg);
-    //             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-    //         ) {
-
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5WSMqttPort);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withBootstrap(bootstrap);
-
-    //             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
-    //                 @Override
-    //                 public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
-    //                     t.completeExceptionally(new Throwable("Intentional failure!"));
-    //                 }
-    //             };
-    //             builder.withWebsocketHandshakeTransform(websocketTransform);
-    //             builder.withPort(mqtt5WSMqttPort);
-
-    //             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                 client.start();
-
-    //                 try {
-    //                     events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //                 } catch (Exception ex) {
-    //                     exceptionOccurred = true;
-    //                     if (events.connectFailureCode == 3) {
-    //                         foundExpectedError = true;
-    //                     }
-    //                 }
-    //                 if (foundExpectedError == false) {
-    //                     System.out.println("Error code was not AWS_ERROR_UNKNOWN like expected! There was an exception though");
-    //                 }
-    //                 if (exceptionOccurred == false) {
-    //                     fail("No exception occurred!");
-    //                 }
-
-    //                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-    //                 client.stop(disconnect.build());
-    //             }
-    //         }
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* For the double client ID test */
-    // static final class LifecycleEvents_DoubleClientID implements Mqtt5ClientOptions.LifecycleEvents {
-    //     CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
-    //     CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
-    //     CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
-
-    //     @Override
-    //     public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
-
-    //     @Override
-    //     public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
-    //         connectedFuture.complete(null);
-    //     }
-
-    //     @Override
-    //     public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
-    //         connectedFuture.completeExceptionally(new Exception("Could not connect!"));
-    //     }
-
-    //     @Override
-    //     public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
-    //         disconnectedFuture.complete(null);
-    //     }
-
-    //     @Override
-    //     public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
-    //         stoppedFuture.complete(null);
-    //     }
-    // }
-
-    // /* Double Client ID failure test */
-    // @Test
-    // public void ConnNegativeID_UC7() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-
-    //     try {
-    //         LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
-
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (
-    //             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-    //             Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
-    //         ) {
-    //             clientOne.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             clientTwo.start();
-    //             events.connectedFuture = new CompletableFuture<>();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             // Make sure a disconnection happened
-    //             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
-    //             // attempt to reconnect endlessly, making a never ending loop.
-    //             DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
-    //             clientOne.stop(disconnect);
-    //             clientTwo.stop(disconnect);
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Double Client ID disconnect and then reconnect test */
-    // @Test
-    // public void ConnNegativeID_UC7_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     try {
-    //         LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
-    //         LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
-
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builderTwo.withLifecycleEvents(eventsTwo);
-    //         builderTwo.withConnectOptions(connectOptions.build());
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //             builderTwo.withTlsContext(tlsContext);
-    //         }
-
-    //         try (
-    //             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-    //             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
-    //         ) {
-    //             clientOne.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             clientTwo.start();
-    //             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             // Make sure the first client was disconnected
-    //             events.disconnectedFuture.get(180, TimeUnit.SECONDS);
-    //             // Disconnect the second client so the first can reconnect
-    //             clientTwo.stop(new DisconnectPacketBuilder().build());
-    //             // Confirm the second client has stopped
-    //             eventsTwo.stoppedFuture.get(180, TimeUnit.SECONDS);
-
-    //             // Wait until the first client has reconnected
-    //             events.connectedFuture = new CompletableFuture<>();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             assertTrue(clientOne.getIsConnected() == true);
-
-    //             // Stop the clients from disconnecting each other. If we do not do this, then the clients will
-    //             // attempt to reconnect endlessly, making a never ending loop.
-    //             DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
-    //             clientOne.stop(disconnect);
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Negative Data Input Tests
-    //  * ============================================================
-    //  */
-
-    // /* Negative Connect Packet Properties */
-    // @Test
-    // public void NewNegative_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientCreationFailed = false;
-
-    //     try {
-    //         Mqtt5Client client = null;
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-
-    //         connectOptions.withKeepAliveIntervalSeconds(-100L);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with negative KeepAliveIntervalSeconds");
-    //         }
-    //         connectOptions.withKeepAliveIntervalSeconds(100L);
-
-    //         connectOptions.withSessionExpiryIntervalSeconds(-100L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with negative SessionExpiryIntervalSeconds");
-    //         }
-    //         connectOptions.withSessionExpiryIntervalSeconds(100L);
-
-    //         connectOptions.withReceiveMaximum(-100L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail negative ReceiveMaximum");
-    //         }
-    //         connectOptions.withReceiveMaximum(100L);
-
-    //         connectOptions.withMaximumPacketSizeBytes(-100L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with negative MaximumPacketSizeBytes");
-    //         }
-    //         connectOptions.withMaximumPacketSizeBytes(100L);
-
-    //         connectOptions.withWillDelayIntervalSeconds(-100L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with negative willDelayIntervalSeconds");
-    //         }
-    //         connectOptions.withWillDelayIntervalSeconds(100L);
-
-    //         // Make sure everything is closed
-    //         if (client != null) {
-    //             client.close();
-    //         }
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Overflow Connect Packet Properties */
-    // @Test
-    // public void NewNegative_UC1_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientCreationFailed = false;
-
-    //     try {
-    //         Mqtt5Client client = null;
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-
-    //         connectOptions.withKeepAliveIntervalSeconds(2147483647L);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with overflow KeepAliveIntervalSeconds");
-    //         }
-    //         connectOptions.withKeepAliveIntervalSeconds(100L);
-
-    //         connectOptions.withSessionExpiryIntervalSeconds(9223372036854775807L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with overflow SessionExpiryIntervalSeconds");
-    //         }
-    //         connectOptions.withSessionExpiryIntervalSeconds(100L);
-
-    //         connectOptions.withReceiveMaximum(2147483647L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail overflow ReceiveMaximum");
-    //         }
-    //         connectOptions.withReceiveMaximum(100L);
-
-    //         connectOptions.withMaximumPacketSizeBytes(9223372036854775807L);
-    //         builder.withConnectOptions(connectOptions.build());
-    //         clientCreationFailed = false;
-    //         try {
-    //             client = new Mqtt5Client(builder.build());
-    //         } catch (Exception ex) {
-    //             clientCreationFailed = true;
-    //         }
-    //         if (clientCreationFailed == false) {
-    //             fail("Client creation did not fail with overflow MaximumPacketSizeBytes");
-    //         }
-    //         connectOptions.withMaximumPacketSizeBytes(100L);
-
-    //         // WillDelayIntervalSeconds is an unsigned 64 bit Long, so it cannot overflow it from Java
-
-    //         // Make sure everything is closed
-    //         if (client != null) {
-    //             client.close();
-    //         }
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Negative Disconnect Packet Properties */
-    // @Test
-    // public void NewNegative_UC2() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientDisconnectFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
-    //             disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
-    //             try {
-    //                 client.stop(disconnectBuilder.build());
-    //             } catch (Exception ex) {
-    //                 clientDisconnectFailed = true;
-    //             }
-
-    //             if (clientDisconnectFailed == false) {
-    //                 fail("Client disconnect packet creation did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Overflow Disconnect Packet Properties */
-    // @Test
-    // public void NewNegative_UC2_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientDisconnectFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
-    //             disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
-    //             try {
-    //                 client.stop(disconnectBuilder.build());
-    //             } catch (Exception ex) {
-    //                 clientDisconnectFailed = true;
-    //             }
-
-    //             if (clientDisconnectFailed == false) {
-    //                 fail("Client disconnect did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Negative Publish Packet Properties */
-    // @Test
-    // public void NewNegative_UC3() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientPublishFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
-    //             publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
-    //             publishBuilder.withMessageExpiryIntervalSeconds(-100L);
-    //             try {
-    //                 CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
-    //                 future.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 clientPublishFailed = true;
-    //             }
-
-    //             if (clientPublishFailed == false) {
-    //                 fail("Client publish did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Overflow Publish Packet Properties */
-    // @Test
-    // public void NewNegative_UC3_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientPublishFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
-    //             publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic").withQOS(QOS.AT_LEAST_ONCE);
-    //             publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
-    //             try {
-    //                 CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
-    //                 future.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 clientPublishFailed = true;
-    //             }
-
-    //             if (clientPublishFailed == false) {
-    //                 fail("Client publish did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Negative Subscribe Packet Properties */
-    // @Test
-    // public void NewNegative_UC4() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientSubscribeFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
-    //             subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
-    //             subscribeBuilder.withSubscriptionIdentifier(-100L);
-    //             try {
-    //                 CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
-    //                 future.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 clientSubscribeFailed = true;
-    //             }
-
-    //             if (clientSubscribeFailed == false) {
-    //                 fail("Client subscribe did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Overflow Subscribe Packet Properties */
-    // @Test
-    // public void NewNegative_UC4_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean clientSubscribeFailed = false;
-
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
-    //             subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
-    //             subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
-    //             try {
-    //                 CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
-    //                 future.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 clientSubscribeFailed = true;
-    //             }
-
-    //             if (clientSubscribeFailed == false) {
-    //                 fail("Client subscribe did not fail!");
-    //             }
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Negotiated Settings Tests
-    //  * ============================================================
-    //  */
-
-    // /* Happy path, minimal success test */
-    // @Test
-    // public void Negotiated_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-    //         ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
-    //         optionsBuilder.withSessionExpiryIntervalSeconds(600000L);
-    //         builder.withConnectOptions(optionsBuilder.build());
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             // TODO - add support for this in the future!
-    //             // assertEquals(
-    //             //     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-    //             //     events.connectSuccessSettings.getSessionExpiryInterval(),
-    //             //     600000L);
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Maximum success test */
-    // @Test
-    // public void Negotiated_UC2() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
-    //         optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
-    //         optionsBuilder.withSessionExpiryIntervalSeconds(0L);
-    //         optionsBuilder.withKeepAliveIntervalSeconds(360L);
-    //         builder.withConnectOptions(optionsBuilder.build());
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             assertEquals(
-    //                 "Negotiated Settings client ID does not match sent client ID",
-    //                 events.connectSuccessSettings.getAssignedClientID(),
-    //                 "test/MQTT5_Binding_Java_" + testUUID);
-    //             assertEquals(
-    //                 "Negotiated Settings session expiry interval does not match sent session expiry interval",
-    //                 events.connectSuccessSettings.getSessionExpiryInterval(),
-    //                 0L);
-    //             assertEquals(
-    //                 "Negotiated Settings keep alive result does not match sent keep alive",
-    //                 events.connectSuccessSettings.getServerKeepAlive(),
-    //                 360);
-    //             assertEquals(
-    //                     "Negotiated Settings rejoined session does not match expected value",
-    //                     false,
-    //                     events.connectSuccessSettings.getRejoinedSession());
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Rejoin always session resumption test */
-    // @Test
-    // public void Negotiated_Rejoin_Always() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
-    //         optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
-    //         optionsBuilder.withSessionExpiryIntervalSeconds(3600L);
-    //         optionsBuilder.withKeepAliveIntervalSeconds(360L);
-    //         builder.withConnectOptions(optionsBuilder.build());
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             assertEquals(
-    //                     "Negotiated Settings client ID does not match sent client ID",
-    //                     events.connectSuccessSettings.getAssignedClientID(),
-    //                     "test/MQTT5_Binding_Java_" + testUUID);
-    //             assertEquals(
-    //                     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-    //                     events.connectSuccessSettings.getSessionExpiryInterval(),
-    //                     3600L);
-    //             assertEquals(
-    //                     "Negotiated Settings keep alive result does not match sent keep alive",
-    //                     events.connectSuccessSettings.getServerKeepAlive(),
-    //                     360);
-    //             assertEquals(
-    //                     "Negotiated Settings rejoined session does not match expected value",
-    //                     false,
-    //                     events.connectSuccessSettings.getRejoinedSession());
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
-    //         LifecycleEvents_Futured rejoinEvents = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(rejoinEvents);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             rejoinEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             assertEquals(
-    //                     "Negotiated Settings rejoined session does not match expected value",
-    //                     true,
-    //                     rejoinEvents.connectSuccessSettings.getRejoinedSession());
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Operation Tests
-    //  * ============================================================
-    //  */
-
-    // /* Sub-UnSub happy path */
-    // @Test
-    // public void Op_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         PublishEvents_Futured publishEvents = new PublishEvents_Futured();
-    //         builder.withPublishEvents(publishEvents);
-
-    //         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //         publishPacketBuilder.withTopic(testTopic);
-    //         publishPacketBuilder.withPayload("Hello World".getBytes());
-    //         publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
-
-    //         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //         subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-
-    //         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-    //         unsubscribePacketBuilder.withSubscription(testTopic);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-
-    //             publishEvents.publishReceivedFuture = new CompletableFuture<>();
-    //             publishEvents.publishPacket = null;
-    //             client.unsubscribe(unsubscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             assertEquals(
-    //                 "Publish after unsubscribe still arrived!",
-    //                 publishEvents.publishPacket,
-    //                 null);
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Sub-UnSub happy path */
-    // @Test
-    // public void Op_UC2() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-    //         PublishPacketBuilder willPacket = new PublishPacketBuilder();
-    //         willPacket.withTopic(testTopic);
-    //         willPacket.withQOS(QOS.AT_LEAST_ONCE);
-    //         willPacket.withPayload("Hello World".getBytes());
-    //         connectOptions.withWill(willPacket.build());
-    //         connectOptions.withWillDelayIntervalSeconds(0L);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
-    //         builderTwo.withLifecycleEvents(eventsTwo);
-    //         PublishEvents_Futured publishEvents = new PublishEvents_Futured();
-    //         builderTwo.withPublishEvents(publishEvents);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContextTwo = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContextTwo = getIoTCoreTlsContext();
-    //             builderTwo.withTlsContext(tlsContextTwo);
-    //         }
-
-    //         SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder();
-    //         subscribeOptions.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-
-    //         try (
-    //             Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-    //             Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
-    //         ) {
-    //             clientOne.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             clientTwo.start();
-    //             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             clientTwo.subscribe(subscribeOptions.build()).get(180, TimeUnit.SECONDS);
-    //             clientOne.stop(null);
-
-    //             // Did we get a publish message?
-    //             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-    //             assertTrue(publishEvents.publishPacket != null);
-
-    //             clientTwo.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //             tlsContextTwo.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Binary Publish Test */
-    // @Test
-    // public void Op_UC3() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         PublishEvents_Futured publishEvents = new PublishEvents_Futured();
-    //         builder.withPublishEvents(publishEvents);
-
-    //         // Make random binary
-    //         byte[] randomBytes = new byte[256];
-    //         Random random = new Random();
-    //         random.nextBytes(randomBytes);
-
-    //         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //         publishPacketBuilder.withTopic(testTopic).withPayload(randomBytes).withQOS(QOS.AT_LEAST_ONCE);
-
-    //         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //         subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-
-    //             assertTrue(java.util.Arrays.equals(publishEvents.publishPacket.getPayload(), randomBytes));
-
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //             events.stopFuture.get(180, TimeUnit.SECONDS);
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Error Operation Tests
-    //  * ============================================================
-    //  */
-
-    // /* Null Publish Test */
-    // @Test
-    // public void ErrorOp_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.publish(null).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Null publish packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Publish with empty builder test */
-    // @Test
-    // public void ErrorOp_UC1_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.publish(new PublishPacketBuilder().build()).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Empty publish packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Null Subscribe Test */
-    // @Test
-    // public void ErrorOp_UC2() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.subscribe(null).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Null subscribe packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Empty Subscribe Test */
-    // @Test
-    // public void ErrorOp_UC2_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.subscribe(new SubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Empty subscribe packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Null Unsubscribe Test */
-    // @Test
-    // public void ErrorOp_UC3() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.unsubscribe(null).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Null unsubscribe packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Empty Unsubscribe Test */
-    // @Test
-    // public void ErrorOp_UC3_ALT() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             try {
-    //                 client.unsubscribe(new UnsubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Empty unsubscribe packet did not cause exception with error!");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /* Unsupported Connect packet data sent (IoT Core only) */
-    // @Test
-    // public void ErrorOp_UC4() {
-    //     skipIfNetworkUnavailable();
-    //     /* Only works on IoT Core */
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttCertificateFile != null);
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttKeyFile != null);
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttCertificateBytes != null);
-    //     Assume.assumeTrue(mqtt5IoTCoreMqttKeyBytes != null);
-    //     boolean didExceptionOccur = false;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, mqtt5IoTCoreMqttPort);
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         TlsContext tlsContext = null;
-    //         tlsContext = getIoTCoreTlsContext();
-    //         builder.withTlsContext(tlsContext);
-
-    //         ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-    //         String clientIDString = "";
-    //         for (int i = 0; i < 256; i++) {
-    //             clientIDString += "a";
-    //         }
-    //         connectOptions.withClientId(clientIDString);
-    //         builder.withConnectOptions(connectOptions.build());
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             try {
-    //                 client.start();
-    //                 events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Was able to connect with Client ID longer than 128 characters (AWS_IOT_CORE_MAXIMUM_CLIENT_ID_LENGTH)");
-    //             }
-    //             client.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * QoS1 Tests
-    //  * ============================================================
-    //  */
-
-    // /* Happy path. No drop in connection, no retry, no reconnect */
-    // @Test
-    // public void QoS1_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     int messageCount = 10;
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
-    //         builderTwo.withLifecycleEvents(eventsTwo);
-    //         PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
-    //         publishEvents.desiredPublishCount = messageCount;
-    //         builderTwo.withPublishEvents(publishEvents);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //             builderTwo.withTlsContext(tlsContext);
-    //         }
-
-    //         try (
-    //             Mqtt5Client publisher = new Mqtt5Client(builder.build());
-    //             Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build());
-    //         ) {
-    //             publisher.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             subscriber.start();
-    //             eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-    //             subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //             publishPacketBuilder.withTopic(testTopic);
-    //             publishPacketBuilder.withPayload("Hello World".getBytes());
-    //             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
-
-    //             for (int i = 0; i < messageCount; i++) {
-    //                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             }
-
-    //             // Did we get all the messages?
-    //             publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
-
-    //             subscriber.stop(new DisconnectPacketBuilder().build());
-    //             publisher.stop(new DisconnectPacketBuilder().build());
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Retain Tests
-    //  * ============================================================
-    //  */
-
-    // /* Happy path. No drop in connection, no retry, no reconnect */
-    // @Test
-    // public void Retain_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder publisherEventsBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
-    //         publisherEventsBuilder.withLifecycleEvents(publisherEvents);
-
-    //         Mqtt5ClientOptionsBuilder successSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
-    //         PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
-    //         successSubscriberBuilder.withLifecycleEvents(successSubscriberEvents);
-    //         successSubscriberBuilder.withPublishEvents(successSubscriberPublishEvents);
-
-    //         Mqtt5ClientOptionsBuilder unsuccessSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
-    //         PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
-    //         unsuccessSubscriberBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
-    //         unsuccessSubscriberBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             publisherEventsBuilder.withTlsContext(tlsContext);
-    //             successSubscriberBuilder.withTlsContext(tlsContext);
-    //             unsuccessSubscriberBuilder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (
-    //             Mqtt5Client publisher = new Mqtt5Client(publisherEventsBuilder.build());
-    //             Mqtt5Client successSubscriber = new Mqtt5Client(successSubscriberBuilder.build());
-    //             Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(unsuccessSubscriberBuilder.build());
-    //         ) {
-    //             // Connect and publish a retained message
-    //             publisher.start();
-    //             publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //             publishPacketBuilder.withTopic(testTopic)
-    //                 .withPayload("Hello World".getBytes())
-    //                 .withQOS(QOS.AT_LEAST_ONCE)
-    //                 .withRetain(true);
-    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             // Setup for clearing the retained message
-    //             publishPacketBuilder.withPayload(null);
-
-    //             // Connect the successful subscriber
-    //             successSubscriber.start();
-    //             try {
-    //                 successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 // Clear the retained message
-    //                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //                 fail("Success subscriber could not connect!");
-    //             }
-
-    //             // Subscribe and verify the retained message
-    //             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
-    //             try {
-    //                 successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 // Clear the retained message
-    //                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //                 fail("Success subscriber could not subscribe!");
-    //             }
-    //             try {
-    //                 successSubscriberPublishEvents.publishReceivedFuture.get(360, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 // Clear the retained message
-    //                 publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //                 fail("Success subscriber did not get retained message!");
-    //             }
-
-    //             // Clear the retained message
-    //             publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-
-    //             // Wait 15 seconds to give the server time to clear everything out
-    //             Thread.sleep(15000);
-
-    //             // Connect the unsuccessful subscriber
-    //             unsuccessfulSubscriber.start();
-    //             unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
-    //             unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
-    //             // Make sure we do NOT get a publish
-    //             boolean didExceptionOccur = false;
-    //             try {
-    //                 unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 didExceptionOccur = true;
-    //             }
-
-    //             if (didExceptionOccur == false) {
-    //                 fail("Unsuccessful subscriber got retained message even though it should be cleared!");
-    //             }
-
-    //             // Disconnect all clients
-    //             DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
-    //             publisher.stop(disconnectPacketBuilder.build());
-    //             publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
-    //             successSubscriber.stop(disconnectPacketBuilder.build());
-    //             successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
-    //             unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
-    //             unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // /**
-    //  * ============================================================
-    //  * Operation Interrupt Tests
-    //  * ============================================================
-    //  */
-
-    // // Subscribe interrupt test
-    // @Test
-    // public void Interrupt_Sub_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-    //             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
-
-    //             try {
-    //                 CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());
-    //                 client.stop(new DisconnectPacketBuilder().build());
-    //                 SubAckPacket packet = subscribeResult.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 if (ex.getCause().getClass() == CrtRuntimeException.class) {
-    //                     CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
-    //                     if (exCrt.errorCode != 5153) {
-    //                         System.out.println("Exception ocurred when stopping subscribe" +
-    //                             "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // // Unsubscribe interrupt test
-    // @Test
-    // public void Interrupt_Unsub_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-    //             unsubscribePacketBuilder.withSubscription(testTopic);
-
-    //             try {
-    //                 CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());
-    //                 client.stop(new DisconnectPacketBuilder().build());
-    //                 UnsubAckPacket packet = unsubscribeResult.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 if (ex.getCause().getClass() == CrtRuntimeException.class) {
-    //                     CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
-    //                     if (exCrt.errorCode != 5153) {
-    //                         System.out.println("Exception ocurred when stopping unsubscribe" +
-    //                             "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
-
-    // // Publish interrupt test
-    // @Test
-    // public void Interrupt_Publish_UC1() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(checkMinimumDirectHostAndPort());
-    //     String testUUID = UUID.randomUUID().toString();
-    //     String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
-    //     try {
-    //         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //         builder.withLifecycleEvents(events);
-
-    //         // Only needed for IoT Core
-    //         TlsContext tlsContext = null;
-    //         if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-    //             Assume.assumeTrue(getMinimumDirectCert() != null);
-    //             Assume.assumeTrue(getMinimumDirectKey() != null);
-    //             tlsContext = getIoTCoreTlsContext();
-    //             builder.withTlsContext(tlsContext);
-    //         }
-
-    //         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //             client.start();
-    //             events.connectedFuture.get(180, TimeUnit.SECONDS);
-
-    //             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-    //             publishPacketBuilder.withTopic(testTopic).withQOS(QOS.AT_LEAST_ONCE).withPayload("null".getBytes());
-
-    //             try {
-    //                 CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
-    //                 client.stop(new DisconnectPacketBuilder().build());
-    //                 PublishResult publishData = publishResult.get(180, TimeUnit.SECONDS);
-    //             } catch (Exception ex) {
-    //                 if (ex.getCause().getClass() == CrtRuntimeException.class) {
-    //                     CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
-    //                     if (exCrt.errorCode != 5153) {
-    //                         System.out.println("Exception ocurred when stopping publish" +
-    //                             "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         if (tlsContext != null) {
-    //             tlsContext.close();
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
+    /* Client connect with invalid host name */
+    @Test
+    public void ConnNegativeID_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("_test", getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+            builder.withMinReconnectDelayMs(1000L);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+
+                try {
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    exceptionOccurred = true;
+                    if (events.connectFailureCode == 1059) {
+                        foundExpectedError = true;
+                    } else {
+                        System.out.println("EXCEPTION: " + ex);
+                        System.out.println(ex.getMessage() + " \n");
+                    }
+                }
+
+                if (foundExpectedError == false) {
+                    System.out.println("Error code was not AWS_IO_DNS_INVALID_NAME like expected! There was an exception though");
+                }
+                if (exceptionOccurred == false) {
+                    fail("No exception occurred!");
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Client connect with invalid, nonexistent port for direct connection */
+    @Test
+    public void ConnNegativeID_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), 65535L);
+            builder.withLifecycleEvents(events);
+            builder.withMinReconnectDelayMs(1000L);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+
+                try {
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    exceptionOccurred = true;
+                    if (events.connectFailureCode == 1047) {
+                        foundExpectedError = true;
+                    }
+                }
+
+                if (foundExpectedError == false) {
+                    System.out.println("Error code was not AWS_IO_SOCKET_CONNECTION_REFUSED like expected! There was an exception though");
+                }
+                if (exceptionOccurred == false) {
+                    fail("No exception occurred!");
+                }
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Client connect with invalid protocol port for direct connection */
+    @Test
+    public void ConnNegativeID_UC2_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5DirectMqttHost != null);
+        Assume.assumeTrue(mqtt5WSMqttPort != null);
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttHost, mqtt5WSMqttPort);
+            builder.withLifecycleEvents(events);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+
+                try {
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    exceptionOccurred = true;
+                    if (events.connectFailureCode == 5149) {
+                        foundExpectedError = true;
+                    }
+                }
+
+                if (foundExpectedError == false) {
+                    System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
+                }
+                if (exceptionOccurred == false) {
+                    fail("No exception occurred!");
+                }
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Client connect with invalid, nonexistent port for websocket connection */
+    @Test
+    public void ConnNegativeID_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5WSMqttHost != null);
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, 444L);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+
+                Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
+                    @Override
+                    public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
+                        t.complete(t.getHttpRequest());
+                    }
+                };
+                builder.withWebsocketHandshakeTransform(websocketTransform);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+
+                    try {
+                        events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    } catch (Exception ex) {
+                        exceptionOccurred = true;
+                        if (events.connectFailureCode == 1047) {
+                            foundExpectedError = true;
+                        }
+                    }
+
+                    if (foundExpectedError == false) {
+                        System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
+                    }
+                    if (exceptionOccurred == false) {
+                        fail("No exception occurred!");
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Client connect with invalid protocol port for websocket connection */
+    @Test
+    public void ConnNegativeID_UC3_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5WSMqttHost != null);
+        Assume.assumeTrue(mqtt5DirectMqttPort != null);
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            ) {
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5DirectMqttPort);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+
+                Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
+                    @Override
+                    public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
+                        t.complete(t.getHttpRequest());
+                    }
+                };
+                builder.withWebsocketHandshakeTransform(websocketTransform);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    try {
+                        events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    } catch (Exception ex) {
+                        exceptionOccurred = true;
+                        if (events.connectFailureCode == 46) {
+                            foundExpectedError = true;
+                        }
+                    }
+
+                    if (foundExpectedError == false) {
+                        System.out.println("Error code was not AWS_ERROR_SYS_CALL_FAILURE (occurs right after AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR for Websockets) like expected! There was an exception though");
+                    }
+                    if (exceptionOccurred == false) {
+                        fail("No exception occurred!");
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Client connect with socket timeout */
+    @Test
+    public void ConnNegativeID_UC4() {
+        skipIfNetworkUnavailable();
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                SocketOptions options = new SocketOptions();
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("www.example.com", 81L);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+
+                options.connectTimeoutMs = 100;
+                builder.withSocketOptions(options);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+
+                    try {
+                        events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    } catch (Exception ex) {
+                        exceptionOccurred = true;
+                        if (events.connectFailureCode == 1048) {
+                            foundExpectedError = true;
+                        }
+                    }
+                    if (foundExpectedError == false) {
+                        System.out.println("Error code was not AWS_IO_SOCKET_TIMEOUT like expected! There was an exception though");
+                    }
+                    if (exceptionOccurred == false) {
+                        fail("No exception occurred!");
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Websocket handshake failure test */
+    @Test
+    public void ConnNegativeID_UC6() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(mqtt5WSMqttHost != null);
+        Assume.assumeTrue(mqtt5WSMqttPort != null);
+        boolean foundExpectedError = false;
+        boolean exceptionOccurred = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            ) {
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttHost, mqtt5WSMqttPort);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+
+                Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
+                    @Override
+                    public void accept(Mqtt5WebsocketHandshakeTransformArgs t) {
+                        t.completeExceptionally(new Throwable("Intentional failure!"));
+                    }
+                };
+                builder.withWebsocketHandshakeTransform(websocketTransform);
+                builder.withPort(mqtt5WSMqttPort);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+
+                    try {
+                        events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    } catch (Exception ex) {
+                        exceptionOccurred = true;
+                        if (events.connectFailureCode == 3) {
+                            foundExpectedError = true;
+                        }
+                    }
+                    if (foundExpectedError == false) {
+                        System.out.println("Error code was not AWS_ERROR_UNKNOWN like expected! There was an exception though");
+                    }
+                    if (exceptionOccurred == false) {
+                        fail("No exception occurred!");
+                    }
+
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* For the double client ID test */
+    static final class LifecycleEvents_DoubleClientID implements Mqtt5ClientOptions.LifecycleEvents {
+        CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+        CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
+        CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
+
+        @Override
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
+
+        @Override
+        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            connectedFuture.complete(null);
+        }
+
+        @Override
+        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
+            connectedFuture.completeExceptionally(new Exception("Could not connect!"));
+        }
+
+        @Override
+        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
+            disconnectedFuture.complete(null);
+        }
+
+        @Override
+        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
+            stoppedFuture.complete(null);
+        }
+    }
+
+    /* Double Client ID failure test */
+    @Test
+    public void ConnNegativeID_UC7() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+
+        try {
+            LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            builder.withConnectOptions(connectOptions.build());
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client clientOne = new Mqtt5Client(builder.build());
+                Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
+            ) {
+                clientOne.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                clientTwo.start();
+                events.connectedFuture = new CompletableFuture<>();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                // Make sure a disconnection happened
+                events.disconnectedFuture.get(180, TimeUnit.SECONDS);
+
+                // Stop the clients from disconnecting each other. If we do not do this, then the clients will
+                // attempt to reconnect endlessly, making a never ending loop.
+                DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
+                clientOne.stop(disconnect);
+                clientTwo.stop(disconnect);
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Double Client ID disconnect and then reconnect test */
+    @Test
+    public void ConnNegativeID_UC7_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        try {
+            LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
+            LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            builder.withConnectOptions(connectOptions.build());
+
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builderTwo.withLifecycleEvents(eventsTwo);
+            builderTwo.withConnectOptions(connectOptions.build());
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+                builderTwo.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client clientOne = new Mqtt5Client(builder.build());
+                Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
+            ) {
+                clientOne.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                clientTwo.start();
+                eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                // Make sure the first client was disconnected
+                events.disconnectedFuture.get(180, TimeUnit.SECONDS);
+                // Disconnect the second client so the first can reconnect
+                clientTwo.stop(new DisconnectPacketBuilder().build());
+                // Confirm the second client has stopped
+                eventsTwo.stoppedFuture.get(180, TimeUnit.SECONDS);
+
+                // Wait until the first client has reconnected
+                events.connectedFuture = new CompletableFuture<>();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                assertTrue(clientOne.getIsConnected() == true);
+
+                // Stop the clients from disconnecting each other. If we do not do this, then the clients will
+                // attempt to reconnect endlessly, making a never ending loop.
+                DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
+                clientOne.stop(disconnect);
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Negative Data Input Tests
+     * ============================================================
+     */
+
+    /* Negative Connect Packet Properties */
+    @Test
+    public void NewNegative_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientCreationFailed = false;
+
+        try {
+            Mqtt5Client client = null;
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+
+            connectOptions.withKeepAliveIntervalSeconds(-100L);
+            builder.withConnectOptions(connectOptions.build());
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with negative KeepAliveIntervalSeconds");
+            }
+            connectOptions.withKeepAliveIntervalSeconds(100L);
+
+            connectOptions.withSessionExpiryIntervalSeconds(-100L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with negative SessionExpiryIntervalSeconds");
+            }
+            connectOptions.withSessionExpiryIntervalSeconds(100L);
+
+            connectOptions.withReceiveMaximum(-100L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail negative ReceiveMaximum");
+            }
+            connectOptions.withReceiveMaximum(100L);
+
+            connectOptions.withMaximumPacketSizeBytes(-100L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with negative MaximumPacketSizeBytes");
+            }
+            connectOptions.withMaximumPacketSizeBytes(100L);
+
+            connectOptions.withWillDelayIntervalSeconds(-100L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with negative willDelayIntervalSeconds");
+            }
+            connectOptions.withWillDelayIntervalSeconds(100L);
+
+            // Make sure everything is closed
+            if (client != null) {
+                client.close();
+            }
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Overflow Connect Packet Properties */
+    @Test
+    public void NewNegative_UC1_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientCreationFailed = false;
+
+        try {
+            Mqtt5Client client = null;
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+
+            connectOptions.withKeepAliveIntervalSeconds(2147483647L);
+            builder.withConnectOptions(connectOptions.build());
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with overflow KeepAliveIntervalSeconds");
+            }
+            connectOptions.withKeepAliveIntervalSeconds(100L);
+
+            connectOptions.withSessionExpiryIntervalSeconds(9223372036854775807L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with overflow SessionExpiryIntervalSeconds");
+            }
+            connectOptions.withSessionExpiryIntervalSeconds(100L);
+
+            connectOptions.withReceiveMaximum(2147483647L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail overflow ReceiveMaximum");
+            }
+            connectOptions.withReceiveMaximum(100L);
+
+            connectOptions.withMaximumPacketSizeBytes(9223372036854775807L);
+            builder.withConnectOptions(connectOptions.build());
+            clientCreationFailed = false;
+            try {
+                client = new Mqtt5Client(builder.build());
+            } catch (Exception ex) {
+                clientCreationFailed = true;
+            }
+            if (clientCreationFailed == false) {
+                fail("Client creation did not fail with overflow MaximumPacketSizeBytes");
+            }
+            connectOptions.withMaximumPacketSizeBytes(100L);
+
+            // WillDelayIntervalSeconds is an unsigned 64 bit Long, so it cannot overflow it from Java
+
+            // Make sure everything is closed
+            if (client != null) {
+                client.close();
+            }
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Negative Disconnect Packet Properties */
+    @Test
+    public void NewNegative_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientDisconnectFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
+                disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
+                try {
+                    client.stop(disconnectBuilder.build());
+                } catch (Exception ex) {
+                    clientDisconnectFailed = true;
+                }
+
+                if (clientDisconnectFailed == false) {
+                    fail("Client disconnect packet creation did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Overflow Disconnect Packet Properties */
+    @Test
+    public void NewNegative_UC2_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientDisconnectFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
+                disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
+                try {
+                    client.stop(disconnectBuilder.build());
+                } catch (Exception ex) {
+                    clientDisconnectFailed = true;
+                }
+
+                if (clientDisconnectFailed == false) {
+                    fail("Client disconnect did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Negative Publish Packet Properties */
+    @Test
+    public void NewNegative_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientPublishFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
+                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
+                publishBuilder.withMessageExpiryIntervalSeconds(-100L);
+                try {
+                    CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
+                    future.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    clientPublishFailed = true;
+                }
+
+                if (clientPublishFailed == false) {
+                    fail("Client publish did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Overflow Publish Packet Properties */
+    @Test
+    public void NewNegative_UC3_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientPublishFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
+                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic").withQOS(QOS.AT_LEAST_ONCE);
+                publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
+                try {
+                    CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
+                    future.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    clientPublishFailed = true;
+                }
+
+                if (clientPublishFailed == false) {
+                    fail("Client publish did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Negative Subscribe Packet Properties */
+    @Test
+    public void NewNegative_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientSubscribeFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
+                subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
+                subscribeBuilder.withSubscriptionIdentifier(-100L);
+                try {
+                    CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
+                    future.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    clientSubscribeFailed = true;
+                }
+
+                if (clientSubscribeFailed == false) {
+                    fail("Client subscribe did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Overflow Subscribe Packet Properties */
+    @Test
+    public void NewNegative_UC4_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean clientSubscribeFailed = false;
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
+                subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
+                subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
+                try {
+                    CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
+                    future.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    clientSubscribeFailed = true;
+                }
+
+                if (clientSubscribeFailed == false) {
+                    fail("Client subscribe did not fail!");
+                }
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Negotiated Settings Tests
+     * ============================================================
+     */
+
+    /* Happy path, minimal success test */
+    @Test
+    public void Negotiated_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+            ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
+            optionsBuilder.withSessionExpiryIntervalSeconds(600000L);
+            builder.withConnectOptions(optionsBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                // TODO - add support for this in the future!
+                // assertEquals(
+                //     "Negotiated Settings session expiry interval does not match sent session expiry interval",
+                //     events.connectSuccessSettings.getSessionExpiryInterval(),
+                //     600000L);
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Maximum success test */
+    @Test
+    public void Negotiated_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
+            optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            optionsBuilder.withSessionExpiryIntervalSeconds(0L);
+            optionsBuilder.withKeepAliveIntervalSeconds(360L);
+            builder.withConnectOptions(optionsBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                assertEquals(
+                    "Negotiated Settings client ID does not match sent client ID",
+                    events.connectSuccessSettings.getAssignedClientID(),
+                    "test/MQTT5_Binding_Java_" + testUUID);
+                assertEquals(
+                    "Negotiated Settings session expiry interval does not match sent session expiry interval",
+                    events.connectSuccessSettings.getSessionExpiryInterval(),
+                    0L);
+                assertEquals(
+                    "Negotiated Settings keep alive result does not match sent keep alive",
+                    events.connectSuccessSettings.getServerKeepAlive(),
+                    360);
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        false,
+                        events.connectSuccessSettings.getRejoinedSession());
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Rejoin always session resumption test */
+    @Test
+    public void Negotiated_Rejoin_Always() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            ConnectPacketBuilder optionsBuilder = new ConnectPacketBuilder();
+            optionsBuilder.withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            optionsBuilder.withSessionExpiryIntervalSeconds(3600L);
+            optionsBuilder.withKeepAliveIntervalSeconds(360L);
+            builder.withConnectOptions(optionsBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                assertEquals(
+                        "Negotiated Settings client ID does not match sent client ID",
+                        events.connectSuccessSettings.getAssignedClientID(),
+                        "test/MQTT5_Binding_Java_" + testUUID);
+                assertEquals(
+                        "Negotiated Settings session expiry interval does not match sent session expiry interval",
+                        events.connectSuccessSettings.getSessionExpiryInterval(),
+                        3600L);
+                assertEquals(
+                        "Negotiated Settings keep alive result does not match sent keep alive",
+                        events.connectSuccessSettings.getServerKeepAlive(),
+                        360);
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        false,
+                        events.connectSuccessSettings.getRejoinedSession());
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
+            LifecycleEvents_Futured rejoinEvents = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(rejoinEvents);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                rejoinEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                assertEquals(
+                        "Negotiated Settings rejoined session does not match expected value",
+                        true,
+                        rejoinEvents.connectSuccessSettings.getRejoinedSession());
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Operation Tests
+     * ============================================================
+     */
+
+    /* Sub-UnSub happy path */
+    @Test
+    public void Op_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withPayload("Hello World".getBytes());
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
+            unsubscribePacketBuilder.withSubscription(testTopic);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+
+                publishEvents.publishReceivedFuture = new CompletableFuture<>();
+                publishEvents.publishPacket = null;
+                client.unsubscribe(unsubscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                assertEquals(
+                    "Publish after unsubscribe still arrived!",
+                    publishEvents.publishPacket,
+                    null);
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Sub-UnSub happy path */
+    @Test
+    public void Op_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            PublishPacketBuilder willPacket = new PublishPacketBuilder();
+            willPacket.withTopic(testTopic);
+            willPacket.withQOS(QOS.AT_LEAST_ONCE);
+            willPacket.withPayload("Hello World".getBytes());
+            connectOptions.withWill(willPacket.build());
+            connectOptions.withWillDelayIntervalSeconds(0L);
+            builder.withConnectOptions(connectOptions.build());
+
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
+            builderTwo.withLifecycleEvents(eventsTwo);
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builderTwo.withPublishEvents(publishEvents);
+
+            // Only needed for IoT Core
+            TlsContext tlsContextTwo = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContextTwo = getIoTCoreTlsContext();
+                builderTwo.withTlsContext(tlsContextTwo);
+            }
+
+            SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder();
+            subscribeOptions.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            try (
+                Mqtt5Client clientOne = new Mqtt5Client(builder.build());
+                Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
+            ) {
+                clientOne.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+                clientTwo.start();
+                eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                clientTwo.subscribe(subscribeOptions.build()).get(180, TimeUnit.SECONDS);
+                clientOne.stop(null);
+
+                // Did we get a publish message?
+                publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                assertTrue(publishEvents.publishPacket != null);
+
+                clientTwo.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+                tlsContextTwo.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Binary Publish Test */
+    @Test
+    public void Op_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+
+            // Make random binary
+            byte[] randomBytes = new byte[256];
+            Random random = new Random();
+            random.nextBytes(randomBytes);
+
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic).withPayload(randomBytes).withQOS(QOS.AT_LEAST_ONCE);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                client.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                client.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+
+                assertTrue(java.util.Arrays.equals(publishEvents.publishPacket.getPayload(), randomBytes));
+
+                client.stop(new DisconnectPacketBuilder().build());
+                events.stopFuture.get(180, TimeUnit.SECONDS);
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Error Operation Tests
+     * ============================================================
+     */
+
+    /* Null Publish Test */
+    @Test
+    public void ErrorOp_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.publish(null).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Null publish packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Publish with empty builder test */
+    @Test
+    public void ErrorOp_UC1_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.publish(new PublishPacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Empty publish packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Null Subscribe Test */
+    @Test
+    public void ErrorOp_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.subscribe(null).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Null subscribe packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Empty Subscribe Test */
+    @Test
+    public void ErrorOp_UC2_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.subscribe(new SubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Empty subscribe packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Null Unsubscribe Test */
+    @Test
+    public void ErrorOp_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.unsubscribe(null).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Null unsubscribe packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Empty Unsubscribe Test */
+    @Test
+    public void ErrorOp_UC3_ALT() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    client.unsubscribe(new UnsubscribePacketBuilder().build()).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Empty unsubscribe packet did not cause exception with error!");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Unsupported Connect packet data sent (IoT Core only) */
+    @Test
+    public void ErrorOp_UC4() {
+        skipIfNetworkUnavailable();
+        /* Only works on IoT Core */
+        Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateBytes != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyBytes != null);
+        boolean didExceptionOccur = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, mqtt5IoTCoreMqttPort);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            TlsContext tlsContext = null;
+            tlsContext = getIoTCoreTlsContext();
+            builder.withTlsContext(tlsContext);
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            String clientIDString = "";
+            for (int i = 0; i < 256; i++) {
+                clientIDString += "a";
+            }
+            connectOptions.withClientId(clientIDString);
+            builder.withConnectOptions(connectOptions.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                try {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Was able to connect with Client ID longer than 128 characters (AWS_IOT_CORE_MAXIMUM_CLIENT_ID_LENGTH)");
+                }
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * QoS1 Tests
+     * ============================================================
+     */
+
+    /* Happy path. No drop in connection, no retry, no reconnect */
+    @Test
+    public void QoS1_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
+            builderTwo.withLifecycleEvents(eventsTwo);
+            PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
+            publishEvents.desiredPublishCount = messageCount;
+            builderTwo.withPublishEvents(publishEvents);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+                builderTwo.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client publisher = new Mqtt5Client(builder.build());
+                Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build());
+            ) {
+                publisher.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+                subscriber.start();
+                eventsTwo.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+                subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+                publishPacketBuilder.withTopic(testTopic);
+                publishPacketBuilder.withPayload("Hello World".getBytes());
+                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+                for (int i = 0; i < messageCount; i++) {
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                }
+
+                // Did we get all the messages?
+                publishEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+
+                subscriber.stop(new DisconnectPacketBuilder().build());
+                publisher.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Retain Tests
+     * ============================================================
+     */
+
+    /* Happy path. No drop in connection, no retry, no reconnect */
+    @Test
+    public void Retain_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder publisherEventsBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
+            publisherEventsBuilder.withLifecycleEvents(publisherEvents);
+
+            Mqtt5ClientOptionsBuilder successSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
+            PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
+            successSubscriberBuilder.withLifecycleEvents(successSubscriberEvents);
+            successSubscriberBuilder.withPublishEvents(successSubscriberPublishEvents);
+
+            Mqtt5ClientOptionsBuilder unsuccessSubscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
+            PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
+            unsuccessSubscriberBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
+            unsuccessSubscriberBuilder.withPublishEvents(unsuccessfulSubscriberPublishEvents);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                publisherEventsBuilder.withTlsContext(tlsContext);
+                successSubscriberBuilder.withTlsContext(tlsContext);
+                unsuccessSubscriberBuilder.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client publisher = new Mqtt5Client(publisherEventsBuilder.build());
+                Mqtt5Client successSubscriber = new Mqtt5Client(successSubscriberBuilder.build());
+                Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(unsuccessSubscriberBuilder.build());
+            ) {
+                // Connect and publish a retained message
+                publisher.start();
+                publisherEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+                publishPacketBuilder.withTopic(testTopic)
+                    .withPayload("Hello World".getBytes())
+                    .withQOS(QOS.AT_LEAST_ONCE)
+                    .withRetain(true);
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                // Setup for clearing the retained message
+                publishPacketBuilder.withPayload(null);
+
+                // Connect the successful subscriber
+                successSubscriber.start();
+                try {
+                    successSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    // Clear the retained message
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                    fail("Success subscriber could not connect!");
+                }
+
+                // Subscribe and verify the retained message
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+                try {
+                    successSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    // Clear the retained message
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                    fail("Success subscriber could not subscribe!");
+                }
+                try {
+                    successSubscriberPublishEvents.publishReceivedFuture.get(360, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    // Clear the retained message
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                    fail("Success subscriber did not get retained message!");
+                }
+
+                // Clear the retained message
+                publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                // Wait 15 seconds to give the server time to clear everything out
+                Thread.sleep(15000);
+
+                // Connect the unsuccessful subscriber
+                unsuccessfulSubscriber.start();
+                unsuccessfulSubscriberEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+                unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                // Make sure we do NOT get a publish
+                boolean didExceptionOccur = false;
+                try {
+                    unsuccessfulSubscriberPublishEvents.publishReceivedFuture.get(30, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    didExceptionOccur = true;
+                }
+
+                if (didExceptionOccur == false) {
+                    fail("Unsuccessful subscriber got retained message even though it should be cleared!");
+                }
+
+                // Disconnect all clients
+                DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
+                publisher.stop(disconnectPacketBuilder.build());
+                publisherEvents.stopFuture.get(180, TimeUnit.SECONDS);
+                successSubscriber.stop(disconnectPacketBuilder.build());
+                successSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+                unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
+                unsuccessfulSubscriberEvents.stopFuture.get(180, TimeUnit.SECONDS);
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * Operation Interrupt Tests
+     * ============================================================
+     */
+
+    // Subscribe interrupt test
+    @Test
+    public void Interrupt_Sub_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+                try {
+                    CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());
+                    client.stop(new DisconnectPacketBuilder().build());
+                    SubAckPacket packet = subscribeResult.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                        CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                        if (exCrt.errorCode != 5153) {
+                            System.out.println("Exception ocurred when stopping subscribe" +
+                                "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                        }
+                    }
+                }
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    // Unsubscribe interrupt test
+    @Test
+    public void Interrupt_Unsub_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
+                unsubscribePacketBuilder.withSubscription(testTopic);
+
+                try {
+                    CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());
+                    client.stop(new DisconnectPacketBuilder().build());
+                    UnsubAckPacket packet = unsubscribeResult.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                        CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                        if (exCrt.errorCode != 5153) {
+                            System.out.println("Exception ocurred when stopping unsubscribe" +
+                                "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                        }
+                    }
+                }
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    // Publish interrupt test
+    @Test
+    public void Interrupt_Publish_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+                publishPacketBuilder.withTopic(testTopic).withQOS(QOS.AT_LEAST_ONCE).withPayload("null".getBytes());
+
+                try {
+                    CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
+                    client.stop(new DisconnectPacketBuilder().build());
+                    PublishResult publishData = publishResult.get(180, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    if (ex.getCause().getClass() == CrtRuntimeException.class) {
+                        CrtRuntimeException exCrt = (CrtRuntimeException)ex.getCause();
+                        if (exCrt.errorCode != 5153) {
+                            System.out.println("Exception ocurred when stopping publish" +
+                                "but it was not AWS_ERROR_MQTT5_USER_REQUESTED_STOP like expected");
+                        }
+                    }
+                }
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 }

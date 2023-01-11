@@ -21,6 +21,9 @@ phases:
       - sudo chmod a+xr $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
       - cd $CODEBUILD_SRC_DIR # assure we are in the correct directory again
+      # For MQTT5, we need Squid installed too
+      - sudo apt update -y
+      - sudo apt install squid -y
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh

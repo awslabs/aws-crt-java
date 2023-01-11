@@ -7,7 +7,7 @@ phases:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
       - sudo apt-get install gcc-7 cmake3 ninja-build -y
-      - sudo apt-get install libwebsockets-dev openssl libssl-dev -y
+      - sudo apt-get install libwebsockets-dev -y
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
@@ -19,7 +19,13 @@ phases:
       - echo Build started on `date`
 
       - echo Setup mosquitto
-      # TEMP - print OpenSSL version
+      # mosquitto needs OpenSSL at version 1.1.0+, so we have to install from source
+      - wget https://www.openssl.org/source/openssl-1.1.1s.tar.gz
+      - tar xzvf openssl-1.1.1s.tar.gz
+      - cd openssl-1.1.1s
+      - ./config
+      - make
+      - sudo make install
       - openssl version
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15

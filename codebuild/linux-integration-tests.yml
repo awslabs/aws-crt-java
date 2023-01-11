@@ -29,6 +29,7 @@ phases:
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
       - cd mosquitto
+      - LD_LIBRARY_PATH=/usr/local/lib
       - make install WITH_DOCS=no WITH_CJSON=no
       - cd ..
       # Get the config file and run it

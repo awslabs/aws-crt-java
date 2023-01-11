@@ -46,8 +46,7 @@ class AWSCrtJavaTest(Builder.Action):
                 self._write_secret_to_temp_file("ecc-test/privatekey") as ecc_key_file:
 
             self._run_java_tests(
-                "mvn", "--batch-mode",
-                "--activate-profiles", "continuous-integration",
+                "mvn", "-P", "continuous-integration", "-B", "test",
                 "-DredirectTestOutputToFile=true",
                 "-DreuseForks=false",
                 "-DrerunFailingTestsCount=5",
@@ -61,13 +60,12 @@ class AWSCrtJavaTest(Builder.Action):
                 f"-Dprivatekey={key_file.name}",
                 f"-Decc_certificate={ecc_cert_file.name}",
                 f"-Decc_privatekey={ecc_key_file.name}",
-                "test")
+            )
 
         # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         self._run_java_tests(
-            "mvn", "--batch-mode",
-            "--activate-profiles", "continuous-integration",
+            "mvn", "-P", "continuous-integration", "-B", "test",
             "-DredirectTestOutputToFile=true",
             "-DreuseForks=false",
             "-Daws.crt.memory.tracing=2",
@@ -75,7 +73,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.aws_trace_log_per_test=true",
             "-Daws.crt.ci=true",
             "-Dtest=ShutdownTest",
-            "test")
+        )
 
         # run the elasticurl integration tests
         python = sys.executable

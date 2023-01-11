@@ -20,8 +20,7 @@ phases:
       # Install Mosquitto
       - sudo chmod a+xr $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
-      # make sure we are in the right directory again
-      - cd $CODEBUILD_SRC_DIR
+      - cd $CODEBUILD_SRC_DIR # assure we are in the correct directory again
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
@@ -29,6 +28,3 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-
-      - echo Print Mosquitto log if it exists
-      - cat /var/log/mosquitto/mosquitto.log 2>/dev/null

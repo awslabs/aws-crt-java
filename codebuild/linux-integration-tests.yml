@@ -21,7 +21,7 @@ phases:
       - echo Setup mosquitto dependencies - OpenSSL
       - git clone https://github.com/openssl/openssl.git --branch OpenSSL_1_1_1s
       - cd openssl
-      - ./config --prefix=/usr/local/ --openssldir=/usr/local/
+      - ./config --prefix=/usr/local --openssldir=/usr/local
       - make
       - sudo make install
       # And we have to install libwebsockets from source for mosquitto too
@@ -40,13 +40,13 @@ phases:
       - cd mosquitto
       - make install WITH_DOCS=no WITH_CJSON=no WITH_WEBSOCKETS=yes LDFLAGS="-L/usr/local/lib/  -Wl,-rpath,/usr/local/lib/"
       - cd ..
+      - sudo ldconfig
       # Get the config file and run it
       - echo Setup mosquitto - configure mosquitto and start it running
       - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
       - sudo chmod a+xr ./setup_mosquitto_test_env.sh
       - ./setup_mosquitto_test_env.sh
-      # - mosquitto -d -c /etc/mosquitto/mosquitto.conf -v
-      - sudo systemctl restart mosquitto
+      - mosquitto -d -c /etc/mosquitto/mosquitto.conf -v
       # make sure we are in the right directory again
       - cd $CODEBUILD_SRC_DIR
 

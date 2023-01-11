@@ -7,7 +7,6 @@ phases:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
       - sudo apt-get install gcc-7 cmake3 ninja-build -y
-      - sudo apt-get install libwebsockets-dev -y
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
@@ -25,6 +24,15 @@ phases:
       - ./config --prefix=/usr/local/ --openssldir=/usr/local/
       - make
       - sudo make install
+      # And we have to install libwebsockets from source for mosquttio too
+      - git clone https://github.com/warmcat/libwebsockets.git --branch v4.3.2
+      - cd libwebsockets
+      - mkdir build
+      - cd build
+      - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc
+      - make
+      - sudo make install
+      - cd ../..
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
       - cd mosquitto

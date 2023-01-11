@@ -25,6 +25,8 @@ phases:
       - ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl
       - make
       - sudo make install
+      # Apparently we need to remove this folder?
+      - sudo rm -r /usr/local/include/openssl
       # - openssl version
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15

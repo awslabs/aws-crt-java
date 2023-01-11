@@ -28,7 +28,7 @@ phases:
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
       - cd mosquitto
-      - make install WITH_DOCS=no WITH_CJSON=no WITH_STATIC_LIBRARIES=yes
+      - make install WITH_DOCS=no WITH_CJSON=no LDFLAGS="-L/usr/local/lib/  -Wl,-rpath,/usr/local/lib/"
       - cd ..
       # Get the config file and run it
       - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh

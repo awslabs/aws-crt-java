@@ -50,8 +50,8 @@ sudo chmod a+xr ./setup_mosquitto_test_env.sh
 mosquitto -d -c /etc/mosquitto/mosquitto.conf
 
 # For HTTP proxy tests, we need Squid too
-sudo apt update
-sudo apt install squid
+sudo apt update -y
+sudo apt install squid -y
 # Make sure it is running
 systemctl status squid.service
 

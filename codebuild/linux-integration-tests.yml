@@ -46,7 +46,7 @@ phases:
       - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
       - sudo chmod a+xr ./setup_mosquitto_test_env.sh
       - ./setup_mosquitto_test_env.sh
-      - mosquitto -d -c /etc/mosquitto/mosquitto.conf -v
+      - mosquitto -d -c /etc/mosquitto/mosquitto.conf
       # make sure we are in the right directory again
       - cd $CODEBUILD_SRC_DIR
 
@@ -58,4 +58,4 @@ phases:
       - echo Build completed on `date`
 
       - echo Print Mosquitto log
-      - cat /var/log/mosquitto/mosquitto.log
+      - [ -f /var/log/mosquitto/mosquitto.log ] && cat /var/log/mosquitto/mosquitto.log

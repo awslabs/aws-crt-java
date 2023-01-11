@@ -7,7 +7,7 @@ mkdir -p MosquittoInstall
 cd MosquittoInstall
 
 # mosquitto needs OpenSSL at version 1.1.0+, so we have to install from source
-echo "Setup mosquitto dependencies - OpenSSL (may take a couple minutes - should take no more than 6 minutes)"
+echo "Setup mosquitto dependencies from source - OpenSSL (may take a couple minutes - should take no more than 6 minutes)"
 # Note: 99% of the time we do not care for the output, so let's hide it to reduce console spam!
 {
     git clone https://github.com/openssl/openssl.git --branch OpenSSL_1_1_1s
@@ -19,7 +19,7 @@ echo "Setup mosquitto dependencies - OpenSSL (may take a couple minutes - should
 
 # And we have to install libwebsockets from source for mosquitto too
 # Note: 99% of the time we do not care for the output, so let's hide it to reduce console spam!
-echo "Setup mosquitto dependencies - LibWebsockets (may take a couple minutes - should take no more than 6 minutes)"
+echo "Setup mosquitto dependencies from source - LibWebsockets (may take a couple minutes - should take no more than 6 minutes)"
 {
     git clone https://github.com/warmcat/libwebsockets.git --branch v4.3.2
     cd libwebsockets
@@ -33,7 +33,7 @@ cd ../..
 
 # Install mosquitto from source
 # Note: 99% of the time we do not care for the output, so let's hide it to reduce console spam!
-echo "Setup mosquitto - Mosquitto from source (may take a couple minutes - should take no more than 6 minutes)"
+echo "Setup mosquitto from source - Mosquitto (may take a couple minutes - should take no more than 6 minutes)"
 {
     git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
     cd mosquitto
@@ -43,7 +43,7 @@ echo "Setup mosquitto - Mosquitto from source (may take a couple minutes - shoul
 } > /dev/null
 
 # Get the config file and run it
-echo "Setup mosquitto - configure mosquitto and start it running"
+echo "Setup mosquitto from source - configure mosquitto and start it running"
 aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
 sudo chmod a+xr ./setup_mosquitto_test_env.sh
 ./setup_mosquitto_test_env.sh

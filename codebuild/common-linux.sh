@@ -37,6 +37,6 @@ mvn -B test $* \
     -Dcmake.s2nNoPqAsm=ON
 
 # Run the MQTT5 tests again, but connecting to Codebuild Mosquitto
-source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/IotProdMQTT5EnvironmentVariables.txt us-east-1
+source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodebuildMosquittoIotProdMQTT5EnvironmentVariables.txt us-east-1
 mvn -B test -Dtest=Mqtt5ClientTest -Daws.crt.debugnative=true -DreuseForks=false -DredirectTestOutputToFile=true
-source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/IotProdMQTT5EnvironmentVariables.txt cleanup
+source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodebuildMosquittoIotProdMQTT5EnvironmentVariables.txt cleanup

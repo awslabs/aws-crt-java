@@ -5,10 +5,10 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-      - sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa
+      # - sudo add-apt-repository ppa:mosquitto-dev/mosquitto-ppa
       - sudo apt-get update -y
       - sudo apt-get install gcc-7 cmake3 ninja-build -y
-      - sudo apt-get install mosquitto mosquitto-clients -y
+      # - sudo apt-get install mosquitto mosquitto-clients -y
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
@@ -20,10 +20,16 @@ phases:
       - echo Build started on `date`
 
       - echo Setup mosquitto
+      # Install mosquitto from source
+      - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
+      - cd mosquitto
+      - make install
+      - cd ..
+      # Get the config file and run it
       - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
       - sudo chmod a+xr ./setup_mosquitto_test_env.sh
-      # Start mosquitto
       - ./setup_mosquitto_test_env.sh
+      # (Re)Start mosquitto
       - sudo service mosquitto restart
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh

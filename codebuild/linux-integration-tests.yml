@@ -22,11 +22,9 @@ phases:
       # mosquitto needs OpenSSL at version 1.1.0+, so we have to install from source
       - git clone https://github.com/openssl/openssl.git --branch OpenSSL_1_1_1s
       - cd openssl
-      - ./config
+      - ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl
       - make
       - sudo make install
-      - sudo ln -s /usr/local/bin/openssl /usr/bin/openssl
-      - sudo ldconfig
       # - openssl version
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15

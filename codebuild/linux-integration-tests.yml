@@ -58,4 +58,4 @@ phases:
       - echo Build completed on `date`
 
       - echo Print Mosquitto log
-      - [ -f /var/log/mosquitto/mosquitto.log ] && cat /var/log/mosquitto/mosquitto.log
+      - if (test -a /var/log/mosquitto/mosquitto.log); then cat /var/log/mosquitto/mosquitto.log; fi

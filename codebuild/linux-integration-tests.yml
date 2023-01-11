@@ -9,6 +9,7 @@ phases:
       - sudo apt-get update -y
       - sudo apt-get install gcc-7 cmake3 ninja-build -y
       # - sudo apt-get install mosquitto mosquitto-clients -y
+      - sudo apt-get install libwebsockets-dev cjson -y
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
       - unzip -q -d /tmp /tmp/awscliv2.zip
       - sudo /tmp/aws/install
@@ -23,7 +24,7 @@ phases:
       # Install mosquitto from source
       - git clone https://github.com/eclipse/mosquitto.git --branch v2.0.15
       - cd mosquitto
-      - make install
+      - make install WITH_DOCS=no
       - cd ..
       # Get the config file and run it
       - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh

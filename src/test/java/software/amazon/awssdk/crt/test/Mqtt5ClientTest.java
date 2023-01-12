@@ -62,7 +62,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     private String mqtt5BasicAuthPassword;
     private String mqtt5ProxyHost;
     private Long mqtt5ProxyPort;
-    private String mqtt5ProxyPerformTest;
+    private String mqtt5ProxyMqttHost;
+    private Long mqtt5ProxyMqttPort;
     private String mqtt5CertificateFile;
     private String mqtt5KeyFile;
     private byte[] mqtt5CertificateBytes;
@@ -121,7 +122,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         if (System.getenv("AWS_TEST_MQTT5_PROXY_PORT") != null) {
             mqtt5ProxyPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_PROXY_PORT"));
         }
-        mqtt5ProxyPerformTest = System.getenv("AWS_TEST_MQTT5_PROXY_PERFORM_TEST");
+        mqtt5ProxyMqttHost = System.getenv("AWS_TEST_MQTT5_PROXY_MQTT_HOST");
+        if (System.getenv("AWS_TEST_MQTT5_PROXY_PORT") != null) {
+            mqtt5ProxyMqttPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_PROXY_MQTT_PORT"));
+        }
         mqtt5CertificateFile = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
         mqtt5KeyFile = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
 
@@ -627,16 +631,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     public void ConnDC_UC5() {
         skipIfNetworkUnavailable();
         // Only perform against IoT Core on Codebuild
-        Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
-        Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
-        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateFile != null);
-        Assume.assumeTrue(mqtt5IoTCoreMqttKeyFile != null);
-        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateBytes != null);
-        Assume.assumeTrue(mqtt5IoTCoreMqttKeyBytes != null);
+        Assume.assumeTrue(getMinimumDirectCert() != null);
+        Assume.assumeTrue(getMinimumDirectKey() != null);
         // Proxy stuff
         Assume.assumeTrue(mqtt5ProxyHost != null);
         Assume.assumeTrue(mqtt5ProxyPort != null);
-        Assume.assumeTrue(mqtt5ProxyPerformTest != null);
+        Assume.assumeTrue(mqtt5ProxyMqttHost != null);
+        Assume.assumeTrue(mqtt5ProxyMqttPort != null);
 
         try {
 
@@ -646,7 +647,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
             ) {
                 LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, mqtt5IoTCoreMqttPort);
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5ProxyMqttHost, mqtt5ProxyMqttPort);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
 
@@ -656,14 +657,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
                 builder.withHttpProxyOptions(proxyOptions);
 
-                // Only needed for IoT Core
+                // Needed for IoT Core
                 TlsContext tlsContext = null;
-                if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
-                    Assume.assumeTrue(getMinimumDirectCert() != null);
-                    Assume.assumeTrue(getMinimumDirectKey() != null);
-                    tlsContext = getIoTCoreTlsContext();
-                    builder.withTlsContext(tlsContext);
-                }
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();

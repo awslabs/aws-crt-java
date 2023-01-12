@@ -2,11 +2,11 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <jni.h>
 
 #include <aws/common/logging.h>
 
 #include "crt.h"
+#include "logging.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -44,6 +44,9 @@ static bool s_initialized_logger = false;
 extern int g_memory_tracing;
 
 static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_options *options) {
+    /* Clean up logger, in case it was already initialized */
+    aws_jni_cleanup_logging();
+
     /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
     struct aws_allocator *allocator = aws_default_allocator();
 
@@ -102,6 +105,7 @@ void aws_jni_cleanup_logging(void) {
 
     if (s_initialized_logger) {
         aws_logger_clean_up(&s_logger);
+        s_initialized_logger = false;
     }
 }
 

@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.test;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
@@ -17,7 +18,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import java.io.File;
 
 import org.junit.Before;
 import org.junit.After;
@@ -35,20 +35,28 @@ public class CrtTestFixture {
 
     @Before
     public void setup() {
+        // We only want to see the CRT logs if the test fails.
+        // Surefire has a redirectTestOutputToFile option, but that doesn't
+        // capture what the CRT logger writes to stdout or stderr.
+        // Our workaround is to have the CRT logger write to log.txt.
+        // We clear the file for each new test by restarting the logger.
+        // We stop all tests when one fails (see FailFastListener) so that
+        // a valuable log.txt isn't overwritten.
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
-            File logsFile = new File("log.txt");
-            logsFile.delete();
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
         context = new CrtTestContext();
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testSetup(context);
         }
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
     }
 
     @After
     public void tearDown() {
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown begin");
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testTearDown(context);
@@ -69,6 +77,7 @@ public class CrtTestFixture {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }
         }
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

@@ -23,18 +23,18 @@ cd $CODEBUILD_SRC_DIR
 
 # Build and run all the tests!
 ulimit -c unlimited
-# mvn -B test $* \
-#     -DredirectTestOutputToFile=true \
-#     -DreuseForks=false \
-#     -Dendpoint=$ENDPOINT \
-#     -Dcertificate=/tmp/certificate.pem \
-#     -Dprivatekey=/tmp/privatekey.pem \
-#     -Decc_certificate=/tmp/ecc_certificate.pem \
-#     -Decc_privatekey=/tmp/ecc_privatekey.pem \
-#     -Drootca=/tmp/AmazonRootCA1.pem \
-#     -Dprivatekey_p8=/tmp/privatekey_p8.pem \
-#     -Daws.crt.debugnative=true \
-#     -Dcmake.s2nNoPqAsm=ON
+mvn -B test $* \
+    -DredirectTestOutputToFile=true \
+    -DreuseForks=false \
+    -Dendpoint=$ENDPOINT \
+    -Dcertificate=/tmp/certificate.pem \
+    -Dprivatekey=/tmp/privatekey.pem \
+    -Decc_certificate=/tmp/ecc_certificate.pem \
+    -Decc_privatekey=/tmp/ecc_privatekey.pem \
+    -Drootca=/tmp/AmazonRootCA1.pem \
+    -Dprivatekey_p8=/tmp/privatekey_p8.pem \
+    -Daws.crt.debugnative=true \
+    -Dcmake.s2nNoPqAsm=ON
 
 # Run the MQTT5 tests again, but connecting to Codebuild Mosquitto
 source ./utils/mqtt5_test_setup.sh s3://aws-crt-test-stuff/CodebuildMosquittoIotProdMQTT5EnvironmentVariables.txt us-east-1

@@ -640,9 +640,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(mqtt5ProxyMqttHost != null);
         Assume.assumeTrue(mqtt5ProxyMqttPort != null);
 
-        // Enable logging (hopefully it will help show what is wrong)
-        Log.initLoggingToStdout(LogLevel.Trace);
-
         try {
             try (
                 EventLoopGroup elg = new EventLoopGroup(1);
@@ -664,8 +661,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
 
-                // Set the TLS in the proxy
-                // proxyOptions.setTlsContext(getIoTCoreTlsContext());
+                // Set the HTTP proxy
                 builder.withHttpProxyOptions(proxyOptions);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {

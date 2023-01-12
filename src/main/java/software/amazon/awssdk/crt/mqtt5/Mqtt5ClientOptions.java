@@ -10,10 +10,7 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
-import software.amazon.awssdk.crt.mqtt5.packets.ConnAckPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
-import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket;
-import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket;
 
 import java.util.Map;
 import java.util.function.Function;

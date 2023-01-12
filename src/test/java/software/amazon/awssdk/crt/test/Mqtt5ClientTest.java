@@ -640,7 +640,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(mqtt5ProxyMqttPort != null);
 
         try {
-
             try (
                 EventLoopGroup elg = new EventLoopGroup(1);
                 HostResolver hr = new HostResolver(elg);
@@ -675,7 +674,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     tlsContext.close();
                 }
             }
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

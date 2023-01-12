@@ -630,7 +630,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC5() {
         skipIfNetworkUnavailable();
-        // Only perform against IoT Core on Codebuild
+        // We need a cert/key for TLS (IoT Core)
         Assume.assumeTrue(getMinimumDirectCert() != null);
         Assume.assumeTrue(getMinimumDirectKey() != null);
         // Proxy stuff
@@ -655,12 +655,15 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 proxyOptions.setHost(mqtt5ProxyHost);
                 proxyOptions.setPort((mqtt5ProxyPort.intValue()));
                 proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
-                builder.withHttpProxyOptions(proxyOptions);
 
-                // Needed for IoT Core
+                // Needed for TLS (IoT Core)
                 TlsContext tlsContext = null;
                 tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
+
+                // Set the TLS in the proxy
+                proxyOptions.setTlsContext(getIoTCoreTlsContext());
+                builder.withHttpProxyOptions(proxyOptions);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();

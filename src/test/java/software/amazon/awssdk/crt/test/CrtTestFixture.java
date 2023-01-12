@@ -18,7 +18,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
-import java.io.File;
 
 import org.junit.Before;
 import org.junit.After;

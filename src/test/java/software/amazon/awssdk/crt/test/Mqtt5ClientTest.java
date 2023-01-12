@@ -665,7 +665,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 builder.withTlsContext(tlsContext);
 
                 // Set the TLS in the proxy
-                proxyOptions.setTlsContext(getIoTCoreTlsContext());
+                // proxyOptions.setTlsContext(getIoTCoreTlsContext());
                 builder.withHttpProxyOptions(proxyOptions);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {

@@ -62,6 +62,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     private String mqtt5BasicAuthPassword;
     private String mqtt5ProxyHost;
     private Long mqtt5ProxyPort;
+    private String mqtt5ProxyPerformTest;
     private String mqtt5CertificateFile;
     private String mqtt5KeyFile;
     private byte[] mqtt5CertificateBytes;
@@ -120,6 +121,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         if (System.getenv("AWS_TEST_MQTT5_PROXY_PORT") != null) {
             mqtt5ProxyPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_PROXY_PORT"));
         }
+        mqtt5ProxyHost = System.getenv("AWS_TEST_MQTT5_PROXY_PERFORM_TEST");
         mqtt5CertificateFile = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
         mqtt5KeyFile = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
 
@@ -621,53 +623,63 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     }
 
     /* Direct connection with HttpProxyOptions */
-    // Disable for now! Is currently not working with Squid on Codebuild.
-    // @Test
-    // public void ConnDC_UC5() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeTrue(mqtt5DirectMqttTlsHost != null);
-    //     Assume.assumeTrue(mqtt5DirectMqttTlsPort != null);
-    //     Assume.assumeTrue(mqtt5ProxyHost != null);
-    //     Assume.assumeTrue(mqtt5ProxyPort != null);
+    @Test
+    public void ConnDC_UC5() {
+        skipIfNetworkUnavailable();
+        // Only perform against IoT Core on Codebuild
+        Assume.assumeTrue(mqtt5IoTCoreMqttHost != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttPort != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyFile != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttCertificateBytes != null);
+        Assume.assumeTrue(mqtt5IoTCoreMqttKeyBytes != null);
+        // Proxy stuff
+        Assume.assumeTrue(mqtt5ProxyHost != null);
+        Assume.assumeTrue(mqtt5ProxyPort != null);
+        Assume.assumeTrue(mqtt5ProxyPerformTest != null);
 
-    //     try {
+        try {
 
-    //         try (
-    //             EventLoopGroup elg = new EventLoopGroup(1);
-    //             HostResolver hr = new HostResolver(elg);
-    //             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-    //         ) {
-    //             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttTlsHost, mqtt5DirectMqttTlsPort);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withBootstrap(bootstrap);
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            ) {
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, mqtt5IoTCoreMqttPort);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
 
-    //             HttpProxyOptions proxyOptions = new HttpProxyOptions();
-    //             proxyOptions.setHost(mqtt5ProxyHost);
-    //             proxyOptions.setPort((mqtt5ProxyPort.intValue()));
-    //             proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
+                HttpProxyOptions proxyOptions = new HttpProxyOptions();
+                proxyOptions.setHost(mqtt5ProxyHost);
+                proxyOptions.setPort((mqtt5ProxyPort.intValue()));
+                proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
+                builder.withHttpProxyOptions(proxyOptions);
 
-    //             try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
-    //                 tlsOptions.withVerifyPeer(false);
-    //                 try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
-    //                     builder.withTlsContext(tlsContext);
+                // Only needed for IoT Core
+                TlsContext tlsContext = null;
+                if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                    Assume.assumeTrue(getMinimumDirectCert() != null);
+                    Assume.assumeTrue(getMinimumDirectKey() != null);
+                    tlsContext = getIoTCoreTlsContext();
+                    builder.withTlsContext(tlsContext);
+                }
 
-    //                     builder.withHttpProxyOptions(proxyOptions);
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+                if (tlsContext != null) {
+                    tlsContext.close();
+                }
+            }
 
-    //                     try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                         client.start();
-    //                         events.connectedFuture.get(180, TimeUnit.SECONDS);
-    //                         DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-    //                         client.stop(disconnect.build());
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
-    // }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 
     /* Maximum options set connection test */
     @Test

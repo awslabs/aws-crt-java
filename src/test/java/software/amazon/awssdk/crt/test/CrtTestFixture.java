@@ -41,7 +41,7 @@ public class CrtTestFixture {
         // Our workaround is to have the CRT logger write to log.txt.
         // We clear the file for each new test by restarting the logger.
         // We stop all tests when one fails (see FailFastListener) so that
-        // a valuable log.txt isn't ovewritten.
+        // a valuable log.txt isn't overwritten.
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }

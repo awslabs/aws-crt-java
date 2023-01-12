@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -638,6 +639,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(mqtt5ProxyPort != null);
         Assume.assumeTrue(mqtt5ProxyMqttHost != null);
         Assume.assumeTrue(mqtt5ProxyMqttPort != null);
+
+        // Enable logging (hopefully it will help show what is wrong)
+        Log.initLoggingToStdout(LogLevel.Trace);
 
         try {
             try (

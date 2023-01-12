@@ -52,7 +52,7 @@ class AWSCrtJavaTest(Builder.Action):
                 "-DrerunFailingTestsCount=5",
                 "-Daws.crt.memory.tracing=2",
                 "-Daws.crt.debugnative=true",
-                "-Daws.crt.aws_trace_log_per_test=true",
+                "-Daws.crt.aws_trace_log_per_test",
                 "-Daws.crt.ci=true",
                 f"-Dendpoint={endpoint}",
                 f"-Drootca={root_ca_file.name}",
@@ -70,7 +70,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-DreuseForks=false",
             "-Daws.crt.memory.tracing=2",
             "-Daws.crt.debugnative=true",
-            "-Daws.crt.aws_trace_log_per_test=true",
+            "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
             "-Dtest=ShutdownTest",
         )

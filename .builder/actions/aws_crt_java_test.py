@@ -46,7 +46,7 @@ class AWSCrtJavaTest(Builder.Action):
                 self._write_secret_to_temp_file("ecc-test/certificate") as ecc_cert_file, \
                 self._write_secret_to_temp_file("ecc-test/privatekey") as ecc_key_file:
 
-            let commands = [ "mvn", "-P", "continuous-integration" ]
+            commands = [ "mvn", "-P", "continuous-integration" ]
             if current_host() == 'alpine':
                 commands += ['-P', 'alpine']
 
@@ -72,7 +72,7 @@ class AWSCrtJavaTest(Builder.Action):
         # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
 
-        let shutdown_commands = ["mvn", "-P", "continuous-integration"]
+        shutdown_commands = ["mvn", "-P", "continuous-integration"]
         if current_host() == 'alpine':
             shutdown_commands += ['-P', 'alpine']
 

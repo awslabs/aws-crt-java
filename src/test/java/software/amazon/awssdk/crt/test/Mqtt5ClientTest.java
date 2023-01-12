@@ -638,6 +638,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(mqtt5ProxyPort != null);
         Assume.assumeTrue(mqtt5ProxyPerformTest != null);
 
+        System.out.println("PROXY TEST IS GOING TO RUN!!!");
+
         try {
 
             try (

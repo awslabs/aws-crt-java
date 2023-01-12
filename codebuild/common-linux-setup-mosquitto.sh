@@ -17,7 +17,7 @@ echo "Setup mosquitto dependencies from source - OpenSSL (may take a couple minu
     sudo make install
 } > /dev/null
 
-# And we have to install libwebsockets from source for mosquitto too
+# We have to install libwebsockets from source for mosquitto too for websockets support
 # Note: 99% of the time we do not care for the output, so let's hide it to reduce console spam!
 echo "Setup mosquitto dependencies from source - LibWebsockets (may take a couple minutes - should take no more than 6 minutes)"
 {
@@ -31,7 +31,7 @@ echo "Setup mosquitto dependencies from source - LibWebsockets (may take a coupl
 cd ../..
 } > /dev/null
 
-# Install mosquitto from source
+# Install mosquitto from source (apt-get version is too old)
 # Note: 99% of the time we do not care for the output, so let's hide it to reduce console spam!
 echo "Setup mosquitto from source - Mosquitto (may take a couple minutes - should take no more than 6 minutes)"
 {
@@ -42,7 +42,7 @@ echo "Setup mosquitto from source - Mosquitto (may take a couple minutes - shoul
     sudo ldconfig
 } > /dev/null
 
-# Get the config file and run it
+# Get the Mosquttio config file and run it
 echo "Setup mosquitto from source - configure mosquitto and start it running"
 aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_test_env.sh ./setup_mosquitto_test_env.sh
 sudo chmod a+xr ./setup_mosquitto_test_env.sh

@@ -17,18 +17,10 @@ phases:
     commands:
       - echo Build started on `date`
 
-      # For now, disable Squid.
-      # # Install Squid proxy for MQTT5 testing
-      # - sudo apt-get install squid3 -y
-      # # We need a special Squid config
-      # - aws s3 cp s3://aws-crt-test-stuff/setup_mosquitto_squid.conf /etc/squid/squid.conf
-      # - # Start squid now that we have changed the config
-      # - sudo service squid3 start
-
       # Install Mosquitto
       - sudo chmod a+xr $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
       - $CODEBUILD_SRC_DIR/codebuild/common-linux-setup-mosquitto.sh
-      - cd $CODEBUILD_SRC_DIR # assure we are in the correct directory again
+      - cd $CODEBUILD_SRC_DIR # just make sure we are in the correct directory
 
       - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
       - sudo chmod a+xr /tmp/setup_proxy_test_env.sh

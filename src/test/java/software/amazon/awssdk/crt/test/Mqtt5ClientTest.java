@@ -121,7 +121,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         if (System.getenv("AWS_TEST_MQTT5_PROXY_PORT") != null) {
             mqtt5ProxyPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_PROXY_PORT"));
         }
-        mqtt5ProxyHost = System.getenv("AWS_TEST_MQTT5_PROXY_PERFORM_TEST");
+        mqtt5ProxyPerformTest = System.getenv("AWS_TEST_MQTT5_PROXY_PERFORM_TEST");
         mqtt5CertificateFile = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
         mqtt5KeyFile = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
 
@@ -637,8 +637,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(mqtt5ProxyHost != null);
         Assume.assumeTrue(mqtt5ProxyPort != null);
         Assume.assumeTrue(mqtt5ProxyPerformTest != null);
-
-        System.out.println("PROXY TEST IS GOING TO RUN!!!");
 
         try {
 

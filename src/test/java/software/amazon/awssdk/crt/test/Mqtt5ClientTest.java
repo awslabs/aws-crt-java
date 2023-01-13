@@ -126,6 +126,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         if (System.getenv("AWS_TEST_MQTT5_PROXY_MQTT_PORT") != null) {
             mqtt5ProxyMqttPort = Long.parseLong(System.getenv("AWS_TEST_MQTT5_PROXY_MQTT_PORT"));
         }
+
         mqtt5CertificateFile = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
         mqtt5KeyFile = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
 

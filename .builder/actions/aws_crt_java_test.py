@@ -18,9 +18,26 @@ class AWSCrtJavaTest(Builder.Action):
 
         return temp_file
 
-    def _run_java_tests(self, *cmd_args):
+    def _run_java_tests(self, *extra_args):
         if os.path.exists('log.txt'):
             os.remove('log.txt')
+
+        profiles = 'continuous-integration'
+        if current_host() == 'alpine':
+            profiles += ',alpine'
+
+        cmd_args = [
+            "mvn", "-B",
+            "-P", profiles,
+            "-DredirectTestOutputToFile=true",
+            "-DreuseForks=false",
+            "-Daws.crt.memory.tracing=2",
+            "-Daws.crt.debugnative=true",
+            "-Daws.crt.aws_trace_log_per_test",
+            "-Daws.crt.ci=true",
+        ]
+        cmd_args.extend(extra_args)
+        cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)
         if result.returncode:
@@ -46,48 +63,20 @@ class AWSCrtJavaTest(Builder.Action):
                 self._write_secret_to_temp_file("ecc-test/certificate") as ecc_cert_file, \
                 self._write_secret_to_temp_file("ecc-test/privatekey") as ecc_key_file:
 
-            commands = [ "mvn", "-P", "continuous-integration" ]
-            if current_host() == 'alpine':
-                commands += ['-P', 'alpine']
-
-            commands += [
-                "-B", "test",
-                "-DredirectTestOutputToFile=true",
-                "-DreuseForks=false",
+            self._run_java_tests(
                 "-DrerunFailingTestsCount=5",
-                "-Daws.crt.memory.tracing=2",
-                "-Daws.crt.debugnative=true",
-                "-Daws.crt.aws_trace_log_per_test",
-                "-Daws.crt.ci=true",
                 f"-Dendpoint={endpoint}",
                 f"-Drootca={root_ca_file.name}",
                 f"-Dcertificate={cert_file.name}",
                 f"-Dprivatekey={key_file.name}",
                 f"-Decc_certificate={ecc_cert_file.name}",
                 f"-Decc_privatekey={ecc_key_file.name}",
-            ]
-
-            self._run_java_tests( commands )
+            )
 
         # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
 
-        shutdown_commands = ["mvn", "-P", "continuous-integration"]
-        if current_host() == 'alpine':
-            shutdown_commands += ['-P', 'alpine']
-
-        shutdown_commands += [
-            "-B", "test",
-            "-DredirectTestOutputToFile=true",
-            "-DreuseForks=false",
-            "-Daws.crt.memory.tracing=2",
-            "-Daws.crt.debugnative=true",
-            "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true",
-            "-Dtest=ShutdownTest",
-        ]
-
-        self._run_java_tests(shutdown_commands)
+        self._run_java_tests("-Dtest=ShutdownTest")
 
         # run the elasticurl integration tests
         python = sys.executable

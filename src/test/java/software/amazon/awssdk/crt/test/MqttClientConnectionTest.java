@@ -5,7 +5,11 @@
 
 package software.amazon.awssdk.crt.test;
 
+import static org.junit.Assert.fail;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
@@ -26,8 +30,11 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     public void testConnectPublishWaitStatisticsDisconnect() {
         skipIfNetworkUnavailable();
         connect();
-        publish("test/topic/" + (UUID.randomUUID()).toString(), "hello_world".getBytes(), QualityOfService.AT_LEAST_ONCE);
-        sleepForMilliseconds(2000);
+        try {
+            publish("test/topic/" + (UUID.randomUUID()).toString(), "hello_world".getBytes(), QualityOfService.AT_LEAST_ONCE).get(60, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            fail("Exception ocurred during publish: " + ex.getMessage());
+        }
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();
@@ -37,30 +44,33 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     public void testConnectPublishStatisticsWaitDisconnect() {
         skipIfNetworkUnavailable();
 
-        // NOTE: In the future, we will want to test offline publishes, but right now the test fixtures forces a clean session
-        // and making publishes while a clean session is set causes an error. So just publish multiple times while connected instead.
-
         connect();
 
-        // This might be flakey as it is a bit of a race...
-        long publish_count = 5;
-        String randomTopic = "test/topic/" + (UUID.randomUUID()).toString();
-        byte[] randomPayload = "Hello_World".getBytes();
-        for (int i = 0; i < publish_count; i++) {
-            publish(randomTopic, randomPayload, QualityOfService.AT_LEAST_ONCE);
-        }
+        String topic = "test/topic/" + (UUID.randomUUID()).toString();
+        byte[] payload = "Hello_World".getBytes();
+        CompletableFuture<Integer> puback = null;
         // Per packet: (The size of the topic, the size of the payload, 2 for the header and 2 for the packet ID)
-        Long expectedSize = (randomTopic.length() + randomPayload.length + 4) * publish_count;
+        Long expectedSize = new Long(topic.length() + payload.length + 4);
+
+        puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
+
         // Note: Unacked will be zero because we are not connected
-        checkOperationStatistics(publish_count, expectedSize, 0, 0);
+        checkOperationStatistics(1, expectedSize, 0, 0);
 
-        // Let everything go out as expected
-        sleepForMilliseconds(2000);
+        // Publish
+        try {
+            puback.get(60, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            fail("Exception ocurred during publish: " + ex.getMessage());
+        }
 
+        // Make sure it is empty
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();
     }
+    // NOTE: In the future, we will want to test offline publishes, but right now the test fixtures forces a clean session
+    // and making publishes while a clean session is set causes an error.
 
     @Test
     public void testECCKeyConnectDisconnect() {

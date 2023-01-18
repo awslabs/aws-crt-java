@@ -277,13 +277,14 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         connection.close();
     }
 
-    void publish(String topic, byte[] payload, QualityOfService qos) {
+    CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {
         try {
             MqttMessage messageToSend = new MqttMessage(topic, payload, qos);
-            connection.publish(messageToSend);
+            return connection.publish(messageToSend);
         } catch (Exception ex) {
             fail("Exception during publish: " + ex.getMessage());
         }
+        return null;
     }
 
     void checkOperationStatistics(

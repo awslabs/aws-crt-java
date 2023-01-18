@@ -43,16 +43,13 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         for (int i = 0; i < publish_count; i++) {
             publish(randomTopic, randomPayload, QualityOfService.AT_LEAST_ONCE);
         }
-        // Sleep just a little bit to give the publishes time to move to the socket
         sleepForMilliseconds(2000);
         // Per packet: (The size of the topic, the size of the payload, 2 for the header and 2 for the packet ID)
         Long expectedSize = (randomTopic.length() + randomPayload.length + 4) * publish_count;
         // Note: Unacked will be zero because we are not connected
         checkOperationStatistics(publish_count, expectedSize, 0, 0);
         connect();
-        // Sleep just a little bit to give the publishes time to publish
         sleepForMilliseconds(2000);
-        // Make sure there is nothing left in the queue
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();

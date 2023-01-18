@@ -3117,4 +3117,112 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             fail(ex.getMessage());
         }
     }
+
+    /**
+     * ============================================================
+     * Misc Tests
+     * ============================================================
+     */
+
+    /* Happy path. No drop in connection, no retry, no reconnect */
+    @Test
+    public void OperationStatistics_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client publisher = new Mqtt5Client(builder.build());
+            ) {
+                publisher.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                Mqtt5ClientOperationStatistics statistics = publisher.getOperationStatistics();
+                // Make sure it is empty
+                if (statistics.getIncompleteOperationCount() != 0) {
+                    fail("Incomplete operation count was not zero!");
+                }
+                if (statistics.getIncompleteOperationSize() != 0) {
+                    fail("Incomplete operation size was not zero!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+                publishPacketBuilder.withTopic(testTopic);
+                publishPacketBuilder.withPayload("Hello World".getBytes());
+                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+                for (int i = 0; i < messageCount; i++) {
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                }
+
+                // Make sure it is empty
+                if (statistics.getIncompleteOperationCount() != 0) {
+                    fail("Incomplete operation count was not zero!");
+                }
+                if (statistics.getIncompleteOperationSize() != 0) {
+                    fail("Incomplete operation size was not zero!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                publisher.stop(new DisconnectPacketBuilder().build());
+
+                // Make publishes offline
+                for (int i = 0; i < messageCount; i++) {
+                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
+                }
+
+                // Make sure incomplete operations are NOT empty but unacked are
+                if (statistics.getIncompleteOperationCount() == 0) {
+                    fail("Incomplete operation count was WAS zero!");
+                }
+                if (statistics.getIncompleteOperationSize() == 0) {
+                    fail("Incomplete operation size was WAS zero!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                // DONE!
+
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
 }

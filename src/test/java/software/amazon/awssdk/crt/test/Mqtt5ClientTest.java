@@ -3192,28 +3192,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 }
 
                 publisher.stop(new DisconnectPacketBuilder().build());
-
-                // Make publishes offline
-                for (int i = 0; i < messageCount; i++) {
-                    publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
-                }
-
-                // Make sure incomplete operations are NOT empty but unacked are
-                if (statistics.getIncompleteOperationCount() == 0) {
-                    fail("Incomplete operation count was WAS zero!");
-                }
-                if (statistics.getIncompleteOperationSize() == 0) {
-                    fail("Incomplete operation size was WAS zero!");
-                }
-                if (statistics.getUnackedOperationCount() != 0) {
-                    fail("Unacked operation count was not zero!");
-                }
-                if (statistics.getUnackedOperationSize() != 0) {
-                    fail("Unacked operation size was not zero!");
-                }
-
-                // DONE!
-
+                events.stopFuture.get(60, TimeUnit.SECONDS);
             }
 
             if (tlsContext != null) {

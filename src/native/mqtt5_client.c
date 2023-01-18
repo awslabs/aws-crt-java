@@ -2122,7 +2122,6 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt
     struct aws_mqtt5_client_operation_statistics client_stats;
     aws_mqtt5_client_get_stats(java_client->client, &client_stats);
 
-
     (*env)->SetLongField(
         env,
         jni_operation_statistics,

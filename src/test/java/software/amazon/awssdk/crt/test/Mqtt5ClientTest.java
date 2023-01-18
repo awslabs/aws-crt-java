@@ -3124,7 +3124,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      * ============================================================
      */
 
-    /* Happy path. No drop in connection, no retry, no reconnect */
+    /* Happy path. Check statistics before, make some publishes, check it after */
     @Test
     public void OperationStatistics_UC1() {
         skipIfNetworkUnavailable();
@@ -3176,6 +3176,101 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 for (int i = 0; i < messageCount; i++) {
                     publisher.publish(publishPacketBuilder.build()).get(180, TimeUnit.SECONDS);
                 }
+
+                // Make sure it is empty
+                if (statistics.getIncompleteOperationCount() != 0) {
+                    fail("Incomplete operation count was not zero!");
+                }
+                if (statistics.getIncompleteOperationSize() != 0) {
+                    fail("Incomplete operation size was not zero!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                publisher.stop(new DisconnectPacketBuilder().build());
+                events.stopFuture.get(60, TimeUnit.SECONDS);
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Happy path. Check statistics before, make a publish but do call the future, checks, publishes, checks again */
+    @Test
+    public void OperationStatistics_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            try (
+                Mqtt5Client publisher = new Mqtt5Client(builder.build());
+            ) {
+                publisher.start();
+                events.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                Mqtt5ClientOperationStatistics statistics = publisher.getOperationStatistics();
+                // Make sure it is empty
+                if (statistics.getIncompleteOperationCount() != 0) {
+                    fail("Incomplete operation count was not zero!");
+                }
+                if (statistics.getIncompleteOperationSize() != 0) {
+                    fail("Incomplete operation size was not zero!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+                publishPacketBuilder.withTopic(testTopic);
+                publishPacketBuilder.withPayload("Hello World".getBytes());
+                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+                CompletableFuture<PublishResult> puback = null;
+                puback = publisher.publish(publishPacketBuilder.build());
+
+                // Make sure it is NOT empty
+                if (statistics.getIncompleteOperationCount() != 1) {
+                    fail("Incomplete operation count was not one!");
+                }
+                if (statistics.getIncompleteOperationSize() >= 0) {
+                    fail("Incomplete operation size was zero or less!");
+                }
+                if (statistics.getUnackedOperationCount() != 0) {
+                    fail("Unacked operation count was not zero!");
+                }
+                if (statistics.getUnackedOperationSize() != 0) {
+                    fail("Unacked operation size was not zero!");
+                }
+
+                // Publish
+                puback.get(60, TimeUnit.SECONDS);
 
                 // Make sure it is empty
                 if (statistics.getIncompleteOperationCount() != 0) {

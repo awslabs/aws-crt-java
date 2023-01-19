@@ -3271,19 +3271,21 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
                 // Publish
                 puback.get(60, TimeUnit.SECONDS);
+                // Wait a second to let the publish go out
+                Thread.sleep(1000);
 
                 // Make sure it is empty
                 if (statistics.getIncompleteOperationCount() != 0) {
-                    fail("Incomplete operation count was not zero!");
+                    fail("(final) Incomplete operation count was not zero!");
                 }
                 if (statistics.getIncompleteOperationSize() != 0) {
-                    fail("Incomplete operation size was not zero!");
+                    fail("(final) Incomplete operation size was not zero!");
                 }
                 if (statistics.getUnackedOperationCount() != 0) {
-                    fail("Unacked operation count was not zero!");
+                    fail("(final) Unacked operation count was not zero!");
                 }
                 if (statistics.getUnackedOperationSize() != 0) {
-                    fail("Unacked operation size was not zero!");
+                    fail("(final) Unacked operation size was not zero!");
                 }
 
                 publisher.stop(new DisconnectPacketBuilder().build());

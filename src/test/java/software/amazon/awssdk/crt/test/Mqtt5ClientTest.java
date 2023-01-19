@@ -3254,6 +3254,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
                 CompletableFuture<PublishResult> puback = null;
                 puback = publisher.publish(publishPacketBuilder.build());
+                // Give it just a bit of time to move to the socket (quarter second)
+                Thread.sleep(250);
 
                 // Make sure it is NOT empty
                 if (statistics.getIncompleteOperationCount() != 1) {

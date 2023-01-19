@@ -54,7 +54,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
 
         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
 
-        // Note: Unacked will be zero because we are not connected
+        // Note: Unacked will be zero because we have not invoked the future yet and so it has not had time to move to the socket
         checkOperationStatistics(1, expectedSize, 0, 0);
 
         // Publish

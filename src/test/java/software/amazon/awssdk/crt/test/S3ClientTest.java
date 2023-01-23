@@ -210,7 +210,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT + ":443") };
             HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()

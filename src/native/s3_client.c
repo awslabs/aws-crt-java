@@ -49,7 +49,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jclass jni_class,
     jobject s3_client_jobject,
     jbyteArray jni_region,
-    jbyteArray jni_endpoint,
     jlong jni_client_bootstrap,
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
@@ -129,9 +128,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         struct aws_tls_ctx *tls_ctx = (void *)jni_tls_ctx;
         tls_options = &tls_options_storage;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
-        aws_tls_connection_options_set_server_name(tls_options, allocator, &endpoint);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
     }
 
     struct aws_s3_client_config client_config = {

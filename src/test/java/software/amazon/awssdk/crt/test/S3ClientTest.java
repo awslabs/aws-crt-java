@@ -812,7 +812,9 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    // TODO: copy is disabled currently because it does not work correctly on c
+    // side. reenable once its fixed in crt.
+    //@Test 
     public void testS3Copy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

@@ -132,6 +132,11 @@ public class S3ClientOptions {
         return this.initialReadWindowSize;
     }
 
+    /*
+     * @deprecated does not have any effect. Use endpoint option or add Host
+     * header to meta request in order to specify endpoint.
+     */
+    @Deprecated
     public S3ClientOptions withEndpoint(String endpoint) {
         this.endpoint = endpoint;
         return this;

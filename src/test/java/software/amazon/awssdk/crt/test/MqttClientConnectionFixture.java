@@ -276,4 +276,53 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     void close() {
         connection.close();
     }
+
+    CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {
+        try {
+            MqttMessage messageToSend = new MqttMessage(topic, payload, qos);
+            return connection.publish(messageToSend);
+        } catch (Exception ex) {
+            fail("Exception during publish: " + ex.getMessage());
+        }
+        return null;
+    }
+
+    void checkOperationStatistics(
+        long expectedIncompleteOperationCount, long expectedIncompleteOperationSize,
+        long expectedUnackedOperationCount, long expectedUnackedOperationSize) {
+        try {
+            MqttClientConnectionOperationStatistics statistics = connection.getOperationStatistics();
+
+            long incomplete_ops_count = statistics.getIncompleteOperationCount();
+            long incomplete_ops_size = statistics.getIncompleteOperationSize();
+            long unacked_ops_count = statistics.getUnackedOperationCount();
+            long unacked_ops_size = statistics.getUnackedOperationSize();
+
+            if (incomplete_ops_count != expectedIncompleteOperationCount) {
+                fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
+            }
+
+            if (incomplete_ops_size != expectedIncompleteOperationSize) {
+                fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
+            }
+
+            if (unacked_ops_count != expectedUnackedOperationCount) {
+                fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
+            }
+
+            if (unacked_ops_size != expectedUnackedOperationSize) {
+                fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
+            }
+        } catch (Exception ex) {
+            fail("Exception during operation statistics check: " + ex.getMessage());
+        }
+    }
+
+    void sleepForMilliseconds(long secondsToSleep) {
+        try {
+            Thread.sleep(secondsToSleep);
+        } catch (Exception ex) {
+            fail("Exception during sleep: " + ex.getMessage());
+        }
+    }
 }

@@ -26,6 +26,7 @@ import java.net.URI;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class HttpClientConnectionTest extends HttpClientTestFixture {
@@ -148,5 +149,38 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         // AWS_ERROR_HTTP_CONNECTION_CLOSED should be retryable
         exception = new HttpException(0x080a);
         assertTrue(HttpClientConnection.isErrorRetryable(exception));
+    }
+
+    @Test
+    public void testUseAfterFree() throws Exception {
+        skipIfNetworkUnavailable();
+
+        URI uri = new URI("https://www.amazon.com");
+        try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);
+
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    conn.close();
+                    try {
+                        conn.shutdown();
+                    } catch (IllegalStateException e) {
+                        // expected
+                        assertNotNull(e);
+                    }
+                    try {
+                        conn.getVersion();
+                    } catch (IllegalStateException e) {
+                        // expected
+                        assertNotNull(e);
+                    }
+                }
+            }
+        }
     }
 }

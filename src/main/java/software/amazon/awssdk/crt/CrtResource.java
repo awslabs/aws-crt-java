@@ -230,6 +230,9 @@ public abstract class CrtResource implements AutoCloseable {
      * @return native address
      */
     public long getNativeHandle() {
+        if(nativeHandle == NULL) {
+            throw new IllegalStateException("Native handle is NULL");
+        }
         return nativeHandle;
     }
 

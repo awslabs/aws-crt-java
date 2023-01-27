@@ -156,7 +156,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jlong jni_tls_connection_options,
-    jint jni_window_size,
+    jlong jni_window_size,
     jbyteArray jni_endpoint,
     jint jni_port,
     jint jni_max_conns,
@@ -201,10 +201,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-    if (jni_window_size <= 0) {
-        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
+    size_t window_size;
+    if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
         goto cleanup;
     }
+
 
     if (jni_max_conns <= 0) {
         aws_jni_throw_runtime_exception(env, "Max Connections must be > 0");
@@ -235,7 +236,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     AWS_ZERO_STRUCT(manager_options);
 
     manager_options.bootstrap = client_bootstrap;
-    manager_options.initial_window_size = (size_t)jni_window_size;
+    manager_options.initial_window_size = window_size;
     manager_options.socket_options = socket_options;
     manager_options.tls_connection_options = tls_connection_options;
     manager_options.host = endpoint;

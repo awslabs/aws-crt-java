@@ -206,7 +206,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-
     if (jni_max_conns <= 0) {
         aws_jni_throw_runtime_exception(env, "Max Connections must be > 0");
         goto cleanup;

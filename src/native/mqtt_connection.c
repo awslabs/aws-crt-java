@@ -1190,6 +1190,85 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     aws_tls_connection_options_clean_up(&proxy_tls_conn_options);
 }
 
+JNIEXPORT jobject JNICALL
+    Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionGetOperationStatistics(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_connection) {
+    (void)jni_class;
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.getOperationStatistics: Invalid connection");
+        return NULL;
+    }
+
+    /* Construct Java object */
+    jobject jni_operation_statistics = (*env)->NewObject(
+        env,
+        mqtt_connection_operation_statistics_properties.statistics_class,
+        mqtt_connection_operation_statistics_properties.statistics_constructor_id);
+    if (jni_operation_statistics == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.getOperationStatistics: Could not create operation statistics object");
+        return NULL;
+    }
+
+    struct aws_mqtt_connection_operation_statistics connection_stats;
+    aws_mqtt_client_connection_get_stats(connection->client_connection, &connection_stats);
+
+    (*env)->SetLongField(
+        env,
+        jni_operation_statistics,
+        mqtt_connection_operation_statistics_properties.incomplete_operation_count_field_id,
+        (jlong)connection_stats.incomplete_operation_count);
+    if (aws_jni_check_and_clear_exception(env)) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.getOperationStatistics: could not create incomplete operation count");
+        return NULL;
+    }
+
+    (*env)->SetLongField(
+        env,
+        jni_operation_statistics,
+        mqtt_connection_operation_statistics_properties.incomplete_operation_size_field_id,
+        (jlong)connection_stats.incomplete_operation_size);
+    if (aws_jni_check_and_clear_exception(env)) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.getOperationStatistics: could not create incomplete operation size");
+        return NULL;
+    }
+
+    (*env)->SetLongField(
+        env,
+        jni_operation_statistics,
+        mqtt_connection_operation_statistics_properties.unacked_operation_count_field_id,
+        (jlong)connection_stats.unacked_operation_count);
+    if (aws_jni_check_and_clear_exception(env)) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.getOperationStatistics: could not create unacked operation count");
+        return NULL;
+    }
+
+    (*env)->SetLongField(
+        env,
+        jni_operation_statistics,
+        mqtt_connection_operation_statistics_properties.unacked_operation_size_field_id,
+        (jlong)connection_stats.unacked_operation_size);
+    if (aws_jni_check_and_clear_exception(env)) {
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+        aws_jni_throw_runtime_exception(
+            env, "MqttClientConnection.getOperationStatistics: could not create unacked operation size");
+        return NULL;
+    }
+
+    return jni_operation_statistics;
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

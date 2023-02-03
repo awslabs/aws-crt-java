@@ -1,9 +1,8 @@
 package software.amazon.awssdk.crt.mqtt;
 
 /**
- * The data returned when the
- * {@link software.amazon.awssdk.crt.mqtt.MqttClientConnectedEvents}
- * connection success callback is invoked
+ * The data returned when the connection success callback is invoked in a connection.
+ * @see software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents
  */
 public class OnConnectionSuccessReturn {
 

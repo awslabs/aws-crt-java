@@ -294,7 +294,10 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     s_mqtt_jni_connection_release(jni_connection);
 }
 
-static void s_on_connection_stopped(struct aws_mqtt_client_connection *client_connection, struct on_connection_closed_data *data, void *user_data) {
+static void s_on_connection_stopped(
+    struct aws_mqtt_client_connection *client_connection,
+    struct on_connection_closed_data *data,
+    void *user_data) {
     (void)client_connection;
     (void)data;
 
@@ -397,7 +400,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
 
     aws_mqtt_client_connection_set_connection_interruption_handlers(
         connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
-    aws_mqtt_client_connection_set_connection_closed_handler(connection->client_connection, s_on_connection_stopped, connection);
+    aws_mqtt_client_connection_set_connection_closed_handler(
+        connection->client_connection, s_on_connection_stopped, connection);
 
     return (jlong)connection;
 }

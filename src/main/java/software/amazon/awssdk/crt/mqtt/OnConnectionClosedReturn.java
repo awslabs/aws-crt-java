@@ -1,11 +1,10 @@
 package software.amazon.awssdk.crt.mqtt;
 
-/**
- * The data returned when the
- * {@link software.amazon.awssdk.crt.mqtt.MqttClientConnectedEvents}
- * connection failure callback is invoked
+ /**
+ * The data returned when the connection closed callback is invoked in a connection.
  * <p>
- * Currently empty, but this may contain additional data in the future.
+ * <b>Note:</b> This class is currently empty, but this may contain additional data in the future.
+ * @see software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents
  */
 public class OnConnectionClosedReturn {
 

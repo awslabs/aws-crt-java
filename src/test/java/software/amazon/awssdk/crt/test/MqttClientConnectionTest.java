@@ -35,8 +35,14 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         } catch (Exception ex) {
             fail("Exception ocurred during publish: " + ex.getMessage());
         }
+
         // Wait just a little bit of time (1/2 second)
-        Thread.sleep(500);
+        try {
+            Thread.sleep(500);
+        } catch (Exception ex) {
+            fail("Exception ocurred trying to sleep for 1/2 second");
+        }
+
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();
@@ -67,7 +73,11 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         }
 
         // Wait just a little bit of time (1/2 second)
-        Thread.sleep(500);
+        try {
+            Thread.sleep(500);
+        } catch (Exception ex) {
+            fail("Exception ocurred trying to sleep for 1/2 second");
+        }
         // Make sure it is empty
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();

@@ -291,7 +291,8 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     aws_jni_release_thread_env(jni_connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    /* NOTE: We do not need to release here, as s_on_connection_stopped will be called right after and it will release */
+    /* NOTE: We do not need to release here, as s_on_connection_stopped will
+      always be called right after and it will release instead */
 }
 
 static void s_on_connection_stopped(

@@ -301,9 +301,6 @@ static void s_on_connection_stopped(
     (void)client_connection;
     (void)data;
 
-    // TESTING
-    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 1 \n\n");
-
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
@@ -313,27 +310,16 @@ static void s_on_connection_stopped(
         return;
     }
 
-    // TESTING
-    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2 \n\n");
-
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
-        // TESTING
-        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.1 \n\n");
         (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
-        // TESTING
-        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.2 \n\n");
         (*env)->DeleteLocalRef(env, mqtt_connection);
-        // TESTING
-        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.3 \n\n");
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
-
-    // TESTING
-    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 3 \n\n");
-
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
+
+    s_mqtt_jni_connection_release(jni_connection);
 }
 
 static struct mqtt_jni_connection *s_mqtt_connection_new(
@@ -580,6 +566,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     s_mqtt_jni_connection_acquire(connection);
+    // We have to acquire again for the on_stopped callback, as they happen one after another
+    s_mqtt_jni_connection_acquire(connection);
 
     if (aws_mqtt_client_connection_disconnect(
             connection->client_connection, s_on_connection_disconnected, disconnect_callback) != AWS_OP_SUCCESS) {
@@ -594,6 +582,9 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
             error,
             aws_error_str(error));
         s_on_connection_disconnected(connection->client_connection, disconnect_callback);
+
+        // Release the acquire we made for the on_stopped callback
+        s_mqtt_jni_connection_release(connection);
     }
 }
 

@@ -5,8 +5,8 @@
  */
 package software.amazon.awssdk.crt.mqtt;
 
-/** 
- * Interface used to receive connection events from the CRT 
+/**
+ * Interface used to receive connection events from the CRT
  */
 public interface MqttClientConnectionEvents {
     /**
@@ -21,4 +21,22 @@ public interface MqttClientConnectionEvents {
      * @param sessionPresent true if the session has been resumed, false if the session is clean
      */
     void onConnectionResumed(boolean sessionPresent);
+
+    /**
+     * Called when a connection was successful.
+     * @param data The data sent from the client alongside the successful connection callback.
+     */
+    default void onConnectionSuccess(OnConnectionSuccessReturn data) {};
+
+    /**
+     * Called when a connection was unsuccessful.
+     * @param data The data sent from the client alongside the failed connection callback.
+     */
+    default void onConnectionFailure(OnConnectionFailureReturn data) {};
+
+    /**
+     * called when the connection was disconnected with user-initiated disconnect successfully.
+     * @param data The data sent from the client alongside the successful disconnect.
+     */
+    default void onConnectionClosed(OnConnectionClosedReturn data) {};
 }

@@ -172,6 +172,9 @@ static void s_cache_mqtt_connection(JNIEnv *env) {
     mqtt_connection_properties.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_resumed);
 
+    mqtt_connection_properties.on_connection_stopped = (*env)->GetMethodID(env, cls, "onConnectionStopped", "()V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_stopped);
+
     mqtt_connection_properties.on_websocket_handshake =
         (*env)->GetMethodID(env, cls, "onWebsocketHandshake", "(Lsoftware/amazon/awssdk/crt/http/HttpRequest;J)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_websocket_handshake);

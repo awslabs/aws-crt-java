@@ -202,6 +202,21 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                             "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
                 }
             }
+
+            @Override
+            public void onConnectionFailure(OnConnectionFailureReturn data) {
+                System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+            }
+
+            @Override
+            public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                System.out.println("Connection success. Session present: " + data.getSessionPresent());
+            }
+
+            @Override
+            public void onConnectionClosed(OnConnectionClosedReturn data) {
+                System.out.println("Connection disconnected successfully");
+            }
         };
 
         try(EventLoopGroup elg = new EventLoopGroup(1);

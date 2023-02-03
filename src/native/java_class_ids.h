@@ -73,6 +73,7 @@ struct java_mqtt_connection_properties {
     jmethodID on_connection_complete;
     jmethodID on_connection_interrupted;
     jmethodID on_connection_resumed;
+    jmethodID on_connection_stopped;
     jmethodID on_websocket_handshake;
 };
 extern struct java_mqtt_connection_properties mqtt_connection_properties;

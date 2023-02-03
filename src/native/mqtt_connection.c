@@ -319,7 +319,7 @@ static void s_on_connection_stopped(
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    s_mqtt_jni_connection_release(jni_connection);
+    s_mqtt_jni_connection_release(connection);
 }
 
 static struct mqtt_jni_connection *s_mqtt_connection_new(

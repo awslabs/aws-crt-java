@@ -87,7 +87,6 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
             } catch (Exception ex) {
                 // do nothing just let it retry
-                System.out.println(ex.getMessage());
             }
 
         } while ((response == null || shouldRetry(response)) && numAttempts < 3);

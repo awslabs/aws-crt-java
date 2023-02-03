@@ -174,6 +174,22 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
+    public void testS3ClientCreateDestroyHttpProxyOptions() {
+        skipIfNetworkUnavailable();
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+             TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
+        ) {
+            HttpProxyOptions proxyOptions = new HttpProxyOptions();
+            proxyOptions.setHost("localhost");
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withProxyOptions(proxyOptions), elg)) {
+            }
+        }
+    }
+    @Test
     public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
         skipIfNetworkUnavailable();
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);

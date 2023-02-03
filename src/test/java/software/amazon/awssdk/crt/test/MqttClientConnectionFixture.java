@@ -246,6 +246,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setCleanSession(cleanSession);
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+                config.setConnectionCallbacks(events);
 
                 if (connectionConfigTransformer != null) {
                     connectionConfigTransformer.accept(config);

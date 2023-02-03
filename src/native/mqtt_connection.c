@@ -291,8 +291,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     aws_jni_release_thread_env(jni_connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    /* NOTE: We do not need to release here, as s_on_connection_stopped will
-      always be called right after and it will release instead */
+    s_mqtt_jni_connection_release(jni_connection);
 }
 
 static void s_on_connection_stopped(
@@ -567,6 +566,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     s_mqtt_jni_connection_acquire(connection);
+    // Acquire for on_stopped
+    s_mqtt_jni_connection_acquire(connection);
 
     if (aws_mqtt_client_connection_disconnect(
             connection->client_connection, s_on_connection_disconnected, disconnect_callback) != AWS_OP_SUCCESS) {
@@ -582,7 +583,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
             aws_error_str(error));
         s_on_connection_disconnected(connection->client_connection, disconnect_callback);
 
-        // Release the acquire
+        // Release for on_stopped since it will not be called
         s_mqtt_jni_connection_release(connection);
     }
 }

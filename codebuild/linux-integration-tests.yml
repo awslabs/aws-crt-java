@@ -22,3 +22,6 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
+      - if [ -d /root.aws-crt-java ]; then
+      -   sudo find /root/aws-crt-java/** -name "hs_err*.log" -type f -exec cat {} +
+      - fi

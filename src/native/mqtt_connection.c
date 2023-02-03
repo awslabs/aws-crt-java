@@ -301,6 +301,9 @@ static void s_on_connection_stopped(
     (void)client_connection;
     (void)data;
 
+    // TESTING
+    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 1 \n\n");
+
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
@@ -310,12 +313,24 @@ static void s_on_connection_stopped(
         return;
     }
 
+    // TESTING
+    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2 \n\n");
+
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
+        // TESTING
+        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.1 \n\n");
         (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
+        // TESTING
+        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.2 \n\n");
         (*env)->DeleteLocalRef(env, mqtt_connection);
+        // TESTING
+        fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 2.3 \n\n");
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
+
+    // TESTING
+    fprintf(stderr, "\n\n ON_CONNECTION_STOPPED 3 \n\n");
 
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/

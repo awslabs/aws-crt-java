@@ -35,9 +35,8 @@ void aws_http_proxy_environment_variable_setting_jni_init(
 }
 
 void aws_http_proxy_environment_variable_setting_jni_clean_up(struct proxy_env_var_settings *options) {
-    if (options->tls_options != NULL) {
-        aws_tls_connection_options_clean_up((struct aws_tls_connection_options *)options->tls_options);
-    }
+    /* Nothing to cleanup */
+    (void) options;
 }
 
 #if UINTPTR_MAX == 0xffffffff

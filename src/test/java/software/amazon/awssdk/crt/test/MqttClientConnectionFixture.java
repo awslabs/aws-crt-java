@@ -329,16 +329,16 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 }
             }
             else {
-                if (incomplete_ops_count >= expectedIncompleteOperationCount) {
+                if (incomplete_ops_count <= expectedIncompleteOperationCount) {
                     fail("Incomplete operations count:" + incomplete_ops_count + " did not <= expected value:" + expectedIncompleteOperationCount);
                 }
-                if (incomplete_ops_size >= expectedIncompleteOperationSize) {
+                if (incomplete_ops_size <= expectedIncompleteOperationSize) {
                     fail("Incomplete operations size:" + incomplete_ops_size + " did not <= expected value:" + expectedIncompleteOperationSize);
                 }
-                if (unacked_ops_count >= expectedUnackedOperationCount) {
+                if (unacked_ops_count <= expectedUnackedOperationCount) {
                     fail("Unacked operations count:" + unacked_ops_count + " did not <= expected value:" + expectedUnackedOperationCount);
                 }
-                if (unacked_ops_size >= expectedUnackedOperationSize) {
+                if (unacked_ops_size <= expectedUnackedOperationSize) {
                     fail("Unacked operations size:" + unacked_ops_size + " did not <= expected value:" + expectedUnackedOperationSize);
                 }
             }

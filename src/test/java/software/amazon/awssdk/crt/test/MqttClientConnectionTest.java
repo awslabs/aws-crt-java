@@ -62,8 +62,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         Long expectedSize = new Long(topic.length() + payload.length + 4);
 
         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
-        // Make sure there is at least one operation and the size is correct, or at least that it is over 0
-        // (Does more-than-or-equal check)
+        // Make sure there is at least one operation and the size is correct (there is a bit of a race here at times, so we just do a <= check)
         checkOperationStatistics(1, expectedSize, 0, 0, false);
 
         // Publish

@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import static org.junit.Assert.fail;
+
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +64,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
 
         // Note: Unacked will be zero because we have not invoked the future yet and so it has not had time to move to the socket
+        System.out.println("About to perform first check:");
         checkOperationStatistics(1, expectedSize, 0, 0);
 
         // Publish
@@ -72,13 +74,14 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             fail("Exception ocurred during publish: " + ex.getMessage());
         }
 
-        // Wait just a little bit of time (2 seconds)
+        // Wait just a little bit of time (1/2 second)
         try {
-            Thread.sleep(2000);
+            Thread.sleep(500);
         } catch (Exception ex) {
-            fail("Exception ocurred trying to sleep for 2 seconds");
+            fail("Exception ocurred trying to sleep for 1/2 seconds");
         }
         // Make sure it is empty
+        System.out.println("About to perform first check:");
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();

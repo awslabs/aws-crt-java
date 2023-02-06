@@ -179,7 +179,7 @@ public class MqttClientConnection extends CrtResource {
     }
 
     // Called when the connection is disconnected successfully and intentionally.
-    private void onConnectionStopped() {
+    private void onConnectionClosed() {
         if (config != null) {
             MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
             if (callbacks != null) {

@@ -322,7 +322,7 @@ static void s_on_connection_closed(
     if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
         jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
         if (mqtt_connection) {
-            (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
+            (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_closed);
             (*env)->DeleteLocalRef(env, mqtt_connection);
             AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
         }

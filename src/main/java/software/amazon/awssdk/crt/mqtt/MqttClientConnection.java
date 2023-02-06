@@ -180,19 +180,13 @@ public class MqttClientConnection extends CrtResource {
 
     // Called when the connection is disconnected successfully and intentionally.
     private void onConnectionStopped() {
-        System.out.println("\n Java OnConnectionStopped 01 \n");
         if (config != null) {
-            System.out.println("\n Java OnConnectionStopped 02 \n");
             MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
-            System.out.println("\n Java OnConnectionStopped 03 \n");
             if (callbacks != null) {
-                System.out.println("\n Java OnConnectionStopped 04 \n");
                 OnConnectionClosedReturn returnData = new OnConnectionClosedReturn();
                 callbacks.onConnectionClosed(returnData);
-                System.out.println("\n Java OnConnectionStopped 05 \n");
             }
         }
-        System.out.println("\n Java OnConnectionStopped 06 \n");
     }
 
     /**

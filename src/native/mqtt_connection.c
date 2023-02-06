@@ -310,9 +310,12 @@ static void s_on_connection_stopped(
         return;
     }
 
+    // Acquire for on_stopped so it for sure stays alive long enough to finish
+    s_mqtt_jni_connection_acquire(connection);
+
     fprintf(stderr, "\n ON STOPPED 01 \n");
 
-    // Object has been garbage collected!
+    // Make sure the Java object has not been garbage collected
     if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
         jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
         if (mqtt_connection) {
@@ -578,8 +581,6 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
     s_mqtt_jni_connection_acquire(connection);
-    // Acquire for on_stopped
-    s_mqtt_jni_connection_acquire(connection);
 
     if (aws_mqtt_client_connection_disconnect(
             connection->client_connection, s_on_connection_disconnected, disconnect_callback) != AWS_OP_SUCCESS) {
@@ -594,9 +595,6 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
             error,
             aws_error_str(error));
         s_on_connection_disconnected(connection->client_connection, disconnect_callback);
-
-        // Release for on_stopped since it will not be called
-        s_mqtt_jni_connection_release(connection);
     }
 }
 

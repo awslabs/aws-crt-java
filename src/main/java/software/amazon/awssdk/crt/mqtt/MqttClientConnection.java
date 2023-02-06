@@ -175,6 +175,9 @@ public class MqttClientConnection extends CrtResource {
         MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
         if (callbacks != null) {
             callbacks.onConnectionResumed(sessionPresent);
+
+            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+            callbacks.onConnectionSuccess(returnData);
         }
     }
 

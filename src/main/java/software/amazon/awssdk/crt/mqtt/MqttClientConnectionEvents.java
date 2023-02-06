@@ -23,14 +23,14 @@ public interface MqttClientConnectionEvents {
     void onConnectionResumed(boolean sessionPresent);
 
     /**
-     * Called on successful connect.
+     * Called on every successful connect.
      * Optional and is not required to be defined.
      * @param data The data sent from the client alongside the successful connection callback.
      */
     default void onConnectionSuccess(OnConnectionSuccessReturn data) {};
 
     /**
-     * Called on unsuccessful connect.
+     * Called on every unsuccessful connect. Does not get invoked in interrupts/disconnects from the server - use onConnectionInterrupted for that.
      * Optional and is not required to be defined.
      * @param data The data sent from the client alongside the failed connection callback.
      */

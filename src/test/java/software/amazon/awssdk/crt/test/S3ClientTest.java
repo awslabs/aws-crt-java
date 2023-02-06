@@ -283,7 +283,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT + ":443") };
             HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
@@ -885,7 +885,9 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    // TODO: copy is disabled currently because it does not work correctly on c
+    // side. reenable once its fixed in crt.
+    //@Test 
     public void testS3Copy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

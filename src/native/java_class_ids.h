@@ -83,6 +83,17 @@ struct java_message_handler_properties {
 };
 extern struct java_message_handler_properties message_handler_properties;
 
+/* MqttClientConnection.MqttClientOperationStatistics */
+struct java_mqtt_connection_operation_statistics_properties {
+    jclass statistics_class;
+    jmethodID statistics_constructor_id;
+    jfieldID incomplete_operation_count_field_id;
+    jfieldID incomplete_operation_size_field_id;
+    jfieldID unacked_operation_count_field_id;
+    jfieldID unacked_operation_size_field_id;
+};
+extern struct java_mqtt_connection_operation_statistics_properties mqtt_connection_operation_statistics_properties;
+
 /* MqttException */
 struct java_mqtt_exception_properties {
     jclass jni_mqtt_exception;

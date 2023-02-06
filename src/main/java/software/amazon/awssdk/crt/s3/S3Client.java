@@ -68,7 +68,6 @@ public class S3Client extends CrtResource {
 
         acquireNativeHandle(s3ClientNew(this,
                 region.getBytes(UTF8),
-                options.getEndpoint() != null ? options.getEndpoint().getBytes(UTF8) : null,
                 options.getClientBootstrap().getNativeHandle(),
                 tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(),
@@ -181,7 +180,7 @@ public class S3Client extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long s3ClientNew(S3Client thisObj, byte[] region, byte[] endpoint, long clientBootstrap,
+    private static native long s3ClientNew(S3Client thisObj, byte[] region, long clientBootstrap,
             long tlsContext, long signingConfig, long partSize, double throughputTargetGbps,
             boolean enableReadBackpressure, long initialReadWindow, int maxConnections,
             StandardRetryOptions standardRetryOptions, boolean computeContentMd5,

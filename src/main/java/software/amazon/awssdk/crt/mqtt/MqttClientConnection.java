@@ -336,6 +336,14 @@ public class MqttClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Returns statistics about the current state of the MqttClientConnection's queue of operations.
+     * @return Current state of the connection's queue of operations.
+     */
+    public MqttClientConnectionOperationStatistics getOperationStatistics() {
+        return mqttClientConnectionGetOperationStatistics(getNativeHandle());
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -385,4 +393,7 @@ public class MqttClientConnection extends CrtResource {
             int proxyAuthorizationType,
             String proxyAuthorizationUsername,
             String proxyAuthorizationPassword) throws CrtRuntimeException;
+
+    private static native MqttClientConnectionOperationStatistics mqttClientConnectionGetOperationStatistics(long connection);
+
 };

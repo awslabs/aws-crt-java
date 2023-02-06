@@ -199,6 +199,32 @@ static void s_cache_mqtt_exception(JNIEnv *env) {
     AWS_FATAL_ASSERT(mqtt_exception_properties.jni_constructor);
 }
 
+struct java_mqtt_connection_operation_statistics_properties mqtt_connection_operation_statistics_properties;
+
+static void s_cache_mqtt_client_connection_operation_statistics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttClientConnectionOperationStatistics");
+    AWS_FATAL_ASSERT(cls);
+    mqtt_connection_operation_statistics_properties.statistics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.statistics_class);
+    // Functions
+    mqtt_connection_operation_statistics_properties.statistics_constructor_id =
+        (*env)->GetMethodID(env, mqtt_connection_operation_statistics_properties.statistics_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.statistics_constructor_id);
+    // Field IDs
+    mqtt_connection_operation_statistics_properties.incomplete_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "incompleteOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.incomplete_operation_count_field_id);
+    mqtt_connection_operation_statistics_properties.incomplete_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "incompleteOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.incomplete_operation_size_field_id);
+    mqtt_connection_operation_statistics_properties.unacked_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "unackedOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.unacked_operation_count_field_id);
+    mqtt_connection_operation_statistics_properties.unacked_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "unackedOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.unacked_operation_size_field_id);
+}
+
 struct java_byte_buffer_properties byte_buffer_properties;
 
 static void s_cache_byte_buffer(JNIEnv *env) {
@@ -2112,6 +2138,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_mqtt_connection(env);
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
+    s_cache_mqtt_client_connection_operation_statistics(env);
     s_cache_byte_buffer(env);
     s_cache_credentials_provider(env);
     s_cache_credentials(env);

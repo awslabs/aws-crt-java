@@ -63,9 +63,16 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
 
         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
 
-        // Note: Unacked will be zero because we have not invoked the future yet and so it has not had time to move to the socket
-        System.out.println("About to perform first check:");
-        checkOperationStatistics(1, expectedSize, 0, 0);
+        // We wait just a little bit to let the operation for sure reach the socket and get into the unacked statistics.
+        // (Previously we tried to check just the incomplete operations, but it is incredibly hard to time for testing
+        // without getting the data in the unacked statistics as well)
+        try {
+            Thread.sleep(500);
+        } catch (Exception ex) {
+            fail("Exception ocurred trying to sleep for 1/2 seconds");
+        }
+        // Make sure the data is where we expected it to be
+        checkOperationStatistics(1, expectedSize, 1, expectedSize);
 
         // Publish
         try {
@@ -81,7 +88,6 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             fail("Exception ocurred trying to sleep for 1/2 seconds");
         }
         // Make sure it is empty
-        System.out.println("About to perform first check:");
         checkOperationStatistics(0, 0, 0, 0);
         disconnect();
         close();

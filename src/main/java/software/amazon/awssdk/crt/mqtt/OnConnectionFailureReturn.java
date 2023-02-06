@@ -5,10 +5,7 @@ package software.amazon.awssdk.crt.mqtt;
  * @see software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents
  */
 public class OnConnectionFailureReturn {
-    /**
-     * AWS CRT error code for the connection failure.
-     * Pass to {@link software.amazon.awssdk.crt.CRT#awsErrorString(int)} for a human readable error
-     */
+
     private int errorCode;
 
     /**

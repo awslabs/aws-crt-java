@@ -87,7 +87,8 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
 
         /**
          * Disable the onClosed callback, so it is not invoked on the last disconnect for clean-up.
-         * (We do not invoke any callbacks on the last disconnect during clean-up/shutdown)
+         * (We do not invoke any callbacks on the last disconnect during clean-up/shutdown. Doing such will cause a
+         * segfault!)
          */
         aws_mqtt_client_connection_set_connection_closed_handler(connection->client_connection, NULL, NULL);
 
@@ -321,9 +322,7 @@ static void s_on_connection_closed(
     if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
         jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
         if (mqtt_connection) {
-            fprintf(stderr, "\n ABOUT TO CALL VOID METHOD \n");
             (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
-            fprintf(stderr, "\n CALLED VOID METHOD \n");
             (*env)->DeleteLocalRef(env, mqtt_connection);
             AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
         }

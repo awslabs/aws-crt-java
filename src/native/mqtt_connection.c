@@ -312,15 +312,18 @@ static void s_on_connection_stopped(
 
     fprintf(stderr, "\n ON STOPPED 01 \n");
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection) {
-        fprintf(stderr, "\n ON STOPPED 02 \n");
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
-        fprintf(stderr, "\n ON STOPPED 03 \n");
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-        fprintf(stderr, "\n ON STOPPED 04 \n");
-        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-        fprintf(stderr, "\n ON STOPPED 05 \n");
+    // Object has been garbage collected!
+    if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
+        jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
+        if (mqtt_connection) {
+            fprintf(stderr, "\n ON STOPPED 02 \n");
+            (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_stopped);
+            fprintf(stderr, "\n ON STOPPED 03 \n");
+            (*env)->DeleteLocalRef(env, mqtt_connection);
+            fprintf(stderr, "\n ON STOPPED 04 \n");
+            AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+            fprintf(stderr, "\n ON STOPPED 05 \n");
+        }
     }
     fprintf(stderr, "\n ON STOPPED 06 \n");
     aws_jni_release_thread_env(connection->jvm, env);

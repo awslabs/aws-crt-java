@@ -67,9 +67,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         // (Previously we tried to check just the incomplete operations, but it is incredibly hard to time for testing
         // without getting the data in the unacked statistics as well)
         try {
-            Thread.sleep(500);
+            Thread.sleep(100);
         } catch (Exception ex) {
-            fail("Exception ocurred trying to sleep for 1/2 seconds");
+            fail("Exception ocurred trying to sleep for 100 ms");
         }
         // Make sure the data is where we expected it to be
         checkOperationStatistics(1, expectedSize, 1, expectedSize);

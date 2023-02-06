@@ -36,7 +36,7 @@ void aws_http_proxy_environment_variable_setting_jni_init(
 
 void aws_http_proxy_environment_variable_setting_jni_clean_up(struct proxy_env_var_settings *options) {
     /* Nothing to cleanup */
-    (void) options;
+    (void)options;
 }
 
 #if UINTPTR_MAX == 0xffffffff

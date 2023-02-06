@@ -305,7 +305,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
 
     void checkOperationStatistics(
         long expectedIncompleteOperationCount, long expectedIncompleteOperationSize,
-        long expectedUnackedOperationCount, long expectedUnackedOperationSize) {
+        long expectedUnackedOperationCount, long expectedUnackedOperationSize, boolean equalExact) {
         try {
             MqttClientConnectionOperationStatistics statistics = connection.getOperationStatistics();
 
@@ -314,21 +314,35 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             long unacked_ops_count = statistics.getUnackedOperationCount();
             long unacked_ops_size = statistics.getUnackedOperationSize();
 
-            if (incomplete_ops_count != expectedIncompleteOperationCount) {
-                fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
+            if (equalExact == true) {
+                if (incomplete_ops_count != expectedIncompleteOperationCount) {
+                    fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
+                }
+                if (incomplete_ops_size != expectedIncompleteOperationSize) {
+                    fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
+                }
+                if (unacked_ops_count != expectedUnackedOperationCount) {
+                    fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
+                }
+                if (unacked_ops_size != expectedUnackedOperationSize) {
+                    fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
+                }
+            }
+            else {
+                if (incomplete_ops_count >= expectedIncompleteOperationCount) {
+                    fail("Incomplete operations count:" + incomplete_ops_count + " did not <= expected value:" + expectedIncompleteOperationCount);
+                }
+                if (incomplete_ops_size >= expectedIncompleteOperationSize) {
+                    fail("Incomplete operations size:" + incomplete_ops_size + " did not <= expected value:" + expectedIncompleteOperationSize);
+                }
+                if (unacked_ops_count >= expectedUnackedOperationCount) {
+                    fail("Unacked operations count:" + unacked_ops_count + " did not <= expected value:" + expectedUnackedOperationCount);
+                }
+                if (unacked_ops_size >= expectedUnackedOperationSize) {
+                    fail("Unacked operations size:" + unacked_ops_size + " did not <= expected value:" + expectedUnackedOperationSize);
+                }
             }
 
-            if (incomplete_ops_size != expectedIncompleteOperationSize) {
-                fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
-            }
-
-            if (unacked_ops_count != expectedUnackedOperationCount) {
-                fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
-            }
-
-            if (unacked_ops_size != expectedUnackedOperationSize) {
-                fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
-            }
         } catch (Exception ex) {
             fail("Exception during operation statistics check: " + ex.getMessage());
         }

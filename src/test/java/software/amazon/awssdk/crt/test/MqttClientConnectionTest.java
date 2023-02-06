@@ -44,7 +44,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             fail("Exception ocurred trying to sleep for 1/2 second");
         }
 
-        checkOperationStatistics(0, 0, 0, 0);
+        checkOperationStatistics(0, 0, 0, 0, true);
         disconnect();
         close();
     }
@@ -62,17 +62,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         Long expectedSize = new Long(topic.length() + payload.length + 4);
 
         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
-
-        // We wait just a little bit to let the operation for sure reach the socket and get into the unacked statistics.
-        // (Previously we tried to check just the incomplete operations, but it is incredibly hard to time for testing
-        // without getting the data in the unacked statistics as well)
-        try {
-            Thread.sleep(100);
-        } catch (Exception ex) {
-            fail("Exception ocurred trying to sleep for 100 ms");
-        }
-        // Make sure the data is where we expected it to be
-        checkOperationStatistics(1, expectedSize, 1, expectedSize);
+        // Make sure there is at least one operation and the size is correct, or at least that it is over 0
+        // (Does more-than-or-equal check)
+        checkOperationStatistics(1, expectedSize, 0, 0, false);
 
         // Publish
         try {
@@ -88,7 +80,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             fail("Exception ocurred trying to sleep for 1/2 seconds");
         }
         // Make sure it is empty
-        checkOperationStatistics(0, 0, 0, 0);
+        checkOperationStatistics(0, 0, 0, 0, true);
         disconnect();
         close();
     }

@@ -239,9 +239,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         jni_environment_variable_type,
         (struct aws_tls_connection_options *)jni_environment_variable_proxy_tls_connection_options);
 
-    if (jni_proxy_host != NULL) {
-        client_config.proxy_ev_settings = &proxy_ev_settings;
-    }
+    client_config.proxy_ev_settings = &proxy_ev_settings;
 
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {

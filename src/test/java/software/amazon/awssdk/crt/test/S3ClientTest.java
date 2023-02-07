@@ -180,15 +180,21 @@ public class S3ClientTest extends CrtTestFixture {
              EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
              TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
              TlsContext tlsContext = new TlsContext(tlsContextOptions);
-             TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
         ) {
             HttpProxyOptions proxyOptions = new HttpProxyOptions();
             proxyOptions.setHost("localhost");
+            proxyOptions.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            proxyOptions.setPort(80);
+            proxyOptions.setTlsContext(tlsContext);
+            proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
+            proxyOptions.setAuthorizationUsername("username");
+            proxyOptions.setAuthorizationPassword("password");
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withProxyOptions(proxyOptions), elg)) {
             }
         }
     }
+
     @Test
     public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
         skipIfNetworkUnavailable();
@@ -199,6 +205,8 @@ public class S3ClientTest extends CrtTestFixture {
              TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
         ) {
             HttpProxyEnvironmentVariableSetting environmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
+            environmentVariableSetting.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            environmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.DISABLED);
             environmentVariableSetting.setTlsConnectionOptions(tlsConnectionOptions);
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {

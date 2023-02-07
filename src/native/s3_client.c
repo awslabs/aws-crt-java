@@ -257,8 +257,6 @@ clean_up:
     aws_http_proxy_options_jni_clean_up(
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
-    aws_http_proxy_environment_variable_setting_jni_clean_up(&proxy_ev_settings);
-
     aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
 
     return (jlong)client;

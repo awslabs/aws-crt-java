@@ -18,6 +18,4 @@ void aws_http_proxy_environment_variable_setting_jni_init(
     jint environment_variable_type,
     struct aws_tls_connection_options *proxy_tls_connection_options);
 
-void aws_http_proxy_environment_variable_setting_jni_clean_up(struct proxy_env_var_settings *options);
-
 #endif /* AWS_JNI_CRT_HTTP_PROXY_ENVIRONMENT_VARIABLE_SETTING_H */

@@ -167,7 +167,7 @@ public class S3ClientTest extends CrtTestFixture {
             monitoringOptions.setMinThroughputBytesPerSecond(100);
             monitoringOptions.setAllowableThroughputFailureIntervalSeconds(10);
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
-                    .withHttpMonitoringOptions(monitoringOptions), elg)) {
+                    .withHttpMonitoringOptions(monitoringOptions).withConnectTimeoutMs(10), elg)) {
 
             }
         }

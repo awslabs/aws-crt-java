@@ -48,7 +48,7 @@ public class S3ClientOptions {
      * Optional.
      * Configuration for fetching proxy configuration from environment.
      * By Default read proxy configuration from environment is enabled.
-     * Only works when proxy_options is not set. If both are set, configuration from
+     * Only works when proxyOptions is not set. If both are set, configuration from
      * proxy_options is used.
      */
     private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;

@@ -173,6 +173,9 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    /*
+     * Test that a client can be created successfully with proxy options.
+     */
     @Test
     public void testS3ClientCreateDestroyHttpProxyOptions() {
         skipIfNetworkUnavailable();
@@ -195,6 +198,9 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    /*
+     * Test that a client can be created successfully with proxy environment variable setting.
+     */
     @Test
     public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
         skipIfNetworkUnavailable();

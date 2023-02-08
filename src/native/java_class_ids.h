@@ -423,6 +423,16 @@ struct java_aws_s3_meta_request_progress {
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
+/* S3TcpKeepAliveOptions */
+struct java_aws_s3_tcp_keep_alive_options_properties {
+    jclass s3_tcp_keep_alive_options_class;
+    jmethodID s3_tcp_keep_alive_options_constructor_method_id;
+    jfieldID keep_alive_interval_sec_field_id;
+    jfieldID keep_alive_timeout_sec_field_id;
+    jfieldID keep_alive_max_failed_probes_field_id;
+};
+extern struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;
+
 /* ResumeToken */
 struct java_aws_s3_meta_request_resume_token {
     jclass s3_meta_request_resume_token_class;

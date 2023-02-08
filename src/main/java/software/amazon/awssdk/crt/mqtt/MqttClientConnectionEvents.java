@@ -17,7 +17,7 @@ public interface MqttClientConnectionEvents {
     void onConnectionInterrupted(int errorCode);
 
     /**
-     *  called on first successful connect, and whenever a reconnect succeeds
+     *  called whenever a reconnect succeeds; not called on an initial connect success
      * @param sessionPresent true if the session has been resumed, false if the session is clean
      */
     void onConnectionResumed(boolean sessionPresent);

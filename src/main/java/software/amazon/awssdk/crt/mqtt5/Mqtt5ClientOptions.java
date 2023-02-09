@@ -4,19 +4,18 @@
  */
 package software.amazon.awssdk.crt.mqtt5;
 
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
-
-import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
-
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.function.Consumer;
+
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
+import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 /**
  * Configuration for the creation of Mqtt5Clients

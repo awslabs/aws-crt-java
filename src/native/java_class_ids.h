@@ -895,6 +895,15 @@ struct java_boxed_array_list_properties {
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 
+/* mqtt5.ClientOptions */
+struct java_aws_mqtt5_listener_options_properties {
+    jclass listener_options_class;
+
+    jfieldID publish_events_field_id;
+    jfieldID lifecycle_events_field_id;
+};
+extern struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;
+
 void cache_java_class_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

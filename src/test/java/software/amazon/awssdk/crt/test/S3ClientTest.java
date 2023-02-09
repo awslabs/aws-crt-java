@@ -3,20 +3,15 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
-
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
-import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
-import software.amazon.awssdk.crt.s3.ResumeToken;
 import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
+import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
@@ -129,6 +124,94 @@ public class S3ClientTest extends CrtTestFixture {
             try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
 
+            }
+        }
+    }
+
+
+    /*
+     * Test that a client can be created successfully with Tcp Keep Alive options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyTcpKeepAliveOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            S3TcpKeepAliveOptions tcpKeepAliveOptions = new S3TcpKeepAliveOptions();
+            tcpKeepAliveOptions.setKeepAliveIntervalSec((short) 10);
+            tcpKeepAliveOptions.setKeepAliveTimeoutSec((short) 20);
+            tcpKeepAliveOptions.setKeepAliveMaxFailedProbes((short) 30);
+
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withS3TcpKeepAliveOptions(tcpKeepAliveOptions), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with monitoring options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyMonitoringOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            HttpMonitoringOptions monitoringOptions = new HttpMonitoringOptions();
+            monitoringOptions.setMinThroughputBytesPerSecond(100);
+            monitoringOptions.setAllowableThroughputFailureIntervalSeconds(10);
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withHttpMonitoringOptions(monitoringOptions).withConnectTimeoutMs(10), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with proxy options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyHttpProxyOptions() {
+        skipIfNetworkUnavailable();
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+        ) {
+            HttpProxyOptions proxyOptions = new HttpProxyOptions();
+            proxyOptions.setHost("localhost");
+            proxyOptions.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            proxyOptions.setPort(80);
+            proxyOptions.setTlsContext(tlsContext);
+            proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
+            proxyOptions.setAuthorizationUsername("username");
+            proxyOptions.setAuthorizationPassword("password");
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withProxyOptions(proxyOptions), elg)) {
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with proxy environment variable setting.
+     */
+    @Test
+    public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
+        skipIfNetworkUnavailable();
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+             TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
+        ) {
+            HttpProxyEnvironmentVariableSetting environmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
+            environmentVariableSetting.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            environmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.DISABLED);
+            environmentVariableSetting.setTlsConnectionOptions(tlsConnectionOptions);
+            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+                    .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {
             }
         }
     }

@@ -502,7 +502,7 @@ static int s_set_int_enum_in_packet(
         if (*int_enum < 0) {
             return AWS_OP_ERR;
         }
-        (*env)->CallIntMethod(env, packet, set_enum_field_id, (jint)*int_enum);
+        (*env)->CallVoidMethod(env, packet, set_enum_field_id, (jint)*int_enum);
         if (aws_jni_check_and_clear_exception(env)) {
             return AWS_OP_ERR;
         }
@@ -539,7 +539,7 @@ static jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error when creating ConnAckPacket from native: Reason code is negative!");
         return NULL;
     }
-    (*env)->CallIntMethod(
+    (*env)->CallVoidMethod(
         env, connack_data, mqtt5_connack_packet_properties.connack_native_add_reason_code_id, (jint)reason_code_int);
 
     /* Set all of the optional data in Java classes */
@@ -753,7 +753,7 @@ static jobject s_aws_mqtt5_client_create_jni_negotiated_settings_from_native(
         mqtt5_negotiated_settings_properties.negotiated_settings_class,
         mqtt5_negotiated_settings_properties.negotiated_settings_constructor_id);
 
-    (*env)->CallObjectMethod(
+    (*env)->CallVoidMethod(
         env,
         negotiated_settings_data,
         mqtt5_negotiated_settings_properties.negotiated_settings_native_set_qos_id,
@@ -1123,7 +1123,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 mqtt5_on_attempting_connect_return_properties.return_constructor_id);
             aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-            (*env)->CallObjectMethod(
+            (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_attempting_connect_id,
@@ -1142,10 +1142,9 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
             aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
             /* Set OnConnected BEFORE calling the callback so it is accurate in the callback itself. */
-            (*env)->CallBooleanMethod(
-                env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
+            (*env)->CallVoidMethod(env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
 
-            (*env)->CallObjectMethod(
+            (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_connection_success_id,
@@ -1164,7 +1163,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 connack_data);
             aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-            (*env)->CallObjectMethod(
+            (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_connection_failure_id,
@@ -1185,10 +1184,10 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
             aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
             /* Set OnConnected BEFORE calling the callback so it is accurate in the callback itself. */
-            (*env)->CallBooleanMethod(
+            (*env)->CallVoidMethod(
                 env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, false);
 
-            (*env)->CallObjectMethod(
+            (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_disconnection_id,
@@ -1205,7 +1204,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
                 mqtt5_on_stopped_return_properties.return_constructor_id);
             aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-            (*env)->CallObjectMethod(
+            (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,
                 mqtt5_lifecycle_events_properties.lifecycle_stopped_id,
@@ -1305,7 +1304,7 @@ static void s_aws_mqtt5_client_java_publish_received(
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     if (java_client->jni_publish_events) {
-        (*env)->CallObjectMethod(
+        (*env)->CallVoidMethod(
             env,
             java_client->jni_publish_events,
             mqtt5_publish_events_properties.publish_events_publish_received_id,

@@ -507,15 +507,13 @@ static void aws_mqtt5_listener_java_destroy(
     if (java_listener->jni_lifecycle_events) {
         (*env)->DeleteGlobalRef(env, java_listener->jni_lifecycle_events);
     }
-    if (java_listener->jni_listener)
-    {
+    if (java_listener->jni_listener) {
         (*env)->DeleteGlobalRef(env, java_listener->jni_listener);
     }
 
     /* Frees allocated memory */
     aws_mem_release(allocator, java_listener);
 }
-
 
 static void s_aws_count_allocation(const void *pointer, size_t *counter) {
     if (pointer != NULL) {
@@ -867,7 +865,6 @@ static void s_aws_mqtt5_listener_java_termination(void *complete_ctx) {
     aws_jni_release_thread_env(jvm, env);
 }
 
-
 /*******************************************************************************
  * JNI FUNCTIONS
  ******************************************************************************/
@@ -917,7 +914,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_listener->jvm);
     if (jvmresult != 0) {
-        s_aws_mqtt5_listener_log_and_throw_exception(env, "MQTT5 listener new: Unable to get JVM", AWS_ERROR_INVALID_STATE);
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "MQTT5 listener new: Unable to get JVM", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
 

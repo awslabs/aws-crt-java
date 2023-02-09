@@ -2065,6 +2065,28 @@ static void s_cache_mqtt5_on_disconnection_return(JNIEnv *env) {
     AWS_FATAL_ASSERT(mqtt5_on_disconnection_return_properties.return_constructor_id);
 }
 
+struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;
+
+static void s_cache_mqtt5_listener_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_listener_options_properties.listener_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.listener_options_class);
+    // Functions
+    mqtt5_listener_options_properties.publish_events_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_listener_options_properties.listener_options_class,
+        "publishEvents",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions$ListenerPublishEvents;");
+    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.publish_events_field_id);
+    mqtt5_listener_options_properties.lifecycle_events_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_listener_options_properties.listener_options_class,
+        "lifecycleEvents",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions$LifecycleEvents;");
+    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.lifecycle_events_field_id);
+}
+
 struct java_boxed_integer_properties boxed_integer_properties;
 
 static void s_cache_boxed_integer(JNIEnv *env) {
@@ -2126,28 +2148,6 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     boxed_array_list_properties.list_constructor_id =
         (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "<init>", "()V");
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
-}
-
-struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;
-
-static void s_cache_mqtt5_listener_options(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions");
-    AWS_FATAL_ASSERT(cls);
-    mqtt5_listener_options_properties.listener_options_class = (*env)->NewGlobalRef(env, cls);
-    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.listener_options_class);
-    // Functions
-    mqtt5_listener_options_properties.publish_events_field_id = (*env)->GetFieldID(
-        env,
-        mqtt5_listener_options_properties.listener_options_class,
-        "publishEvents",
-        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions$ListenerPublishEvents;");
-    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.publish_events_field_id);
-    mqtt5_listener_options_properties.lifecycle_events_field_id = (*env)->GetFieldID(
-        env,
-        mqtt5_listener_options_properties.listener_options_class,
-        "lifecycleEvents",
-        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions$LifecycleEvents;");
-    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.lifecycle_events_field_id);
 }
 
 void cache_java_class_ids(JNIEnv *env) {
@@ -2242,6 +2242,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_mqtt5_on_connection_success_return(env);
     s_cache_mqtt5_on_connection_failure_return(env);
     s_cache_mqtt5_on_disconnection_return(env);
+    s_cache_mqtt5_listener_options(env);
     s_cache_boxed_integer(env);
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);

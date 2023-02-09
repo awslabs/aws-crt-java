@@ -863,6 +863,15 @@ struct java_aws_mqtt5_on_disconnection_return_properties {
 };
 extern struct java_aws_mqtt5_on_disconnection_return_properties mqtt5_on_disconnection_return_properties;
 
+/* mqtt5.ListenerOptions */
+struct java_aws_mqtt5_listener_options_properties {
+    jclass listener_options_class;
+
+    jfieldID publish_events_field_id;
+    jfieldID lifecycle_events_field_id;
+};
+extern struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;
+
 /* java/lang/Integer */
 struct java_boxed_integer_properties {
     jclass integer_class;
@@ -894,15 +903,6 @@ struct java_boxed_array_list_properties {
     jmethodID list_constructor_id;
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
-
-/* mqtt5.ClientOptions */
-struct java_aws_mqtt5_listener_options_properties {
-    jclass listener_options_class;
-
-    jfieldID publish_events_field_id;
-    jfieldID lifecycle_events_field_id;
-};
-extern struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;
 
 void cache_java_class_ids(JNIEnv *env);
 

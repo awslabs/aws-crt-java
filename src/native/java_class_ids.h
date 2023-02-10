@@ -802,6 +802,13 @@ struct java_aws_mqtt5_publish_events {
 };
 extern struct java_aws_mqtt5_publish_events mqtt5_publish_events_properties;
 
+/* mqtt5.Mqtt5ListenerOptions.PublishEvents */
+struct java_aws_mqtt5_listener_publish_events {
+    jclass listener_publish_events_class;
+    jmethodID listener_publish_events_publish_received_id;
+};
+extern struct java_aws_mqtt5_listener_publish_events mqtt5_listener_publish_events_properties;
+
 /* mqtt5.Mqtt5ClientOptions.LifecycleEvents */
 struct java_aws_mqtt5_lifecycle_events {
     jclass lifecycle_events_class;

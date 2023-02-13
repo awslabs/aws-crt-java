@@ -13,6 +13,7 @@
 #include <http_request_utils.h>
 #include <java_class_ids.h>
 #include <jni.h>
+#include <mqtt5_client_jni.h>
 #include <mqtt5_packets.h>
 #include <mqtt5_utils.h>
 
@@ -31,18 +32,6 @@
 /*******************************************************************************
  * CLIENT ONLY STRUCTS
  ******************************************************************************/
-
-struct aws_mqtt5_client_java_jni {
-    struct aws_mqtt5_client *client;
-    jobject jni_client;
-    JavaVM *jvm;
-
-    struct aws_tls_connection_options tls_options;
-    struct aws_tls_connection_options http_proxy_tls_options;
-
-    jobject jni_publish_events;
-    jobject jni_lifecycle_events;
-};
 
 struct aws_mqtt5_client_publish_return_data {
     struct aws_mqtt5_client_java_jni *java_client;

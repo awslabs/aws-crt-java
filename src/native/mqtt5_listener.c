@@ -13,6 +13,7 @@
 #include <http_request_utils.h>
 #include <java_class_ids.h>
 #include <jni.h>
+#include <mqtt5_client_jni.h>
 #include <mqtt5_packets.h>
 #include <mqtt5_utils.h>
 
@@ -523,7 +524,23 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
     listener_options.termination_callback_user_data = (void *)java_listener;
 
     listener_options.listener_callbacks = callback_set;
-    // TODO: listener_options.client = *?
+
+    // Get aws_mqtt5_client_java_jni reference
+    jlong jni_mqtt5_client_pointer =
+        (*env)->CallLongMethod(env, jni_mqtt5_client, crt_resource_properties.get_native_handle_method_id);
+    if (aws_jni_check_and_clear_exception(env)) {
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "MQTT5 listener new: could not get native handle for mqtt5 client", AWS_ERROR_INVALID_ARGUMENT);
+        goto clean_up;
+    }
+
+    struct aws_mqtt5_client_java_jni *java_class_client = (struct aws_mqtt5_client_java_jni *)jni_mqtt5_client_pointer;
+    if (!java_class_client) {
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "MQTT5 listener new: could not get native handle for mqtt5 client", AWS_ERROR_INVALID_ARGUMENT);
+        goto clean_up;
+    }
+    listener_options.client = java_class_client->client;
 
     /* Make the MQTT5 listener */
     java_listener->listener = aws_mqtt5_listener_new(allocator, &listener_options);

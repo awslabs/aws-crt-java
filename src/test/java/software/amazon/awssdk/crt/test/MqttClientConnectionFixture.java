@@ -3,356 +3,388 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-package software.amazon.awssdk.crt.test;
+ package software.amazon.awssdk.crt.test;
 
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.rules.DisableOnDebug;
-import org.junit.rules.TestRule;
-import org.junit.rules.Timeout;
+ import org.junit.Assume;
+ import org.junit.Rule;
+ import org.junit.rules.DisableOnDebug;
+ import org.junit.rules.TestRule;
+ import org.junit.rules.Timeout;
 
-import static org.junit.Assert.*;
+ import static org.junit.Assert.*;
 
-import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.mqtt.*;
+ import software.amazon.awssdk.crt.*;
+ import software.amazon.awssdk.crt.io.ClientBootstrap;
+ import software.amazon.awssdk.crt.io.EventLoopGroup;
+ import software.amazon.awssdk.crt.io.HostResolver;
+ import software.amazon.awssdk.crt.io.TlsContext;
+ import software.amazon.awssdk.crt.io.TlsContextOptions;
+ import software.amazon.awssdk.crt.mqtt.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Date;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.InvalidPathException;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.util.Date;
+ import java.util.UUID;
+ import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.TimeUnit;
+ import java.util.function.Consumer;
 
-class MissingCredentialsException extends RuntimeException {
-    MissingCredentialsException(String message) {
-        super(message);
-    }
-}
+ class MissingCredentialsException extends RuntimeException {
+     MissingCredentialsException(String message) {
+         super(message);
+     }
+ }
 
-public class MqttClientConnectionFixture extends CrtTestFixture {
+ public class MqttClientConnectionFixture extends CrtTestFixture {
 
-    static final boolean IS_CI = System.getProperty("aws.crt.ci") != null;
+     static final boolean IS_CI = System.getProperty("aws.crt.ci") != null;
 
-    MqttClientConnection connection = null;
-    private boolean disconnecting = false;
+     MqttClientConnection connection = null;
+     private boolean disconnecting = false;
 
-    static final String TEST_ENDPOINT = System.getProperty("endpoint");
-    static final String TEST_CERTIFICATE = System.getProperty("certificate");
-    static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
-    static final String TEST_ECC_CERTIFICATE = System.getProperty("ecc_certificate");
-    static final String TEST_ECC_PRIVATEKEY = System.getProperty("ecc_privatekey");
-    static final String TEST_ROOTCA = System.getProperty("rootca");
-    static final short TEST_PORT = 8883;
-    static final short TEST_PORT_ALPN = 443;
-    static final String TEST_CLIENTID = "aws-crt-java-";
+     private long TIMEOUT_TIME = 100;
+     private CompletableFuture<OnConnectionSuccessReturn> onConnectionSuccessFuture = new CompletableFuture<OnConnectionSuccessReturn>();
+     private CompletableFuture<OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
+     private CompletableFuture<OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
 
-    Path pathToCert = null;
-    Path pathToKey = null;
-    Path pathToCa = null;
+     static final String TEST_ENDPOINT = System.getProperty("endpoint");
+     static final String TEST_CERTIFICATE = System.getProperty("certificate");
+     static final String TEST_PRIVATEKEY = System.getProperty("privatekey");
+     static final String TEST_ECC_CERTIFICATE = System.getProperty("ecc_certificate");
+     static final String TEST_ECC_PRIVATEKEY = System.getProperty("ecc_privatekey");
+     static final String TEST_ROOTCA = System.getProperty("rootca");
+     static final short TEST_PORT = 8883;
+     static final short TEST_PORT_ALPN = 443;
+     static final String TEST_CLIENTID = "aws-crt-java-";
 
-    String certificatePem = null;
-    String privateKeyPem = null;
-    String caRoot = null;
-    String iotEndpoint = null;
+     Path pathToCert = null;
+     Path pathToKey = null;
+     Path pathToCa = null;
 
-    enum AUTH_KEY_TYPE {
-        RSA,
-        ECC
-    }
+     String certificatePem = null;
+     String privateKeyPem = null;
+     String caRoot = null;
+     String iotEndpoint = null;
 
-    Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
+     enum AUTH_KEY_TYPE {
+         RSA,
+         ECC
+     }
 
-    protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
-        this.connectionConfigTransformer = connectionConfigTransformer;
-    }
+     Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
 
-    private boolean findCredentials(AUTH_KEY_TYPE key_type) {
-        CrtTestContext ctx = getContext();
+     protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
+         this.connectionConfigTransformer = connectionConfigTransformer;
+     }
 
-        // For each parameter, check the context first, then check the file system/system properties
-        try {
-            if (ctx.iotCARoot == null) {
-                pathToCa = TEST_ROOTCA != null ? Paths.get(TEST_ROOTCA) : null;
-                if (pathToCa == null || !pathToCa.toFile().exists()) {
-                    throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
-                }
-                ctx.iotCARoot = Files.readAllBytes(pathToCa);
-            }
-            caRoot = new String(ctx.iotCARoot);
+     private boolean findCredentials(AUTH_KEY_TYPE key_type) {
+         CrtTestContext ctx = getContext();
 
-            if (ctx.iotEndpoint == null && TEST_ENDPOINT != null) {
-                ctx.iotEndpoint = TEST_ENDPOINT;
-            }
-            iotEndpoint = ctx.iotEndpoint;
+         // For each parameter, check the context first, then check the file system/system properties
+         try {
+             if (ctx.iotCARoot == null) {
+                 pathToCa = TEST_ROOTCA != null ? Paths.get(TEST_ROOTCA) : null;
+                 if (pathToCa == null || !pathToCa.toFile().exists()) {
+                     throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
+                 }
+                 ctx.iotCARoot = Files.readAllBytes(pathToCa);
+             }
+             caRoot = new String(ctx.iotCARoot);
 
-            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientCertificate == null) {
-                pathToCert = TEST_CERTIFICATE != null? Paths.get(TEST_CERTIFICATE) : null;
-                if (pathToCert == null || pathToCert.toString().equals("")) {
-                    throw new MissingCredentialsException("Certificate not provided");
-                }
-                if (!pathToCert.toFile().exists()) {
-                    throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
-                }
-                ctx.iotClientCertificate = Files.readAllBytes(pathToCert);
-            }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccCertificate == null) {
-                pathToCert = TEST_ECC_CERTIFICATE != null? Paths.get(TEST_ECC_CERTIFICATE) : null;
-                if (pathToCert == null || pathToCert.toString().equals("")) {
-                    throw new MissingCredentialsException("Certificate not provided");
-                }
-                if (!pathToCert.toFile().exists()) {
-                    throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
-                }
-                ctx.iotClientEccCertificate = Files.readAllBytes(pathToCert);
-            }
+             if (ctx.iotEndpoint == null && TEST_ENDPOINT != null) {
+                 ctx.iotEndpoint = TEST_ENDPOINT;
+             }
+             iotEndpoint = ctx.iotEndpoint;
 
-            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientPrivateKey == null) {
-                pathToKey = TEST_PRIVATEKEY != null? Paths.get(TEST_PRIVATEKEY) : null;
-                if (pathToKey == null || pathToKey.toString().equals("")) {
-                    throw new MissingCredentialsException("Private key not provided");
-                }
-                if (!pathToKey.toFile().exists()) {
-                    throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
-                }
-                ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
-            }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccPrivateKey == null) {
-                pathToKey = TEST_ECC_PRIVATEKEY != null? Paths.get(TEST_ECC_PRIVATEKEY) : null;
-                if (pathToKey == null || pathToKey.toString().equals("")) {
-                    throw new MissingCredentialsException("Private key not provided");
-                }
-                if (!pathToKey.toFile().exists()) {
-                    throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
-                }
-                ctx.iotClientEccPrivateKey = Files.readAllBytes(pathToKey);
-            }
+             if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientCertificate == null) {
+                 pathToCert = TEST_CERTIFICATE != null? Paths.get(TEST_CERTIFICATE) : null;
+                 if (pathToCert == null || pathToCert.toString().equals("")) {
+                     throw new MissingCredentialsException("Certificate not provided");
+                 }
+                 if (!pathToCert.toFile().exists()) {
+                     throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
+                 }
+                 ctx.iotClientCertificate = Files.readAllBytes(pathToCert);
+             }
+             else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccCertificate == null) {
+                 pathToCert = TEST_ECC_CERTIFICATE != null? Paths.get(TEST_ECC_CERTIFICATE) : null;
+                 if (pathToCert == null || pathToCert.toString().equals("")) {
+                     throw new MissingCredentialsException("Certificate not provided");
+                 }
+                 if (!pathToCert.toFile().exists()) {
+                     throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
+                 }
+                 ctx.iotClientEccCertificate = Files.readAllBytes(pathToCert);
+             }
 
-            if( key_type == AUTH_KEY_TYPE.ECC)
-            {
-                certificatePem = new String(ctx.iotClientEccCertificate);
-                privateKeyPem = new String(ctx.iotClientEccPrivateKey);
-            }
-            else if(key_type == AUTH_KEY_TYPE.RSA)
-            {
-                certificatePem = new String(ctx.iotClientCertificate);
-                privateKeyPem = new String(ctx.iotClientPrivateKey);
-            }
+             if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientPrivateKey == null) {
+                 pathToKey = TEST_PRIVATEKEY != null? Paths.get(TEST_PRIVATEKEY) : null;
+                 if (pathToKey == null || pathToKey.toString().equals("")) {
+                     throw new MissingCredentialsException("Private key not provided");
+                 }
+                 if (!pathToKey.toFile().exists()) {
+                     throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
+                 }
+                 ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
+             }
+             else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccPrivateKey == null) {
+                 pathToKey = TEST_ECC_PRIVATEKEY != null? Paths.get(TEST_ECC_PRIVATEKEY) : null;
+                 if (pathToKey == null || pathToKey.toString().equals("")) {
+                     throw new MissingCredentialsException("Private key not provided");
+                 }
+                 if (!pathToKey.toFile().exists()) {
+                     throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
+                 }
+                 ctx.iotClientEccPrivateKey = Files.readAllBytes(pathToKey);
+             }
 
-            return true;
-        } catch (InvalidPathException ex) {
-            return false;
-        } catch (MissingCredentialsException ex) {
-            if (IS_CI) {
-                throw ex;
-            }
-            return false;
-        } catch (IOException ex) {
-            return false;
-        }
-    }
+             if( key_type == AUTH_KEY_TYPE.ECC)
+             {
+                 certificatePem = new String(ctx.iotClientEccCertificate);
+                 privateKeyPem = new String(ctx.iotClientEccPrivateKey);
+             }
+             else if(key_type == AUTH_KEY_TYPE.RSA)
+             {
+                 certificatePem = new String(ctx.iotClientCertificate);
+                 privateKeyPem = new String(ctx.iotClientPrivateKey);
+             }
 
-    public TlsContext createIotClientTlsContext() {
-        return createTlsContextOptions(getContext().iotCARoot);
-    }
+             return true;
+         } catch (InvalidPathException ex) {
+             return false;
+         } catch (MissingCredentialsException ex) {
+             if (IS_CI) {
+                 throw ex;
+             }
+             return false;
+         } catch (IOException ex) {
+             return false;
+         }
+     }
 
-    public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
-        return new TlsContext(configureTlsContextOptions(tlsOpts, getContext().iotCARoot));
-    }
+     public TlsContext createIotClientTlsContext() {
+         return createTlsContextOptions(getContext().iotCARoot);
+     }
 
-    MqttClientConnectionFixture() {
-    }
+     public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
+         return new TlsContext(configureTlsContextOptions(tlsOpts, getContext().iotCARoot));
+     }
 
-    boolean connect() {
-        return connect(false, 0, 0, null);
-    }
+     MqttClientConnectionFixture() {
+     }
 
-    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
-        return connect(false, 0, 0, anyMessageHandler);
-    }
+     boolean connect() {
+         return connect(false, 0, 0, null, null, false);
+     }
 
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout) {
-        return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null);
-    }
+     boolean connect(Consumer<MqttMessage> anyMessageHandler) {
+         return connect(false, 0, 0, anyMessageHandler, null, false);
+     }
 
-    boolean connectECC() {
-        return connectWithKeyType(false, 0, 0, null, AUTH_KEY_TYPE.ECC);
-    }
+     boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler) {
+         return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, anyMessageHandler, null, false);
+     }
 
-    boolean connectDirect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
-    {
-        MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
-            @Override
-            public void onConnectionResumed(boolean sessionPresent) {
-                System.out.println("Connection resumed");
-            }
+     boolean connectECC() {
+         return connectWithKeyType(false, 0, 0, null, AUTH_KEY_TYPE.ECC, null, false);
+     }
 
-            @Override
-            public void onConnectionInterrupted(int errorCode) {
-                if (!disconnecting) {
-                    System.out.println(
-                            "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
-                }
-            }
+     boolean connectPortOverride(Integer portOverride, boolean doNotFailOnNoConnect) {
+         return connect(false, 0, 0, null, portOverride, doNotFailOnNoConnect);
+     }
 
-            @Override
-            public void onConnectionFailure(OnConnectionFailureReturn data) {
-                System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
-            }
+     boolean connectDirect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, Integer overridePort, boolean doNotFailOnNoConnect)
+     {
+         MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+             @Override
+             public void onConnectionResumed(boolean sessionPresent) {
+                 System.out.println("Connection resumed");
+             }
 
-            @Override
-            public void onConnectionSuccess(OnConnectionSuccessReturn data) {
-                System.out.println("Connection success. Session present: " + data.getSessionPresent());
-            }
+             @Override
+             public void onConnectionInterrupted(int errorCode) {
+                 if (!disconnecting) {
+                     System.out.println(
+                             "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                 }
+             }
 
-            @Override
-            public void onConnectionClosed(OnConnectionClosedReturn data) {
-                System.out.println("Connection disconnected successfully");
-            }
-        };
+             @Override
+             public void onConnectionFailure(OnConnectionFailureReturn data) {
+                 System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                 onConnectionFailureFuture.complete(data);
+             }
 
-        try(EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(certificatePem, privateKeyPem);) {
+             @Override
+             public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                 System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                 onConnectionSuccessFuture.complete(data);
+             }
 
-            int port = TEST_PORT;
-            if (caRoot != null) {
-                tlsOptions.overrideDefaultTrustStore(caRoot);
-            }
-            if (TlsContextOptions.isAlpnSupported()) {
-                tlsOptions.withAlpnList("x-amzn-mqtt-ca");
-                port = TEST_PORT_ALPN;
-            }
+             @Override
+             public void onConnectionClosed(OnConnectionClosedReturn data) {
+                 System.out.println("Connection disconnected successfully");
+                 onConnectionClosedFuture.complete(data);
+             }
+         };
 
-            cleanSession = true; // only true is supported right now
-            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-            try (TlsContext tls = new TlsContext(tlsOptions);
-                 MqttClient client = new MqttClient(bootstrap, tls);
-                 MqttConnectionConfig config = new MqttConnectionConfig()) {
+         try(EventLoopGroup elg = new EventLoopGroup(1);
+             HostResolver hr = new HostResolver(elg);
+             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(certificatePem, privateKeyPem);) {
 
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(iotEndpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-                config.setConnectionCallbacks(events);
+             int port = TEST_PORT;
+             if (caRoot != null) {
+                 tlsOptions.overrideDefaultTrustStore(caRoot);
+             }
+             if (TlsContextOptions.isAlpnSupported()) {
+                 tlsOptions.withAlpnList("x-amzn-mqtt-ca");
+                 port = TEST_PORT_ALPN;
+             }
 
-                if (connectionConfigTransformer != null) {
-                    connectionConfigTransformer.accept(config);
-                }
+             if (overridePort != null) {
+                 port = overridePort;
+             }
 
-                connection = new MqttClientConnection(config);
-                if (anyMessageHandler != null) {
-                    connection.onMessage(anyMessageHandler);
-                }
+             cleanSession = true; // only true is supported right now
+             String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
+             try (TlsContext tls = new TlsContext(tlsOptions);
+                  MqttClient client = new MqttClient(bootstrap, tls);
+                  MqttConnectionConfig config = new MqttConnectionConfig()) {
 
-                CompletableFuture<Boolean> connected = connection.connect();
-                connected.get();
-                return true;
-            }
-        } catch (Exception ex) {
-            fail("Exception during connect: " + ex.toString());
-        }
-        return false;
-    }
+                 config.setMqttClient(client);
+                 config.setClientId(clientId);
+                 config.setEndpoint(iotEndpoint);
+                 config.setPort(port);
+                 config.setCleanSession(cleanSession);
+                 config.setKeepAliveSecs(keepAliveSecs);
+                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+                 config.setConnectionCallbacks(events);
 
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
-    {
-        Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
-        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
-    }
+                 if (connectionConfigTransformer != null) {
+                     connectionConfigTransformer.accept(config);
+                 }
 
-    boolean connectWithKeyType(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type) {
-        Assume.assumeTrue(findCredentials(type));
-        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
-    }
+                 connection = new MqttClientConnection(config);
+                 if (anyMessageHandler != null) {
+                     connection.onMessage(anyMessageHandler);
+                 }
 
-    void disconnect() {
-        disconnecting = true;
-        try {
-            CompletableFuture<Void> disconnected = connection.disconnect();
-            disconnected.get();
-        } catch (Exception ex) {
-            fail("Exception during disconnect: " + ex.getMessage());
-        }
+                 CompletableFuture<Boolean> connected = connection.connect();
+                 connected.get();
+                 return true;
+             }
+         } catch (Exception ex) {
+             if (doNotFailOnNoConnect == false) {
+                 fail("Exception during connect: " + ex.toString());
+             } else {
+                 System.out.println("Failed to connect, but not required to pass connection for test...");
+             }
+         }
+         return false;
+     }
 
-    }
+     boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, Integer portOverride, boolean doNotFailOnNoConnect)
+     {
+         Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
+         return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler, portOverride, doNotFailOnNoConnect);
+     }
 
-    void close() {
-        connection.close();
-    }
+     boolean connectWithKeyType(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type, Integer portOverride, boolean doNotFailOnNoConnect) {
+         Assume.assumeTrue(findCredentials(type));
+         return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler, portOverride, doNotFailOnNoConnect);
+     }
 
-    CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {
-        try {
-            MqttMessage messageToSend = new MqttMessage(topic, payload, qos);
-            return connection.publish(messageToSend);
-        } catch (Exception ex) {
-            fail("Exception during publish: " + ex.getMessage());
-        }
-        return null;
-    }
+     void disconnect() {
+         disconnecting = true;
+         try {
+             CompletableFuture<Void> disconnected = connection.disconnect();
+             disconnected.get();
+         } catch (Exception ex) {
+             fail("Exception during disconnect: " + ex.getMessage());
+         }
 
-    void checkOperationStatistics(
-        long expectedIncompleteOperationCount, long expectedIncompleteOperationSize,
-        long expectedUnackedOperationCount, long expectedUnackedOperationSize, boolean equalExact) {
-        try {
-            MqttClientConnectionOperationStatistics statistics = connection.getOperationStatistics();
+     }
 
-            long incomplete_ops_count = statistics.getIncompleteOperationCount();
-            long incomplete_ops_size = statistics.getIncompleteOperationSize();
-            long unacked_ops_count = statistics.getUnackedOperationCount();
-            long unacked_ops_size = statistics.getUnackedOperationSize();
+     void close() {
+         connection.close();
+     }
 
-            if (equalExact == true) {
-                if (incomplete_ops_count != expectedIncompleteOperationCount) {
-                    fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
-                }
-                if (incomplete_ops_size != expectedIncompleteOperationSize) {
-                    fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
-                }
-                if (unacked_ops_count != expectedUnackedOperationCount) {
-                    fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
-                }
-                if (unacked_ops_size != expectedUnackedOperationSize) {
-                    fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
-                }
-            }
-            else {
-                if (incomplete_ops_count > expectedIncompleteOperationCount) {
-                    fail("Incomplete operations count:" + incomplete_ops_count + " did not <= expected value:" + expectedIncompleteOperationCount);
-                }
-                if (incomplete_ops_size > expectedIncompleteOperationSize) {
-                    fail("Incomplete operations size:" + incomplete_ops_size + " did not <= expected value:" + expectedIncompleteOperationSize);
-                }
-                if (unacked_ops_count > expectedUnackedOperationCount) {
-                    fail("Unacked operations count:" + unacked_ops_count + " did not <= expected value:" + expectedUnackedOperationCount);
-                }
-                if (unacked_ops_size > expectedUnackedOperationSize) {
-                    fail("Unacked operations size:" + unacked_ops_size + " did not <= expected value:" + expectedUnackedOperationSize);
-                }
-            }
+     OnConnectionSuccessReturn waitForConnectSuccess() throws Exception {
+         return onConnectionSuccessFuture.get(TIMEOUT_TIME, TimeUnit.SECONDS);
+     }
 
-        } catch (Exception ex) {
-            fail("Exception during operation statistics check: " + ex.getMessage());
-        }
-    }
+     OnConnectionFailureReturn waitForConnectFailure() throws Exception {
+         return onConnectionFailureFuture.get(TIMEOUT_TIME, TimeUnit.SECONDS);
+     }
 
-    void sleepForMilliseconds(long secondsToSleep) {
-        try {
-            Thread.sleep(secondsToSleep);
-        } catch (Exception ex) {
-            fail("Exception during sleep: " + ex.getMessage());
-        }
-    }
-}
+     OnConnectionClosedReturn waitForConnectClose() throws Exception {
+         return onConnectionClosedFuture.get(TIMEOUT_TIME, TimeUnit.SECONDS);
+     }
+
+     CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {
+         try {
+             MqttMessage messageToSend = new MqttMessage(topic, payload, qos);
+             return connection.publish(messageToSend);
+         } catch (Exception ex) {
+             fail("Exception during publish: " + ex.getMessage());
+         }
+         return null;
+     }
+
+     void checkOperationStatistics(
+         long expectedIncompleteOperationCount, long expectedIncompleteOperationSize,
+         long expectedUnackedOperationCount, long expectedUnackedOperationSize, boolean equalExact) {
+         try {
+             MqttClientConnectionOperationStatistics statistics = connection.getOperationStatistics();
+
+             long incomplete_ops_count = statistics.getIncompleteOperationCount();
+             long incomplete_ops_size = statistics.getIncompleteOperationSize();
+             long unacked_ops_count = statistics.getUnackedOperationCount();
+             long unacked_ops_size = statistics.getUnackedOperationSize();
+
+             if (equalExact == true) {
+                 if (incomplete_ops_count != expectedIncompleteOperationCount) {
+                     fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
+                 }
+                 if (incomplete_ops_size != expectedIncompleteOperationSize) {
+                     fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
+                 }
+                 if (unacked_ops_count != expectedUnackedOperationCount) {
+                     fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
+                 }
+                 if (unacked_ops_size != expectedUnackedOperationSize) {
+                     fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
+                 }
+             }
+             else {
+                 if (incomplete_ops_count > expectedIncompleteOperationCount) {
+                     fail("Incomplete operations count:" + incomplete_ops_count + " did not <= expected value:" + expectedIncompleteOperationCount);
+                 }
+                 if (incomplete_ops_size > expectedIncompleteOperationSize) {
+                     fail("Incomplete operations size:" + incomplete_ops_size + " did not <= expected value:" + expectedIncompleteOperationSize);
+                 }
+                 if (unacked_ops_count > expectedUnackedOperationCount) {
+                     fail("Unacked operations count:" + unacked_ops_count + " did not <= expected value:" + expectedUnackedOperationCount);
+                 }
+                 if (unacked_ops_size > expectedUnackedOperationSize) {
+                     fail("Unacked operations size:" + unacked_ops_size + " did not <= expected value:" + expectedUnackedOperationSize);
+                 }
+             }
+
+         } catch (Exception ex) {
+             fail("Exception during operation statistics check: " + ex.getMessage());
+         }
+     }
+
+     void sleepForMilliseconds(long secondsToSleep) {
+         try {
+             Thread.sleep(secondsToSleep);
+         } catch (Exception ex) {
+             fail("Exception during sleep: " + ex.getMessage());
+         }
+     }
+ }

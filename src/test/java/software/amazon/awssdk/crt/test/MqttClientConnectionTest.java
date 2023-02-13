@@ -3,94 +3,136 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-package software.amazon.awssdk.crt.test;
+ package software.amazon.awssdk.crt.test;
 
-import static org.junit.Assert.fail;
+ import static org.junit.Assert.assertTrue;
+ import static org.junit.Assert.fail;
 
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+ import java.util.UUID;
+ import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-import software.amazon.awssdk.crt.mqtt.QualityOfService;
+ import org.junit.Test;
+ import software.amazon.awssdk.crt.mqtt.*;
 
+ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
+     public MqttClientConnectionTest() {
+     }
 
-public class MqttClientConnectionTest extends MqttClientConnectionFixture {
-    public MqttClientConnectionTest() {
-    }
+     @Test
+     public void testConnectDisconnect() {
+         skipIfNetworkUnavailable();
+         connect();
+         disconnect();
+         close();
+     }
 
-    @Test
-    public void testConnectDisconnect() {
-        skipIfNetworkUnavailable();
-        connect();
-        disconnect();
-        close();
-    }
+     @Test
+     public void testConnectPublishWaitStatisticsDisconnect() {
+         skipIfNetworkUnavailable();
+         connect();
+         try {
+             publish("test/topic/" + (UUID.randomUUID()).toString(), "hello_world".getBytes(), QualityOfService.AT_LEAST_ONCE).get(60, TimeUnit.SECONDS);
+         } catch (Exception ex) {
+             fail("Exception ocurred during publish: " + ex.getMessage());
+         }
 
-    @Test
-    public void testConnectPublishWaitStatisticsDisconnect() {
-        skipIfNetworkUnavailable();
-        connect();
-        try {
-            publish("test/topic/" + (UUID.randomUUID()).toString(), "hello_world".getBytes(), QualityOfService.AT_LEAST_ONCE).get(60, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            fail("Exception ocurred during publish: " + ex.getMessage());
-        }
+         // Wait just a little bit of time (1/2 second)
+         try {
+             Thread.sleep(500);
+         } catch (Exception ex) {
+             fail("Exception ocurred trying to sleep for 1/2 second");
+         }
 
-        // Wait just a little bit of time (1/2 second)
-        try {
-            Thread.sleep(500);
-        } catch (Exception ex) {
-            fail("Exception ocurred trying to sleep for 1/2 second");
-        }
+         checkOperationStatistics(0, 0, 0, 0, true);
+         disconnect();
+         close();
+     }
 
-        checkOperationStatistics(0, 0, 0, 0, true);
-        disconnect();
-        close();
-    }
+     @Test
+     public void testConnectPublishStatisticsWaitDisconnect() {
+         skipIfNetworkUnavailable();
 
-    @Test
-    public void testConnectPublishStatisticsWaitDisconnect() {
-        skipIfNetworkUnavailable();
+         connect();
 
-        connect();
+         String topic = "test/topic/" + (UUID.randomUUID()).toString();
+         byte[] payload = "Hello_World".getBytes();
+         CompletableFuture<Integer> puback = null;
+         // Per packet: (The size of the topic, the size of the payload, 2 for the header and 2 for the packet ID)
+         Long expectedSize = new Long(topic.length() + payload.length + 4);
 
-        String topic = "test/topic/" + (UUID.randomUUID()).toString();
-        byte[] payload = "Hello_World".getBytes();
-        CompletableFuture<Integer> puback = null;
-        // Per packet: (The size of the topic, the size of the payload, 2 for the header and 2 for the packet ID)
-        Long expectedSize = new Long(topic.length() + payload.length + 4);
+         puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
+         // Make sure there is at least one operation and the size is correct (there is a bit of a race here at times, so we just do a <= check)
+         checkOperationStatistics(1, expectedSize, 1, expectedSize, false);
 
-        puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
-        // Make sure there is at least one operation and the size is correct (there is a bit of a race here at times, so we just do a <= check)
-        checkOperationStatistics(1, expectedSize, 1, expectedSize, false);
+         // Publish
+         try {
+             puback.get(60, TimeUnit.SECONDS);
+         } catch (Exception ex) {
+             fail("Exception ocurred during publish: " + ex.getMessage());
+         }
 
-        // Publish
-        try {
-            puback.get(60, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            fail("Exception ocurred during publish: " + ex.getMessage());
-        }
+         // Wait just a little bit of time (1/2 second)
+         try {
+             Thread.sleep(500);
+         } catch (Exception ex) {
+             fail("Exception ocurred trying to sleep for 1/2 seconds");
+         }
+         // Make sure it is empty
+         checkOperationStatistics(0, 0, 0, 0, true);
+         disconnect();
+         close();
+     }
+     // NOTE: In the future, we will want to test offline publishes, but right now the test fixtures forces a clean session
+     // and making publishes while a clean session is set causes an error.
 
-        // Wait just a little bit of time (1/2 second)
-        try {
-            Thread.sleep(500);
-        } catch (Exception ex) {
-            fail("Exception ocurred trying to sleep for 1/2 seconds");
-        }
-        // Make sure it is empty
-        checkOperationStatistics(0, 0, 0, 0, true);
-        disconnect();
-        close();
-    }
-    // NOTE: In the future, we will want to test offline publishes, but right now the test fixtures forces a clean session
-    // and making publishes while a clean session is set causes an error.
+     @Test
+     public void testECCKeyConnectDisconnect() {
+         skipIfNetworkUnavailable();
+         connectECC();
+         disconnect();
+         close();
+     }
 
-    @Test
-    public void testECCKeyConnectDisconnect() {
-        skipIfNetworkUnavailable();
-        connectECC();
-        disconnect();
-        close();
-    }
-};
+     @Test
+     public void testConnectDisconnectEventsHappy() {
+         skipIfNetworkUnavailable();
+         connect();
+
+         try {
+             OnConnectionSuccessReturn result = waitForConnectSuccess();
+             assertTrue("Connection success callback was empty", result != null);
+             assertTrue("Session present was NOT false", result.getSessionPresent() == false);
+         } catch (Exception ex) {
+             fail(ex.toString());
+         }
+
+         disconnect();
+
+         try {
+             OnConnectionClosedReturn result = waitForConnectClose();
+             assertTrue("Connection close callback was empty", result != null);
+         } catch (Exception ex) {
+             fail(ex.toString());
+         }
+
+         close();
+     }
+
+     @Test
+     public void testConnectDisconnectEventsUnhappy() {
+         skipIfNetworkUnavailable();
+
+         connectPortOverride(123, true);
+
+         try {
+             OnConnectionFailureReturn result = waitForConnectFailure();
+             assertTrue("Connection error callback was empty", result != null);
+             assertTrue("Error code was success when it should not be", result.getErrorCode() != 0);
+         } catch (Exception ex) {
+             fail(ex.toString());
+         }
+
+         close();
+     }
+ };

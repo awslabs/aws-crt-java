@@ -389,7 +389,7 @@ static bool s_aws_mqtt5_listener_java_publish_received(
 
     if (java_listener->jni_listener_publish_events) {
         // jni_listener_publish_events returns a jboolean, cast it to bool
-        callback_result = (bool)((*env)->CallObjectMethod(
+        callback_result = (bool)((*env)->CallBooleanMethod(
             env,
             java_listener->jni_listener_publish_events,
             mqtt5_publish_events_properties.publish_events_publish_received_id,

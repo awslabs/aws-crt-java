@@ -498,8 +498,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
     callback_set.listener_publish_received_handler = &s_aws_mqtt5_listener_java_publish_received;
     callback_set.listener_publish_received_handler_user_data = (void *)java_listener;
 
-    jobject jni_listener_publish_events =
-        (*env)->GetObjectField(env, jni_listener_options, mqtt5_listener_options_properties.listener_publish_events_field_id);
+    jobject jni_listener_publish_events = (*env)->GetObjectField(
+        env, jni_listener_options, mqtt5_listener_options_properties.listener_publish_events_field_id);
     if (aws_jni_check_and_clear_exception(env)) {
         s_aws_mqtt5_listener_log_and_throw_exception(
             env, "MQTT5 listener new: error getting publish events", AWS_ERROR_INVALID_STATE);

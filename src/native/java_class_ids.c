@@ -2089,12 +2089,12 @@ static void s_cache_mqtt5_listener_options(JNIEnv *env) {
     mqtt5_listener_options_properties.listener_options_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_listener_options_properties.listener_options_class);
     // Functions
-    mqtt5_listener_options_properties.publish_events_field_id = (*env)->GetFieldID(
+    mqtt5_listener_options_properties.listener_publish_events_field_id = (*env)->GetFieldID(
         env,
         mqtt5_listener_options_properties.listener_options_class,
-        "publishEvents",
+        "listenerPublishEvents",
         "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ListenerOptions$ListenerPublishEvents;");
-    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.publish_events_field_id);
+    AWS_FATAL_ASSERT(mqtt5_listener_options_properties.listener_publish_events_field_id);
     mqtt5_listener_options_properties.lifecycle_events_field_id = (*env)->GetFieldID(
         env,
         mqtt5_listener_options_properties.listener_options_class,

@@ -16,7 +16,7 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
 public class Mqtt5ListenerOptions {
 
     private LifecycleEvents lifecycleEvents;
-    private ListenerPublishEvents publishEvents;
+    private ListenerPublishEvents listenerPublishEvents;
 
     /**
      * Returns the LifecycleEvents interface that will be called when the client gets a LifecycleEvent.
@@ -32,8 +32,8 @@ public class Mqtt5ListenerOptions {
      *
      * @return PublishEvents interface that will be called when the client gets a message.
      */
-    public ListenerPublishEvents getPublishEvents() {
-        return this.publishEvents;
+    public ListenerPublishEvents getListenerPublishEvents() {
+        return this.listenerPublishEvents;
     }
 
     /*******************************************************************************

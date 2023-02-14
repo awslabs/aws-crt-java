@@ -24,7 +24,7 @@ public class Mqtt5Listener extends CrtResource {
      * Creates a Mqtt5Listener instance using the provided Mqtt5ListenerOptions. Once the Mqtt5Listener is created,
      * changing the settings will not cause a change in already created Mqtt5Listener's.
      *
-     * @param options The Mqtt5Options class to use to configure the new Mqtt5Listener.
+     * @param options The Mqtt5ListenerOptions class to use to configure the new Mqtt5Listener.
      * @param client The Mqtt5Client class the mqtt5 listener listen to
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT5 client structure
      */

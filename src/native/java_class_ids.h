@@ -874,7 +874,7 @@ extern struct java_aws_mqtt5_on_disconnection_return_properties mqtt5_on_disconn
 struct java_aws_mqtt5_listener_options_properties {
     jclass listener_options_class;
 
-    jfieldID publish_events_field_id;
+    jfieldID listener_publish_events_field_id;
     jfieldID lifecycle_events_field_id;
 };
 extern struct java_aws_mqtt5_listener_options_properties mqtt5_listener_options_properties;

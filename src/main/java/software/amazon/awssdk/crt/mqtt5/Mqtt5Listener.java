@@ -19,6 +19,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
  */
 public class Mqtt5Listener extends CrtResource {
+    private Mqtt5Client clientReference = null;
 
     /**
      * Creates a Mqtt5Listener instance using the provided Mqtt5ListenerOptions. Once the Mqtt5Listener is created,
@@ -30,11 +31,14 @@ public class Mqtt5Listener extends CrtResource {
      */
     public Mqtt5Listener(Mqtt5ListenerOptions options, Mqtt5Client client) throws CrtRuntimeException {
 
+        clientReference = client;
         acquireNativeHandle(mqtt5ListenerNew(
             options,
             client,
             this
         ));
+        // addRefrenceTo client after the native handler get acquired
+        addReferenceTo(client);
     }
 
     /**
@@ -44,6 +48,7 @@ public class Mqtt5Listener extends CrtResource {
     protected void releaseNativeHandle() {
         if (!isNull()) {
             mqtt5ListenerDestroy(getNativeHandle());
+            removeReferenceTo(clientReference);
         }
     }
 

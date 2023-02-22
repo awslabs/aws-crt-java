@@ -49,8 +49,8 @@ struct aws_mqtt5_listener_java_jni {
  ******************************************************************************/
 
 static void s_aws_mqtt5_listener_log_and_throw_exception(JNIEnv *env, const char *message, int error_code) {
-    AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "%s - error code: %i", message, error_code);
-    aws_jni_throw_runtime_exception(env, "%s - error code: %i", message, error_code);
+    AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "listener %s - error code: %i", message, error_code);
+    aws_jni_throw_runtime_exception(env, "listener %s - error code: %i", message, error_code);
 }
 
 /*******************************************************************************
@@ -99,7 +99,14 @@ static void s_aws_mqtt5_listener_java_lifecycle_event(const struct aws_mqtt5_cli
 
     struct aws_mqtt5_listener_java_jni *java_listener = (struct aws_mqtt5_listener_java_jni *)event->user_data;
     if (!java_listener) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "LifecycleEvent: invalid client");
+        AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "LifecycleEvent: invalid listener");
+        return;
+    }
+
+    jobject jni_lifecycle_events = java_listener->jni_lifecycle_events;
+    if (!jni_lifecycle_events) {
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "LifecycleEvent: no lifecycle events found!", AWS_ERROR_INVALID_STATE);
         return;
     }
 
@@ -184,13 +191,6 @@ static void s_aws_mqtt5_listener_java_lifecycle_event(const struct aws_mqtt5_cli
     jobject negotiated_settings_data = NULL;
     if (event->settings != NULL) {
         negotiated_settings_data = s_aws_mqtt5_client_create_jni_negotiated_settings_from_native(env, event->settings);
-    }
-
-    jobject jni_lifecycle_events = java_listener->jni_lifecycle_events;
-    if (!jni_lifecycle_events) {
-        s_aws_mqtt5_listener_log_and_throw_exception(
-            env, "LifecycleEvent: no lifecycle events found!", AWS_ERROR_INVALID_STATE);
-        goto clean_up;
     }
 
     jobject java_lifecycle_return_data;
@@ -320,6 +320,10 @@ static bool s_aws_mqtt5_listener_java_publish_received(
         return false;
     }
 
+    if (java_listener->jni_listener_publish_events == NULL) {
+        return false;
+    }
+
     if (!publish) {
         AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "publishReceived function: invalid publish packet");
         return false;
@@ -387,17 +391,15 @@ static bool s_aws_mqtt5_listener_java_publish_received(
         publish_packet_data);
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-    if (java_listener->jni_listener_publish_events) {
-        // jni_listener_publish_events returns a jboolean, cast it to bool
-        callback_result = (bool)((*env)->CallBooleanMethod(
-            env,
-            java_listener->jni_listener_publish_events,
-            mqtt5_publish_events_properties.publish_events_publish_received_id,
-            java_listener->jni_mqtt5_client,
-            publish_packet_return_data));
-        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
-    }
-    goto clean_up;
+
+    // jni_listener_publish_events returns a jboolean, cast it to bool
+    callback_result = (bool)((*env)->CallBooleanMethod(
+        env,
+        java_listener->jni_listener_publish_events,
+        mqtt5_publish_events_properties.publish_events_publish_received_id,
+        java_listener->jni_mqtt5_client,
+        publish_packet_return_data));
+    aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
 clean_up:
 
@@ -544,14 +546,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
 
     /* Make the MQTT5 listener */
     java_listener->listener = aws_mqtt5_listener_new(allocator, &listener_options);
-    /* Did we successfully make a client? If not, then throw an exception */
+    /* Did we successfully make a listener? If not, then throw an exception */
     if (java_listener->listener == NULL) {
         s_aws_mqtt5_listener_log_and_throw_exception(
             env,
             "MQTT5 listener new: Was unable to create client due to option configuration! Enable error logging to see "
             "reason",
             AWS_ERROR_MQTT5_CLIENT_OPTIONS_VALIDATION);
-        // TODO : ADD MQTT5 LISTENER ERRORS
         goto clean_up;
     }
 
@@ -581,7 +582,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt5
         return;
     }
 
-    // If the client is NOT null it can be shut down normally
+    // If the listener is NOT null it can be shut down normally
     struct aws_allocator *allocator = aws_jni_get_allocator();
     if (java_listener->listener) {
         aws_mqtt5_listener_release(java_listener->listener);

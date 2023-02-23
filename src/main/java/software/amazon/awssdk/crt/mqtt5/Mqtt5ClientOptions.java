@@ -336,7 +336,9 @@ public class Mqtt5ClientOptions {
      */
     public interface PublishEvents {
         /**
-         * Called when an MQTT PUBLISH packet is received by the client
+         * Called when an MQTT PUBLISH packet is received by the client. If the PublishReturn has been already handled by
+         * a service client, then the callback will not get invoked.
+         * Checkout Mqtt5ListenerOptions.ListenerPublishEvents for more details.
          *
          * @param client The client that has received the message
          * @param publishReturn All of the data that was received from the server

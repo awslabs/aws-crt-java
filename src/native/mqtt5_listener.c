@@ -391,7 +391,6 @@ static bool s_aws_mqtt5_listener_java_publish_received(
         publish_packet_data);
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-
     // jni_listener_publish_events returns a jboolean, cast it to bool
     callback_result = (bool)((*env)->CallBooleanMethod(
         env,

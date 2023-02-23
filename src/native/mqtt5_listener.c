@@ -103,19 +103,19 @@ static void s_aws_mqtt5_listener_java_lifecycle_event(const struct aws_mqtt5_cli
         return;
     }
 
-    jobject jni_lifecycle_events = java_listener->jni_lifecycle_events;
-    if (!jni_lifecycle_events) {
-        s_aws_mqtt5_listener_log_and_throw_exception(
-            env, "LifecycleEvent: no lifecycle events found!", AWS_ERROR_INVALID_STATE);
-        return;
-    }
-
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = java_listener->jvm;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "LifecycleEvent: could not get env");
+        return;
+    }
+
+    jobject jni_lifecycle_events = java_listener->jni_lifecycle_events;
+    if (!jni_lifecycle_events) {
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "LifecycleEvent: no lifecycle events found!", AWS_ERROR_INVALID_STATE);
         return;
     }
 

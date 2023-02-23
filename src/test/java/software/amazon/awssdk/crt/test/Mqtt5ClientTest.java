@@ -3203,4 +3203,26 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             fail(ex.getMessage());
         }
     }
+
+    /**
+     * ============================================================
+     * Mqtt5ListenerTests Tests
+     * ============================================================
+     */
+
+     @Test
+     public void LNew_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+            assertNotNull(client);
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder Listenerbuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            Mqtt5Listener listener = new Mqtt5Listener(Listenerbuilder.build(), client);
+            assertNotNull(listener);
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 }

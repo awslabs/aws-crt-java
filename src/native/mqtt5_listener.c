@@ -459,12 +459,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
     struct aws_mqtt5_listener_config listener_options;
     AWS_ZERO_STRUCT(listener_options);
 
-    if(jni_listener_options == NULL)
-    {
+    if (jni_listener_options == NULL) {
         s_aws_mqtt5_listener_log_and_throw_exception(
-            env,
-            "MQTT5 listener new: Invalid Mqtt5 Listener Options",
-            AWS_ERROR_INVALID_ARGUMENT);
+            env, "MQTT5 listener new: Invalid Mqtt5 Listener Options", AWS_ERROR_INVALID_ARGUMENT);
         return (jlong)NULL;
     }
 

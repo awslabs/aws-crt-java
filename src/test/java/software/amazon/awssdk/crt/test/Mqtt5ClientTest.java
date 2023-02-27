@@ -24,6 +24,7 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ExtendedValidationAnd
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.PublishEvents;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ListenerOptions.ListenerPublishEvents;
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectPacketBuilder;
@@ -202,6 +203,30 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
             publishPacket = result.getPublishPacket();
             publishReceivedFuture.complete(null);
+        }
+    }
+
+    static final class ListenerPublishEvents_Futured implements ListenerPublishEvents {
+        CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
+        PublishPacket publishPacket = null;
+        String listenerTopic = "";
+        public ListenerPublishEvents_Futured(String topic)
+        {
+            super();
+            listenerTopic = topic;
+        }
+
+        @Override
+        public boolean onMessageReceived(Mqtt5Client client, PublishReturn result) {
+            publishPacket = result.getPublishPacket();
+            /* If we dont set the listener topic, always ignore the message. */
+            if(listenerTopic.isEmpty()) return false;
+            if(listenerTopic.equals(publishPacket.getTopic()))
+            {
+                publishReceivedFuture.complete(null);
+                return true;
+            }
+            else return false;
         }
     }
 
@@ -3210,17 +3235,77 @@ public class Mqtt5ClientTest extends CrtTestFixture {
      * ============================================================
      */
 
-     @Test
-     public void LNew_UC1() {
+    /* [LNew_UC1] Happy Path. Mqtt5Listener Minimal setup and cleanup */
+    @Test
+    public void LNew_UC1() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             Mqtt5Client client = new Mqtt5Client(builder.build());
             assertNotNull(client);
-            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder Listenerbuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
-            Mqtt5Listener listener = new Mqtt5Listener(Listenerbuilder.build(), client);
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            assertNotNull(listenerBuilder);
+            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), client);
             assertNotNull(listener);
+            listener.close();
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* [LNEW-UC2] Happy Path. Full setup and cleanup */
+    @Test
+    public void LNew_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+            assertNotNull(client);
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            assertNotNull(listenerBuilder);
+            listenerBuilder.withLifecycleEvents(new LifecycleEvents_Futured());
+            listenerBuilder.withListenerPublishEvents(new ListenerPublishEvents_Futured(""));
+            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), client);
+            assertNotNull(listener);
+            listener.close();
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* [LNEW-UC3] Invalid Mqtt5ListenerOption */
+    @Test
+    public void LNew_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+            assertNotNull(client);
+            Mqtt5Listener listener = new Mqtt5Listener(null, client);
+            assertNotNull(listener);
+            listener.close();
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* [LNEW-UC4] Invalid Mqtt5Client */
+    @Test
+    public void LNew_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        try {
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            assertNotNull(listenerBuilder);
+            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), null);
+            assertNotNull(listener);
+            listener.close();
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

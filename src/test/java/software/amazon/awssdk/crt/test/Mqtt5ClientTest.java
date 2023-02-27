@@ -24,6 +24,7 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ExtendedValidationAnd
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.PublishEvents;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ListenerOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ListenerOptions.ListenerPublishEvents;
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
@@ -206,30 +207,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
-    static final class ListenerPublishEvents_Futured implements ListenerPublishEvents {
-        CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
-        PublishPacket publishPacket = null;
-        String listenerTopic = "";
-        public ListenerPublishEvents_Futured(String topic)
-        {
-            super();
-            listenerTopic = topic;
-        }
-
-        @Override
-        public boolean onMessageReceived(Mqtt5Client client, PublishReturn result) {
-            publishPacket = result.getPublishPacket();
-            /* If we dont set the listener topic, always ignore the message. */
-            if(listenerTopic.isEmpty()) return false;
-            if(listenerTopic.equals(publishPacket.getTopic()))
-            {
-                publishReceivedFuture.complete(null);
-                return true;
-            }
-            else return false;
-        }
-    }
-
     static final class PublishEvents_Futured_Counted implements PublishEvents {
         CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
         int currentPublishCount = 0;
@@ -249,6 +226,37 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
             publishPacketsRecieved.add(result.getPublishPacket());
+        }
+    }
+
+
+    static final class ListenerPublishEvents_Futured_Counted implements ListenerPublishEvents {
+        CompletableFuture<Void> PublishProceedFuture = new CompletableFuture<>();
+        CompletableFuture<Void> PublishSkippedFuture = new CompletableFuture<>();
+        PublishPacket publishPacket = null;
+        String listenerTopic = "";
+        int proceedPublishCount = 0;
+        int skippedPublishCount = 0;
+
+        public ListenerPublishEvents_Futured_Counted(String topic)
+        {
+            super();
+            listenerTopic = topic;
+        }
+
+        @Override
+        public boolean onMessageReceived(Mqtt5Client client, PublishReturn result) {
+            publishPacket = result.getPublishPacket();
+            /* If we dont set the listener topic, always proceed the message. */
+            if(listenerTopic.isEmpty() || listenerTopic.equals(publishPacket.getTopic()))
+            {
+                ++proceedPublishCount;
+                PublishProceedFuture.complete(null);
+                return true;
+            }
+            ++skippedPublishCount;
+            PublishSkippedFuture.complete(null);
+            return false;
         }
     }
 
@@ -3267,7 +3275,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
             assertNotNull(listenerBuilder);
             listenerBuilder.withLifecycleEvents(new LifecycleEvents_Futured());
-            listenerBuilder.withListenerPublishEvents(new ListenerPublishEvents_Futured(""));
+            listenerBuilder.withListenerPublishEvents(new ListenerPublishEvents_Futured_Counted(""));
             Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), client);
             assertNotNull(listener);
             listener.close();
@@ -3284,12 +3292,18 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(checkMinimumDirectHostAndPort());
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
-            Mqtt5Client client = new Mqtt5Client(builder.build());
-            assertNotNull(client);
-            Mqtt5Listener listener = new Mqtt5Listener(null, client);
-            assertNotNull(listener);
-            listener.close();
-            client.close();
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                try(Mqtt5Listener listener = new Mqtt5Listener(null, client)){}
+                catch (CrtRuntimeException ex) {
+                    System.out.println("EXCEPTION: " + ex);
+                    System.out.println(ex.getMessage() + " \n");
+                    if ( ex.errorCode == 34) {
+                        System.out.println("Error code was AWS_ERROR_INVALID_ARGUMENT like expected!");
+                    } else {
+                        fail(ex.getMessage());
+                    }
+                }
+            }
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -3303,9 +3317,348 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         try {
             Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
             assertNotNull(listenerBuilder);
-            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), null);
+            try
+            {
+                Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), null);
+            }
+            catch (CrtRuntimeException ex) {
+                System.out.println("EXCEPTION: " + ex);
+                System.out.println(ex.getMessage() + " \n");
+                if ( ex.errorCode == 34) {
+                    System.out.println("Error code was AWS_ERROR_INVALID_ARGUMENT like expected!");
+                } else {
+                    fail(ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Listener Functionality Test [LFT-UC]
+     * Tests test ensure that the operations of mqtt5Listener can perform work correctly
+     */
+
+    /* [LFT-UC1] LifecycleEvent Callback Test */
+    @Test
+    public void LFT_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events1 = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events1);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+            assertNotNull(client);
+
+            // Create Mqtt5 Listener
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            LifecycleEvents_Futured events2 = new LifecycleEvents_Futured();
+            listenerBuilder.withLifecycleEvents(events2);
+            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), client);
             assertNotNull(listener);
+
+
+            client.start();
+            events2.connectedFuture.get(180, TimeUnit.SECONDS);
+            events1.connectedFuture.get(180, TimeUnit.SECONDS);
+
+            client.stop(new DisconnectPacketBuilder().build());
+
+            events2.stopFuture.get(180, TimeUnit.SECONDS);
+            events1.stopFuture.get(180, TimeUnit.SECONDS);
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
             listener.close();
+            client.close();
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* [LFT-UC2] Remove Mqtt5Listener for LifecycleEvent */
+    @Test
+    public void LFT_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured events1 = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events1);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                builder.withTlsContext(tlsContext);
+            }
+
+            Mqtt5Client client = new Mqtt5Client(builder.build());
+            assertNotNull(client);
+
+            // Create Mqtt5 Listener
+            Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+            LifecycleEvents_Futured events2 = new LifecycleEvents_Futured();
+            listenerBuilder.withLifecycleEvents(events2);
+            Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), client);
+            assertNotNull(listener);
+
+
+            client.start();
+            events2.connectedFuture.get(180, TimeUnit.SECONDS);
+            events1.connectedFuture.get(180, TimeUnit.SECONDS);
+
+            listener.close();
+            client.stop(new DisconnectPacketBuilder().build());
+
+            try {
+                events2.stopFuture.get(180, TimeUnit.SECONDS);
+                fail("Error: The Listener should no longer invoke to the LifeCycleEvent as it is terminated.");
+            } catch (java.util.concurrent.TimeoutException timeout) {
+                // As the listener is removed, the stopFuture should never complete
+                System.out.println("As the Mqtt5Listener get removed, the LifeCycleEvent callback for Listener is timed out as expected.");
+            }
+            catch (Exception other) {
+                fail(other.getMessage());
+            }
+
+            events1.stopFuture.get(180, TimeUnit.SECONDS);
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+            client.close();
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+
+    /* [LFT-UC3] ListenerPublishReceived Callback Test */
+    @Test
+    public void LFT_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        final String testTopic = "test/MQTT5_Binding_Java_Test_Topic" + testUUID;
+        final String listenerTopic = "test/MQTT5_Binding_Java_Listener_Topic" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder subscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured subscriberLifecycleEvents = new LifecycleEvents_Futured();
+            subscriberBuilder.withLifecycleEvents(subscriberLifecycleEvents);
+
+            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured publisherLifecycleEvents = new LifecycleEvents_Futured();
+            publisherBuilder.withLifecycleEvents(publisherLifecycleEvents);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                subscriberBuilder.withTlsContext(tlsContext);
+                publisherBuilder.withTlsContext(tlsContext);
+            }
+
+            PublishEvents_Futured subscriberOnMessageEvents = new PublishEvents_Futured();
+            subscriberBuilder.withPublishEvents(subscriberOnMessageEvents);
+
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withPayload("Hello World".getBytes());
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+            subscribePacketBuilder.withSubscription(listenerTopic, QOS.AT_LEAST_ONCE);
+
+            try (
+                Mqtt5Client subscriber = new Mqtt5Client(subscriberBuilder.build());
+                Mqtt5Client publisher = new Mqtt5Client(publisherBuilder.build());
+            ){
+                // Start subscriber
+                subscriber.start();
+                subscriberLifecycleEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+                subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                // Create Mqtt5 Listener
+                Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+                ListenerPublishEvents_Futured_Counted listenerOnMessageEvent = new ListenerPublishEvents_Futured_Counted(listenerTopic);
+                listenerBuilder.withListenerPublishEvents(listenerOnMessageEvent);
+                Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), subscriber);
+                assertNotNull(listener);
+
+                // Start publisher
+                publisher.start();
+                publisherLifecycleEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                ////////////////////////////////////////////////////////////////
+                // Publish to ListenerTopic
+                publisher.publish(publishPacketBuilder.withTopic(listenerTopic).build()).get(180, TimeUnit.SECONDS);
+
+                // Listener should get the listener topic message
+                listenerOnMessageEvent.PublishProceedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                    fail("Error: The subscriber should no longer received the message on listener topic as it should be handled by the listener.");
+                } catch (java.util.concurrent.TimeoutException timeout) {
+                    // As the listener is removed, the stopFuture should never complete
+                    System.out.println("The subscriber did not received the message as expected.");
+                }
+                catch (Exception other) {
+                    fail(other.getMessage());
+                }
+
+                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
+                assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
+
+                ////////////////////////////////////////////////////////////////
+                // Publish to Test topic
+                publisher.publish(publishPacketBuilder.withTopic(testTopic).build()).get(180, TimeUnit.SECONDS);
+
+                // Listener should skip the test topic message
+                listenerOnMessageEvent.PublishSkippedFuture.get(180, TimeUnit.SECONDS);
+                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
+                assertEquals(1, listenerOnMessageEvent.skippedPublishCount);
+
+                subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+
+                listener.close();
+
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+
+    /* [LFT-UC4] Remove Mqtt5Listener for ListenerPublishReceived */
+    @Test
+    public void LFT_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(checkMinimumDirectHostAndPort());
+        String testUUID = UUID.randomUUID().toString();
+        final String testTopic = "test/MQTT5_Binding_Java_Test_Topic" + testUUID;
+
+        try {
+            Mqtt5ClientOptionsBuilder subscriberBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured subscriberLifecycleEvents = new LifecycleEvents_Futured();
+            subscriberBuilder.withLifecycleEvents(subscriberLifecycleEvents);
+
+            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            LifecycleEvents_Futured publisherLifecycleEvents = new LifecycleEvents_Futured();
+            publisherBuilder.withLifecycleEvents(publisherLifecycleEvents);
+
+            // Only needed for IoT Core
+            TlsContext tlsContext = null;
+            if (getMinimumDirectHost() == mqtt5IoTCoreMqttHost && mqtt5IoTCoreMqttCertificateBytes != null) {
+                Assume.assumeTrue(getMinimumDirectCert() != null);
+                Assume.assumeTrue(getMinimumDirectKey() != null);
+                tlsContext = getIoTCoreTlsContext();
+                subscriberBuilder.withTlsContext(tlsContext);
+                publisherBuilder.withTlsContext(tlsContext);
+            }
+
+            PublishEvents_Futured subscriberOnMessageEvents = new PublishEvents_Futured();
+            subscriberBuilder.withPublishEvents(subscriberOnMessageEvents);
+
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withPayload("Hello World".getBytes());
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            try (
+                Mqtt5Client subscriber = new Mqtt5Client(subscriberBuilder.build());
+                Mqtt5Client publisher = new Mqtt5Client(publisherBuilder.build());
+            ){
+                // Start subscriber
+                subscriber.start();
+                subscriberLifecycleEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+                subscriber.subscribe(subscribePacketBuilder.build()).get(180, TimeUnit.SECONDS);
+
+                // Create Mqtt5 Listener
+                Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder listenerBuilder = new Mqtt5ListenerOptions.Mqtt5ListenerOptionsBuilder();
+                ListenerPublishEvents_Futured_Counted listenerOnMessageEvent = new ListenerPublishEvents_Futured_Counted("");
+                listenerBuilder.withListenerPublishEvents(listenerOnMessageEvent);
+                Mqtt5Listener listener = new Mqtt5Listener(listenerBuilder.build(), subscriber);
+                assertNotNull(listener);
+
+                // Start publisher
+                publisher.start();
+                publisherLifecycleEvents.connectedFuture.get(180, TimeUnit.SECONDS);
+
+                ////////////////////////////////////////////////////////////////
+                // Publish to ListenerTopic
+                publisher.publish(publishPacketBuilder.withTopic(testTopic).build()).get(180, TimeUnit.SECONDS);
+
+                // Listener should get the listener topic message
+                listenerOnMessageEvent.PublishProceedFuture.get(180, TimeUnit.SECONDS);
+
+                try {
+                    subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                    fail("Error: The subscriber should no longer received the message on listener topic as it should be handled by the listener.");
+                } catch (java.util.concurrent.TimeoutException timeout) {
+                    // As the listener is removed, the stopFuture should never complete
+                    System.out.println("The subscriber did not received the message as expected.");
+                }
+                catch (Exception other) {
+                    fail(other.getMessage());
+                }
+
+                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
+                assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
+
+                listener.close();
+
+                ////////////////////////////////////////////////////////////////
+                // Publish to Test topic
+                publisher.publish(publishPacketBuilder.withTopic(testTopic).build()).get(180, TimeUnit.SECONDS);
+
+
+                // As the completeFuture could only used once. Sleep for 180 seconds to make sure the ListenerPublishEvent did
+                // not get invoked
+                Thread.sleep(180000);
+                // Make sure the message count does not change.
+                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
+                assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
+
+                // The subscriber should receive the mssage
+                subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

@@ -211,7 +211,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
         int currentPublishCount = 0;
         int desiredPublishCount = 0;
-        List<PublishPacket> publishPacketsRecieved = new ArrayList<PublishPacket>();
+        List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
 
         @Override
         public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
@@ -222,10 +222,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publishReceivedFuture.completeExceptionally(new Throwable("Too many publish packets received"));
             }
 
-            if (publishPacketsRecieved.contains(result)) {
+            if (publishPacketsReceived.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
-            publishPacketsRecieved.add(result.getPublishPacket());
+            publishPacketsReceived.add(result.getPublishPacket());
         }
     }
 
@@ -3522,13 +3522,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
                     fail("Error: The subscriber should no longer received the message on listener topic as it should be handled by the listener.");
                 } catch (java.util.concurrent.TimeoutException timeout) {
-                    // As the listener is removed, the stopFuture should never complete
+                    // As the listener is setup, the subscriber should not invoke the publishReceivedEvent
                     System.out.println("The subscriber did not received the message as expected.");
                 }
                 catch (Exception other) {
                     fail(other.getMessage());
                 }
 
+                // Make sure the publish count is correct
                 assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
                 assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
 
@@ -3541,6 +3542,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
                 assertEquals(1, listenerOnMessageEvent.skippedPublishCount);
 
+                // As the listener did not listen to testTopic, the subscriber should received the mssage
                 subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
                 listener.close();

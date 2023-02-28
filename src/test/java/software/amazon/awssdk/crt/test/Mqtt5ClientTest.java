@@ -3428,18 +3428,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             listener.close();
             client.stop(new DisconnectPacketBuilder().build());
 
-            try {
-                events2.stopFuture.get(180, TimeUnit.SECONDS);
-                fail("Error: The Listener should no longer invoke to the LifeCycleEvent as it is terminated.");
-            } catch (java.util.concurrent.TimeoutException timeout) {
-                // As the listener is removed, the stopFuture should never complete
-                System.out.println("As the Mqtt5Listener get removed, the LifeCycleEvent callback for Listener is timed out as expected.");
-            }
-            catch (Exception other) {
-                fail(other.getMessage());
-            }
-
             events1.stopFuture.get(180, TimeUnit.SECONDS);
+
+            // As the listener is removed, the stopFuture should not complete at this point
+            assertTrue(!events2.stopFuture.isDone());
 
             if (tlsContext != null) {
                 tlsContext.close();
@@ -3519,7 +3511,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 listenerOnMessageEvent.PublishProceedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                    /* As we already get message in the listener, it should not take long to invoke client callbacks,
+                     * therefore we set a short timeout time. */
+                    subscriberOnMessageEvents.publishReceivedFuture.get(10, TimeUnit.SECONDS);
                     fail("Error: The subscriber should no longer received the message on listener topic as it should be handled by the listener.");
                 } catch (java.util.concurrent.TimeoutException timeout) {
                     // As the listener is setup, the subscriber should not invoke the publishReceivedEvent
@@ -3625,7 +3619,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 listenerOnMessageEvent.PublishProceedFuture.get(180, TimeUnit.SECONDS);
 
                 try {
-                    subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
+                    subscriberOnMessageEvents.publishReceivedFuture.get(10, TimeUnit.SECONDS);
                     fail("Error: The subscriber should no longer received the message on listener topic as it should be handled by the listener.");
                 } catch (java.util.concurrent.TimeoutException timeout) {
                     // As the listener is removed, the stopFuture should never complete
@@ -3645,16 +3639,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publisher.publish(publishPacketBuilder.withTopic(testTopic).build()).get(180, TimeUnit.SECONDS);
 
 
-                // As the completeFuture could only used once. Sleep for 180 seconds to make sure the ListenerPublishEvent did
-                // not get invoked
-                Thread.sleep(180000);
-                // Make sure the message count does not change.
-                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
-                assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
-
                 // The subscriber should receive the mssage
                 subscriberOnMessageEvents.publishReceivedFuture.get(180, TimeUnit.SECONDS);
 
+                /* As the listener callback should be invoked before client, the listener should have proceed the
+                 * publish message by this point. Make sure the message count does not change. */
+                assertEquals(1, listenerOnMessageEvent.proceedPublishCount);
+                assertEquals(0, listenerOnMessageEvent.skippedPublishCount);
             }
 
             if (tlsContext != null) {

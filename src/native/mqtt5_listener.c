@@ -50,6 +50,8 @@ struct aws_mqtt5_listener_java_jni {
 
 static void s_aws_mqtt5_listener_log_and_throw_exception(JNIEnv *env, const char *message, int error_code) {
     AWS_LOGF_ERROR(AWS_LS_MQTT5_GENERAL, "listener %s - error code: %i", message, error_code);
+    // raise error to update the "last_error_code"
+    aws_raise_error(error_code);
     aws_jni_throw_runtime_exception(env, "listener %s - error code: %i", message, error_code);
 }
 
@@ -395,7 +397,7 @@ static bool s_aws_mqtt5_listener_java_publish_received(
     callback_result = (bool)((*env)->CallBooleanMethod(
         env,
         java_listener->jni_listener_publish_events,
-        mqtt5_publish_events_properties.publish_events_publish_received_id,
+        mqtt5_listener_publish_events_properties.listener_publish_events_publish_received_id,
         java_listener->jni_mqtt5_client,
         publish_packet_return_data));
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
@@ -457,6 +459,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
     struct aws_mqtt5_listener_config listener_options;
     AWS_ZERO_STRUCT(listener_options);
 
+    if (jni_listener_options == NULL) {
+        s_aws_mqtt5_listener_log_and_throw_exception(
+            env, "MQTT5 listener new: Invalid Mqtt5 Listener Options", AWS_ERROR_INVALID_ARGUMENT);
+        return (jlong)NULL;
+    }
+
     /**
      * Push a new local frame so any local allocations we make are tied to it. Then we can pop it to free memory.
      * * Reference: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html#PushLocalFrame
@@ -480,7 +488,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Listener_mqtt
     if (java_listener == NULL) {
         s_aws_mqtt5_listener_log_and_throw_exception(
             env, "MQTT5 listener new: could not initialize new listener", AWS_ERROR_INVALID_STATE);
-        return (jlong)NULL;
+        goto clean_up;
     }
 
     jint jvmresult = (*env)->GetJavaVM(env, &java_listener->jvm);

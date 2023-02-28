@@ -38,7 +38,7 @@ public class Mqtt5Listener extends CrtResource {
             this
         ));
         // addRefrenceTo client after the native handler get acquired
-        addReferenceTo(client);
+        addReferenceTo(clientReference);
     }
 
     /**

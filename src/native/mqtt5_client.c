@@ -65,6 +65,8 @@ struct aws_http_proxy_options_java_jni {
 
 static void s_aws_mqtt5_client_log_and_throw_exception(JNIEnv *env, const char *message, int error_code) {
     AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "%s - error code: %i", message, error_code);
+    // raise error to update the "last_error_code"
+    aws_raise_error(error_code);
     aws_jni_throw_runtime_exception(env, "%s - error code: %i", message, error_code);
 }
 
@@ -1628,7 +1630,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     if (java_client == NULL) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "MQTT5 client new: could not initialize new client", AWS_ERROR_INVALID_STATE);
-        return (jlong)NULL;
+        goto clean_up;
     }
 
     if (aws_get_string_from_jobject(

@@ -16,11 +16,15 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -585,6 +589,96 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    // Test that we can upload by passing a filepath instead of an HTTP body stream
+    @Test
+    public void testS3PutFilePath() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            int contentLength = 1024 * 1024;
+            Files.write(uploadFilePath, createTestPayload(contentLength));
+
+            HttpHeader[] headers = {
+                new HttpHeader("Host", ENDPOINT),
+                new HttpHeader("Content-Length", String.valueOf(contentLength)),
+            };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_filepath_1MB.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withRequestFilePath(uploadFilePath)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        } finally {
+            Files.deleteIfExists(uploadFilePath);
+        }
+    }
+
+    // Test that passing a nonexistent file path will cause an error
+    @Test
+    public void testS3PutNonexistentFilePath() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            // response handler does nothing, it just needs to exist for this test
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {};
+
+            HttpHeader[] headers = {
+                new HttpHeader("Host", ENDPOINT),
+                new HttpHeader("Content-Length", String.valueOf(1024)),
+            };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_nonexistent_file", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withRequestFilePath(Paths.get("obviously_nonexistent_file.derp"))
+                    .withResponseHandler(responseHandler);
+
+            // makeMetaRequest() should fail
+            Throwable thrown = Assert.assertThrows(Throwable.class,
+                () -> client.makeMetaRequest(metaRequestOptions));
+
+            // exception should indicate the file doesn't exist
+            String exceptionString = thrown.toString();
+            Assert.assertTrue(exceptionString.contains("AWS_ERROR_FILE_INVALID_PATH"));
+        }
+    }
+
     private S3MetaRequestResponseHandler createTestPutPauseResumeHandler(CompletableFuture<Integer> onFinishedFuture,
         CompletableFuture<Void> onProgressFuture) {
         return new S3MetaRequestResponseHandler() {
@@ -897,7 +991,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     // TODO: copy is disabled currently because it does not work correctly on c
     // side. reenable once its fixed in crt.
-    //@Test 
+    //@Test
     public void testS3Copy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());

@@ -612,6 +612,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jintArray jni_marshalled_validate_algorithms,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
+    jbyteArray jni_request_filepath,
     jlong jni_credentials_provider,
     jobject java_response_handler_jobject,
     jbyteArray jni_endpoint,
@@ -621,6 +622,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
+    struct aws_byte_cursor request_filepath;
+    AWS_ZERO_STRUCT(request_filepath);
     struct aws_s3_meta_request_resume_token *resume_token =
         s_native_resume_token_from_java_new(env, java_resume_token_jobject);
     struct aws_signing_config_aws *signing_config = NULL;
@@ -653,6 +656,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
+
+    if (jni_request_filepath) {
+        request_filepath = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_request_filepath);
+        if (request_filepath.ptr == NULL) {
+            goto done;
+        }
+        if (request_filepath.len == 0) {
+            aws_jni_throw_illegal_argument_exception(env, "Request file path cannot be empty");
+            goto done;
+        }
+    }
 
     struct aws_uri endpoint;
     AWS_ZERO_STRUCT(endpoint);
@@ -689,6 +703,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .type = meta_request_type,
         .checksum_config = &checksum_config,
         .message = request_message,
+        .send_filepath = request_filepath,
         .user_data = callback_data,
         .signing_config = signing_config,
         .headers_callback = s_on_s3_meta_request_headers_callback,
@@ -719,6 +734,7 @@ done:
         aws_mem_release(allocator, signing_config);
     }
     aws_http_message_release(request_message);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
     aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;

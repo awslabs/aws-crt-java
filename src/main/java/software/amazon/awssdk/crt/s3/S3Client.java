@@ -124,6 +124,11 @@ public class S3Client extends CrtResource {
                 options.getResponseHandler());
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
+        byte[] requestFilePath = null;
+        if (options.getRequestFilePath() != null) {
+            requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
+        }
+
         long credentialsProviderNativeHandle = 0;
         if (options.getCredentialsProvider() != null) {
             credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
@@ -137,7 +142,7 @@ public class S3Client extends CrtResource {
                 options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
                 checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                httpRequestBytes, options.getHttpRequest().getBodyStream(), credentialsProviderNativeHandle,
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, credentialsProviderNativeHandle,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
                 options.getResumeToken());
 
@@ -204,7 +209,7 @@ public class S3Client extends CrtResource {
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
             int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
             int[] validateAlgorithms, byte[] httpRequestBytes,
-            HttpRequestBodyStream httpRequestBodyStream,
+            HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
             long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, ResumeToken resumeToken);
 }

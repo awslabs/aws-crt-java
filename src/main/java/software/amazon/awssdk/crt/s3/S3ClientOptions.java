@@ -66,12 +66,6 @@ public class S3ClientOptions {
      */
     private S3TcpKeepAliveOptions tcpKeepAliveOptions;
 
-    /**
-     * Optional.
-     * Configuration options for connection monitoring.
-     * If the transfer speed falls below the specified
-     * minimum_throughput_bytes_per_second, the operation is aborted.
-     */
     private HttpMonitoringOptions monitoringOptions;
 
     public S3ClientOptions() {
@@ -258,6 +252,15 @@ public class S3ClientOptions {
         return tcpKeepAliveOptions;
     }
 
+    /**
+     * Options for detecting bad HTTP connections.
+     * If the transfer throughput falls below the specified thresholds
+     * for long enough, the operation is retried on a new connection.
+     * If left unset, default values are used.
+     *
+     * @param monitoringOptions
+     * @return this
+     */
     public S3ClientOptions withHttpMonitoringOptions(HttpMonitoringOptions monitoringOptions) {
         this.monitoringOptions = monitoringOptions;
         return this;

@@ -258,7 +258,7 @@ public class S3ClientOptions {
      * for long enough, the operation is retried on a new connection.
      * If left unset, default values are used.
      *
-     * @param monitoringOptions
+     * @param monitoringOptions monitoring options
      * @return this
      */
     public S3ClientOptions withHttpMonitoringOptions(HttpMonitoringOptions monitoringOptions) {

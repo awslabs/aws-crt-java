@@ -4,6 +4,7 @@
  */
 package software.amazon.awssdk.crt.mqtt5;
 
+import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -34,7 +35,7 @@ import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuild
  * preview window is especially valuable in shaping the final product.  During the preview period we may make
  * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
  */
-public class Mqtt5Client extends CrtResource {
+public class Mqtt5Client extends CrtResource implements Serializable {
 
     /**
      * A private reference to the websocket handshake from the MQTT5 client options

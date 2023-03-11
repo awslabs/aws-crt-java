@@ -10,6 +10,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
+import java.io.Serializable;
+
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionalities
  * via the AWS Common Runtime
@@ -17,7 +19,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
  * One MqttClient class is needed per application. It can create any number of connections to
  * any number of MQTT endpoints
  */
-public class MqttClient extends CrtResource {
+public class MqttClient extends CrtResource implements Serializable {
 
     private TlsContext tlsContext;
 

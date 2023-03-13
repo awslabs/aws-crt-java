@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\Qlinux/x86_64/libaws-crt-jni.so\\E"
+      }
+    ]
+  },
+  "bundles": []
+}

@@ -159,8 +159,9 @@ public class S3MetaRequestOptions {
     /**
      * Set the initial HTTP request.
      *
-     * Note: When uploading a file, you should set {@link withRequestFilePath},
-     * (instead of setting the HttpRequest's body stream) for better performance.
+     * Note: When uploading a file, you can get better performance by setting
+     * {@link withRequestFilePath} instead of setting a body stream on the HttpRequest.
+     * (If both are set, the file path is used and body stream is ignored)
      *
      * @param httpRequest initial HTTP request message.
      * @return this
@@ -175,10 +176,9 @@ public class S3MetaRequestOptions {
     }
 
     /**
-     * If set, this file is sent as the request's body.
+     * If set, this file is sent as the request's body, and the {@link withHttpRequest} body stream is ignored.
      *
-     * When uploading a file, you should set this for better performance than if you
-     * set a body stream on {@link withHttpRequest}).
+     * This can give better upload performance than sending data using the body stream.
      *
      * @param requestFilePath path to file to send as the request's body.
      * @return this

@@ -72,7 +72,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
-        
+
         struct aws_string *thread_name = NULL;
         if (aws_thread_current_name(aws_jni_get_allocator(), &thread_name)) {
             /* Retrieving thread name can fail for multitude of reasons and is
@@ -83,7 +83,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
         struct JavaVMAttachArgs attach_args = {
             .version = JNI_VERSION_1_6,
             .name = NULL,
-            .group = NULL
+            .group = NULL,
         };
 
         if (thread_name != NULL) {

@@ -91,7 +91,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
         }
 
 #ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
 #else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
 #endif

@@ -32,7 +32,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
 
-    private static String COGNITO_IDENTITY = System.getenv("AWS_TESTING_COGNITO_IDENTITY");
+    private static String COGNITO_IDENTITY = System.getenv("AWS_TEST_COGNITO_IDENTITY");
     private static String TEST_HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
     private static String TEST_HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
 

@@ -7,28 +7,21 @@ package software.amazon.awssdk.crt.test;
 
 import org.junit.Assume;
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;
-
 import static org.junit.Assert.*;
 
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.*;
-import software.amazon.awssdk.crt.mqtt.*;
-import software.amazon.awssdk.crt.mqtt.MqttException;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.UUID;
 
-public class CustomKeyOpsTest extends CustomKeyOpsFixture {
+public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     public CustomKeyOpsTest() {
     }
 
@@ -133,12 +126,13 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testHappyPath() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, false);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, false);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
-            connect(keyOperationOptions);
+            connectCustomKeyOps(keyOperationOptions);
         }
         catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
@@ -150,12 +144,13 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExceptionFailurePath() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, false);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, false);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
-            connect(keyOperationOptions);
+            connectCustomKeyOps(keyOperationOptions);
         }
         catch (Exception ex) {
             close();
@@ -168,12 +163,13 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExtraCompleteHappy() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, true);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
-            connect(keyOperationOptions);
+            connectCustomKeyOps(keyOperationOptions);
         }
         catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
@@ -185,12 +181,13 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExceptionExtraCompleteFailurePath() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
+        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, true);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
-            connect(keyOperationOptions);
+            connectCustomKeyOps(keyOperationOptions);
         }
         catch (Exception ex) {
             close();

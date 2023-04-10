@@ -99,15 +99,15 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     static final String TEST_KEY_PATH_PROPERTY = "privatekey";
 
     // Skip test if system property, or the file it describes, cannot be found
-    private String getPathStringFromSystemProperty(String property) {
+    private String getPathStringFromEnvironmentVariable(String environmentVariable) {
         try {
-            String pathStr = System.getProperty(property);
+            String pathStr = System.getenv(environmentVariable);
             Assume.assumeTrue("system property not set", pathStr != null && !pathStr.equals(""));
             Path path = Paths.get(pathStr);
             Assume.assumeTrue("file not found at " + pathStr, path.toFile().exists());
             return path.toString();
         } catch (Exception ex) {
-            Assume.assumeNoException("cannot use '" + property + "' file", ex);
+            Assume.assumeNoException("cannot use '" + environmentVariable + "' file", ex);
         }
         return null; // unreachable
     }
@@ -180,8 +180,8 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     @Test
     public void testMtlsFromPath() {
         skipIfNetworkUnavailable();
-        String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
-        String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
+        String certPath = getPathStringFromEnvironmentVariable(TEST_CERT_PATH_PROPERTY);
+        String keyPath = getPathStringFromEnvironmentVariable(TEST_KEY_PATH_PROPERTY);
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             options.initMtlsFromPath(certPath, keyPath);
@@ -199,8 +199,8 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     @Test
     public void testMtlsFromBadPath() {
         skipIfNetworkUnavailable();
-        String certPath = getPathStringFromSystemProperty(TEST_CERT_PATH_PROPERTY);
-        String keyPath = getPathStringFromSystemProperty(TEST_KEY_PATH_PROPERTY);
+        String certPath = getPathStringFromEnvironmentVariable(TEST_CERT_PATH_PROPERTY);
+        String keyPath = getPathStringFromEnvironmentVariable(TEST_KEY_PATH_PROPERTY);
 
         certPath = certPath + ".not.valid.path";
         keyPath = keyPath + ".not.valid.path";
@@ -221,7 +221,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testMtlsPkcs11() {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         Pkcs11LibTest.assumeEnvironmentSetUpForPkcs11Tests();
 
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB);

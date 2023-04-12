@@ -8,6 +8,7 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +81,7 @@ public class S3MetaRequestOptions {
     private MetaRequestType metaRequestType;
     private ChecksumConfig checksumConfig;
     private HttpRequest httpRequest;
+    private Path requestFilePath;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
     private URI endpoint;
@@ -154,6 +156,16 @@ public class S3MetaRequestOptions {
         return checksumConfig.getValidateChecksum();
     }
 
+    /**
+     * Set the initial HTTP request.
+     *
+     * Note: When uploading a file, you can get better performance by setting
+     * {@link withRequestFilePath} instead of setting a body stream on the HttpRequest.
+     * (If both are set, the file path is used and body stream is ignored)
+     *
+     * @param httpRequest initial HTTP request message.
+     * @return this
+     */
     public S3MetaRequestOptions withHttpRequest(HttpRequest httpRequest) {
         this.httpRequest = httpRequest;
         return this;
@@ -161,6 +173,23 @@ public class S3MetaRequestOptions {
 
     public HttpRequest getHttpRequest() {
         return httpRequest;
+    }
+
+    /**
+     * If set, this file is sent as the request's body, and the {@link withHttpRequest} body stream is ignored.
+     *
+     * This can give better upload performance than sending data using the body stream.
+     *
+     * @param requestFilePath path to file to send as the request's body.
+     * @return this
+     */
+    public S3MetaRequestOptions withRequestFilePath(Path requestFilePath) {
+        this.requestFilePath = requestFilePath;
+        return this;
+    }
+
+    public Path getRequestFilePath() {
+        return requestFilePath;
     }
 
     public S3MetaRequestOptions withResponseHandler(S3MetaRequestResponseHandler responseHandler) {

@@ -434,6 +434,9 @@ static struct aws_error_info s_crt_errors[] = {
     AWS_DEFINE_ERROR_INFO_CRT(
         AWS_ERROR_JAVA_CRT_JVM_DESTROYED,
         "Attempt to use a JVM that has already been destroyed"),
+    AWS_DEFINE_ERROR_INFO_CRT(
+        AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
+        "OutOfMemoryError has been raised from JVM."),
 };
 /* clang-format on */
 

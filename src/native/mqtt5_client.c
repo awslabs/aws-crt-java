@@ -1170,6 +1170,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_packet_publish_view_java_jni *java_publish_packet = NULL;
     struct aws_mqtt5_client_publish_return_data *return_data = NULL;
+    int error_code = 0;
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
@@ -1184,10 +1185,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
     if (!java_client->client) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Invalid/null native client");
         goto exception;
     }
     if (!jni_publish_packet) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Invalid/Null publish packet!");
         goto exception;
     }
@@ -1203,6 +1206,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     java_publish_packet = aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
     if (!java_publish_packet) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Could not create native publish packet!");
         goto exception;
     }
@@ -1210,6 +1214,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_publish(
         java_client->client, aws_mqtt5_packet_publish_view_get_packet(java_publish_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(
             AWS_LS_MQTT_CLIENT, "Mqtt5Client.publish: Could not publish packet! Error code: %i", return_result);
         goto exception;
@@ -1217,7 +1222,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, &jni_publish_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(
+        env,
+        &jni_publish_future,
+        (error_code == AWS_ERROR_SUCCESS) ? AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE : error_code);
     if (java_publish_packet) {
         aws_mqtt5_packet_publish_view_java_destroy(env, allocator, java_publish_packet);
     }
@@ -1243,6 +1251,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_client_subscribe_return_data *return_data = NULL;
     struct aws_mqtt5_packet_subscribe_view_java_jni *java_subscribe_packet = NULL;
+    int error_code = AWS_ERROR_SUCCESS;
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
@@ -1257,10 +1266,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
     if (!java_client->client) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Invalid/null native client");
         goto exception;
     }
     if (!jni_subscribe_packet) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Invalid/Null subscribe packet!");
         goto exception;
     }
@@ -1276,6 +1287,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     java_subscribe_packet = aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
     if (java_subscribe_packet == NULL) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Could not create native subscribe packet!");
         goto exception;
     }
@@ -1283,13 +1295,17 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     int return_result = aws_mqtt5_client_subscribe(
         java_client->client, aws_mqtt5_packet_subscribe_view_get_packet(java_subscribe_packet), &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.subscribe: Subscribe failed! Error code: %i", return_result);
         goto exception;
     }
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, &jni_subscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(
+        env,
+        &jni_subscribe_future,
+        (error_code == AWS_ERROR_SUCCESS) ? AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE : error_code);
     if (java_subscribe_packet) {
         aws_mqtt5_packet_subscribe_view_java_destroy(env, allocator, java_subscribe_packet);
     }
@@ -1315,6 +1331,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_client_unsubscribe_return_data *return_data = NULL;
     struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_unsubscribe_packet = NULL;
+    int error_code = AWS_ERROR_SUCCESS;
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
@@ -1329,10 +1346,12 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
     if (!java_client->client) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Invalid/null native client");
         goto exception;
     }
     if (!jni_unsubscribe_packet) {
+        error_code = AWS_ERROR_INVALID_ARGUMENT;
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Invalid/Null unsubscribe packet!");
         goto exception;
     }
@@ -1349,6 +1368,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     java_unsubscribe_packet =
         aws_mqtt5_packet_unsubscribe_view_create_from_java(env, allocator, jni_unsubscribe_packet);
     if (!java_unsubscribe_packet) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Could not create native unsubscribe packet!");
         goto exception;
     }
@@ -1358,6 +1378,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         aws_mqtt5_packet_unsubscribe_view_get_packet(java_unsubscribe_packet),
         &completion_options);
     if (return_result != AWS_OP_SUCCESS) {
+        error_code = aws_last_error();
         AWS_LOGF_ERROR(
             AWS_LS_MQTT_CLIENT, "Mqtt5Client.unsubscribe: Unsubscribe failed! Error code: %i", return_result);
         goto exception;
@@ -1365,7 +1386,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     goto clean_up;
 
 exception:
-    s_complete_future_with_exception(env, &jni_unsubscribe_future, AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE);
+    s_complete_future_with_exception(
+        env,
+        &jni_unsubscribe_future,
+        (error_code == AWS_ERROR_SUCCESS) ? AWS_ERROR_MQTT5_OPERATION_PROCESSING_FAILURE : error_code);
     if (java_unsubscribe_packet) {
         aws_mqtt5_packet_unsubscribe_view_java_destroy(env, allocator, java_unsubscribe_packet);
     }

@@ -406,6 +406,11 @@ static int s_on_s3_meta_request_headers_callback(
         aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
     }
     java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+    if (java_headers_buffer == NULL) {
+        aws_jni_check_and_clear_exception(env);
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+        goto cleanup;
+    }
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         (*env)->CallVoidMethod(

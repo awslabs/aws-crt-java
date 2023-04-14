@@ -3,7 +3,7 @@ import sys
 import os
 import os.path
 import tempfile
-
+import windows_cert_test_setup
 
 class AWSCrtJavaTest(Builder.Action):
 
@@ -32,7 +32,9 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.memory.tracing=2",
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true"
+            "-Daws.crt.ci=true",
+            # TESTING ONLY
+            "-Dtest=MqttClientConnectionMethodTest"
         )
 
         # run the ShutdownTest by itself
@@ -57,6 +59,7 @@ class AWSCrtJavaTest(Builder.Action):
         self.env = env
 
         return Builder.Script([
-            Builder.SetupCIFromJSON(), # setup CI environment variables
+            Builder.SetupCIFromFiles(), # setup CI environment variables
+            windows_cert_test_setup.WindowsCertTestSetup(),
             self.start_maven_tests # Then run the Maven stuff
             ])

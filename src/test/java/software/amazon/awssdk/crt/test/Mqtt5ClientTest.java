@@ -599,7 +599,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
-            try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+            try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(mqtt5CertificateFile, mqtt5KeyFile)) {
                 tlsOptions.withVerifyPeer(false);
                 try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
                     Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5DirectMqttTlsHost, mqtt5DirectMqttTlsPort);
@@ -888,7 +888,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
             ) {
 
-                try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+                try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(mqtt5CertificateFile, mqtt5KeyFile)) {
                     tlsOptions.withVerifyPeer(false);
                     try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
                         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5WSMqttTlsHost, mqtt5WSMqttTlsPort);

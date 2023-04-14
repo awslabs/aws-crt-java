@@ -126,7 +126,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     @Test
     public void testHappyPath() {
         skipIfNetworkUnavailable();
-        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
+        Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
         Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, false);
@@ -144,7 +145,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     @Test
     public void testExceptionFailurePath() {
         skipIfNetworkUnavailable();
-        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
+        Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
         Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, false);
@@ -163,7 +165,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     @Test
     public void testExtraCompleteHappy() {
         skipIfNetworkUnavailable();
-        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
+        Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
         Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, true);
@@ -181,7 +184,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     @Test
     public void testExceptionExtraCompleteFailurePath() {
         skipIfNetworkUnavailable();
-        skipIfCredentialsMissingRSA();
+        Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
+        Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
         Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
 
         TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, true);

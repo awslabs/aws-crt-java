@@ -16,9 +16,13 @@ import static org.junit.Assert.*;
 import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSignedBodyHeaderType;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.io.TlsContextCustomKeyOperationOptions;
@@ -48,9 +52,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String AWS_TEST_ENDPOINT = System.getenv("AWS_TEST_ENDPOINT");
     static final String AWS_TEST_ROOTCA = System.getenv("AWS_TEST_ROOT_CA");
     // Static credential related
-    static final String AWS_TEST_ACCESS_KEY = System.getenv("AWS_TEST_ROLE_CREDENTIAL_ACCESS_KEY");
-    static final String AWS_TEST_SECRET_ACCESS_KEY = System.getenv("AWS_TEST_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
-    static final String AWS_TEST_SESSION_TOKEN = System.getenv("AWS_TEST_ROLE_CREDENTIAL_SESSION_TOKEN");
+    static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY");
+    static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
+    static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN");
     // Key/Cert connection related
     static final String AWS_TEST_RSA_CERTIFICATE = System.getenv("AWS_TEST_RSA_CERTIFICATE");
     static final String AWS_TEST_RSA_PRIVATEKEY = System.getenv("AWS_TEST_RSA_PRIVATE_KEY");
@@ -60,6 +64,66 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     // Cognito
     static final String AWS_TEST_COGNITO_ENDPOINT = System.getenv("AWS_TEST_COGNITO_ENDPOINT");
     static final String AWS_TEST_COGNITO_IDENTITY = System.getenv("AWS_TEST_COGNITO_IDENTITY");
+    // MQTT311 Codebuild/Direct connections data
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_HOST = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_HOST");
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_PORT = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_PORT");
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST");
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT");
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_TLS_HOST = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_TLS_HOST");
+    static final String AWS_TEST_MQTT311_DIRECT_MQTT_TLS_PORT = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_TLS_PORT");
+    // MQTT311 Codebuild/Websocket connections data
+    static final String AWS_TEST_MQTT311_WS_MQTT_HOST = System.getenv("AWS_TEST_MQTT311_WS_MQTT_HOST");
+    static final String AWS_TEST_MQTT311_WS_MQTT_PORT = System.getenv("AWS_TEST_MQTT311_WS_MQTT_PORT");
+    static final String AWS_TEST_MQTT311_WS_MQTT_BASIC_AUTH_HOST = System.getenv("AWS_TEST_MQTT311_WS_MQTT_BASIC_AUTH_HOST");
+    static final String AWS_TEST_MQTT311_WS_MQTT_BASIC_AUTH_PORT = System.getenv("AWS_TEST_MQTT311_WS_MQTT_BASIC_AUTH_PORT");
+    static final String AWS_TEST_MQTT311_WS_MQTT_TLS_HOST = System.getenv("AWS_TEST_MQTT311_WS_MQTT_TLS_HOST");
+    static final String AWS_TEST_MQTT311_WS_MQTT_TLS_PORT = System.getenv("AWS_TEST_MQTT311_WS_MQTT_TLS_PORT");
+    // MQTT311 Codebuild misc connections data
+    static final String AWS_TEST_MQTT311_BASIC_AUTH_USERNAME = System.getenv("AWS_TEST_MQTT311_BASIC_AUTH_USERNAME");
+    static final String AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD = System.getenv("AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD");
+    static final String AWS_TEST_MQTT311_CERTIFICATE_FILE = System.getenv("AWS_TEST_MQTT311_CERTIFICATE_FILE");
+    static final String AWS_TEST_MQTT311_KEY_FILE = System.getenv("AWS_TEST_MQTT311_KEY_FILE");
+    // MQTT311 IoT Endpoint, Key, Cert
+    static final String AWS_TEST_MQTT311_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT311_IOT_CORE_HOST");
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY");
+    // MQTT311 IoT Custom Auth
+    static final String AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_NAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_NAME");
+    static final String AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_USERNAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_USERNAME");
+    static final String AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_PASSWORD = System.getenv("AWS_TEST_MQTT311_IOT_CORE_NO_SIGNING_AUTHORIZER_PASSWORD");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_NAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_NAME");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_USERNAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_USERNAME");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_PASSWORD = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_PASSWORD");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN_KEY_NAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN_KEY_NAME");
+    static final String AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN_SIGNATURE = System.getenv("AWS_TEST_MQTT311_IOT_CORE_SIGNING_AUTHORIZER_TOKEN_SIGNATURE");
+    // MQTT311 Proxy
+    static final String AWS_TEST_MQTT311_PROXY_HOST = System.getenv("AWS_TEST_MQTT311_PROXY_HOST");
+    static final String AWS_TEST_MQTT311_PROXY_PORT = System.getenv("AWS_TEST_MQTT311_PROXY_PORT");
+    // MQTT311 Keystore
+    static final String AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_FORMAT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_FORMAT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_FILE = System.getenv("AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_FILE");
+    static final String AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_PASSWORD = System.getenv("AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_PASSWORD");
+    static final String AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_CERT_ALIAS = System.getenv("AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_CERT_ALIAS");
+    static final String AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_CERT_PASSWORD = System.getenv("AWS_TEST_MQTT311_IOT_CORE_KEYSTORE_CERT_PASSWORD");
+    // MQTT311 PKCS12
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY");
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY_PASSWORD = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY_PASSWORD");
+    // MQTT311 PKCS11
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB");
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL");
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN");
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL");
+    static final String AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE = System.getenv("AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE");
+    // MQTT311 X509
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_KEY");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME");
+    // MQTT311 Windows Cert Store
+    static final String AWS_TEST_MQTT311_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getenv("AWS_TEST_MQTT311_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
+    static final String AWS_TEST_MQTT311_IOT_CORE_WINDOWS_CERT_STORE = System.getenv("AWS_TEST_MQTT311_IOT_CORE_WINDOWS_CERT_STORE");
 
     static final short TEST_PORT = 8883;
     static final short TEST_PORT_ALPN = 443;
@@ -81,23 +145,6 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     }
 
     Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
-
-    public void skipIfCredentialsMissingRSA()
-    {
-        Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
-        Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
-    }
-    public void skipIfCredentialsMissingECC()
-    {
-        Assume.assumeTrue(AWS_TEST_ECC_CERTIFICATE != null);
-        Assume.assumeTrue(AWS_TEST_ECC_PRIVATEKEY != null);
-    }
-    public void skipIfCredentialsMissingStatic()
-    {
-        Assume.assumeTrue(AWS_TEST_ACCESS_KEY != null);
-        Assume.assumeTrue(AWS_TEST_SECRET_ACCESS_KEY != null);
-        Assume.assumeTrue(AWS_TEST_SESSION_TOKEN != null);
-    }
 
     protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
         this.connectionConfigTransformer = connectionConfigTransformer;
@@ -290,7 +337,63 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
     }
 
-    boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider)
+    boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)
+    {
+        try(EventLoopGroup elg = new EventLoopGroup(1);
+            HostResolver hr = new HostResolver(elg);
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
+
+            // Default settings
+            boolean cleanSession = true; // only true is supported right now
+            int keepAliveSecs = 0;
+            int protocolOperationTimeout = 60000;
+            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
+
+            try (MqttConnectionConfig config = new MqttConnectionConfig()) {
+
+                MqttClient client = null;
+                if (tlsContext != null)
+                {
+                    client = new MqttClient(bootstrap, tlsContext);
+                }
+                else
+                {
+                    client = new MqttClient(bootstrap);
+                }
+
+                config.setMqttClient(client);
+                config.setClientId(clientId);
+                config.setEndpoint(endpoint);
+                config.setPort(port);
+                config.setCleanSession(cleanSession);
+                config.setKeepAliveSecs(keepAliveSecs);
+                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+
+                if (httpProxyOptions != null) {
+                    config.setHttpProxyOptions(httpProxyOptions);
+                }
+                if (username != null) {
+                    config.setUsername(username);
+                }
+                if (password != null)
+                {
+                    config.setPassword(password);
+                }
+
+                connection = new MqttClientConnection(config);
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
+
+                client.close();
+                return true;
+            }
+        } catch (Exception ex) {
+            fail("Exception during connect: " + ex.toString());
+        }
+        return false;
+    }
+
+    boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions)
     {
         // Return result
         boolean result = false;
@@ -299,48 +402,64 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         int keepAliveSecs = 0;
         int protocolOperationTimeout = 60000;
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-        int port = TEST_PORT_ALPN;
-        // Other setup
-        iotEndpoint = AWS_TEST_ENDPOINT;
 
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();)
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);)
         {
-            try (TlsContext tls = new TlsContext(tlsOptions);
-                 MqttClient client = new MqttClient(bootstrap, tls);
-                 MqttConnectionConfig config = new MqttConnectionConfig();
+            try (MqttConnectionConfig config = new MqttConnectionConfig();
                  AwsSigningConfig signingConfig = new AwsSigningConfig();) {
+
+                MqttClient client = null;
+                if (tlsContext != null)
+                {
+                    client = new MqttClient(bootstrap, tlsContext);
+                }
+                else
+                {
+                    client = new MqttClient(bootstrap);
+                }
 
                 config.setMqttClient(client);
                 config.setClientId(clientId);
-                config.setEndpoint(iotEndpoint);
+                config.setEndpoint(endpoint);
                 config.setPort(port);
                 config.setCleanSession(cleanSession);
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
                 config.setUseWebsockets(true);
 
+                if (username != null) {
+                    config.setUsername(username);
+                }
+                if (password != null) {
+                    config.setPassword(password);
+                }
+                if (httpProxyOptions != null) {
+                    config.setHttpProxyOptions(httpProxyOptions);
+                }
+
                 // Make the websocket transformer
-                signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                if (credentialsProvider != null) {
+                    signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                    // NOTE: Missing a credentials provider gives a non-helpful error. This needs to be changed in Java V2...
+                    signingConfig.setCredentialsProvider(credentialsProvider);
+                }
                 signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
                 signingConfig.setRegion(TEST_REGION);
                 signingConfig.setService("iotdevicegateway");
-                signingConfig.setCredentialsProvider(credentialsProvider);
                 signingConfig.setOmitSessionToken(true);
-
                 try (MqttClientConnectionSigv4HandshakeTransformer transformer = new MqttClientConnectionSigv4HandshakeTransformer(signingConfig);)
                 {
                     config.setWebsocketHandshakeTransform(transformer);
-                    // config.addReferenceTo(transformer);
-
                     connection = new MqttClientConnection(config);
 
                     CompletableFuture<Boolean> connected = connection.connect();
                     connected.get();
                     result = true;
                 }
+                client.close();
+
             } catch (Exception ex) {
                 fail("Exception during connect: " + ex.toString());
             }

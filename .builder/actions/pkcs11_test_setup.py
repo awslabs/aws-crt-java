@@ -86,6 +86,51 @@ class Pkcs11TestSetup(Builder.Action):
         self._setenv('TEST_PKCS11_CERT_FILE', os.path.join(resources_dir, 'unittests.crt'))
         self._setenv('TEST_PKCS11_CA_FILE', os.path.join(resources_dir, 'unittests.crt'))
 
+        ################################################################################
+        # Make a usable, 'real' PKCS11 token and key for IoT connection tests
+        ################################################################################
+
+        if (self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT") != None and
+            self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_Key") != None):
+
+            print ("Setting IoT Core PKCS11 environment variables...")
+
+            # create a token
+            self._exec_softhsm2_util(
+                '--init-token',
+                '--free', # use any free slot
+                '--label', 'my-test-iot-token',
+                '--pin', '0000',
+                '--so-pin', '0000')
+
+            # we need to figure out which slot the new token is in because:
+            # 1) old versions of softhsm2-util make you pass --slot <number>
+            #    (instead of accepting --token <name> like newer versions)
+            # 2) newer versions of softhsm2-util reassign new tokens to crazy
+            #    slot numbers (instead of simply using 0 like older versions)
+            iot_slot = self._get_token_slots()[0]
+
+            # add private key to token
+            self._exec_softhsm2_util(
+                '--import', self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_Key"),
+                '--slot', str(iot_slot),
+                '--label', 'my-test-iot-key',
+                '--id', 'BEEFCAFF', # ID is hex
+                '--pin', '0000')
+
+            # for logging's sake, print the new state of things
+            self._exec_softhsm2_util('--show-slots', '--pin', '0000')
+
+            # set env vars for tests
+            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB', softhsm_lib)
+            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL', 'my-test-iot-token')
+            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN', '0000')
+            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL', 'my-test-iot-key')
+            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE', self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT"))
+
+        else:
+            print("Skipping setting IoT Core PKCS11 environment variables...")
+
     def _find_softhsm_lib(self):
         """Return path to SoftHSM2 shared lib, or None if not found"""
 

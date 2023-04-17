@@ -235,7 +235,7 @@ class SetupCIFromFiles(Action):
             self._process_environment_variables(convert_list)
 
         except Exception as ex:
-            sys.exit(f"[FAIL]: Exception ocurred trying parson XML file with name {xml_filepath}. Exception: {ex}")
+            sys.exit(f"[FAIL]: Exception ocurred trying parse XML file with name {xml_filepath}. Exception: {ex}")
 
     def copy_s3_file(self, s3_url, filename):
         cmd = ['aws', '--region', 'us-east-1', 's3', 'cp',
@@ -261,7 +261,7 @@ class SetupCIFromFiles(Action):
         self.env_instance = env
 
         # Get the file(s)
-        # for file in self.env_instance.config.get('CI_ENVIRONMENT_VARIABLE_FILES'):
+        # for file in self.env_instance.config.get('ci_environment_variable_files'):
         for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"]: # in the real deal we'd get this from the builder config.
             # Is this an S3 file? If so, then download it to a temporary file and execute it there
             if (file.startswith("s3://")):
@@ -278,12 +278,12 @@ class SetupCIFromFiles(Action):
                         print("Processed JSON file.")
                     elif (file.endswith(".xml")):
                         print("Processing XML file...")
-                        self._process_xml_file(file)
+                        self._process_xml_file(tmp_s3_filepath)
                         print("Processed XML file.")
                     else:
                         sys.exit(f"Cannot parse file: S3 file given [{file}] has an unknown extension!")
                 else:
-                    sys.exit(f"Cannot parse JSON file: Error processing temporary file from S3")
+                    sys.exit(f"Cannot parse environment file: Error processing temporary file from S3")
             # otherwise it's just a normal file, so execute it
             else:
                 if (os.path.exists(file) == False):

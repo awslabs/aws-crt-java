@@ -87,13 +87,40 @@ class Pkcs11TestSetup(Builder.Action):
         self._setenv('TEST_PKCS11_CA_FILE', os.path.join(resources_dir, 'unittests.crt'))
 
         ################################################################################
-        # Make a usable, 'real' PKCS11 token and key for IoT connection tests
+        # Make a usable, 'real' PKCS11 token and key for connection tests
         ################################################################################
 
-        if (self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT") != None and
-            self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_Key") != None):
+        # MQTT311
+        self._make_iot_pkcs11_environment_variables(
+            softhsm_lib,
+            "AWS_TEST_MQTT311_IOT_CORE_RSA_CERT",
+            "AWS_TEST_MQTT311_IOT_CORE_RSA_Key",
+            "AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB",
+            "AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL",
+            "AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN",
+            "AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL",
+            "AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE")
 
-            print ("Setting IoT Core PKCS11 environment variables...")
+        # MQTT5
+        self._make_iot_pkcs11_environment_variables(
+            softhsm_lib,
+            "AWS_TEST_MQTT5_IOT_CORE_RSA_CERT",
+            "AWS_TEST_MQTT5_IOT_CORE_RSA_Key",
+            "AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB",
+            "AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL",
+            "AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN",
+            "AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL",
+            "AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE")
+
+
+    def _make_iot_pkcs11_environment_variables(
+        self, softhsm_lib, env_cert, env_key, env_pkcs11_lib, env_pkcs11_token, env_pkcs11_pin,
+        env_pkcs11_private_label, env_pkcs11_cert):
+
+        if (self.env.shell.getenv(env_cert) != None and
+            self.env.shell.getenv(env_key) != None):
+
+            print (f"Setting IoT Core PKCS11 environment variables like {env_pkcs11_lib}...")
 
             # create a token
             self._exec_softhsm2_util(
@@ -112,7 +139,7 @@ class Pkcs11TestSetup(Builder.Action):
 
             # add private key to token
             self._exec_softhsm2_util(
-                '--import', self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_Key"),
+                '--import', self.env.shell.getenv(env_key),
                 '--slot', str(iot_slot),
                 '--label', 'my-test-iot-key',
                 '--id', 'BEEFCAFF', # ID is hex
@@ -122,14 +149,13 @@ class Pkcs11TestSetup(Builder.Action):
             self._exec_softhsm2_util('--show-slots', '--pin', '0000')
 
             # set env vars for tests
-            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB', softhsm_lib)
-            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL', 'my-test-iot-token')
-            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN', '0000')
-            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL', 'my-test-iot-key')
-            self._setenv('AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE', self.env.shell.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT"))
-
+            self._setenv(env_pkcs11_lib, softhsm_lib)
+            self._setenv(env_pkcs11_token, 'my-test-iot-token')
+            self._setenv(env_pkcs11_pin, '0000')
+            self._setenv(env_pkcs11_private_label, 'my-test-iot-key')
+            self._setenv(env_pkcs11_cert, self.env.shell.getenv(env_cert))
         else:
-            print("Skipping setting IoT Core PKCS11 environment variables...")
+            print(f"Skipping setting IoT Core PKCS11 environment variables like {env_pkcs11_lib}...")
 
     def _find_softhsm_lib(self):
         """Return path to SoftHSM2 shared lib, or None if not found"""

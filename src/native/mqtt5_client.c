@@ -1633,9 +1633,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
 
     /**
      * Push a new local frame so any local allocations we make are tied to it. Then we can pop it to free memory.
-     * * Reference: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html#PushLocalFrame
      * In Java JNI allocations here, we have 21 allocations so we need at least that many.
-     * According to this Stackoverflow, it should expand if we use more: https://stackoverflow.com/a/70946713
+     * It should expand if we use more.
      * (NOTE: We cannot get the exact here because we are pulling from Java objects and we have no way to know how many
      * that will need)
      */
@@ -1650,7 +1649,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
 
     struct aws_mqtt5_client_java_jni *java_client =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_client_java_jni));
-    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "java_client=%p: Initalizing MQTT5 client", (void *)java_client);
+    AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "java_client=%p: Initializing MQTT5 client", (void *)java_client);
     if (java_client == NULL) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "MQTT5 client new: could not initialize new client", AWS_ERROR_INVALID_STATE);
@@ -1667,6 +1666,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &client_options.host_name,
             false,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get host name from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
 
@@ -1680,6 +1681,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &port,
             false,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get port from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1795,6 +1798,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &session_behavior,
             true,
             &was_value_set) == AWS_OP_ERR) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get session behavior from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1807,11 +1812,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             jni_options,
             mqtt5_client_options_properties.options_get_extended_validation_and_flow_control_options_id,
             s_client_string,
-            "offline queue behavior",
+            "extended validation and flow control",
             mqtt5_client_extended_validation_and_flow_control_options.client_get_value_id,
             &extended_validation_and_flow_control_options,
             true,
             &was_value_set) == AWS_OP_ERR) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env,
+            "MQTT5 client new: Could not extended validation and flow control from options",
+            AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1830,6 +1839,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &offline_queue_enum,
             true,
             &was_value_set) == AWS_OP_ERR) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get offline queue behavior from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1847,6 +1858,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &retry_jitter_enum,
             true,
             &was_value_set) == AWS_OP_ERR) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get retry jitter mode from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1863,6 +1876,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &min_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get minimum reconnect delay from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1879,6 +1894,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &max_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get maximum reconnect delay from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1895,6 +1912,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &min_connected_time_to_reset_reconnect_delay_ms,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env,
+            "MQTT5 client new: Could not get minimum connected time to reset reconnect delay from options",
+            AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1911,6 +1932,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &ping_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get ping timeout from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1927,6 +1950,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &connack_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get ConnAck timeout from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -1943,6 +1968,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             &ack_timeout,
             true,
             &was_value_set) != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "MQTT5 client new: Could not get Ack timeout from options", AWS_ERROR_INVALID_STATE);
         goto clean_up;
     }
     if (was_value_set) {
@@ -2011,7 +2038,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
             AWS_ERROR_MQTT5_CLIENT_OPTIONS_VALIDATION);
         goto clean_up;
     }
-
     goto clean_up;
 
 clean_up:

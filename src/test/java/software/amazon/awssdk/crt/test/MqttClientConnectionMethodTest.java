@@ -36,9 +36,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
      * ============================================================
      */
 
-    // MQTT311 ConnDC_Cred_UC1 - MQTT311 connect with Java Keystore
+    /* MQTT311 ConnDC_Cred_UC1 - MQTT311 connect with Java Keystore */
     @Test
-    public void testDirectCredentialsJavaKeystore()
+    public void ConnDC_Cred_UC1()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -79,9 +79,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         }
     }
 
-    // MQTT311 ConnDC_Cred_UC2 - MQTT311 connect with PKCS12 Key
+    /* MQTT311 ConnDC_Cred_UC2 - MQTT311 connect with PKCS12 Key */
     @Test
-    public void testDirectCredentialsPKCS12()
+    public void ConnDC_Cred_UC2()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -105,9 +105,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             }
     }
 
-    // MQTT311 ConnDC_Cred_UC3 - MQTT311 connect with Windows Cert Store
+    /* MQTT311 ConnDC_Cred_UC3 - MQTT311 connect with Windows Cert Store */
     @Test
-    public void testDirectCredentialsWindowsCert()
+    public void ConnDC_Cred_UC3()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -130,9 +130,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             }
     }
 
-    // MQTT311 ConnDC_Cred_UC4 - MQTT311 connect with PKCS11
+    /* MQTT311 ConnDC_Cred_UC4 - MQTT311 connect with PKCS11 */
     @Test
-    public void testDirectCredentialsPKCS11()
+    public void ConnDC_Cred_UC4()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -170,15 +170,15 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
      * ============================================================
      */
 
-    // MQTT311 ConnWS_Cred_UC1 - static credentials connect
+    /* MQTT311 ConnWS_Cred_UC1 - static credentials connect */
     @Test
-    public void testWebsocketCredentialsStaticConnect()
+    public void ConnWS_Cred_UC1()
     {
         skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN != null);
-        Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
 
         StaticCredentialsProviderBuilder builder = new StaticCredentialsProviderBuilder();
         builder.withAccessKeyId(AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY.getBytes());
@@ -194,9 +194,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         }
     }
 
-    // MQTT311 ConnWS_Cred_UC2 - default credentials connect
+    /* MQTT311 ConnWS_Cred_UC2 - default credentials connect */
     @Test
-    public void testWebsocketCredentialsDefault()
+    public void ConnWS_Cred_UC2()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -221,10 +221,12 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
      * TODO: Make another test that supports logins
      */
     @Test
-    public void testWebsocketCredentialsCognito()
+    public void ConnWS_Cred_UC3()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
+        Assume.assumeTrue(AWS_TEST_COGNITO_ENDPOINT != null);
+        Assume.assumeTrue(AWS_TEST_COGNITO_IDENTITY != null);
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
@@ -246,9 +248,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         }
     }
 
-    // MQTT311 ConnWS_Cred_UC4 - X509 credentials connect
+    /* MQTT311 ConnWS_Cred_UC4 - X509 credentials connect */
     @Test
-    public void testWebsocketCredentialsX509()
+    public void ConnWS_Cred_UC4()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_ENDPOINT != null);
@@ -288,9 +290,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
      * ============================================================
      */
 
-    // MQTT311 ConnDC_UC1 - MQTT311 connect without authentication
+    /* MQTT311 ConnDC_UC1 - MQTT311 connect without authentication */
     @Test
-    public void testDirectConnectionMinimalConfiguration()
+    public void ConnDC_UC1()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_DIRECT_MQTT_HOST != null);
@@ -307,9 +309,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         close();
     }
 
-    // MQTT311 ConnDC_UC2 - MQTT311 connect with basic authentication
+    /* MQTT311 ConnDC_UC2 - MQTT311 connect with basic authentication */
     @Test
-    public void testDirectConnectionBasicConfiguration()
+    public void ConnDC_UC2()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST != null);
@@ -328,9 +330,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         close();
     }
 
-    // MQTT311 ConnDC_UC3 - MQTT311 connect with TLS
+    /* MQTT311 ConnDC_UC3 - MQTT311 connect with TLS */
     @Test
-    public void testDirectConnectionTLSConfiguration()
+    public void ConnDC_UC3()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_DIRECT_MQTT_TLS_HOST != null);
@@ -358,9 +360,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             }
     }
 
-    // MQTT311 ConnDC_UC4 - MQTT311 connect with mTLS
+    /* MQTT311 ConnDC_UC4 - MQTT311 connect with mTLS */
     @Test
-    public void testDirectConnectionMutualTLSConfiguration()
+    public void ConnDC_UC4()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
@@ -391,9 +393,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             }
     }
 
-    // MQTT311 ConnDC_UC5 - MQTT311 connect with proxy
+    /* MQTT311 ConnDC_UC5 - MQTT311 connect with proxy */
     @Test
-    public void testDirectConnectionTLSProxyConfiguration()
+    public void ConnDC_UC5()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_DIRECT_MQTT_TLS_HOST != null);
@@ -435,9 +437,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
      * ============================================================
      */
 
-    // MQTT311 ConnWS_UC1 - MQTT311 websocket minimal connect
+    /* MQTT311 ConnWS_UC1 - MQTT311 websocket minimal connect */
     @Test
-    public void testWebsocketConnectionMinimalConfiguration()
+    public void ConnWS_UC1()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_WS_MQTT_HOST != null);
@@ -455,9 +457,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         close();
     }
 
-    // MQTT311 ConnWS_UC2 - MQTT311 with basic auth
+    /* MQTT311 ConnWS_UC2 - MQTT311 with basic auth */
     @Test
-    public void testWebsocketConnectionBasicConfiguration()
+    public void ConnWS_UC2()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_WS_MQTT_BASIC_AUTH_HOST != null);
@@ -477,9 +479,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         close();
     }
 
-    // MQTT311 ConnWS_UC3 - MQTT311 with TLS
+    /* MQTT311 ConnWS_UC3 - MQTT311 with TLS */
     @Test
-    public void testWebsocketConnectionTLSConfiguration()
+    public void ConnWS_UC3()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_WS_MQTT_TLS_HOST != null);
@@ -506,9 +508,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         }
     }
 
-    // MQTT311 ConnWS_UC4 - MQTT311 with proxy
+    /* MQTT311 ConnWS_UC4 - MQTT311 with proxy */
     @Test
-    public void testWebsocketConnectionTLSProxyConfiguration()
+    public void ConnWS_UC4()
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_WS_MQTT_TLS_HOST != null);

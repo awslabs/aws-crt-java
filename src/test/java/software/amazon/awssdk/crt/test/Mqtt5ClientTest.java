@@ -8,14 +8,23 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import software.amazon.awssdk.crt.*;
+import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.credentials.CognitoCredentialsProvider.CognitoCredentialsProviderBuilder;
+import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
+import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider.StaticCredentialsProviderBuilder;
+import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider.X509CredentialsProviderBuilder;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
+import software.amazon.awssdk.crt.io.TlsContextPkcs11Options;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.mqtt5.*;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientOfflineQueueBehavior;
@@ -75,6 +84,43 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     private String mqtt5IoTCoreMqttKeyFile;
     private byte[] mqtt5IoTCoreMqttCertificateBytes;
     private byte[] mqtt5IoTCoreMqttKeyBytes;
+
+    // Endpoint/Host credentials
+    static final String AWS_TEST_MQTT5_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT5_IOT_CORE_HOST");
+    static final String AWS_TEST_MQTT5_IOT_CORE_REGION = System.getenv("AWS_TEST_MQTT5_IOT_CORE_REGION");
+    static final String AWS_TEST_MQTT5_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
+    static final String AWS_TEST_MQTT5_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
+    // Static credential related
+    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
+    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
+    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
+    // Cognito
+    static final String AWS_TEST_MQTT5_COGNITO_ENDPOINT = System.getenv("AWS_TEST_MQTT5_COGNITO_ENDPOINT");
+    static final String AWS_TEST_MQTT5_COGNITO_IDENTITY = System.getenv("AWS_TEST_MQTT5_COGNITO_IDENTITY");
+    // MQTT311 Keystore
+    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT");
+    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE");
+    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD");
+    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS");
+    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD");
+    // MQTT311 PKCS12
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY");
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD");
+    // MQTT311 PKCS11
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB");
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL");
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN");
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL");
+    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE");
+    // MQTT311 X509
+    static final String AWS_TEST_MQTT5_IOT_CORE_X509_CERT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_CERT");
+    static final String AWS_TEST_MQTT5_IOT_CORE_X509_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_KEY");
+    static final String AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT");
+    static final String AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS");
+    static final String AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME");
+    // MQTT311 Windows Cert Store
+    static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
+    static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE");
 
     private byte[] loadPemIntoBytes(String filepath) {
         byte[] retVal = null;
@@ -3654,6 +3700,435 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
         } catch (Exception ex) {
             fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * MQTT5 DIRECT IoT Core CONNECTION TEST CASES
+     * ============================================================
+     */
+
+    /* MQTT5 ConnDC_Cred_UC1 - MQTT5 connect with Java Keystore */
+    @Test
+    public void ConnDC_Cred_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD != null);
+
+        try {
+            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT);
+            java.io.FileInputStream keyStoreStream = new java.io.FileInputStream(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE);
+            keyStore.load(keyStoreStream, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD.toCharArray());
+            keyStoreStream.close();
+
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            try (
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsJavaKeystore(
+                    keyStore,
+                    AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS,
+                    AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, 8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(tlsContext);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* MQTT5 ConnDC_Cred_UC2 - MQTT5 connect with PKCS12 Key */
+    @Test
+    public void ConnDC_Cred_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD != null);
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            try (
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs12(
+                    AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
+                    AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, 8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(tlsContext);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* MQTT5 ConnDC_Cred_UC3 - MQTT5 connect with Windows Cert Store */
+    @Test
+    public void ConnDC_Cred_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE != null);
+
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            try (
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsWindowsCertStorePath(
+                    AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, 8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(tlsContext);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* MQTT5 ConnDC_Cred_UC4 - MQTT5 connect with PKCS11 */
+    @Test
+    public void ConnDC_Cred_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE != null);
+
+        try {
+            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB);
+            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);
+            pkcs11Options.withTokenLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL);
+            pkcs11Options.withUserPin(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN);
+            pkcs11Options.withPrivateKeyObjectLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL);
+            pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
+
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            try (
+                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(mqtt5IoTCoreMqttHost, 8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(tlsContext);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * ============================================================
+     * MQTT5 WEBSOCKET IoT Core CONNECTION TEST CASES
+     * ============================================================
+     */
+
+    /* MQTT5 ConnWS_Cred_UC1 - static credentials connect */
+    @Test
+    public void ConnWS_Cred_UC1() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN != null);
+
+        CredentialsProvider provider = null;
+        AwsSigningConfig signingConfig = new AwsSigningConfig();
+        Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
+
+        try {
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+                StaticCredentialsProviderBuilder credentialsBuilder = new StaticCredentialsProviderBuilder();
+                credentialsBuilder.withAccessKeyId(AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY.getBytes());
+                credentialsBuilder.withSecretAccessKey(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.getBytes());
+                credentialsBuilder.withSessionToken(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.getBytes());
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 443L);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+                builder.withTlsContext(tlsContext);
+
+                provider = credentialsBuilder.build();
+                signingConfig.setCredentialsProvider(provider);
+                signingConfig.setAlgorithm(AwsSigningAlgorithm.SIGV4);
+                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+                signingConfig.setRegion(AWS_TEST_MQTT5_IOT_CORE_REGION);
+                signingConfig.setService("iotdevicegateway");
+                signingConfig.setOmitSessionToken(true);
+                transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(signingConfig);
+
+                builder.withWebsocketHandshakeTransform(transformer);
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            fail(ex.getMessage());
+        } finally {
+            if (provider != null) {
+                provider.close();
+            }
+            if (signingConfig != null) {
+                signingConfig.close();
+            }
+            if (transformer != null) {
+                transformer.close();
+            }
+        }
+    }
+
+    /* MQTT5 ConnWS_Cred_UC2 - default credentials connect */
+    @Test
+    public void ConnWS_Cred_UC2() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
+
+        CredentialsProvider provider = null;
+        AwsSigningConfig signingConfig = new AwsSigningConfig();
+        Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
+
+        try {
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+                DefaultChainCredentialsProviderBuilder credentialsBuilder = new DefaultChainCredentialsProviderBuilder();
+                credentialsBuilder.withClientBootstrap(bootstrap);
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 443l);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+                builder.withTlsContext(tlsContext);
+
+                provider = credentialsBuilder.build();
+                signingConfig.setCredentialsProvider(provider);
+                signingConfig.setAlgorithm(AwsSigningAlgorithm.SIGV4);
+                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+                signingConfig.setRegion(AWS_TEST_MQTT5_IOT_CORE_REGION);
+                signingConfig.setService("iotdevicegateway");
+                signingConfig.setOmitSessionToken(true);
+                transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(signingConfig);
+
+                builder.withWebsocketHandshakeTransform(transformer);
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        } finally {
+            if (provider != null) {
+                provider.close();
+            }
+            if (signingConfig != null) {
+                signingConfig.close();
+            }
+            if (transformer != null) {
+                transformer.close();
+            }
+        }
+    }
+
+    /**
+     * MQTT5 ConnWS_Cred_UC3 - Cognito Identity credentials connect
+     * TODO: Make another test that supports logins
+     */
+    @Test
+    public void ConnWS_Cred_UC3() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_COGNITO_ENDPOINT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_COGNITO_IDENTITY != null);
+
+        CredentialsProvider provider = null;
+        AwsSigningConfig signingConfig = new AwsSigningConfig();
+        Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
+
+        try {
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions cognitoContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext cognitoContext = new TlsContext(cognitoContextOptions);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+                CognitoCredentialsProviderBuilder credentialsBuilder = new CognitoCredentialsProviderBuilder();
+                credentialsBuilder.withClientBootstrap(bootstrap);
+                credentialsBuilder.withTlsContext(cognitoContext);
+                credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_COGNITO_ENDPOINT);
+                credentialsBuilder.withIdentity(AWS_TEST_MQTT5_COGNITO_IDENTITY);
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 443l);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+                builder.withTlsContext(tlsContext);
+
+                provider = credentialsBuilder.build();
+                signingConfig.setCredentialsProvider(provider);
+                signingConfig.setAlgorithm(AwsSigningAlgorithm.SIGV4);
+                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+                signingConfig.setRegion(AWS_TEST_MQTT5_IOT_CORE_REGION);
+                signingConfig.setService("iotdevicegateway");
+                signingConfig.setOmitSessionToken(true);
+                transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(signingConfig);
+
+                builder.withWebsocketHandshakeTransform(transformer);
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        } finally {
+            if (provider != null) {
+                provider.close();
+            }
+            if (signingConfig != null) {
+                signingConfig.close();
+            }
+            if (transformer != null) {
+                transformer.close();
+            }
+        }
+    }
+
+    /* MQTT5 ConnWS_Cred_UC4 - X509 credentials connect */
+    @Test
+    public void ConnWS_Cred_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_CERT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME != null);
+
+        CredentialsProvider provider = null;
+        AwsSigningConfig signingConfig = new AwsSigningConfig();
+        Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
+
+        try {
+            try (
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions x509ContextOptions = TlsContextOptions.createWithMtlsFromPath(
+                    AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY);
+                TlsContext x509Context = new TlsContext(x509ContextOptions);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+            ) {
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+                X509CredentialsProviderBuilder credentialsBuilder = new X509CredentialsProviderBuilder();
+                credentialsBuilder.withClientBootstrap(bootstrap);
+                credentialsBuilder.withTlsContext(x509Context);
+                credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT);
+                credentialsBuilder.withRoleAlias(AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS);
+                credentialsBuilder.withThingName(AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
+
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 443l);
+                builder.withLifecycleEvents(events);
+                builder.withBootstrap(bootstrap);
+                builder.withTlsContext(tlsContext);
+
+                provider = credentialsBuilder.build();
+                signingConfig.setCredentialsProvider(provider);
+                signingConfig.setAlgorithm(AwsSigningAlgorithm.SIGV4);
+                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+                signingConfig.setRegion(AWS_TEST_MQTT5_IOT_CORE_REGION);
+                signingConfig.setService("iotdevicegateway");
+                signingConfig.setOmitSessionToken(true);
+                transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(signingConfig);
+
+                builder.withWebsocketHandshakeTransform(transformer);
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                    client.stop(disconnect.build());
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        } finally {
+            if (provider != null) {
+                provider.close();
+            }
+            if (signingConfig != null) {
+                signingConfig.close();
+            }
+            if (transformer != null) {
+                transformer.close();
+            }
         }
     }
 }

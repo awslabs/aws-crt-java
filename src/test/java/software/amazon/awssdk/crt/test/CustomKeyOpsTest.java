@@ -128,9 +128,9 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
         Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
-        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, false);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, false, false);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connectCustomKeyOps(keyOperationOptions);
@@ -147,9 +147,9 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
         Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
-        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, false);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, true, false);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connectCustomKeyOps(keyOperationOptions);
@@ -167,9 +167,9 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
         Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
-        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, false, true);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, false, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connectCustomKeyOps(keyOperationOptions);
@@ -186,9 +186,9 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_RSA_CERTIFICATE != null);
         Assume.assumeTrue(AWS_TEST_RSA_PRIVATEKEY != null);
-        Assume.assumeTrue(AWS_TEST_RSA_PKCS8_PRIVATEKEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY != null);
 
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_RSA_PKCS8_PRIVATEKEY, true, true);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, true, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
         try {
             connectCustomKeyOps(keyOperationOptions);

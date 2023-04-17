@@ -58,9 +58,10 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     // Key/Cert connection related
     static final String AWS_TEST_RSA_CERTIFICATE = System.getenv("AWS_TEST_RSA_CERTIFICATE");
     static final String AWS_TEST_RSA_PRIVATEKEY = System.getenv("AWS_TEST_RSA_PRIVATE_KEY");
-    static final String AWS_TEST_RSA_PKCS8_PRIVATEKEY = System.getenv("AWS_TEST_PKCS8_RSA_PRIVATE_KEY");
     static final String AWS_TEST_ECC_CERTIFICATE = System.getenv("AWS_TEST_ECC_CERTIFICATE");
     static final String AWS_TEST_ECC_PRIVATEKEY = System.getenv("AWS_TEST_ECC_PRIVATE_KEY");
+    // Custom Key Ops
+    static final String AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY = System.getenv("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY");
     // Cognito
     static final String AWS_TEST_COGNITO_ENDPOINT = System.getenv("AWS_TEST_COGNITO_ENDPOINT");
     static final String AWS_TEST_COGNITO_IDENTITY = System.getenv("AWS_TEST_COGNITO_IDENTITY");

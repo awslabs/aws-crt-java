@@ -110,7 +110,7 @@ class SetupCIFromFiles(Action):
                 #   'input_s3': <S3 URL Here>
                 if ('input_s3' in item):
                     try:
-                        tmp_file = tempfile.NamedTemporaryFile()
+                        tmp_file = tempfile.NamedTemporaryFile(delete=False)
                         tmp_file.flush()
                         self.tmp_file_storage.append(tmp_file)
                         tmp_s3_filepath = tmp_file.name
@@ -167,7 +167,7 @@ class SetupCIFromFiles(Action):
                 # Valid JSON:
                 #   'file_tmp': <whatever you want - its unused>
                 if ('file_tmp' in item):
-                    tmp_file = tempfile.NamedTemporaryFile()
+                    tmp_file = tempfile.NamedTemporaryFile(delete=False)
                     # lgtm [py/clear-text-storage-sensitive-data]
                     tmp_file.write(str.encode(environment_value))
                     tmp_file.flush()
@@ -265,11 +265,10 @@ class SetupCIFromFiles(Action):
         self.env_instance = env
 
         # Get the file(s)
-        # for file in self.env_instance.config.get('ci_environment_variable_files'):
-        for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"]: # in the real deal we'd get this from the builder config.
+        for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"]:
             # Is this an S3 file? If so, then download it to a temporary file and execute it there
             if (file.startswith("s3://")):
-                tmp_file = tempfile.NamedTemporaryFile()
+                tmp_file = tempfile.NamedTemporaryFile(delete=False)
                 tmp_file.flush()
                 self.tmp_file_storage.append(tmp_file)
                 tmp_s3_filepath = tmp_file.name

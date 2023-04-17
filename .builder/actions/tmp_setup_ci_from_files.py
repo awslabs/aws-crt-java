@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0.
 
 from builder.core.action import Action
+from builder.core.host import current_os, current_arch
 import os
 import pathlib
 import sys
@@ -16,13 +17,9 @@ class SetupCIFromFiles(Action):
     tmp_file_storage = []  # NOTE: This is needed to keep the tmp files alive
 
     def _is_same_os_as_string(self, os_string):
-        our_platform = ""
-        if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
+        our_platform = current_os()
+        if our_platform == "freebsd" or our_platform == "openbsd":
             our_platform = "linux"
-        elif sys.platform.startswith("windows") or sys.platform.startswith("cygwin"):
-            our_platform = "windows"
-        elif sys.platform.startswith("darwin"):
-            our_platform = "mac"
         return os_string == our_platform
 
     def _process_environment_variables(self, object_environment_variables):
@@ -74,8 +71,8 @@ class SetupCIFromFiles(Action):
 
                 # Calls 'assume_role' on the given IAM role ARN and puts the access key, secret access key, and
                 # session token in environment variables with the following names:
-                # * <environment name in file file>_ACCCESS_KEY = role access key
-                # * <environment name in file file>_SECRET_ACCCESS_KEY = role secret access key
+                # * <environment name in file file>_ACCESS_KEY = role access key
+                # * <environment name in file file>_SECRET_ACCESS_KEY = role secret access key
                 # * <environment name in file file>_SESSION_TOKEN = role session token
                 # It will assign environment_value to "SUCCESS".
                 #
@@ -146,8 +143,9 @@ class SetupCIFromFiles(Action):
                 # Valid JSON:
                 #   'os_arm_skip': <any value - the existence is what is checked>
                 if ('os_arm_skip' in item):
-                    if os.uname()[4][:3] == 'arm':
-                        print(f"[SKIP] {environment_name} [OS No ARM]: OS is ARM. Skipping...")
+                    our_arch = current_arch()
+                    if our_arch != "x64" and our_arch != "x86":
+                        print(f"[SKIP] {environment_name} [OS No ARM]: OS is ARM (or at least not 'x64' or 'x86'). Skipping...")
                         continue
 
                 # Checks to see if the platform is Codebuild. If the platform is NOT codebuild, then it skips.
@@ -238,16 +236,22 @@ class SetupCIFromFiles(Action):
             sys.exit(f"[FAIL]: Exception ocurred trying parse XML file with name {xml_filepath}. Exception: {ex}")
 
     def copy_s3_file(self, s3_url, filename):
-        cmd = ['aws', '--region', 'us-east-1', 's3', 'cp',
-               s3_url, filename]
-        self.env_instance.shell.exec(*cmd, check=True, quiet=True)
+        try:
+            cmd = ['aws', '--region', 'us-east-1', 's3', 'cp',
+                s3_url, filename]
+            self.env_instance.shell.exec(*cmd, check=True, quiet=True)
+        except:
+            raise ValueError("Exception occurred trying to get S3 file from bucket")
 
     def get_arn_role_credentials(self, role_arn):
-        cmd = ["aws", "--region", "us-east-1", "sts", "assume-role",
-               "--role-arn", role_arn, "--role-session", "CI_Test_Run"]
-        result = self.env_instance.shell.exec(*cmd, check=True, quiet=True)
-        result_json = json.loads(result.output)
-        return [result_json["Credentials"]["AccessKeyId"], result_json["Credentials"]["SecretAccessKey"], result_json["Credentials"]["SessionToken"]]
+        try:
+            cmd = ["aws", "--region", "us-east-1", "sts", "assume-role",
+                "--role-arn", role_arn, "--role-session", "CI_Test_Run"]
+            result = self.env_instance.shell.exec(*cmd, check=True, quiet=True)
+            result_json = json.loads(result.output)
+            return [result_json["Credentials"]["AccessKeyId"], result_json["Credentials"]["SecretAccessKey"], result_json["Credentials"]["SessionToken"]]
+        except:
+            raise ValueError("Exception occurred trying to get role credentials from ARN")
 
     def run(self, env):
         # Get the executing folder
@@ -269,7 +273,11 @@ class SetupCIFromFiles(Action):
                 tmp_file.flush()
                 self.tmp_file_storage.append(tmp_file)
                 tmp_s3_filepath = tmp_file.name
-                self.copy_s3_file(file, tmp_s3_filepath)
+                try:
+                    self.copy_s3_file(file, tmp_s3_filepath)
+                except:
+                    print(f"[SKIP] Unable to get S3 file given [{file}]. Skipping...")
+                    continue
                 if (os.path.exists(tmp_s3_filepath)):
                     # Is it a JSON file or XML file?
                     if (file.endswith(".json")):
@@ -281,13 +289,16 @@ class SetupCIFromFiles(Action):
                         self._process_xml_file(tmp_s3_filepath)
                         print("Processed XML file.")
                     else:
-                        sys.exit(f"Cannot parse file: S3 file given [{file}] has an unknown extension!")
+                        print(f"[SKIP] S3 file given [{file}] has an unknown extension. Skipping...")
+                        continue
                 else:
-                    sys.exit(f"Cannot parse environment file: Error processing temporary file from S3")
+                    print(f"[SKIP] Unable to parse S3 file given [{file}]. Skipping...")
+                    continue
             # otherwise it's just a normal file, so execute it
             else:
                 if (os.path.exists(file) == False):
-                    sys.exit(f"Cannot parse file: file given [{file}] does not point to a valid file")
+                    print(f"[SKIP] file given [{file}] does not point to a valid file. Skipping...")
+                    continue
 
                 # Is it a JSON file or XML file?
                 if (file.endswith(".json")):
@@ -299,4 +310,5 @@ class SetupCIFromFiles(Action):
                     self._process_xml_file(file)
                     print("Processed XML file.")
                 else:
-                    sys.exit(f"Cannot parse file: file given [{file}] has an unknown extension!")
+                    print(f"[SKIP] file given [{file}] has an unknown extension. Skipping...")
+                    continue

@@ -17,7 +17,6 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.io.TlsContextCustomKeyOperationOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.io.IOException;
@@ -27,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 class MissingCredentialsException extends RuntimeException {
@@ -54,6 +54,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String AWS_TEST_ECC_PRIVATEKEY = System.getenv("AWS_TEST_ECC_PRIVATE_KEY");
     // Custom Key Ops
     static final String AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY = System.getenv("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY");
+    static final String AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT = System.getenv("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT");
     // Cognito
     static final String AWS_TEST_COGNITO_ENDPOINT = System.getenv("AWS_TEST_COGNITO_ENDPOINT");
     static final String AWS_TEST_COGNITO_IDENTITY = System.getenv("AWS_TEST_COGNITO_IDENTITY");
@@ -322,6 +323,16 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
 
     boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)
     {
+        try {
+            return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions);
+        } catch (Exception ex) {
+            fail("Exception during connect: " + ex.toString());
+        }
+        return false;
+    }
+
+    boolean connectDirectWithConfigThrows(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
+    {
         try(EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
@@ -363,17 +374,16 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                     config.setPassword(password);
                 }
 
+                try {
                 connection = new MqttClientConnection(config);
                 CompletableFuture<Boolean> connected = connection.connect();
                 connected.get();
-
-                client.close();
+                } finally {
+                    client.close();
+                }
                 return true;
             }
-        } catch (Exception ex) {
-            fail("Exception during connect: " + ex.toString());
         }
-        return false;
     }
 
     boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions)
@@ -448,56 +458,6 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             }
         }
         return result;
-    }
-
-    boolean connectCustomKeyOps(TlsContextCustomKeyOperationOptions keyOperationOptions) throws Exception {
-        return connectWithCustomKeyOps(true, 0, 60000, keyOperationOptions);
-    }
-
-    boolean connectWithCustomKeyOps(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, TlsContextCustomKeyOperationOptions keyOperationOptions) throws Exception {
-        Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
-
-        // Add the certificate
-        keyOperationOptions.withCertificateFilePath(pathToCert.toString());
-
-        try(EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);) {
-
-            int port = TEST_PORT;
-            if (caRoot != null) {
-                tlsOptions.overrideDefaultTrustStore(caRoot);
-            }
-            if (TlsContextOptions.isAlpnSupported()) {
-                tlsOptions.withAlpnList("x-amzn-mqtt-ca");
-                port = TEST_PORT_ALPN;
-            }
-
-            cleanSession = true; // only true is supported right now
-            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-            try (TlsContext tls = new TlsContext(tlsOptions);
-                 MqttClient client = new MqttClient(bootstrap, tls);
-                 MqttConnectionConfig config = new MqttConnectionConfig()) {
-
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(iotEndpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-
-                connection = new MqttClientConnection(config);
-
-                CompletableFuture<Boolean> connected = connection.connect();
-                connected.get();
-                return true;
-            }
-        } catch (Exception ex) {
-            connection.close();
-            throw ex;
-        }
     }
 
     void disconnect() {

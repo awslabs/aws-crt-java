@@ -47,7 +47,7 @@ class WindowsCertTestSetup(Builder.Action):
         import_result = self.env.shell.exec("powershell.exe", import_pfx_arguments, check=True)
 
         # Get the certificate thumbprint from the output:
-        import_pfx_output = str(import_result["output"])
+        import_pfx_output = str(import_result.output)
         # We know the Thumbprint will always be 40 characters long, so we can find it using that
         # TODO: Extract this using a better, more fool-proof method
         thumbprint = ""

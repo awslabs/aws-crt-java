@@ -261,7 +261,8 @@ class SetupCIFromFiles(Action):
         self.env_instance = env
 
         # Get the file(s)
-        for file in self.env_instance.config.get('CI_ENVIRONMENT_VARIABLE_FILES'):
+        # for file in self.env_instance.config.get('CI_ENVIRONMENT_VARIABLE_FILES'):
+        for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"]: # in the real deal we'd get this from the builder config.
             # Is this an S3 file? If so, then download it to a temporary file and execute it there
             if (file.startswith("s3://")):
                 tmp_file = tempfile.NamedTemporaryFile()

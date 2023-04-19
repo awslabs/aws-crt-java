@@ -1469,6 +1469,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Assume.assumeTrue(getMinimumDirectKey() != null);
                 tlsContext = getIoTCoreTlsContext();
                 builder.withTlsContext(tlsContext);
+                builderTwo.withTlsContext(tlsContext);
             }
 
             try (Mqtt5Client clientOne = new Mqtt5Client(builder.build());

@@ -67,31 +67,9 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env);
 int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix);
 
 /*******************************************************************************
- * aws_java_byte_array_new - Creates a new Java byte[]
- ******************************************************************************/
-jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);
-
-/*******************************************************************************
- * aws_copy_java_byte_array_to_native_array - Copies from a Java byte[] to a Native byte array.
- * Returns false if ArrayIndexOutOfBoundsException occurred.
- ******************************************************************************/
-bool aws_copy_java_byte_array_to_native_array(JNIEnv *env, jbyteArray src, uint8_t *dst, size_t amount);
-
-/*******************************************************************************
- * aws_copy_java_byte_array_to_native_array - Copies from a Native byte array to a Java byte[]
- * Returns false if ArrayIndexOutOfBoundsException occurred.
- ******************************************************************************/
-bool aws_copy_native_array_to_java_byte_array(JNIEnv *env, jbyteArray dst, uint8_t *src, size_t amount);
-
-/*******************************************************************************
  * aws_jni_byte_array_from_cursor - Creates a jbyteArray from a aws_byte_cursor.
  ******************************************************************************/
 jbyteArray aws_jni_byte_array_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
-
-/*******************************************************************************
- * jni_byte_buffer_copy_from_cursor - Creates a Java ByteBuffer from a native aws_byte_cursor
- ******************************************************************************/
-jobject aws_jni_byte_buffer_copy_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data);
 
 /*******************************************************************************
  * aws_jni_string_from_cursor - Creates a Java String from a cursor.
@@ -104,11 +82,6 @@ jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *na
  * This function never returns NULL. It produces a fatal assertion if the allocator is out of memory.
  ******************************************************************************/
 jstring aws_jni_string_from_string(JNIEnv *env, const struct aws_string *string);
-
-/*******************************************************************************
- * aws_jni_native_byte_buf_from_java_direct_byte_buf - Populates a aws_byte_buf from a Java DirectByteBuffer
- ******************************************************************************/
-void aws_jni_native_byte_buf_from_java_direct_byte_buf(JNIEnv *env, jobject directBuf, struct aws_byte_buf *dst);
 
 /*******************************************************************************
  * aws_jni_direct_byte_buffer_from_raw_ptr - Creates a Java Direct ByteBuffer from raw pointer and length
@@ -161,13 +134,6 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
  * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
-
-/*******************************************************************************
- * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the
- * direct byte buffer. Note that the buffer is not reference pinned, so the cursor
- * is only valid for the current JNI call
- ******************************************************************************/
-struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer);
 
 /*******************************************************************************
  * aws_jni_new_string_from_jstring - Creates a new aws_string from the UTF-8

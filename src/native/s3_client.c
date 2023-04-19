@@ -328,6 +328,8 @@ static int s_on_s3_meta_request_body_callback(
     if (jni_payload == NULL) {
         /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
         aws_jni_check_and_clear_exception(env);
+        aws_jni_release_thread_env(callback_data->jvm, env);
+        /********** JNI ENV RELEASE **********/
         return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
     }
 

@@ -1455,12 +1455,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(eventsOne);
             builder.withConnectOptions(connectOptions.build());
-            builder.withConnackTimeoutMs(10000); // 10 seconds
+            builder.withConnackTimeoutMs(10000l); // 10 seconds
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builderTwo.withLifecycleEvents(eventsTwo);
             builderTwo.withConnectOptions(connectOptions.build());
-            builderTwo.withConnackTimeoutMs(10000); // 10 seconds
+            builderTwo.withConnackTimeoutMs(10000l); // 10 seconds
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;
@@ -1513,12 +1513,12 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builder.withLifecycleEvents(eventsOne);
             builder.withConnectOptions(connectOptions.build());
-            builder.withConnackTimeoutMs(10000); // 10 seconds
+            builder.withConnackTimeoutMs(10000l); // 10 seconds
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
             builderTwo.withLifecycleEvents(eventsTwo);
             builderTwo.withConnectOptions(connectOptions.build());
-            builderTwo.withConnackTimeoutMs(10000); // 10 seconds
+            builderTwo.withConnackTimeoutMs(10000l); // 10 seconds
 
             // Only needed for IoT Core
             TlsContext tlsContext = null;

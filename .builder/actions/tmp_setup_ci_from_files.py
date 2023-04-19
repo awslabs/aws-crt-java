@@ -8,7 +8,6 @@ import pathlib
 import sys
 import json
 import tempfile
-import xml.etree.cElementTree as xml
 
 
 class SetupCIFromFiles(Action):
@@ -26,6 +25,12 @@ class SetupCIFromFiles(Action):
         print("Starting to process all environment variables in file...")
 
         for item in object_environment_variables:
+
+            # Is this an array/list? If so, then skip as there is no environment variable format
+            # that is defined as a list currently.
+            if isinstance(item, list):
+                print("[SKIP]: Skipping comment...")
+                continue
 
             ############################################################
             # PRE-PROCESSING
@@ -206,39 +211,15 @@ class SetupCIFromFiles(Action):
         try:
             json_data = json.loads(json_file_data_raw)
         except Exception as ex:
-            sys.exit(f"[FAIL]: Exception ocurred trying parson JSON file with name {json_filepath}. Exception {ex}")
+            sys.exit(f"[FAIL]: Exception ocurred trying parson JSON file with name {json_filepath}")
 
         # Process Environment Variables
         self._process_environment_variables(json_data)
 
-    def _process_xml_file(self, xml_filepath):
-        try:
-            # Open the XML file
-            xml_filepath_abs = pathlib.Path(xml_filepath).resolve()
-            xml_file_data_raw = ""
-            with open(xml_filepath_abs, "r") as xml_file:
-                xml_file_data_raw = xml_file.read()
-            # Load the XML file
-            xml_data = xml.fromstring(xml_file_data_raw)
-
-            # Convert to a list of dictionaries so it processes like JSON
-            convert_list = []
-            for element in xml_data:
-                item = {}
-                for sub_item in element:
-                    item[sub_item.tag] = sub_item.text
-                convert_list.append(item)
-
-            # Process Environment Variables
-            self._process_environment_variables(convert_list)
-
-        except Exception as ex:
-            sys.exit(f"[FAIL]: Exception ocurred trying parse XML file with name {xml_filepath}. Exception: {ex}")
-
     def copy_s3_file(self, s3_url, filename):
         try:
             cmd = ['aws', '--region', 'us-east-1', 's3', 'cp',
-                s3_url, filename]
+                   s3_url, filename]
             self.env_instance.shell.exec(*cmd, check=True, quiet=True)
         except:
             raise ValueError("Exception occurred trying to get S3 file from bucket")
@@ -246,7 +227,7 @@ class SetupCIFromFiles(Action):
     def get_arn_role_credentials(self, role_arn):
         try:
             cmd = ["aws", "--region", "us-east-1", "sts", "assume-role",
-                "--role-arn", role_arn, "--role-session", "CI_Test_Run"]
+                   "--role-arn", role_arn, "--role-session", "CI_Test_Run"]
             result = self.env_instance.shell.exec(*cmd, check=True, quiet=True)
             result_json = json.loads(result.output)
             return [result_json["Credentials"]["AccessKeyId"], result_json["Credentials"]["SecretAccessKey"], result_json["Credentials"]["SessionToken"]]
@@ -265,7 +246,7 @@ class SetupCIFromFiles(Action):
         self.env_instance = env
 
         # Get the file(s)
-        for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"]:
+        for file in ["s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.json"]: # TMP - hard code the JSON S3 URL
             # Is this an S3 file? If so, then download it to a temporary file and execute it there
             if (file.startswith("s3://")):
                 tmp_file = tempfile.NamedTemporaryFile(delete=False)
@@ -283,10 +264,6 @@ class SetupCIFromFiles(Action):
                         print("Processing JSON file...")
                         self._process_json_file(tmp_s3_filepath)
                         print("Processed JSON file.")
-                    elif (file.endswith(".xml")):
-                        print("Processing XML file...")
-                        self._process_xml_file(tmp_s3_filepath)
-                        print("Processed XML file.")
                     else:
                         print(f"[SKIP] S3 file given [{file}] has an unknown extension. Skipping...")
                         continue
@@ -304,10 +281,6 @@ class SetupCIFromFiles(Action):
                     print("Processing JSON file...")
                     self._process_json_file(file)
                     print("Processed JSON file.")
-                elif (file.endswith(".xml")):
-                    print("Processing XML file...")
-                    self._process_xml_file(file)
-                    print("Processed XML file.")
                 else:
                     print(f"[SKIP] file given [{file}] has an unknown extension. Skipping...")
                     continue

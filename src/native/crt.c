@@ -42,7 +42,7 @@ static struct aws_allocator *s_init_allocator(void) {
 }
 
 static struct aws_allocator *s_allocator = NULL;
-struct aws_allocator *aws_jni_get_allocator() {
+struct aws_allocator *aws_jni_get_allocator(void) {
     if (AWS_UNLIKELY(s_allocator == NULL)) {
         s_allocator = s_init_allocator();
     }

@@ -6,10 +6,14 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.ArrayList;
@@ -27,7 +31,7 @@ public class PublishTest extends MqttClientConnectionFixture {
     public PublishTest() {
     }
 
-    final String TEST_TOPIC = "publish/me/senpai" + (UUID.randomUUID()).toString();
+    final String TEST_TOPIC = "publish/me/senpai/" + (UUID.randomUUID()).toString();
     static final String TEST_PAYLOAD = "PUBLISH ME! SHINY AND CHROME!";
     static final String EMPTY_PAYLOAD = "";
 
@@ -80,30 +84,78 @@ public class PublishTest extends MqttClientConnectionFixture {
     @Test
     public void testRoundTrip() {
         skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(TEST_PAYLOAD.getBytes());
-        disconnect();
-        close();
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+                TlsContext context = new TlsContext(contextOptions);)
+            {
+                connectDirectWithConfig(
+                    context,
+                    AWS_TEST_MQTT311_IOT_CORE_HOST,
+                    8883,
+                    null,
+                    null,
+                    null);
+                subscribe();
+                publishAndCheck(TEST_PAYLOAD.getBytes());
+                disconnect();
+                close();
+            }
     }
 
     @Test
     public void testEmptyRoundTrip() {
         skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(EMPTY_PAYLOAD.getBytes());
-        disconnect();
-        close();
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+                TlsContext context = new TlsContext(contextOptions);)
+            {
+                connectDirectWithConfig(
+                    context,
+                    AWS_TEST_MQTT311_IOT_CORE_HOST,
+                    8883,
+                    null,
+                    null,
+                    null);
+                subscribe();
+                publishAndCheck(EMPTY_PAYLOAD.getBytes());
+                disconnect();
+                close();
+            }
     }
 
     @Test
     public void testNullRoundTrip() {
         skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(null);
-        disconnect();
-        close();
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+                TlsContext context = new TlsContext(contextOptions);)
+            {
+                connectDirectWithConfig(
+                    context,
+                    AWS_TEST_MQTT311_IOT_CORE_HOST,
+                    8883,
+                    null,
+                    null,
+                    null);
+                subscribe();
+                publishAndCheck(null);
+                disconnect();
+                close();
+            }
     }
 };

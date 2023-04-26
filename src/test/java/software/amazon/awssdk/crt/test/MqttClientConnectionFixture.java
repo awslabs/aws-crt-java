@@ -5,10 +5,8 @@
 
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Assume;
 import static org.junit.Assert.*;
 
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -16,17 +14,11 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 class MissingCredentialsException extends RuntimeException {
@@ -81,6 +73,8 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String AWS_TEST_MQTT311_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT311_IOT_CORE_HOST");
     static final String AWS_TEST_MQTT311_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT");
     static final String AWS_TEST_MQTT311_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY");
+    static final String AWS_TEST_MQTT311_IOT_CORE_ECC_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_ECC_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_ECC_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_ECC_KEY");
     // MQTT311 Proxy
     static final String AWS_TEST_MQTT311_PROXY_HOST = System.getenv("AWS_TEST_MQTT311_PROXY_HOST");
     static final String AWS_TEST_MQTT311_PROXY_PORT = System.getenv("AWS_TEST_MQTT311_PROXY_PORT");
@@ -123,202 +117,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     String caRoot = null;
     String iotEndpoint = null;
 
-    enum AUTH_KEY_TYPE {
-        RSA,
-        ECC
-    }
-
     Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
-
     protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
         this.connectionConfigTransformer = connectionConfigTransformer;
     }
 
-    private boolean findCredentials(AUTH_KEY_TYPE key_type) {
-        CrtTestContext ctx = getContext();
-
-        // For each parameter, check the context first, then check the file system/system properties
-        try {
-            if (ctx.iotCARoot == null) {
-                pathToCa = AWS_TEST_ROOTCA != null ? Paths.get(AWS_TEST_ROOTCA) : null;
-                if (pathToCa == null || !pathToCa.toFile().exists()) {
-                    throw new MissingCredentialsException("Root CA could not be found at " + pathToCa);
-                }
-                ctx.iotCARoot = Files.readAllBytes(pathToCa);
-            }
-            caRoot = new String(ctx.iotCARoot);
-
-            if (ctx.iotEndpoint == null && AWS_TEST_ENDPOINT != null) {
-                ctx.iotEndpoint = AWS_TEST_ENDPOINT;
-            }
-            iotEndpoint = ctx.iotEndpoint;
-
-            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientCertificate == null) {
-                pathToCert = AWS_TEST_RSA_CERTIFICATE != null? Paths.get(AWS_TEST_RSA_CERTIFICATE) : null;
-                if (pathToCert == null || pathToCert.toString().equals("")) {
-                    throw new MissingCredentialsException("Certificate not provided");
-                }
-                if (!pathToCert.toFile().exists()) {
-                    throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
-                }
-                ctx.iotClientCertificate = Files.readAllBytes(pathToCert);
-            }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccCertificate == null) {
-                pathToCert = AWS_TEST_ECC_CERTIFICATE != null? Paths.get(AWS_TEST_ECC_CERTIFICATE) : null;
-                if (pathToCert == null || pathToCert.toString().equals("")) {
-                    throw new MissingCredentialsException("Certificate not provided");
-                }
-                if (!pathToCert.toFile().exists()) {
-                    throw new MissingCredentialsException("Certificate could not be found at " + pathToCert);
-                }
-                ctx.iotClientEccCertificate = Files.readAllBytes(pathToCert);
-            }
-
-            if (key_type == AUTH_KEY_TYPE.RSA && ctx.iotClientPrivateKey == null) {
-                pathToKey = AWS_TEST_RSA_PRIVATEKEY != null? Paths.get(AWS_TEST_RSA_PRIVATEKEY) : null;
-                if (pathToKey == null || pathToKey.toString().equals("")) {
-                    throw new MissingCredentialsException("Private key not provided");
-                }
-                if (!pathToKey.toFile().exists()) {
-                    throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
-                }
-                ctx.iotClientPrivateKey = Files.readAllBytes(pathToKey);
-            }
-            else if (key_type == AUTH_KEY_TYPE.ECC && ctx.iotClientEccPrivateKey == null) {
-                pathToKey = AWS_TEST_ECC_PRIVATEKEY != null? Paths.get(AWS_TEST_ECC_PRIVATEKEY) : null;
-                if (pathToKey == null || pathToKey.toString().equals("")) {
-                    throw new MissingCredentialsException("Private key not provided");
-                }
-                if (!pathToKey.toFile().exists()) {
-                    throw new MissingCredentialsException("Private key could not be found at " + pathToKey);
-                }
-                ctx.iotClientEccPrivateKey = Files.readAllBytes(pathToKey);
-            }
-
-            if( key_type == AUTH_KEY_TYPE.ECC)
-            {
-                certificatePem = new String(ctx.iotClientEccCertificate);
-                privateKeyPem = new String(ctx.iotClientEccPrivateKey);
-            }
-            else if(key_type == AUTH_KEY_TYPE.RSA)
-            {
-                certificatePem = new String(ctx.iotClientCertificate);
-                privateKeyPem = new String(ctx.iotClientPrivateKey);
-            }
-
-            return true;
-        } catch (InvalidPathException ex) {
-            return false;
-        } catch (MissingCredentialsException ex) {
-            if (AWS_TEST_IS_CI) {
-                throw ex;
-            }
-            return false;
-        } catch (IOException ex) {
-            return false;
-        }
-    }
-
-    public TlsContext createIotClientTlsContext() {
-        return createTlsContextOptions(getContext().iotCARoot);
-    }
-
-    public TlsContext createIotClientTlsContext(TlsContextOptions tlsOpts) {
-        return new TlsContext(configureTlsContextOptions(tlsOpts, getContext().iotCARoot));
+    Consumer<MqttMessage> connectionMessageTransfomer = null;
+    protected void setConnectionMessageTransformer(Consumer<MqttMessage> connectionMessageTransfomer) {
+        this.connectionMessageTransfomer = connectionMessageTransfomer;
     }
 
     MqttClientConnectionFixture() {
-    }
-
-    boolean connect() {
-        return connect(false, 0, 0, null);
-    }
-
-    boolean connect(Consumer<MqttMessage> anyMessageHandler) {
-        return connect(false, 0, 0, anyMessageHandler);
-    }
-
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout) {
-        return connect(cleanSession, keepAliveSecs, protocolOperationTimeout, null);
-    }
-
-    boolean connectECC() {
-        return connectWithKeyType(false, 0, 0, null, AUTH_KEY_TYPE.ECC);
-    }
-
-    boolean connectDirect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
-    {
-        MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
-            @Override
-            public void onConnectionResumed(boolean sessionPresent) {
-                System.out.println("Connection resumed");
-            }
-
-            @Override
-            public void onConnectionInterrupted(int errorCode) {
-                if (!disconnecting) {
-                    System.out.println(
-                            "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
-                }
-            }
-        };
-
-        try(EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtls(certificatePem, privateKeyPem);) {
-
-            int port = TEST_PORT;
-            if (caRoot != null) {
-                tlsOptions.overrideDefaultTrustStore(caRoot);
-            }
-            if (TlsContextOptions.isAlpnSupported()) {
-                tlsOptions.withAlpnList("x-amzn-mqtt-ca");
-                port = TEST_PORT_ALPN;
-            }
-
-            cleanSession = true; // only true is supported right now
-            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-            try (TlsContext tls = new TlsContext(tlsOptions);
-                 MqttClient client = new MqttClient(bootstrap, tls);
-                 MqttConnectionConfig config = new MqttConnectionConfig()) {
-
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(iotEndpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-
-                if (connectionConfigTransformer != null) {
-                    connectionConfigTransformer.accept(config);
-                }
-
-                connection = new MqttClientConnection(config);
-                if (anyMessageHandler != null) {
-                    connection.onMessage(anyMessageHandler);
-                }
-
-                CompletableFuture<Boolean> connected = connection.connect();
-                connected.get();
-                return true;
-            }
-        } catch (Exception ex) {
-            fail("Exception during connect: " + ex.toString());
-        }
-        return false;
-    }
-
-    boolean connect(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler)
-    {
-        Assume.assumeTrue(findCredentials(AUTH_KEY_TYPE.RSA));
-        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
-    }
-
-    boolean connectWithKeyType(boolean cleanSession, int keepAliveSecs, int protocolOperationTimeout, Consumer<MqttMessage> anyMessageHandler, AUTH_KEY_TYPE type) {
-        Assume.assumeTrue(findCredentials(type));
-        return connectDirect(cleanSession,keepAliveSecs,protocolOperationTimeout, anyMessageHandler);
     }
 
     boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)
@@ -374,10 +183,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                     config.setPassword(password);
                 }
 
+                if (connectionConfigTransformer != null) {
+                    connectionConfigTransformer.accept(config);
+                }
+
                 try {
-                connection = new MqttClientConnection(config);
-                CompletableFuture<Boolean> connected = connection.connect();
-                connected.get();
+                    connection = new MqttClientConnection(config);
+                    if (connectionMessageTransfomer != null) {
+                        connection.onMessage(connectionMessageTransfomer);
+                    }
+                    CompletableFuture<Boolean> connected = connection.connect();
+                    connected.get();
                 } finally {
                     client.close();
                 }
@@ -432,6 +248,10 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                     config.setHttpProxyOptions(httpProxyOptions);
                 }
 
+                if (connectionConfigTransformer != null) {
+                    connectionConfigTransformer.accept(config);
+                }
+
                 // Make the websocket transformer
                 if (credentialsProvider != null) {
                     signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
@@ -446,7 +266,9 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 {
                     config.setWebsocketHandshakeTransform(transformer);
                     connection = new MqttClientConnection(config);
-
+                    if (connectionMessageTransfomer != null) {
+                        connection.onMessage(connectionMessageTransfomer);
+                    }
                     CompletableFuture<Boolean> connected = connection.connect();
                     connected.get();
                     result = true;

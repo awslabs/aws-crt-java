@@ -95,8 +95,8 @@ public class TlsContextOptionsTest extends CrtTestFixture {
             + "54irVW5mNUDcA8s9+DloeTlUlJIr8J/RADC9rpqHLaZzcdvpIMhVsw==\n"
             + "-----END RSA PRIVATE KEY-----";
 
-    static final String TEST_CERT_PATH_PROPERTY = "certificate";
-    static final String TEST_KEY_PATH_PROPERTY = "privatekey";
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY");
 
     // Skip test if system property, or the file it describes, cannot be found
     private String getPathStringFromEnvironmentVariable(String environmentVariable) {
@@ -180,11 +180,11 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     @Test
     public void testMtlsFromPath() {
         skipIfNetworkUnavailable();
-        String certPath = getPathStringFromEnvironmentVariable(TEST_CERT_PATH_PROPERTY);
-        String keyPath = getPathStringFromEnvironmentVariable(TEST_KEY_PATH_PROPERTY);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
 
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.initMtlsFromPath(certPath, keyPath);
+            options.initMtlsFromPath(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
             try (TlsContext tls = new TlsContext(options)) {
                 assertNotNull(tls);
             } catch (Exception ex) {
@@ -199,11 +199,11 @@ public class TlsContextOptionsTest extends CrtTestFixture {
     @Test
     public void testMtlsFromBadPath() {
         skipIfNetworkUnavailable();
-        String certPath = getPathStringFromEnvironmentVariable(TEST_CERT_PATH_PROPERTY);
-        String keyPath = getPathStringFromEnvironmentVariable(TEST_KEY_PATH_PROPERTY);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
 
-        certPath = certPath + ".not.valid.path";
-        keyPath = keyPath + ".not.valid.path";
+        String certPath = AWS_TEST_MQTT311_IOT_CORE_RSA_CERT + ".not.valid.path";
+        String keyPath = AWS_TEST_MQTT311_IOT_CORE_RSA_KEY + ".not.valid.path";
 
         boolean successfullyCreatedTlsContext = false;
 

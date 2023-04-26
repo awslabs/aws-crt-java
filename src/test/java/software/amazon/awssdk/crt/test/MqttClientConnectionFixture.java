@@ -33,23 +33,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     private boolean disconnecting = false;
 
     static final boolean AWS_TEST_IS_CI = System.getenv("AWS_TEST_IS_CI") != null;
-    static final String AWS_TEST_ENDPOINT = System.getenv("AWS_TEST_ENDPOINT");
-    static final String AWS_TEST_ROOTCA = System.getenv("AWS_TEST_ROOT_CA");
+    static final String AWS_TEST_MQTT311_ROOTCA = System.getenv("AWS_TEST_MQTT311_ROOT_CA");
     // Static credential related
     static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY");
     static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
     static final String AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN = System.getenv("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN");
-    // Key/Cert connection related
-    static final String AWS_TEST_RSA_CERTIFICATE = System.getenv("AWS_TEST_RSA_CERTIFICATE");
-    static final String AWS_TEST_RSA_PRIVATEKEY = System.getenv("AWS_TEST_RSA_PRIVATE_KEY");
-    static final String AWS_TEST_ECC_CERTIFICATE = System.getenv("AWS_TEST_ECC_CERTIFICATE");
-    static final String AWS_TEST_ECC_PRIVATEKEY = System.getenv("AWS_TEST_ECC_PRIVATE_KEY");
     // Custom Key Ops
     static final String AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY = System.getenv("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY");
     static final String AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT = System.getenv("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT");
-    // Cognito
-    static final String AWS_TEST_COGNITO_ENDPOINT = System.getenv("AWS_TEST_COGNITO_ENDPOINT");
-    static final String AWS_TEST_COGNITO_IDENTITY = System.getenv("AWS_TEST_COGNITO_IDENTITY");
+    // MQTT311 Cognito
+    static final String AWS_TEST_MQTT311_COGNITO_ENDPOINT = System.getenv("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
+    static final String AWS_TEST_MQTT311_COGNITO_IDENTITY = System.getenv("AWS_TEST_MQTT311_COGNITO_IDENTITY");
     // MQTT311 Codebuild/Direct connections data
     static final String AWS_TEST_MQTT311_DIRECT_MQTT_HOST = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_HOST");
     static final String AWS_TEST_MQTT311_DIRECT_MQTT_PORT = System.getenv("AWS_TEST_MQTT311_DIRECT_MQTT_PORT");

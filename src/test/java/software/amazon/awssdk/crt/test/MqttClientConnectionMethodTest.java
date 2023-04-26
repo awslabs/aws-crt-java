@@ -225,8 +225,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
     {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_COGNITO_ENDPOINT != null);
-        Assume.assumeTrue(AWS_TEST_COGNITO_IDENTITY != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_COGNITO_ENDPOINT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT311_COGNITO_IDENTITY != null);
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
@@ -236,8 +236,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProviderBuilder();
             builder.withClientBootstrap(bootstrap);
             builder.withTlsContext(context);
-            builder.withEndpoint(AWS_TEST_COGNITO_ENDPOINT);
-            builder.withIdentity(AWS_TEST_COGNITO_IDENTITY);
+            builder.withEndpoint(AWS_TEST_MQTT311_COGNITO_ENDPOINT);
+            builder.withIdentity(AWS_TEST_MQTT311_COGNITO_IDENTITY);
             try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
                 TlsContext tlsContext = new TlsContext(tlsOptions);
                 CredentialsProvider provider = builder.build();) {

@@ -2375,6 +2375,77 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
+    /* Will test */
+    @Test
+    public void Op_UC4() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
+        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            // Publisher
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            // Subscriber
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured eventsTwo = new LifecycleEvents_Futured();
+            builderTwo.withLifecycleEvents(eventsTwo);
+
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+            builder.withTlsContext(tlsContext);
+            builderTwo.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builderTwo.withPublishEvents(publishEvents);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+
+            ConnectPacketBuilder connectPacketBuilder = new ConnectPacketBuilder();
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withPayload("Hello World".getBytes());
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+            connectPacketBuilder.withWill(publishPacketBuilder.build());
+            connectPacketBuilder.withKeepAliveIntervalSeconds(4l);
+            builder.withConnectOptions(connectPacketBuilder.build());
+            builder.withPingTimeoutMs(8l);
+
+            DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
+            disconnectPacketBuilder.withReasonCode(DisconnectReasonCode.DISCONNECT_WITH_WILL_MESSAGE);
+
+            try (Mqtt5Client publisher = new Mqtt5Client(builder.build());
+                Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build())) {
+
+                publisher.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                subscriber.start();
+                eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                publisher.stop(disconnectPacketBuilder.build());
+
+                publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriber.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
     /**
      * ============================================================
      * Error Operation Tests

@@ -2,8 +2,6 @@ import Builder
 import sys
 import os
 import os.path
-import windows_cert_test_setup
-import tmp_setup_ci_from_files
 
 class AWSCrtJavaTest(Builder.Action):
 

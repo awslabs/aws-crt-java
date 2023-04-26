@@ -57,7 +57,6 @@ class AWSCrtJavaTest(Builder.Action):
         self.env = env
 
         return Builder.Script([
-            tmp_setup_ci_from_files.SetupCIFromFiles(), # setup CI environment variables
-            windows_cert_test_setup.WindowsCertTestSetup(),
+            Builder.SetupCrossCICrtEnvironment(),
             self.start_maven_tests # Then run the Maven stuff
             ])

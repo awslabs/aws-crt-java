@@ -21,9 +21,6 @@
         "JAVA_HOME": "{java_home}",
         "OVERRIDE_JAVA_HOME": "{java_home}"
     },
-    "ci_environment_variable_files": [
-        "s3://aws-crt-test-stuff/Iot_CRT_ProdMQTTEnvironmentVariables.xml"
-    ],
     "hosts": {
         "ubuntu": {
             "packages": [

@@ -38,6 +38,7 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5ListenerOptions.ListenerPublishEven
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectPacketBuilder;
+import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectReasonCode;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket.PublishPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.SubscribePacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;

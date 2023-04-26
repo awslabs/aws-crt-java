@@ -1,4 +1,12 @@
 version: 0.2
+
+env:
+  variables:
+    BUILDER_VERSION: setup_crt_ci_from_action
+    BUILDER_SOURCE: channels
+    BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
+    PACKAGE_NAME: aws-crt-java
+
 #this build spec assumes the ubuntu aws/codebuild/java:openjdk-8 image
 phases:
   install:
@@ -16,9 +24,9 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
-      - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
-      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
+      # Build library and test
+      - python3 -c "from urllib.request import urlretrieve; urlretrieve('$BUILDER_HOST/$BUILDER_SOURCE/$BUILDER_VERSION/builder.pyz?run=$CODEBUILD_BUILD_ID', 'builder.pyz')"
+      - python3 builder.pyz build -p $PACKAGE_NAME
   post_build:
     commands:
       - echo Build completed on `date`

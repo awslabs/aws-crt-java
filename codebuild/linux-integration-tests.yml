@@ -1,6 +1,7 @@
 version: 0.2
 
 env:
+  shell: bash
   variables:
     BUILDER_VERSION: setup_crt_ci_from_action
     BUILDER_SOURCE: channels

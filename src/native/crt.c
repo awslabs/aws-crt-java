@@ -42,7 +42,7 @@ static struct aws_allocator *s_init_allocator(void) {
 }
 
 static struct aws_allocator *s_allocator = NULL;
-struct aws_allocator *aws_jni_get_allocator() {
+struct aws_allocator *aws_jni_get_allocator(void) {
     if (AWS_UNLIKELY(s_allocator == NULL)) {
         s_allocator = s_init_allocator();
     }
@@ -72,11 +72,32 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+
+        struct aws_string *thread_name = NULL;
+        if (aws_thread_current_name(aws_jni_get_allocator(), &thread_name)) {
+            /* Retrieving thread name can fail for multitude of reasons and is
+            not fatal. Ignore the error and continue. */
+            AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "Failed to retrieve name for the thread.");
+        }
+
+        struct JavaVMAttachArgs attach_args = {
+            .version = JNI_VERSION_1_6,
+            .name = NULL,
+            .group = NULL,
+        };
+
+        if (thread_name != NULL) {
+            attach_args.name = (char *)aws_string_c_str(thread_name);
+        }
+
 #ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
 #else
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
 #endif
+
+        aws_string_destroy(thread_name);
+
         /* Ran out of memory, don't log in this case */
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
@@ -434,6 +455,9 @@ static struct aws_error_info s_crt_errors[] = {
     AWS_DEFINE_ERROR_INFO_CRT(
         AWS_ERROR_JAVA_CRT_JVM_DESTROYED,
         "Attempt to use a JVM that has already been destroyed"),
+    AWS_DEFINE_ERROR_INFO_CRT(
+        AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
+        "OutOfMemoryError has been raised from JVM."),
 };
 /* clang-format on */
 

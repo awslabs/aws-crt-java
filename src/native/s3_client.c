@@ -325,6 +325,13 @@ static int s_on_s3_meta_request_body_callback(
     }
 
     jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+    if (jni_payload == NULL) {
+        /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
+        aws_jni_check_and_clear_exception(env);
+        aws_jni_release_thread_env(callback_data->jvm, env);
+        /********** JNI ENV RELEASE **********/
+        return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+    }
 
     jint body_response_result = 0;
 
@@ -401,6 +408,11 @@ static int s_on_s3_meta_request_headers_callback(
         aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
     }
     java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+    if (java_headers_buffer == NULL) {
+        aws_jni_check_and_clear_exception(env);
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+        goto cleanup;
+    }
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         (*env)->CallVoidMethod(
@@ -475,7 +487,9 @@ static void s_on_s3_meta_request_finish_callback(
                 "id=%p: Ignored Exception from S3MetaRequest.onFinished callback",
                 (void *)meta_request);
         }
-        (*env)->DeleteLocalRef(env, jni_payload);
+        if (jni_payload) {
+            (*env)->DeleteLocalRef(env, jni_payload);
+        }
     }
 
     aws_jni_release_thread_env(callback_data->jvm, env);

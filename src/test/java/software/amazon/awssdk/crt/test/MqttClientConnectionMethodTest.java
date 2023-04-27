@@ -75,7 +75,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         catch (Exception ex)
         {
             ex.printStackTrace();
-            assertTrue("Exception ocurrred running Java Keystore test!", ex == null);
+            assertTrue("Exception ocurred running Java Keystore test!", ex == null);
         }
     }
 

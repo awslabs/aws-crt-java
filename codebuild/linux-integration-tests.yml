@@ -8,7 +8,6 @@ env:
     BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
     PACKAGE_NAME: aws-crt-java
 
-#this build spec assumes the ubuntu aws/codebuild/java:openjdk-8 image
 phases:
   install:
     commands:

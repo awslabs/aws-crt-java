@@ -7,7 +7,6 @@ env:
     BUILDER_SOURCE: channels
     BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
     PACKAGE_NAME: aws-crt-java
-
 phases:
   install:
     commands:

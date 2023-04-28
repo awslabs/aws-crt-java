@@ -340,9 +340,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         Assume.assumeTrue(AWS_TEST_MQTT311_CERTIFICATE_FILE != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_KEY_FILE != null);
 
-        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT311_CERTIFICATE_FILE,
-                AWS_TEST_MQTT311_KEY_FILE);)
+        try (TlsContextOptions contextOptions = TlsContextOptions.createDefaultClient();)
             {
                 contextOptions.verifyPeer = false;
                 try (TlsContext context = new TlsContext(contextOptions);)

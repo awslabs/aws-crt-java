@@ -619,8 +619,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 proxyOptions.setPort(Integer.parseInt(AWS_TEST_MQTT5_PROXY_PORT));
                 proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
 
-                try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                        AWS_TEST_MQTT5_CERTIFICATE_FILE, AWS_TEST_MQTT5_KEY_FILE)) {
+                try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
                     tlsOptions.withVerifyPeer(false);
                     try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
                         builder.withTlsContext(tlsContext);

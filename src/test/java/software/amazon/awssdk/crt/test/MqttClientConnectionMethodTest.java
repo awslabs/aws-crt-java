@@ -408,9 +408,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         proxyOptions.setPort(Integer.parseInt(AWS_TEST_MQTT311_PROXY_PORT));
         proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
 
-        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT311_CERTIFICATE_FILE,
-                AWS_TEST_MQTT311_KEY_FILE);)
+        try (TlsContextOptions contextOptions = TlsContextOptions.createDefaultClient();)
             {
                 contextOptions.verifyPeer = false;
                 try (TlsContext context = new TlsContext(contextOptions);)

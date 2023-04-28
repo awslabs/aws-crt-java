@@ -485,7 +485,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         Assume.assumeTrue(AWS_TEST_MQTT311_CERTIFICATE_FILE != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_KEY_FILE != null);
 
-        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()); {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
             tlsOptions.withVerifyPeer(false);
             try (TlsContext tlsContext = new TlsContext(tlsOptions);)
             {
@@ -520,7 +520,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         proxyOptions.setPort(Integer.parseInt(AWS_TEST_MQTT311_PROXY_PORT));
         proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
 
-        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();) {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
             tlsOptions.withVerifyPeer(false);
             try (TlsContext tlsContext = new TlsContext(tlsOptions);)
             {

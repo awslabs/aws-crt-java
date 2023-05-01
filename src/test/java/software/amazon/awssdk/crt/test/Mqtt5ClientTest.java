@@ -1349,6 +1349,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
         CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
+        String client_name = "";
 
         @Override
         public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
@@ -1360,7 +1361,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
-            connectedFuture.completeExceptionally(new Exception("Could not connect!"));
+            connectedFuture.completeExceptionally(new Exception(
+                "[" + client_name + "] Could not connect! Error code is: " + onConnectionFailureReturn.getErrorCode()
+            ));
         }
 
         @Override
@@ -1384,12 +1387,23 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         String testUUID = UUID.randomUUID().toString();
 
         try {
-            LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
+            LifecycleEvents_DoubleClientID eventsOne = new LifecycleEvents_DoubleClientID();
+            LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
+            eventsOne.client_name = "client_one";
+            eventsTwo.client_name = "client_two";
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDFail_" + testUUID);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(events);
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
+            builder.withConnackTimeoutMs(30000l); // 30 seconds
+
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            builderTwo.withLifecycleEvents(eventsTwo);
+            builderTwo.withConnectOptions(connectOptions.build());
+            builderTwo.withConnackTimeoutMs(30000l); // 30 seconds
 
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
@@ -1397,31 +1411,27 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             tlsOptions.close();
             builder.withTlsContext(tlsContext);
 
-            try (
-                Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-                Mqtt5Client clientTwo = new Mqtt5Client(builder.build());
-            ) {
+            try (Mqtt5Client clientOne = new Mqtt5Client(builder.build());
+                Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());) {
                 clientOne.start();
-                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                Thread.sleep(1100); // Sleep for 1.1 seconds to not hit IoT Core limits
 
                 clientTwo.start();
-                events.connectedFuture = new CompletableFuture<>();
-                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Make sure a disconnection happened
-                events.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // Make sure a disconnection for client 1 happened
+                eventsOne.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Stop the clients from disconnecting each other. If we do not do this, then the clients will
                 // attempt to reconnect endlessly, making a never ending loop.
-                DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
-                clientOne.stop(disconnect);
-                clientTwo.stop(disconnect);
+                clientOne.stop(null);
+                clientTwo.stop(null);
             }
-
             if (tlsContext != null) {
                 tlsContext.close();
             }
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -1436,17 +1446,21 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
         String testUUID = UUID.randomUUID().toString();
         try {
-            LifecycleEvents_DoubleClientID events = new LifecycleEvents_DoubleClientID();
+            LifecycleEvents_DoubleClientID eventsOne = new LifecycleEvents_DoubleClientID();
             LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
+            eventsOne.client_name = "client_one";
+            eventsTwo.client_name = "client_two";
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDReconnect_" + testUUID);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(events);
-            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
+            builder.withConnackTimeoutMs(30000l); // 30 seconds
 
             Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builderTwo.withLifecycleEvents(eventsTwo);
             builderTwo.withConnectOptions(connectOptions.build());
+            builderTwo.withConnackTimeoutMs(30000l); // 30 seconds
 
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
@@ -1460,28 +1474,26 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
             ) {
                 clientOne.start();
-                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                Thread.sleep(1100); // Sleep for 1.1 seconds to not hit IoT Core limits
 
                 clientTwo.start();
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Make sure the first client was disconnected
-                events.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                eventsOne.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // Disconnect the second client so the first can reconnect
-                clientTwo.stop(new DisconnectPacketBuilder().build());
+                clientTwo.stop(null);
                 // Confirm the second client has stopped
                 eventsTwo.stoppedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Wait until the first client has reconnected
-                events.connectedFuture = new CompletableFuture<>();
-                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                eventsOne.connectedFuture = new CompletableFuture<>();
+                eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertTrue(clientOne.getIsConnected() == true);
-
-                // Stop the clients from disconnecting each other. If we do not do this, then the clients will
-                // attempt to reconnect endlessly, making a never ending loop.
-                DisconnectPacket disconnect = new DisconnectPacketBuilder().build();
-                clientOne.stop(disconnect);
+                clientOne.stop(null);
             }
 
             if (tlsContext != null) {

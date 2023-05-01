@@ -8,6 +8,7 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.utils.ByteBufferUtils.transferData;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
@@ -98,9 +99,10 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         }
 
         Assert.assertTrue(hasContentLengthHeader);
-        if (response.statusCode < 500) { // if the server errored, not our fault
-            Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
-        }
+
+        Assume.assumeTrue("The server errored, not our fault, skip test", response.statusCode < 500);
+
+        Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
 
         return response;
     }

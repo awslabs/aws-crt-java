@@ -133,8 +133,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_ECC_CERT != null);
 
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
-            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
-            AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+            AWS_TEST_MQTT311_IOT_CORE_ECC_CERT,
+            AWS_TEST_MQTT311_IOT_CORE_ECC_KEY);
                 TlsContext context = new TlsContext(contextOptions);)
             {
                 connectDirectWithConfig(

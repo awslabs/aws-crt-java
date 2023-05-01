@@ -1395,12 +1395,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDFail_" + testUUID);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
-            builder.withLifecycleEvents(events);
-            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Binding_Java_" + testUUID);
+            builder.withLifecycleEvents(eventsOne);
             builder.withConnectOptions(connectOptions.build());
             builder.withConnackTimeoutMs(30000l); // 30 seconds
 
-            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(getMinimumDirectHost(), getMinimumDirectPort());
+            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builderTwo.withLifecycleEvents(eventsTwo);
             builderTwo.withConnectOptions(connectOptions.build());
             builderTwo.withConnackTimeoutMs(30000l); // 30 seconds
@@ -1453,7 +1452,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDReconnect_" + testUUID);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
-            builder.withLifecycleEvents(events);
+            builder.withLifecycleEvents(eventsOne);
             builder.withConnectOptions(connectOptions.build());
             builder.withConnackTimeoutMs(30000l); // 30 seconds
 

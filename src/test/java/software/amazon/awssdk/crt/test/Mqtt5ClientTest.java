@@ -1415,7 +1415,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     clientOne.start();
                     eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                    Thread.sleep(1200); // Sleep for 1.2 seconds to not hit IoT Core limits
+                    Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
 
                     clientTwo.start();
                     eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1472,7 +1472,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     clientOne.start();
                     eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                    Thread.sleep(1200); // Sleep for 1.2 seconds to not hit IoT Core limits
+                    Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
 
                     clientTwo.start();
                     eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

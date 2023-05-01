@@ -537,5 +537,4 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             }
         }
     }
-
 };

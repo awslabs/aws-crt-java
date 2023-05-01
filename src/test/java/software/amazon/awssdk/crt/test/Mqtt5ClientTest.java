@@ -1409,12 +1409,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 TlsContext tlsContext = new TlsContext(tlsOptions))
             {
                 builder.withTlsContext(tlsContext);
+                builderTwo.withTlsContext(tlsContext);
                 try (Mqtt5Client clientOne = new Mqtt5Client(builder.build());
                     Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());) {
                     clientOne.start();
                     eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                    Thread.sleep(1100); // Sleep for 1.1 seconds to not hit IoT Core limits
+                    Thread.sleep(1200); // Sleep for 1.2 seconds to not hit IoT Core limits
 
                     clientTwo.start();
                     eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1471,7 +1472,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     clientOne.start();
                     eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                    Thread.sleep(1100); // Sleep for 1.1 seconds to not hit IoT Core limits
+                    Thread.sleep(1200); // Sleep for 1.2 seconds to not hit IoT Core limits
 
                     clientTwo.start();
                     eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

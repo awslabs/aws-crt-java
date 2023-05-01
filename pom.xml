@@ -45,7 +45,6 @@
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.disable_perl>ON</cmake.disable_perl>
         <cmake.disable_aws_lc_512avx>OFF</cmake.disable_aws_lc_512avx>
-
     </properties>
 
     <profiles>

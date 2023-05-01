@@ -72,6 +72,7 @@ public class S3Client extends CrtResource {
                 tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                 options.getCredentialsProvider().getNativeHandle(),
                 options.getPartSize(),
+                options.getMultiPartUploadThreshold(),
                 options.getThroughputTargetGbps(),
                 options.getReadBackpressureEnabled(),
                 options.getInitialReadWindowSize(),
@@ -186,7 +187,7 @@ public class S3Client extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, long clientBootstrap,
-            long tlsContext, long signingConfig, long partSize, double throughputTargetGbps,
+            long tlsContext, long signingConfig, long partSize, long multipartUploadThreshold, double throughputTargetGbps,
             boolean enableReadBackpressure, long initialReadWindow, int maxConnections,
             StandardRetryOptions standardRetryOptions, boolean computeContentMd5,
             int proxyConnectionType,

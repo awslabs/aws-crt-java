@@ -100,7 +100,10 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertTrue(hasContentLengthHeader);
 
-        Assume.assumeTrue("The server errored, not our fault, skip test", response.statusCode < 500);
+        // Skip test if server has unexpected error.
+        if (expectedStatus < 500) {
+            Assume.assumeTrue("The server errored, not our fault", response.statusCode < 500);
+        }
 
         Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
 

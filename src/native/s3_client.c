@@ -80,6 +80,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
     jlong part_size_jlong,
+    jlong multipart_upload_threshold_jlong,
     jdouble throughput_target_gbps,
     jboolean enable_read_backpressure,
     jlong initial_read_window_jlong,
@@ -117,10 +118,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         return (jlong)NULL;
     }
 
-    size_t part_size;
-    if (aws_size_t_from_java(env, &part_size, part_size_jlong, "Part size")) {
-        return (jlong)NULL;
-    }
+    uint64_t part_size = (uint64_t)part_size_jlong;
+    uint64_t multipart_upload_threshold = (uint64_t)multipart_upload_threshold_jlong;
 
     size_t initial_read_window;
     if (aws_size_t_from_java(env, &initial_read_window, initial_read_window_jlong, "Initial read window")) {
@@ -186,7 +185,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,
         .signing_config = &signing_config,
-        .part_size = (size_t)part_size,
+        .part_size = part_size,
+        .multipart_upload_threshold = multipart_upload_threshold,
         .throughput_target_gbps = throughput_target_gbps,
         .enable_read_backpressure = enable_read_backpressure,
         .initial_read_window = initial_read_window,
@@ -600,7 +600,7 @@ static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_
     struct aws_string *upload_id = aws_jni_new_string_from_jstring(env, upload_id_jni);
 
     struct aws_s3_upload_resume_token_options upload_options = {
-        .part_size = (size_t)part_size_jni,
+        .part_size = (uint64_t)part_size_jni,
         .total_num_parts = (size_t)total_num_parts_jni,
         .num_parts_completed = (size_t)num_parts_completed_jni,
         .upload_id = aws_byte_cursor_from_string(upload_id),

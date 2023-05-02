@@ -46,7 +46,6 @@ jobs:
       matrix:
         image:
           - manylinux1-x64
-          - manylinux1-x86
 
     steps:
       - name: Checkout Sources

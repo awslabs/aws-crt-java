@@ -26,12 +26,28 @@ jobs:
         image:
           - manylinux2014-x64
           - manylinux2014-x86
-          - manylinux1-x64
-          - manylinux1-x86
           - al2-x64
           - fedora-34-x64
           - opensuse-leap
           - rhel8-x64
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+
+  manylinux1:
+    runs-on: ubuntu-20.04 # latest
+    strategy:
+      matrix:
+        image:
+          - manylinux1-x64
+          - manylinux1-x86
+
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3

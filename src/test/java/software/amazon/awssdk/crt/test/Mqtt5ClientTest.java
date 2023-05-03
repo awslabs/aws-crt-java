@@ -3761,29 +3761,28 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
         try (
             Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB);
-            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);
-            ) {
-            pkcs11Options.withTokenLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL);
-            pkcs11Options.withUserPin(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN);
-            pkcs11Options.withPrivateKeyObjectLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL);
-            pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
+            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);) {
+                pkcs11Options.withTokenLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL);
+                pkcs11Options.withUserPin(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN);
+                pkcs11Options.withPrivateKeyObjectLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL);
+                pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
 
-            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-            try (
-                TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
-                TlsContext tlsContext = new TlsContext(tlsOptions);
-            ) {
-                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
-                builder.withLifecycleEvents(events);
-                builder.withTlsContext(tlsContext);
+                LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+                try (
+                    TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
+                    TlsContext tlsContext = new TlsContext(tlsOptions);
+                ) {
+                    Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+                    builder.withLifecycleEvents(events);
+                    builder.withTlsContext(tlsContext);
 
-                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-                    client.start();
-                    events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                        client.start();
+                        events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                        DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
+                        client.stop(disconnect.build());
+                    }
                 }
-            }
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

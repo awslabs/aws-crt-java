@@ -21,6 +21,7 @@ public class S3ClientOptions {
     private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
     private long partSize;
+    private long multipartUploadThreshold;
     private double throughputTargetGbps;
     private boolean readBackpressureEnabled;
     private long initialReadWindowSize;
@@ -106,6 +107,15 @@ public class S3ClientOptions {
 
     public long getPartSize() {
         return partSize;
+    }
+
+    public S3ClientOptions withMultipartUploadThreshold(long multipartUploadThreshold) {
+        this.multipartUploadThreshold = multipartUploadThreshold;
+        return this;
+    }
+
+    public long getMultiPartUploadThreshold() {
+        return multipartUploadThreshold;
     }
 
     public S3ClientOptions withThroughputTargetGbps(double throughputTargetGbps) {

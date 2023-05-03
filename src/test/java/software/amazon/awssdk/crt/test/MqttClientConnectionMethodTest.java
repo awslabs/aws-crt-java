@@ -142,26 +142,30 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL != null);
         Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE != null);
 
-        Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB);
-        TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);
-        pkcs11Options.withTokenLabel(AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL);
-        pkcs11Options.withUserPin(AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN);
-        pkcs11Options.withPrivateKeyObjectLabel(AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL);
-        pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE);
+        try (
+            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB);
+            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);
+        )
+        {
+            pkcs11Options.withTokenLabel(AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL);
+            pkcs11Options.withUserPin(AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN);
+            pkcs11Options.withPrivateKeyObjectLabel(AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL);
+            pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE);
 
-        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
-                TlsContext context = new TlsContext(contextOptions);)
-            {
-                connectDirectWithConfig(
-                    context,
-                    AWS_TEST_MQTT311_IOT_CORE_HOST,
-                    8883,
-                    null,
-                    null,
-                    null);
-                disconnect();
-                close();
-            }
+            try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
+                    TlsContext context = new TlsContext(contextOptions);)
+                {
+                    connectDirectWithConfig(
+                        context,
+                        AWS_TEST_MQTT311_IOT_CORE_HOST,
+                        8883,
+                        null,
+                        null,
+                        null);
+                    disconnect();
+                    close();
+                }
+        }
     }
 
     /**

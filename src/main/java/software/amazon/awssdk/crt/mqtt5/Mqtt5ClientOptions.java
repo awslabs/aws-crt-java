@@ -4,18 +4,19 @@
  */
 package software.amazon.awssdk.crt.mqtt5;
 
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
+
+import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
+
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
-import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
+import java.util.function.Consumer;
 
 /**
  * Configuration for the creation of Mqtt5Clients
@@ -336,9 +337,7 @@ public class Mqtt5ClientOptions {
      */
     public interface PublishEvents {
         /**
-         * Called when an MQTT PUBLISH packet is received by the client. If the PublishReturn has been already handled by
-         * a service client, then the callback will not get invoked.
-         * Checkout Mqtt5ListenerOptions.ListenerPublishEvents for more details.
+         * Called when an MQTT PUBLISH packet is received by the client
          *
          * @param client The client that has received the message
          * @param publishReturn All of the data that was received from the server

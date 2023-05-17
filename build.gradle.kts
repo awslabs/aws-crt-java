@@ -62,6 +62,11 @@ tasks.processResources {
     dependsOn(":native:cmakeBuild")
 }
 
+// withSourcesJar uses output of task :native:cmakeBuild so explicitly declaring dependency
+tasks.named("sourcesJar") {
+    dependsOn(":native:cmakeBuild")
+}
+
 tasks.test {
     useJUnit()
     testLogging {

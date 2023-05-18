@@ -212,7 +212,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
         int currentPublishCount = 0;
         int desiredPublishCount = 0;
-        List<PublishPacket> publishPacketsRecieved = new ArrayList<PublishPacket>();
+        List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
 
         @Override
         public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
@@ -223,10 +223,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 publishReceivedFuture.completeExceptionally(new Throwable("Too many publish packets received"));
             }
 
-            if (publishPacketsRecieved.contains(result)) {
+            if (publishPacketsReceived.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
-            publishPacketsRecieved.add(result.getPublishPacket());
+            publishPacketsReceived.add(result.getPublishPacket());
         }
     }
 

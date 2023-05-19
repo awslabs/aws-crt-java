@@ -88,7 +88,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() {
         skipIfNetworkUnavailable();
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
                 .withComputeContentMd5(true);
         try (S3Client client = createS3Client(clientOptions)) {
 
@@ -105,7 +105,7 @@ public class S3ClientTest extends CrtTestFixture {
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(retry_elg));
 
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
 
             }
@@ -125,7 +125,7 @@ public class S3ClientTest extends CrtTestFixture {
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withMaxRetries(30));
 
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
 
             }
@@ -147,7 +147,7 @@ public class S3ClientTest extends CrtTestFixture {
             tcpKeepAliveOptions.setKeepAliveTimeoutSec((short) 20);
             tcpKeepAliveOptions.setKeepAliveMaxFailedProbes((short) 30);
 
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withS3TcpKeepAliveOptions(tcpKeepAliveOptions), elg)) {
 
             }
@@ -166,7 +166,7 @@ public class S3ClientTest extends CrtTestFixture {
             HttpMonitoringOptions monitoringOptions = new HttpMonitoringOptions();
             monitoringOptions.setMinThroughputBytesPerSecond(100);
             monitoringOptions.setAllowableThroughputFailureIntervalSeconds(10);
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withHttpMonitoringOptions(monitoringOptions).withConnectTimeoutMs(10), elg)) {
 
             }
@@ -192,7 +192,7 @@ public class S3ClientTest extends CrtTestFixture {
             proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
             proxyOptions.setAuthorizationUsername("username");
             proxyOptions.setAuthorizationPassword("password");
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withProxyOptions(proxyOptions), elg)) {
             }
         }
@@ -214,7 +214,7 @@ public class S3ClientTest extends CrtTestFixture {
             environmentVariableSetting.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
             environmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.DISABLED);
             environmentVariableSetting.setTlsConnectionOptions(tlsConnectionOptions);
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {
             }
         }
@@ -225,7 +225,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -271,7 +271,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -327,7 +327,7 @@ public class S3ClientTest extends CrtTestFixture {
         final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
-                .withEndpoint(ENDPOINT)
+
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
                 .withInitialReadWindowSize(1024)
@@ -416,7 +416,7 @@ public class S3ClientTest extends CrtTestFixture {
         final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
-                .withEndpoint(ENDPOINT)
+
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
                 .withInitialReadWindowSize(1024)
@@ -462,7 +462,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         boolean expectedException = false;
         byte[] madeUpCredentials = "I am a madeup credentials".getBytes();
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
@@ -530,7 +530,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -768,7 +768,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         S3ClientOptions clientOptions = new S3ClientOptions()
-            .withEndpoint(ENDPOINT)
+
             .withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -872,7 +872,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onPutFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -988,7 +988,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -1051,7 +1051,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             final AtomicLong totalBytesTransferred = new AtomicLong();
@@ -1236,7 +1236,7 @@ public class S3ClientTest extends CrtTestFixture {
         // Ignore stats during warm up time, they skew results
         TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
         try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
-            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region)
                     .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
 
             try (S3Client client = createS3Client(clientOptions, threadCount)) {
@@ -1375,7 +1375,7 @@ public class S3ClientTest extends CrtTestFixture {
         TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
 
         try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
-            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region)
                     .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
 
             try (S3Client client = createS3Client(clientOptions, threadCount)) {

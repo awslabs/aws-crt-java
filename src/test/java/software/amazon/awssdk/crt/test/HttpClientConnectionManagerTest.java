@@ -60,7 +60,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
     }
 
-
     private HttpRequest createHttpRequest(String method, String endpoint, String path, String requestBody) throws Exception{
         URI uri = new URI(endpoint);
         HttpHeader[] requestHeaders =

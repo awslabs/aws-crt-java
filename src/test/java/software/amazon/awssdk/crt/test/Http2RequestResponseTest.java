@@ -201,6 +201,8 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                 try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
                     h2Stream.activate();
                     streamComplete.get();
+                } catch(Exception e) {
+                    // ignoring the exception as it might fail that RST_STREAM has been sent.
                 }
             }
         } catch (Exception e) {

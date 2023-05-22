@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://httpbin.org";
+    private final static String HOST = "https://postman-echo.com";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
@@ -114,27 +114,27 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Get() throws Exception {
         Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
+        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 404);
     }
 
     @Test
     public void testHttp2Post() throws Exception {
         skipIfNetworkUnavailable();
-        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 404);
+        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 404);
         testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 404);
     }
 
     @Test
     public void testHttp2Put() throws Exception {
         skipIfNetworkUnavailable();
-        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
+        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 404);
+        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 404);
+        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 404);
         testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
     }
 

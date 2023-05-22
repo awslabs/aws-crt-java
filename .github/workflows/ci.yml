@@ -7,7 +7,7 @@ on:
       - 'docs'
 
 env:
-  BUILDER_VERSION: v0.9.40
+  BUILDER_VERSION: v0.9.43
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -20,7 +20,7 @@ env:
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         image:
@@ -42,7 +42,7 @@ jobs:
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         compiler:
@@ -69,7 +69,7 @@ jobs:
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         arch: [armv6, armv7, arm64]
@@ -81,7 +81,7 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
   raspberry:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       fail-fast: false
       matrix:
@@ -127,7 +127,7 @@ jobs:
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   osx:  # With integration tests
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -140,7 +140,7 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   osx-arm64:
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -154,7 +154,7 @@ jobs:
           python3 codebuild/macos_compatibility_check.py armv8
 
   osx-x64:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -182,7 +182,7 @@ jobs:
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -192,7 +192,7 @@ jobs:
           ./make-docs.sh
 
   check-submodules:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
@@ -206,7 +206,7 @@ jobs:
 
 
   localhost-test-linux:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -224,7 +224,7 @@ jobs:
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-test-mac:
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3

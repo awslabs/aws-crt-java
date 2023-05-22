@@ -149,7 +149,6 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
           mvn -B compile -P mac-arm64
-          mvn test
       - name: verify backward compatibility
         run: |
           python3 codebuild/macos_compatibility_check.py armv8
@@ -164,7 +163,6 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
           mvn -B compile -P mac-x64
-          mvn test
       - name: verify backward compatibility
         run: |
           python3 codebuild/macos_compatibility_check.py

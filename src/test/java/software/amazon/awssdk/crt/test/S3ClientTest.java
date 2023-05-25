@@ -678,8 +678,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            int contentLength = 10 * 1024 * 1024;
-            Files.write(uploadFilePath, createTestPayload(contentLength));
+            Files.write(uploadFilePath, createTestPayload(10 * 1024 * 1024));
 
             HttpHeader[] headers = {
                 new HttpHeader("Host", ENDPOINT),

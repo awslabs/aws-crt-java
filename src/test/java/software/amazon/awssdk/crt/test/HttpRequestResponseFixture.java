@@ -68,8 +68,8 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
     }
 
     protected boolean shouldRetry(TestHttpResponse response) {
-        // Retry if we couldn't connect or if we got 503 response
-        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503) {
+        // Retry if we couldn't connect or if we got flaky 5xx server errors
+        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503 || response.statusCode == 504) {
             return true;
         }
         return false;

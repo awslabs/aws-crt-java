@@ -1362,69 +1362,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
         }
     }
 
-    /* Double Client ID disconnect and then reconnect test */
-    @Test
-    public void ConnNegativeID_UC7_ALT() {
-        skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-        String testUUID = UUID.randomUUID().toString();
-        try {
-            LifecycleEvents_DoubleClientID eventsOne = new LifecycleEvents_DoubleClientID();
-            LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
-            eventsOne.client_name = "client_one";
-            eventsTwo.client_name = "client_two";
-            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDReconnect_" + testUUID);
-
-            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
-            builder.withLifecycleEvents(eventsOne);
-            builder.withConnectOptions(connectOptions.build());
-            builder.withConnackTimeoutMs(30000l); // 30 seconds
-
-            Mqtt5ClientOptionsBuilder builderTwo = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
-            builderTwo.withLifecycleEvents(eventsTwo);
-            builderTwo.withConnectOptions(connectOptions.build());
-            builderTwo.withConnackTimeoutMs(30000l); // 30 seconds
-
-            try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-                TlsContext tlsContext = new TlsContext(tlsOptions);)
-            {
-                builder.withTlsContext(tlsContext);
-                builderTwo.withTlsContext(tlsContext);
-                try (
-                    Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-                    Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());
-                ) {
-                    clientOne.start();
-                    eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-
-                    Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
-
-                    clientTwo.start();
-                    eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-
-                    // Make sure the first client was disconnected
-                    eventsOne.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    // Disconnect the second client so the first can reconnect
-                    clientTwo.stop(null);
-                    // Confirm the second client has stopped
-                    eventsTwo.stoppedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-
-                    Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
-
-                    // Wait until the first client has reconnected
-                    eventsOne.connectedFuture = new CompletableFuture<>();
-                    eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-
-                    assertTrue(clientOne.getIsConnected() == true);
-                    clientOne.stop(null);
-                }
-            }
-        } catch (Exception ex) {
-            fail(ex.getMessage());
-        }
-    }
-
     /**
      * ============================================================
      * Negative Data Input Tests

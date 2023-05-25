@@ -7,6 +7,7 @@
 
 import static org.junit.Assert.*;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -150,6 +151,40 @@ import java.util.function.Consumer;
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
+            // Connection callback events
+            MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+                @Override
+                public void onConnectionResumed(boolean sessionPresent) {
+                    System.out.println("Connection resumed");
+                }
+
+                @Override
+                public void onConnectionInterrupted(int errorCode) {
+                    if (!disconnecting) {
+                        System.out.println(
+                                "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                    }
+                }
+
+                @Override
+                public void onConnectionFailure(OnConnectionFailureReturn data) {
+                    System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                    onConnectionFailureFuture.complete(data);
+                }
+
+                @Override
+                public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                    System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                    onConnectionSuccessFuture.complete(data);
+                }
+
+                @Override
+                public void onConnectionClosed(OnConnectionClosedReturn data) {
+                    System.out.println("Connection disconnected successfully");
+                    onConnectionClosedFuture.complete(data);
+                }
+            };
+
             // Default settings
             boolean cleanSession = true; // only true is supported right now
             int keepAliveSecs = 0;
@@ -175,6 +210,7 @@ import java.util.function.Consumer;
                 config.setCleanSession(cleanSession);
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+                config.setConnectionCallbacks(events);
 
                 if (httpProxyOptions != null) {
                     config.setHttpProxyOptions(httpProxyOptions);
@@ -216,6 +252,40 @@ import java.util.function.Consumer;
         int protocolOperationTimeout = 60000;
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
+        // Connection callback events
+        MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+            @Override
+            public void onConnectionResumed(boolean sessionPresent) {
+                System.out.println("Connection resumed");
+            }
+
+            @Override
+            public void onConnectionInterrupted(int errorCode) {
+                if (!disconnecting) {
+                    System.out.println(
+                            "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                }
+            }
+
+            @Override
+            public void onConnectionFailure(OnConnectionFailureReturn data) {
+                System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                onConnectionFailureFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                onConnectionSuccessFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionClosed(OnConnectionClosedReturn data) {
+                System.out.println("Connection disconnected successfully");
+                onConnectionClosedFuture.complete(data);
+            }
+        };
+
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);)
@@ -241,6 +311,7 @@ import java.util.function.Consumer;
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
                 config.setUseWebsockets(true);
+                config.setConnectionCallbacks(events);
 
                 if (username != null) {
                     config.setUsername(username);

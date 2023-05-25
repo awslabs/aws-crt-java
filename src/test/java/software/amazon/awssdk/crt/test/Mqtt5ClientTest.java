@@ -1410,6 +1410,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     // Confirm the second client has stopped
                     eventsTwo.stoppedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
+                    Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
+
                     // Wait until the first client has reconnected
                     eventsOne.connectedFuture = new CompletableFuture<>();
                     eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

@@ -193,13 +193,17 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
                 TlsContext context = new TlsContext(contextOptions);)
             {
-                connectDirectWithConfig(
+                try {
+                connectDirectWithConfigThrows(
                     context,
                     AWS_TEST_MQTT311_IOT_CORE_HOST,
                     123,
                     null,
                     null,
                     null);
+                } catch (Exception ex) {
+                    // Do nothing with the exception - we expect this to throw since we passed an incorrect port.
+                }
                 try {
                     OnConnectionFailureReturn result = waitForConnectFailure();
                     assertTrue("Connection error callback was empty", result != null);

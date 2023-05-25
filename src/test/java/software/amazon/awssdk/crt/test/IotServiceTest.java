@@ -39,10 +39,6 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);)
             {
-                // if (TlsContextOptions.isAlpnSupported()) {
-                //     contextOptions.withAlpnList("x-amzn-mqtt-ca");
-                //     port = TEST_PORT_ALPN;
-                // }
                 try (TlsContext context = new TlsContext(contextOptions);)
                 {
                     connectDirectWithConfig(

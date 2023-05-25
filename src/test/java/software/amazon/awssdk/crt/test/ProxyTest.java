@@ -37,27 +37,7 @@ import java.net.URISyntaxException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-/*
-
-# AWS_TEST_HTTP_PROXY_HOST - host address of the proxy to use for tests that make open connections to the proxy
-# AWS_TEST_HTTP_PROXY_PORT - port to use for tests that make open connections to the proxy
-# AWS_TEST_HTTPS_PROXY_HOST - host address of the proxy to use for tests that make tls-protected connections to the proxy
-# AWS_TEST_HTTPS_PROXY_PORT - port to use for tests that make tls-protected connections to the proxy
-# AWS_TEST_HTTP_PROXY_BASIC_HOST - host address of the proxy to use for tests that make open connections to the proxy with basic authentication
-# AWS_TEST_HTTP_PROXY_BASIC_PORT - port to use for tests that make open connections to the proxy with basic authentication
-
-# AWS_TEST_BASIC_AUTH_USERNAME - username to use when using basic authentication to the proxy
-# AWS_TEST_BASIC_AUTH_PASSWORD - password to use when using basic authentication to the proxy
-
-# AWS_TEST_MQTT311_ROOTCA = The RootCA for connecting
-# AWS_TEST_MQTT311_IOT_CORE_HOST = The IoT Core endpoint to connect to
-# AWS_TEST_MQTT311_IOT_CORE_X509_CERT = file path to certificate used to initialize the tls context of the x509 provider connection
-# AWS_TEST_MQTT311_IOT_CORE_X509_KEY = file path to the key used to initialize the tls context of the x509 provider connection
-# AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT = AWS account-specific endpoint to source x509 credentials from
-# AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS = associated role alias ...
-# AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME = associated name of the x509 thing
-
- */
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class ProxyTest extends CrtTestFixture  {
 
     enum ProxyTestType {
@@ -379,10 +359,9 @@ public class ProxyTest extends CrtTestFixture  {
     }
 
     private TlsContext createX509TlsContext(String alpn) {
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_X509_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_X509_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_ROOTCA != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_X509_CERT, AWS_TEST_MQTT311_IOT_CORE_X509_KEY,
+            AWS_TEST_MQTT311_ROOTCA);
         try (TlsContextOptions options = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_X509_CERT, AWS_TEST_MQTT311_IOT_CORE_X509_KEY)) {
             options.withCertificateAuthorityFromPath(null, AWS_TEST_MQTT311_ROOTCA);
@@ -395,10 +374,9 @@ public class ProxyTest extends CrtTestFixture  {
     }
 
     private CredentialsProvider buildProxiedX509CredentialsProvider(ProxyTestType testType, ProxyAuthType authType) {
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT, AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS,
+            AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
@@ -450,7 +428,7 @@ public class ProxyTest extends CrtTestFixture  {
     }
 
     private MqttClientConnection buildDirectMqttConnection(ProxyTestType testType, ProxyAuthType authType) {
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST);
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);

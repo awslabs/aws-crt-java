@@ -97,6 +97,11 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     static final String AWS_TEST_MQTT311_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getenv("AWS_TEST_MQTT311_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
     static final String AWS_TEST_MQTT311_IOT_CORE_WINDOWS_CERT_STORE = System.getenv("AWS_TEST_MQTT311_IOT_CORE_WINDOWS_CERT_STORE");
 
+    // MQTT5 Custom Key Ops (so we don't have to make a new file just for a single test)
+    static final String AWS_TEST_MQTT5_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT5_IOT_CORE_HOST");
+    static final String AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT = System.getenv("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT");
+    static final String AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY = System.getenv("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY");
+
     static final short TEST_PORT = 8883;
     static final short TEST_PORT_ALPN = 443;
     static final String TEST_CLIENTID = "aws-crt-java-";
@@ -302,15 +307,12 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
     }
 
     void checkOperationStatistics(
-        long expectedIncompleteOperationCount, long expectedIncompleteOperationSize,
-        long expectedUnackedOperationCount, long expectedUnackedOperationSize) {
+        long expectedIncompleteOperationCount, long expectedIncompleteOperationSize) {
         try {
             MqttClientConnectionOperationStatistics statistics = connection.getOperationStatistics();
 
             long incomplete_ops_count = statistics.getIncompleteOperationCount();
             long incomplete_ops_size = statistics.getIncompleteOperationSize();
-            long unacked_ops_count = statistics.getUnackedOperationCount();
-            long unacked_ops_size = statistics.getUnackedOperationSize();
 
             if (incomplete_ops_count != expectedIncompleteOperationCount) {
                 fail("Incomplete operations count:" + incomplete_ops_count + " did not equal expected value:" + expectedIncompleteOperationCount);
@@ -320,16 +322,10 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 fail("Incomplete operations size:" + incomplete_ops_size + " did not equal expected value:" + expectedIncompleteOperationSize);
             }
 
-            // While in theory we should be checking the unacked operations as well, it isn't really straight forward
-            // because it heavily depends on how fast it goes to the socket, which is a bit out of our control currently.
-            // TODO: Find a way to reliably track the unacked operations.
-            // if (unacked_ops_count != expectedUnackedOperationCount) {
-            //     fail("Unacked operations count:" + unacked_ops_count + " did not equal expected value:" + expectedUnackedOperationCount);
-            // }
+            // TODO - check unacked operations once we have a way to consistently check them. Part of the issue right now
+            // is that unacked operations are heavily dependent on the socket and when incomplete operations get to the socket
+            // and so the speed of the socket can mess up the test.
 
-            // if (unacked_ops_size != expectedUnackedOperationSize) {
-            //     fail("Unacked operations size:" + unacked_ops_size + " did not equal expected value:" + expectedUnackedOperationSize);
-            // }
         } catch (Exception ex) {
             fail("Exception during operation statistics check: " + ex.getMessage());
         }

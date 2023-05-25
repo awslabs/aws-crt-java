@@ -18,6 +18,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
 
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     public MqttClientConnectionTest() {
     }
@@ -25,10 +26,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     @Test
     public void testConnectDisconnect() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
@@ -49,10 +49,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     @Test
     public void testConnectPublishWaitStatisticsDisconnect() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
@@ -73,7 +72,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 } catch (Exception ex) {
                     fail("Exception ocurred during publish: " + ex.getMessage());
                 }
-                checkOperationStatistics(0, 0, 0, 0);
+                checkOperationStatistics(0, 0);
                 disconnect();
                 close();
             }
@@ -82,10 +81,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     @Test
     public void testConnectPublishStatisticsWaitDisconnect() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY,
+            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
@@ -105,9 +103,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 Long expectedSize = (topic.length() + payload.length + 4l);
 
                 CompletableFuture<Integer> puback = publish(topic, payload, QualityOfService.AT_LEAST_ONCE);
-
-                // Note: Unacked will be zero because we have not invoked the future yet and so it has not had time to move to the socket
-                checkOperationStatistics(1, expectedSize, 0, 0);
+                checkOperationStatistics(1, expectedSize);
 
                 // Publish
                 try {
@@ -116,8 +112,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     fail("Exception ocurred during publish: " + ex.getMessage());
                 }
 
-                // Make sure it is empty
-                checkOperationStatistics(0, 0, 0, 0);
+                checkOperationStatistics(0, 0);
                 disconnect();
                 close();
             }
@@ -128,10 +123,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
     @Test
     public void testECCKeyConnectDisconnect() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_ECC_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_ECC_CERT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_ECC_KEY,
+            AWS_TEST_MQTT311_IOT_CORE_ECC_CERT);
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_ECC_CERT,
             AWS_TEST_MQTT311_IOT_CORE_ECC_KEY);

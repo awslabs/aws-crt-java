@@ -21,6 +21,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class SubscribeTest extends MqttClientConnectionFixture {
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
@@ -35,10 +37,7 @@ public class SubscribeTest extends MqttClientConnectionFixture {
     @Test
     public void testSubscribeUnsubscribe() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
             AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);

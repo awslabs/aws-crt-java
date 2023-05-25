@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5ClientTest extends CrtTestFixture {
 
     // MQTT5 Codebuild/Direct connections data
@@ -209,8 +210,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void New_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
                 AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
@@ -227,12 +227,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void New_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_PORT != null);
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
+            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
 
             try (
@@ -320,8 +318,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void New_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
                 AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
@@ -339,13 +336,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void New_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_PORT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
+            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
             try (
                 EventLoopGroup elg = new EventLoopGroup(1);
@@ -439,8 +433,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -465,11 +458,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -497,11 +488,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_CERTIFICATE_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_KEY_FILE != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -529,10 +516,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* Direct connection with mTLS */
     @Test
     public void ConnDC_UC4() {
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
-
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -561,13 +546,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC5() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_CERTIFICATE_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_KEY_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_PORT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT,
+            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
 
             try (
@@ -611,11 +592,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_UC6() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -693,8 +672,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST, AWS_TEST_MQTT5_WS_MQTT_PORT);
         try {
 
             try (
@@ -735,11 +713,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -781,11 +757,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_TLS_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_CERTIFICATE_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_KEY_FILE != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -831,13 +803,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_UC5() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_TLS_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_CERTIFICATE_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_KEY_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_PROXY_PORT != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
+            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -892,11 +860,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_UC6() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -979,7 +945,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1022,7 +988,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1061,8 +1027,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC2_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_WS_MQTT_PORT);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1101,7 +1066,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_HOST != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1154,8 +1119,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC3_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_DIRECT_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1257,8 +1221,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC6() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_WS_MQTT_PORT != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST, AWS_TEST_MQTT5_WS_MQTT_PORT);
         boolean foundExpectedError = false;
         boolean exceptionOccurred = false;
 
@@ -1348,9 +1311,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC7() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
 
         try {
@@ -1405,9 +1366,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnNegativeID_UC7_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         try {
             LifecycleEvents_DoubleClientID eventsOne = new LifecycleEvents_DoubleClientID();
@@ -1474,9 +1433,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientCreationFailed = false;
 
         try {
@@ -1573,9 +1530,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC1_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientCreationFailed = false;
 
         try {
@@ -1661,9 +1616,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientDisconnectFailed = false;
 
         try {
@@ -1709,9 +1662,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC2_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientDisconnectFailed = false;
 
         try {
@@ -1757,9 +1708,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientPublishFailed = false;
 
         try {
@@ -1807,9 +1756,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC3_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientPublishFailed = false;
 
         try {
@@ -1857,9 +1804,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientSubscribeFailed = false;
 
         try {
@@ -1907,9 +1852,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void NewNegative_UC4_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientSubscribeFailed = false;
 
         try {
@@ -1963,10 +1906,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Negotiated_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2008,11 +1948,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Negotiated_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2067,11 +2004,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Negotiated_Rejoin_Always() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2148,12 +2082,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Op_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2214,12 +2145,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Op_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2288,12 +2216,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Op_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2347,12 +2272,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Op_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             // Publisher
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2424,11 +2346,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2469,11 +2388,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC1_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2514,11 +2430,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2559,11 +2472,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC2_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2604,11 +2514,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2649,11 +2556,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC3_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2694,11 +2598,8 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ErrorOp_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2751,13 +2652,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void QoS1_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         int messageCount = 10;
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2825,12 +2723,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Retain_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder publisherEventsBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
@@ -2953,12 +2848,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Interrupt_Sub_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -3005,12 +2897,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Interrupt_Unsub_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -3057,12 +2946,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void Interrupt_Publish_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -3115,13 +3001,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void OperationStatistics_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_RSA_KEY != null);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         int messageCount = 10;
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -3200,13 +3083,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_Cred_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT,
+            AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD,
+            AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
         try {
             java.security.KeyStore keyStore = java.security.KeyStore.getInstance(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT);
             java.io.FileInputStream keyStoreStream = new java.io.FileInputStream(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE);
@@ -3242,10 +3122,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_Cred_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
+            AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             try (
@@ -3274,10 +3153,9 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_Cred_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS,
+            AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             try (
@@ -3305,13 +3183,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnDC_Cred_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB,
+            AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN,
+            AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
         try (
             Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB);
             TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);) {
@@ -3351,12 +3226,10 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_Cred_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+            AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY, AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY,
+            AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN);
         CredentialsProvider provider = null;
         AwsSigningConfig signingConfig = new AwsSigningConfig();
         Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
@@ -3418,9 +3291,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_Cred_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION);
         CredentialsProvider provider = null;
         AwsSigningConfig signingConfig = new AwsSigningConfig();
         Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
@@ -3477,16 +3348,13 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
     /**
      * MQTT5 ConnWS_Cred_UC3 - Cognito Identity credentials connect
-     * TODO: Make another test that supports logins
      */
     @Test
     public void ConnWS_Cred_UC3() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_COGNITO_ENDPOINT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_COGNITO_IDENTITY != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+            AWS_TEST_MQTT5_COGNITO_ENDPOINT, AWS_TEST_MQTT5_COGNITO_IDENTITY);
         CredentialsProvider provider = null;
         AwsSigningConfig signingConfig = new AwsSigningConfig();
         Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
@@ -3550,18 +3418,14 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     @Test
     public void ConnWS_Cred_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_REGION != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_CERT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS != null);
-        Assume.assumeTrue(AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME != null);
-
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+            AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY,
+            AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT, AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS,
+            AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
         CredentialsProvider provider = null;
         AwsSigningConfig signingConfig = new AwsSigningConfig();
         Mqtt5ClientTestSigv4HandshakeTransformer transformer = null;
-
         try {
             try (
                 EventLoopGroup elg = new EventLoopGroup(1);

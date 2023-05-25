@@ -18,6 +18,8 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 import software.amazon.awssdk.crt.mqtt.QualityOfService;
 
+
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class WillTest extends MqttClientConnectionFixture {
     @Rule
 
@@ -33,10 +35,7 @@ public class WillTest extends MqttClientConnectionFixture {
     @Test
     public void testWill() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         setConnectionConfigTransformer((config) -> {
             config.setWillMessage(new MqttMessage(TEST_TOPIC, TEST_WILL.getBytes(), QualityOfService.AT_LEAST_ONCE));
         });
@@ -60,10 +59,7 @@ public class WillTest extends MqttClientConnectionFixture {
     @Test
     public void testEmptyWill() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         setConnectionConfigTransformer((config) -> {
             config.setWillMessage(new MqttMessage(TEST_TOPIC, TEST_EMPTY_WILL.getBytes(), QualityOfService.AT_LEAST_ONCE));
         });
@@ -87,10 +83,7 @@ public class WillTest extends MqttClientConnectionFixture {
     @Test
     public void testNullWill() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_HOST != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_KEY != null);
-        Assume.assumeTrue(AWS_TEST_MQTT311_IOT_CORE_RSA_CERT != null);
-
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
         setConnectionConfigTransformer((config) -> {
             config.setWillMessage(new MqttMessage(TEST_TOPIC, null, QualityOfService.AT_LEAST_ONCE));
         });

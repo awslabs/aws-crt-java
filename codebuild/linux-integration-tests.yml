@@ -1,4 +1,13 @@
 version: 0.2
+
+env:
+  shell: bash
+  variables:
+    BUILDER_VERSION: v0.9.45
+    BUILDER_SOURCE: releases
+    BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
+    PACKAGE_NAME: aws-crt-java
+
 phases:
   install:
     commands:
@@ -9,9 +18,11 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - aws s3 cp s3://aws-crt-test-stuff/setup_proxy_test_env.sh /tmp/setup_proxy_test_env.sh
-      - sudo chmod a+xr /tmp/setup_proxy_test_env.sh
-      - $CODEBUILD_SRC_DIR/codebuild/common-linux.sh
+      # Update the submodules
+      - git submodule update --init
+      # Build library and test
+      - python3 -c "from urllib.request import urlretrieve; urlretrieve('$BUILDER_HOST/$BUILDER_SOURCE/$BUILDER_VERSION/builder.pyz?run=$CODEBUILD_BUILD_ID', 'builder.pyz')"
+      - python3 builder.pyz build --project aws-crt-java downstream
   post_build:
     commands:
       - echo Build completed on `date`

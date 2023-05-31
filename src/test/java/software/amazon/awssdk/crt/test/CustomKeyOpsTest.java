@@ -7,28 +7,28 @@ package software.amazon.awssdk.crt.test;
 
 import org.junit.Assume;
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;
-
 import static org.junit.Assert.*;
 
-import software.amazon.awssdk.crt.*;
 import software.amazon.awssdk.crt.io.*;
-import software.amazon.awssdk.crt.mqtt.*;
-import software.amazon.awssdk.crt.mqtt.MqttException;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
-public class CustomKeyOpsTest extends CustomKeyOpsFixture {
+
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
+public class CustomKeyOpsTest extends MqttClientConnectionFixture {
     public CustomKeyOpsTest() {
     }
 
@@ -131,31 +131,102 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     }
 
     @Test
-    public void testHappyPath() {
+    public void testHappyPath()
+    {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
-
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, false);
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT,
+            AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, false, false);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
-        try {
-            connect(keyOperationOptions);
+        keyOperationOptions.withCertificateFilePath(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);
+                TlsContext context = new TlsContext(contextOptions);)
+            {
+                connectDirectWithConfig(
+                    context,
+                    AWS_TEST_MQTT311_IOT_CORE_HOST,
+                    8883,
+                    null,
+                    null,
+                    null);
+                disconnect();
+                close();
+            }
+    }
+
+    // Not ideal, but I don't see the point of making a new file just for a single MQTT5 Custom Key Ops test.
+    static final class LifecycleEvents_Futured implements LifecycleEvents {
+        CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+        @Override
+        public void onAttemptingConnect(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn onAttemptingConnectReturn) {}
+        @Override
+        public void onConnectionSuccess(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn onConnectionSuccessReturn) {
+            connectedFuture.complete(null);
         }
-        catch (Exception ex) {
-            fail("Exception during connect: " + ex.toString());
+        @Override
+        public void onConnectionFailure(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn onConnectionFailureReturn) {
+            connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
-        disconnect();
-        close();
+        @Override
+        public void onDisconnection(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn onDisconnectionReturn) {}
+        @Override
+        public void onStopped(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnStoppedReturn onStoppedReturn) {}
     }
 
     @Test
-    public void testExceptionFailurePath() {
+    public void testHappyPathMQTT5() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
-
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, false);
-        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT,
+            AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY);
         try {
-            connect(keyOperationOptions);
+            TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY, false, false);
+            TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
+            keyOperationOptions.withCertificateFilePath(AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT);
+
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            try (
+                TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);
+                TlsContext context = new TlsContext(contextOptions);
+            ) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(context);
+
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    client.start();
+                    events.connectedFuture.get(180, TimeUnit.SECONDS);
+                    client.stop(null);
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testExceptionFailurePath()
+    {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT,
+            AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, true, false);
+        TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
+        keyOperationOptions.withCertificateFilePath(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);
+            TlsContext context = new TlsContext(contextOptions);)
+        {
+            connectDirectWithConfigThrows(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
         }
         catch (Exception ex) {
             close();
@@ -168,12 +239,25 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExtraCompleteHappy() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
-
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, false, true);
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT,
+            AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, false, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
-        try {
-            connect(keyOperationOptions);
+        keyOperationOptions.withCertificateFilePath(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);
+            TlsContext context = new TlsContext(contextOptions);)
+        {
+            connectDirectWithConfig(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
+            disconnect();
+            close();
         }
         catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
@@ -185,12 +269,23 @@ public class CustomKeyOpsTest extends CustomKeyOpsFixture {
     @Test
     public void testExceptionExtraCompleteFailurePath() {
         skipIfNetworkUnavailable();
-        Assume.assumeTrue(TEST_PRIVATEKEY != null && TEST_PRIVATEKEY != "");
-
-        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(TEST_PRIVATEKEY, true, true);
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT,
+            AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY);
+        TestKeyOperationHandler myKeyOperationHandler = new TestKeyOperationHandler(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY, true, true);
         TlsContextCustomKeyOperationOptions keyOperationOptions = new TlsContextCustomKeyOperationOptions(myKeyOperationHandler);
-        try {
-            connect(keyOperationOptions);
+        keyOperationOptions.withCertificateFilePath(AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT);
+
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsCustomKeyOperations(keyOperationOptions);
+            TlsContext context = new TlsContext(contextOptions);)
+        {
+            connectDirectWithConfigThrows(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
         }
         catch (Exception ex) {
             close();

@@ -139,6 +139,9 @@ public class Log {
 
     /**
      * Initializes the logging system
+     * @param destinationString determines where logging should be routed to
+     * @param filenameString filename to use if destination for logs is a file
+     * @param levelString detail level of logs that should be shown
      */
     public static void initLogging(String destinationString, String filenameString, String levelString){
         if(destinationString == null && levelString == null){

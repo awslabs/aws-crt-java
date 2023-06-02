@@ -134,13 +134,19 @@ public class Log {
         String filenameString = System.getProperty(LOG_FILE_NAME_PROPERTY_NAME);
         String levelString = System.getProperty(LOG_LEVEL_PROPERTY_NAME);
 
-        // If nothing was specified, disable logging
-        if (destinationString == null && levelString == null) {
+        initLogging(destinationString, filenameString, levelString);
+    }
+
+    /**
+     * Initializes the logging system
+     */
+    public static void initLogging(String destinationString, String filenameString, String levelString){
+        if(destinationString == null && levelString == null){
             return;
         }
 
         // If no destination wasn't specified, default to stderr
-        if (destinationString == null) {
+        if(destinationString == null){
             destinationString = "Stderr";
         }
 

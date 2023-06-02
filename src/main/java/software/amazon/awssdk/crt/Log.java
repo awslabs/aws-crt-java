@@ -146,7 +146,7 @@ public class Log {
         }
 
         // If no destination wasn't specified, default to stderr
-        if(destinationString == null){
+        if (destinationString == null) {
             destinationString = "Stderr";
         }
 

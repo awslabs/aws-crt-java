@@ -21,7 +21,7 @@ phases:
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
+      - export PKG_VERSION=0.22.0-2-g3048c8c6
       - echo $PKG_VERSION
       - mkdir -p target/cmake-build/lib
       # mv all the platform-specific jars to target/
@@ -61,7 +61,7 @@ phases:
       - bash ./codebuild/cd/deploy-platform-specific-jars.sh
       - mvn nexus-staging:close -Prelease -DstagingRepositoryId=$STAGING_REPO_ID
       # deploy android
-      - bash ./codebuild/cd/deploy-snapshot-android.sh
+      - ./codebuild/cd/deploy-snapshot-android.sh
   post_build:
     commands:
 

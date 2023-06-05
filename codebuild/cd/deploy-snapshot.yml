@@ -21,7 +21,7 @@ phases:
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      - export PKG_VERSION=0.22.0-2-g3048c8c6
+      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - echo $PKG_VERSION
       - mkdir -p target/cmake-build/lib
       # mv all the platform-specific jars to target/

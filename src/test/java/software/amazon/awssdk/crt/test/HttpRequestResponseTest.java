@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
+    private final static String HOST = "https://postman-echo.com";
 
     public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody,
             boolean useChunkedEncoding, int expectedStatus) throws Exception {
@@ -108,46 +109,46 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpDelete() throws Exception {
         skipIfNetworkUnavailable();
-        testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, false, 200);
-        testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
+        testRequest("DELETE", HOST, "/delete", EMPTY_BODY, false, 200);
+        testRequest("DELETE", HOST, "/get", EMPTY_BODY, false, 404);
+        testRequest("DELETE", HOST, "/post", EMPTY_BODY, false, 404);
+        testRequest("DELETE", HOST, "/put", EMPTY_BODY, false, 404);
     }
 
     @Test
     public void testHttpGet() throws Exception {
         skipIfNetworkUnavailable();
-        testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, false, 200);
-        testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("GET", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
+        testRequest("GET", HOST, "/delete", EMPTY_BODY, false, 404);
+        testRequest("GET", HOST, "/get", EMPTY_BODY, false, 200);
+        testRequest("GET", HOST, "/post", EMPTY_BODY, false, 404);
+        testRequest("GET", HOST, "/put", EMPTY_BODY, false, 404);
     }
 
     @Test
     public void testHttpPost() throws Exception {
         skipIfNetworkUnavailable();
-        testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, false, 200);
-        testRequest("POST", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
+        testRequest("POST", HOST, "/delete", EMPTY_BODY, false, 404);
+        testRequest("POST", HOST, "/get", EMPTY_BODY, false, 404);
+        testRequest("POST", HOST, "/post", EMPTY_BODY, false, 200);
+        testRequest("POST", HOST, "/put", EMPTY_BODY, false, 404);
     }
 
     @Test
     public void testHttpPut() throws Exception {
         skipIfNetworkUnavailable();
-        testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/put", EMPTY_BODY, false, 200);
+        testRequest("PUT", HOST, "/delete", EMPTY_BODY, false, 404);
+        testRequest("PUT", HOST, "/get", EMPTY_BODY, false, 404);
+        testRequest("PUT", HOST, "/post", EMPTY_BODY, false, 404);
+        testRequest("PUT", HOST, "/put", EMPTY_BODY, false, 200);
     }
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
         skipIfNetworkUnavailable();
-        testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, false, 200);
-        testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, false, 300);
-        testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, false, 400);
-        testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, false, 500);
+        testRequest("GET", HOST, "/status/200", EMPTY_BODY, false, 200);
+        testRequest("GET", HOST, "/status/300", EMPTY_BODY, false, 300);
+        testRequest("GET", HOST, "/status/400", EMPTY_BODY, false, 400);
+        testRequest("GET", HOST, "/status/500", EMPTY_BODY, false, 500);
     }
 
     @Test
@@ -177,13 +178,13 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     private void testHttpUpload(boolean chunked) throws Exception {
         skipIfNetworkUnavailable();
         String bodyToSend = TEST_DOC_LINE;
-        TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, chunked, 200);
+        TestHttpResponse response = testRequest("PUT", HOST, "/put", bodyToSend, chunked, 200);
 
         // Get the Body bytes that were echoed back to us
         String body = response.getBody();
 
         /**
-         * Example Json Response Body from httpbin.org:
+         * Example Json Response Body from postman-echo.com:
          *
          * {
          * "args": {},
@@ -194,12 +195,11 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
          * "form": {},
          * "headers": {
          * "Content-Length": "166",
-         * "Host": "httpbin.org"
+         * "Host": "postman-echo.com"
          * },
          * "json": null,
          * "method": "PUT",
          * "origin": "1.2.3.4, 5.6.7.8",
-         * "url": "https://httpbin.org/anything"
          * }
          *
          */
@@ -240,7 +240,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     public void testHttpRequestUnActivated() throws Exception {
         skipIfNetworkUnavailable();
 
-        URI uri = new URI("https://httpbin.org");
+        URI uri = new URI(HOST);
 
         HttpHeader[] requestHeaders = new HttpHeader[] { new HttpHeader("Host", uri.getHost()) };
 

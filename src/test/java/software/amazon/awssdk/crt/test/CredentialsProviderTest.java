@@ -32,7 +32,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
 
-    private static String COGNITO_IDENTITY = System.getenv("AWS_TESTING_COGNITO_IDENTITY");
+    private static String COGNITO_ENDPOINT = System.getenv("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
+    private static String COGNITO_IDENTITY = System.getenv("AWS_TEST_MQTT311_COGNITO_IDENTITY");
     private static String TEST_HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
     private static String TEST_HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
 
@@ -441,7 +442,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
              TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
 
@@ -472,7 +473,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             proxyOptions.setPort(Integer.parseInt(TEST_HTTP_PROXY_PORT));
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
             builder.withHttpProxyOptions(proxyOptions);
@@ -499,7 +500,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
             builder.withLogin(new CognitoCredentialsProvider.CognitoLoginTokenPair("test", "token"));

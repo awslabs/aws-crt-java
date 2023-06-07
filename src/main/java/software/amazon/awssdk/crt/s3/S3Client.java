@@ -68,9 +68,11 @@ public class S3Client extends CrtResource {
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
         AwsSigningConfig signingConfig = options.getSigningConfig();
+        boolean created_signing_config = false;
         if(signingConfig == null) {
             /* Create the signing config from credentials provider */
             signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+            created_signing_config=true;
         }
 
         acquireNativeHandle(s3ClientNew(this,
@@ -104,7 +106,9 @@ public class S3Client extends CrtResource {
                 monitoringFailureIntervalInSeconds));
 
         addReferenceTo(options.getClientBootstrap());
-        addReferenceTo(signingConfig);
+        if(created_signing_config) {
+            signingConfig.close();
+        }
     }
 
     private void onShutdownComplete() {

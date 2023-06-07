@@ -93,18 +93,11 @@ public class S3ClientOptions {
         return clientBootstrap;
     }
 
-    /**
-     * @Deprecated
-     * Same as use `.withSigningConfig(getDefaultAwsSigningConfig(region, credentialsProvider))`
-     **/
     public S3ClientOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
     }
 
-    /**
-     * @Deprecated
-     **/
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
     }
@@ -113,12 +106,6 @@ public class S3ClientOptions {
         this.signingConfig = signingConfig;
         return this;
     }
-
-    /**
-     * Helper to get the default signing config for S3.
-     * @return
-     */
-
 
     public AwsSigningConfig getSigningConfig() {
         return signingConfig;

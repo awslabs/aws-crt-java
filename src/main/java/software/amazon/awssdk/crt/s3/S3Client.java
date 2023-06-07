@@ -107,6 +107,7 @@ public class S3Client extends CrtResource {
 
         addReferenceTo(options.getClientBootstrap());
         if(created_signing_config) {
+            /* The native code will keep the needed resource around */
             signingConfig.close();
         }
     }
@@ -141,9 +142,13 @@ public class S3Client extends CrtResource {
             requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
         }
 
-        long credentialsProviderNativeHandle = 0;
-        if (options.getCredentialsProvider() != null) {
-            credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
+        AwsSigningConfig signingConfig = options.getSigningConfig();
+        boolean created_signing_config = false;
+        if(signingConfig == null) {
+            if (options.getCredentialsProvider() != null) {
+                signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+                created_signing_config=true;
+            }
         }
         URI endpoint = options.getEndpoint();
 
@@ -154,17 +159,15 @@ public class S3Client extends CrtResource {
                 options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
                 checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, credentialsProviderNativeHandle,
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
                 options.getResumeToken());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-        if (credentialsProviderNativeHandle != 0) {
-            /*
-             * Keep the java object alive until the meta Request shut down and release all
-             * the resources it's pointing to
-             */
-            metaRequest.addReferenceTo(options.getCredentialsProvider());
+
+        if(created_signing_config) {
+            /* The native code will keep the needed resource around */
+            signingConfig.close();
         }
         return metaRequest;
     }
@@ -222,6 +225,6 @@ public class S3Client extends CrtResource {
             int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
-            long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
+            AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, ResumeToken resumeToken);
 }

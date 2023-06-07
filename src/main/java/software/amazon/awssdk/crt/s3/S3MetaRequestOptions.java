@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -84,6 +85,7 @@ public class S3MetaRequestOptions {
     private Path requestFilePath;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private URI endpoint;
     private ResumeToken resumeToken;
 
@@ -208,6 +210,15 @@ public class S3MetaRequestOptions {
 
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
+    }
+
+    public S3MetaRequestOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
     }
 
     public S3MetaRequestOptions withEndpoint(URI endpoint) {

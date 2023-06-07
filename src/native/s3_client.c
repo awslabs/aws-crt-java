@@ -45,6 +45,7 @@ struct s3_client_make_meta_request_callback_data {
     jobject java_s3_meta_request;
     jobject java_s3_meta_request_response_handler_native_adapter;
     struct aws_input_stream *input_stream;
+    struct aws_signing_config_data signing_config_data;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -564,6 +565,7 @@ static void s_s3_meta_request_callback_cleanup(
     if (callback_data) {
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
+        aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
     }
 }
@@ -631,7 +633,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
     jbyteArray jni_request_filepath,
-    jlong jni_credentials_provider,
+    jobject java_signing_config,
     jobject java_response_handler_jobject,
     jbyteArray jni_endpoint,
     jobject java_resume_token_jobject) {
@@ -639,23 +641,25 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
-    struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
     struct aws_byte_cursor request_filepath;
     AWS_ZERO_STRUCT(request_filepath);
     struct aws_s3_meta_request_resume_token *resume_token =
         s_native_resume_token_from_java_new(env, java_resume_token_jobject);
-    struct aws_signing_config_aws *signing_config = NULL;
     struct aws_s3_meta_request *meta_request = NULL;
     bool success = false;
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
-    if (credentials_provider) {
-        signing_config = aws_mem_calloc(allocator, 1, sizeof(struct aws_signing_config_aws));
-        aws_s3_init_default_signing_config(signing_config, region, credentials_provider);
-    }
+    struct aws_http_message *request_message = NULL;
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
     AWS_FATAL_ASSERT(callback_data);
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+    if (java_signing_config) {
+        if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
+            goto done;
+        }
+    }
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     (void)jvmresult;
@@ -668,7 +672,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
     AWS_FATAL_ASSERT(callback_data->java_s3_meta_request_response_handler_native_adapter != NULL);
 
-    struct aws_http_message *request_message = aws_http_message_new_request(allocator);
+    request_message = aws_http_message_new_request(allocator);
     AWS_FATAL_ASSERT(request_message);
 
     AWS_FATAL_ASSERT(
@@ -723,7 +727,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .message = request_message,
         .send_filepath = request_filepath,
         .user_data = callback_data,
-        .signing_config = signing_config,
+        .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
         .body_callback = s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
@@ -748,9 +752,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 done:
     aws_s3_meta_request_resume_token_release(resume_token);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
-    if (signing_config) {
-        aws_mem_release(allocator, signing_config);
-    }
     aws_http_message_release(request_message);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
     aws_uri_clean_up(&endpoint);

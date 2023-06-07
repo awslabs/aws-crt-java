@@ -17,6 +17,8 @@ import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
+
 import java.net.URI;
 
 public class S3Client extends CrtResource {
@@ -65,12 +67,17 @@ public class S3Client extends CrtResource {
             monitoringThroughputThresholdInBytesPerSecond = monitoringOptions.getMinThroughputBytesPerSecond();
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
+        AwsSigningConfig signingConfig = options.getSigningConfig();
+        if(signingConfig == null) {
+            /* Create the signing config from credentials provider */
+            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+        }
 
         acquireNativeHandle(s3ClientNew(this,
                 region.getBytes(UTF8),
                 options.getClientBootstrap().getNativeHandle(),
                 tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
-                options.getCredentialsProvider().getNativeHandle(),
+                signingConfig,
                 options.getPartSize(),
                 options.getMultiPartUploadThreshold(),
                 options.getThroughputTargetGbps(),
@@ -97,7 +104,7 @@ public class S3Client extends CrtResource {
                 monitoringFailureIntervalInSeconds));
 
         addReferenceTo(options.getClientBootstrap());
-        addReferenceTo(options.getCredentialsProvider());
+        addReferenceTo(signingConfig);
     }
 
     private void onShutdownComplete() {
@@ -187,7 +194,7 @@ public class S3Client extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, long clientBootstrap,
-            long tlsContext, long signingConfig, long partSize, long multipartUploadThreshold, double throughputTargetGbps,
+            long tlsContext, AwsSigningConfig signingConfig, long partSize, long multipartUploadThreshold, double throughputTargetGbps,
             boolean enableReadBackpressure, long initialReadWindow, int maxConnections,
             StandardRetryOptions standardRetryOptions, boolean computeContentMd5,
             int proxyConnectionType,

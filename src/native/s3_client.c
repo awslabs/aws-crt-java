@@ -2,6 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#include "aws_signing.h"
 #include "crt.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
@@ -36,6 +37,7 @@
 struct s3_client_callback_data {
     JavaVM *jvm;
     jobject java_s3_client;
+    struct aws_signing_config_data signing_config_data;
 };
 
 struct s3_client_make_meta_request_callback_data {
@@ -78,7 +80,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jbyteArray jni_region,
     jlong jni_client_bootstrap,
     jlong jni_tls_ctx,
-    jlong jni_credentials_provider,
+    jobject java_signing_config,
     jlong part_size_jlong,
     jlong multipart_upload_threshold_jlong,
     jdouble throughput_target_gbps,
@@ -109,12 +111,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     if (!client_bootstrap) {
         aws_jni_throw_illegal_argument_exception(env, "Invalid Client Bootstrap");
-        return (jlong)NULL;
-    }
-
-    struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
-    if (!credentials_provider) {
-        aws_jni_throw_illegal_argument_exception(env, "Invalid Credentials Provider");
         return (jlong)NULL;
     }
 
@@ -160,15 +156,21 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     struct s3_client_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_callback_data));
+
+    struct aws_signing_config_aws signing_config;
+    AWS_ZERO_STRUCT(signing_config);
+    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
+        aws_jni_throw_runtime_exception(env, "Invalid signingConfig");
+        aws_mem_release(allocator, callback_data);
+        return (jlong)NULL;
+    }
+
     AWS_FATAL_ASSERT(callback_data);
     callback_data->java_s3_client = (*env)->NewGlobalRef(env, s3_client_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
-
-    struct aws_signing_config_aws signing_config;
-    aws_s3_init_default_signing_config(&signing_config, region, credentials_provider);
 
     struct aws_tls_connection_options *tls_options = NULL;
     struct aws_tls_connection_options tls_options_storage;
@@ -244,10 +246,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {
         aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
-        goto clean_up;
+        /* Clean up stuff */
+        aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
+        aws_mem_release(allocator, callback_data);
     }
 
-clean_up:
     aws_retry_strategy_release(retry_strategy);
 
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
@@ -296,6 +299,7 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
 
     // We're done with this callback data, free it.
     (*env)->DeleteGlobalRef(env, callback->java_s3_client);
+    aws_signing_config_data_clean_up(&callback->signing_config_data, env);
 
     aws_jni_release_thread_env(callback->jvm, env);
     /********** JNI ENV RELEASE **********/

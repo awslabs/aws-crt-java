@@ -6,6 +6,7 @@
 #ifndef AWS_JNI_CRT_AWS_SIGNING_H
 #define AWS_JNI_CRT_AWS_SIGNING_H
 
+#include <aws/common/byte_buf.h>
 #include <jni.h>
 
 struct aws_signing_config_aws;

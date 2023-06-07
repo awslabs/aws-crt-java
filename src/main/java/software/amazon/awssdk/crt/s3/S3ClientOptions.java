@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 public class S3ClientOptions {
 
@@ -20,6 +21,7 @@ public class S3ClientOptions {
     private ClientBootstrap clientBootstrap;
     private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private long partSize;
     private long multipartUploadThreshold;
     private double throughputTargetGbps;
@@ -91,13 +93,35 @@ public class S3ClientOptions {
         return clientBootstrap;
     }
 
+    /**
+     * @Deprecated
+     * Same as use `.withSigningConfig(getDefaultAwsSigningConfig(region, credentialsProvider))`
+     **/
     public S3ClientOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
     }
 
+    /**
+     * @Deprecated
+     **/
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
+    }
+
+    public S3ClientOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    /**
+     * Helper to get the default signing config for S3.
+     * @return
+     */
+
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
     }
 
     public S3ClientOptions withPartSize(long partSize) {

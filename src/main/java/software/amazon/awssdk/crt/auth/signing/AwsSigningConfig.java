@@ -473,6 +473,8 @@ public class AwsSigningConfig extends CrtResource {
 
     /**
      * Helper to get the default signing Config for S3.
+     * @param region The region to sign with
+     * @param credentialsProvider The provider while signing request.
      * @return the default signing config for S3
      */
     static public AwsSigningConfig getDefaultS3SigningConfig(String region, CredentialsProvider credentialsProvider){

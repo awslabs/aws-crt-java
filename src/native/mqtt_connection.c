@@ -85,6 +85,13 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
 
     if (old_value == 1) {
 
+        /**
+         * Disable the onClosed callback, so it is not invoked on the last disconnect for clean-up.
+         * (We do not invoke any callbacks on the last disconnect during clean-up/shutdown.
+         * Calling the callback on the final disconnect will cause a segfault!)
+         */
+        aws_mqtt_client_connection_set_connection_closed_handler(connection->client_connection, NULL, NULL);
+
         if (aws_mqtt_client_connection_disconnect(
                 connection->client_connection, s_on_shutdown_disconnect_complete, connection) != AWS_OP_SUCCESS) {
 
@@ -291,7 +298,40 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     aws_jni_release_thread_env(jni_connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    s_mqtt_jni_connection_release(jni_connection);
+    /* Do not call release here: s_on_connection_closed will (normally) be called
+     * right after and so we can call the release there instead. */
+}
+
+static void s_on_connection_closed(
+    struct aws_mqtt_client_connection *client_connection,
+    struct on_connection_closed_data *data,
+    void *user_data) {
+    (void)client_connection;
+    (void)data;
+
+    struct mqtt_jni_connection *connection = user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
+    // Make sure the Java object has not been garbage collected
+    if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
+        jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
+        if (mqtt_connection) {
+            (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_closed);
+            (*env)->DeleteLocalRef(env, mqtt_connection);
+            AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+        }
+    }
+    aws_jni_release_thread_env(connection->jvm, env);
+    /********** JNI ENV RELEASE **********/
+
+    /* Release the connection acquired during the disconnect function invoke */
+    s_mqtt_jni_connection_release(connection);
 }
 
 static struct mqtt_jni_connection *s_mqtt_connection_new(
@@ -373,6 +413,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
 
     aws_mqtt_client_connection_set_connection_interruption_handlers(
         connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
+    aws_mqtt_client_connection_set_connection_closed_handler(
+        connection->client_connection, s_on_connection_closed, connection);
 
     return (jlong)connection;
 }
@@ -550,6 +592,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
             error,
             aws_error_str(error));
         s_on_connection_disconnected(connection->client_connection, disconnect_callback);
+        // Release the reference manually
+        s_mqtt_jni_connection_release(connection);
     }
 }
 

@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-package software.amazon.awssdk.crt.test;
+ package software.amazon.awssdk.crt.test;
 
 import static org.junit.Assert.*;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -19,18 +20,23 @@ import software.amazon.awssdk.crt.mqtt.*;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-class MissingCredentialsException extends RuntimeException {
-    MissingCredentialsException(String message) {
-        super(message);
-    }
-}
+ class MissingCredentialsException extends RuntimeException {
+     MissingCredentialsException(String message) {
+         super(message);
+     }
+ }
 
-public class MqttClientConnectionFixture extends CrtTestFixture {
+ public class MqttClientConnectionFixture extends CrtTestFixture {
 
     MqttClientConnection connection = null;
     private boolean disconnecting = false;
+
+    private CompletableFuture<OnConnectionSuccessReturn> onConnectionSuccessFuture = new CompletableFuture<OnConnectionSuccessReturn>();
+    private CompletableFuture<OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
+    private CompletableFuture<OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
 
     static final boolean AWS_TEST_IS_CI = System.getenv("AWS_TEST_IS_CI") != null;
     static final String AWS_TEST_MQTT311_ROOTCA = System.getenv("AWS_TEST_MQTT311_ROOT_CA");
@@ -145,6 +151,40 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
+            // Connection callback events
+            MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+                @Override
+                public void onConnectionResumed(boolean sessionPresent) {
+                    System.out.println("Connection resumed");
+                }
+
+                @Override
+                public void onConnectionInterrupted(int errorCode) {
+                    if (!disconnecting) {
+                        System.out.println(
+                                "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                    }
+                }
+
+                @Override
+                public void onConnectionFailure(OnConnectionFailureReturn data) {
+                    System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                    onConnectionFailureFuture.complete(data);
+                }
+
+                @Override
+                public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                    System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                    onConnectionSuccessFuture.complete(data);
+                }
+
+                @Override
+                public void onConnectionClosed(OnConnectionClosedReturn data) {
+                    System.out.println("Connection disconnected successfully");
+                    onConnectionClosedFuture.complete(data);
+                }
+            };
+
             // Default settings
             boolean cleanSession = true; // only true is supported right now
             int keepAliveSecs = 0;
@@ -170,6 +210,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setCleanSession(cleanSession);
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+                config.setConnectionCallbacks(events);
 
                 if (httpProxyOptions != null) {
                     config.setHttpProxyOptions(httpProxyOptions);
@@ -211,6 +252,40 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
         int protocolOperationTimeout = 60000;
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
+        // Connection callback events
+        MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+            @Override
+            public void onConnectionResumed(boolean sessionPresent) {
+                System.out.println("Connection resumed");
+            }
+
+            @Override
+            public void onConnectionInterrupted(int errorCode) {
+                if (!disconnecting) {
+                    System.out.println(
+                            "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                }
+            }
+
+            @Override
+            public void onConnectionFailure(OnConnectionFailureReturn data) {
+                System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                onConnectionFailureFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                onConnectionSuccessFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionClosed(OnConnectionClosedReturn data) {
+                System.out.println("Connection disconnected successfully");
+                onConnectionClosedFuture.complete(data);
+            }
+        };
+
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);)
@@ -236,6 +311,7 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
                 config.setKeepAliveSecs(keepAliveSecs);
                 config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
                 config.setUseWebsockets(true);
+                config.setConnectionCallbacks(events);
 
                 if (username != null) {
                     config.setUsername(username);
@@ -338,4 +414,17 @@ public class MqttClientConnectionFixture extends CrtTestFixture {
             fail("Exception during sleep: " + ex.getMessage());
         }
     }
+
+    OnConnectionSuccessReturn waitForConnectSuccess() throws Exception {
+        return onConnectionSuccessFuture.get(60, TimeUnit.SECONDS);
+    }
+
+    OnConnectionFailureReturn waitForConnectFailure() throws Exception {
+        return onConnectionFailureFuture.get(60, TimeUnit.SECONDS);
+    }
+
+    OnConnectionClosedReturn waitForConnectClose() throws Exception {
+        return onConnectionClosedFuture.get(60, TimeUnit.SECONDS);
+    }
 }
+

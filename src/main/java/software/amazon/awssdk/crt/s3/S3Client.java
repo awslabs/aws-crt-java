@@ -108,6 +108,7 @@ public class S3Client extends CrtResource {
         addReferenceTo(options.getClientBootstrap());
         if(created_signing_config) {
             /* The native code will keep the needed resource around */
+            addReferenceTo(options.getCredentialsProvider());
             signingConfig.close();
         }
     }
@@ -167,6 +168,7 @@ public class S3Client extends CrtResource {
 
         if(created_signing_config) {
             /* The native code will keep the needed resource around */
+            addReferenceTo(options.getCredentialsProvider());
             signingConfig.close();
         }
         return metaRequest;

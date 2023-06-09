@@ -22,7 +22,7 @@ struct aws_signing_config_data {
 
     jobject java_sign_header_predicate;
     struct aws_credentials *credentials;
-    struct aws_credentials_provider *credentials_provider;
+    jobject java_credentials_provider;
 };
 
 /* Initialize the native `config` from Java Object and Keep the required data around with `config_data`. You need to

@@ -58,8 +58,10 @@ void aws_signing_config_data_clean_up(struct aws_signing_config_data *data, JNIE
     if (data->java_sign_header_predicate) {
         (*env)->DeleteGlobalRef(env, data->java_sign_header_predicate);
     }
+    if (data->java_credentials_provider) {
+        (*env)->DeleteGlobalRef(env, data->java_credentials_provider);
+    }
     aws_credentials_release(data->credentials);
-    aws_credentials_provider_release(data->credentials_provider);
 }
 
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data, JNIEnv *env) {
@@ -358,8 +360,9 @@ int aws_build_signing_config(
     if (provider != NULL) {
         config->credentials_provider =
             (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
-        config_data->credentials_provider = config->credentials_provider;
-        aws_credentials_provider_acquire(config->credentials_provider);
+        /* Keep the java object alive */
+        config_data->java_credentials_provider = (*env)->NewGlobalRef(env, provider);
+        AWS_FATAL_ASSERT(config_data->java_credentials_provider != NULL);
         aws_jni_check_and_clear_exception(env);
     }
 

@@ -525,12 +525,10 @@ public class S3ClientTest extends CrtTestFixture {
         return payload.array();
     }
 
-    @Test
-    public void testS3Put() {
-        skipIfNetworkUnavailable();
-        Assume.assumeTrue(hasAwsCredentials());
-
+    private void testS3PutHelper(boolean useFile, boolean unknowContentLength, String objectPath) throws IOException {
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
+        int contentLength = 10 * 1024 * 1024;
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -554,39 +552,66 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(1024 * 1024));
-            HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
-                @Override
-                public boolean sendRequestBody(ByteBuffer outBuffer) {
-                    ByteBufferUtils.transferData(payload, outBuffer);
-                    return payload.remaining() == 0;
-                }
 
-                @Override
-                public boolean resetPosition() {
-                    return true;
-                }
+            HttpHeader[] headers = {
+                    new HttpHeader("Host", ENDPOINT),
+                };
+            HttpRequest httpRequest;
+            String encodedPath = "/put_object_test_10MB.txt";
+            if(objectPath!=null) {
+                encodedPath = objectPath;
+            }
+            if (useFile) {
+                Files.write(uploadFilePath, createTestPayload(contentLength));
+                httpRequest = new HttpRequest("PUT", encodedPath, headers, null);
+            } else {
+                final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(contentLength));
+                HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
+                    @Override
+                    public boolean sendRequestBody(ByteBuffer outBuffer) {
+                        ByteBufferUtils.transferData(payload, outBuffer);
+                        return payload.remaining() == 0;
+                    }
 
-                @Override
-                public long getLength() {
-                    return payload.capacity();
-                }
-            };
+                    @Override
+                    public boolean resetPosition() {
+                        return true;
+                    }
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
-                    new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_1MB.txt", headers, payloadStream);
+                    @Override
+                    public long getLength() {
+                        return payload.capacity();
+                    }
+                };
+                httpRequest = new HttpRequest("PUT", encodedPath, headers, payloadStream);
+            }
 
+            if(!unknowContentLength) {
+                httpRequest.addHeader(
+                    new HttpHeader("Content-Length", Integer.valueOf(contentLength).toString()));
+            }
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
+            if (useFile) {
+                metaRequestOptions.withRequestFilePath(uploadFilePath);
+            }
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
+        } finally {
+            Files.deleteIfExists(uploadFilePath);
         }
+    }
+
+    @Test
+    public void testS3Put() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3PutHelper(false, false, null);
     }
 
     // Test that we can upload by passing a filepath instead of an HTTP body stream
@@ -594,56 +619,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3PutFilePath() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-
-        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
-
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
-        try (S3Client client = createS3Client(clientOptions)) {
-            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
-            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
-
-                @Override
-                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
-                    return 0;
-                }
-
-                @Override
-                public void onFinished(S3FinishedResponseContext context) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Meta request finished with error code " + context.getErrorCode());
-                    if (context.getErrorCode() != 0) {
-                        onFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
-                        return;
-                    }
-                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
-                }
-            };
-
-            int contentLength = 1024 * 1024;
-            Files.write(uploadFilePath, createTestPayload(contentLength));
-
-            HttpHeader[] headers = {
-                new HttpHeader("Host", ENDPOINT),
-                new HttpHeader("Content-Length", String.valueOf(contentLength)),
-            };
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_filepath_1MB.txt", headers, null);
-
-            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
-                    .withHttpRequest(httpRequest)
-                    .withRequestFilePath(uploadFilePath)
-                    .withResponseHandler(responseHandler);
-
-            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
-            }
-        } catch (InterruptedException | ExecutionException ex) {
-            Assert.fail(ex.getMessage());
-        } finally {
-            Files.deleteIfExists(uploadFilePath);
-        }
+        testS3PutHelper(true, false, null);
     }
 
     // Test that we can upload without provide the content length
@@ -651,54 +627,15 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3PutUnknownContentLength() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+        testS3PutHelper(false, true, null);
+    }
 
-        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
-
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
-        try (S3Client client = createS3Client(clientOptions)) {
-            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
-            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
-
-                @Override
-                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
-                    return 0;
-                }
-
-                @Override
-                public void onFinished(S3FinishedResponseContext context) {
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                            "Meta request finished with error code " + context.getErrorCode());
-                    if (context.getErrorCode() != 0) {
-                        onFinishedFuture.completeExceptionally(
-                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
-                        return;
-                    }
-                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
-                }
-            };
-
-            Files.write(uploadFilePath, createTestPayload(10 * 1024 * 1024));
-
-            HttpHeader[] headers = {
-                new HttpHeader("Host", ENDPOINT),
-            };
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_filepath_10MB.txt", headers, null);
-
-            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
-                    .withHttpRequest(httpRequest)
-                    .withRequestFilePath(uploadFilePath)
-                    .withResponseHandler(responseHandler);
-
-            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
-            }
-        } catch (InterruptedException | ExecutionException ex) {
-            Assert.fail(ex.getMessage());
-        } finally {
-            Files.deleteIfExists(uploadFilePath);
-        }
+    // Test that we can upload with paht with special characters
+    @Test
+    public void testS3PutSpecialCharPath() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt");
     }
 
     // Test that passing a nonexistent file path will cause an error

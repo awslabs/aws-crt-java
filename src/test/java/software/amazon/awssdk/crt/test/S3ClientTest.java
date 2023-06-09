@@ -526,7 +526,7 @@ public class S3ClientTest extends CrtTestFixture {
         return payload.array();
     }
 
-    private void testS3PutHelper(boolean useFile, boolean unknowContentLength, String objectPath) throws IOException {
+    private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath) throws IOException {
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
         int contentLength = 10 * 1024 * 1024;
@@ -553,7 +553,6 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-
             HttpHeader[] headers = {
                     new HttpHeader("Host", ENDPOINT),
                 };
@@ -563,32 +562,32 @@ public class S3ClientTest extends CrtTestFixture {
                 path = objectPath;
             }
             String encodedPath = Uri.encodeUriPath(path);
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(contentLength));
+            HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
+                @Override
+                public boolean sendRequestBody(ByteBuffer outBuffer) {
+                    ByteBufferUtils.transferData(payload, outBuffer);
+                    return payload.remaining() == 0;
+                }
+
+                @Override
+                public boolean resetPosition() {
+                    return true;
+                }
+
+                @Override
+                public long getLength() {
+                    return payload.capacity();
+                }
+            };
             if (useFile) {
                 Files.write(uploadFilePath, createTestPayload(contentLength));
                 httpRequest = new HttpRequest("PUT", encodedPath, headers, null);
             } else {
-                final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(contentLength));
-                HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
-                    @Override
-                    public boolean sendRequestBody(ByteBuffer outBuffer) {
-                        ByteBufferUtils.transferData(payload, outBuffer);
-                        return payload.remaining() == 0;
-                    }
-
-                    @Override
-                    public boolean resetPosition() {
-                        return true;
-                    }
-
-                    @Override
-                    public long getLength() {
-                        return payload.capacity();
-                    }
-                };
                 httpRequest = new HttpRequest("PUT", encodedPath, headers, payloadStream);
             }
 
-            if(!unknowContentLength) {
+            if(!unknownContentLength) {
                 httpRequest.addHeader(
                     new HttpHeader("Content-Length", Integer.valueOf(contentLength).toString()));
             }
@@ -636,7 +635,6 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3PutSpecialCharPath() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        Log.initLoggingToFile(LogLevel.Trace, "log.txt");
         testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt");
     }
 

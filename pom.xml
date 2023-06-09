@@ -172,7 +172,7 @@
                                     <arguments>
                                         <argument>-B${cmake.binaries}</argument>
                                         <argument>-H${project.basedir}</argument>
-                                        <argument>-DCMAKE_BUILD_TYPE=${cmake.buildtype}</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Debug</argument>
                                         <argument>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</argument>
                                         <argument>-DBUILD_DEPS=ON</argument>
                                         <argument>-DAWS_WARNINGS_ARE_ERRORS=${cmake.warningsareerrors}</argument>

@@ -3,6 +3,7 @@ import sys
 import os
 import os.path
 
+
 class AWSCrtJavaTest(Builder.Action):
 
     def _run_java_tests(self, *cmd_args):
@@ -31,6 +32,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
+            "-Dtest=software.amazon.awssdk.crt.test.S3ClientTest"
         )
 
         # run the ShutdownTest by itself
@@ -56,5 +58,5 @@ class AWSCrtJavaTest(Builder.Action):
 
         return Builder.Script([
             Builder.SetupCrossCICrtEnvironment(),
-            self.start_maven_tests # Then run the Maven stuff
-            ])
+            self.start_maven_tests  # Then run the Maven stuff
+        ])

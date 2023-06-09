@@ -485,6 +485,8 @@ public class AwsSigningConfig extends CrtResource {
         defaultConfig.setSignedBodyValue("UNSIGNED-PAYLOAD");
         defaultConfig.setRegion(region);
         defaultConfig.setCredentialsProvider(credentialsProvider);
+        defaultConfig.setShouldNormalizeUriPath(false);
+        defaultConfig.setUseDoubleUriEncode(false);
         return defaultConfig;
     }
 }

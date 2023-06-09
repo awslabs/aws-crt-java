@@ -32,7 +32,6 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
-            "-Dtest=software.amazon.awssdk.crt.test.S3ClientTest"
         )
 
         # run the ShutdownTest by itself

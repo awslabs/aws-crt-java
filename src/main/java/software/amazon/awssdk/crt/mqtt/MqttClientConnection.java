@@ -141,6 +141,17 @@ public class MqttClientConnection extends CrtResource {
             }
             connectAck = null;
         }
+
+        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        if (callbacks != null) {
+            if (errorCode == 0) {
+                OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+                callbacks.onConnectionSuccess(returnData);
+            } else {
+                OnConnectionFailureReturn returnData = new OnConnectionFailureReturn(errorCode);
+                callbacks.onConnectionFailure(returnData);
+            }
+        }
     }
 
     // Called when the connection drops or is disconnected. If errorCode == 0, the
@@ -164,6 +175,20 @@ public class MqttClientConnection extends CrtResource {
         MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
         if (callbacks != null) {
             callbacks.onConnectionResumed(sessionPresent);
+
+            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+            callbacks.onConnectionSuccess(returnData);
+        }
+    }
+
+    // Called when the connection is disconnected successfully and intentionally.
+    private void onConnectionClosed() {
+        if (config != null) {
+            MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+            if (callbacks != null) {
+                OnConnectionClosedReturn returnData = new OnConnectionClosedReturn();
+                callbacks.onConnectionClosed(returnData);
+            }
         }
     }
 

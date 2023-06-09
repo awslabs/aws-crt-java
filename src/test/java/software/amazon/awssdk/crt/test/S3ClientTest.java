@@ -596,9 +596,8 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
             if (useFile) {
-                metaRequestOptions.withRequestFilePath(uploadFilePath);
+                metaRequestOptions = metaRequestOptions.withRequestFilePath(uploadFilePath);
             }
-
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }

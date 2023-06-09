@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -557,10 +558,11 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Host", ENDPOINT),
                 };
             HttpRequest httpRequest;
-            String encodedPath = "/put_object_test_10MB.txt";
+            String path = "/put_object_test_10MB.txt";
             if(objectPath!=null) {
-                encodedPath = objectPath;
+                path = objectPath;
             }
+            String encodedPath = Uri.encodeUriPath(path);
             if (useFile) {
                 Files.write(uploadFilePath, createTestPayload(contentLength));
                 httpRequest = new HttpRequest("PUT", encodedPath, headers, null);
@@ -635,6 +637,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3PutSpecialCharPath() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+        Log.initLoggingToFile(LogLevel.Trace, "log.txt");
         testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt");
     }
 

@@ -630,7 +630,7 @@ public class S3ClientTest extends CrtTestFixture {
         testS3PutHelper(false, true, null);
     }
 
-    // Test that we can upload with paht with special characters
+    // Test that we can upload to a path with special characters
     @Test
     public void testS3PutSpecialCharPath() throws IOException {
         skipIfNetworkUnavailable();

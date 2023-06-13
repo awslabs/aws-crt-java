@@ -655,7 +655,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(callback_data);
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
-    if (java_signing_config) {
+    if (java_signing_config != NULL) {
         if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
             goto done;
         }

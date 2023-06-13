@@ -203,6 +203,14 @@ public class S3MetaRequestOptions {
         return responseHandler;
     }
 
+    /**
+     * @deprecated Please use {@link #withSigningConfig(signingConfig)} instead.
+     * The credentials provider will be used to create the signing Config to override the client level config.
+     * The client config will be used.
+     *
+     * @param credentialsProvider provide credentials for signing.
+     * @return this
+     */
     public S3MetaRequestOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
@@ -212,6 +220,13 @@ public class S3MetaRequestOptions {
         return credentialsProvider;
     }
 
+    /**
+     * The configuration related to signing used by S3 client. It will override the client level configuration if provided.
+     * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     *
+     * @param signingConfig configuration related to signing via an AWS signing process.
+     * @return this
+     */
     public S3MetaRequestOptions withSigningConfig(AwsSigningConfig signingConfig) {
         this.signingConfig = signingConfig;
         return this;

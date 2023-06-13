@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
@@ -557,10 +556,7 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Host", ENDPOINT),
                 };
             HttpRequest httpRequest;
-            String path = "/put_object_test_10MB.txt";
-            if(objectPath!=null) {
-                path = objectPath;
-            }
+            String path = objectPath == null ? "/put_object_test_10MB.txt" : objectPath;
             String encodedPath = Uri.encodeUriPath(path);
             final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(contentLength));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {

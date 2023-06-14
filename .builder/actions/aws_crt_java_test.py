@@ -10,22 +10,22 @@ class AWSCrtJavaTest(Builder.Action):
         if os.path.exists('log.txt'):
             os.remove('log.txt')
 
-         profiles = 'continuous-integration'
-                if current_host() == 'alpine':
-                    profiles += ',alpine'
+        profiles = 'continuous-integration'
+        if current_host() == 'alpine':
+            profiles += ',alpine'
 
-                cmd_args = [
-                    "mvn", "-B",
-                    "-P", profiles,
-                    "-DredirectTestOutputToFile=true",
-                    "-DreuseForks=false",
-                    "-Daws.crt.memory.tracing=2",
-                    "-Daws.crt.debugnative=true",
-                    "-Daws.crt.aws_trace_log_per_test",
-                    "-Daws.crt.ci=true",
-                ]
-                cmd_args.extend(extra_args)
-                cmd_args.append("test")
+        cmd_args = [
+            "mvn", "-B",
+            "-P", profiles,
+            "-DredirectTestOutputToFile=true",
+            "-DreuseForks=false",
+            "-Daws.crt.memory.tracing=2",
+            "-Daws.crt.debugnative=true",
+            "-Daws.crt.aws_trace_log_per_test",
+            "-Daws.crt.ci=true",
+        ]
+        cmd_args.extend(extra_args)
+        cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)
         if result.returncode:

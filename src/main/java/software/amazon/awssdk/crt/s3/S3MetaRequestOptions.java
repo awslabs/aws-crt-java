@@ -204,7 +204,7 @@ public class S3MetaRequestOptions {
     }
 
     /**
-     * @deprecated Please use {@link #withSigningConfig(signingConfig)} instead.
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
      * The credentials provider will be used to create the signing Config to override the client level config.
      * The client config will be used.
      *

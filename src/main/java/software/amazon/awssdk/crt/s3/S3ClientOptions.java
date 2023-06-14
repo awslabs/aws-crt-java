@@ -94,7 +94,7 @@ public class S3ClientOptions {
     }
 
     /**
-     * @deprecated Please use {@link #withSigningConfig(signingConfig)} instead.
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
      * The credentials provider will be used to create the signing Config when the client was created.
      * Client will use `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` to create the signing config.
      *

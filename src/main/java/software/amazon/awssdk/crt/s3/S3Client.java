@@ -68,11 +68,12 @@ public class S3Client extends CrtResource {
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
         AwsSigningConfig signingConfig = options.getSigningConfig();
-        if(signingConfig == null) {
+        boolean didCreateSigningConfig = false;
+        if(signingConfig == null && options.getCredentialsProvider()!= null) {
             /* Create the signing config from credentials provider */
             signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+            didCreateSigningConfig = true;
         }
-        boolean created_signing_config = signingConfig == null;
 
         acquireNativeHandle(s3ClientNew(this,
                 region.getBytes(UTF8),
@@ -105,7 +106,7 @@ public class S3Client extends CrtResource {
                 monitoringFailureIntervalInSeconds));
 
         addReferenceTo(options.getClientBootstrap());
-        if(created_signing_config) {
+        if(didCreateSigningConfig) {
             /* The native code will keep the needed resource around */
             signingConfig.close();
         }
@@ -142,12 +143,11 @@ public class S3Client extends CrtResource {
         }
 
         AwsSigningConfig signingConfig = options.getSigningConfig();
-        if(signingConfig == null) {
-            if (options.getCredentialsProvider() != null) {
-                signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
-            }
+        boolean didCreateSigningConfig = false;
+        if(signingConfig == null && options.getCredentialsProvider()!= null) {
+            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+            didCreateSigningConfig = true;
         }
-        boolean created_signing_config = signingConfig == null;
         URI endpoint = options.getEndpoint();
 
         ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
@@ -163,7 +163,7 @@ public class S3Client extends CrtResource {
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
-        if(created_signing_config) {
+        if(didCreateSigningConfig) {
             /* The native code will keep the needed resource around */
             signingConfig.close();
         }

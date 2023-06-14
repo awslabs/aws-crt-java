@@ -160,6 +160,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
+    if (java_signing_config == NULL) {
+        aws_jni_throw_illegal_argument_exception(env, "Missing signingConfig");
+        aws_mem_release(allocator, callback_data);
+        return (jlong)NULL;
+    }
+
     if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
         aws_jni_throw_runtime_exception(env, "Invalid signingConfig");
         aws_mem_release(allocator, callback_data);

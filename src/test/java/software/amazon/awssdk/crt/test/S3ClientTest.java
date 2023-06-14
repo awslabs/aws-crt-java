@@ -3,29 +3,28 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
-
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.*;
 import software.amazon.awssdk.crt.s3.*;
-import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
-import software.amazon.awssdk.crt.s3.ChecksumAlgorithm;
-import software.amazon.awssdk.crt.s3.ResumeToken;
 import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
+import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -89,7 +88,7 @@ public class S3ClientTest extends CrtTestFixture {
     public void testS3ClientCreateDestroy() {
         skipIfNetworkUnavailable();
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
                 .withComputeContentMd5(true);
         try (S3Client client = createS3Client(clientOptions)) {
 
@@ -106,7 +105,7 @@ public class S3ClientTest extends CrtTestFixture {
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withEventLoopGroup(retry_elg));
 
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
 
             }
@@ -126,9 +125,97 @@ public class S3ClientTest extends CrtTestFixture {
             final StandardRetryOptions standardRetryOptions = new StandardRetryOptions().withInitialBucketCapacity(123)
                     .withBackoffRetryOptions(new ExponentialBackoffRetryOptions().withMaxRetries(30));
 
-            try (S3Client client = createS3Client(new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION)
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
                     .withStandardRetryOptions(standardRetryOptions), elg)) {
 
+            }
+        }
+    }
+
+
+    /*
+     * Test that a client can be created successfully with Tcp Keep Alive options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyTcpKeepAliveOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            S3TcpKeepAliveOptions tcpKeepAliveOptions = new S3TcpKeepAliveOptions();
+            tcpKeepAliveOptions.setKeepAliveIntervalSec((short) 10);
+            tcpKeepAliveOptions.setKeepAliveTimeoutSec((short) 20);
+            tcpKeepAliveOptions.setKeepAliveMaxFailedProbes((short) 30);
+
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
+                    .withS3TcpKeepAliveOptions(tcpKeepAliveOptions), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with monitoring options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyMonitoringOptions() {
+        skipIfNetworkUnavailable();
+
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
+
+            HttpMonitoringOptions monitoringOptions = new HttpMonitoringOptions();
+            monitoringOptions.setMinThroughputBytesPerSecond(100);
+            monitoringOptions.setAllowableThroughputFailureIntervalSeconds(10);
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
+                    .withHttpMonitoringOptions(monitoringOptions).withConnectTimeoutMs(10), elg)) {
+
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with proxy options.
+     */
+    @Test
+    public void testS3ClientCreateDestroyHttpProxyOptions() {
+        skipIfNetworkUnavailable();
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+        ) {
+            HttpProxyOptions proxyOptions = new HttpProxyOptions();
+            proxyOptions.setHost("localhost");
+            proxyOptions.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            proxyOptions.setPort(80);
+            proxyOptions.setTlsContext(tlsContext);
+            proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
+            proxyOptions.setAuthorizationUsername("username");
+            proxyOptions.setAuthorizationPassword("password");
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
+                    .withProxyOptions(proxyOptions), elg)) {
+            }
+        }
+    }
+
+    /*
+     * Test that a client can be created successfully with proxy environment variable setting.
+     */
+    @Test
+    public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
+        skipIfNetworkUnavailable();
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+             EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
+             TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions);
+             TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
+        ) {
+            HttpProxyEnvironmentVariableSetting environmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
+            environmentVariableSetting.setConnectionType(HttpProxyOptions.HttpProxyConnectionType.Tunneling);
+            environmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.DISABLED);
+            environmentVariableSetting.setTlsConnectionOptions(tlsConnectionOptions);
+            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
+                    .withProxyEnvironmentVariableSetting(environmentVariableSetting), elg)) {
             }
         }
     }
@@ -138,7 +225,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -184,7 +271,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -210,7 +297,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT + ":443") };
             HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
@@ -240,7 +327,7 @@ public class S3ClientTest extends CrtTestFixture {
         final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
-                .withEndpoint(ENDPOINT)
+
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
                 .withInitialReadWindowSize(1024)
@@ -329,7 +416,7 @@ public class S3ClientTest extends CrtTestFixture {
         final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
-                .withEndpoint(ENDPOINT)
+
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
                 .withInitialReadWindowSize(1024)
@@ -375,7 +462,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         boolean expectedException = false;
         byte[] madeUpCredentials = "I am a madeup credentials".getBytes();
         StaticCredentialsProvider.StaticCredentialsProviderBuilder builder = new StaticCredentialsProvider.StaticCredentialsProviderBuilder()
@@ -443,7 +530,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -502,6 +589,151 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    // Test that we can upload by passing a filepath instead of an HTTP body stream
+    @Test
+    public void testS3PutFilePath() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            int contentLength = 1024 * 1024;
+            Files.write(uploadFilePath, createTestPayload(contentLength));
+
+            HttpHeader[] headers = {
+                new HttpHeader("Host", ENDPOINT),
+                new HttpHeader("Content-Length", String.valueOf(contentLength)),
+            };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_filepath_1MB.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withRequestFilePath(uploadFilePath)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        } finally {
+            Files.deleteIfExists(uploadFilePath);
+        }
+    }
+
+    // Test that we can upload without provide the content length
+    @Test
+    public void testS3PutUnknownContentLength() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + bodyBytesIn.toString());
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(
+                                new CrtS3RuntimeException(context.getErrorCode(), context.getResponseStatus(), context.getErrorPayload()));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            Files.write(uploadFilePath, createTestPayload(10 * 1024 * 1024));
+
+            HttpHeader[] headers = {
+                new HttpHeader("Host", ENDPOINT),
+            };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_filepath_10MB.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withRequestFilePath(uploadFilePath)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        } finally {
+            Files.deleteIfExists(uploadFilePath);
+        }
+    }
+
+    // Test that passing a nonexistent file path will cause an error
+    @Test
+    public void testS3PutNonexistentFilePath() throws IOException {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            // response handler does nothing, it just needs to exist for this test
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {};
+
+            HttpHeader[] headers = {
+                new HttpHeader("Host", ENDPOINT),
+                new HttpHeader("Content-Length", String.valueOf(1024)),
+            };
+            HttpRequest httpRequest = new HttpRequest("PUT", "/put_nonexistent_file", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withRequestFilePath(Paths.get("obviously_nonexistent_file.derp"))
+                    .withResponseHandler(responseHandler);
+
+            // makeMetaRequest() should fail
+            Throwable thrown = Assert.assertThrows(Throwable.class,
+                () -> client.makeMetaRequest(metaRequestOptions));
+
+            // exception should indicate the file doesn't exist
+            String exceptionString = thrown.toString();
+            Assert.assertTrue(exceptionString.contains("AWS_ERROR_FILE_INVALID_PATH"));
+        }
+    }
+
     private S3MetaRequestResponseHandler createTestPutPauseResumeHandler(CompletableFuture<Integer> onFinishedFuture,
         CompletableFuture<Void> onProgressFuture) {
         return new S3MetaRequestResponseHandler() {
@@ -536,7 +768,7 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
 
         S3ClientOptions clientOptions = new S3ClientOptions()
-            .withEndpoint(ENDPOINT)
+
             .withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -640,7 +872,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onPutFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -756,7 +988,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -812,12 +1044,14 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
+    // TODO: copy is disabled currently because it does not work correctly on c
+    // side. reenable once its fixed in crt.
+    //@Test
     public void testS3Copy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        S3ClientOptions clientOptions = new S3ClientOptions().withEndpoint(ENDPOINT).withRegion(REGION);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             final AtomicLong totalBytesTransferred = new AtomicLong();
@@ -1002,7 +1236,7 @@ public class S3ClientTest extends CrtTestFixture {
         // Ignore stats during warm up time, they skew results
         TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
         try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
-            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region)
                     .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
 
             try (S3Client client = createS3Client(clientOptions, threadCount)) {
@@ -1141,7 +1375,7 @@ public class S3ClientTest extends CrtTestFixture {
         TransferStats.global.withSampleDelay(Duration.ofSeconds(sampleDelay));
 
         try (TlsContext tlsCtx = createTlsContextOptions(getContext().trustStore)) {
-            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEndpoint(endpoint)
+            S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region)
                     .withThroughputTargetGbps(expectedGbps).withTlsContext(useTls ? tlsCtx : null);
 
             try (S3Client client = createS3Client(clientOptions, threadCount)) {

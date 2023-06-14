@@ -7,6 +7,8 @@
 #include "java_class_ids.h"
 #include "retry_utils.h"
 #include <aws/common/string.h>
+#include <aws/http/connection.h>
+#include <aws/http/proxy.h>
 #include <aws/http/request_response.h>
 #include <aws/io/channel_bootstrap.h>
 #include <aws/io/retry_strategy.h>
@@ -14,6 +16,8 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
+#include <http_proxy_options.h>
+#include <http_proxy_options_enviornment_variable.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -44,22 +48,59 @@ struct s3_client_make_meta_request_callback_data {
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
 static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data);
 
+int aws_s3_tcp_keep_alive_options_from_java(
+    JNIEnv *env,
+    jobject jni_s3_tcp_keep_alive_options,
+    struct aws_s3_tcp_keep_alive_options *s3_tcp_keep_alive_options) {
+
+    uint16_t jni_keep_alive_interval_sec = (*env)->GetShortField(
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id);
+
+    uint16_t jni_keep_alive_timeout_sec = (*env)->GetShortField(
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id);
+
+    uint16_t jni_keep_alive_max_failed_probes = (*env)->GetShortField(
+        env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id);
+
+    AWS_ZERO_STRUCT(*s3_tcp_keep_alive_options);
+
+    s3_tcp_keep_alive_options->keep_alive_interval_sec = jni_keep_alive_interval_sec;
+    s3_tcp_keep_alive_options->keep_alive_timeout_sec = jni_keep_alive_timeout_sec;
+    s3_tcp_keep_alive_options->keep_alive_max_failed_probes = jni_keep_alive_max_failed_probes;
+
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     JNIEnv *env,
     jclass jni_class,
     jobject s3_client_jobject,
     jbyteArray jni_region,
-    jbyteArray jni_endpoint,
     jlong jni_client_bootstrap,
     jlong jni_tls_ctx,
     jlong jni_credentials_provider,
     jlong part_size_jlong,
+    jlong multipart_upload_threshold_jlong,
     jdouble throughput_target_gbps,
     jboolean enable_read_backpressure,
     jlong initial_read_window_jlong,
     int max_connections,
     jobject jni_standard_retry_options,
-    jboolean compute_content_md5) {
+    jboolean compute_content_md5,
+    jint jni_proxy_connection_type,
+    jbyteArray jni_proxy_host,
+    jint jni_proxy_port,
+    jlong jni_proxy_tls_context,
+    jint jni_proxy_authorization_type,
+    jbyteArray jni_proxy_authorization_username,
+    jbyteArray jni_proxy_authorization_password,
+    jint jni_environment_variable_proxy_connection_type,
+    jlong jni_environment_variable_proxy_tls_connection_options,
+    jint jni_environment_variable_type,
+    int connect_timeout_ms,
+    jobject jni_s3_tcp_keep_alive_options,
+    jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
+    jint jni_monitoring_failure_interval_in_seconds) {
     (void)jni_class;
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
@@ -77,10 +118,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         return (jlong)NULL;
     }
 
-    size_t part_size;
-    if (aws_size_t_from_java(env, &part_size, part_size_jlong, "Part size")) {
-        return (jlong)NULL;
-    }
+    uint64_t part_size = (uint64_t)part_size_jlong;
+    uint64_t multipart_upload_threshold = (uint64_t)multipart_upload_threshold_jlong;
 
     size_t initial_read_window;
     if (aws_size_t_from_java(env, &initial_read_window, initial_read_window_jlong, "Initial read window")) {
@@ -107,6 +146,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
             return (jlong)NULL;
         }
     }
+    struct aws_s3_tcp_keep_alive_options *s3_tcp_keep_alive_options = NULL;
+
+    if (jni_s3_tcp_keep_alive_options != NULL) {
+        s3_tcp_keep_alive_options = aws_mem_calloc(allocator, 1, sizeof(struct aws_s3_tcp_keep_alive_options));
+        if (aws_s3_tcp_keep_alive_options_from_java(env, jni_s3_tcp_keep_alive_options, s3_tcp_keep_alive_options)) {
+            aws_jni_throw_runtime_exception(env, "Could not create s3_tcp_keep_alive_options");
+            return (jlong)NULL;
+        }
+    }
 
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
 
@@ -129,9 +177,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         struct aws_tls_ctx *tls_ctx = (void *)jni_tls_ctx;
         tls_options = &tls_options_storage;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
-        aws_tls_connection_options_set_server_name(tls_options, allocator, &endpoint);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
     }
 
     struct aws_s3_client_config client_config = {
@@ -140,7 +185,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,
         .signing_config = &signing_config,
-        .part_size = (size_t)part_size,
+        .part_size = part_size,
+        .multipart_upload_threshold = multipart_upload_threshold,
         .throughput_target_gbps = throughput_target_gbps,
         .enable_read_backpressure = enable_read_backpressure,
         .initial_read_window = initial_read_window,
@@ -148,7 +194,52 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .shutdown_callback = s_on_s3_client_shutdown_complete_callback,
         .shutdown_callback_user_data = callback_data,
         .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
+        .connect_timeout_ms = connect_timeout_ms,
+        .tcp_keep_alive_options = s3_tcp_keep_alive_options,
     };
+
+    struct aws_http_connection_monitoring_options monitoring_options;
+    AWS_ZERO_STRUCT(monitoring_options);
+    if (jni_monitoring_throughput_threshold_in_bytes_per_second >= 0 &&
+        jni_monitoring_failure_interval_in_seconds >= 2) {
+        monitoring_options.minimum_throughput_bytes_per_second =
+            jni_monitoring_throughput_threshold_in_bytes_per_second;
+        monitoring_options.allowable_throughput_failure_interval_seconds = jni_monitoring_failure_interval_in_seconds;
+        client_config.monitoring_options = &monitoring_options;
+    }
+
+    struct aws_http_proxy_options proxy_options;
+    AWS_ZERO_STRUCT(proxy_options);
+
+    struct aws_tls_connection_options proxy_tls_conn_options;
+    AWS_ZERO_STRUCT(proxy_tls_conn_options);
+
+    aws_http_proxy_options_jni_init(
+        env,
+        &proxy_options,
+        jni_proxy_connection_type,
+        &proxy_tls_conn_options,
+        jni_proxy_host,
+        (uint16_t)jni_proxy_port,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_authorization_type,
+        (struct aws_tls_ctx *)jni_proxy_tls_context);
+
+    if (jni_proxy_host != NULL) {
+        client_config.proxy_options = &proxy_options;
+    }
+
+    struct proxy_env_var_settings proxy_ev_settings;
+    AWS_ZERO_STRUCT(proxy_ev_settings);
+
+    aws_http_proxy_environment_variable_setting_jni_init(
+        &proxy_ev_settings,
+        jni_environment_variable_proxy_connection_type,
+        jni_environment_variable_type,
+        (struct aws_tls_connection_options *)jni_environment_variable_proxy_tls_connection_options);
+
+    client_config.proxy_ev_settings = &proxy_ev_settings;
 
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {
@@ -160,6 +251,11 @@ clean_up:
     aws_retry_strategy_release(retry_strategy);
 
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
+
+    aws_http_proxy_options_jni_clean_up(
+        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+
+    aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
 
     return (jlong)client;
 }
@@ -229,6 +325,13 @@ static int s_on_s3_meta_request_body_callback(
     }
 
     jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+    if (jni_payload == NULL) {
+        /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
+        aws_jni_check_and_clear_exception(env);
+        aws_jni_release_thread_env(callback_data->jvm, env);
+        /********** JNI ENV RELEASE **********/
+        return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+    }
 
     jint body_response_result = 0;
 
@@ -305,6 +408,11 @@ static int s_on_s3_meta_request_headers_callback(
         aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
     }
     java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+    if (java_headers_buffer == NULL) {
+        aws_jni_check_and_clear_exception(env);
+        aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+        goto cleanup;
+    }
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
         (*env)->CallVoidMethod(
@@ -379,7 +487,9 @@ static void s_on_s3_meta_request_finish_callback(
                 "id=%p: Ignored Exception from S3MetaRequest.onFinished callback",
                 (void *)meta_request);
         }
-        (*env)->DeleteLocalRef(env, jni_payload);
+        if (jni_payload) {
+            (*env)->DeleteLocalRef(env, jni_payload);
+        }
     }
 
     aws_jni_release_thread_env(callback_data->jvm, env);
@@ -490,7 +600,7 @@ static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_
     struct aws_string *upload_id = aws_jni_new_string_from_jstring(env, upload_id_jni);
 
     struct aws_s3_upload_resume_token_options upload_options = {
-        .part_size = (size_t)part_size_jni,
+        .part_size = (uint64_t)part_size_jni,
         .total_num_parts = (size_t)total_num_parts_jni,
         .num_parts_completed = (size_t)num_parts_completed_jni,
         .upload_id = aws_byte_cursor_from_string(upload_id),
@@ -516,6 +626,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jintArray jni_marshalled_validate_algorithms,
     jbyteArray jni_marshalled_message_data,
     jobject jni_http_request_body_stream,
+    jbyteArray jni_request_filepath,
     jlong jni_credentials_provider,
     jobject java_response_handler_jobject,
     jbyteArray jni_endpoint,
@@ -525,6 +636,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     struct aws_credentials_provider *credentials_provider = (struct aws_credentials_provider *)jni_credentials_provider;
+    struct aws_byte_cursor request_filepath;
+    AWS_ZERO_STRUCT(request_filepath);
     struct aws_s3_meta_request_resume_token *resume_token =
         s_native_resume_token_from_java_new(env, java_resume_token_jobject);
     struct aws_signing_config_aws *signing_config = NULL;
@@ -557,6 +670,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
+
+    if (jni_request_filepath) {
+        request_filepath = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_request_filepath);
+        if (request_filepath.ptr == NULL) {
+            goto done;
+        }
+        if (request_filepath.len == 0) {
+            aws_jni_throw_illegal_argument_exception(env, "Request file path cannot be empty");
+            goto done;
+        }
+    }
 
     struct aws_uri endpoint;
     AWS_ZERO_STRUCT(endpoint);
@@ -593,6 +717,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .type = meta_request_type,
         .checksum_config = &checksum_config,
         .message = request_message,
+        .send_filepath = request_filepath,
         .user_data = callback_data,
         .signing_config = signing_config,
         .headers_callback = s_on_s3_meta_request_headers_callback,
@@ -623,6 +748,7 @@ done:
         aws_mem_release(allocator, signing_config);
     }
     aws_http_message_release(request_message);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
     aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;

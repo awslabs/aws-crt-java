@@ -57,7 +57,7 @@ From the aws-crt-java directory:
 ```mvn install```
 From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-crt/)
 
-## Platform-Specific JARs [experimental]
+## Platform-Specific JARs
 
 The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
 

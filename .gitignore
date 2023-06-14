@@ -86,6 +86,7 @@ target/
 .settings/
 
 .gradle/
+local.properties
 
 # configuration pulled from Secrets Manager
 settings.xml

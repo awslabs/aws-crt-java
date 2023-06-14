@@ -6,6 +6,7 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#include <http_proxy_options.h>
 #include <jni.h>
 #include <string.h>
 
@@ -87,67 +88,6 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     /********** JNI ENV RELEASE **********/
 }
 
-void aws_http_proxy_options_jni_init(
-    JNIEnv *env,
-    struct aws_http_proxy_options *options,
-    jint proxy_connection_type,
-    struct aws_tls_connection_options *tls_options,
-    jbyteArray proxy_host,
-    uint16_t proxy_port,
-    jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password,
-    int proxy_authorization_type,
-    struct aws_tls_ctx *proxy_tls_ctx) {
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    options->connection_type = proxy_connection_type;
-    options->port = proxy_port;
-    options->auth_type = proxy_authorization_type;
-
-    if (proxy_host != NULL) {
-        options->host = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_host);
-    }
-
-    if (proxy_authorization_username != NULL) {
-        options->auth_username = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_authorization_username);
-    }
-
-    if (proxy_authorization_password != NULL) {
-        options->auth_password = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_authorization_password);
-    }
-
-    if (proxy_tls_ctx != NULL) {
-        aws_tls_connection_options_init_from_ctx(tls_options, proxy_tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, allocator, &options->host);
-        options->tls_options = tls_options;
-    }
-}
-
-void aws_http_proxy_options_jni_clean_up(
-    JNIEnv *env,
-    struct aws_http_proxy_options *options,
-    jbyteArray proxy_host,
-    jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password) {
-
-    if (options->host.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_host, options->host);
-    }
-
-    if (options->auth_username.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_authorization_username, options->auth_username);
-    }
-
-    if (options->auth_password.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_authorization_password, options->auth_password);
-    }
-
-    if (options->tls_options != NULL) {
-        aws_tls_connection_options_clean_up((struct aws_tls_connection_options *)options->tls_options);
-    }
-}
-
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerNew(
     JNIEnv *env,
     jclass jni_class,
@@ -156,7 +96,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jlong jni_tls_connection_options,
-    jint jni_window_size,
+    jlong jni_window_size,
     jbyteArray jni_endpoint,
     jint jni_port,
     jint jni_max_conns,
@@ -201,8 +141,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-    if (jni_window_size <= 0) {
-        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
+    size_t window_size;
+    if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
         goto cleanup;
     }
 
@@ -235,7 +175,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     AWS_ZERO_STRUCT(manager_options);
 
     manager_options.bootstrap = client_bootstrap;
-    manager_options.initial_window_size = (size_t)jni_window_size;
+    manager_options.initial_window_size = window_size;
     manager_options.socket_options = socket_options;
     manager_options.tls_connection_options = tls_connection_options;
     manager_options.host = endpoint;

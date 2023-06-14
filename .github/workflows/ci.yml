@@ -95,7 +95,7 @@ jobs:
   # At run time we have to force armv7 (via environment variable) in order to achieve proper resource path
   # resolution.
   linux-musl-armv7:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       - name: Install qemu/docker
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes

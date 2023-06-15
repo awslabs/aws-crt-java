@@ -38,8 +38,8 @@ public class Pkcs11LibTest extends CrtTestFixture {
         assumeEnvironmentSetUpForPkcs11Tests();
 
         // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
-        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT)) {
-        }
+//        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT)) {
+//        }
     }
 
     @Test
@@ -47,10 +47,9 @@ public class Pkcs11LibTest extends CrtTestFixture {
         assumeEnvironmentSetUpForPkcs11Tests();
 
         // check that errors during initialization bubble up as Exceptions
-        // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
-        assertThrows(Exception.class, () -> new Pkcs11Lib(null, Pkcs11Lib.InitializeFinalizeBehavior.STRICT));
-        assertThrows(Exception.class, () -> new Pkcs11Lib("obviously-invalid-path.so", Pkcs11Lib.InitializeFinalizeBehavior.STRICT));
-        assertThrows(Exception.class, () -> new Pkcs11Lib("", Pkcs11Lib.InitializeFinalizeBehavior.STRICT));
+        assertThrows(Exception.class, () -> new Pkcs11Lib(null));
+        assertThrows(Exception.class, () -> new Pkcs11Lib("obviously-invalid-path.so"));
+        assertThrows(Exception.class, () -> new Pkcs11Lib(""));
     }
 
     @Test

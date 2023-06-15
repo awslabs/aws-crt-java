@@ -113,6 +113,7 @@ public class S3ClientOptions {
     /**
      * The configuration related to signing used by S3 client.
      * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     * If no signing config provided, the client will skip signing.
      *
      * @param signingConfig configuration related to signing via an AWS signing process.
      * @return this

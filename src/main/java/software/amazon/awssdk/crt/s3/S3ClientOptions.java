@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 public class S3ClientOptions {
 
@@ -20,6 +21,7 @@ public class S3ClientOptions {
     private ClientBootstrap clientBootstrap;
     private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private long partSize;
     private long multipartUploadThreshold;
     private double throughputTargetGbps;
@@ -91,6 +93,14 @@ public class S3ClientOptions {
         return clientBootstrap;
     }
 
+    /**
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
+     * The credentials provider will be used to create the signing Config when the client was created.
+     * Client will use `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` to create the signing config.
+     *
+     * @param credentialsProvider provide credentials for signing.
+     * @return this
+     */
     public S3ClientOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
@@ -98,6 +108,22 @@ public class S3ClientOptions {
 
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
+    }
+
+    /**
+     * The configuration related to signing used by S3 client.
+     * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     *
+     * @param signingConfig configuration related to signing via an AWS signing process.
+     * @return this
+     */
+    public S3ClientOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
     }
 
     public S3ClientOptions withPartSize(long partSize) {

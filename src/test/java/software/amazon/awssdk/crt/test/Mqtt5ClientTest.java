@@ -3129,7 +3129,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
 
         // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
         try (
-            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB);
+            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
             TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);) {
                 pkcs11Options.withTokenLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL);
                 pkcs11Options.withUserPin(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN);

@@ -89,6 +89,28 @@ jobs:
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
+  macos-musl:
+    runs-on: macos-13 # latest
+    strategy:
+      matrix:
+        image:
+          - alpine-3.16-x64
+          - alpine-3.16-x86
+          - alpine-3.16-armv6
+          - alpine-3.16-arm64
+          - openwrt-x64-openjdk8
+    steps:
+      - name: Install qemu/docker
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+
   # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
   #
   # At build time we can properly figure out that we're targeting armv7.

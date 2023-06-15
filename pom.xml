@@ -144,12 +144,12 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
-        <profile>
-            <id>alpine</id>
-            <properties>
-                <crt.surefire.version>3.0.0-M4</crt.surefire.version>
-            </properties>
-        </profile>
+<!--        <profile>-->
+<!--            <id>alpine</id>-->
+<!--            <properties>-->
+<!--                <crt.surefire.version>3.0.0-M4</crt.surefire.version>-->
+<!--            </properties>-->
+<!--        </profile>-->
 
         <!-- native compilation -->
         <profile>

@@ -135,8 +135,10 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB,
             AWS_TEST_MQTT311_IOT_CORE_PKCS11_TOKEN_LABEL, AWS_TEST_MQTT311_IOT_CORE_PKCS11_PIN,
             AWS_TEST_MQTT311_IOT_CORE_PKCS11_PKEY_LABEL, AWS_TEST_MQTT311_IOT_CORE_PKCS11_CERT_FILE);
+
+        // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
         try (
-            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB);
+            Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT311_IOT_CORE_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
             TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib);
         )
         {

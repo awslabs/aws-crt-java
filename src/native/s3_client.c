@@ -160,16 +160,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
-    if (java_signing_config == NULL) {
-        aws_jni_throw_illegal_argument_exception(env, "Missing signingConfig");
-        aws_mem_release(allocator, callback_data);
-        return (jlong)NULL;
-    }
-
-    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
-        aws_jni_throw_runtime_exception(env, "Invalid signingConfig");
-        aws_mem_release(allocator, callback_data);
-        return (jlong)NULL;
+    if (java_signing_config != NULL) {
+        if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
+            aws_jni_throw_runtime_exception(env, "Invalid signingConfig");
+            aws_mem_release(allocator, callback_data);
+            return (jlong)NULL;
+        }
     }
 
     AWS_FATAL_ASSERT(callback_data);
@@ -193,7 +189,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .region = region,
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,
-        .signing_config = &signing_config,
+        .signing_config = java_signing_config == NULL ? NULL : &signing_config,
         .part_size = part_size,
         .multipart_upload_threshold = multipart_upload_threshold,
         .throughput_target_gbps = throughput_target_gbps,

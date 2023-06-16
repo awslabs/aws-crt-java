@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -84,6 +85,7 @@ public class S3MetaRequestOptions {
     private Path requestFilePath;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private URI endpoint;
     private ResumeToken resumeToken;
 
@@ -201,6 +203,14 @@ public class S3MetaRequestOptions {
         return responseHandler;
     }
 
+    /**
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
+     * The credentials provider will be used to create the signing Config to override the client level config.
+     * The client config will be used.
+     *
+     * @param credentialsProvider provide credentials for signing.
+     * @return this
+     */
     public S3MetaRequestOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
@@ -208,6 +218,22 @@ public class S3MetaRequestOptions {
 
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
+    }
+
+    /**
+     * The configuration related to signing used by S3 client. It will override the client level configuration if provided.
+     * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     *
+     * @param signingConfig configuration related to signing via an AWS signing process.
+     * @return this
+     */
+    public S3MetaRequestOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
     }
 
     public S3MetaRequestOptions withEndpoint(URI endpoint) {

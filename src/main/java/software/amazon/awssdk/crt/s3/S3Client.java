@@ -17,6 +17,8 @@ import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
+
 import java.net.URI;
 
 public class S3Client extends CrtResource {
@@ -65,12 +67,19 @@ public class S3Client extends CrtResource {
             monitoringThroughputThresholdInBytesPerSecond = monitoringOptions.getMinThroughputBytesPerSecond();
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
+        AwsSigningConfig signingConfig = options.getSigningConfig();
+        boolean didCreateSigningConfig = false;
+        if(signingConfig == null && options.getCredentialsProvider()!= null) {
+            /* Create the signing config from credentials provider */
+            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+            didCreateSigningConfig = true;
+        }
 
         acquireNativeHandle(s3ClientNew(this,
                 region.getBytes(UTF8),
                 options.getClientBootstrap().getNativeHandle(),
                 tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
-                options.getCredentialsProvider().getNativeHandle(),
+                signingConfig,
                 options.getPartSize(),
                 options.getMultiPartUploadThreshold(),
                 options.getThroughputTargetGbps(),
@@ -97,7 +106,10 @@ public class S3Client extends CrtResource {
                 monitoringFailureIntervalInSeconds));
 
         addReferenceTo(options.getClientBootstrap());
-        addReferenceTo(options.getCredentialsProvider());
+        if(didCreateSigningConfig) {
+            /* The native code will keep the needed resource around */
+            signingConfig.close();
+        }
     }
 
     private void onShutdownComplete() {
@@ -130,9 +142,11 @@ public class S3Client extends CrtResource {
             requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
         }
 
-        long credentialsProviderNativeHandle = 0;
-        if (options.getCredentialsProvider() != null) {
-            credentialsProviderNativeHandle = options.getCredentialsProvider().getNativeHandle();
+        AwsSigningConfig signingConfig = options.getSigningConfig();
+        boolean didCreateSigningConfig = false;
+        if(signingConfig == null && options.getCredentialsProvider()!= null) {
+            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+            didCreateSigningConfig = true;
         }
         URI endpoint = options.getEndpoint();
 
@@ -143,17 +157,15 @@ public class S3Client extends CrtResource {
                 options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
                 checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, credentialsProviderNativeHandle,
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
                 options.getResumeToken());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-        if (credentialsProviderNativeHandle != 0) {
-            /*
-             * Keep the java object alive until the meta Request shut down and release all
-             * the resources it's pointing to
-             */
-            metaRequest.addReferenceTo(options.getCredentialsProvider());
+
+        if(didCreateSigningConfig) {
+            /* The native code will keep the needed resource around */
+            signingConfig.close();
         }
         return metaRequest;
     }
@@ -187,7 +199,7 @@ public class S3Client extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long s3ClientNew(S3Client thisObj, byte[] region, long clientBootstrap,
-            long tlsContext, long signingConfig, long partSize, long multipartUploadThreshold, double throughputTargetGbps,
+            long tlsContext, AwsSigningConfig signingConfig, long partSize, long multipartUploadThreshold, double throughputTargetGbps,
             boolean enableReadBackpressure, long initialReadWindow, int maxConnections,
             StandardRetryOptions standardRetryOptions, boolean computeContentMd5,
             int proxyConnectionType,
@@ -211,6 +223,6 @@ public class S3Client extends CrtResource {
             int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
-            long signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
+            AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, ResumeToken resumeToken);
 }

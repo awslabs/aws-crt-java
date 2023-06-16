@@ -470,7 +470,23 @@ public class AwsSigningConfig extends CrtResource {
      * @return the expiration time in seconds for a pre-signed url
      */
     public long getExpirationInSeconds() { return expirationInSeconds; }
+
+    /**
+     * Helper to get the default signing Config for S3.
+     * @param region The region to sign with
+     * @param credentialsProvider The provider while signing request.
+     * @return the default signing config for S3
+     */
+    static public AwsSigningConfig getDefaultS3SigningConfig(String region, CredentialsProvider credentialsProvider){
+        AwsSigningConfig defaultConfig = new AwsSigningConfig();
+        defaultConfig.setAlgorithm(AwsSigningAlgorithm.SIGV4);
+        defaultConfig.setService("s3");
+        defaultConfig.setSignedBodyHeader(AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256);
+        defaultConfig.setSignedBodyValue("UNSIGNED-PAYLOAD");
+        defaultConfig.setRegion(region);
+        defaultConfig.setCredentialsProvider(credentialsProvider);
+        defaultConfig.setShouldNormalizeUriPath(false);
+        defaultConfig.setUseDoubleUriEncode(false);
+        return defaultConfig;
+    }
 }
-
-
-

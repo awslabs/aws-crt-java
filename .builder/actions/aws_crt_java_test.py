@@ -4,6 +4,7 @@ import os
 import os.path
 from builder.core.host import current_host
 
+
 class AWSCrtJavaTest(Builder.Action):
 
     def _run_java_tests(self, *extra_args):
@@ -60,5 +61,5 @@ class AWSCrtJavaTest(Builder.Action):
 
         return Builder.Script([
             Builder.SetupCrossCICrtEnvironment(),
-            self.start_maven_tests # Then run the Maven stuff
-            ])
+            self.start_maven_tests  # Then run the Maven stuff
+        ])

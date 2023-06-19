@@ -24,6 +24,7 @@ import org.junit.After;
 import org.junit.Assume;
 
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class CrtTestFixture {
 
@@ -42,6 +43,7 @@ public class CrtTestFixture {
         // We clear the file for each new test by restarting the logger.
         // We stop all tests when one fails (see FailFastListener) so that
         // a valuable log.txt isn't overwritten.
+        Log.initLoggingToStdout(Log.LogLevel.Trace);
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
@@ -52,6 +54,7 @@ public class CrtTestFixture {
             platform.testSetup(context);
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
+
     }
 
     @After

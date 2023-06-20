@@ -23,11 +23,6 @@ public class Pkcs11LibTest extends CrtTestFixture {
 
     static void assumeEnvironmentSetUpForPkcs11Tests() {
         Assume.assumeNotNull(TEST_PKCS11_LIB);
-        Assume.assumeNotNull(TEST_PKCS11_TOKEN_LABEL);
-        Assume.assumeNotNull(TEST_PKCS11_PIN);
-        Assume.assumeNotNull(TEST_PKCS11_PKEY_LABEL);
-        Assume.assumeNotNull(TEST_PKCS11_CERT_FILE);
-        Assume.assumeNotNull(TEST_PKCS11_CA_FILE);
     }
 
     public Pkcs11LibTest() {
@@ -40,6 +35,8 @@ public class Pkcs11LibTest extends CrtTestFixture {
         // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB)) {
         }
+
+
     }
 
     @Test

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -30,8 +31,7 @@ public class Pkcs11LibTest extends CrtTestFixture {
 
     @Test
     public void testPkcs11Lib() {
-        assumeEnvironmentSetUpForPkcs11Tests();
-
+        Assert.assertNotNull(TEST_PKCS11_LIB);
         // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB)) {
         }

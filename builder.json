@@ -46,8 +46,7 @@
             "hosts": {
                 "alpine": {
                     "!build_steps": [
-                        "mvn -P continuous-integration -P alpine -B compile",
-                        "build-classifier"
+                        "mvn -P continuous-integration -P alpine -B compile"
                     ],
                     "!test_steps": [
                         "aws-crt-java-test"

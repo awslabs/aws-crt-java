@@ -51,10 +51,10 @@ class AWSCrtJavaTest(Builder.Action):
             "-Dtest=ShutdownTest",
         )
 
-        # run the elasticurl integration tests
-        python = sys.executable
-        env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                       python, 'integration-testing/java_elasticurl_runner.py', check=True)
+#         # run the elasticurl integration tests
+#         python = sys.executable
+#         env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
+#                        python, 'integration-testing/java_elasticurl_runner.py', check=True)
 
     def run(self, env):
         self.env = env

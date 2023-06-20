@@ -24,6 +24,8 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
+            "-Dtest=software.amazon.awssdk.crt.test.Pkcs11LibTest#testPkcs11Lib",
+            "-Daws.crt.log.level=trace",
         ]
         cmd_args.extend(extra_args)
         cmd_args.append("test")

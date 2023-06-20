@@ -525,7 +525,8 @@ static void s_on_s3_meta_request_progress_callback(
         s3_meta_request_progress_properties.s3_meta_request_progress_class,
         s3_meta_request_progress_properties.s3_meta_request_progress_constructor_method_id);
     if ((*env)->ExceptionCheck(env) || progress_object == NULL) {
-        /* progress object constructor failed, nothing to do */
+        aws_jni_throw_runtime_exception(
+            env, "S3MetaRequestResponseHandler.onProgress: Failed to create S3MetaRequestProgress object.");
         goto done;
     }
 

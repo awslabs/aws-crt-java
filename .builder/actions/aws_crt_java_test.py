@@ -63,5 +63,6 @@ class AWSCrtJavaTest(Builder.Action):
 
         return Builder.Script([
             Builder.SetupCrossCICrtEnvironment(),
-            self.start_maven_tests  # Then run the Maven stuff
+            self.start_maven_tests,  # Then run the Maven stuff
+            Builder.CleanupCrossCICrtEnvironment()
         ])

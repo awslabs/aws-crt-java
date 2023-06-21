@@ -37,7 +37,7 @@ public class Pkcs11LibTest extends CrtTestFixture {
     public void testPkcs11Lib() {
         assumeEnvironmentSetUpForPkcs11Tests();
 
-        // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
+        // The published Softhsm package on muslc (Alpine) crashes if we don't call C_Finalize at the end.
         try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT)) {
         }
     }

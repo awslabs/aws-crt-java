@@ -46,7 +46,7 @@
             "hosts": {
                 "alpine": {
                     "!build_steps": [
-                        "mvn -P continuous-integration -P alpine -B compile",
+                        "mvn -P continuous-integration -B compile",
                         "build-classifier"
                     ],
                     "!test_steps": [

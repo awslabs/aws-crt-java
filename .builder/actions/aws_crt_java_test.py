@@ -12,8 +12,6 @@ class AWSCrtJavaTest(Builder.Action):
             os.remove('log.txt')
 
         profiles = 'continuous-integration'
-        if current_host() == 'alpine':
-            profiles += ',alpine'
 
         cmd_args = [
             "mvn", "-B",

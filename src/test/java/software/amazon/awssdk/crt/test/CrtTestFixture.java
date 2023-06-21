@@ -80,6 +80,7 @@ public class CrtTestFixture {
             }
         }
         try {
+            
             ProcessBuilder builder = new ProcessBuilder("softhsm2-util", "--delete-token", "--token", "my-test-token", "--pin","0000");
             Process process = builder.start();
 

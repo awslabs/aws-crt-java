@@ -224,9 +224,9 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Pkcs11LibTest.assumeEnvironmentSetUpForPkcs11Tests();
 
-//        // The published Softhsm package on muslc (Alpine) crashes if we don't use strict finalization
-        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB);
-                TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
+        // The published Softhsm package on muslc (Alpine) crashes if we don't call C_Finalize at the end
+        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(Pkcs11LibTest.TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
+             TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)
                         .withUserPin(Pkcs11LibTest.TEST_PKCS11_PIN)
                         .withTokenLabel(Pkcs11LibTest.TEST_PKCS11_TOKEN_LABEL)
                         .withPrivateKeyObjectLabel(Pkcs11LibTest.TEST_PKCS11_PKEY_LABEL)

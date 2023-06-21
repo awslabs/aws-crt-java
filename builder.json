@@ -50,7 +50,6 @@
                         "build-classifier"
                     ],
                     "!test_steps": [
-                        "crt-ci-prep",
                         "aws-crt-java-test"
                     ]
                 },

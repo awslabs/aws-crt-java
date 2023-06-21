@@ -120,7 +120,7 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3ClientCreateDestroyWithoutSigningConfig() {
+    public void testS3ClientCreateDestroyWithoutSigningConfig() throws Exception {
         skipIfNetworkUnavailable();
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);
                 HostResolver hostResolver = new HostResolver(elg);
@@ -129,8 +129,6 @@ public class S3ClientTest extends CrtTestFixture {
                     .withClientBootstrap(clientBootstrap);
             try (S3Client client = new S3Client(clientOptions)) {
 
-            } catch (IllegalArgumentException ex) {
-                assertNotNull(ex);
             }
         }
     }

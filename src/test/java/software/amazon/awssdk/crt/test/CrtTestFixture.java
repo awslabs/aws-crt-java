@@ -79,7 +79,23 @@ public class CrtTestFixture {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }
         }
+        try {
 
+            ProcessBuilder builder = new ProcessBuilder("softhsm2-util", "--delete-token", "--token", "my-test-token", "--pin","0000");
+            Process process = builder.start();
+
+            // Get the output of the command
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            int exitCode = process.waitFor();
+            System.out.println("\nExited with error code : " + exitCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
     }
 

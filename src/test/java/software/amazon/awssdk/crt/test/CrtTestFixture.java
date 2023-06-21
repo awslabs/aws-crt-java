@@ -79,7 +79,7 @@ public class CrtTestFixture {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }
         }
-        
+
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
     }
 

@@ -5,6 +5,7 @@
 
 #include "crt.h"
 
+#include "aws_signing.h"
 #include "credentials.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
@@ -38,18 +39,30 @@ struct s_aws_sign_request_callback_data {
     jobject java_signing_result_future;
     jobject java_original_request;
     jobject java_original_chunk_body;
-    jobject java_sign_header_predicate;
     jbyteArray java_previous_signature;
     struct aws_http_headers *trailing_headers;
     struct aws_input_stream *chunk_body_stream;
     struct aws_http_message *native_request;
     struct aws_signable *original_message_signable;
-    struct aws_string *region;
-    struct aws_string *service;
-    struct aws_string *signed_body_value;
     struct aws_byte_cursor previous_signature;
-    struct aws_credentials *credentials;
+
+    struct aws_signing_config_data signing_config_data;
 };
+
+void aws_signing_config_data_clean_up(struct aws_signing_config_data *data, JNIEnv *env) {
+
+    aws_jni_byte_cursor_from_jstring_release(env, data->region, data->region_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, data->service, data->service_cursor);
+    aws_jni_byte_cursor_from_jstring_release(env, data->signed_body_value, data->signed_body_value_cursor);
+
+    if (data->java_sign_header_predicate) {
+        (*env)->DeleteGlobalRef(env, data->java_sign_header_predicate);
+    }
+    if (data->java_credentials_provider) {
+        (*env)->DeleteGlobalRef(env, data->java_credentials_provider);
+    }
+    aws_credentials_release(data->credentials);
+}
 
 static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *callback_data, JNIEnv *env) {
     if (callback_data == NULL || env == NULL) {
@@ -68,10 +81,6 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
         (*env)->DeleteGlobalRef(env, callback_data->java_original_chunk_body);
     }
 
-    if (callback_data->java_sign_header_predicate) {
-        (*env)->DeleteGlobalRef(env, callback_data->java_sign_header_predicate);
-    }
-
     if (callback_data->native_request) {
         aws_http_message_release(callback_data->native_request);
     }
@@ -80,19 +89,12 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
         aws_signable_destroy(callback_data->original_message_signable);
     }
 
-    if (callback_data->credentials) {
-        aws_credentials_release(callback_data->credentials);
-    }
-
     if (callback_data->chunk_body_stream != NULL) {
         aws_input_stream_destroy(callback_data->chunk_body_stream);
     }
     if (callback_data->trailing_headers != NULL) {
         aws_http_headers_release(callback_data->trailing_headers);
     }
-    aws_string_destroy(callback_data->region);
-    aws_string_destroy(callback_data->service);
-    aws_string_destroy(callback_data->signed_body_value);
 
     if (callback_data->previous_signature.len > 0 && callback_data->java_previous_signature != NULL) {
         aws_jni_byte_cursor_from_jbyteArray_release(
@@ -102,6 +104,8 @@ static void s_cleanup_callback_data(struct s_aws_sign_request_callback_data *cal
     if (callback_data->java_previous_signature != NULL) {
         (*env)->DeleteGlobalRef(env, callback_data->java_previous_signature);
     }
+
+    aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
 
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -271,7 +275,7 @@ static void s_aws_trailing_headers_signing_complete(struct aws_signing_result *r
 }
 
 static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_data) {
-    struct s_aws_sign_request_callback_data *callback_data = user_data;
+    struct aws_signing_config_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
@@ -294,11 +298,14 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
     return result;
 }
 
-static int s_build_signing_config(
+int aws_build_signing_config(
     JNIEnv *env,
-    struct s_aws_sign_request_callback_data *callback_data,
     jobject java_config,
+    struct aws_signing_config_data *config_data,
     struct aws_signing_config_aws *config) {
+
+    jint jvmresult = (*env)->GetJavaVM(env, &config_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
 
     config->config_type = AWS_SIGNING_CONFIG_AWS;
     config->algorithm = (enum aws_signing_algorithm)(*env)->GetIntField(
@@ -306,13 +313,15 @@ static int s_build_signing_config(
     config->signature_type = (enum aws_signature_type)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.signature_type_field_id);
 
-    jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
-    callback_data->region = aws_jni_new_string_from_jstring(env, region);
-    config->region = aws_byte_cursor_from_string(callback_data->region);
+    config_data->region =
+        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
+    config->region = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->region);
+    config_data->region_cursor = config->region;
 
-    jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
-    callback_data->service = aws_jni_new_string_from_jstring(env, service);
-    config->service = aws_byte_cursor_from_string(callback_data->service);
+    config_data->service =
+        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
+    config->service = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->service);
+    config_data->service_cursor = config->service;
 
     int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, aws_signing_config_properties.time_field_id);
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);
@@ -320,11 +329,11 @@ static int s_build_signing_config(
     jobject sign_header_predicate =
         (*env)->GetObjectField(env, java_config, aws_signing_config_properties.should_sign_header_field_id);
     if (sign_header_predicate != NULL) {
-        callback_data->java_sign_header_predicate = (*env)->NewGlobalRef(env, sign_header_predicate);
-        AWS_FATAL_ASSERT(callback_data->java_sign_header_predicate != NULL);
+        config_data->java_sign_header_predicate = (*env)->NewGlobalRef(env, sign_header_predicate);
+        AWS_FATAL_ASSERT(config_data->java_sign_header_predicate != NULL);
 
         config->should_sign_header = s_should_sign_header;
-        config->should_sign_header_ud = callback_data;
+        config->should_sign_header_ud = config_data;
     }
 
     config->flags.use_double_uri_encode =
@@ -334,14 +343,14 @@ static int s_build_signing_config(
     config->flags.omit_session_token =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
 
-    jstring signed_body_value =
+    config_data->signed_body_value =
         (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
-    if (signed_body_value == NULL) {
+    if (config_data->signed_body_value == NULL) {
         AWS_ZERO_STRUCT(config->signed_body_value);
     } else {
-        callback_data->signed_body_value = aws_jni_new_string_from_jstring(env, signed_body_value);
-        config->signed_body_value = aws_byte_cursor_from_string(callback_data->signed_body_value);
+        config->signed_body_value = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->signed_body_value);
     }
+    config_data->signed_body_value_cursor = config->signed_body_value;
 
     config->signed_body_header =
         (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_header_field_id);
@@ -351,13 +360,16 @@ static int s_build_signing_config(
     if (provider != NULL) {
         config->credentials_provider =
             (void *)(*env)->CallLongMethod(env, provider, crt_resource_properties.get_native_handle_method_id);
+        /* Keep the java object alive */
+        config_data->java_credentials_provider = (*env)->NewGlobalRef(env, provider);
+        AWS_FATAL_ASSERT(config_data->java_credentials_provider != NULL);
         aws_jni_check_and_clear_exception(env);
     }
 
     jobject credentials = (*env)->GetObjectField(env, java_config, aws_signing_config_properties.credentials_field_id);
     if (credentials != NULL) {
-        callback_data->credentials = aws_credentials_new_from_java_credentials(env, credentials);
-        config->credentials = callback_data->credentials;
+        config_data->credentials = aws_credentials_new_from_java_credentials(env, credentials);
+        config->credentials = config_data->credentials;
     }
 
     config->expiration_in_seconds =
@@ -402,7 +414,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
 
-    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
         aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
         goto on_error;
     }
@@ -481,8 +493,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     /* Build a native aws_signing_config_aws object */
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
-
-    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
         aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
         goto on_error;
     }
@@ -546,7 +557,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
 
-    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
         aws_jni_throw_runtime_exception(env, "Failed to create signing configuration");
         goto on_error;
     }
@@ -624,7 +635,7 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
     struct aws_signing_config_aws signing_config;
     AWS_ZERO_STRUCT(signing_config);
 
-    if (s_build_signing_config(env, callback_data, java_signing_config, &signing_config)) {
+    if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
         goto done;
     }
 

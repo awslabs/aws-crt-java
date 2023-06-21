@@ -44,6 +44,8 @@
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <crt.surefire.version>2.21.0</crt.surefire.version>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
+        <cmake.disable_perl>ON</cmake.disable_perl>
+        <cmake.disable_aws_lc_512avx>OFF</cmake.disable_aws_lc_512avx>
     </properties>
 
     <profiles>
@@ -189,6 +191,8 @@
                                         <argument>${cmake.osx_arch}</argument>
                                         <argument>-DS2N_NO_PQ_ASM=${cmake.s2nNoPqAsm}</argument>
                                         <argument>-DBUILD_TESTING=OFF</argument>
+                                        <argument>-DDISABLE_PERL=${cmake.disable_perl}</argument>
+                                        <argument>-DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=${cmake.disable_aws_lc_512avx}</argument>
                                         <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>

@@ -26,7 +26,7 @@ import software.amazon.awssdk.crt.CrtResource;
 
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
-    private final static String HOST = "https://httpbin.org";
+    private final static String HOST = "https://postman-echo.com";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     @Test

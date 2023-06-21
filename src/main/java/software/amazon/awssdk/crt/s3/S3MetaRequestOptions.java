@@ -6,8 +6,10 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,8 +82,10 @@ public class S3MetaRequestOptions {
     private MetaRequestType metaRequestType;
     private ChecksumConfig checksumConfig;
     private HttpRequest httpRequest;
+    private Path requestFilePath;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private URI endpoint;
     private ResumeToken resumeToken;
 
@@ -154,6 +158,16 @@ public class S3MetaRequestOptions {
         return checksumConfig.getValidateChecksum();
     }
 
+    /**
+     * Set the initial HTTP request.
+     *
+     * Note: When uploading a file, you can get better performance by setting
+     * {@link withRequestFilePath} instead of setting a body stream on the HttpRequest.
+     * (If both are set, the file path is used and body stream is ignored)
+     *
+     * @param httpRequest initial HTTP request message.
+     * @return this
+     */
     public S3MetaRequestOptions withHttpRequest(HttpRequest httpRequest) {
         this.httpRequest = httpRequest;
         return this;
@@ -161,6 +175,23 @@ public class S3MetaRequestOptions {
 
     public HttpRequest getHttpRequest() {
         return httpRequest;
+    }
+
+    /**
+     * If set, this file is sent as the request's body, and the {@link withHttpRequest} body stream is ignored.
+     *
+     * This can give better upload performance than sending data using the body stream.
+     *
+     * @param requestFilePath path to file to send as the request's body.
+     * @return this
+     */
+    public S3MetaRequestOptions withRequestFilePath(Path requestFilePath) {
+        this.requestFilePath = requestFilePath;
+        return this;
+    }
+
+    public Path getRequestFilePath() {
+        return requestFilePath;
     }
 
     public S3MetaRequestOptions withResponseHandler(S3MetaRequestResponseHandler responseHandler) {
@@ -172,6 +203,14 @@ public class S3MetaRequestOptions {
         return responseHandler;
     }
 
+    /**
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
+     * The credentials provider will be used to create the signing Config to override the client level config.
+     * The client config will be used.
+     *
+     * @param credentialsProvider provide credentials for signing.
+     * @return this
+     */
     public S3MetaRequestOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
@@ -179,6 +218,22 @@ public class S3MetaRequestOptions {
 
     public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
+    }
+
+    /**
+     * The configuration related to signing used by S3 client. It will override the client level configuration if provided.
+     * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     *
+     * @param signingConfig configuration related to signing via an AWS signing process.
+     * @return this
+     */
+    public S3MetaRequestOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
     }
 
     public S3MetaRequestOptions withEndpoint(URI endpoint) {

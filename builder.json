@@ -34,7 +34,8 @@
         },
         "alpine": {
             "packages": [
-                "openjdk8"
+                "openjdk8",
+                "openssl-dev"
             ]
         }
     },

@@ -143,7 +143,6 @@
                 <cmake.buildtype>Debug</cmake.buildtype>
             </properties>
         </profile>
-
         <!-- native compilation -->
         <profile>
             <id>build-shared-lib</id>

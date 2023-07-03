@@ -11,7 +11,7 @@ preBuild {
 }
 
 Properties getGitTag() {
-    def gitTag = "git describe --tags".execute().text.trim()
+    def gitTag = "git describe --tags --abbrev=0".execute().text.trim()
     def version = new Properties()
     def versionPattern = Pattern.compile('v(\\d+).(\\d+).(\\d+)(-(.+))?')
     def matcher = versionPattern.matcher(gitTag)

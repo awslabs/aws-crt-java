@@ -5,6 +5,7 @@ import os
 import tempfile
 from builder.core.host import current_host
 
+# This action is used by the musl-linux-build.sh script
 class BuildClassifier(Builder.Action):
 
 

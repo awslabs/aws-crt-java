@@ -33,7 +33,7 @@ aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
 chmod a+x builder
 
 # Upload the lib to S3
-GIT_TAG=$(git describe --tags)
+GIT_TAG=$(git describe --tags --abbrev=0)
 
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
 # Builder corss-compiles the shared lib to `target/cmake-build/aws-crt-java/`, move it to the expected path for mvn to generate the jar.

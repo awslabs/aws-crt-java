@@ -4,7 +4,7 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -P continuous-integration -B compile"
+        "mvn -P continuous-integration -B compile -U"
     ],
     "test_steps": [
         "aws-crt-java-test"
@@ -42,12 +42,50 @@
     "targets": {
         "linux": {
             "!build_steps": [
-                "mvn -P continuous-integration -B compile"
+                "mvn -P continuous-integration -B compile -U"
             ],
+            "architectures": {
+                "armv6": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
+                    ]
+                },
+                "armv7": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
+                    ]
+                },
+                "arm64": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "build"
+                    ],
+                    "!test_steps": [],
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
+                    ]
+                }
+            },
             "hosts": {
                 "alpine": {
                     "!build_steps": [
-                        "mvn -P continuous-integration -B compile",
+                        "mvn -P continuous-integration -B compile -U",
                         "build-classifier"
                     ],
                     "!test_steps": [
@@ -68,7 +106,7 @@
                 "openwrt": {
                     "!packages": [],
                     "!build_steps": [
-                        "mvn -P continuous-integration -P alpine -B compile"
+                        "mvn -P continuous-integration -P alpine -B compile -U"
                     ]
                 }
             }

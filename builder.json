@@ -44,6 +44,9 @@
             "!build_steps": [
                 "mvn -P continuous-integration -B compile"
             ],
+            "!test_steps": [
+                "aws-crt-java-test"
+            ],
             "architectures": {
                 "armv6": {
                     "!packages": [],
@@ -106,7 +109,7 @@
                 "openwrt": {
                     "!packages": [],
                     "!build_steps": [
-                        "mvn -P continuous-integration -P alpine -B compile"
+                        "mvn -P continuous-integration -B compile"
                     ]
                 }
             }

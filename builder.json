@@ -4,7 +4,7 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -P continuous-integration -B compile -U"
+        "mvn -P continuous-integration -B compile"
     ],
     "test_steps": [
         "aws-crt-java-test"
@@ -42,7 +42,7 @@
     "targets": {
         "linux": {
             "!build_steps": [
-                "mvn -P continuous-integration -B compile -U"
+                "mvn -P continuous-integration -B compile"
             ],
             "architectures": {
                 "armv6": {
@@ -85,7 +85,7 @@
             "hosts": {
                 "alpine": {
                     "!build_steps": [
-                        "mvn -P continuous-integration -B compile -U",
+                        "mvn -P continuous-integration -B compile",
                         "build-classifier"
                     ],
                     "!test_steps": [
@@ -106,7 +106,7 @@
                 "openwrt": {
                     "!packages": [],
                     "!build_steps": [
-                        "mvn -P continuous-integration -P alpine -B compile -U"
+                        "mvn -P continuous-integration -P alpine -B compile"
                     ]
                 }
             }

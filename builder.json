@@ -34,8 +34,7 @@
         },
         "alpine": {
             "packages": [
-                "openjdk8",
-                "openssl-dev"
+                "openjdk8"
             ]
         }
     },
@@ -93,17 +92,6 @@
                     ],
                     "!test_steps": [
                         "aws-crt-java-test"
-                    ]
-                },
-                "raspbian": {
-                    "!build_steps": [
-                        "build"
-                    ],
-                    "!test_steps": [],
-                    "!cmake_args": [
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "openwrt": {

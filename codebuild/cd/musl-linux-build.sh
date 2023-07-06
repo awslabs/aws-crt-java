@@ -19,7 +19,7 @@ docker run --rm --privileged ${QEMU_IMAGE} --reset -p yes
 
 export CRT_CLASSIFIER=${CLASSIFIER}
 export BRANCH_TAG=$(git describe --tags --abbrev=0)
-docker run --mount type=volume,src=$(pwd),dst=/root/aws-crt-java --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env CXXFLAGS --env AWS_CRT_ARCH --env CRT_CLASSIFIER $DOCKER_IMAGE --version=${BUILDER_VERSION} build -p aws-crt-java --branch ${BRANCH_TAG} run_tests=false
+docker run --mount type=bind,src=$(pwd),dst=/root/aws-crt-java --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env CXXFLAGS --env AWS_CRT_ARCH --env CRT_CLASSIFIER $DOCKER_IMAGE --version=${BUILDER_VERSION} build -p aws-crt-java --branch ${BRANCH_TAG} run_tests=false
 docker container prune -f
 
 # Upload the artifacts to S3

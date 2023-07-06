@@ -6,7 +6,6 @@ import os.path
 
 class AWSCrtJavaTest(Builder.Action):
 
-
     def _run_java_tests(self, *extra_args):
         if os.path.exists('log.txt'):
             os.remove('log.txt')
@@ -39,12 +38,10 @@ class AWSCrtJavaTest(Builder.Action):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
 
-
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
         # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-
         self._run_java_tests("-Dtest=ShutdownTest")
 
         # run the elasticurl integration tests

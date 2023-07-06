@@ -31,11 +31,6 @@
             "packages": [
                 "openjdk-8-jdk-headless"
             ]
-        },
-        "alpine": {
-            "+packages": [
-                "openjdk8"
-            ]
         }
     },
     "targets": {
@@ -86,6 +81,10 @@
             },
             "hosts": {
                 "alpine": {
+                    "!packages": [
+                        "maven",
+                        "openjdk8"
+                    ],
                     "!build_steps": [
                         "mvn -P continuous-integration -B compile",
                         "build-classifier"

@@ -103,24 +103,20 @@ public final class CRT {
     /**
      * @return a string describing the detected architecture the CRT is executing on
      */
-    public static String getArchIdentifier() throws UnknownPlatformException {
+    public static String[] getArchIdentifier() throws UnknownPlatformException {
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
 
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
-            return "x86_64";
+            return new String[] {"x86_64"};
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
-            return "x86_32";
-        } else if (arch.startsWith("armeabi")) {
-            if (arch.contains("v7")) {
-                return "armv7";
-            } else {
-                return "armv6";
-            }
-        } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
-            return "armv8";
-        } else if (arch.equals("arm")) {
-            return "armv6";
+            return new String[] {"x86_32"};
+        } else if (arch.contains("arm")) {
+        	return new String[] {
+          		"armv8",
+        		"armv7",
+           		"armv6"
+        	};
         } else if (arch.equals("armv7l")) {
             return "armv7";
         }
@@ -187,28 +183,40 @@ public final class CRT {
             }
 
             // open a stream to read the shared lib contents from this JAR
-            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
-            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
-                if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
-                }
-
-                // Copy from jar stream to temp file
-                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
-                    int read;
-                    byte [] bytes = new byte[1024];
-                    while ((read = in.read(bytes)) != -1){
-                        out.write(bytes, 0, read);
-                    }
-                }
+            for(final String identifier: getArchIdentifier()) {
+	            String libResourcePath = "/" + os + "/" + identifier + "/" + libraryName;
+	            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
+	                if (in == null) {
+	                	continue;
+	                }
+	
+	                // Copy from jar stream to temp file
+	                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
+	                    int read;
+	                    byte [] bytes = new byte[1024];
+	                    while ((read = in.read(bytes)) != -1){
+	                        out.write(bytes, 0, read);
+	                    }
+	                }
+	            }
+	
+	            if (!tempSharedLib.setWritable(false)) {
+	                throw new CrtRuntimeException("Unable to make shared library read-only");
+	            }
+	
+	            // load the shared lib from the temp path
+	            try {
+	            	System.load(tempSharedLib.getAbsolutePath());
+	            	return;
+	            } catch(UnsatisfiedLinkError e) {
+		            if (!tempSharedLib.setWritable(true)) {
+		                throw new CrtRuntimeException("Can't back to writable");
+		            }
+		            tempSharedLib.delete();
+	            	continue;
+	            }
             }
-
-            if (!tempSharedLib.setWritable(false)) {
-                throw new CrtRuntimeException("Unable to make shared library read-only");
-            }
-
-            // load the shared lib from the temp path
-            System.load(tempSharedLib.getAbsolutePath());
+            throw new UnsatisfiedLinkError();
         } catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex);
             crtex.printStackTrace();

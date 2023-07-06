@@ -8,7 +8,7 @@ set AWS_CMAKE_GENERATOR=Visual Studio 14 2015
 
 git submodule update --init
 
-for /f %%A in ('git describe --tags ') do (
+for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
 

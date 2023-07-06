@@ -5,7 +5,7 @@ set -ex
 cd `dirname $0`/../..
 
 git submodule update --init
-export GIT_TAG=$(git describe --tags --abbrev=0)
+export GIT_TAG=$(git describe --tags )
 
 mvn -B package -DskipTests -P mac-arm64 -Dcrt.classifier=osx-aarch_64
 

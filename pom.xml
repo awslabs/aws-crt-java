@@ -216,6 +216,7 @@
                 </plugins>
             </build>
         </profile>
+        
         <profile>
             <id>release</id>
             <distributionManagement>

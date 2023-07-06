@@ -88,6 +88,8 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 - linux-x86_32
 - linux-x86_64
 - linux-x86_64-musl
+- linux-armv7-musl
+- linux-aarch_64-musl
 - osx-aarch_64
 - osx-x86_64
 - windows-x86_32

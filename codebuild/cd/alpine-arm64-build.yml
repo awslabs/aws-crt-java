@@ -8,7 +8,7 @@ phases:
   build:
     commands:
       - cd aws-crt-java
-      - ./codebuild/cd/musl-linux-build.sh aws-crt-alpine-3.16-arm64 linux-arm64-musl
+      - ./codebuild/cd/musl-linux-build.sh aws-crt-alpine-3.16-arm64 linux-aarch_64-musl
 
   post_build:
     commands:

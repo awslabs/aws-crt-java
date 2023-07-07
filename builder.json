@@ -32,7 +32,6 @@
                 "openjdk-8-jdk-headless"
             ]
         }
-
     },
     "targets": {
         "linux": {

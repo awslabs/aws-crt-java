@@ -5,7 +5,7 @@ import os
 import tempfile
 from builder.core.host import current_host
 
-# This action is used by the musl-linux-build.sh script
+# This action is used by the musl-linux-build.sh script to build the binaries for release.
 class BuildClassifier(Builder.Action):
 
 

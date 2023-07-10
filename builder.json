@@ -80,10 +80,10 @@
                 }
             },
             "hosts": {
+                "_comment": "Reset the overrides from targets/linux/architectures/arm* for Alpine",
                 "alpine": {
                     "!packages": [
-                        "maven",
-                        "openjdk8"
+                        "maven"
                     ],
                     "!build_steps": [
                         "mvn -P continuous-integration -B compile",

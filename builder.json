@@ -83,7 +83,8 @@
                 "_comment": "Reset the overrides from targets/linux/architectures/arm* for Alpine",
                 "alpine": {
                     "!packages": [
-                        "maven"
+                        "maven",
+                        "openjdk8"
                     ],
                     "!build_steps": [
                         "mvn -P continuous-integration -B compile",

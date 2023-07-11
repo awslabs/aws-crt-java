@@ -37,7 +37,8 @@ public class Pkcs11LibTest extends CrtTestFixture {
     public void testPkcs11Lib() {
         assumeEnvironmentSetUpForPkcs11Tests();
 
-        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB)) {
+        // The published Softhsm package on muslc (Alpine) crashes if we don't call C_Finalize at the end.
+        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(TEST_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT)) {
         }
     }
 
@@ -66,5 +67,6 @@ public class Pkcs11LibTest extends CrtTestFixture {
         assertNotNull(crtException);
         assertTrue(crtException.errorName.contains("CKR_CRYPTOKI_NOT_INITIALIZED"));
     }
+
 
 }

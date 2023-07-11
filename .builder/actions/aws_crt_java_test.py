@@ -6,9 +6,24 @@ import os.path
 
 class AWSCrtJavaTest(Builder.Action):
 
-    def _run_java_tests(self, *cmd_args):
+    def _run_java_tests(self, *extra_args):
         if os.path.exists('log.txt'):
             os.remove('log.txt')
+
+        profiles = 'continuous-integration'
+
+        cmd_args = [
+            "mvn", "-B",
+            "-P", profiles,
+            "-DredirectTestOutputToFile=true",
+            "-DreuseForks=false",
+            "-Daws.crt.memory.tracing=2",
+            "-Daws.crt.debugnative=true",
+            "-Daws.crt.aws_trace_log_per_test",
+            "-Daws.crt.ci=true",
+        ]
+        cmd_args.extend(extra_args)
+        cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)
         if result.returncode:
@@ -23,29 +38,11 @@ class AWSCrtJavaTest(Builder.Action):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
 
-        self._run_java_tests(
-            "mvn", "-P", "continuous-integration", "-B", "test",
-            "-DredirectTestOutputToFile=true",
-            "-DreuseForks=false",
-            "-DrerunFailingTestsCount=5",
-            "-Daws.crt.memory.tracing=2",
-            "-Daws.crt.debugnative=true",
-            "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true",
-        )
+        self._run_java_tests("-DrerunFailingTestsCount=5")
 
         # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        self._run_java_tests(
-            "mvn", "-P", "continuous-integration", "-B", "test",
-            "-DredirectTestOutputToFile=true",
-            "-DreuseForks=false",
-            "-Daws.crt.memory.tracing=2",
-            "-Daws.crt.debugnative=true",
-            "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true",
-            "-Dtest=ShutdownTest",
-        )
+        self._run_java_tests("-Dtest=ShutdownTest")
 
         # run the elasticurl integration tests
         python = sys.executable

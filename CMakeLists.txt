@@ -105,6 +105,9 @@ endif()
 include(UseJava)
 include(AwsPlatformDetect)
 include(AwsSharedLibSetup)
+include(AwsCRuntime)
+
+aws_determine_local_c_runtime(AWS_C_RUNTIME)
 
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"
@@ -156,7 +159,7 @@ file(GLOB CRT_JAVA_SRC
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
 message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
-set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}/${AWS_C_RUNTIME}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})

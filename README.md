@@ -82,11 +82,14 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 
 ### Available platform classifiers
 
-- linux-armv6
-- linux-armv7
+- linux-armv6 (no auto-detect)
+- linux-armv7 (no auto-detect)
 - linux-aarch_64
 - linux-x86_32
 - linux-x86_64
+- linux-x86_64-musl (no auto-detect)
+- linux-armv7-musl (no auto-detect)
+- linux-aarch_64-musl (no auto-detect)
 - osx-aarch_64
 - osx-x86_64
 - windows-x86_32
@@ -97,6 +100,8 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 The [os-maven-plugin](https://github.com/trustin/os-maven-plugin) can automatically detect your platform's classifier at build time.
 
 **NOTES**: The auto-detected `linux-arm_32` platform classifier is not supported, you must specify `linux-armv6` or `linux-armv7`.
+Additionally, musl vs glibc detection is not supported either.  If you are deploying to a musl-based system and wish to use 
+a classifier-based jar, you must specify the classifier name yourself.
 
 ``` xml
 <build>

@@ -51,9 +51,9 @@ struct s_aws_sign_request_callback_data {
 
 void aws_signing_config_data_clean_up(struct aws_signing_config_data *data, JNIEnv *env) {
 
-    aws_jni_byte_cursor_from_jstring_release(env, data->region, data->region_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, data->service, data->service_cursor);
-    aws_jni_byte_cursor_from_jstring_release(env, data->signed_body_value, data->signed_body_value_cursor);
+    aws_string_destroy(data->region);
+    aws_string_destroy(data->service);
+    aws_string_destroy(data->signed_body_value);
 
     if (data->java_sign_header_predicate) {
         (*env)->DeleteGlobalRef(env, data->java_sign_header_predicate);
@@ -313,15 +313,13 @@ int aws_build_signing_config(
     config->signature_type = (enum aws_signature_type)(*env)->GetIntField(
         env, java_config, aws_signing_config_properties.signature_type_field_id);
 
-    config_data->region =
-        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
-    config->region = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->region);
-    config_data->region_cursor = config->region;
+    jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
+    config_data->region = aws_jni_new_string_from_jstring(env, region);
+    config->region = aws_byte_cursor_from_string(config_data->region);
 
-    config_data->service =
-        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
-    config->service = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->service);
-    config_data->service_cursor = config->service;
+    jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
+    config_data->service = aws_jni_new_string_from_jstring(env, service);
+    config->service = aws_byte_cursor_from_string(config_data->service);
 
     int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, aws_signing_config_properties.time_field_id);
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);
@@ -343,14 +341,13 @@ int aws_build_signing_config(
     config->flags.omit_session_token =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
 
-    config_data->signed_body_value =
-        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
-    if (config_data->signed_body_value == NULL) {
+    jstring signed_body_value = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    if(signed_body_value == NULL){
         AWS_ZERO_STRUCT(config->signed_body_value);
     } else {
-        config->signed_body_value = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->signed_body_value);
+        config_data->signed_body_value = aws_jni_new_string_from_jstring(env, signed_body_value);
+        config->signed_body_value = aws_byte_cursor_from_string(config_data->signed_body_value);
     }
-    config_data->signed_body_value_cursor = config->signed_body_value;
 
     config->signed_body_header =
         (*env)->GetIntField(env, java_config, aws_signing_config_properties.signed_body_header_field_id);

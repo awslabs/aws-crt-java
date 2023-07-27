@@ -50,11 +50,23 @@ struct s_aws_sign_request_callback_data {
 };
 
 void aws_signing_config_data_clean_up(struct aws_signing_config_data *data, JNIEnv *env) {
+    if (data == NULL || env == NULL) {
+        return;
+    }
 
     aws_jni_byte_cursor_from_jstring_release(env, data->region, data->region_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, data->service, data->service_cursor);
     aws_jni_byte_cursor_from_jstring_release(env, data->signed_body_value, data->signed_body_value_cursor);
 
+    if (data->region) {
+        (*env)->DeleteGlobalRef(env, data->region);
+    }
+    if (data->service) {
+        (*env)->DeleteGlobalRef(env, data->service);
+    }
+    if (data->signed_body_value) {
+        (*env)->DeleteGlobalRef(env, data->signed_body_value);
+    }
     if (data->java_sign_header_predicate) {
         (*env)->DeleteGlobalRef(env, data->java_sign_header_predicate);
     }
@@ -315,11 +327,13 @@ int aws_build_signing_config(
 
     config_data->region =
         (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
+    config_data->region = (*env)->NewGlobalRef(env, config_data->region);
     config->region = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->region);
     config_data->region_cursor = config->region;
 
     config_data->service =
         (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
+    config_data->service = (*env)->NewGlobalRef(env, config_data->service);
     config->service = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->service);
     config_data->service_cursor = config->service;
 
@@ -348,6 +362,7 @@ int aws_build_signing_config(
     if (config_data->signed_body_value == NULL) {
         AWS_ZERO_STRUCT(config->signed_body_value);
     } else {
+        config_data->signed_body_value = (*env)->NewGlobalRef(env, config_data->signed_body_value);
         config->signed_body_value = aws_jni_byte_cursor_from_jstring_acquire(env, config_data->signed_body_value);
     }
     config_data->signed_body_value_cursor = config->signed_body_value;

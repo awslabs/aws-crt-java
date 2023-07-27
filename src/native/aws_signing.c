@@ -341,7 +341,8 @@ int aws_build_signing_config(
     config->flags.omit_session_token =
         (*env)->GetBooleanField(env, java_config, aws_signing_config_properties.omit_session_token_field_id);
 
-    jstring signed_body_value = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
+    jstring signed_body_value =
+        (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.signed_body_value_field_id);
     if(signed_body_value == NULL){
         AWS_ZERO_STRUCT(config->signed_body_value);
     } else {

@@ -13,12 +13,9 @@ struct aws_signing_config_aws;
 
 struct aws_signing_config_data {
     JavaVM *jvm;
-    jstring region;
-    struct aws_byte_cursor region_cursor;
-    jstring service;
-    struct aws_byte_cursor service_cursor;
-    jstring signed_body_value;
-    struct aws_byte_cursor signed_body_value_cursor;
+    struct aws_string *region;
+    struct aws_string *service;
+    struct aws_string *signed_body_value;
 
     jobject java_sign_header_predicate;
     struct aws_credentials *credentials;

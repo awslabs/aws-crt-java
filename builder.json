@@ -78,6 +78,28 @@
                         "-DBUILD_TESTING=OFF"
                     ]
                 }
+            },
+            "hosts": {
+                "_comment": "Reset the overrides from targets/linux/architectures/arm* for Alpine",
+                "alpine": {
+                    "!packages": [
+                        "maven",
+                        "openjdk8"
+                    ],
+                    "!build_steps": [
+                        "mvn -P continuous-integration -B compile",
+                        "build-classifier"
+                    ],
+                    "!test_steps": [
+                        "aws-crt-java-test"
+                    ]
+                },
+                "openwrt": {
+                    "!packages": [],
+                    "!build_steps": [
+                        "mvn -P continuous-integration -B compile"
+                    ]
+                }
             }
         },
         "android": {

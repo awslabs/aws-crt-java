@@ -4,11 +4,13 @@
  */
 package software.amazon.awssdk.crt;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -19,6 +21,9 @@ import java.util.*;
  * load the shared lib
  */
 public final class CRT {
+    private static final String CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY = "aws.crt.arch";
+    private static final String CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE = "AWS_CRT_ARCH";
+
     private static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
     private static final CrtPlatform s_platform;
@@ -104,6 +109,16 @@ public final class CRT {
      * @return a string describing the detected architecture the CRT is executing on
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
+        String systemPropertyOverride = System.getProperty(CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY);
+        if (systemPropertyOverride != null && systemPropertyOverride.length() > 0) {
+            return systemPropertyOverride;
+        }
+
+        String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
+        if (environmentOverride != null && environmentOverride.length() > 0) {
+            return environmentOverride;
+        }
+
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
 
@@ -119,13 +134,58 @@ public final class CRT {
             }
         } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
             return "armv8";
-        } else if (arch.equals("arm")) {
-            return "armv6";
         } else if (arch.equals("armv7l")) {
             return "armv7";
+        } else if (arch.startsWith("arm")) {
+            return "armv6";
         }
 
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
+    }
+
+    private static final String NON_LINUX_RUNTIME_TAG = "cruntime";
+    private static final String MUSL_RUNTIME_TAG = "musl";
+    private static final String GLIBC_RUNTIME_TAG = "glibc";
+
+    public static String getCRuntime(String osIdentifier) {
+        if (!osIdentifier.equals("linux")) {
+            return NON_LINUX_RUNTIME_TAG;
+        }
+
+        Runtime rt = Runtime.getRuntime();
+        String[] commands = {"ldd", "--version"};
+        try {
+            java.lang.Process proc = rt.exec(commands);
+
+            // the "normal" input stream of the proc is the stdout of the invoked command
+            BufferedReader stdOutput = new BufferedReader(new
+                    InputStreamReader(proc.getInputStream()));
+
+            // sometimes, ldd's output goes to stderr, so capture that too
+            BufferedReader stdError = new BufferedReader(new
+                    InputStreamReader(proc.getErrorStream()));
+
+            String line;
+            StringBuilder outputBuilder = new StringBuilder();
+            while ((line = stdOutput.readLine()) != null) {
+                outputBuilder.append(line);
+            }
+
+            StringBuilder errorBuilder = new StringBuilder();
+            while ((line = stdError.readLine()) != null) {
+                errorBuilder.append(line);
+            }
+
+            String lddOutput = outputBuilder.toString();
+            String lddError = errorBuilder.toString();
+            if (lddOutput.contains("musl") || lddError.contains("musl")) {
+                return MUSL_RUNTIME_TAG;
+            } else {
+                return GLIBC_RUNTIME_TAG;
+            }
+        } catch (IOException io) {
+            return GLIBC_RUNTIME_TAG;
+        }
     }
 
     private static void extractAndLoadLibrary(String path) {
@@ -187,7 +247,7 @@ public final class CRT {
             }
 
             // open a stream to read the shared lib contents from this JAR
-            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
+            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);

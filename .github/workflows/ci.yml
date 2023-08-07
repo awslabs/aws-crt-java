@@ -207,19 +207,19 @@ jobs:
         run: |
           python3 codebuild/macos_compatibility_check.py
 
-  android:
-    name: Android
-    # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
-    runs-on: ubuntu-20.04 # latest
-    steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          ./gradlew :android:crt:build
-          ./gradlew test
+  # android:
+  #   name: Android
+  #   # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
+  #   runs-on: ubuntu-20.04 # latest
+  #   steps:
+  #     - name: Checkout Sources
+  #       uses: actions/checkout@v3
+  #       with:
+  #         submodules: true
+  #     - name: Build ${{ env.PACKAGE_NAME }}
+  #       run: |
+  #         ./gradlew :android:crt:build
+  #         ./gradlew test
 
   android-device-farm:
     name: Android Device Farm
@@ -242,10 +242,11 @@ jobs:
           cache: 'gradle'
       - name: Setup Android Test Files
         run: |
-          echo $pwd
+          pwd
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:assembledebug
+          ./gradlew test
 
   # check that docs can still build
   check-docs:

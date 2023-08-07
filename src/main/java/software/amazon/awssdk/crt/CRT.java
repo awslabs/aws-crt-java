@@ -58,10 +58,10 @@ public final class CRT {
         {
             public void run()
             {
+                CRT.onJvmShutdown();
                 ClientBootstrap.closeStaticDefault();
                 EventLoopGroup.closeStaticDefault();
                 HostResolver.closeStaticDefault();
-                CRT.onJvmShutdown();
             }
         });
 

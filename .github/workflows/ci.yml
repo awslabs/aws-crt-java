@@ -79,7 +79,7 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
-          
+
   linux-musl:
     runs-on: ubuntu-22.04 # latest
     strategy:
@@ -220,6 +220,32 @@ jobs:
         run: |
           ./gradlew :android:crt:build
           ./gradlew test
+
+  android-device-farm:
+    name: Android Device Farm
+    runs-on: ubuntu-20.04 # latest
+    permissions:
+      # These permissions needed to interact with GitHub's OIDC Token endpoint
+      id-token: write # This is required for requesting the JWT
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+            submodules: true
+            fetch-depth: 0
+      # Setup JDK 11
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'gradle'
+      - name: Setup Android Test Files
+        run: |
+          echo $pwd
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          ./gradlew :android:crt:assembledebug
 
   # check that docs can still build
   check-docs:

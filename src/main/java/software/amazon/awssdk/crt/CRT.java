@@ -174,9 +174,10 @@ public final class CRT {
             return NON_LINUX_RUNTIME_TAG;
         }
         if(isMusl()) {
+            System.out.println("waahm7 --- MUSL");
             return "musl";
         }
-
+        System.out.println("waahm7 --- Glibc");
         return "glibc";
 //
 //        Runtime rt = Runtime.getRuntime();

@@ -12,7 +12,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the
@@ -147,45 +151,68 @@ public final class CRT {
     private static final String MUSL_RUNTIME_TAG = "musl";
     private static final String GLIBC_RUNTIME_TAG = "glibc";
 
+    public static boolean isMusl() {
+        Path mapFilesDir = Paths.get("/proc/self/map_files");
+        try (Stream<Path> dirStream = Files.list(mapFilesDir)) {
+            return dirStream
+                    .map(
+                            path -> {
+                                try {
+                                    return path.toRealPath().toString();
+                                } catch (IOException e) {
+                                    return "";
+                                }
+                            })
+                    .anyMatch(s -> s.toLowerCase().contains("musl"));
+        } catch (IOException ignored) {
+        }
+        return false;
+    }
+
     public static String getCRuntime(String osIdentifier) {
         if (!osIdentifier.equals("linux")) {
             return NON_LINUX_RUNTIME_TAG;
         }
-
-        Runtime rt = Runtime.getRuntime();
-        String[] commands = {"ldd", "--version"};
-        try {
-            java.lang.Process proc = rt.exec(commands);
-
-            // the "normal" input stream of the proc is the stdout of the invoked command
-            BufferedReader stdOutput = new BufferedReader(new
-                    InputStreamReader(proc.getInputStream()));
-
-            // sometimes, ldd's output goes to stderr, so capture that too
-            BufferedReader stdError = new BufferedReader(new
-                    InputStreamReader(proc.getErrorStream()));
-
-            String line;
-            StringBuilder outputBuilder = new StringBuilder();
-            while ((line = stdOutput.readLine()) != null) {
-                outputBuilder.append(line);
-            }
-
-            StringBuilder errorBuilder = new StringBuilder();
-            while ((line = stdError.readLine()) != null) {
-                errorBuilder.append(line);
-            }
-
-            String lddOutput = outputBuilder.toString();
-            String lddError = errorBuilder.toString();
-            if (lddOutput.contains("musl") || lddError.contains("musl")) {
-                return MUSL_RUNTIME_TAG;
-            } else {
-                return GLIBC_RUNTIME_TAG;
-            }
-        } catch (IOException io) {
-            return GLIBC_RUNTIME_TAG;
+        if(isMusl()) {
+            return "musl";
         }
+
+        return "glibc";
+//
+//        Runtime rt = Runtime.getRuntime();
+//        String[] commands = {"ldd", "--version"};
+//        try {
+//            java.lang.Process proc = rt.exec(commands);
+//
+//            // the "normal" input stream of the proc is the stdout of the invoked command
+//            BufferedReader stdOutput = new BufferedReader(new
+//                    InputStreamReader(proc.getInputStream()));
+//
+//            // sometimes, ldd's output goes to stderr, so capture that too
+//            BufferedReader stdError = new BufferedReader(new
+//                    InputStreamReader(proc.getErrorStream()));
+//
+//            String line;
+//            StringBuilder outputBuilder = new StringBuilder();
+//            while ((line = stdOutput.readLine()) != null) {
+//                outputBuilder.append(line);
+//            }
+//
+//            StringBuilder errorBuilder = new StringBuilder();
+//            while ((line = stdError.readLine()) != null) {
+//                errorBuilder.append(line);
+//            }
+//
+//            String lddOutput = outputBuilder.toString();
+//            String lddError = errorBuilder.toString();
+//            if (lddOutput.contains("musl") || lddError.contains("musl")) {
+//                return MUSL_RUNTIME_TAG;
+//            } else {
+//                return GLIBC_RUNTIME_TAG;
+//            }
+//        } catch (IOException io) {
+//            return GLIBC_RUNTIME_TAG;
+//        }
     }
 
     private static void extractAndLoadLibrary(String path) {

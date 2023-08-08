@@ -3,6 +3,7 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -258,9 +259,13 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3Get() {
+    public void testS3Get() throws InterruptedException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+        System.setProperty("aws.crt.memory.tracing", "2");
+
+        Log.initLoggingToFile(Log.LogLevel.Trace, "crt.txt");
+        System.setProperty("aws.crt.debugnative", "true");
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -297,11 +302,17 @@ public class S3ClientTest extends CrtTestFixture {
                     .withResponseHandler(responseHandler);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                System.out.println("during:" + CRT.nativeMemory());
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+        System.out.println("before end:" + CRT.nativeMemory());
+
+        Thread.sleep(30_000);
+        System.out.println("end:" + CRT.nativeMemory());
+        CRT.dumpNativeMemory();
     }
 
     @Test
@@ -1240,23 +1251,25 @@ public class S3ClientTest extends CrtTestFixture {
     public void benchmarkS3Get() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
+       // Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
 
         // Log.initLoggingToStdout(LogLevel.Trace);
-
+        System.setProperty("aws.crt.memory.tracing", "2");
+        System.setProperty("aws.crt.debugnative", "true");
+        System.out.println( "CRT memory usage Before tests" + CRT.nativeMemory());
         // Override defaults with values from system properties, via -D on mvn
         // commandline
-        final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "0"));
+        final int threadCount = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.threads", "10"));
         final String region = System.getProperty("aws.crt.s3.benchmark.region", "us-west-2");
         final String bucket = System.getProperty("aws.crt.s3.benchmark.bucket",
                 (region == "us-west-2") ? "aws-crt-canary-bucket" : String.format("aws-crt-canary-bucket-%s", region));
         final String endpoint = System.getProperty("aws.crt.s3.benchmark.endpoint",
                 String.format("%s.s3.%s.amazonaws.com", bucket, region));
         final String objectName = System.getProperty("aws.crt.s3.benchmark.object",
-                "crt-canary-obj-single-part-9223372036854775807");
+                "get_object_test_10MB.txt");
         final boolean useTls = Boolean.parseBoolean(System.getProperty("aws.crt.s3.benchmark.tls", "false"));
         final double expectedGbps = Double.parseDouble(System.getProperty("aws.crt.s3.benchmark.gbps", "10"));
-        final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "16"));
+        final int numTransfers = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.transfers", "50"));
         final int concurrentTransfers = Integer.parseInt(
                 System.getProperty("aws.crt.s3.benchmark.concurrent", "16")); /* should be 1.6 * expectedGbps */
         // avg of .3Gbps per connection, 32 connections per vip, 5 seconds per vip
@@ -1314,11 +1327,11 @@ public class S3ClientTest extends CrtTestFixture {
                                 return;
                             }
 
-                            synchronized (System.out) {
-                                System.out.println(
-                                        String.format("Transfer %d:  Avg: %.3f Gbps Peak: %.3f Gbps First Byte: %dms",
-                                                myIdx + 1, stats.avgGbps(), stats.peakGbps(), stats.latency()));
-                            }
+//                            synchronized (System.out) {
+//                                System.out.println(
+//                                        String.format("Transfer %d:  Avg: %.3f Gbps Peak: %.3f Gbps First Byte: %dms",
+//                                                myIdx + 1, stats.avgGbps(), stats.peakGbps(), stats.latency()));
+//                            }
 
                             onFinishedFuture.complete(stats);
                         }
@@ -1332,6 +1345,7 @@ public class S3ClientTest extends CrtTestFixture {
 
                     }
                 }
+                System.out.println( "CRT memory usage during tests" + CRT.nativeMemory());
 
                 // Finish each future, and deduct failures from completedTransfers
                 int completedTransfers = numTransfers;
@@ -1353,13 +1367,14 @@ public class S3ClientTest extends CrtTestFixture {
                         --completedTransfers;
                     }
                 }
+                System.out.println( "CRT memory usage after tests" + CRT.nativeMemory());
 
                 // Dump overall stats
                 TransferStats overall = TransferStats.global;
                 System.out.println(String.format("%d/%d successful transfers", completedTransfers, numTransfers));
                 System.out.println(String.format("Avg: %.3f Gbps", overall.avgGbps()));
                 System.out.println(String.format("Peak: %.3f Gbps", overall.peakGbps()));
-                System.out.println(String.format("P90: %.3f Gbps (stddev: %.3f)", overall.p90Gbps(), overall.stddev()));
+            //    System.out.println(String.format("P90: %.3f Gbps (stddev: %.3f)", overall.p90Gbps(), overall.stddev()));
                 System.out.println(String.format("Avg Latency: %dms", overall.latency()));
                 System.out.flush();
 

@@ -31,8 +31,10 @@ def main():
     project_arn = args.project_arn
     device_pool_arn = args.device_pool_arn
 
+    dev_farm_region = os.getenv('AWS_DEVICE_FARM_REGION')
+    print("Testing os.geteng with AWS_DEVICE_FARM_REGION:" + dev_farm_region)
+
     print("Beginning Android Device Farm Setup\n")
-    print("region:" + region + "/nrun_id:" + run_id + "/nrun_attempt:" + run_attempt + "\nproject:" + project_arn + "\ndevice_pool:"+ device_pool_arn)
 
     # Create Boto3 client for Device Farm
     try:

@@ -152,40 +152,78 @@ public final class CRT {
             return NON_LINUX_RUNTIME_TAG;
         }
 
-        Runtime rt = Runtime.getRuntime();
-        String[] commands = {"ldd", "--version"};
-        try {
-            java.lang.Process proc = rt.exec(commands);
+        // The system might have both musl and glibc on it:
+        // https://github.com/awslabs/aws-crt-java/issues/659
 
-            // the "normal" input stream of the proc is the stdout of the invoked command
-            BufferedReader stdOutput = new BufferedReader(new
-                    InputStreamReader(proc.getInputStream()));
-
-            // sometimes, ldd's output goes to stderr, so capture that too
-            BufferedReader stdError = new BufferedReader(new
-                    InputStreamReader(proc.getErrorStream()));
-
-            String line;
-            StringBuilder outputBuilder = new StringBuilder();
-            while ((line = stdOutput.readLine()) != null) {
-                outputBuilder.append(line);
+        // First, check which one java is using.
+        // Run: ldd $JAVA_HOME/bin/java
+        // If musl, has a line like: libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f7732ae4000)
+        // If glibc, has a line like: libc.so.6 => /lib64/ld-linux-x86-64.so.2 (0x7f112c894000)
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null) {
+            File javaExecutable = new File(new File(javaHome, "bin"), "java");
+            if (javaExecutable.exists()) {
+                try {
+                    String[] lddJavaCmd = {"ldd", javaExecutable.toString()};
+                    List<String> lddJavaOutput = runProcess(lddJavaCmd);
+                    for (String line : lddJavaOutput) {
+                        String lower = line.toLowerCase();
+                        if (lower.contains("libc")) {
+                            if (lower.contains("musl")) {
+                                return MUSL_RUNTIME_TAG;
+                            } else {
+                                return GLIBC_RUNTIME_TAG;
+                            }
+                        }
+                    }
+                    // uncertain, continue to next check
+                } catch (IOException ex) {
+                    // uncertain, continue to next check
+                }
             }
-
-            StringBuilder errorBuilder = new StringBuilder();
-            while ((line = stdError.readLine()) != null) {
-                errorBuilder.append(line);
-            }
-
-            String lddOutput = outputBuilder.toString();
-            String lddError = errorBuilder.toString();
-            if (lddOutput.contains("musl") || lddError.contains("musl")) {
-                return MUSL_RUNTIME_TAG;
-            } else {
-                return GLIBC_RUNTIME_TAG;
-            }
-        } catch (IOException io) {
-            return GLIBC_RUNTIME_TAG;
         }
+
+        // Next, check whether ldd says it's using musl
+        // Run: ldd --version
+        // If musl, has a line like: musl libc (x86_64)
+        try {
+            String[] lddVersionCmd = {"ldd", "--version"};
+            List<String> lddVersionOutput = runProcess(lddVersionCmd);
+            for (String line : lddVersionOutput) {
+                if (line.toLowerCase().contains("musl")) {
+                    return MUSL_RUNTIME_TAG;
+                }
+            }
+            // uncertain, continue to next check
+
+        } catch (IOException io) {
+            // uncertain, continue to next check
+        }
+
+        // Assume it's glibc
+        return GLIBC_RUNTIME_TAG;
+    }
+
+    // Run process and return lines of output.
+    // (ouput is stdout and stderr merged together)
+    // (exit code is ignored)
+    private static List<String> runProcess(String[] cmdArray) throws IOException {
+        java.lang.Process proc = new ProcessBuilder(cmdArray)
+                .redirectErrorStream(true)
+                .start();
+
+        BufferedReader outputReader = new BufferedReader(new
+                InputStreamReader(proc.getInputStream()));
+
+        String line;
+        List<String> output = new ArrayList<String>();
+        while ((line = outputReader.readLine()) != null) {
+            output.add(line);
+        }
+
+        proc.destroy();
+
+        return output;
     }
 
     private static void extractAndLoadLibrary(String path) {
@@ -432,4 +470,5 @@ public final class CRT {
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 
     private static native void onJvmShutdown();
+
 };

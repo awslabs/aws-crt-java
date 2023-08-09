@@ -17,6 +17,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
   AWS_REGION: us-east-1
+  AWS_DEVICE_FARM_REGION: us-west-2 # Device Farm only available in us-west-2 region
 
 jobs:
   linux-compat:
@@ -246,7 +247,20 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:assembledebug
+      - name: Run Tests Locally
+        run: |
           ./gradlew test
+      - name: Python Script
+        run: |
+          echo "Attempting to run python script"
+          python3 -m pip install boto3
+          python3 -m pip install requests
+          python3 ./.github/workflows/run_android_ci.py \
+          --region ${{ env.AWS_DEVICE_FARM_REGION }} \
+          -- run_id ${{ github.run_id }} \
+          -- run_attempt ${{ github.run_attempt }} \
+          --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
 
   # check that docs can still build
   check-docs:

@@ -32,6 +32,7 @@ def main():
     device_pool_arn = args.device_pool_arn
 
     print("Beginning Android Device Farm Setup\n")
+    print("region:" + region + "/nrun_id:" + run_id + "/nrun_attempt:" + run_attempt + "\nproject:" + project_arn + "\ndevice_pool:"+ device_pool_arn)
 
     # Create Boto3 client for Device Farm
     try:

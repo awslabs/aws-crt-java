@@ -209,13 +209,17 @@ public final class CRT {
     }
 
     // Run process and return lines of output.
-    // (ouput is stdout and stderr merged together)
-    // (exit code is ignored)
+    // Output is stdout and stderr merged together.
+    // The exit code is ignored.
+    // We do it this way because, on some Linux distros (Alpine),
+    // "ldd --version" reports exit code 1 and prints to stderr.
+    // But on most Linux distros it reports exit code 0 and prints to stdout.
     private static List<String> runProcess(String[] cmdArray) throws IOException {
         java.lang.Process proc = new ProcessBuilder(cmdArray)
-                .redirectErrorStream(true)
+                .redirectErrorStream(true) // merge stderr into stdout
                 .start();
 
+        // confusingly, getInputStream() gets you stdout
         BufferedReader outputReader = new BufferedReader(new
                 InputStreamReader(proc.getInputStream()));
 
@@ -224,8 +228,6 @@ public final class CRT {
         while ((line = outputReader.readLine()) != null) {
             output.add(line);
         }
-
-        proc.destroy();
 
         return output;
     }

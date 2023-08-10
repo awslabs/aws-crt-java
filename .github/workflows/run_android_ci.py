@@ -8,7 +8,6 @@ import requests # - for uploading files
 import boto3
 
 parser = argparse.ArgumentParser(description="Utility script to upload and run Android Device tests on AWS Device Farm for CI")
-parser.add_argument('--region', required=True, help="The AWS region device farm project is located")
 parser.add_argument('--run_id', required=True, help="A unique number for each workflow run within a repository")
 parser.add_argument('--run_attempt', required=True, help="A unique number for each attempt of a particular workflow run in a repository")
 parser.add_argument('--project_arn', required=True, help="Arn for the Device Farm Project the apk will be tested on")
@@ -25,14 +24,12 @@ test_file_location = current_working_directory + '/android/crt/build/outputs/aar
 
 def main():
     args = parser.parse_args()
-    region = args.region
     run_id = args.run_id
     run_attempt = args.run_attempt
     project_arn = args.project_arn
     device_pool_arn = args.device_pool_arn
 
-    dev_farm_region = os.getenv('AWS_DEVICE_FARM_REGION')
-    print("Testing os.geteng with AWS_DEVICE_FARM_REGION:" + dev_farm_region)
+    region = os.getenv('AWS_DEVICE_FARM_REGION')
 
     print("Beginning Android Device Farm Setup\n")
 

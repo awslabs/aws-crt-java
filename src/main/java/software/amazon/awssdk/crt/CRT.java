@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the
@@ -159,6 +160,8 @@ public final class CRT {
         // Run: ldd $JAVA_HOME/bin/java
         // If musl, has a line like: libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f7732ae4000)
         // If glibc, has a line like: libc.so.6 => /lib64/ld-linux-x86-64.so.2 (0x7f112c894000)
+        Pattern muslWord = Pattern.compile("\\bmusl\\b", Pattern.CASE_INSENSITIVE);
+        Pattern libcWord = Pattern.compile("\\blibc\\b", Pattern.CASE_INSENSITIVE);
         String javaHome = System.getProperty("java.home");
         if (javaHome != null) {
             File javaExecutable = new File(new File(javaHome, "bin"), "java");
@@ -167,9 +170,9 @@ public final class CRT {
                     String[] lddJavaCmd = {"ldd", javaExecutable.toString()};
                     List<String> lddJavaOutput = runProcess(lddJavaCmd);
                     for (String line : lddJavaOutput) {
-                        String lower = line.toLowerCase();
-                        if (lower.contains("libc")) {
-                            if (lower.contains("musl")) {
+                        // check if the "libc" line mentions "musl"
+                        if (libcWord.matcher(line).find()) {
+                            if (muslWord.matcher(line).find()) {
                                 return MUSL_RUNTIME_TAG;
                             } else {
                                 return GLIBC_RUNTIME_TAG;
@@ -190,7 +193,8 @@ public final class CRT {
             String[] lddVersionCmd = {"ldd", "--version"};
             List<String> lddVersionOutput = runProcess(lddVersionCmd);
             for (String line : lddVersionOutput) {
-                if (line.toLowerCase().contains("musl")) {
+                // any mention of "musl" is sufficient
+                if (muslWord.matcher(line).find()) {
                     return MUSL_RUNTIME_TAG;
                 }
             }
@@ -470,5 +474,4 @@ public final class CRT {
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 
     private static native void onJvmShutdown();
-
 };

@@ -131,7 +131,7 @@ a classifier-based jar, you must specify the classifier name yourself.
     - `aws.crt.log.level` - Log level. May be: "None", "Fatal", "Error", "Warn" (default), "Info", "Debug", "Trace".
     - `aws.crt.log.destination` - Log destination. May be: "Stderr" (default), "Stdout", "File", "None".
     - `aws.crt.log.filename` - File to use when `aws.crt.log.destination` is "File".
-- `aws.crt.libc` - (Linux only) Set to "musl" or "glibc" if CRT is cannot properly detect which to use.
+- `aws.crt.libc` - (Linux only) Set to "musl" or "glibc" if CRT cannot properly detect which to use.
 - `aws.crt.lib.dir` - Set directory where CRT may extract its native library (by default, `java.io.tmpdir` is used)
 - `aws.crt.memory.tracing` - May be: "0" (default, no tracing), "1" (track bytes), "2" (more detail).
     Allows the CRT.nativeMemory() and CRT.dumpNativeMemory() functions to report native memory usage.

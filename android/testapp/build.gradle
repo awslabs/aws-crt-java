@@ -61,7 +61,7 @@ android {
 }
 
 dependencies {
-    api 'software.amazon.awssdk.crt:aws-crt-android:0.24.1-SNAPSHOT'
+    api 'software.amazon.awssdk.crt:aws-crt-android:0.25.0-SNAPSHOT'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'

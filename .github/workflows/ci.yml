@@ -240,7 +240,8 @@ jobs:
           ./gradlew test
       - name: Build Test App
         run: |
-          ./gradlew :android:testapp:assembledebug
+          cd android/testapp
+          ../../gradlew assembledebug
       - name: Device Farm Tests
         run: |
           echo "Attempting to run python script"

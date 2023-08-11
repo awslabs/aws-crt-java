@@ -208,20 +208,6 @@ jobs:
         run: |
           python3 codebuild/macos_compatibility_check.py
 
-  # android:
-  #   name: Android
-  #   # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
-  #   runs-on: ubuntu-20.04 # latest
-  #   steps:
-  #     - name: Checkout Sources
-  #       uses: actions/checkout@v3
-  #       with:
-  #         submodules: true
-  #     - name: Build ${{ env.PACKAGE_NAME }}
-  #       run: |
-  #         ./gradlew :android:crt:build
-  #         ./gradlew test
-
   android:
     name: Android
     runs-on: ubuntu-20.04 # latest
@@ -247,10 +233,14 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:build
-        # ./gradlew :android:crt:assembledebug
-      # - name: Run Tests Locally
-      #   run: |
-      #     ./gradlew test
+          ./gradlew :android:crt:publishToMavenLocal
+        # ./gradlew :android:crt:assembledebug # Generates crt-debug.aar only
+      - name: Run CRT Tests Locally
+        run: |
+          ./gradlew test
+      - name: Build Test App
+        run: |
+          ./gradlew :android:testapp:assembledebug
       - name: Device Farm Tests
         run: |
           echo "Attempting to run python script"

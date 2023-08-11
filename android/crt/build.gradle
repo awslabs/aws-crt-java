@@ -167,6 +167,7 @@ afterEvaluate {
     publishing {
         repositories {
             maven { name = "testLocal"; url = "$rootProject.buildDir/m2" }
+            mavenLocal()
         }
 
         publications {
@@ -199,6 +200,14 @@ afterEvaluate {
                     }
                 }
                 version = android.defaultConfig.versionName
+            }
+
+            debug(MavenPublication) {
+                from components.release
+
+                groupId = 'software.amazon.awssdk.crt'
+                artifactId = 'aws-crt-android'
+                version = android.defaultConfig.versionName + '-SNAPSHOT'
             }
         }
         repositories {

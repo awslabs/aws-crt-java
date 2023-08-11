@@ -153,11 +153,20 @@ public final class CRT {
             return NON_LINUX_RUNTIME_TAG;
         }
 
-        // The system might have both musl and glibc on it:
+        // If system property is set, use that.
+        String systemPropertyOverride = System.getProperty("aws.crt.libc");
+        if (systemPropertyOverride != null) {
+            systemPropertyOverride = systemPropertyOverride.toLowerCase().trim();
+            if (!systemPropertyOverride.isEmpty()) {
+                return systemPropertyOverride;
+            }
+        }
+
+        // Be warned, the system might have both musl and glibc on it:
         // https://github.com/awslabs/aws-crt-java/issues/659
 
-        // First, check which one java is using.
-        // Run: ldd $JAVA_HOME/bin/java
+        // Next, check which one java is using.
+        // Run: ldd /path/to/java
         // If musl, has a line like: libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f7732ae4000)
         // If glibc, has a line like: libc.so.6 => /lib64/ld-linux-x86-64.so.2 (0x7f112c894000)
         Pattern muslWord = Pattern.compile("\\bmusl\\b", Pattern.CASE_INSENSITIVE);

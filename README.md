@@ -125,6 +125,16 @@ a classifier-based jar, you must specify the classifier name yourself.
   <dependencies>
 ```
 
+## System Properties
+
+-  To enable logging, set `aws.crt.log.destination` or `aws.crt.log.level`:
+    - `aws.crt.log.level` - Log level. May be: "None", "Fatal", "Error", "Warn" (default), "Info", "Debug", "Trace". 
+    - `aws.crt.log.destination` - Log destination. May be: "Stderr" (default), "Stdout", "File", "None".
+    - `aws.crt.log.filename` - File to use when `-Daws.crt.log.destination=File`.
+- `aws.crt.libc` - (Linux only) Set to "musl" or "glibc" if CRT is cannot properly detect which to use.
+- `aws.crt.lib.dir` - Set directory where CRT may extract its native library (by default, "java.io.tmpdir" is used)
+- `aws.crt.memory.tracing` - Enable tracking native memory usage. May be: "0" (default), "1" (track bytes), "2" (more detail). Enables the CRT.nativeMemory() and CRT.dumpNativeMemory() functions.
+
 ## Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:

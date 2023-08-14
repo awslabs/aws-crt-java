@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
- package software.amazon.awssdk.crttest
+package software.amazon.awssdk.crttest
 
 import androidx.appcompat.app.AppCompatActivity
 

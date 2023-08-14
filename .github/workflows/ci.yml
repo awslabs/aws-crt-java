@@ -242,9 +242,9 @@ jobs:
           pwd
       - name: Build Test App
         run: |
-          cd android/testapp
-          ../../gradlew assembledebug
-          ../../gradlew assembleAndroidTest
+          cd src/test/android/testapp
+          ../../../../gradlew assembledebug
+          ../../../../gradlew assembleAndroidTest
       - name: Device Farm Tests
         run: |
           echo "Attempting to run python script"

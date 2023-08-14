@@ -227,21 +227,24 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'gradle'
-      - name: Setup Android Test Files
-        run: |
-          pwd
       - name: Build ${{ env.PACKAGE_NAME }}
+      # Build and publish locally for the test app to find the SNAPSHOT version
         run: |
           ./gradlew :android:crt:build
           ./gradlew :android:crt:publishToMavenLocal
-        # ./gradlew :android:crt:assembledebug # Generates crt-debug.aar only
       - name: Run CRT Tests Locally
         run: |
           ./gradlew test
+      - name: Setup Android Test Files
+      # Setup files and/or env variables required by the test app
+      # this is a TODO
+        run: |
+          pwd
       - name: Build Test App
         run: |
           cd android/testapp
           ../../gradlew assembledebug
+          ../../gradlew assembleAndroidTest
       - name: Device Farm Tests
         run: |
           echo "Attempting to run python script"

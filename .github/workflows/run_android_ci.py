@@ -19,8 +19,8 @@ def main():
 
 current_working_directory = os.getcwd()
 # Steve TODO these will be changed to the new test app w/the crt library
-build_file_location = current_working_directory + 'src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'
-test_file_location = current_working_directory + 'src/test/android/testapp/build/outputs/apk/androidTest/debug/testapp-debug-androidTest.apk'
+build_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'
+test_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/androidTest/debug/testapp-debug-androidTest.apk'
 
 def main():
     args = parser.parse_args()

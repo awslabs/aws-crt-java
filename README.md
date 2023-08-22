@@ -100,7 +100,7 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 The [os-maven-plugin](https://github.com/trustin/os-maven-plugin) can automatically detect your platform's classifier at build time.
 
 **NOTES**: The auto-detected `linux-arm_32` platform classifier is not supported, you must specify `linux-armv6` or `linux-armv7`.
-Additionally, musl vs glibc detection is not supported either.  If you are deploying to a musl-based system and wish to use 
+Additionally, musl vs glibc detection is not supported either.  If you are deploying to a musl-based system and wish to use
 a classifier-based jar, you must specify the classifier name yourself.
 
 ``` xml
@@ -124,6 +124,17 @@ a classifier-based jar, you must specify the classifier name yourself.
         </dependency>
   <dependencies>
 ```
+
+## System Properties
+
+- To enable logging, set `aws.crt.log.destination` or `aws.crt.log.level`:
+    - `aws.crt.log.level` - Log level. May be: "None", "Fatal", "Error", "Warn" (default), "Info", "Debug", "Trace".
+    - `aws.crt.log.destination` - Log destination. May be: "Stderr" (default), "Stdout", "File", "None".
+    - `aws.crt.log.filename` - File to use when `aws.crt.log.destination` is "File".
+- `aws.crt.libc` - (Linux only) Set to "musl" or "glibc" if CRT cannot properly detect which to use.
+- `aws.crt.lib.dir` - Set directory where CRT may extract its native library (by default, `java.io.tmpdir` is used)
+- `aws.crt.memory.tracing` - May be: "0" (default, no tracing), "1" (track bytes), "2" (more detail).
+    Allows the CRT.nativeMemory() and CRT.dumpNativeMemory() functions to report native memory usage.
 
 ## Mac-Only TLS Behavior
 

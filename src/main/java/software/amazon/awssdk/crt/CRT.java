@@ -31,6 +31,7 @@ public final class CRT {
 
     static {
         // Scan for and invoke any platform specific initialization
+        System.out.println("Android TEST: static started\n");
         s_platform = findPlatformImpl();
         jvmInit();
         try {
@@ -354,6 +355,7 @@ public final class CRT {
 
         List<Exception> exceptions = new LinkedList<>();
         for (String path : pathsToTry) {
+            System.out.println("Android TEST: loadLibraryFromJar trying path:"+path);
             try {
                 extractAndLoadLibrary(path);
                 return;
@@ -393,12 +395,14 @@ public final class CRT {
     }
 
     private static CrtPlatform findPlatformImpl() {
+        System.out.println("Android TEST: findPlatformImpl \n");
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
                 // Search for test impl first, fall back to crt
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {
+            System.out.println("Android TEST: platformImpl Check:" + platformImpl);
             try {
                 Class<?> platformClass = classLoader.loadClass(platformImpl);
                 CrtPlatform instance = (CrtPlatform) platformClass.getDeclaredConstructor().newInstance();

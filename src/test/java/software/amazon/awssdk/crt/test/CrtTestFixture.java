@@ -42,16 +42,19 @@ public class CrtTestFixture {
         // We clear the file for each new test by restarting the logger.
         // We stop all tests when one fails (see FailFastListener) so that
         // a valuable log.txt isn't overwritten.
-        if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
-            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
-        }
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
+        // if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
+        //     Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+        // }
+        System.out.println("Android TEST: setup\n");
+        // Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
         context = new CrtTestContext();
+        System.out.println("Android TEST: new CrtTestContext() finished\n");
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testSetup(context);
         }
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
+        // Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
+        System.out.println("Android TEST: setup complete\n");
     }
 
     @After

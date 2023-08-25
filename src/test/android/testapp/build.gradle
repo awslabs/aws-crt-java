@@ -25,6 +25,10 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
 
+    useLibrary 'android.test.runner'
+    useLibrary 'android.test.base'
+    useLibrary 'android.test.mock'
+
     defaultConfig {
         applicationId "software.amazon.awssdk.crttest"
         minSdkVersion 26
@@ -38,8 +42,14 @@ android {
 
     sourceSets {
         main {
+            java.srcDir 'src/main/java'
+        }
+        androidTest {
+            setRoot '../..'
             java.srcDir '../../java'
-            // java.srcDir '../../src/test/java'
+            java.srcDir '../../../main/java'
+            java.srcDir 'src/androidTest/java'
+            java.srcDir 'src/androidTest/assets'
         }
     }
 
@@ -49,6 +59,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8

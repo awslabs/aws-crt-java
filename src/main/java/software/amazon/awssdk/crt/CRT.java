@@ -27,42 +27,47 @@ public final class CRT {
 
     private static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
-    private static final CrtPlatform s_platform;
+    private static CrtPlatform s_platform = null;
+    private static boolean s_initialized = false;
 
     static {
-        // Scan for and invoke any platform specific initialization
-        s_platform = findPlatformImpl();
-        jvmInit();
-        try {
-            // If the lib is already present/loaded or is in java.library.path, just use it
-            System.loadLibrary(CRT_LIB_NAME);
-        } catch (UnsatisfiedLinkError e) {
-            // otherwise, load from the jar this class is in
-            loadLibraryFromJar();
-        }
+        synchronized(CrtPlatform.class) {
+            if (!s_initialized) {
+                s_initialized = true; /* success or failure, let's only do this once */
 
-        // Initialize the CRT
-        int memoryTracingLevel = 0;
-        try {
-            memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
-        } catch (Exception ex) {
-        }
-        boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
-        boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
-        awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
+                // Scan for and invoke any platform specific initialization
+                s_platform = findPlatformImpl();
+                jvmInit();
+                try {
+                    // If the lib is already present/loaded or is in java.library.path, just use it
+                    System.loadLibrary(CRT_LIB_NAME);
+                } catch (UnsatisfiedLinkError e) {
+                    // otherwise, load from the jar this class is in
+                    loadLibraryFromJar();
+                }
 
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
-            public void run()
-            {
-                CRT.onJvmShutdown();
+                // Initialize the CRT
+                int memoryTracingLevel = 0;
+                try {
+                    memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
+                } catch (Exception ex) {
+                }
+                boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
+                boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
+                awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
+
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                    public void run() {
+                        CRT.onJvmShutdown();
+                    }
+                });
+
+                try {
+                    Log.initLoggingFromSystemProperties();
+                } catch (IllegalArgumentException e) {
+                    ;
+                }
             }
-        });
-
-        try {
-            Log.initLoggingFromSystemProperties();
-        } catch (IllegalArgumentException e) {
-            ;
         }
     }
 

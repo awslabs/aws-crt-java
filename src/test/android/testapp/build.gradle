@@ -49,7 +49,7 @@ android {
             java.srcDir '../../java'
             // java.srcDir '../../../main/java'
             java.srcDir 'src/androidTest/java'
-            java.srcDir 'src/androidTest/assets'
+            assets.srcDir 'src/androidTest/assets'
         }
     }
 

@@ -31,7 +31,7 @@ public final class CRT {
 
     static {
         // Scan for and invoke any platform specific initialization
-        System.out.println("Android TEST: static started\n");
+        System.out.println("Android TEST: CRT static started\n");
         s_platform = findPlatformImpl();
         jvmInit();
         try {
@@ -88,10 +88,16 @@ public final class CRT {
      * @return a string describing the detected platform the CRT is executing on
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
-
+        System.out.println("Android TEST: CRT.getOSIdentifier() Started\n");
         CrtPlatform platform = getPlatformImpl();
+        if(platform != null){
+            System.out.println("Android TEST: CRT.getOSIdentifier platform != null\n");
+        } else {
+            System.out.println("Android TEST: CRT.getOSIdentifier platform == null\n");
+        }
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
+        System.out.println("Android TEST: CRT.getOSIdentifier() name set to:" + name + " and being returned\n");
         if (name.contains("windows")) {
             return "windows";
         } else if (name.contains("linux")) {
@@ -102,8 +108,11 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
+        } else if (name.contains("android")){
+            return "android";
         }
 
+        System.out.println("Android TEST: CRT.getOSIdentifier() OS not supported exception:" + name);
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
     }
 
@@ -111,19 +120,22 @@ public final class CRT {
      * @return a string describing the detected architecture the CRT is executing on
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
+        System.out.println("Android TEST: CRT.getArchIdentifier() Started()\n");
         String systemPropertyOverride = System.getProperty(CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY);
         if (systemPropertyOverride != null && systemPropertyOverride.length() > 0) {
+            System.out.println("Android TEST: returning systemPropertyOverride:" + systemPropertyOverride + "\n");
             return systemPropertyOverride;
         }
 
         String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
         if (environmentOverride != null && environmentOverride.length() > 0) {
+            System.out.println("Android TEST: CRT.getArchIdentifier() returning environmentOverride:" + environmentOverride + "\n");
             return environmentOverride;
         }
 
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
-
+        System.out.println("Android TEST: CRT.getArchIdentifier() arch:" + arch + "\n");
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
@@ -142,6 +154,7 @@ public final class CRT {
             return "armv6";
         }
 
+        System.out.println("Android TEST: CRT.getArchIdentifier() throw architecture not supported exception\n");
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
@@ -395,35 +408,47 @@ public final class CRT {
     }
 
     private static CrtPlatform findPlatformImpl() {
-        System.out.println("Android TEST: findPlatformImpl \n");
+        System.out.println("Android TEST: CRT.findPlatformImpl() Started \n");
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
-                // Search for test impl first, fall back to crt
+                // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+                // Search for android test impl specifically because getOSIdentifier will return "linux" on android
+                String.format("software.amazon.awssdk.crt.test.android.CrtPlatformImpl"),
+                // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {
-            System.out.println("Android TEST: platformImpl Check:" + platformImpl);
+            System.out.println("Android TEST: CRT.findPlatformImpl() Check platformImp:" + platformImpl);
             try {
                 Class<?> platformClass = classLoader.loadClass(platformImpl);
                 CrtPlatform instance = (CrtPlatform) platformClass.getDeclaredConstructor().newInstance();
+                System.out.println("Android TEST: CRT.findPlatformImpl() returning instance with Version:" + instance.getVersion() + " os:" + instance.getOSIdentifier() +"\n");
                 return instance;
             } catch (ClassNotFoundException ex) {
+                System.out.println("Android TEST: CRT.findPlatformImpl() ClassNotFoundException\n");
                 // IGNORED
             } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException ex) {
+                System.out.println("Android TEST: CRT.findPlatformImpl() CRTRuntimeException:" + ex.toString() + "\n");
                 throw new CrtRuntimeException(ex.toString());
             }
         }
+        System.out.println("Android TEST: CRT.findPlatformImpl() returning null\n");
         return null;
     }
 
     public static CrtPlatform getPlatformImpl() {
+        System.out.println("Android TEST: CRT.getPlatformImpl() Called, returning s_platform\n");
         return s_platform;
     }
 
     private static void jvmInit() {
+        System.out.println("Android TEST: CRT.jvmInit() Started");
         CrtPlatform platform = getPlatformImpl();
         if (platform != null) {
+            System.out.println("Android TEST: CRT.jvmInit() platform != null\n");
             platform.jvmInit();
+        } else {
+            System.out.println("Android TEST: CRT.jvmInit() platform == null\n");
         }
     }
 

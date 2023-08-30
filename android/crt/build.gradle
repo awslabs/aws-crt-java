@@ -210,7 +210,7 @@ afterEvaluate {
 
                 groupId = 'software.amazon.awssdk.crt'
                 artifactId = 'aws-crt-android'
-                version = android.defaultConfig.versionName + '-SNAPSHOT'
+                version = '1.0.0-SNAPSHOT'
             }
         }
         repositories {

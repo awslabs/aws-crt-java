@@ -25,7 +25,7 @@ public final class PackageInfo {
 
         public Version(String v) {
             version = v != null ? v : "UNKNOWN";
-            
+
             int dashIdx = version.indexOf('-');
             if (dashIdx != -1) {
                 tag = version.substring(dashIdx + 1);
@@ -65,10 +65,16 @@ public final class PackageInfo {
      * Default constructor
      */
     public PackageInfo() {
+        System.out.println("Android TEST: PackageInfo.PackageInfo() Started\n");
+
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
+            System.out.println("Android TEST: PackageInfo.PackageInfo() platform != null version is set\n");
             version = platform.getVersion();
             return;
+        }
+        else {
+            System.out.println("Android TEST: PackageInfo.PackageInfo() platform = null\n");
         }
 
         Package pkg = CRT.class.getPackage();
@@ -82,5 +88,5 @@ public final class PackageInfo {
         }
         version = new Version(pkgVersion);
     }
-    
+
 }

@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.utils.PackageInfo;
 // Overrides just for testing
 public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatformImpl {
     public void jvmInit() {
+        System.out.println("Android TEST: CrtPlatformImpl.jvmInit() android.crt.src.androidTest.java Started\n");
         // Ensure that android JUnitTestRunner test arguments get turned into system properties
         Bundle testArgs = InstrumentationRegistry.getArguments();
         if (testArgs != null) {
@@ -33,6 +34,7 @@ public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatf
     }
 
     public PackageInfo.Version getVersion() {
+        System.out.println("Android TEST: CrtPlatformImpl.getVersion() from crt->androidTest hit\n");
         return new PackageInfo.Version("0.0.0-UNITTEST");
     }
 

@@ -14,12 +14,14 @@ public abstract class CrtPlatform {
     // Gets the package version. If not overridden, the Java Package that the
     // CRT class is in will be read for version info.
     public PackageInfo.Version getVersion() {
+        System.out.println("Android TEST: CrtPlatform.getVersion() from src->CrtPlatform Started\n");
         return null;
     }
 
     // Get the OS identifier, used to determine platform and to load the
     // JNI library
     public String getOSIdentifier() {
+        System.out.println("Android TEST: CrtPlatform.getOSIdentifier() src->CrtPlatform Started");
         return System.getProperty("os.name");
     }
 
@@ -31,7 +33,7 @@ public abstract class CrtPlatform {
 
     // Called before every JUnit test
     public void testSetup(Object context) {}
-    
+
     // Called after every JUnit test
     public void testTearDown(Object context) {}
 }

@@ -50,7 +50,10 @@ public class CrtTestFixture {
         context = new CrtTestContext();
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
+            System.out.println("Android TEST: CrtTestFixture.setup() platform != null");
             platform.testSetup(context);
+        } else {
+            System.out.println("Android TEST: CrtTestFixture.setup() platform == null, testSetup not called");
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
         System.out.println("Android TEST: CrtTestFixture.setup() complete\n");
@@ -62,7 +65,10 @@ public class CrtTestFixture {
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown begin");
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
+            System.out.println("Android TEST: CrtTestFixture.tearDown() platform != null");
             platform.testTearDown(context);
+        } else {
+            System.out.println("Android TEST: CrtTestFixture.tearDown() platform == null, testTearDown not called");
         }
 
         context = null;

@@ -2235,5 +2235,5 @@ static void s_cache_java_class_ids(void *user_data) {
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;
 
 void aws_cache_jni_ids(JNIEnv *env) {
-    aws_thread_call_once(&s_cache_once_init, s_cache_java_class_ids, env);
+    aws_thread_call_once(&s_cache_once_init, s_cache_java_class_ids, (void *)env);
 }

@@ -57,7 +57,7 @@ public class MqttClientConnection extends CrtResource {
      * @throws MqttException If mqttClient is null
      */
     public MqttClientConnection(MqttConnectionConfig config) throws MqttException {
-        if (config.getMqttClient() == null) {
+        if (config.getMqttClient() == null && config.getMqtt5Client() == null) {
             throw new MqttException("mqttClient must not be null");
         }
         if (config.getClientId() == null) {
@@ -71,7 +71,15 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
+            if(config.getMqttClient() != null)
+            {
+                acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this, 3));
+            }
+            else if (config.getMqtt5Client() != null)
+            {
+                acquireNativeHandle(mqttClientConnectionNew(config.getMqtt5Client().getNativeHandle(), this, 5));
+            }
+
 
             if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
@@ -200,7 +208,15 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Boolean> connect() throws MqttException {
 
-        TlsContext tls = config.getMqttClient().getTlsContext();
+        TlsContext tls = null;
+        if(config.getMqttClient() != null)
+        {
+            tls = config.getMqttClient().getTlsContext();
+        }
+        else if (config.getMqtt5Client() != null)
+        {
+            tls = config.getMqtt5Client().getTlsContext();
+        }
 
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
@@ -372,7 +388,7 @@ public class MqttClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj)
+    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj, int client_version)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDestroy(long connection);

@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -254,6 +255,28 @@ public class Mqtt5ClientOptions {
      */
     public PublishEvents getPublishEvents() {
         return this.publishEvents;
+    }
+
+    /**
+     * Create a mqtt3 config from a mqtt5 client
+     */
+    protected MqttConnectionConfig toMqtt3ConnectionConfig() throws Exception {
+        try{
+            MqttConnectionConfig options = new MqttConnectionConfig();
+            options.setEndpoint(this.hostName);
+            options.setPort(Math.toIntExact(this.port));
+            options.setSocketOptions(this.socketOptions);
+            options.setClientId(this.connectOptions.getClientId());
+            options.setCleanSession(this.sessionBehavior.compareTo(ClientSessionBehavior.CLEAN) <= 0);
+            options.setKeepAliveSecs(Math.toIntExact(this.connectOptions.getKeepAliveIntervalSeconds()));
+            options.setPingTimeoutMs(Math.toIntExact(this.pingTimeoutMs));
+            options.setProtocolOperationTimeoutMs(Math.toIntExact(this.ackTimeoutSeconds * 1000));
+            return options;
+        }
+        catch(ArithmeticException e)
+        {
+            throw new ArithmeticException("Failed to convert long values to int. Parameters are out of range for Mqtt3 Options: " + e.getMessage());
+        }
     }
 
     /**

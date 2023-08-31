@@ -9,6 +9,9 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
+import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -22,6 +25,9 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubAckPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
+
+import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 
  /**
@@ -47,6 +53,16 @@ public class Mqtt5Client extends CrtResource {
     private boolean isConnected;
 
     /**
+     * A private config used to save config for mqtt3 connection creation
+     */
+    private Mqtt5ClientOptions clientOptions;
+
+    /**
+     * A private tlscontext
+     */
+    private TlsContext tlsContext;
+
+    /**
      * Creates a Mqtt5Client instance using the provided Mqtt5ClientOptions. Once the Mqtt5Client is created,
      * changing the settings will not cause a change in already created Mqtt5Client's.
      *
@@ -54,9 +70,10 @@ public class Mqtt5Client extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT5 client structure
      */
     public Mqtt5Client(Mqtt5ClientOptions options) throws CrtRuntimeException {
+        clientOptions = options;
         ClientBootstrap bootstrap = options.getBootstrap();
         SocketOptions socketOptions = options.getSocketOptions();
-        TlsContext tlsContext = options.getTlsContext();
+        this.tlsContext = options.getTlsContext();
         HttpProxyOptions proxyOptions = options.getHttpProxyOptions();
         ConnectPacket connectionOptions = options.getConnectOptions();
         this.websocketHandshakeTransform = options.getWebsocketHandshakeTransform();
@@ -83,8 +100,8 @@ public class Mqtt5Client extends CrtResource {
         if (socketOptions != null) {
             addReferenceTo(socketOptions);
         }
-        if (tlsContext != null) {
-            addReferenceTo(tlsContext);
+        if (this.tlsContext != null) {
+            addReferenceTo(this.tlsContext);
         }
         if (proxyOptions != null) {
             if (proxyOptions.getTlsContext() != null) {
@@ -93,6 +110,11 @@ public class Mqtt5Client extends CrtResource {
         }
         isConnected = false;
     }
+
+    /**
+     * @return the tls context used by all connections associated with this client.
+     */
+    public TlsContext getTlsContext() { return tlsContext; }
 
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
@@ -227,6 +249,31 @@ public class Mqtt5Client extends CrtResource {
             args.complete(handshakeRequest);
         }
     }
+
+    /*******************************************************************************
+     * Mqtt5 to Mqtt3 Adapter
+     ******************************************************************************/
+
+    /**
+     * Returns a MqttConnection Object in Mqtt3 interface
+     *
+     * @Return a Mqtt5ClientConnection
+     */
+    private MqttClientConnection NewConnection()
+    {
+        try
+        {
+            MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig();
+            return new MqttClientConnection(mqtt3Config);
+        }
+        catch(Exception e)
+        {
+            Log.log(LogLevel.Error, LogSubject.MqttClient, "Failed to setup mqtt3 configuration"+e.getMessage() );
+        }
+        return null;
+    }
+
+
 
     /*******************************************************************************
      * native methods

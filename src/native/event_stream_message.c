@@ -30,6 +30,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageNew(
     jbyteArray headers,
     jbyteArray payload) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_message *message =
         aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct aws_event_stream_message));
@@ -71,6 +72,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageDelete(
     jlong message_ptr) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_message *message = (struct aws_event_stream_message *)message_ptr;
     aws_event_stream_message_clean_up(message);
     aws_mem_release(aws_jni_get_allocator(), message);
@@ -82,6 +85,7 @@ jobject JNICALL Java_software_amazon_awssdk_crt_eventstream_Message_messageBuffe
     jclass jni_class,
     jlong message_ptr) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_message *message = (struct aws_event_stream_message *)message_ptr;
     const uint8_t *buffer = aws_event_stream_message_buffer(message);

@@ -896,6 +896,6 @@ struct java_boxed_array_list_properties {
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 
-void cache_java_class_ids(JNIEnv *env);
+void aws_cache_jni_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

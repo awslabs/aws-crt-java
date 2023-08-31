@@ -132,4 +132,11 @@ public class CrtTestFixture {
     protected void skipIfLocalhostUnavailable() {
         Assume.assumeTrue(System.getProperty("aws.crt.localhost") != null);
     }
+
+    protected void skipIfAndroid() {
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            Assume.assumeTrue(platform.getOSIdentifier().contains("android"));
+        }
+    }
 }

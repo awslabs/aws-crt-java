@@ -55,7 +55,7 @@ public final class CRT {
         {
             public void run()
             {
-                CRT.onJvmShutdown();
+                CRT.defaultCrtShutdown();
             }
         });
 
@@ -420,6 +420,45 @@ public final class CRT {
         CrtPlatform platform = getPlatformImpl();
         if (platform != null) {
             platform.jvmInit();
+        }
+    }
+
+    private static boolean useManualShutdown = false;
+    private static int manualShutdownRefCount = 0;
+
+    public static void enableManualShutdown() {
+        synchronized(CRT.class) {
+            useManualShutdown = true;
+            ++manualShutdownRefCount;
+        }
+    }
+
+    public static void manualShutdown() {
+        boolean invoke_native_shutdown = false;
+        synchronized(CRT.class) {
+            if (useManualShutdown) {
+                --manualShutdownRefCount;
+                if (manualShutdownRefCount == 0) {
+                    invoke_native_shutdown = true;
+                }
+            }
+        }
+
+        if (invoke_native_shutdown) {
+            onJvmShutdown();
+        }
+    }
+
+    private static void defaultCrtShutdown() {
+        boolean invoke_native_shutdown = true;
+        synchronized(CRT.class) {
+            if (useManualShutdown) {
+                invoke_native_shutdown = false;
+            }
+        }
+
+        if (invoke_native_shutdown) {
+            onJvmShutdown();
         }
     }
 

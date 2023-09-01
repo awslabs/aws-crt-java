@@ -34,17 +34,6 @@ class AWSCrtJavaTest(Builder.Action):
                 print("----------------------------------")
             sys.exit(f"Tests failed")
 
-    def run_concurrent_init_test(self, env):
-        env.shell.exec(["mvn", "dependency:build-classpath", "-DincludeScope=test", "-Dmdep.outputFile=classpath.txt"], check=True)
-
-        with open('classpath.txt', 'r') as file:
-            classpath = file.read()
-
-        init_test_command = ["java", "-classpath", f"{classpath}", "com.intellij.rt.junit.JUnitStarter" "-junit4" "software.amazon.awssdk.crt.test.InitTest,testConcurrentInitForDeadlock"]
-        result = self.env.shell.exec(*init_test_command, check=False)
-        if result.returncode:
-            sys.exit(f"Concurrent Init Test failed")
-
     def start_maven_tests(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
@@ -55,10 +44,9 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         self._run_java_tests("-Dtest=ShutdownTest")
 
-        # run the InitTest by itself.  We skip it during other runs because 'mvn test' does not include
-        # the CRT itself on the class path, which makes the test fail with a ClassNotFound exception.
-        env.shell.setenv('AWS_CRT_INIT_TESTING', '1')
-        self.run_concurrent_init_test(env)
+        # run the InitTest by itself.  This creates an environment where the test itself is the one that
+        # causes the CRT to be loaded and initialized.
+        self._run_java_tests("-Dtest=InitTest")
 
         # run the elasticurl integration tests
         python = sys.executable

@@ -63,7 +63,6 @@ import software.amazon.awssdk.crt.mqtt.OnConnectionFailureReturn;
 import software.amazon.awssdk.crt.mqtt.OnConnectionClosedReturn;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -79,9 +78,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
 
     private boolean disconnecting = false;
     MqttClientConnection connection = null;
-    private CompletableFuture<OnConnectionSuccessReturn> onConnectionSuccessFuture = new CompletableFuture<OnConnectionSuccessReturn>();
-    private CompletableFuture<OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
-    private CompletableFuture<OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
+    private CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionSuccessReturn> onConnectionSuccessFuture = new CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionSuccessReturn>();
+    private CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionFailureReturn>();
+    private CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<software.amazon.awssdk.crt.mqtt.OnConnectionClosedReturn>();
     int pubsAcked = 0;
     int subsAcked = 0;
     // Connection callback events
@@ -101,7 +100,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
 
         @Override
         public void onConnectionFailure(OnConnectionFailureReturn data) {
-            System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+            System.out.println("Connection failed with error: " + data.getErrorCode() + " "
+                    + CRT.awsErrorString(data.getErrorCode()));
             onConnectionFailureFuture.complete(data);
         }
 
@@ -121,8 +121,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
     public Mqtt5to3AdapterConnectionTest() {
     }
 
-
     Consumer<MqttMessage> connectionMessageTransfomer = null;
+
     void setConnectionMessageTransformer(Consumer<MqttMessage> connectionMessageTransfomer) {
         this.connectionMessageTransfomer = connectionMessageTransfomer;
     }
@@ -142,8 +142,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
 
     }
 
-    boolean Mqtt3Connect(Mqtt5Client client) throws Exception
-    {
+    boolean Mqtt3Connect(Mqtt5Client client) throws Exception {
         try {
             connection = client.NewConnection(events);
             if (connectionMessageTransfomer != null) {
@@ -151,9 +150,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             }
             CompletableFuture<Boolean> connected = connection.connect();
             connected.get();
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             fail(ex.getMessage());
         }
         return true;
@@ -224,20 +221,20 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                         .withConnackTimeoutMs(100L)
                         .withConnectOptions(connectBuilder.build())
                         .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
-                        .withLifecycleEvents(new LifecycleEvents() {
+                        .withLifecycleEvents(new software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents() {
                             @Override
                             public void onAttemptingConnect(Mqtt5Client client,
-                                    OnAttemptingConnectReturn onAttemptingConnectReturn) {
+                                    software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn onAttemptingConnectReturn) {
                             }
 
                             @Override
                             public void onConnectionSuccess(Mqtt5Client client,
-                                    mqtt5.OnConnectionSuccessReturn onConnectionSuccessReturn) {
+                                    software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn onConnectionSuccessReturn) {
                             }
 
                             @Override
                             public void onConnectionFailure(Mqtt5Client client,
-                                    OnConnectionFailureReturn onConnectionFailureReturn) {
+                                    software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn onConnectionFailureReturn) {
                             }
 
                             @Override
@@ -283,11 +280,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
-
     /****************************************************************
-                CONNECT THROUGH MQTT5 INTERFACE
-    ****************************************************************/
+     * CONNECT THROUGH MQTT5 INTERFACE
+     ****************************************************************/
     /* Happy path. Direct connection with minimal configuration */
     @Test
     public void TestDirectConnectThroughMqtt5() {
@@ -338,7 +333,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             builder.withConnectOptions(connectOptions.build());
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                MqttClientConnection connection = client.NewConnection();) {
+                    MqttClientConnection connection = client.NewConnection();) {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -370,7 +365,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                 builder.withConnectOptions(connectOptions.build());
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = client.NewConnection();) {
+                        MqttClientConnection connection = client.NewConnection();) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                     DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -382,7 +377,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /* Happy path. Websocket connection with minimal configuration */
     @Test
     public void TestWebsocketMinimalConnectThroughMqtt5() {
@@ -391,15 +385,14 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         try {
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
                 LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
+                        AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
@@ -415,7 +408,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                 builder.withWebsocketHandshakeTransform(websocketTransform);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = client.NewConnection();) {
+                        MqttClientConnection connection = client.NewConnection();) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                     DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -428,14 +421,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /* Websocket connection with HttpProxyOptions */
     @Test
     public void TestWebsocketHttpProxyConnectThroughMqtt5() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -444,7 +436,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT));
+                    AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT));
             builder.withLifecycleEvents(events);
             builder.withBootstrap(bootstrap);
             ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
@@ -491,10 +483,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /****************************************************************
-                CONNECT THROUGH MQTT311 INTERFACE
-    ****************************************************************/
+     * CONNECT THROUGH MQTT311 INTERFACE
+     ****************************************************************/
     /* Happy path. Direct connection with minimal configuration */
     @Test
     public void TestDirectConnectThroughMqtt311() {
@@ -544,7 +535,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             builder.withConnectOptions(connectOptions.build());
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                MqttClientConnection connection = client.NewConnection();) {
+                    MqttClientConnection connection = client.NewConnection();) {
                 Mqtt3Connect(client);
                 Mqtt3ConnectionDisconnect();
                 Mqtt3ConnectionClose();
@@ -574,7 +565,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                 connectBuilder.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
                 builder.withConnectOptions(connectBuilder.build());
                 try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = client.NewConnection();) {
+                        MqttClientConnection connection = client.NewConnection();) {
                     Mqtt3Connect(client);
                     Mqtt3ConnectionDisconnect();
                     Mqtt3ConnectionClose();
@@ -585,7 +576,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /* Happy path. Websocket connection with minimal configuration */
     @Test
     public void TestWebsocketMinimalConnectThroughMqtt311() {
@@ -594,15 +584,14 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         try {
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
                 LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
+                        AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
@@ -618,7 +607,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                 builder.withWebsocketHandshakeTransform(websocketTransform);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = client.NewConnection();) {
+                        MqttClientConnection connection = client.NewConnection();) {
                     Mqtt3Connect(client);
                     Mqtt3ConnectionDisconnect();
                     Mqtt3ConnectionClose();
@@ -630,14 +619,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /* Websocket connection with HttpProxyOptions */
     @Test
     public void TestWebsocketHttpProxyConnectThroughMqtt311() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -646,10 +634,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT));
+                    AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_TLS_PORT));
             builder.withLifecycleEvents(events);
             builder.withBootstrap(bootstrap);
-
 
             TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
             tlsOptions.withVerifyPeer(false);
@@ -693,12 +680,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
     }
 
     /****************************************************************
-    *            OPERATION TEST CASE
-    ****************************************************************/
+     * OPERATION TEST CASE
+     ****************************************************************/
     @Test
     public void TestOperationSubUnsub() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5to3Adapter_Binding_Java_" + testUUID;
         String clientId = "test/MQTT5TO3Adapter_ClientId" + testUUID;
@@ -715,14 +703,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             }
         };
 
-
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(events);
 
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
             TlsContext tlsContext = new TlsContext(tlsOptions);
             tlsOptions.close();
             builder.withTlsContext(tlsContext);
@@ -733,9 +720,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             connectBuilder.withClientId(clientId);
             builder.withConnectOptions(connectBuilder.build());
 
-
             try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                MqttClientConnection connection = client.NewConnection()) {
+                    MqttClientConnection connection = client.NewConnection()) {
                 connection.onMessage(messageHandler);
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -746,7 +732,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                 };
 
                 CompletableFuture<Integer> subscribed = connection.subscribe(testTopic, QualityOfService.AT_LEAST_ONCE,
-                subscriberMessageHandler);
+                        subscriberMessageHandler);
                 subscribed.thenApply(unused -> subsAcked++);
                 int packetId = subscribed.get();
 
@@ -793,10 +779,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-
     /****************************************************************
-    *            MQTT311 LIFECYCLE CALLBACK TEST CASE
-    ****************************************************************/
+     * MQTT311 LIFECYCLE CALLBACK TEST CASE
+     ****************************************************************/
     @Test
     public void TestConnectionSuccessCallback() {
         skipIfNetworkUnavailable();
@@ -830,44 +815,47 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
 
     // @Test
     // public void TestConnectionFailureCallback() {
-    //     skipIfNetworkUnavailable();
-    //     Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-    //             AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-    //     try {
-    //         LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+    // skipIfNetworkUnavailable();
+    // Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST,
+    // AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+    // AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+    // try {
+    // LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
-    //         try (
-    //                 TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-    //                         AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-    //                 TlsContext tlsContext = new TlsContext(tlsOptions);) {
-    //             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("badhost", 8883l);
-    //             builder.withLifecycleEvents(events);
-    //             builder.withTlsContext(tlsContext);
-    //             ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-    //             connectBuilder.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
-    //             builder.withConnectOptions(connectBuilder.build());
-    //             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    //                 connection = client.NewConnection(this.events);
-    //                 connection.connect();
-    //                 onConnectionFailureFuture.get();
-    //                 Mqtt3ConnectionDisconnect();
-    //                 Mqtt3ConnectionClose();
-    //             }
-    //         }
-    //     } catch (Exception ex) {
-    //         fail(ex.getMessage());
-    //     }
+    // try (
+    // TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+    // AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+    // TlsContext tlsContext = new TlsContext(tlsOptions);) {
+    // Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("badhost",
+    // 8883l);
+    // builder.withLifecycleEvents(events);
+    // builder.withTlsContext(tlsContext);
+    // ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
+    // connectBuilder.withClientId("test/MQTT5to3Adapter" +
+    // UUID.randomUUID().toString());
+    // builder.withConnectOptions(connectBuilder.build());
+    // try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+    // connection = client.NewConnection(this.events);
+    // connection.connect();
+    // onConnectionFailureFuture.get();
+    // Mqtt3ConnectionDisconnect();
+    // Mqtt3ConnectionClose();
+    // }
+    // }
+    // } catch (Exception ex) {
+    // fail(ex.getMessage());
+    // }
     // }
 
-
     /****************************************************************
-    *            MQTT311 ADAPTER TEST CASE
-    ****************************************************************/
+     * MQTT311 ADAPTER TEST CASE
+     ****************************************************************/
 
     @Test
     public void TestMultipleAdapter() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         String testUUID = UUID.randomUUID().toString();
         String testTopic1 = "test/MQTT5to3Adapter1" + testUUID;
         String testTopic2 = "test/MQTT5to3Adapter2" + testUUID;
@@ -881,7 +869,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             builder.withLifecycleEvents(events);
 
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
             TlsContext tlsContext = new TlsContext(tlsOptions);
             tlsOptions.close();
             builder.withTlsContext(tlsContext);
@@ -892,10 +880,9 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             connectBuilder.withClientId(clientId);
             builder.withConnectOptions(connectBuilder.build());
 
-
             try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                MqttClientConnection connection1 = client.NewConnection();
-                MqttClientConnection connection2 = client.NewConnection()) {
+                    MqttClientConnection connection1 = client.NewConnection();
+                    MqttClientConnection connection2 = client.NewConnection()) {
                 // Connect
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -909,24 +896,27 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
                     receivedFuture2.complete(message);
                 };
 
-                CompletableFuture<Integer> subscribed = connection1.subscribe(testTopic1, QualityOfService.AT_LEAST_ONCE,
-                subscriberMessageHandler1);
+                CompletableFuture<Integer> subscribed = connection1.subscribe(testTopic1,
+                        QualityOfService.AT_LEAST_ONCE,
+                        subscriberMessageHandler1);
                 int packetId = subscribed.get();
                 assertNotSame(0, packetId);
 
                 subscribed = connection2.subscribe(testTopic2, QualityOfService.AT_LEAST_ONCE,
-                subscriberMessageHandler2);
+                        subscriberMessageHandler2);
                 packetId = subscribed.get();
                 assertNotSame(0, packetId);
 
-                MqttMessage message1 = new MqttMessage(testTopic1, testPayload.getBytes(), QualityOfService.AT_LEAST_ONCE,
+                MqttMessage message1 = new MqttMessage(testTopic1, testPayload.getBytes(),
+                        QualityOfService.AT_LEAST_ONCE,
                         false);
                 CompletableFuture<Integer> published = connection1.publish(message1);
                 packetId = published.get();
 
                 assertNotSame(0, packetId);
 
-                MqttMessage message2 = new MqttMessage(testTopic2, testPayload.getBytes(), QualityOfService.AT_LEAST_ONCE,
+                MqttMessage message2 = new MqttMessage(testTopic2, testPayload.getBytes(),
+                        QualityOfService.AT_LEAST_ONCE,
                         false);
                 published = connection2.publish(message2);
                 packetId = published.get();
@@ -949,6 +939,5 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             fail(ex.getMessage());
         }
     }
-
 
 };

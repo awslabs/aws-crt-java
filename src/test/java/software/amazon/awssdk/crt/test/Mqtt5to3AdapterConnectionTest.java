@@ -813,39 +813,39 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
         }
     }
 
-    // @Test
-    // public void TestConnectionFailureCallback() {
-    // skipIfNetworkUnavailable();
-    // Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST,
-    // AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-    // AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-    // try {
-    // LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+    @Test
+    public void TestConnectionFailureCallback() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
-    // try (
-    // TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-    // AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-    // TlsContext tlsContext = new TlsContext(tlsOptions);) {
-    // Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("badhost",
-    // 8883l);
-    // builder.withLifecycleEvents(events);
-    // builder.withTlsContext(tlsContext);
-    // ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-    // connectBuilder.withClientId("test/MQTT5to3Adapter" +
-    // UUID.randomUUID().toString());
-    // builder.withConnectOptions(connectBuilder.build());
-    // try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-    // connection = client.NewConnection(this.events);
-    // connection.connect();
-    // onConnectionFailureFuture.get();
-    // Mqtt3ConnectionDisconnect();
-    // Mqtt3ConnectionClose();
-    // }
-    // }
-    // } catch (Exception ex) {
-    // fail(ex.getMessage());
-    // }
-    // }
+            try (
+                    TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                            AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    TlsContext tlsContext = new TlsContext(tlsOptions);) {
+                Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("badhost",
+                        8883l);
+                builder.withLifecycleEvents(events);
+                builder.withTlsContext(tlsContext);
+                ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
+                connectBuilder.withClientId("test/MQTT5to3Adapter" +
+                        UUID.randomUUID().toString());
+                builder.withConnectOptions(connectBuilder.build());
+                try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                    connection = client.NewConnection(this.events);
+                    connection.connect();
+                    onConnectionFailureFuture.get();
+                    Mqtt3ConnectionDisconnect();
+                    Mqtt3ConnectionClose();
+                }
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
 
     /****************************************************************
      * MQTT311 ADAPTER TEST CASE

@@ -233,10 +233,10 @@ public class Mqtt5Client extends CrtResource {
      ******************************************************************************/
 
     /**
-     * Returns a MqttConnection Object in Mqtt3 interface
+     * Returns a MqttConnection Object based on Mqtt5Client configuration. A client id is required for NewConnection.
      * @param callbacks connection event callbacks to use
      *
-     * @Return a Mqtt5ClientConnection
+     * @return a Mqtt5ClientConnection
      */
     public MqttClientConnection NewConnection(MqttClientConnectionEvents callbacks)
     {
@@ -254,9 +254,9 @@ public class Mqtt5Client extends CrtResource {
     }
 
     /**
-     * Returns a MqttConnection Object in Mqtt3 interface
+     * Returns a MqttConnection Object based on Mqtt5Client configuration. A client id is required for NewConnection.
      *
-     * @Return a Mqtt5ClientConnection
+     * @return a Mqtt5ClientConnection
      */
     public MqttClientConnection NewConnection() throws MqttException {
         try(MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig())

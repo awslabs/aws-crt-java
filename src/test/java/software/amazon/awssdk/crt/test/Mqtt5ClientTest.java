@@ -112,7 +112,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
     static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE");
 
-    private int OPERATION_TIMEOUT_TIME = 30;
+    protected int OPERATION_TIMEOUT_TIME = 30;
 
     public Mqtt5ClientTest() {
     }

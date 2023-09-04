@@ -28,6 +28,8 @@ import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuild
 
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents;
+import software.amazon.awssdk.crt.mqtt.MqttException;
 
 
  /**
@@ -73,7 +75,7 @@ public class Mqtt5Client extends CrtResource {
         clientOptions = options;
         ClientBootstrap bootstrap = options.getBootstrap();
         SocketOptions socketOptions = options.getSocketOptions();
-        this.tlsContext = options.getTlsContext();
+        TlsContext tlsContext = options.getTlsContext();
         HttpProxyOptions proxyOptions = options.getHttpProxyOptions();
         ConnectPacket connectionOptions = options.getConnectOptions();
         this.websocketHandshakeTransform = options.getWebsocketHandshakeTransform();
@@ -100,8 +102,9 @@ public class Mqtt5Client extends CrtResource {
         if (socketOptions != null) {
             addReferenceTo(socketOptions);
         }
-        if (this.tlsContext != null) {
-            addReferenceTo(this.tlsContext);
+        if (tlsContext != null) {
+            addReferenceTo(tlsContext);
+            this.tlsContext = tlsContext;
         }
         if (proxyOptions != null) {
             if (proxyOptions.getTlsContext() != null) {
@@ -224,6 +227,49 @@ public class Mqtt5Client extends CrtResource {
         isConnected = connected;
     }
 
+
+    /*******************************************************************************
+     * Mqtt5 to Mqtt3 Adapter
+     ******************************************************************************/
+
+    /**
+     * Returns a MqttConnection Object in Mqtt3 interface
+     * @param callbacks connection event callbacks to use
+     *
+     * @Return a Mqtt5ClientConnection
+     */
+    public MqttClientConnection NewConnection(MqttClientConnectionEvents callbacks)
+    {
+        try(MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig())
+        {
+            mqtt3Config.setConnectionCallbacks(callbacks);
+            mqtt3Config.setMqtt5Client(this);
+            return new MqttClientConnection(mqtt3Config);
+        }
+        catch(Exception e)
+        {
+            Log.log(LogLevel.Error, LogSubject.MqttClient, "Failed to setup mqtt3 connection "+e.getMessage() );
+        }
+        return null;
+    }
+
+    /**
+     * Returns a MqttConnection Object in Mqtt3 interface
+     *
+     * @Return a Mqtt5ClientConnection
+     */
+    public MqttClientConnection NewConnection() throws MqttException {
+        try(MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig())
+        {
+            mqtt3Config.setMqtt5Client(this);
+            return new MqttClientConnection(mqtt3Config);
+        }
+        catch(Exception e)
+        {
+            throw new MqttException("Failed to setup mqtt3 connection : "+e.getMessage());
+        }
+    }
+
     /*******************************************************************************
      * websocket methods
      ******************************************************************************/
@@ -249,30 +295,6 @@ public class Mqtt5Client extends CrtResource {
             args.complete(handshakeRequest);
         }
     }
-
-    /*******************************************************************************
-     * Mqtt5 to Mqtt3 Adapter
-     ******************************************************************************/
-
-    /**
-     * Returns a MqttConnection Object in Mqtt3 interface
-     *
-     * @Return a Mqtt5ClientConnection
-     */
-    private MqttClientConnection NewConnection()
-    {
-        try
-        {
-            MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig();
-            return new MqttClientConnection(mqtt3Config);
-        }
-        catch(Exception e)
-        {
-            Log.log(LogLevel.Error, LogSubject.MqttClient, "Failed to setup mqtt3 configuration"+e.getMessage() );
-        }
-        return null;
-    }
-
 
 
     /*******************************************************************************

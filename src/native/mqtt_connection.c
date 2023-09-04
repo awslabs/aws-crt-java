@@ -330,6 +330,29 @@ static void s_on_connection_closed(
     }
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
+}
+
+static void s_on_connection_terminated(void *user_data) {
+
+    struct mqtt_jni_connection *connection = user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
+    // Make sure the Java object has not been garbage collected
+    if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
+        jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
+        if (mqtt_connection) {
+            (*env)->DeleteLocalRef(env, mqtt_connection);
+            AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+        }
+    }
+    aws_jni_release_thread_env(connection->jvm, env);
+    /********** JNI ENV RELEASE **********/
 
     /* Release the connection acquired during the disconnect function invoke */
     s_mqtt_jni_connection_release(connection);
@@ -354,13 +377,10 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    if(client3 != NULL)
-    {
+    if (client3 != NULL) {
         connection->client = client3;
         connection->client_connection = aws_mqtt_client_connection_new(client3);
-    }
-    else if (client5_jni != NULL)
-    {
+    } else if (client5_jni != NULL) {
         connection->client_connection = aws_mqtt_client_connection_new_from_mqtt5_client(client5_jni->client);
     }
 
@@ -369,6 +389,15 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
             env,
             "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to create new "
             "connection");
+        goto on_error;
+    }
+
+    if (aws_mqtt_client_connection_set_connection_termination_handler(
+            connection->client_connection, s_on_connection_terminated, connection)) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_new failed, unable to set termination "
+            "callback");
         goto on_error;
     }
 
@@ -414,22 +443,18 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
     struct aws_mqtt_client *client3 = NULL;
     struct aws_mqtt5_client_java_jni *client5_jni = NULL;
 
-    if((uint16_t)jni_client_version == 3)
-    {
+    if ((uint16_t)jni_client_version == 3) {
         client3 = (struct aws_mqtt_client *)jni_client;
         if (!client3) {
             aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt3 Client is invalid/null");
             return (jlong)NULL;
         }
-    }
-    else if ((uint16_t)jni_client_version == 5)
-    {
+    } else if ((uint16_t)jni_client_version == 5) {
         client5_jni = (struct aws_mqtt5_client_java_jni *)jni_client;
         if (!client5_jni) {
             aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt5 Client is invalid/null");
             return (jlong)NULL;
         }
-
     }
 
     /* any error after this point needs to jump to error_cleanup */

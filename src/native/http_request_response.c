@@ -423,6 +423,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_make_request_general(
         env,
         jni_connection,
@@ -440,6 +442,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnec
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_make_request_general(
         env,
         jni_connection,
@@ -498,6 +502,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jboolean is_final_chunk,
     jobject completion_callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
@@ -546,6 +551,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     jlong jni_stream_binding,
     jobject j_http_stream_base) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_stream_binding;
     struct aws_http_stream *stream = binding->native_stream;
@@ -573,6 +579,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     jlong jni_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
     struct aws_http_stream *stream = binding->native_stream;
@@ -593,6 +600,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     jlong jni_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
     struct aws_http_stream *stream = binding->native_stream;
@@ -620,6 +628,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     jint window_update) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
     struct aws_http_stream *stream = binding->native_stream;
@@ -646,6 +655,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
     jint error_code) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = binding->native_stream;
@@ -669,6 +679,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     jlong jni_connection) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -686,6 +698,8 @@ JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnecti
     jlong jni_connection) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -703,6 +717,7 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnec
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     switch (error_code) {
         case AWS_ERROR_HTTP_HEADER_NOT_FOUND:
@@ -790,6 +805,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jlongArray java_marshalled_settings) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
@@ -883,6 +899,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jbyteArray ping_data) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -931,6 +949,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jbyteArray debug_data) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
     struct aws_byte_cursor *debug_cur_pointer = NULL;
@@ -961,6 +981,8 @@ JNIEXPORT void JNICALL
         jlong increment_size) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 

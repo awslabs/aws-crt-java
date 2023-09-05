@@ -6,6 +6,7 @@
 #include <aws/common/logging.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 #include "logging.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -32,6 +33,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_log(
     jint jni_subject,
     jstring jni_logstring) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     const char *raw_string = (*env)->GetStringUTFChars(env, jni_logstring, NULL);
     AWS_LOGF((enum aws_log_level)jni_level, jni_subject, "%s", raw_string);
@@ -69,6 +71,7 @@ static void s_aws_init_logging_internal(JNIEnv *env, struct aws_logger_standard_
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToStdout(JNIEnv *env, jclass jni_crt_class, jint level) {
     (void)jni_crt_class;
+    aws_cache_jni_ids(env);
 
     struct aws_logger_standard_options log_options = {.level = level, .file = stdout};
 
@@ -78,6 +81,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToStdout(JNIEnv *env
 JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToStderr(JNIEnv *env, jclass jni_crt_class, jint level) {
     (void)jni_crt_class;
+    aws_cache_jni_ids(env);
 
     struct aws_logger_standard_options log_options = {.level = level, .file = stderr};
 
@@ -91,6 +95,7 @@ void JNICALL Java_software_amazon_awssdk_crt_Log_initLoggingToFile(
     jint level,
     jstring jni_filename) {
     (void)jni_crt_class;
+    aws_cache_jni_ids(env);
 
     const char *filename = (*env)->GetStringUTFChars(env, jni_filename, NULL);
     struct aws_logger_standard_options log_options = {.level = level, .filename = filename};

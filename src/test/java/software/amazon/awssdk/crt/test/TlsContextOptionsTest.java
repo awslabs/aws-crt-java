@@ -7,11 +7,8 @@ import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.is;
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;

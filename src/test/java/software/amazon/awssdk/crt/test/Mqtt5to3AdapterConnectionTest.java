@@ -661,7 +661,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             builder.withHttpProxyOptions(proxyOptions);
 
             Mqtt5Client client = new Mqtt5Client(builder.build());
-            MqttClientConnection connection = client.NewConnection();
 
             Mqtt3Connect(client);
             Mqtt3ConnectionDisconnect();
@@ -673,7 +672,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
             elg.close();
             hr.close();
             bootstrap.close();
-
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

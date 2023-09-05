@@ -85,8 +85,7 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection release, ref count now = %d", (int)old_value - 1);
 }
 
-static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection)
-{
+static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection) {
     /**
      * Disable the onClosed callback, so it is not invoked on the last disconnect for clean-up.
      * (We do not invoke any callbacks on the last disconnect during clean-up/shutdown.
@@ -95,17 +94,15 @@ static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection
     aws_mqtt_client_connection_set_connection_closed_handler(connection->client_connection, NULL, NULL);
 
     if (aws_mqtt_client_connection_disconnect(
-                connection->client_connection, s_on_shutdown_disconnect_complete, connection) != AWS_OP_SUCCESS) {
+            connection->client_connection, s_on_shutdown_disconnect_complete, connection) != AWS_OP_SUCCESS) {
 
         /*
-        * This can happen under normal code paths if the client happens to be disconnected at cleanup/shutdown
-        * time. Log it (in case it was unexpected) and then invoke the shutdown callback manually.
-        */
+         * This can happen under normal code paths if the client happens to be disconnected at cleanup/shutdown
+         * time. Log it (in case it was unexpected) and then invoke the shutdown callback manually.
+         */
         aws_mqtt_client_connection_release(connection->client_connection);
     }
 }
-
-
 
 static struct mqtt_jni_async_callback *s_mqtt_jni_async_callback_new(
     struct mqtt_jni_connection *connection,

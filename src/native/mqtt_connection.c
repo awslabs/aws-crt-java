@@ -101,9 +101,9 @@ static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection
 
         /*
          * This can happen under normal code paths if the client happens to be disconnected at cleanup/shutdown
-         * time. Log it (in case it was unexpected) and then invoke the shutdown callback manually.
+         * time. Log it (in case it was unexpected) and then shutdown the underlying connection manually.
          */
-        s_on_shutdown_disconnect_complete(connection->client_connection, connection);
+        aws_mqtt_client_connection_release(connection->client_connection);
     }
 }
 

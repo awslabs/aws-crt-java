@@ -490,6 +490,7 @@ static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection 
         return;
     }
 
+    /* Release the underlying mqtt connection */
     aws_mqtt_client_connection_release(jni_connection->client_connection);
 
     JavaVM *jvm = jni_connection->jvm;

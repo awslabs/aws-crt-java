@@ -74,7 +74,7 @@ import java.util.function.Consumer;
 import org.junit.Test;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
-public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTest {
+public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
 
     private boolean disconnecting = false;
     MqttClientConnection connection = null;

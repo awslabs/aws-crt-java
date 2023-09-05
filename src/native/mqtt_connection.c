@@ -436,6 +436,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
     jobject jni_mqtt_connection,
     jint jni_client_version) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct mqtt_jni_connection *connection = NULL;
     struct aws_mqtt_client *client3 = NULL;
@@ -499,6 +500,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     jlong jni_connection) {
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     s_mqtt_jni_connection_destory(connection);
@@ -522,6 +524,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jshort ping_timeout_ms,
     jint protocol_operation_timeout_ms) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_connect: Connection is invalid/null");
@@ -607,6 +611,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_connection,
     jobject jni_ack) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_disconnect: Invalid connection");
@@ -775,6 +781,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jobject jni_handler,
     jobject jni_ack) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_subscribe: Invalid connection");
@@ -837,6 +845,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_connection,
     jobject jni_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqttClientConnectionOnMessage: Invalid connection");
@@ -887,6 +897,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jstring jni_topic,
     jobject jni_ack) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_unsubscribe: Invalid connection");
@@ -932,6 +944,8 @@ jshort JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttCli
     jbyteArray jni_payload,
     jobject jni_ack) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_publish: Invalid connection");
@@ -993,6 +1007,8 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnec
     jboolean jni_retain,
     jbyteArray jni_payload) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_will: Invalid connection");
@@ -1031,6 +1047,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     jstring jni_user,
     jstring jni_pass) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_login: Invalid connection");
@@ -1065,6 +1083,8 @@ JNIEXPORT void JNICALL
         jlong jni_min_timeout,
         jlong jni_max_timeout) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_reconnect_timeout: Invalid connection");
@@ -1154,6 +1174,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     jclass jni_class,
     jlong jni_connection) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_raise_error(AWS_ERROR_INVALID_STATE);
@@ -1178,6 +1200,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_user_data) {
     (void)jni_class;
     (void)jni_connection;
+    aws_cache_jni_ids(env);
 
     struct mqtt_jni_ws_handshake *ws_handshake = (void *)jni_user_data;
     int error_code = AWS_ERROR_SUCCESS;
@@ -1219,6 +1242,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jstring jni_proxy_authorization_password) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
 
@@ -1278,6 +1302,8 @@ JNIEXPORT jobject JNICALL
         jclass jni_class,
         jlong jni_connection) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
     if (!connection) {
         aws_raise_error(AWS_ERROR_INVALID_STATE);

@@ -83,6 +83,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_DirectoryTraversal_crt
     jboolean recursive,
     jobject handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_string *path_str = aws_jni_new_string_from_jstring(env, path);
     if (path_str == NULL) {

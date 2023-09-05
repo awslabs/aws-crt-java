@@ -896,6 +896,14 @@ struct java_boxed_array_list_properties {
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 
-void cache_java_class_ids(JNIEnv *env);
+/**
+ * All functions bound to JNI MUST call this before doing anything else.
+ * This caches all JNI IDs the first time it is called. Any further calls are no-op; it is thread-safe.
+ * The reason we do this lazily, rather than simply calling it once from awsCrtInit(),
+ * is to avoid deadlock when multiple threads init the CRT simultaneously.
+ *
+ * See: https://github.com/awslabs/aws-crt-java/pull/670
+ */
+void aws_cache_jni_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

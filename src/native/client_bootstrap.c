@@ -75,6 +75,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrap
     jlong jni_elg,
     jlong jni_hr) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)jni_elg;
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_hr;
 
@@ -136,6 +138,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
     jlong jni_bootstrap) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
         return;

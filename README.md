@@ -136,7 +136,21 @@ a classifier-based jar, you must specify the classifier name yourself.
 - `aws.crt.memory.tracing` - May be: "0" (default, no tracing), "1" (track bytes), "2" (more detail).
     Allows the CRT.nativeMemory() and CRT.dumpNativeMemory() functions to report native memory usage.
 
-## Mac-Only TLS Behavior
+## TLS Behavior
+
+The CRT uses native libraries for TLS, rather than Java's typical
+Secure Socket Extension (JSSE), KeyStore, and TrustStore.
+On [Windows](https://learn.microsoft.com/en-us/windows/win32/security) and
+[Apple](https://developer.apple.com/documentation/security) devices,
+the built-in OS libraries are used.
+On Linux/Unix/etc [s2n-tls](https://github.com/aws/s2n-tls) is used.
+
+If you need to add certificates to the trust store, add them to your OS trust store.
+The CRT does not use the Java TrustStore. For more customization options, see
+[TlsContextOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsContextOptions.html) and
+[TlsConnectionOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsConnectionOptions.html).
+
+### Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
 

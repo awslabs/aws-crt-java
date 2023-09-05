@@ -225,6 +225,9 @@ public class Elasticurl {
             useTls = false;
             port = 80;
         }
+        if (uri.getPort() != -1) {
+            port = uri.getPort();
+        }
 
         HttpVersion requiredVersion = HttpVersion.UNKNOWN;
         if (cli.hasOption("http1_1")) {

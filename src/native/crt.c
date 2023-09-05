@@ -585,7 +585,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_register_log_subject_info_list(&s_crt_log_subject_list);
 
     s_jvm_table_add_jvm_for_env(env);
-    cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
         atexit(s_jni_atexit_strict);

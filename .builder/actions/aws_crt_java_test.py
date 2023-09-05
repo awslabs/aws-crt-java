@@ -44,6 +44,10 @@ class AWSCrtJavaTest(Builder.Action):
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
         self._run_java_tests("-Dtest=ShutdownTest")
 
+        # run the InitTest by itself.  This creates an environment where the test itself is the one that
+        # causes the CRT to be loaded and initialized.
+        self._run_java_tests("-Dtest=InitTest")
+
         # run the elasticurl integration tests
         python = sys.executable
         env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',

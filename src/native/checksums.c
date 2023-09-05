@@ -7,6 +7,7 @@
 #include <aws/checksums/crc.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 jint crc_common(
     JNIEnv *env,
@@ -37,6 +38,8 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32_crc32(
     jint offset,
     jint length) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return crc_common(env, input, previous, offset, length, aws_checksums_crc32);
 }
 
@@ -48,5 +51,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32C_crc32c(
     jint offset,
     jint length) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return crc_common(env, input, previous, offset, length, aws_checksums_crc32c);
 }

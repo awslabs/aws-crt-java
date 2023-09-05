@@ -18,7 +18,7 @@
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
 #include <http_proxy_options.h>
-#include <http_proxy_options_enviornment_variable.h>
+#include <http_proxy_options_environment_variable.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -105,6 +105,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -269,6 +270,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientDestroy(JNIEnv *env, jclass jni_class, jlong jni_s3_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     if (!client) {
         aws_jni_throw_runtime_exception(env, "S3Client.s3_client_clean_up: Invalid/null client");
@@ -641,6 +644,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_endpoint,
     jobject java_resume_token_jobject) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
@@ -800,6 +804,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jclass jni_class,
     jlong jni_s3_meta_request) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -816,8 +821,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jclass jni_class,
     jlong jni_s3_meta_request) {
 
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -833,7 +838,9 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
     JNIEnv *env,
     jclass jni_class,
     jlong jni_s3_meta_request) {
+
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -903,6 +910,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jlong increment) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {

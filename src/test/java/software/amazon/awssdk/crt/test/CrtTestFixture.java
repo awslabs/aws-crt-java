@@ -223,11 +223,7 @@ public class CrtTestFixture {
             System.out.println("Android TEST: CrtTestFixture.setup() platform != null");
             platform.testSetup(context);
         } else {
-<<<<<<< HEAD
-            System.out.println("Android TEST: CrtTestFixture.setup() platform == null, testSetup not called");
-=======
             SetupTestProperties();
->>>>>>> env-to-property
         }
 
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");

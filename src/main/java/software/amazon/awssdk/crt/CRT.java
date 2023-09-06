@@ -430,7 +430,7 @@ public final class CRT {
      * shutdown process works via ref-counting, with a default starting count of 1 which is decremented by a
      * JVM shutdown hook.  Each external call to `acquireShutdownRef()` requires a corresponding call to
      * `releaseShutdownRef()` when the caller is ready for the CRT to be shut down.  Once all shutdown references
-     * have been released, the CRT will be shutdown.
+     * have been released, the CRT will be shut down.
      *
      * If the ref count is not properly driven to zero (and thus leaving the CRT active), the JVM may crash
      * if unmanaged native code in the CRT is still busy and attempts to call back into the JVM after the JVM cleans

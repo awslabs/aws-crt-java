@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 // Encapsulates any platform-specific configuration for tests
+// TODO remove this. We are going to be using System Properties for tests
 public class CrtTestContext {
     // Trust store PEM blob
     public byte[] trustStore = null;

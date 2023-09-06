@@ -159,7 +159,8 @@ static: certificate has an existing certificate-key pair that was previously imp
 ```
 
 ## Testing
-Many tests require environment variables to be set. These tests will be quietly skipped if their environment variables are not set.
+Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
+
 Environment variables can be set like so:
 ```
 export ENV_VARIABLE_NAME="<variable value>"

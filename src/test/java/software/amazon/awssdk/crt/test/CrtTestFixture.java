@@ -40,6 +40,7 @@ public class CrtTestFixture {
         }
     }
 
+    // Setup System properties from environment variables set by builder for use by unit tests.
     private void SetupTestProperties(){
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("NETWORK_TESTS_DISABLED");
@@ -215,6 +216,7 @@ public class CrtTestFixture {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
+
         context = new CrtTestContext();
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {

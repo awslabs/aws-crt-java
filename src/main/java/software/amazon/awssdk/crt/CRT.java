@@ -449,7 +449,7 @@ public final class CRT {
      * Public API to release a shutdown reference that blocks CRT shutdown from proceeding.  Must be called once, and
      * only once, for each call to `acquireShutdownRef()`.  Once all shutdown references have been released (including
      * the initial reference that is managed by a JVM shutdown hook), the CRT will begin its shutdown process which
-     * permanently severs all native<->JVM interactions.
+     * permanently severs all native-JVM interactions.
      */
     public static void releaseShutdownRef() {
         boolean invoke_native_shutdown = false;

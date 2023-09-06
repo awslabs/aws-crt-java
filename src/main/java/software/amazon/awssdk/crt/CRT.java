@@ -55,7 +55,7 @@ public final class CRT {
         {
             public void run()
             {
-                CRT.defaultCrtShutdown();
+                CRT.releaseShutdownRef();
             }
         });
 
@@ -423,37 +423,44 @@ public final class CRT {
         }
     }
 
-    private static boolean useManualShutdown = false;
-    private static int manualShutdownRefCount = 0;
+    private static int shutdownRefCount = 1;
 
-    public static void enableManualShutdown() {
+    /**
+     * Public API that allows a user to indicate interest in controlling the CRT's time of shutdown.  The
+     * shutdown process works via ref-counting, with a default starting count of 1 which is decremented by a
+     * JVM shutdown hook.  Each external call to `acquireShutdownRef()` requires a corresponding call to
+     * `releaseShutdownRef()` when the caller is ready for the CRT to be shut down.  Once all shutdown references
+     * have been released, the CRT will be shutdown.
+     *
+     * If the ref count is not properly driven to zero (and thus leaving the CRT active), the JVM may crash
+     * if unmanaged native code in the CRT is still busy and attempts to call back into the JVM after the JVM cleans
+     * up JNI.
+     */
+    public static void acquireShutdownRef() {
         synchronized(CRT.class) {
-            useManualShutdown = true;
-            ++manualShutdownRefCount;
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot acquire CRT shutdown when ref count is non-positive");
+            }
+            ++shutdownRefCount;
         }
     }
 
-    public static void manualShutdown() {
+    /**
+     * Public API to release a shutdown reference that blocks CRT shutdown from proceeding.  Must be called once, and
+     * only once, for each call to `acquireShutdownRef()`.  Once all shutdown references have been released (including
+     * the initial reference that is managed by a JVM shutdown hook), the CRT will begin its shutdown process which
+     * permanently severs all native<->JVM interactions.
+     */
+    public static void releaseShutdownRef() {
         boolean invoke_native_shutdown = false;
         synchronized(CRT.class) {
-            if (useManualShutdown) {
-                --manualShutdownRefCount;
-                if (manualShutdownRefCount == 0) {
-                    invoke_native_shutdown = true;
-                }
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot release CRT shutdown when ref count is non-positive");
             }
-        }
 
-        if (invoke_native_shutdown) {
-            onJvmShutdown();
-        }
-    }
-
-    private static void defaultCrtShutdown() {
-        boolean invoke_native_shutdown = true;
-        synchronized(CRT.class) {
-            if (useManualShutdown) {
-                invoke_native_shutdown = false;
+            --shutdownRefCount;
+            if (shutdownRefCount == 0) {
+                invoke_native_shutdown = true;
             }
         }
 

@@ -136,7 +136,21 @@ a classifier-based jar, you must specify the classifier name yourself.
 - `aws.crt.memory.tracing` - May be: "0" (default, no tracing), "1" (track bytes), "2" (more detail).
     Allows the CRT.nativeMemory() and CRT.dumpNativeMemory() functions to report native memory usage.
 
-## Mac-Only TLS Behavior
+## TLS Behavior
+
+The CRT uses native libraries for TLS, rather than Java's typical
+Secure Socket Extension (JSSE), KeyStore, and TrustStore.
+On [Windows](https://learn.microsoft.com/en-us/windows/win32/security) and
+[Apple](https://developer.apple.com/documentation/security) devices,
+the built-in OS libraries are used.
+On Linux/Unix/etc [s2n-tls](https://github.com/aws/s2n-tls) is used.
+
+If you need to add certificates to the trust store, add them to your OS trust store.
+The CRT does not use the Java TrustStore. For more customization options, see
+[TlsContextOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsContextOptions.html) and
+[TlsConnectionOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsConnectionOptions.html).
+
+### Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
 
@@ -145,24 +159,26 @@ static: certificate has an existing certificate-key pair that was previously imp
 ```
 
 ## Testing
-Many tests require custom arguments. These tests will be quietly skipped if their arguments are not set.
-Arguments can be passed like so:
+Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
+
+Environment variables can be set like so:
 ```
-mvn test -Dcertificate=path/to/cert -Dprivatekey=path/to/key ...
+export ENV_VARIABLE_NAME="<variable value>"
 ```
 Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
-Full list of test arguments:
-- `endpoint`: AWS IoT service endpoint hostname
-- `certificate`: Path to the IoT thing certificate
-- `privatekey`: Path to the IoT thing private key
-- `privatekey_p8`: Path to the IoT thing private key in PKCS#8 format
-- `ecc_certificate`: Path to the IoT thing with EC-based certificate
-- `ecc_privatekey`: Path to the IoT thing with ECC private key (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
-- `rootca`: Path to the root certificate
-- `proxyhost`: Hostname of proxy
-- `proxyport`: Port of proxy
+Partial list of environment variables:
+- `AWS_TEST_MQTT311_IOT_CORE_HOST`: AWS IoT service endpoint hostname for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_CERT`: Path to the IoT thing certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_KEY`: Path to the IoT thing private key for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_CERT`: Path to the IoT thing with EC-based certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_KEY`: Path to the IoT thing with ECC private key for MQTT3 (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
+- `AWS_TEST_MQTT311_ROOT_CA`: Path to the root certificate
+- `AWS_TEST_HTTP_PROXY_HOST`: Hostname of proxy
+- `AWS_TEST_HTTP_PROXY_PORT`: Port of proxy
 - `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+
+Other Environment Variables that can be set can be found in the `SetupTestProperties()` function in [CrtTestFixture.java](https://github.com/awslabs/aws-crt-java/blob/main/src/test/java/software/amazon/awssdk/crt/test/CrtTestFixture.java)
 
 These can be set persistently via Maven settings (usually in `~/.m2/settings.xml`):
 ```xml

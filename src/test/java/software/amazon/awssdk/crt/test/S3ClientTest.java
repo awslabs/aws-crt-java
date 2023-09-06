@@ -45,10 +45,10 @@ import java.util.stream.DoubleStream;
 
 public class S3ClientTest extends CrtTestFixture {
 
-    static final String ENDPOINT = System.getenv("ENDPOINT") == null
+    static final String ENDPOINT = System.getProperty("ENDPOINT") == null
             ? "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com"
-            : System.getenv("ENDPOINT");
-    static final String REGION = System.getenv("REGION") == null ? "us-west-2" : System.getenv("REGION");
+            : System.getProperty("ENDPOINT");
+    static final String REGION = System.getProperty("REGION") == null ? "us-west-2" : System.getProperty("REGION");
 
     static final String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
     static final String COPY_SOURCE_KEY = "crt-canary-obj.txt";

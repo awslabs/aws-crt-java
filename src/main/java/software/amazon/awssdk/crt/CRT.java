@@ -127,7 +127,7 @@ public final class CRT {
             return systemPropertyOverride;
         }
 
-        String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
+        String environmentOverride = System.getProperty(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
         if (environmentOverride != null && environmentOverride.length() > 0) {
             System.out.println("Android TEST: CRT.getArchIdentifier() returning environmentOverride:" + environmentOverride + "\n");
             return environmentOverride;

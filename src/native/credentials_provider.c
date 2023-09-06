@@ -93,6 +93,7 @@ JNIEXPORT jlong JNICALL
         jbyteArray session_token) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -140,6 +141,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -179,6 +181,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -245,6 +248,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -310,6 +314,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -368,6 +373,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -415,6 +421,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -488,6 +495,7 @@ JNIEXPORT jlong JNICALL
         jlong native_cached_provider) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     if (native_cached_provider == 0) {
         aws_jni_throw_runtime_exception(
@@ -629,6 +637,7 @@ JNIEXPORT jlong JNICALL
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider_callback_data *callback_data =
@@ -709,6 +718,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredential
 
     (void)jni_class;
     (void)env;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_credentials_provider *provider = NULL;
@@ -820,6 +830,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     jlong cp_addr) {
     (void)jni_cp;
     (void)cp_object;
+    aws_cache_jni_ids(env);
+
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)cp_addr;
     if (!provider) {
         aws_jni_throw_runtime_exception(
@@ -937,6 +949,8 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CredentialsProvide
     jobject java_credentials_future,
     jlong native_credentials_provider) {
     (void)jni_cp;
+    aws_cache_jni_ids(env);
+
     struct aws_credentials_provider *provider = (struct aws_credentials_provider *)native_credentials_provider;
     if (!provider) {
         aws_jni_throw_runtime_exception(

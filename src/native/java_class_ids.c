@@ -6,6 +6,7 @@
 #include "java_class_ids.h"
 
 #include <aws/common/assert.h>
+#include <aws/common/thread.h>
 
 struct java_http_request_body_stream_properties http_request_body_stream_properties;
 
@@ -2131,7 +2132,9 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
 }
 
-void cache_java_class_ids(JNIEnv *env) {
+static void s_cache_java_class_ids(void *user_data) {
+    JNIEnv *env = user_data;
+
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
@@ -2227,4 +2230,10 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
+}
+
+static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;
+
+void aws_cache_jni_ids(JNIEnv *env) {
+    aws_thread_call_once(&s_cache_once_init, s_cache_java_class_ids, (void *)env);
 }

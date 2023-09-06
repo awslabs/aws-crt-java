@@ -115,6 +115,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     (void)jni_class;
     (void)jni_expected_protocol_version;
+    aws_cache_jni_ids(env);
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
@@ -252,6 +253,7 @@ JNIEXPORT void JNICALL
         jlong jni_conn_manager_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_connection_manager_binding *binding =
         (struct http_connection_manager_binding *)jni_conn_manager_binding;
@@ -336,6 +338,7 @@ JNIEXPORT void JNICALL
         jobject acquire_future) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_connection_manager_binding *manager_binding =
         (struct http_connection_manager_binding *)jni_conn_manager_binding;
@@ -375,6 +378,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     jlong jni_connection_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http_connection_binding *binding = (struct aws_http_connection_binding *)jni_connection_binding;
 
@@ -406,6 +410,7 @@ JNIEXPORT jobject JNICALL
         jclass jni_class,
         jlong jni_conn_manager_binding) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_connection_manager_binding *manager_binding =
         (struct http_connection_manager_binding *)jni_conn_manager_binding;

@@ -6,7 +6,8 @@
 
 #include <aws/mqtt/client.h>
 
-#include <crt.h>
+#include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -23,6 +24,8 @@
 JNIEXPORT jlong JNICALL
     Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqttClientNew(JNIEnv *env, jclass jni_class, jlong jni_bootstrap) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
         aws_jni_throw_runtime_exception(env, "Invalid ClientBootstrap");
@@ -44,6 +47,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClient_mqttClien
     jclass jni_class,
     jlong jni_mqtt_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_mqtt_client *client = (struct aws_mqtt_client *)jni_mqtt_client;
     if (!client) {
         aws_jni_throw_runtime_exception(env, "MqttClient.mqtt_client_destroy: Invalid/null client");

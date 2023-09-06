@@ -13,6 +13,9 @@
  import java.io.IOException;
  import java.io.InputStream;
  import java.util.Set;
+ import java.io.File;
+ import java.io.FileWriter;
+ import java.io.BufferedWriter;
 
  import software.amazon.awssdk.crt.test.CrtTestContext;
  import software.amazon.awssdk.crt.utils.PackageInfo;
@@ -69,7 +72,7 @@
     }
 
     // Attempts to create a cached file from a file in the assets folder and set a System property pointing to the created file
-    private void SetPropertyToFileLocation(String name, String fileName){
+    private void SetPropertyToFileLocation(String propertyName, String fileName){
         AssetManager assets = InstrumentationRegistry.getInstrumentation().getContext().getResources().getAssets();
         try (InputStream assetStream = assets.open(fileName);){
             byte[] contents = new byte[assetStream.available()];

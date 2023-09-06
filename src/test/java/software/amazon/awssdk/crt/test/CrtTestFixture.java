@@ -43,7 +43,6 @@ public class CrtTestFixture {
     // Setup System properties from environment variables set by builder for use by unit tests.
     private void SetupTestProperties(){
         SetPropertyFromEnv("AWS_TEST_IS_CI");
-        SetPropertyFromEnv("NETWORK_TESTS_DISABLED");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
         SetPropertyFromEnv("REGION");

@@ -60,18 +60,25 @@
 
      public void testSetup(Object context) {
         System.out.println("Android TEST: CrtPlatformImpl.testSetup() Started");
-         CrtTestContext ctx = (CrtTestContext) context;
-         ctx.trustStore = assetContents("ca-certificates.crt");
-         ctx.iotClientCertificate = assetContents("certificate.pem");
-         ctx.iotClientPrivateKey = assetContents("privatekey.pem");
-         ctx.iotClientECCPrivateKey = assetContents("ecc_privatekey.pem");
-         ctx.iotClientECCCertificate = assetContents("ecc_certificate.pem");
-         byte[] endpoint = assetContents("endpoint.txt");
-         if (endpoint != null) {
-             ctx.iotEndpoint = new String(endpoint).trim();
-         }
-         ctx.iotCARoot = assetContents("AmazonRootCA1.pem");
-         System.out.println("Android TEST: CrtPlatformImpl.testSetup() Completed");
+        // TODO These should not be setting this context object but should instead be setting environment variables if available for tests.
+
+
+        CrtTestContext ctx = (CrtTestContext) context;
+        ctx.trustStore = assetContents("ca-certificates.crt");
+        ctx.iotClientCertificate = assetContents("pubSubCertificate.pem");
+        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT", new String(ctx.iotClientCertificate).trim());
+        ctx.iotClientPrivateKey = assetContents("pubSubPrivatekey.pem");
+        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY", new String(ctx.iotClientPrivateKey).trim());
+        ctx.iotClientECCPrivateKey = assetContents("ecc_privatekey.pem");
+        ctx.iotClientECCCertificate = assetContents("ecc_certificate.pem");
+        byte[] endpoint = assetContents("endpoint.txt");
+        if (endpoint != null) {
+           ctx.iotEndpoint = new String(endpoint).trim();
+           System.setProperty("AWS_TEST_MQTT311_IOT_CORE_HOST", ctx.iotEndpoint);
+        }
+        ctx.iotCARoot = assetContents("AmazonRootCA1.pem");
+
+        System.out.println("Android TEST: CrtPlatformImpl.testSetup() Completed");
      }
 
      public void testTearDown(Object context) {

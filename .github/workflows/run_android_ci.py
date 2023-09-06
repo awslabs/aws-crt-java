@@ -21,6 +21,7 @@ current_working_directory = os.getcwd()
 # Steve TODO these will be changed to the new test app w/the crt library
 build_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'
 test_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/androidTest/debug/testapp-debug-androidTest.apk'
+test_spec_file_location = current_working_directory + '/src/test/android/testapp/instrumentedTestSpec.yml'
 
 def main():
     args = parser.parse_args()
@@ -90,6 +91,32 @@ def main():
         time.sleep(1)
         device_farm_upload_status = client.get_upload(arn=device_farm_instrumentation_upload_arn)
 
+    # Upload the test spec file to Device Farm
+    upload_spec_file_name = 'CI-' + run_id + '-' + run_attempt + 'test-spec.yml'
+    print('Upload file name: ' + upload_spec_file_name)
+
+    # Setup upload to Device Farm project
+    create_upload_response = client.create_upload(
+        projectArn=project_arn,
+        name=upload_spec_file_name,
+        type='INSTRUMENTATION_TEST_SPEC'
+    )
+    device_farm_test_spec_upload_arn = create_upload_response['upload']['arn']
+    device_farm_test_spec_upload_url = create_upload_response['upload']['url']
+
+    # Upload test spec yml
+    with open(test_spec_file_location, 'rb') as f:
+        data = f.read()
+    r = requests.put(device_farm_test_spec_upload_url, data=data)
+    print('File upload status code: ' + str(r.status_code) + ' reason: ' + r.reason)
+    device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
+    while device_farm_upload_status['upload']['status'] != 'SUCCEEDED':
+        if device_farm_upload_status['upload']['status'] == 'FAILED':
+            print('Upload failed to process')
+            sys.exit(-1)
+        time.sleep(1)
+        device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
+
     print('scheduling run')
 
     schedule_run_response = client.schedule_run(
@@ -99,10 +126,11 @@ def main():
         name=upload_file_name,
         test={
             'type': 'INSTRUMENTATION',
-            'testPackageArn': device_farm_instrumentation_upload_arn
+            'testPackageArn': device_farm_instrumentation_upload_arn,
+            'testSpecArn': device_farm_test_spec_upload_arn
         },
         executionConfiguration={
-            'jobTimeoutMinutes': 20
+            'jobTimeoutMinutes': 120
         }
     )
 
@@ -133,6 +161,10 @@ def main():
     )
     client.delete_upload(
         arn=device_farm_instrumentation_upload_arn
+    )
+    print('Deleting ' + upload_spec_file_name + ' from Device Farm project')
+    client.delete_upload(
+        arn=device_farm_test_spec_upload_arn
     )
 
     if is_success == False:

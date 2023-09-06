@@ -94,6 +94,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jobject jni_custom_key_op,
     jstring jni_windows_cert_store_path) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls = aws_mem_calloc(allocator, 1, sizeof(struct jni_tls_ctx_options));
@@ -329,8 +330,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpti
     JNIEnv *env,
     jclass jni_class,
     jlong jni_tls) {
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     s_jni_tls_ctx_options_destroy((struct jni_tls_ctx_options *)jni_tls);
 }
@@ -339,8 +340,9 @@ JNIEXPORT
 jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOptionsIsAlpnAvailable(
     JNIEnv *env,
     jclass jni_class) {
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return aws_tls_is_alpn_available();
 }
 
@@ -350,8 +352,8 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContext
     jclass jni_class,
     jint jni_cipher_pref) {
 
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     if (jni_cipher_pref < 0 || AWS_IO_TLS_CIPHER_PREF_END_RANGE <= jni_cipher_pref) {
         aws_jni_throw_runtime_exception(

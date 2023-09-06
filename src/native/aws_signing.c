@@ -390,6 +390,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -461,6 +462,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -534,6 +536,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
     jobject java_signing_result_future) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct s_aws_sign_request_callback_data *callback_data =
@@ -601,6 +604,7 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
     jstring java_verifier_pub_y) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     bool success = false;
 
@@ -693,6 +697,7 @@ bool JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigningUtils_awsSig
     jstring java_verifier_pub_y) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     bool success = false;
     struct aws_allocator *allocator = aws_jni_get_allocator();

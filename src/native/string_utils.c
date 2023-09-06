@@ -8,6 +8,7 @@
 #include <aws/common/string.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 JNIEXPORT
 jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtilsBase64Encode(
@@ -15,6 +16,7 @@ jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtils
     jclass jni_class,
     jbyteArray jni_data) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_byte_cursor data_cursor;
     AWS_ZERO_STRUCT(data_cursor);
@@ -56,6 +58,7 @@ jbyteArray JNICALL Java_software_amazon_awssdk_crt_utils_StringUtils_stringUtils
     jclass jni_class,
     jbyteArray jni_data) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_byte_cursor data_cursor;
     AWS_ZERO_STRUCT(data_cursor);

@@ -351,6 +351,11 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
         int port = 8883;
 
+        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_HOST:" + AWS_TEST_MQTT311_IOT_CORE_HOST);
+        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT:" + AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_RSA_KEY:" + AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+
+
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);)

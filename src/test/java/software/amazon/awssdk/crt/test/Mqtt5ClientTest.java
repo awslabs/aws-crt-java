@@ -608,7 +608,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-                connectBuilder.withClientId("MQTT5 CRT" + UUID.randomUUID().toString());
+                connectBuilder.withClientId("MQTT5 CRT");
                 connectBuilder.withKeepAliveIntervalSeconds(1000L);
                 connectBuilder.withMaximumPacketSizeBytes(1000L);
                 connectBuilder.withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -876,7 +876,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-                connectBuilder.withClientId("MQTT5 CRT"+UUID.randomUUID().toString());
+                connectBuilder.withClientId("MQTT5 CRT");
                 connectBuilder.withKeepAliveIntervalSeconds(1000L);
                 connectBuilder.withMaximumPacketSizeBytes(1000L);
                 connectBuilder.withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -1984,7 +1984,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                         events.connectSuccessSettings.getRejoinedSession());
 
                 client.stop(new DisconnectPacketBuilder().build());
-                events.stopFuture.get();
             }
 
             builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);

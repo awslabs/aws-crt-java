@@ -220,7 +220,7 @@ public class CrtTestFixture {
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
         // System properties for tests only need to be setup once
-        if (System.getProperty("are.test.properties.setup") != null){
+        if (System.getProperty("are.test.properties.setup") != "true"){
             context = new CrtTestContext();
             CrtPlatform platform = CRT.getPlatformImpl();
             if (platform != null) {

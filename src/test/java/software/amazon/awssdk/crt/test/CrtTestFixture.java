@@ -219,9 +219,10 @@ public class CrtTestFixture {
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
+        // TODO this CrtTestContext should be removed as we are using System Properties for tests now.
+        context = new CrtTestContext();
         // System properties for tests only need to be setup once
         if (System.getProperty("are.test.properties.setup") != "true"){
-            context = new CrtTestContext();
             CrtPlatform platform = CRT.getPlatformImpl();
             if (platform != null) {
                 platform.testSetup(context);

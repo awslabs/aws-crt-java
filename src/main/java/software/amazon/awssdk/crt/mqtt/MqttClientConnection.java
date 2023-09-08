@@ -257,8 +257,8 @@ public class MqttClientConnection extends CrtResource {
     private void onConnectionSuccess(boolean sessionPresent) {
         MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
         if (callbacks != null) {
-            OnConnectionSuccess returnData = new onConnectionFailure(sessionPresent);
-            callbacks.onConnectionFailure(returnData);
+            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+            callbacks.onConnectionSuccess(returnData);
         }
     }
 
@@ -266,7 +266,7 @@ public class MqttClientConnection extends CrtResource {
     private void onConnectionFailure(int errorCode) {
         MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
         if (callbacks != null) {
-            OnConnectionFailureReturn returnData = new onConnectionFailure(errorCode);
+            OnConnectionFailureReturn returnData = new OnConnectionFailureReturn(errorCode);
             callbacks.onConnectionFailure(returnData);
         }
     }

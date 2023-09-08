@@ -53,40 +53,10 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Constructs a new MqttClientConnection. Connections are reusable after being
-     * disconnected.
-     *
-     * @param config Configuration to use
-     * @throws MqttException If mqttClient is null
+     * Static help function to create a MqttConnectionConfig from a
+     * Mqtt5ClientOptions
      */
-    public MqttClientConnection(MqttConnectionConfig config) throws MqttException {
-        if (config.getMqttClient() == null) {
-            throw new MqttException("mqttClient must not be null");
-        }
-        if (config.getClientId() == null) {
-            throw new MqttException("clientId must not be null");
-        }
-        if (config.getEndpoint() == null) {
-            throw new MqttException("endpoint must not be null");
-        }
-        if (config.getPort() <= 0 || config.getPort() > 65535) {
-            throw new MqttException("port must be a positive integer between 1 and 65535");
-        }
-
-        try {
-
-            acquireNativeHandle(mqttClientConnectionNewFrom311Client(config.getMqttClient().getNativeHandle(), this));
-            SetupConfig(config);
-
-        } catch (CrtRuntimeException ex) {
-            throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
-        }
-    }
-
-    /**
-     * Create a mqtt3 config from a mqtt5 client
-     */
-    private static MqttConnectionConfig toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception {
+    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception {
         try {
             MqttConnectionConfig options = new MqttConnectionConfig();
             options.setEndpoint(mqtt5options.getHostName());
@@ -113,16 +83,57 @@ public class MqttClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Constructs a new MqttClientConnection. Connections are reusable after being
+     * disconnected.
+     *
+     * @param config Configuration to use
+     * @throws MqttException If mqttClient is null
+     */
+    public MqttClientConnection(MqttConnectionConfig config) {
+        if (config.getMqttClient() == null) {
+            throw new MqttException("mqttClient must not be null");
+        }
+        if (config.getClientId() == null) {
+            throw new MqttException("clientId must not be null");
+        }
+        if (config.getEndpoint() == null) {
+            throw new MqttException("endpoint must not be null");
+        }
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            throw new MqttException("port must be a positive integer between 1 and 65535");
+        }
+
+        try {
+
+            acquireNativeHandle(mqttClientConnectionNewFrom311Client(config.getMqttClient().getNativeHandle(), this));
+            SetupConfig(config);
+
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Constructs a new MqttClientConnection from a Mqtt5Client. Connections are
+     * reusable after being
+     * disconnected.
+     *
+     * @param mqtt5client the mqtt5 client to setup from
+     * @param callbacks   connection callbacks triggered when receive connection
+     *                    events
+     *
+     * @throws MqttException If mqttClient is null
+     */
     public MqttClientConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException {
         if (mqtt5client == null) {
             throw new MqttException("mqttClient must not be null");
         }
 
-        try {
-            MqttConnectionConfig config = toMqtt3ConnectionConfig(mqtt5client.getClientOptions());
+        try (MqttConnectionConfig config = s_toMqtt3ConnectionConfig(mqtt5client.getClientOptions())) {
+            config.setMqtt5Client(mqtt5client);
             if (callbacks != null) {
                 config.setConnectionCallbacks(callbacks);
-                config.setMqtt5Client(mqtt5client);
             }
 
             if (config.getClientId() == null) {
@@ -137,7 +148,8 @@ public class MqttClientConnection extends CrtResource {
 
             try {
 
-                acquireNativeHandle(mqttClientConnectionNewFrom5Client(config.getMqttClient().getNativeHandle(), this));
+                acquireNativeHandle(
+                        mqttClientConnectionNewFrom5Client(config.getMqtt5Client().getNativeHandle(), this));
                 SetupConfig(config);
 
             } catch (CrtRuntimeException ex) {

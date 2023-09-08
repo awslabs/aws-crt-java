@@ -225,10 +225,9 @@ public class Mqtt5Client extends CrtResource {
      ******************************************************************************/
 
     /**
-     * Returns a MqttConnection Object based on Mqtt5Client configuration. A client id is required for NewConnection.
-     * @param callbacks connection event callbacks to use
+     * Returns the Mqtt5ClientOptions used for the Mqtt5Client
      *
-     * @return a MqttClientConnection
+     * @return Mqtt5ClientOptions
      */
     public Mqtt5ClientOptions getClientOptions()
     {

@@ -85,7 +85,7 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection release, ref count now = %d", (int)old_value - 1);
 }
 
-/* The destory function is called on Java MqttClinetConnection resource release. */
+/* The destroy function is called on Java MqttClientConnection resource release. */
 static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection) {
     /**
      * Disable the onClosed callback, so it is not invoked on the last disconnect for clean-up.

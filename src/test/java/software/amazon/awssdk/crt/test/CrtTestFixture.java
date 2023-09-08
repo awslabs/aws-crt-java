@@ -42,6 +42,9 @@ public class CrtTestFixture {
 
     // Setup System properties from environment variables set by builder for use by unit tests.
     private void SetupTestProperties(){
+        // Indicate that the system properties have been setup
+        System.setProperty("are.test.properties.setup", "true");
+
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
@@ -200,9 +203,6 @@ public class CrtTestFixture {
 
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_USERNAME");
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_PASSWORD");
-
-        // Indicate that the system properties have been setup
-        System.setProperty("are.test.properties.setup", "true");
     }
 
     @Before

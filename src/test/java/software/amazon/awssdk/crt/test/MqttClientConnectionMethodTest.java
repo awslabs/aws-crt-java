@@ -206,7 +206,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
                 TlsContext tlsContext = new TlsContext(tlsOptions);
                 CredentialsProvider provider = builder.build();) {
-                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, elg, hr, bootstrap);
+                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
                 close();
             }
@@ -235,7 +235,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
                 TlsContext tlsContext = new TlsContext(tlsOptions);
                 CredentialsProvider provider = builder.build();) {
-                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, elg, hr, bootstrap);
+                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
                 close();
             }
@@ -268,7 +268,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
                 TlsContext tlsContext = new TlsContext(tlsOptions);
                 CredentialsProvider provider = builder.build();) {
-                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, elg, hr, bootstrap);
+                connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
                 close();
             }

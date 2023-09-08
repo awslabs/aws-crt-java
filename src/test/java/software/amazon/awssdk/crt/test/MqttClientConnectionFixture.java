@@ -135,114 +135,109 @@ import java.util.function.Consumer;
     MqttClientConnectionFixture() {
     }
 
-    boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)
+    boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions, EventLoopGroup elg, HostResolver hr, ClientBootstrap bootstrap)
     {
         try {
-            return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions);
+            return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions, elg, hr, bootstrap);
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
         }
         return false;
     }
 
-    boolean connectDirectWithConfigThrows(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
+    boolean connectDirectWithConfigThrows(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions, EventLoopGroup elg, HostResolver hr, ClientBootstrap bootstrap) throws Exception
     {
-        try(EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
-
-            // Connection callback events
-            MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
-                @Override
-                public void onConnectionResumed(boolean sessionPresent) {
-                    System.out.println("Connection resumed");
-                }
-
-                @Override
-                public void onConnectionInterrupted(int errorCode) {
-                    if (!disconnecting) {
-                        System.out.println(
-                                "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
-                    }
-                }
-
-                @Override
-                public void onConnectionFailure(OnConnectionFailureReturn data) {
-                    System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
-                    onConnectionFailureFuture.complete(data);
-                }
-
-                @Override
-                public void onConnectionSuccess(OnConnectionSuccessReturn data) {
-                    System.out.println("Connection success. Session present: " + data.getSessionPresent());
-                    onConnectionSuccessFuture.complete(data);
-                }
-
-                @Override
-                public void onConnectionClosed(OnConnectionClosedReturn data) {
-                    System.out.println("Connection disconnected successfully");
-                    onConnectionClosedFuture.complete(data);
-                }
-            };
-
-            // Default settings
-            boolean cleanSession = true; // only true is supported right now
-            int keepAliveSecs = 0;
-            int protocolOperationTimeout = 60000;
-            String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
-
-            try (MqttConnectionConfig config = new MqttConnectionConfig()) {
-
-                MqttClient client = null;
-                if (tlsContext != null)
-                {
-                    client = new MqttClient(bootstrap, tlsContext);
-                }
-                else
-                {
-                    client = new MqttClient(bootstrap);
-                }
-
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(endpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-                config.setConnectionCallbacks(events);
-
-                if (httpProxyOptions != null) {
-                    config.setHttpProxyOptions(httpProxyOptions);
-                }
-                if (username != null) {
-                    config.setUsername(username);
-                }
-                if (password != null)
-                {
-                    config.setPassword(password);
-                }
-
-                if (connectionConfigTransformer != null) {
-                    connectionConfigTransformer.accept(config);
-                }
-
-                try {
-                    connection = new MqttClientConnection(config);
-                    if (connectionMessageTransfomer != null) {
-                        connection.onMessage(connectionMessageTransfomer);
-                    }
-                    CompletableFuture<Boolean> connected = connection.connect();
-                    connected.get();
-                } finally {
-                    client.close();
-                }
-                return true;
+        // Connection callback events
+        MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
+            @Override
+            public void onConnectionResumed(boolean sessionPresent) {
+                System.out.println("Connection resumed");
             }
+
+            @Override
+            public void onConnectionInterrupted(int errorCode) {
+                if (!disconnecting) {
+                    System.out.println(
+                            "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
+                }
+            }
+
+            @Override
+            public void onConnectionFailure(OnConnectionFailureReturn data) {
+                System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                onConnectionFailureFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionSuccess(OnConnectionSuccessReturn data) {
+                System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                onConnectionSuccessFuture.complete(data);
+            }
+
+            @Override
+            public void onConnectionClosed(OnConnectionClosedReturn data) {
+                System.out.println("Connection disconnected successfully");
+                onConnectionClosedFuture.complete(data);
+            }
+        };
+
+        // Default settings
+        boolean cleanSession = true; // only true is supported right now
+        int keepAliveSecs = 0;
+        int protocolOperationTimeout = 60000;
+        String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
+
+        try (MqttConnectionConfig config = new MqttConnectionConfig()) {
+
+            MqttClient client = null;
+            if (tlsContext != null)
+            {
+                client = new MqttClient(bootstrap, tlsContext);
+            }
+            else
+            {
+                client = new MqttClient(bootstrap);
+            }
+
+            config.setMqttClient(client);
+            config.setClientId(clientId);
+            config.setEndpoint(endpoint);
+            config.setPort(port);
+            config.setCleanSession(cleanSession);
+            config.setKeepAliveSecs(keepAliveSecs);
+            config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+            config.setConnectionCallbacks(events);
+
+            if (httpProxyOptions != null) {
+                config.setHttpProxyOptions(httpProxyOptions);
+            }
+            if (username != null) {
+                config.setUsername(username);
+            }
+            if (password != null)
+            {
+                config.setPassword(password);
+            }
+
+            if (connectionConfigTransformer != null) {
+                connectionConfigTransformer.accept(config);
+            }
+
+            try {
+                connection = new MqttClientConnection(config);
+                if (connectionMessageTransfomer != null) {
+                    connection.onMessage(connectionMessageTransfomer);
+                }
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
+            } finally {
+                client.close();
+            }
+            return true;
         }
     }
 
-    boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions)
+    boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions, EventLoopGroup elg, HostResolver hr, ClientBootstrap bootstrap)
     {
         // Return result
         boolean result = false;
@@ -286,74 +281,71 @@ import java.util.function.Consumer;
             }
         };
 
-        try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);)
-        {
-            try (MqttConnectionConfig config = new MqttConnectionConfig();
-                 AwsSigningConfig signingConfig = new AwsSigningConfig();) {
 
-                MqttClient client = null;
-                if (tlsContext != null)
-                {
-                    client = new MqttClient(bootstrap, tlsContext);
-                }
-                else
-                {
-                    client = new MqttClient(bootstrap);
-                }
+        try (MqttConnectionConfig config = new MqttConnectionConfig();
+             AwsSigningConfig signingConfig = new AwsSigningConfig();) {
 
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(endpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-                config.setUseWebsockets(true);
-                config.setConnectionCallbacks(events);
-
-                if (username != null) {
-                    config.setUsername(username);
-                }
-                if (password != null) {
-                    config.setPassword(password);
-                }
-                if (httpProxyOptions != null) {
-                    config.setHttpProxyOptions(httpProxyOptions);
-                }
-
-                if (connectionConfigTransformer != null) {
-                    connectionConfigTransformer.accept(config);
-                }
-
-                // Make the websocket transformer
-                if (credentialsProvider != null) {
-                    signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                    // NOTE: Missing a credentials provider gives a non-helpful error. This needs to be changed in Java V2...
-                    signingConfig.setCredentialsProvider(credentialsProvider);
-                }
-                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
-                signingConfig.setRegion(TEST_REGION);
-                signingConfig.setService("iotdevicegateway");
-                signingConfig.setOmitSessionToken(true);
-                try (MqttClientConnectionSigv4HandshakeTransformer transformer = new MqttClientConnectionSigv4HandshakeTransformer(signingConfig);)
-                {
-                    config.setWebsocketHandshakeTransform(transformer);
-                    connection = new MqttClientConnection(config);
-                    if (connectionMessageTransfomer != null) {
-                        connection.onMessage(connectionMessageTransfomer);
-                    }
-                    CompletableFuture<Boolean> connected = connection.connect();
-                    connected.get();
-                    result = true;
-                }
-                client.close();
-
-            } catch (Exception ex) {
-                fail("Exception during connect: " + ex.toString());
+            MqttClient client = null;
+            if (tlsContext != null)
+            {
+                client = new MqttClient(bootstrap, tlsContext);
             }
+            else
+            {
+                client = new MqttClient(bootstrap);
+            }
+
+            config.setMqttClient(client);
+            config.setClientId(clientId);
+            config.setEndpoint(endpoint);
+            config.setPort(port);
+            config.setCleanSession(cleanSession);
+            config.setKeepAliveSecs(keepAliveSecs);
+            config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+            config.setUseWebsockets(true);
+            config.setConnectionCallbacks(events);
+
+            if (username != null) {
+                config.setUsername(username);
+            }
+            if (password != null) {
+                config.setPassword(password);
+            }
+            if (httpProxyOptions != null) {
+                config.setHttpProxyOptions(httpProxyOptions);
+            }
+
+            if (connectionConfigTransformer != null) {
+                connectionConfigTransformer.accept(config);
+            }
+
+            // Make the websocket transformer
+            if (credentialsProvider != null) {
+                signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                // NOTE: Missing a credentials provider gives a non-helpful error. This needs to be changed in Java V2...
+                signingConfig.setCredentialsProvider(credentialsProvider);
+            }
+            signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+            signingConfig.setRegion(TEST_REGION);
+            signingConfig.setService("iotdevicegateway");
+            signingConfig.setOmitSessionToken(true);
+            try (MqttClientConnectionSigv4HandshakeTransformer transformer = new MqttClientConnectionSigv4HandshakeTransformer(signingConfig);)
+            {
+                config.setWebsocketHandshakeTransform(transformer);
+                connection = new MqttClientConnection(config);
+                if (connectionMessageTransfomer != null) {
+                    connection.onMessage(connectionMessageTransfomer);
+                }
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
+                result = true;
+            }
+            client.close();
+
+        } catch (Exception ex) {
+            fail("Exception during connect: " + ex.toString());
         }
+
         return result;
     }
 

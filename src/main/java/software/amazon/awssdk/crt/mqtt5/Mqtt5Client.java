@@ -9,9 +9,6 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
-import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -25,11 +22,6 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubAckPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
-
-import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
-import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
-import software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents;
-import software.amazon.awssdk.crt.mqtt.MqttException;
 
 
  /**
@@ -238,35 +230,9 @@ public class Mqtt5Client extends CrtResource {
      *
      * @return a MqttClientConnection
      */
-    public MqttClientConnection NewConnection(MqttClientConnectionEvents callbacks) throws MqttException
+    public Mqtt5ClientOptions getClientOptions()
     {
-        try(MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig())
-        {
-            mqtt3Config.setConnectionCallbacks(callbacks);
-            mqtt3Config.setMqtt5Client(this);
-            return new MqttClientConnection(mqtt3Config);
-        }
-        catch(Exception e)
-        {
-            throw new MqttException("Failed to setup mqtt3 connection : "+e.getMessage());
-        }
-    }
-
-    /**
-     * Returns a MqttConnection Object based on Mqtt5Client configuration. A client id is required for NewConnection.
-     *
-     * @return a MqttClientConnection
-     */
-    public MqttClientConnection NewConnection() throws MqttException {
-        try(MqttConnectionConfig mqtt3Config = clientOptions.toMqtt3ConnectionConfig())
-        {
-            mqtt3Config.setMqtt5Client(this);
-            return new MqttClientConnection(mqtt3Config);
-        }
-        catch(Exception e)
-        {
-            throw new MqttException("Failed to setup mqtt3 connection : "+e.getMessage());
-        }
+        return clientOptions;
     }
 
     /*******************************************************************************

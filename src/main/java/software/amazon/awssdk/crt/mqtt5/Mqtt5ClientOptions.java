@@ -257,43 +257,6 @@ public class Mqtt5ClientOptions {
         return this.publishEvents;
     }
 
-    private int GetIntValueFromLong(long value) throws ArithmeticException
-    {
-        try
-        {
-            return Math.toIntExact(value);
-        }
-        catch(ArithmeticException e)
-        {
-            throw e;
-        }
-    }
-
-    /**
-     * Create a mqtt3 config from a mqtt5 client
-     */
-    protected MqttConnectionConfig toMqtt3ConnectionConfig() throws Exception {
-        try{
-            MqttConnectionConfig options = new MqttConnectionConfig();
-            options.setEndpoint(this.hostName);
-            options.setPort(GetIntValueFromLong(this.port != null? this.port: 0 ));
-            options.setSocketOptions(this.socketOptions);
-            if(this.connectOptions != null)
-            {
-                options.setClientId(this.connectOptions.getClientId());
-                options.setKeepAliveSecs(GetIntValueFromLong(this.connectOptions.getKeepAliveIntervalSeconds()  != null? this.connectOptions.getKeepAliveIntervalSeconds() : 0 ));
-            }
-            options.setCleanSession(this.sessionBehavior.compareTo(ClientSessionBehavior.CLEAN) <= 0);
-            options.setPingTimeoutMs(GetIntValueFromLong(this.pingTimeoutMs != null? this.pingTimeoutMs: 0 ));
-            options.setProtocolOperationTimeoutMs(GetIntValueFromLong(this.ackTimeoutSeconds != null? this.ackTimeoutSeconds: 0 ) * 1000);
-            return options;
-        }
-        catch(ArithmeticException e)
-        {
-            throw new ArithmeticException("Failed to convert long values to int. Parameters are out of range for Mqtt3 Options: " + e.getMessage());
-        }
-    }
-
     /**
      * Creates a Mqtt5ClientOptionsBuilder instance
      * @param builder The builder to get the Mqtt5ClientOptions values from

@@ -432,35 +432,52 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
     aws_mem_release(allocator, connection);
 }
 
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionNew(
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionNewFrom311Client(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_client,
-    jobject jni_mqtt_connection,
-    jint jni_client_version) {
+    jobject jni_mqtt_connection) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
     struct mqtt_jni_connection *connection = NULL;
-    struct aws_mqtt_client *client3 = NULL;
-    struct aws_mqtt5_client_java_jni *client5_jni = NULL;
-
-    if ((uint16_t)jni_client_version == 3) {
-        client3 = (struct aws_mqtt_client *)jni_client;
-        if (!client3) {
-            aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt3 Client is invalid/null");
-            return (jlong)NULL;
-        }
-    } else if ((uint16_t)jni_client_version == 5) {
-        client5_jni = (struct aws_mqtt5_client_java_jni *)jni_client;
-        if (!client5_jni) {
-            aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt5 Client is invalid/null");
-            return (jlong)NULL;
-        }
+    struct aws_mqtt_client *client3 = (struct aws_mqtt_client *)jni_client;
+    if (!client3) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt3 Client is invalid/null");
+        return (jlong)NULL;
     }
 
     /* any error after this point needs to jump to error_cleanup */
-    connection = s_mqtt_connection_new(env, client3, client5_jni, jni_mqtt_connection);
+    connection = s_mqtt_connection_new(env, client3, NULL, jni_mqtt_connection);
+    if (!connection) {
+        return (jlong)NULL;
+    }
+
+    aws_mqtt_client_connection_set_connection_interruption_handlers(
+        connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
+    aws_mqtt_client_connection_set_connection_closed_handler(
+        connection->client_connection, s_on_connection_closed, connection);
+
+    return (jlong)connection;
+}
+
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionNewFrom5Client(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_client,
+    jobject jni_mqtt_connection) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct mqtt_jni_connection *connection = NULL;
+    struct aws_mqtt5_client_java_jni *client5_jni = (struct aws_mqtt5_client_java_jni *)jni_client;
+    if (!client5_jni) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_new: Mqtt5 Client is invalid/null");
+        return (jlong)NULL;
+    }
+
+    /* any error after this point needs to jump to error_cleanup */
+    connection = s_mqtt_connection_new(env, NULL, client5_jni, jni_mqtt_connection);
     if (!connection) {
         return (jlong)NULL;
     }

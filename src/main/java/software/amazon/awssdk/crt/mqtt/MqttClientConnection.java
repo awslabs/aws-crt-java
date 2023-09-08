@@ -14,6 +14,9 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
+import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -57,7 +60,7 @@ public class MqttClientConnection extends CrtResource {
      * @throws MqttException If mqttClient is null
      */
     public MqttClientConnection(MqttConnectionConfig config) throws MqttException {
-        if (config.getMqttClient() == null && config.getMqtt5Client() == null) {
+        if (config.getMqttClient() == null) {
             throw new MqttException("mqttClient must not be null");
         }
         if (config.getClientId() == null) {
@@ -71,16 +74,83 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-            if(config.getMqttClient() != null)
-            {
-                acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this, 3));
+
+            acquireNativeHandle(mqttClientConnectionNewFrom311Client(config.getMqttClient().getNativeHandle(), this));
+            SetupConfig(config);
+
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Create a mqtt3 config from a mqtt5 client
+     */
+    private static MqttConnectionConfig toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception {
+        try {
+            MqttConnectionConfig options = new MqttConnectionConfig();
+            options.setEndpoint(mqtt5options.getHostName());
+            options.setPort(Math.toIntExact(mqtt5options.getPort() != null ? mqtt5options.getPort() : 0));
+            options.setSocketOptions(mqtt5options.getSocketOptions());
+            if (mqtt5options.getConnectOptions() != null) {
+                options.setClientId(mqtt5options.getConnectOptions().getClientId());
+                options.setKeepAliveSecs(
+                        Math.toIntExact(mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds() != null
+                                ? mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds()
+                                : 0));
             }
-            else if (config.getMqtt5Client() != null)
-            {
-                acquireNativeHandle(mqttClientConnectionNew(config.getMqtt5Client().getNativeHandle(), this, 5));
+            options.setCleanSession(
+                    mqtt5options.getSessionBehavior().compareTo(Mqtt5ClientOptions.ClientSessionBehavior.CLEAN) <= 0);
+            options.setPingTimeoutMs(
+                    Math.toIntExact(mqtt5options.getPingTimeoutMs() != null ? mqtt5options.getPingTimeoutMs() : 0));
+            options.setProtocolOperationTimeoutMs(Math.toIntExact(
+                    mqtt5options.getAckTimeoutSeconds() != null ? mqtt5options.getAckTimeoutSeconds() : 0) * 1000);
+            return options;
+        } catch (ArithmeticException e) {
+            throw new ArithmeticException(
+                    "Failed to convert long values to int. Parameters are out of range for Mqtt3 Options: "
+                            + e.getMessage());
+        }
+    }
+
+    public MqttClientConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException {
+        if (mqtt5client == null) {
+            throw new MqttException("mqttClient must not be null");
+        }
+
+        try {
+            MqttConnectionConfig config = toMqtt3ConnectionConfig(mqtt5client.getClientOptions());
+            if (callbacks != null) {
+                config.setConnectionCallbacks(callbacks);
+                config.setMqtt5Client(mqtt5client);
             }
 
+            if (config.getClientId() == null) {
+                throw new MqttException("clientId must not be null");
+            }
+            if (config.getEndpoint() == null) {
+                throw new MqttException("endpoint must not be null");
+            }
+            if (config.getPort() <= 0 || config.getPort() > 65535) {
+                throw new MqttException("port must be a positive integer between 1 and 65535");
+            }
 
+            try {
+
+                acquireNativeHandle(mqttClientConnectionNewFrom5Client(config.getMqttClient().getNativeHandle(), this));
+                SetupConfig(config);
+
+            } catch (CrtRuntimeException ex) {
+                throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
+            }
+        } catch (Exception e) {
+            throw new MqttException("Failed to setup mqtt3 connection : " + e.getMessage());
+        }
+
+    }
+
+    private void SetupConfig(MqttConnectionConfig config) throws MqttException {
+        try {
             if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
@@ -115,7 +185,6 @@ public class MqttClientConnection extends CrtResource {
 
             addReferenceTo(config);
             this.config = config;
-
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }
@@ -209,12 +278,9 @@ public class MqttClientConnection extends CrtResource {
     public CompletableFuture<Boolean> connect() throws MqttException {
 
         TlsContext tls = null;
-        if(config.getMqttClient() != null)
-        {
+        if (config.getMqttClient() != null) {
             tls = config.getMqttClient().getTlsContext();
-        }
-        else if (config.getMqtt5Client() != null)
-        {
+        } else if (config.getMqtt5Client() != null) {
             tls = config.getMqtt5Client().getTlsContext();
         }
 
@@ -378,7 +444,9 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
-     * Returns statistics about the current state of the MqttClientConnection's queue of operations.
+     * Returns statistics about the current state of the MqttClientConnection's
+     * queue of operations.
+     *
      * @return Current state of the connection's queue of operations.
      */
     public MqttClientConnectionOperationStatistics getOperationStatistics() {
@@ -388,7 +456,10 @@ public class MqttClientConnection extends CrtResource {
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj, int client_version)
+    private static native long mqttClientConnectionNewFrom311Client(long client, MqttClientConnection thisObj)
+            throws CrtRuntimeException;
+
+    private static native long mqttClientConnectionNewFrom5Client(long client, MqttClientConnection thisObj)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDestroy(long connection);
@@ -435,6 +506,7 @@ public class MqttClientConnection extends CrtResource {
             String proxyAuthorizationUsername,
             String proxyAuthorizationPassword) throws CrtRuntimeException;
 
-    private static native MqttClientConnectionOperationStatistics mqttClientConnectionGetOperationStatistics(long connection);
+    private static native MqttClientConnectionOperationStatistics mqttClientConnectionGetOperationStatistics(
+            long connection);
 
 };

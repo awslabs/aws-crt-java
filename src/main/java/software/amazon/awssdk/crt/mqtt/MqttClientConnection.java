@@ -176,6 +176,7 @@ public class MqttClientConnection extends CrtResource {
         if (callbacks != null) {
             OnConnectionSuccess returnData = new onConnectionFailure(sessionPresent);
             callbacks.onConnectionFailure(returnData);
+        }
     }
 
     // called when the connection drops
@@ -184,6 +185,7 @@ public class MqttClientConnection extends CrtResource {
         if (callbacks != null) {
             OnConnectionFailureReturn returnData = new onConnectionFailure(errorCode);
             callbacks.onConnectionFailure(returnData);
+        }
     }
 
     // Called when a reconnect succeeds, and also on initial connection success.

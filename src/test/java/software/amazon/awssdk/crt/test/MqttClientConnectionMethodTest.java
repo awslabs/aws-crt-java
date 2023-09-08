@@ -67,6 +67,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null);
                     disconnect();
+                }
+                finally {
                     close();
                 }
         }
@@ -98,6 +100,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null);
                 disconnect();
+            }
+            finally {
                 close();
             }
     }
@@ -122,6 +126,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null);
                 disconnect();
+            }
+            finally {
                 close();
             }
     }
@@ -157,6 +163,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null);
                     disconnect();
+                }
+                finally {
                     close();
                 }
         }
@@ -187,6 +195,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             CredentialsProvider provider = builder.build();) {
             connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
             disconnect();
+        }
+        finally {
             close();
         }
     }
@@ -208,6 +218,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 CredentialsProvider provider = builder.build();) {
                 connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
+            }
+            finally{
                 close();
             }
         }
@@ -237,6 +249,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 CredentialsProvider provider = builder.build();) {
                 connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
+            }
+            finally {
                 close();
             }
         }
@@ -270,6 +284,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 CredentialsProvider provider = builder.build();) {
                 connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
+            }
+            finally {
                 close();
             }
         }
@@ -336,6 +352,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null);
                     disconnect();
+                }
+                finally {
                     close();
                 }
             }
@@ -350,11 +368,6 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
             AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
             AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
         int port = 8883;
-
-        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_HOST:" + AWS_TEST_MQTT311_IOT_CORE_HOST);
-        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT:" + AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
-        System.out.println("Android TEST: ConnDC_UC4 AWS_TEST_MQTT311_IOT_CORE_RSA_KEY:" + AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
-
 
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
@@ -374,6 +387,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null);
                     disconnect();
+                }
+                finally {
                     close();
                 }
             }
@@ -405,6 +420,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         proxyOptions);
                     disconnect();
+                }
+                finally {
                     close();
                 }
             }
@@ -475,6 +492,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null);
                 disconnect();
+            }
+            finally {
                 close();
             }
         }
@@ -506,6 +525,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     proxyOptions);
                 disconnect();
+            }
+            finally {
                 close();
             }
         }

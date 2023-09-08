@@ -244,12 +244,8 @@ public class CrtTestFixture {
 
         context = null;
 
-        EventLoopGroup.closeStaticDefault();
-        HostResolver.closeStaticDefault();
-        ClientBootstrap.closeStaticDefault();
-
         CrtResource.waitForNoResources();
-        System.out.println("Android TEST: CrtTestFixture.teardown() calling CRT.getOSIdentifier next");
+
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
@@ -259,6 +255,7 @@ public class CrtTestFixture {
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
+        System.out.println("Android TEST: CrtTestFixture.teardown() ended");
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {
@@ -307,7 +304,7 @@ public class CrtTestFixture {
     protected void skipIfAndroid() {
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
-            Assume.assumeTrue(platform.getOSIdentifier().contains("android"));
+            Assume.assumeFalse(platform.getOSIdentifier().contains("android"));
         }
     }
 }

@@ -200,6 +200,9 @@ public class CrtTestFixture {
 
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_USERNAME");
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_PASSWORD");
+
+        // Indicate that the system properties have been setup
+        System.setProperty("are.test.properties.setup", "true");
     }
 
     @Before
@@ -216,12 +219,15 @@ public class CrtTestFixture {
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
-        context = new CrtTestContext();
-        CrtPlatform platform = CRT.getPlatformImpl();
-        if (platform != null) {
-            platform.testSetup(context);
-        } else {
-            SetupTestProperties();
+        // System properties for tests only need to be setup once
+        if (System.getProperty("are.test.properties.setup") != null){
+            context = new CrtTestContext();
+            CrtPlatform platform = CRT.getPlatformImpl();
+            if (platform != null) {
+                platform.testSetup(context);
+            } else {
+                SetupTestProperties();
+            }
         }
 
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");

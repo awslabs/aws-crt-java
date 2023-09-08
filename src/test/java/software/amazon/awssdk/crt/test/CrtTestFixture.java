@@ -42,6 +42,9 @@ public class CrtTestFixture {
 
     // Setup System properties from environment variables set by builder for use by unit tests.
     private void SetupTestProperties(){
+        // Indicate that the system properties have been setup
+        System.setProperty("are.test.properties.setup", "true");
+
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
@@ -217,13 +220,16 @@ public class CrtTestFixture {
         System.out.println("Android TEST: CrtTestFixture.setup() Started\n");
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
+        // TODO this CrtTestContext should be removed as we are using System Properties for tests now.
         context = new CrtTestContext();
-        CrtPlatform platform = CRT.getPlatformImpl();
-        if (platform != null) {
-            System.out.println("Android TEST: CrtTestFixture.setup() platform != null");
-            platform.testSetup(context);
-        } else {
-            SetupTestProperties();
+        // System properties for tests only need to be setup once
+        if (System.getProperty("are.test.properties.setup") != "true"){
+            CrtPlatform platform = CRT.getPlatformImpl();
+            if (platform != null) {
+                platform.testSetup(context);
+            } else {
+                SetupTestProperties();
+            }
         }
 
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");

@@ -219,7 +219,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 connectWebsocketsWithCredentialsProvider(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
                 disconnect();
             }
-            finally{
+            finally {
                 close();
             }
         }

@@ -348,7 +348,7 @@ import java.util.function.Consumer;
                     connected.get();
                     result = true;
                 }
-                finally{
+                finally {
                     client.close();
                 }
 

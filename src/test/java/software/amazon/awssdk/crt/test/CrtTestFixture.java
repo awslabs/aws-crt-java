@@ -237,10 +237,6 @@ public class CrtTestFixture {
 
         context = null;
 
-        EventLoopGroup.closeStaticDefault();
-        HostResolver.closeStaticDefault();
-        ClientBootstrap.closeStaticDefault();
-
         CrtResource.waitForNoResources();
         if (CRT.getOSIdentifier() != "android") {
             try {

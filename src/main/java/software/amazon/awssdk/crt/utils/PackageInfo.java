@@ -65,16 +65,10 @@ public final class PackageInfo {
      * Default constructor
      */
     public PackageInfo() {
-        System.out.println("Android TEST: PackageInfo.PackageInfo() Started\n");
-
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
-            System.out.println("Android TEST: PackageInfo.PackageInfo() platform != null version is set\n");
             version = platform.getVersion();
             return;
-        }
-        else {
-            System.out.println("Android TEST: PackageInfo.PackageInfo() platform = null\n");
         }
 
         Package pkg = CRT.class.getPackage();

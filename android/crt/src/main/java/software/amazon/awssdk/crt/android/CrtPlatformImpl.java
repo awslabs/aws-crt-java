@@ -12,12 +12,10 @@ import software.amazon.awssdk.crt.utils.PackageInfo;
 
 public class CrtPlatformImpl extends CrtPlatform {
     public String getOSIdentifier() {
-        System.out.println("Android TEST: CrtPlatformImpl.getOSIdentifier() called\n");
         return "android";
     }
 
     public PackageInfo.Version getVersion() {
-        System.out.println("Android TEST: CrtPlatformImpl.getVersion() from android->crt->main called\n");
         return new PackageInfo.Version(BuildConfig.VERSION_NAME);
     }
 }

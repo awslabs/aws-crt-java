@@ -14,9 +14,7 @@ public class PackageInfoTest extends CrtTestFixture  {
 
     @Test
     public void testPackageInfo() {
-        System.out.println("Android TEST: testPackageInfo started\n");
         PackageInfo pkgInfo = new PackageInfo();
-        System.out.println("Android TEST: pkgInfo.version:"+ pkgInfo.version.toString() +"\n");
         Assert.assertNotEquals("UNKNOWN", pkgInfo.version.toString());
         Assert.assertEquals(0, pkgInfo.version.major);
         Assert.assertEquals(0, pkgInfo.version.minor);

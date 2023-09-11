@@ -217,7 +217,6 @@ public class CrtTestFixture {
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
-        System.out.println("Android TEST: CrtTestFixture.setup() Started\n");
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
         // TODO this CrtTestContext should be removed as we are using System Properties for tests now.
@@ -233,19 +232,14 @@ public class CrtTestFixture {
         }
 
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
-        System.out.println("Android TEST: CrtTestFixture.setup() complete\n");
     }
 
     @After
     public void tearDown() {
-        System.out.println("Android TEST: CrtTestFixture.teardown() started");
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown begin");
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
-            System.out.println("Android TEST: CrtTestFixture.tearDown() platform != null");
             platform.testTearDown(context);
-        } else {
-            System.out.println("Android TEST: CrtTestFixture.tearDown() platform == null, testTearDown not called");
         }
 
         context = null;
@@ -261,7 +255,6 @@ public class CrtTestFixture {
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
-        System.out.println("Android TEST: CrtTestFixture.teardown() ended");
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

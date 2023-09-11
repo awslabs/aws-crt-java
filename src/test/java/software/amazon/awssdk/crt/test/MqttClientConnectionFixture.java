@@ -348,7 +348,9 @@ import java.util.function.Consumer;
                     connected.get();
                     result = true;
                 }
-                client.close();
+                finally {
+                    client.close();
+                }
 
             } catch (Exception ex) {
                 fail("Exception during connect: " + ex.toString());

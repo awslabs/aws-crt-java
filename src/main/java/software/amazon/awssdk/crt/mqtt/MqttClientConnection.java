@@ -90,7 +90,7 @@ public class MqttClientConnection extends CrtResource {
      * @param config Configuration to use
      * @throws MqttException If mqttClient is null
      */
-    public MqttClientConnection(MqttConnectionConfig config) {
+    public MqttClientConnection(MqttConnectionConfig config) throws MqttException{
         if (config.getMqttClient() == null) {
             throw new MqttException("mqttClient must not be null");
         }
@@ -105,7 +105,6 @@ public class MqttClientConnection extends CrtResource {
         }
 
         try {
-
             acquireNativeHandle(mqttClientConnectionNewFrom311Client(config.getMqttClient().getNativeHandle(), this));
             SetupConfig(config);
 
@@ -147,7 +146,6 @@ public class MqttClientConnection extends CrtResource {
             }
 
             try {
-
                 acquireNativeHandle(
                         mqttClientConnectionNewFrom5Client(config.getMqtt5Client().getNativeHandle(), this));
                 SetupConfig(config);
@@ -197,6 +195,7 @@ public class MqttClientConnection extends CrtResource {
 
             addReferenceTo(config);
             this.config = config;
+
         } catch (CrtRuntimeException ex) {
             throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
         }

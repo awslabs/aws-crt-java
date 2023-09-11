@@ -447,7 +447,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
         return (jlong)NULL;
     }
 
-    /* any error after this point needs to jump to error_cleanup */
     connection = s_mqtt_connection_new(env, client3, NULL, jni_mqtt_connection);
     if (!connection) {
         return (jlong)NULL;
@@ -476,7 +475,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
         return (jlong)NULL;
     }
 
-    /* any error after this point needs to jump to error_cleanup */
     connection = s_mqtt_connection_new(env, NULL, client5_jni, jni_mqtt_connection);
     if (!connection) {
         return (jlong)NULL;

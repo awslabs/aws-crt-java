@@ -41,9 +41,12 @@ phases:
         TESTS_PROCESSES_CRASHED=$(grep "INSTRUMENTATION_RESULT: shortMsg=Process crashed." $DEVICEFARM_LOG_DIR/instrument.log | wc -l);
 
       - >-
-        echo "From your instrumentation output, it appears that $TESTS_PASSED tests passed,
-        $TESTS_FAILED failed, $TESTS_IGNORED were ignored,
-        $TESTS_ERRORED errored, and $TESTS_ASSUMPTION_FAILED experienced an assumption failure.";
+        echo "\n\nFrom your instrumentation output, it appears \n
+        $TESTS_PASSED tests PASSED \n
+        $TESTS_ASSUMPTION_FAILED tests were SKIPPED \n
+        $TESTS_FAILED tests FAILED \n
+        $TESTS_ERRORED tests ERRORED \n
+        $TESTS_IGNORED tests were IGNORED";
 
         echo "These counts are calculated directly from the raw instrumentation output, thus any
         redundant lines of output (e.g. a test case that was retried multiple times) could cause

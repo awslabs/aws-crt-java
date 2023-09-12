@@ -254,6 +254,7 @@ static void s_on_connection_success(
     (void)return_code;
 
     struct mqtt_jni_connection *connection = user_data;
+
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {
@@ -280,6 +281,7 @@ static void s_on_connection_failure(
     (void)client_connection;
 
     struct mqtt_jni_connection *connection = user_data;
+
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm);
     if (env == NULL) {

@@ -57,14 +57,14 @@ def main():
     print("Boto3 client created")
 
 
-    # getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_HOST")
-    # getSecretAndSaveToFile(client, "aws-c-auth-testing/cognito-identity", "AWS_TEST_MQTT5_COGNITO_IDENTITY")
-    # getSecretAndSaveToFile(client, "ci/mqtt5/us/x509/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
+    getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_HOST")
+    getSecretAndSaveToFile(client, "aws-c-auth-testing/cognito-identity", "AWS_TEST_MQTT5_COGNITO_IDENTITY")
+    getSecretAndSaveToFile(client, "ci/mqtt5/us/x509/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
 
     # Files that can be pulled directly from environment setup by builder
-    writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_HOST")
-    writeEnvToFile("AWS_TEST_MQTT5_COGNITO_IDENTITY")
-    writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
+    # writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_HOST")
+    # writeEnvToFile("AWS_TEST_MQTT5_COGNITO_IDENTITY")
+    # writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
 
     # Files that need to be created from a secret. These are typically files that are file locations and not the contents
     getSecretAndSaveToFile(client, "ci/mqtt5/us/Mqtt5Prod/cert", "AWS_TEST_MQTT5_IOT_CORE_RSA_CERT")

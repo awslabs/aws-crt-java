@@ -163,11 +163,9 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         public void onAttemptingConnect(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn onAttemptingConnectReturn) {}
         @Override
         public void onConnectionSuccess(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn onConnectionSuccessReturn) {
-            connectedFuture.complete(null);
         }
         @Override
         public void onConnectionFailure(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn onConnectionFailureReturn) {
-            connectedFuture.completeExceptionally(new Exception("Could not connect!"));
         }
         @Override
         public void onDisconnection(Mqtt5Client client, software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn onDisconnectionReturn) {}

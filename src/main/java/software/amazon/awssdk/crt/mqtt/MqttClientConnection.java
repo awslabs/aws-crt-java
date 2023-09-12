@@ -161,20 +161,20 @@ public class MqttClientConnection extends CrtResource {
 
     // called when the connection or reconnection is successful
     private void onConnectionSuccess(boolean sessionPresent) {
-        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
-        if (callbacks != null) {
-            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
-            callbacks.onConnectionSuccess(returnData);
-        }
+        // MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        // if (callbacks != null) {
+        //     OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+        //     callbacks.onConnectionSuccess(returnData);
+        // }
     }
 
     // called when the connection drops
     private void onConnectionFailure(int errorCode) {
-        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
-        if (callbacks != null) {
-            OnConnectionFailureReturn returnData = new OnConnectionFailureReturn(errorCode);
-            callbacks.onConnectionFailure(returnData);
-        }
+        // MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        // if (callbacks != null) {
+        //     OnConnectionFailureReturn returnData = new OnConnectionFailureReturn(errorCode);
+        //     callbacks.onConnectionFailure(returnData);
+        // }
     }
 
     // Called when a reconnect succeeds, and also on initial connection success.

@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.HashMap;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionality
@@ -33,6 +34,34 @@ public class MqttClientConnection extends CrtResource {
     private MqttConnectionConfig config;
 
     private AsyncCallback connectAck;
+
+
+    private static HashMap<Mqtt5Client, MqttClientConnection> s_connectionMap = new HashMap<>();
+
+    public static MqttClientConnection NewConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException
+    {
+        try
+        {
+            if(!s_connectionMap.containsKey(mqtt5client))
+            {
+                s_connectionMap.put(mqtt5client, new MqttClientConnection(mqtt5client, callbacks));
+            }
+            return s_connectionMap.get(mqtt5client);
+        }
+        catch(MqttException e)
+        {
+            throw e;
+        }
+    }
+
+    public static void CloseConnection(Mqtt5Client mqtt5client)
+    {
+        if(s_connectionMap.containsKey(mqtt5client))
+        {
+            s_connectionMap.get(mqtt5client).close();
+            s_connectionMap.remove(mqtt5client);
+        }
+    }
 
     /**
      * Wraps the handler provided by the user so that an MqttMessage can be
@@ -124,7 +153,7 @@ public class MqttClientConnection extends CrtResource {
      *
      * @throws MqttException If mqttClient is null
      */
-    public MqttClientConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException {
+    private MqttClientConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException {
         if (mqtt5client == null) {
             throw new MqttException("mqttClient must not be null");
         }

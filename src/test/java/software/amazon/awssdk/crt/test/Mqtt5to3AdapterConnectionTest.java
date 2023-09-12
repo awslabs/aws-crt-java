@@ -127,10 +127,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
         this.connectionMessageTransfomer = connectionMessageTransfomer;
     }
 
-    void Mqtt3ConnectionClose() {
-        connection.close();
-    }
-
     void Mqtt3ConnectionDisconnect() {
         disconnecting = true;
         try {
@@ -144,7 +140,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
 
     boolean Mqtt3Connect(Mqtt5Client client) throws Exception {
         try {
-            connection = new MqttClientConnection(client, events);
+            connection = MqttClientConnection.NewConnection(client, events);
             if (connectionMessageTransfomer != null) {
                 connection.onMessage(connectionMessageTransfomer);
             }
@@ -170,8 +166,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             builder.withConnectOptions(connectBuilder.build());
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 assertNotNull(client);
-                MqttClientConnection connection = new MqttClientConnection(client, null);
-                connection.close();
+                MqttClientConnection.NewConnection(client, null);
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -270,8 +265,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     assertNotNull(client);
-                    MqttClientConnection connection = new MqttClientConnection(client, null);
-                    connection.close();
+                    MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                 }
             }
 
@@ -299,8 +293,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             connectBuilder.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
             builder.withConnectOptions(connectBuilder.build());
 
-            try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = new MqttClientConnection(client, null)) {
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -332,8 +326,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                     .withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
             builder.withConnectOptions(connectOptions.build());
 
-            try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = new MqttClientConnection(client, null);) {
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -364,8 +358,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 connectOptions.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
                 builder.withConnectOptions(connectOptions.build());
 
-                try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                        MqttClientConnection connection = new MqttClientConnection(client, null);) {
+                try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                        MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                     DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -407,8 +401,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 };
                 builder.withWebsocketHandshakeTransform(websocketTransform);
 
-                try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                        MqttClientConnection connection = new MqttClientConnection(client, null);) {
+                try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                        MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                     DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
@@ -463,14 +457,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             builder.withHttpProxyOptions(proxyOptions);
 
             Mqtt5Client client = new Mqtt5Client(builder.build());
-            MqttClientConnection connection = new MqttClientConnection(client, null);
+            MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
 
             client.start();
             events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
             DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
             client.stop(disconnect.build());
 
-            connection.close();
             client.close();
             tlsContext.close();
             tlsOptions.close();
@@ -505,7 +498,6 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 Mqtt3Connect(client);
                 Mqtt3ConnectionDisconnect();
-                Mqtt3ConnectionClose();
             }
 
         } catch (Exception ex) {
@@ -534,11 +526,10 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                     .withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
             builder.withConnectOptions(connectOptions.build());
 
-            try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = new MqttClientConnection(client, null);) {
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                    MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                 Mqtt3Connect(client);
                 Mqtt3ConnectionDisconnect();
-                Mqtt3ConnectionClose();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -564,11 +555,11 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
                 builder.withConnectOptions(connectBuilder.build());
-                try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                        MqttClientConnection connection = new MqttClientConnection(client, null);) {
+                try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                        MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                     Mqtt3Connect(client);
                     Mqtt3ConnectionDisconnect();
-                    Mqtt3ConnectionClose();
+
                 }
             }
         } catch (Exception ex) {
@@ -606,11 +597,11 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 };
                 builder.withWebsocketHandshakeTransform(websocketTransform);
 
-                try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                        MqttClientConnection connection = new MqttClientConnection(client, null);) {
+                try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                        MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                     Mqtt3Connect(client);
                     Mqtt3ConnectionDisconnect();
-                    Mqtt3ConnectionClose();
+
                 }
             }
 
@@ -664,7 +655,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
 
             Mqtt3Connect(client);
             Mqtt3ConnectionDisconnect();
-            Mqtt3ConnectionClose();
+
 
             client.close();
             tlsContext.close();
@@ -718,8 +709,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             connectBuilder.withClientId(clientId);
             builder.withConnectOptions(connectBuilder.build());
 
-            try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection = new MqttClientConnection(client, null);) {
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                    MqttClientConnection connection = MqttClientConnection.NewConnection(client, null);
                 connection.onMessage(messageHandler);
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -799,11 +790,11 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 connectBuilder.withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
                 builder.withConnectOptions(connectBuilder.build());
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-                    connection = new MqttClientConnection(client, this.events);
+                    connection = MqttClientConnection.NewConnection(client, this.events);
                     connection.connect();
                     onConnectionSuccessFuture.get();
                     Mqtt3ConnectionDisconnect();
-                    Mqtt3ConnectionClose();
+
                 }
             }
         } catch (Exception ex) {
@@ -833,11 +824,11 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                         UUID.randomUUID().toString());
                 builder.withConnectOptions(connectBuilder.build());
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
-                    connection = new MqttClientConnection(client, this.events);
+                    connection = MqttClientConnection.NewConnection(client, this.events);
                     connection.connect();
                     onConnectionFailureFuture.get();
                     Mqtt3ConnectionDisconnect();
-                    Mqtt3ConnectionClose();
+
                 }
             }
         } catch (Exception ex) {
@@ -878,11 +869,12 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             connectBuilder.withClientId(clientId);
             builder.withConnectOptions(connectBuilder.build());
 
-            try (Mqtt5Client client = new Mqtt5Client(builder.build());
-                    MqttClientConnection connection1 = new MqttClientConnection(client, null);
-                    MqttClientConnection connection2 = new MqttClientConnection(client, null);) {
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
                 // Connect
                 client.start();
+
+                MqttClientConnection connection1 = MqttClientConnection.NewConnection(client, null);
+                MqttClientConnection connection2 = MqttClientConnection.NewConnection(client, null);
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 CompletableFuture<MqttMessage> receivedFuture1 = new CompletableFuture<>();

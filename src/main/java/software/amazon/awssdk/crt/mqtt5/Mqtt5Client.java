@@ -22,6 +22,7 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubAckPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
+import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 
 
  /**
@@ -258,6 +259,12 @@ public class Mqtt5Client extends CrtResource {
         } else {
             args.complete(handshakeRequest);
         }
+    }
+
+    @Override
+    public void close() {
+        MqttClientConnection.CloseConnection(this);
+        decRef();
     }
 
 

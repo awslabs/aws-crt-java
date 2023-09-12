@@ -8,19 +8,18 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
-import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionality
@@ -35,18 +34,30 @@ public class MqttClientConnection extends CrtResource {
 
     private AsyncCallback connectAck;
 
+    /* Only used to match the Mqtt5Client created connection */
+    private UUID connection_id;
 
-    private static HashMap<Mqtt5Client, MqttClientConnection> s_connectionMap = new HashMap<>();
+
+    private static HashMap<Mqtt5Client, HashSet<MqttClientConnection>> s_client_connection_Map = new HashMap<>();
+    private static HashMap<UUID, MqttClientConnection> s_connectionMap = new HashMap<>();
 
     public static MqttClientConnection NewConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException
     {
         try
         {
-            if(!s_connectionMap.containsKey(mqtt5client))
+            UUID id = UUID.randomUUID();
+            MqttClientConnection connection = new MqttClientConnection(mqtt5client, callbacks);
+            connection.connection_id = id;
+            s_connectionMap.put(id, connection);
+            if(s_client_connection_Map.containsKey(mqtt5client))
+                s_client_connection_Map.get(mqtt5client).add(connection);
+            else
             {
-                s_connectionMap.put(mqtt5client, new MqttClientConnection(mqtt5client, callbacks));
+                HashSet<MqttClientConnection> connection_set = new HashSet<MqttClientConnection>();
+                connection_set.add(connection);
+                s_client_connection_Map.put(mqtt5client, connection_set);
             }
-            return s_connectionMap.get(mqtt5client);
+            return s_connectionMap.get(id);
         }
         catch(MqttException e)
         {
@@ -56,11 +67,28 @@ public class MqttClientConnection extends CrtResource {
 
     public static void CloseConnection(Mqtt5Client mqtt5client)
     {
-        if(s_connectionMap.containsKey(mqtt5client))
+        if(s_client_connection_Map.containsKey(mqtt5client))
         {
-            s_connectionMap.get(mqtt5client).close();
-            s_connectionMap.remove(mqtt5client);
+            for (MqttClientConnection connection : s_client_connection_Map.get(mqtt5client)) {
+                s_connectionMap.remove(connection.connection_id);
+                connection.close();
+            }
+            s_client_connection_Map.remove(mqtt5client);
         }
+    }
+
+    public static void CloseConnection(UUID id)
+    {
+        MqttClientConnection connection = s_connectionMap.get(id);
+        if(connection == null)
+        {
+            return;
+        }
+        Mqtt5Client client = connection.config.getMqtt5Client();
+        assert(client != null);
+        s_client_connection_Map.get(client).remove(connection);
+        connection.close();
+        s_connectionMap.remove(id);
     }
 
     /**

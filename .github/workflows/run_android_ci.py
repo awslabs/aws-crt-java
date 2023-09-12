@@ -28,7 +28,7 @@ def main():
 
     region = os.getenv('AWS_DEVICE_FARM_REGION')
 
-    print("Beginning Android Device Farm Setup\n")
+    print("Beginning Android Device Farm Setup \n")
 
     # Create Boto3 client for Device Farm
     try:

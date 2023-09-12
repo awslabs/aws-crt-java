@@ -13,10 +13,6 @@ parser.add_argument('--run_attempt', required=True, help="A unique number for ea
 parser.add_argument('--project_arn', required=True, help="Arn for the Device Farm Project the apk will be tested on")
 parser.add_argument('--device_pool_arn', required=True, help="Arn for device pool of the Device Farm Project the apk will be tested on")
 
-
-def main():
-    args = parser.parse_args()
-
 current_working_directory = os.getcwd()
 # Steve TODO these will be changed to the new test app w/the crt library
 build_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'

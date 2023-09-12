@@ -211,9 +211,6 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     public void New_UC1() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
-
-        System.out.println("Android TEST: Mqtt5ClientTest.New_UC1 test AWS_TEST_MQTT5_DIRECT_MQTT_HOST:" + AWS_TEST_MQTT5_DIRECT_MQTT_HOST);
-        System.out.println("Android TEST: Mqtt5ClientTest.New_UC1 test AWS_TEST_MQTT5_DIRECT_MQTT_PORT:" + AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
                 AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
@@ -3233,6 +3230,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* MQTT5 ConnWS_Cred_UC2 - default credentials connect */
     @Test
     public void ConnWS_Cred_UC2() {
+        skipIfAndroid(); // Credential Provider support not yet added for Android
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION);
         CredentialsProvider provider = null;

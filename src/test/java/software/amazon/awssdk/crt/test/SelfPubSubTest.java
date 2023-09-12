@@ -118,7 +118,6 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
         Consumer<MqttMessage> messageHandler = (message) -> {
             byte[] payload = message.getPayload();
             try {
-                System.out.println("Android TEST: testPubSubOnMessage received");
                 assertEquals(TEST_TOPIC, message.getTopic());
                 String contents = new String(payload, "UTF-8");
                 assertEquals("Message is intact", TEST_PAYLOAD, contents);

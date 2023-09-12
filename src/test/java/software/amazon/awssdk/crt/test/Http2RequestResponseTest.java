@@ -113,7 +113,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Get() throws Exception {
         skipIfAndroid();
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfNetworkUnavailable();
         testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);

@@ -205,6 +205,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
     @Test
     public void ConnWS_Cred_UC2()
     {
+        skipIfAndroid(); // Credential Provider support not yet added for Android
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST);
         try (EventLoopGroup elg = new EventLoopGroup(1);

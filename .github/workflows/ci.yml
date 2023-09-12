@@ -239,7 +239,10 @@ jobs:
       # Setup files and/or env variables required by the test app
       # this is a TODO
         run: |
+          cd src/test/android/testapp/src/main/assets
+          AWS_TEST_MQTT5_COGNITO_IDENTITY=(aws secretsmanager get-secret-value --region us-east-1 --secret-id "aws-c-auth-testing/cognito-identity" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$AWS_TEST_MQTT5_COGNITO_IDENTITY" > AWS_TEST_MQTT5_COGNITO_IDENTITY.txt
           pwd
+
       - name: Build Test App
         run: |
           cd src/test/android/testapp

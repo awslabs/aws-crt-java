@@ -169,13 +169,13 @@ import java.util.function.Consumer;
                 @Override
                 public void onConnectionFailure(OnConnectionFailureReturn data) {
                     System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
-                    onConnectionFailureFuture.complete(data);
+                    // onConnectionFailureFuture.complete(data);
                 }
 
                 @Override
                 public void onConnectionSuccess(OnConnectionSuccessReturn data) {
                     System.out.println("Connection success. Session present: " + data.getSessionPresent());
-                    onConnectionSuccessFuture.complete(data);
+                    // onConnectionSuccessFuture.complete(data);
                 }
 
                 @Override

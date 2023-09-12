@@ -262,7 +262,6 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
         catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
         }
-        disconnect();
         close();
     }
 

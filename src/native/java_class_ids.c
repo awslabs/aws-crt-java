@@ -180,11 +180,11 @@ static void s_cache_mqtt_connection(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onWebsocketHandshake", "(Lsoftware/amazon/awssdk/crt/http/HttpRequest;J)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_websocket_handshake);
 
-    mqtt_connection_properties.on_connection_success = (*env)->GetMethodID(env, cls, "onConnectionSuccess", "(Z)V");
-    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_success);
+    // mqtt_connection_properties.on_connection_success = (*env)->GetMethodID(env, cls, "onConnectionSuccess", "(Z)V");
+    // AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_success);
 
-    mqtt_connection_properties.on_connection_failure = (*env)->GetMethodID(env, cls, "onConnectionFailure", "(I)V");
-    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_failure);
+    // mqtt_connection_properties.on_connection_failure = (*env)->GetMethodID(env, cls, "onConnectionFailure", "(I)V");
+    // AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_failure);
 }
 
 struct java_message_handler_properties message_handler_properties;

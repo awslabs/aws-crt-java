@@ -252,6 +252,7 @@ static void s_on_connection_success(
     void *user_data) {
     (void)client_connection;
     (void)return_code;
+    (void) session_present;
 
     struct mqtt_jni_connection *connection = user_data;
 
@@ -264,7 +265,7 @@ static void s_on_connection_success(
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
 
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_success, session_present);
+        // (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_success, session_present);
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 
@@ -279,6 +280,7 @@ static void s_on_connection_failure(
     int error_code,
     void *user_data) {
     (void)client_connection;
+    (void)error_code;
 
     struct mqtt_jni_connection *connection = user_data;
 
@@ -290,7 +292,7 @@ static void s_on_connection_failure(
     }
     jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
     if (mqtt_connection) {
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_failure, error_code);
+        // (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_failure, error_code);
 
         (*env)->DeleteLocalRef(env, mqtt_connection);
 

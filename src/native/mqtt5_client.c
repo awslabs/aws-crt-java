@@ -432,7 +432,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
 
             /* Set OnConnected BEFORE calling the callback so it is accurate in the callback itself. */
             (*env)->CallVoidMethod(env, java_client->jni_client, mqtt5_client_properties.client_set_is_connected, true);
-            printf("printf using mqtt5\n");
+
             (*env)->CallVoidMethod(
                 env,
                 jni_lifecycle_events,

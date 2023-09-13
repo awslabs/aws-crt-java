@@ -4,6 +4,12 @@ from botocore.exceptions import ClientError
 
 cwd = os.getcwd()
 
+def saveStringToFile(fileData, fileName):
+    secret_file = open(cwd + "/" + fileName + ".txt", "w")
+    secret_file.write(fileData)
+    secret_file.close()
+    print(fileName + ".txt file created")
+
 def getSecretAndSaveToFile(client, secretName, fileName):
     try:
         secret_value_response = client.get_secret_value(
@@ -23,10 +29,11 @@ def getSecretAndSaveToFile(client, secretName, fileName):
             print("An error occurred on service side:", e)
     else:
         if 'SecretString' in secret_value_response:
-            secret_file = open(cwd + "/" + fileName + ".txt", "w")
-            secret_file.write(secret_value_response['SecretString'])
-            secret_file.close()
-            print(fileName + ".txt file created")
+            saveStringToFile(secret_value_response['SecretString'], fileName)
+            # secret_file = open(cwd + "/" + fileName + ".txt", "w")
+            # secret_file.write(secret_value_response['SecretString'])
+            # secret_file.close()
+            # print(fileName + ".txt file created")
         else:
             print("SecretString not found in response")
 
@@ -41,7 +48,7 @@ def main():
             region_name='us-east-1'
         )
     except Exception:
-        print("Error - could not make Boto3 client.")
+        print("Error - could not make Boto3 secrets manager client.")
 
     print("Boto3 client created")
 
@@ -60,9 +67,18 @@ def main():
     getSecretAndSaveToFile(client, "X509IntegrationTestPrivateKey", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY")
     getSecretAndSaveToFile(client, "X509IntegrationTestCertificate", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT")
 
-    # AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY
-    # AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY
-    # AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN
+    try:
+        client_sts = boto3.client('sts')
+    except Exception:
+        print("Error - could not make Boto3 sts client")
+
+    role_credential_response = client.assume_role(
+        RoleArn="arn:aws:iam::123124136734:role/assume_role_connect_iot",
+        RoleSessionName="CI_Test_Run"
+    )
+    saveStringToFile(role_credential_response['Credentials']['AccessKeyId'], "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY")
+    saveStringToFile(role_credential_response['Credentials']['SecretAccessKey'], "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY")
+    saveStringToFile(role_credential_response['Credentials']['SessionToken'], "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN")
 
     print("Android test asset creation complete")
 

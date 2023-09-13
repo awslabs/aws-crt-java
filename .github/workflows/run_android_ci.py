@@ -14,7 +14,6 @@ parser.add_argument('--project_arn', required=True, help="Arn for the Device Far
 parser.add_argument('--device_pool_arn', required=True, help="Arn for device pool of the Device Farm Project the apk will be tested on")
 
 current_working_directory = os.getcwd()
-# Steve TODO these will be changed to the new test app w/the crt library
 build_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'
 test_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/androidTest/debug/testapp-debug-androidTest.apk'
 test_spec_file_location = current_working_directory + '/src/test/android/testapp/instrumentedTestSpec.yml'
@@ -126,7 +125,7 @@ def main():
             'testSpecArn': device_farm_test_spec_upload_arn
         },
         executionConfiguration={
-            'jobTimeoutMinutes': 120
+            'jobTimeoutMinutes': 30
         }
     )
 
@@ -151,10 +150,11 @@ def main():
         is_success = False
 
     # Clean up
-    print('Deleting ' + upload_file_name + ' Device Farm project')
+    print('Deleting ' + upload_file_name + ' from Device Farm project')
     client.delete_upload(
         arn=device_farm_upload_arn
     )
+    print('Deleting ' + upload_test_file_name + ' from Device Farm project')
     client.delete_upload(
         arn=device_farm_instrumentation_upload_arn
     )

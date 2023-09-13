@@ -42,13 +42,16 @@
         return new PackageInfo.Version("0.0.0-UNITTEST");
     }
 
+    // Used to avoid exception when the property being copied is null (not set)
     private void SetPropertyFromProperty(String propertyName, String propertyToCopy){
         if (System.getProperty(propertyToCopy) != null) {
             System.setProperty(propertyName, System.getProperty(propertyToCopy));
+        } else {
+            System.out.println("Android TEST: CrtPlatformImpl.SetPropertyFromProperty() Property:" + propertyToCopy + " is null")
         }
     }
 
-    // Attempts to set a System property to the contents of a file in the assets folder
+    // Set a System property to the contents of a file in the assets folder
     private void SetPropertyFromFile(String propertyName, String fileName){
         AssetManager assets = InstrumentationRegistry.getInstrumentation().getTargetContext().getResources().getAssets();
         try (InputStream assetStream = assets.open(fileName);) {
@@ -81,13 +84,8 @@
     }
 
     public void testSetup(Object context) {
-       // STEVE TODO
-       /*
-       AWS_TEST_MQTT5_ROLE_CREDENTIAL used in builder script (_setenv_role_arn, _setenv_profile_file) to setup
-       _ACCESS_KEY, _SECRET_ACCESS_KEY, _SESSION_TOKEN for tests.
-       Look into whether we want to run those specific tests in Android. If we do, we'll need to set up those
-       various things in the python script in ci.yml to pull and set the files during file setup
-       */
+        // Any new system properties that are required by CI Device Farm tests must be added to android_file_creation.py
+        // as well as configured here.
 
         //Indicate system properties are set for future tests
         System.setProperty("are.test.properties.setup", "true");

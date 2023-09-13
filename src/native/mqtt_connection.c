@@ -86,7 +86,7 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
 }
 
 /* The destroy function is called on Java MqttClientConnection resource release. */
-static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection) {
+static void s_mqtt_jni_connection_destroy(struct mqtt_jni_connection *connection) {
     /* For mqtt311 client, we have to call aws_mqtt_client_connection_disconnect before releasing the underlying c
      * connection.*/
     if (aws_mqtt_client_connection_disconnect(
@@ -96,7 +96,8 @@ static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection
          * This can happen under normal code paths if the client happens to be disconnected at cleanup/shutdown
          * time. Log it (in case it was unexpected) and then shutdown the underlying connection manually.
          */
-        aws_mqtt_client_connection_release(connection->client_connection);
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "Client disconnect failed. Release the client connection.");
+        s_on_shutdown_disconnect_complete(connection->client_connection, NULL);
     }
 }
 
@@ -485,25 +486,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
 ** client shutdown process. Then on termination callback, we will finally release all jni resources.
 */
 static void s_on_shutdown_disconnect_complete(struct aws_mqtt_client_connection *connection, void *user_data) {
-    (void)connection;
-
-    struct mqtt_jni_connection *jni_connection = (struct mqtt_jni_connection *)user_data;
+    (void)user_data;
 
     AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "mqtt_jni_connection shutdown complete, releasing references");
 
-    /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm);
-    if (env == NULL) {
-        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        return;
-    }
-
     /* Release the underlying mqtt connection */
-    aws_mqtt_client_connection_release(jni_connection->client_connection);
-
-    JavaVM *jvm = jni_connection->jvm;
-    aws_jni_release_thread_env(jvm, env);
-    /********** JNI ENV RELEASE **********/
+    aws_mqtt_client_connection_release(connection);
 }
 
 /*******************************************************************************
@@ -518,7 +506,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     aws_cache_jni_ids(env);
 
     struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
-    s_mqtt_jni_connection_destory(connection);
+    s_mqtt_jni_connection_destroy(connection);
 }
 
 /*******************************************************************************

@@ -56,31 +56,26 @@ public class MqttClientConnection extends CrtResource {
      * Static help function to create a MqttConnectionConfig from a
      * Mqtt5ClientOptions
      */
-    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception {
-        try {
-            MqttConnectionConfig options = new MqttConnectionConfig();
-            options.setEndpoint(mqtt5options.getHostName());
-            options.setPort(Math.toIntExact(mqtt5options.getPort() != null ? mqtt5options.getPort() : 0));
-            options.setSocketOptions(mqtt5options.getSocketOptions());
-            if (mqtt5options.getConnectOptions() != null) {
-                options.setClientId(mqtt5options.getConnectOptions().getClientId());
-                options.setKeepAliveSecs(
-                        Math.toIntExact(mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds() != null
-                                ? mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds()
-                                : 0));
-            }
-            options.setCleanSession(
-                    mqtt5options.getSessionBehavior().compareTo(Mqtt5ClientOptions.ClientSessionBehavior.CLEAN) <= 0);
-            options.setPingTimeoutMs(
-                    Math.toIntExact(mqtt5options.getPingTimeoutMs() != null ? mqtt5options.getPingTimeoutMs() : 0));
-            options.setProtocolOperationTimeoutMs(Math.toIntExact(
-                    mqtt5options.getAckTimeoutSeconds() != null ? mqtt5options.getAckTimeoutSeconds() : 0) * 1000);
-            return options;
-        } catch (ArithmeticException e) {
-            throw new ArithmeticException(
-                    "Failed to convert long values to int. Parameters are out of range for Mqtt3 Options: "
-                            + e.getMessage());
+    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception{
+        MqttConnectionConfig options = new MqttConnectionConfig();
+        options.setEndpoint(mqtt5options.getHostName());
+        options.setPort(mqtt5options.getPort() != null ? Math.toIntExact(mqtt5options.getPort()) : 0);
+        options.setSocketOptions(mqtt5options.getSocketOptions());
+        if (mqtt5options.getConnectOptions() != null) {
+            options.setClientId(mqtt5options.getConnectOptions().getClientId());
+            options.setKeepAliveSecs(
+                    mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds() != null
+                            ? Math.toIntExact(mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds())
+                            : 0);
         }
+        options.setCleanSession(
+                mqtt5options.getSessionBehavior().compareTo(Mqtt5ClientOptions.ClientSessionBehavior.CLEAN) <= 0);
+        options.setPingTimeoutMs(
+                mqtt5options.getPingTimeoutMs() != null ? Math.toIntExact(mqtt5options.getPingTimeoutMs()) : 0);
+        options.setProtocolOperationTimeoutMs(mqtt5options.getAckTimeoutSeconds() != null
+                ? Math.toIntExact(mqtt5options.getAckTimeoutSeconds()) * 1000
+                : 0);
+        return options;
     }
 
     /**
@@ -90,7 +85,7 @@ public class MqttClientConnection extends CrtResource {
      * @param config Configuration to use
      * @throws MqttException If mqttClient is null
      */
-    public MqttClientConnection(MqttConnectionConfig config) throws MqttException{
+    public MqttClientConnection(MqttConnectionConfig config) throws MqttException {
         if (config.getMqttClient() == null) {
             throw new MqttException("mqttClient must not be null");
         }
@@ -292,7 +287,7 @@ public class MqttClientConnection extends CrtResource {
         if (config.getMqttClient() != null) {
             tls = config.getMqttClient().getTlsContext();
         } else if (config.getMqtt5Client() != null) {
-            tls = config.getMqtt5Client().getTlsContext();
+            tls = config.getMqtt5Client().getClientOptions().getTlsContext();
         }
 
         // Just clamp the pingTimeout, no point in throwing

@@ -52,11 +52,6 @@ public class Mqtt5Client extends CrtResource {
     private Mqtt5ClientOptions clientOptions;
 
     /**
-     * A private tlscontext
-     */
-    private TlsContext tlsContext;
-
-    /**
      * Creates a Mqtt5Client instance using the provided Mqtt5ClientOptions. Once the Mqtt5Client is created,
      * changing the settings will not cause a change in already created Mqtt5Client's.
      *
@@ -96,7 +91,6 @@ public class Mqtt5Client extends CrtResource {
         }
         if (tlsContext != null) {
             addReferenceTo(tlsContext);
-            this.tlsContext = tlsContext;
         }
         if (proxyOptions != null) {
             if (proxyOptions.getTlsContext() != null) {
@@ -105,11 +99,6 @@ public class Mqtt5Client extends CrtResource {
         }
         isConnected = false;
     }
-
-    /**
-     * @return the tls context used by all connections associated with this client.
-     */
-    public TlsContext getTlsContext() { return tlsContext; }
 
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call

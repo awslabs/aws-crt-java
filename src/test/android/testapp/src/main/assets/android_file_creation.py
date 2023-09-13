@@ -72,7 +72,7 @@ def main():
     except Exception:
         print("Error - could not make Boto3 sts client")
 
-    role_credential_response = client.assume_role(
+    role_credential_response = client_sts.assume_role(
         RoleArn="arn:aws:iam::123124136734:role/assume_role_connect_iot",
         RoleSessionName="CI_Test_Run"
     )

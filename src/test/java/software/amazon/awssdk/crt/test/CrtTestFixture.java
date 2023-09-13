@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.After;
 import org.junit.Assume;
 
@@ -33,7 +34,7 @@ public class CrtTestFixture {
         return context;
     }
 
-    private void SetPropertyFromEnv(String name){
+    private static void SetPropertyFromEnv(String name){
         String propertyValue = System.getenv(name);
         if (propertyValue != null){
             System.setProperty(name, propertyValue);
@@ -41,10 +42,7 @@ public class CrtTestFixture {
     }
 
     // Setup System properties from environment variables set by builder for use by unit tests.
-    private void SetupTestProperties(){
-        // Indicate that the system properties have been setup
-        System.setProperty("are.test.properties.setup", "true");
-
+    private static void SetupTestProperties(){
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
@@ -205,6 +203,12 @@ public class CrtTestFixture {
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_PASSWORD");
     }
 
+    @BeforeClass
+    public static void setupEnv()
+    {
+        SetupTestProperties();
+    }
+
     @Before
     public void setup() {
         // We only want to see the CRT logs if the test fails.
@@ -221,16 +225,10 @@ public class CrtTestFixture {
 
         // TODO this CrtTestContext should be removed as we are using System Properties for tests now.
         context = new CrtTestContext();
-        // System properties for tests only need to be setup once
-        if (System.getProperty("are.test.properties.setup") != "true"){
-            CrtPlatform platform = CRT.getPlatformImpl();
-            if (platform != null) {
-                platform.testSetup(context);
-            } else {
-                SetupTestProperties();
-            }
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            platform.testSetup(context);
         }
-
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
     }
 

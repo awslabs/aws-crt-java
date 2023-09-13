@@ -66,11 +66,8 @@
     // Attempts to create a cached file from a file in the assets folder and sets a System property pointing to the created file
     // CRT cannot directly access files in the assets folder of an Android app as they are compressed
     private void SetPropertyToFileLocation(String propertyName, String fileName){
-        Context testContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Resources testRes = InstrumentationRegistry.getInstrumentation().getTargetContext().getResources();
-        AssetManager assets = testRes.getAssets();
-
-        String cachedName = testContext.getExternalCacheDir().getAbsolutePath() + "/" + fileName;
+        AssetManager assets = InstrumentationRegistry.getInstrumentation().getTargetContext().getResources().getAssets();
+        String cachedName = InstrumentationRegistry.getInstrumentation().getTargetContext().getExternalCacheDir().getAbsolutePath() + "/" + fileName;
 
         try (InputStream assetStream = assets.open(fileName);
             FileOutputStream cachedRes = new FileOutputStream(cachedName)){
